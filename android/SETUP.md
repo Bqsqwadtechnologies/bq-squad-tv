@@ -15,7 +15,7 @@ PRODUCER_CONSOLE_URL=https://YOUR-WEBSITE/producer
 
 The base URL is the API root; Android appends documented `v1/...` paths. Do not put secret keys here.
 
-Add the real Firebase config at `android/app/google-services.json`. Debug project can open before this file is supplied because Firebase initializes from public project identifiers. Release tasks fail with a clear message until the real file is present. Register production package `com.bqsqwad.tv` in Firebase; debug uses a suffix.
+Add the real Firebase config at `android/app/google-services.json`. Debug project can open before this file is supplied because Firebase initializes from public project identifiers. Release tasks fail with a clear message until the real file is present. Register the exact package `com.bqsqwad.tv` in Firebase for both debug and release.
 
 ## Firebase console
 1. Add SHA-1 and SHA-256 fingerprints for debug and release signing certificates.

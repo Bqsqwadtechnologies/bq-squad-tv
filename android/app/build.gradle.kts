@@ -20,7 +20,7 @@ android{
   buildConfigField("String","PRODUCER_CONSOLE_URL",quoted("PRODUCER_CONSOLE_URL","https://YOUR-WEBSITE/producer"))
  }
  buildTypes{
-  debug{applicationIdSuffix=".debug";versionNameSuffix="-debug"}
+  debug{}
   release{isMinifyEnabled=true;isShrinkResources=true;proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"),"proguard-rules.pro");signingConfig=signingConfigs.create("release"){
    val p=System.getenv("ANDROID_KEYSTORE_PATH");if(!p.isNullOrBlank()){storeFile=file(p);storePassword=System.getenv("ANDROID_KEYSTORE_PASSWORD");keyAlias=System.getenv("ANDROID_KEY_ALIAS");keyPassword=System.getenv("ANDROID_KEY_PASSWORD")}
   }}
