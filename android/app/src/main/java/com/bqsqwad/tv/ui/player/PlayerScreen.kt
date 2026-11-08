@@ -139,7 +139,7 @@ fun PlayerScreen(channelId:String,onExit:()->Unit,onTopUp:()->Unit={}) {
   }
   Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){
    TextButton(onClick={if(playing)player.pause() else player.play()}){Text(if(playing)"Pause" else "Play")}
-   TextButton(onClick={player::seekToDefaultPosition}){Text("Go Live")}
+   TextButton(onClick={player.seekToDefaultPosition()}){Text("Go Live")}
    TextButton(onClick={TrackSelectionDialogBuilder(context,"Audio",player,C.TRACK_TYPE_AUDIO).build().show()}){Text("Audio")}
    TextButton(onClick={TrackSelectionDialogBuilder(context,"Subtitles",player,C.TRACK_TYPE_TEXT).build().show()}){Text("CC")}
    TextButton(onClick={locked=!locked}){Text(if(locked)"Unlock zoom" else "Lock zoom")}
