@@ -42,7 +42,7 @@ dependencies{
  implementation("com.google.android.gms:play-services-cast-framework:22.0.0");implementation("androidx.mediarouter:mediarouter:1.8.0")
  implementation("com.android.billingclient:billing-ktx:8.1.0");implementation("com.google.android.play:integrity:1.5.0")
  testImplementation("junit:junit:4.13.2");testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2");testImplementation("androidx.arch.core:core-testing:2.2.0")
- androidTestImplementation("androidx.test.ext:junit:1.3.0");androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0");androidTestImplementation(platform("androidx.compose:compose-bom:2025.12.00"));androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+ androidTestImplementation("androidx.test.ext:junit:1.3.0");androidTestImplementation("androidx.test:rules:1.6.1");androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0");androidTestImplementation(platform("androidx.compose:compose-bom:2025.12.00"));androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }
 tasks.register("verifyReleaseFirebaseConfig"){doLast{val config=file("google-services.json");if(!config.exists()||config.length()==0L)throw GradleException("Release builds require android/app/google-services.json from Firebase project bq-sqwad-tv.")}}
 tasks.matching{it.name.contains("Release",ignoreCase=true)&&it.name.startsWith("pre")}.configureEach{dependsOn("verifyReleaseFirebaseConfig")}

@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.bqsqwad.tv.data.catalog.*
 import kotlinx.coroutines.launch
-@Composable fun HomeScreen(onSearch:()->Unit={},onChannel:(String)->Unit={}) {
+@Composable fun HomeScreen(onSearch:()->Unit={},onChannel:(String)->Unit={},onWallet:()->Unit={},onProducer:()->Unit={}) {
  val repo=remember{CatalogRepository()}; val scope=rememberCoroutineScope()
  var catalog by remember{mutableStateOf<CatalogHomeResponse?>(null)}
  var loading by remember{mutableStateOf(true)}; var error by remember{mutableStateOf<String?>(null)}
@@ -22,7 +22,7 @@ import kotlinx.coroutines.launch
  Column(Modifier.fillMaxSize().padding(top=18.dp)) {
   Row(Modifier.fillMaxWidth().padding(horizontal=20.dp),horizontalArrangement=Arrangement.SpaceBetween) {
    Column { Text("BQ SQWAD TV",style=MaterialTheme.typography.headlineMedium);Text("LIVE ENTERTAINMENT",color=MaterialTheme.colorScheme.primary,style=MaterialTheme.typography.labelMedium) }
-   TextButton(onClick=onSearch){Text("Search")}
+   Row { TextButton(onClick=onSearch){Text("Search")}; TextButton(onClick=onWallet){Text("Wallet")}; TextButton(onClick=onProducer){Text("Producer")} }
   }
   Spacer(Modifier.height(18.dp))
   Card(Modifier.fillMaxWidth().padding(horizontal=16.dp)){Column(Modifier.padding(22.dp)){

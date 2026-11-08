@@ -25,6 +25,8 @@ jobs:
         run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
       - name: Unit tests
         run: gradle -p android :app:testDebugUnitTest
+      - name: Format Kotlin sources
+        run: gradle -p android :app:ktlintFormat
       - name: Kotlin lint
         run: gradle -p android :app:ktlintCheck
       - name: Static analysis

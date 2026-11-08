@@ -12,6 +12,7 @@
   <activity android:name=".MainActivity" android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden" android:exported="true" android:screenOrientation="unspecified" android:supportsPictureInPicture="true" android:resizeableActivity="true">
    <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
   </activity>
+  <service android:name=".data.media.BqPlaybackService" android:exported="false" android:foregroundServiceType="mediaPlayback" />
   <service android:name=".data.notifications.BqMessagingService" android:exported="false">
    <intent-filter><action android:name="com.google.firebase.MESSAGING_EVENT"/></intent-filter>
   </service>

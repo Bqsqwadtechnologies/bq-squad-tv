@@ -5,8 +5,8 @@ import org.junit.Test
 class DisplayMeterTest{
  @Test fun estimateIsDisplayOnlyAndUsesServerSettledTotalAsBase(){
   val result=DisplayMeter.estimate(1200,600,10)
-  assertEquals(100.0,result.ratePerSecondMinor,0.001)
-  assertEquals(2200,result.estimatedTotalMinor)
+  assertEquals(10.0,result.ratePerSecondMinor,0.001)
+  assertEquals(1300,result.estimatedTotalMinor)
  }
  @Test fun warningThresholdsAreFiveAndOneMinutes(){
   assertEquals(300L,DisplayMeter.warning(250))

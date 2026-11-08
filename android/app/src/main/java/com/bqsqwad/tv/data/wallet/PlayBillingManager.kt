@@ -77,7 +77,6 @@ class PlayBillingManager(
             Purchase.PurchaseState.PENDING->onMessage("Your payment is pending. Credits will appear after Google confirms payment.")
             Purchase.PurchaseState.UNSPECIFIED_STATE->onMessage("Google Play returned an unverified purchase state.")
             Purchase.PurchaseState.PURCHASED->{
-                if(purchase.isAcknowledged)return
                 val productId=purchase.products.firstOrNull() ?: return
                 scope.launch(Dispatchers.IO){
                     runCatching{repository.verify(productId,purchase.purchaseToken,purchase.orderId)}
