@@ -148,7 +148,7 @@ fun PlayerScreen(channelId:String,onExit:()->Unit,onTopUp:()->Unit={}) {
   Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){
    Text("Zoom "+String.format("%.1fx",zoom))
    Slider(zoom,{zoom=it.coerceIn(1f,4f)},valueRange=1f..4f,modifier=Modifier.weight(1f).padding(horizontal=10.dp))
-   TextButton(onClick={activity?.requestedOrientation=if(activity.requestedOrientation==ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED else ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE}){Text("Rotate")}
+   TextButton(onClick={if(activity!=null)activity.requestedOrientation=if(activity.requestedOrientation==ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED else ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE}){Text("Rotate")}
   }
   Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){listOf("Auto","1080p","720p","480p").forEach{v->FilterChip(selected=quality==v,onClick={quality=v;val b=TrackSelectionParameters.Builder(context);when(v){"1080p"->b.setMaxVideoSize(1920,1080);"720p"->b.setMaxVideoSize(1280,720);"480p"->b.setMaxVideoSize(854,480);else->b.setMaxVideoSize(Int.MAX_VALUE,Int.MAX_VALUE)};player.trackSelectionParameters=b.build()},label={Text(v)})}}
   Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=androidx.compose.ui.Alignment.CenterVertically){
