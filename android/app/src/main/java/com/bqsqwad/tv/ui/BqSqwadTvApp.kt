@@ -18,7 +18,9 @@ import com.bqsqwad.tv.ui.screens.*
    composable("home"){HomeScreen(onSearch={nav.navigate("search")},onChannel={nav.navigate("channel/"+it)})}
    composable("search"){SearchScreen(onBack={nav.popBackStack()},onChannel={nav.navigate("channel/"+it)})}
    composable("channel/{id}",arguments=listOf(navArgument("id"){type=NavType.StringType})){entry->ChannelScreen(entry.arguments?.getString("id").orEmpty(),onBack={nav.popBackStack()},onPlay={nav.navigate("player/"+it)})}
-   composable("player/{id}",arguments=listOf(navArgument("id"){type=NavType.StringType})){entry->PlayerScreen(entry.arguments?.getString("id").orEmpty(),null,onExit={nav.popBackStack()})}
+   composable("player/{id}",arguments=listOf(navArgument("id"){type=NavType.StringType})){entry->PlayerScreen(entry.arguments?.getString("id").orEmpty(),onExit={nav.popBackStack()})}
+   composable("wallet"){WalletScreen(onBack={nav.popBackStack()})}
+   composable("producer"){ProducerScreen(onBack={nav.popBackStack()})}
   }
  }
 }
