@@ -1,24 +1,17 @@
-# BQ Squad TV
+# BQ SQWAD TV
 
-Bq sqwad TV
+BQ SQWAD TV is a pay-as-you-go streaming product by Bq sqwad technologies. The website source stays at the repository root; the native Kotlin Android application lives in `android/`.
 
-This project was built with [Lovable](https://lovable.dev).
+## Layout
+- `src/` — existing website source; keep website and Android code separate.
+- `android/` — Jetpack Compose app, package `com.bqsqwad.tv`.
+- `docs/API.md` — Android/server integration contract.
+- `docs/BILLING.md` — server-authoritative wallet/session rules.
+- `docs/SECRETS_CHECKLIST.md` — Lovable Cloud secrets and console steps.
+- `docs/STREAMING.md` — licensed provider integration.
 
-## Build with Lovable
+## Backend status
+The current Git tree contains a website starter shell but no Lovable Cloud edge-function source, Firestore rules or prior API/billing contract. Android is wired to the contract in `docs/API.md`; those server routes must be implemented and deployed before production profile, catalog, playback, wallet, ad and producer features can operate. Android never writes wallet balances or ledger entries.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/6c142a90-efac-47d8-9c60-7619691765b8).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+## Android
+Open `android/` in Android Studio and follow [android/SETUP.md](android/SETUP.md). Debug project can open before owner supplies `google-services.json`; release builds intentionally fail until the real Firebase file is added. Secrets stay in Lovable Cloud and signing environment variables.
