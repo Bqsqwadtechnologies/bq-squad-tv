@@ -8,13 +8,15 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.bqsqwad.tv.data.catalog.*
 import kotlinx.coroutines.launch
 @Composable fun HomeScreen(onSearch:()->Unit={},onChannel:(String)->Unit={},onWallet:()->Unit={},onProducer:()->Unit={}) {
- val repo=remember{CatalogRepository()}; val scope=rememberCoroutineScope()
+ val context=LocalContext.current
+ val repo=remember(context){CatalogRepository(context)}; val scope=rememberCoroutineScope()
  var catalog by remember{mutableStateOf<CatalogHomeResponse?>(null)}
  var loading by remember{mutableStateOf(true)}; var error by remember{mutableStateOf<String?>(null)}
  fun refresh(){scope.launch{loading=true;error=null;runCatching{repo.home()}.onSuccess{catalog=it}.onFailure{error=it.localizedMessage?: "Could not load catalogue."};loading=false}}

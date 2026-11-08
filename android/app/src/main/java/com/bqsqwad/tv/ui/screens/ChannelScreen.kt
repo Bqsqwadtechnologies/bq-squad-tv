@@ -5,13 +5,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.bqsqwad.tv.data.catalog.*
 import kotlinx.coroutines.launch
 @Composable fun ChannelScreen(channelId:String,onBack:()->Unit,onPlay:(String)->Unit){
- val repo=remember{CatalogRepository()};var detail by remember{mutableStateOf<ChannelDetailResponse?>(null)};var error by remember{mutableStateOf<String?>(null)}
+ val context=LocalContext.current
+ val repo=remember(context){CatalogRepository(context)};var detail by remember{mutableStateOf<ChannelDetailResponse?>(null)};var error by remember{mutableStateOf<String?>(null)}
  LaunchedEffect(channelId){runCatching{repo.channel(channelId)}.onSuccess{detail=it}.onFailure{error=it.localizedMessage?: "Channel unavailable."}}
  Column(Modifier.fillMaxSize().padding(18.dp)){
   TextButton(onClick=onBack){Text("← Back")}

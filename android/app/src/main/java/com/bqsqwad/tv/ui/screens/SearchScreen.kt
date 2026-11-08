@@ -6,13 +6,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.bqsqwad.tv.data.catalog.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 @Composable fun SearchScreen(onBack:()->Unit,onChannel:(String)->Unit){
- val repo=remember{CatalogRepository()};val scope=rememberCoroutineScope()
+ val context=LocalContext.current
+ val repo=remember(context){CatalogRepository(context)};val scope=rememberCoroutineScope()
  var query by remember{mutableStateOf("")};var results by remember{mutableStateOf<List<ChannelSummary>>(emptyList())}
  var filter by remember{mutableStateOf("all")};var error by remember{mutableStateOf<String?>(null)};var job by remember{mutableStateOf<Job?>(null)}
  fun search(value:String){job?.cancel();if(value.isBlank()){results=emptyList();return};job=scope.launch{delay(250);runCatching{repo.search(value,type=filter.takeIf{it!="all"})}.onSuccess{results=it.results;error=null}.onFailure{error=it.localizedMessage?: "Search unavailable."}}}
