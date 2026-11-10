@@ -7,12 +7,17 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.bqsqwad.tv.data.auth.AuthRepository
+import com.google.firebase.auth.FirebaseAuth
 import com.bqsqwad.tv.ui.player.PlayerScreen
 import com.bqsqwad.tv.ui.screens.*
 @Composable fun BqSqwadTvApp(){
- val nav=rememberNavController();val auth=remember{AuthRepository()}
+ val nav=rememberNavController()
+ val auth=remember{AuthRepository()}
+ val initialDestination=remember {
+  if(FirebaseAuth.getInstance().currentUser!=null) "home" else "signin"
+ }
  Surface(Modifier.fillMaxSize()){
-  NavHost(navController=nav,startDestination="signin"){
+  NavHost(navController=nav,startDestination=initialDestination){
    composable("signin"){SignInScreen{nav.navigate("profile"){popUpTo("signin"){inclusive=true}}}}
    composable("profile"){ProfileSetupScreen(auth){nav.navigate("home"){popUpTo("profile"){inclusive=true}}}}
    composable("home"){HomeScreen(onSearch={nav.navigate("search")},onChannel={nav.navigate("channel/"+it)},onWallet={nav.navigate("wallet")},onProducer={nav.navigate("producer")})}
