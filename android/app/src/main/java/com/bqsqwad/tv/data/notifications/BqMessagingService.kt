@@ -35,7 +35,7 @@ class BqMessagingService:FirebaseMessagingService(){
   if(Build.VERSION.SDK_INT>=26)manager.createNotificationChannel(NotificationChannel("sqwad_updates","SQWAD updates",NotificationManager.IMPORTANCE_DEFAULT))
   val intent=Intent(this,MainActivity::class.java).apply{flags=Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP}
   val pending=PendingIntent.getActivity(this,0,intent,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-  val notification=NotificationCompat.Builder(this,"sqwad_updates").setSmallIcon(android.R.drawable.ic_media_play).setContentTitle(title).setContentText(body).setContentIntent(pending).setAutoCancel(true).build()
+  val notification=NotificationCompat.Builder(this,"sqwad_updates").setSmallIcon(R.drawable.ic_stat_bq_sqwad_tv).setContentTitle(title).setContentText(body).setContentIntent(pending).setAutoCancel(true).build()
   NotificationManagerCompat.from(this).notify((System.currentTimeMillis()%Int.MAX_VALUE).toInt(),notification)
  }
 }

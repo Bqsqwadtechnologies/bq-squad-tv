@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" role="img" aria-labelledby="title desc">
+<title id="title">BQ SQWAD TV</title><desc id="desc">Gold television and play symbol with purple orbit, BQ SQWAD TV wordmark and Watch Stream Enjoy tagline.</desc>
+<defs>
+ <linearGradient id="gold" x1="0" y1="0" x2="0.9" y2="1"><stop stop-color="#fff27a"/><stop offset=".38" stop-color="#ffc928"/><stop offset=".72" stop-color="#f4a900"/><stop offset="1" stop-color="#b86b00"/></linearGradient>
+ <linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#cbd0dc"/></linearGradient>
+ <linearGradient id="purple" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c45bff"/><stop offset=".5" stop-color="#7800ff"/><stop offset="1" stop-color="#3b0a91"/></linearGradient>
+ <filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<g transform="translate(18 28)">
+ <path d="M125 105 75 30 M245 105 295 30" stroke="url(#gold)" stroke-width="17" stroke-linecap="round" fill="none"/>
+ <circle cx="70" cy="24" r="17" fill="url(#gold)"/><circle cx="300" cy="24" r="17" fill="url(#gold)"/>
+ <rect x="48" y="92" width="300" height="205" rx="48" fill="#080611" stroke="url(#gold)" stroke-width="22"/>
+ <rect x="74" y="118" width="248" height="153" rx="32" fill="#11101f" stroke="#6d2bb8" stroke-width="4"/>
+ <path d="M158 150 Q148 144 148 158 V234 Q148 248 161 240 L250 196 Q264 189 250 181Z" fill="url(#gold)" filter="url(#glow)"/>
+ <path d="M28 278 C150 258 302 170 388 75 C350 183 213 284 54 322" fill="none" stroke="url(#purple)" stroke-width="20" stroke-linecap="round"/>
+ <path d="M45 321 C183 299 329 212 390 111" fill="none" stroke="url(#gold)" stroke-width="7" opacity=".95"/>
+</g>
+<g font-family="Arial, Helvetica, sans-serif" font-weight="900">
+ <text x="440" y="210" font-size="142" letter-spacing="-5" fill="url(#gold)">BQ</text>
+ <text x="610" y="210" font-size="132" letter-spacing="-5" fill="url(#silver)">SQWAD</text>
+ <rect x="1030" y="100" width="150" height="118" rx="22" fill="url(#gold)"/>
+ <text x="1050" y="190" font-size="80" fill="#100a18">TV</text>
+</g>
+<text x="450" y="294" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700" letter-spacing="13" fill="#f4f1ff">WATCH  •  STREAM  •  ENJOY</text>
+<path d="M448 326 Q800 365 1158 326" stroke="url(#gold)" stroke-width="8" fill="none" stroke-linecap="round"/>
+</svg>

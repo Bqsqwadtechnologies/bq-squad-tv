@@ -37,10 +37,7 @@ function HomePage() {
 
       <header className="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-6 sm:px-8">
         <a href="/" className="flex items-center gap-3" aria-label="BQ SQWAD TV home">
-          <span className="grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/[0.06] text-[#00e5a8]">
-            <Tv2 size={23} />
-          </span>
-          <span className="text-lg font-black tracking-[0.16em]">BQ SQWAD <span className="text-[#00e5a8]">TV</span></span>
+          <img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV — Watch, Stream, Enjoy" className="h-14 w-auto max-w-[230px] object-contain" />
         </a>
         <nav className="hidden items-center gap-8 text-sm text-white/65 md:flex">
           <a className="transition hover:text-white" href="#experience">Experience</a>
