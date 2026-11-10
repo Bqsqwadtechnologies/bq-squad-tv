@@ -22,20 +22,29 @@ describe("platform role resolution", () => {
     expect(access.roles).toContain("producer");
   });
 
-  it("recognizes the exact configured super-admin email case-insensitively", async () => {
+  it("recognizes only the verified exact configured super-admin email case-insensitively", async () => {
     vi.stubEnv("ADMIN_EMAIL", "owner@example.com");
     const fs = fakeFirestore(null, null);
-    const access = await resolvePlatformAccess(fs, "u1", "OWNER@example.com");
+    const access = await resolvePlatformAccess(fs, "u1", "OWNER@example.com", {}, true);
     expect(access.isSuperAdmin).toBe(true);
     expect(access.adminModules).toContain("pricing");
     expect(isProtectedSuperAdmin("Owner@Example.com")).toBe(true);
     vi.unstubAllEnvs();
   });
 
+  it("does not grant super-admin status until the configured email is verified", async () => {
+    vi.stubEnv("ADMIN_EMAIL", "owner@example.com");
+    const fs = fakeFirestore(null, null);
+    const access = await resolvePlatformAccess(fs, "u1", "owner@example.com", {}, false);
+    expect(access.isSuperAdmin).toBe(false);
+    expect(access.roles).toEqual(["viewer"]);
+    vi.unstubAllEnvs();
+  });
+
   it("does not grant super-admin status to aliases or partial email matches", async () => {
     vi.stubEnv("ADMIN_EMAIL", "owner@example.com");
     const fs = fakeFirestore(null, null);
-    const access = await resolvePlatformAccess(fs, "u1", "owner+alias@example.com");
+    const access = await resolvePlatformAccess(fs, "u1", "owner+alias@example.com", {}, true);
     expect(access.isSuperAdmin).toBe(false);
     expect(isProtectedSuperAdmin("other@example.com")).toBe(false);
     vi.unstubAllEnvs();
