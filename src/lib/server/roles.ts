@@ -23,7 +23,6 @@ function stringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
 }
 
-/** Resolve every platform privilege from trusted server-side records, never request data. */
 export async function resolvePlatformAccess(
   fs: Firestore,
   uid: string,

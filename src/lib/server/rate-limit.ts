@@ -2,7 +2,6 @@ import { ApiError, type Firestore, encodeFields } from "./firebase-admin";
 
 export type RateLimitPolicy = { limit: number; windowMs: number };
 
-/** Firestore-transaction-backed fixed window limiter; keys are stored only as SHA-256 digests. */
 export async function enforceRateLimit(
   fs: Firestore,
   key: string,

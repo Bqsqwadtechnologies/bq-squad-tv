@@ -59,7 +59,7 @@ export async function getChannelAccess(
     throw new ApiError(403, "CHANNEL_ACCESS_EXPIRED", "Your access to this channel has expired.");
   }
   const role = member["role"];
-  if (typeof role !== "string" || !(role in CHANNEL_ROLE_TEMPLATES)) {
+  if (typeof role !== "string" || !Object.prototype.hasOwnProperty.call(CHANNEL_ROLE_TEMPLATES, role)) {
     throw new ApiError(403, "CHANNEL_ROLE_INVALID", "This channel membership has an invalid role.");
   }
   const template = CHANNEL_ROLE_TEMPLATES[role as ChannelRole];
