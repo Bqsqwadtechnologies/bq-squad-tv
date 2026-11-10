@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminFirebaseSchemaRouteImport } from './routes/admin.firebase-schema'
 import { Route as ApiPublicFirebaseSchemaInspectRouteImport } from './routes/api/public/firebase-schema-inspect'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminFirebaseSchemaRoute = AdminFirebaseSchemaRouteImport.update({
+  id: '/admin/firebase-schema',
+  path: '/admin/firebase-schema',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicFirebaseSchemaInspectRoute =
@@ -26,27 +32,36 @@ const ApiPublicFirebaseSchemaInspectRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/public/firebase-schema-inspect'
+  fullPaths:
+    '/' | '/admin/firebase-schema' | '/api/public/firebase-schema-inspect'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/public/firebase-schema-inspect'
-  id: '__root__' | '/' | '/api/public/firebase-schema-inspect'
+  to: '/' | '/admin/firebase-schema' | '/api/public/firebase-schema-inspect'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin/firebase-schema'
+    | '/api/public/firebase-schema-inspect'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminFirebaseSchemaRoute: typeof AdminFirebaseSchemaRoute
   ApiPublicFirebaseSchemaInspectRoute: typeof ApiPublicFirebaseSchemaInspectRoute
 }
 
@@ -57,6 +72,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/firebase-schema': {
+      id: '/admin/firebase-schema'
+      path: '/admin/firebase-schema'
+      fullPath: '/admin/firebase-schema'
+      preLoaderRoute: typeof AdminFirebaseSchemaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/firebase-schema-inspect': {
@@ -71,6 +93,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminFirebaseSchemaRoute: AdminFirebaseSchemaRoute,
   ApiPublicFirebaseSchemaInspectRoute: ApiPublicFirebaseSchemaInspectRoute,
 }
 export const routeTree = rootRouteImport

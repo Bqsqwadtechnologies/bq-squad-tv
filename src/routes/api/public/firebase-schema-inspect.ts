@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { hasAdminBearerAuthorization } from "@/lib/firebase-schema-auth";
 
 type ServiceAccount = {
   client_email?: string;
@@ -14,7 +15,7 @@ export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
       GET: async ({ request }) => {
         const adminEmail = process.env["ADMIN_EMAIL"]?.trim().toLowerCase();
         const authorization = request.headers.get("authorization");
-        if (!adminEmail || !authorization?.startsWith("Bearer ")) {
+        if (!hasAdminBearerAuthorization(authorization, adminEmail) || !authorization || !adminEmail) {
           return Response.json({ error: "Administrator sign-in is required." }, { status: 401 });
         }
 
@@ -138,7 +139,7 @@ async function getReadOnlyAccessToken(serviceAccount: ServiceAccount): Promise<s
   const now = Math.floor(Date.now() / 1000);
   const unsignedToken = `${base64UrlEncode(JSON.stringify({ alg: "RS256", typ: "JWT" }))}.${base64UrlEncode(JSON.stringify({
     iss: serviceAccount.client_email,
-    scope: "https://www.googleapis.com/auth/cloud-platform",
+    scope: "https://www.googleapis.com/auth/datastore",
     aud: "https://oauth2.googleapis.com/token",
     iat: now,
     exp: now + 300,
