@@ -13,8 +13,9 @@ Build the shared Firebase-backed API for the website and Android app, keeping Fi
 
 ## Technical details
 
-- Keep the existing TanStack Start + Cloudflare-compatible hosting target; use raw `fetch` and Web Crypto rather than Node-only Firebase Admin packages.
+- Keep the existing TanStack Start + Lovable-hosted website/API runtime; use raw `fetch` and Web Crypto rather than Node-only Firebase Admin packages.
 - Preserve Firebase Authentication + Firestore as the shared identity/data layer; do not add Supabase or another database.
 - Authenticate Android requests using Firebase ID tokens, validate all inputs, and keep all privileged reads/writes on the server.
 - No client may set balances, roles, age eligibility, or purchase verification results. Use Firestore transactions and idempotency for financial writes where the existing data model permits.
-- Do not enable playback or invent catalogue content without configured licensed streams and rights.let th App and website be hosted here on lovavable 
+- Keep the website and shared API hosted on Lovable; the Android app consumes that API. Do not introduce Cloudflare services or a separate hosting runtime.
+- Do not enable playback or invent catalogue content without configured licensed streams and rights.

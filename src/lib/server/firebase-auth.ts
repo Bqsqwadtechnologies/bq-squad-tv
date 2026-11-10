@@ -7,6 +7,7 @@ export type VerifiedUser = {
   uid: string;
   email: string | null;
   emailVerified: boolean;
+  customClaims: Record<string, unknown>;
 };
 
 let cachedJwks: { keys: Array<JsonWebKey & { kid?: string; alg?: string }>; fetchedAt: number } | null = null;
@@ -78,5 +79,11 @@ export async function verifyFirebaseIdToken(token: string, projectId: string): P
     uid,
     email: typeof claims["email"] === "string" ? claims["email"] : null,
     emailVerified: claims["email_verified"] === true,
+    customClaims: {
+      admin: claims["admin"] === true,
+      producer: claims["producer"] === true,
+      roleTags: Array.isArray(claims["roleTags"]) ? claims["roleTags"].filter((role): role is string => typeof role === "string") : [],
+      adminModules: Array.isArray(claims["adminModules"]) ? claims["adminModules"].filter((module): module is string => typeof module === "string") : [],
+    },
   };
 }
