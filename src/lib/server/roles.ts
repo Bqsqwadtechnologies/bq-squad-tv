@@ -65,6 +65,9 @@ export async function requirePlatformRole(
   user: { uid: string; email: string | null; emailVerified?: boolean; customClaims?: Record<string, unknown> },
   role: PlatformRole,
 ): Promise<PlatformAccess> {
+  if (role === "admin" && user.emailVerified !== true) {
+    throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email address before accessing administrator tools.");
+  }
   const access = await resolvePlatformAccess(
     fs,
     user.uid,

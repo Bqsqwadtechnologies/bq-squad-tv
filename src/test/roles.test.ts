@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { resolvePlatformAccess, isProtectedSuperAdmin } from "@/lib/server/roles";
+import { requirePlatformRole, resolvePlatformAccess, isProtectedSuperAdmin } from "@/lib/server/roles";
 import type { Firestore } from "@/lib/server/firebase-admin";
 
 function fakeFirestore(user: Record<string, unknown> | null, producer: Record<string, unknown> | null) {
@@ -39,6 +39,18 @@ describe("platform role resolution", () => {
     expect(access.isSuperAdmin).toBe(false);
     expect(access.roles).toEqual(["viewer"]);
     vi.unstubAllEnvs();
+  });
+
+  it("requires verified email even when an administrator role is already assigned", async () => {
+    const fs = fakeFirestore({ roleTags: ["admin"] }, null);
+    await expect(
+      requirePlatformRole(fs, {
+        uid: "admin-1",
+        email: "admin@example.com",
+        emailVerified: false,
+        customClaims: { admin: true },
+      }, "admin"),
+    ).rejects.toMatchObject({ status: 403, code: "EMAIL_VERIFICATION_REQUIRED" });
   });
 
   it("does not grant super-admin status to aliases or partial email matches", async () => {
