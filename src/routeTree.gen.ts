@@ -12,6 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminFirebaseSchemaRouteImport } from './routes/admin.firebase-schema'
 import { Route as ApiPublicFirebaseSchemaInspectRouteImport } from './routes/api/public/firebase-schema-inspect'
+import { Route as ApiPublicV1CatalogHomeRouteImport } from './routes/api/public/v1/catalog/home'
+import { Route as ApiPublicV1CatalogSearchRouteImport } from './routes/api/public/v1/catalog/search'
+import { Route as ApiPublicV1ChannelsChannelIdRouteImport } from './routes/api/public/v1/channels/$channelId'
+import { Route as ApiPublicV1ProfileCompleteRouteImport } from './routes/api/public/v1/profile/complete'
+import { Route as ApiPublicV1SecurityIntegrityChallengeRouteImport } from './routes/api/public/v1/security/integrity/challenge'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -29,40 +34,109 @@ const ApiPublicFirebaseSchemaInspectRoute =
     path: '/api/public/firebase-schema-inspect',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1CatalogHomeRoute = ApiPublicV1CatalogHomeRouteImport.update({
+  id: '/api/public/v1/catalog/home',
+  path: '/api/public/v1/catalog/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1CatalogSearchRoute =
+  ApiPublicV1CatalogSearchRouteImport.update({
+    id: '/api/public/v1/catalog/search',
+    path: '/api/public/v1/catalog/search',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ChannelsChannelIdRoute =
+  ApiPublicV1ChannelsChannelIdRouteImport.update({
+    id: '/api/public/v1/channels/$channelId',
+    path: '/api/public/v1/channels/$channelId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProfileCompleteRoute =
+  ApiPublicV1ProfileCompleteRouteImport.update({
+    id: '/api/public/v1/profile/complete',
+    path: '/api/public/v1/profile/complete',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SecurityIntegrityChallengeRoute =
+  ApiPublicV1SecurityIntegrityChallengeRouteImport.update({
+    id: '/api/public/v1/security/integrity/challenge',
+    path: '/api/public/v1/security/integrity/challenge',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
+  '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
+  '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
+  '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
+  '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
+  '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
+  '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
+  '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
+  '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
+  '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
+  '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
+  '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
+  '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/admin/firebase-schema' | '/api/public/firebase-schema-inspect'
+    | '/'
+    | '/admin/firebase-schema'
+    | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/catalog/home'
+    | '/api/public/v1/catalog/search'
+    | '/api/public/v1/channels/$channelId'
+    | '/api/public/v1/profile/complete'
+    | '/api/public/v1/security/integrity/challenge'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin/firebase-schema' | '/api/public/firebase-schema-inspect'
+  to:
+    | '/'
+    | '/admin/firebase-schema'
+    | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/catalog/home'
+    | '/api/public/v1/catalog/search'
+    | '/api/public/v1/channels/$channelId'
+    | '/api/public/v1/profile/complete'
+    | '/api/public/v1/security/integrity/challenge'
   id:
     | '__root__'
     | '/'
     | '/admin/firebase-schema'
     | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/catalog/home'
+    | '/api/public/v1/catalog/search'
+    | '/api/public/v1/channels/$channelId'
+    | '/api/public/v1/profile/complete'
+    | '/api/public/v1/security/integrity/challenge'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminFirebaseSchemaRoute: typeof AdminFirebaseSchemaRoute
   ApiPublicFirebaseSchemaInspectRoute: typeof ApiPublicFirebaseSchemaInspectRoute
+  ApiPublicV1CatalogHomeRoute: typeof ApiPublicV1CatalogHomeRoute
+  ApiPublicV1CatalogSearchRoute: typeof ApiPublicV1CatalogSearchRoute
+  ApiPublicV1ChannelsChannelIdRoute: typeof ApiPublicV1ChannelsChannelIdRoute
+  ApiPublicV1ProfileCompleteRoute: typeof ApiPublicV1ProfileCompleteRoute
+  ApiPublicV1SecurityIntegrityChallengeRoute: typeof ApiPublicV1SecurityIntegrityChallengeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -88,6 +162,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFirebaseSchemaInspectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/catalog/home': {
+      id: '/api/public/v1/catalog/home'
+      path: '/api/public/v1/catalog/home'
+      fullPath: '/api/public/v1/catalog/home'
+      preLoaderRoute: typeof ApiPublicV1CatalogHomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/catalog/search': {
+      id: '/api/public/v1/catalog/search'
+      path: '/api/public/v1/catalog/search'
+      fullPath: '/api/public/v1/catalog/search'
+      preLoaderRoute: typeof ApiPublicV1CatalogSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/channels/$channelId': {
+      id: '/api/public/v1/channels/$channelId'
+      path: '/api/public/v1/channels/$channelId'
+      fullPath: '/api/public/v1/channels/$channelId'
+      preLoaderRoute: typeof ApiPublicV1ChannelsChannelIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/profile/complete': {
+      id: '/api/public/v1/profile/complete'
+      path: '/api/public/v1/profile/complete'
+      fullPath: '/api/public/v1/profile/complete'
+      preLoaderRoute: typeof ApiPublicV1ProfileCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/security/integrity/challenge': {
+      id: '/api/public/v1/security/integrity/challenge'
+      path: '/api/public/v1/security/integrity/challenge'
+      fullPath: '/api/public/v1/security/integrity/challenge'
+      preLoaderRoute: typeof ApiPublicV1SecurityIntegrityChallengeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -95,6 +204,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminFirebaseSchemaRoute: AdminFirebaseSchemaRoute,
   ApiPublicFirebaseSchemaInspectRoute: ApiPublicFirebaseSchemaInspectRoute,
+  ApiPublicV1CatalogHomeRoute: ApiPublicV1CatalogHomeRoute,
+  ApiPublicV1CatalogSearchRoute: ApiPublicV1CatalogSearchRoute,
+  ApiPublicV1ChannelsChannelIdRoute: ApiPublicV1ChannelsChannelIdRoute,
+  ApiPublicV1ProfileCompleteRoute: ApiPublicV1ProfileCompleteRoute,
+  ApiPublicV1SecurityIntegrityChallengeRoute:
+    ApiPublicV1SecurityIntegrityChallengeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
