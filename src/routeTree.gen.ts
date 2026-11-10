@@ -10,33 +10,44 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicFirebaseSchemaInspectRouteImport } from './routes/api/public/firebase-schema-inspect'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicFirebaseSchemaInspectRoute =
+  ApiPublicFirebaseSchemaInspectRouteImport.update({
+    id: '/api/public/firebase-schema-inspect',
+    path: '/api/public/firebase-schema-inspect',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/public/firebase-schema-inspect'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/public/firebase-schema-inspect'
+  id: '__root__' | '/' | '/api/public/firebase-schema-inspect'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicFirebaseSchemaInspectRoute: typeof ApiPublicFirebaseSchemaInspectRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +59,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/firebase-schema-inspect': {
+      id: '/api/public/firebase-schema-inspect'
+      path: '/api/public/firebase-schema-inspect'
+      fullPath: '/api/public/firebase-schema-inspect'
+      preLoaderRoute: typeof ApiPublicFirebaseSchemaInspectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicFirebaseSchemaInspectRoute: ApiPublicFirebaseSchemaInspectRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
