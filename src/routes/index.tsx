@@ -7,6 +7,10 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "BQ SQWAD TV — Watch on your terms" },
       { name: "description", content: "A pay-as-you-go entertainment platform for live channels, programmes and replays. Coming soon." },
+      { property: "og:title", content: "BQ SQWAD TV — Watch on your terms" },
+      { property: "og:description", content: "Discover live channels, programmes and replays with a clear, pay-as-you-go viewing experience." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });

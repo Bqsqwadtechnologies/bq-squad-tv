@@ -11,7 +11,13 @@ type FirestoreValue = Record<string, unknown>;
 export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
+        const adminEmail = process.env["ADMIN_EMAIL"]?.trim().toLowerCase();
+        const authorization = request.headers.get("authorization");
+        if (!adminEmail || !authorization?.startsWith("Bearer ")) {
+          return Response.json({ error: "Administrator sign-in is required." }, { status: 401 });
+        }
+
         const rawServiceAccount = process.env["FIREBASE_SERVICE_ACCOUNT_JSON"];
         if (!rawServiceAccount) {
           return Response.json({ error: "Firebase service account is not configured." }, { status: 503 });
@@ -29,18 +35,29 @@ export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
         }
 
         try {
+          await verifyAdminToken(authorization.slice("Bearer ".length), serviceAccount.project_id, adminEmail);
+        } catch {
+          return Response.json({ error: "Administrator sign-in could not be verified." }, { status: 401 });
+        }
+
+        try {
           const accessToken = await getReadOnlyAccessToken(serviceAccount);
           const databaseUrl = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(serviceAccount.project_id)}/databases/(default)/documents`;
           const rootCollections = await listCollectionIds(databaseUrl, accessToken);
           const collections = await Promise.all(rootCollections.map(async (collection) => {
-            const response = await fetch(`${databaseUrl}/${encodeURIComponent(collection)}?pageSize=3`, {
-              headers: { Authorization: `Bearer ${accessToken}` },
+            const response = await fetch(`${databaseUrl}:runQuery`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "content-type": "application/json",
+              },
+              body: JSON.stringify({ structuredQuery: { from: [{ collectionId: collection }], limit: 3 } }),
             });
-            const payload = await response.json() as { documents?: Array<{ fields?: Record<string, FirestoreValue> }>; error?: { message?: string } };
+            const payload = await response.json() as Array<{ document?: { fields?: Record<string, FirestoreValue> } }> & { error?: { message?: string } };
             if (!response.ok) throw new Error(payload.error?.message ?? `Could not read collection ${collection}.`);
             const fields: Record<string, string> = {};
-            for (const document of payload.documents ?? []) {
-              collectFieldTypes(document.fields ?? {}, fields);
+            for (const result of payload) {
+              if (result.document) collectFieldTypes(result.document.fields ?? {}, fields);
             }
             return { name: collection, fields };
           }));
@@ -55,11 +72,73 @@ export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
   },
 });
 
+async function verifyAdminToken(token: string, projectId: string, adminEmail: string): Promise<void> {
+  if (token.length > 8192) throw new Error("Invalid administrator token.");
+  const parts = token.split(".");
+  if (parts.length !== 3) throw new Error("Invalid administrator token.");
+  const encodedHeader = parts[0];
+  const encodedClaims = parts[1];
+  const encodedSignature = parts[2];
+  if (!encodedHeader || !encodedClaims || !encodedSignature) throw new Error("Invalid administrator token.");
+
+  const header = decodeJwtPart(encodedHeader);
+  const claims = decodeJwtPart(encodedClaims);
+  if (header["alg"] !== "RS256" || typeof header["kid"] !== "string") throw new Error("Invalid administrator token.");
+
+  const keysResponse = await fetch("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com");
+  if (!keysResponse.ok) throw new Error("Could not verify administrator token.");
+  const keySet = await keysResponse.json() as { keys?: Array<JsonWebKey & { kid?: string; alg?: string }> };
+  const signingKey = keySet.keys?.find((key) => key.kid === header["kid"] && key.alg === "RS256");
+  if (!signingKey) throw new Error("Invalid administrator token.");
+
+  const key = await crypto.subtle.importKey("jwk", signingKey, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
+  const validSignature = await crypto.subtle.verify(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    toArrayBuffer(decodeBase64Url(encodedSignature)),
+    toArrayBuffer(new TextEncoder().encode(`${encodedHeader}.${encodedClaims}`)),
+  );
+  const now = Math.floor(Date.now() / 1000);
+  const email = typeof claims["email"] === "string" ? claims["email"].trim().toLowerCase() : "";
+  if (
+    !validSignature ||
+    claims["iss"] !== `https://securetoken.google.com/${projectId}` ||
+    claims["aud"] !== projectId ||
+    typeof claims["sub"] !== "string" ||
+    claims["sub"].length === 0 ||
+    typeof claims["exp"] !== "number" || claims["exp"] <= now ||
+    typeof claims["iat"] !== "number" || claims["iat"] > now + 300 ||
+    claims["email_verified"] !== true ||
+    email !== adminEmail
+  ) {
+    throw new Error("Administrator token is invalid or not authorized.");
+  }
+}
+
+function decodeJwtPart(part: string): Record<string, unknown> {
+  const decoded = new TextDecoder().decode(decodeBase64Url(part));
+  const value = JSON.parse(decoded) as unknown;
+  if (value === null || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid administrator token.");
+  return value as Record<string, unknown>;
+}
+
+function decodeBase64Url(value: string): Uint8Array {
+  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+  const binary = atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(bytes.length);
+  new Uint8Array(buffer).set(bytes);
+  return buffer;
+}
+
 async function getReadOnlyAccessToken(serviceAccount: ServiceAccount): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
   const unsignedToken = `${base64UrlEncode(JSON.stringify({ alg: "RS256", typ: "JWT" }))}.${base64UrlEncode(JSON.stringify({
     iss: serviceAccount.client_email,
-    scope: "https://www.googleapis.com/auth/cloud-platform.read-only",
+    scope: "https://www.googleapis.com/auth/cloud-platform",
     aud: "https://oauth2.googleapis.com/token",
     iat: now,
     exp: now + 300,
@@ -67,7 +146,7 @@ async function getReadOnlyAccessToken(serviceAccount: ServiceAccount): Promise<s
   const keyBytes = pemToBytes(serviceAccount.private_key ?? "");
   const key = await crypto.subtle.importKey(
     "pkcs8",
-    keyBytes,
+    toArrayBuffer(keyBytes),
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
     false,
     ["sign"],
@@ -107,17 +186,17 @@ function collectFieldTypes(fields: Record<string, FirestoreValue>, output: Recor
     const key = prefix ? `${prefix}.${name}` : name;
     const type = Object.keys(value)[0] ?? "unknown";
     output[key] = type;
-    if (type === "mapValue" && value.mapValue && typeof value.mapValue === "object") {
-      const mapFields = (value.mapValue as { fields?: Record<string, FirestoreValue> }).fields;
+    if (type === "mapValue" && value["mapValue"] && typeof value["mapValue"] === "object") {
+      const mapFields = (value["mapValue"] as { fields?: Record<string, FirestoreValue> }).fields;
       if (mapFields) collectFieldTypes(mapFields, output, key);
     }
     if (type === "arrayValue") {
-      const values = (value.arrayValue as { values?: FirestoreValue[] } | undefined)?.values ?? [];
+      const values = (value["arrayValue"] as { values?: FirestoreValue[] } | undefined)?.values ?? [];
       for (const item of values.slice(0, 3)) {
         const itemType = Object.keys(item)[0] ?? "unknown";
         output[`${key}[]`] = itemType;
-        if (itemType === "mapValue" && item.mapValue && typeof item.mapValue === "object") {
-          const mapFields = (item.mapValue as { fields?: Record<string, FirestoreValue> }).fields;
+        if (itemType === "mapValue" && item["mapValue"] && typeof item["mapValue"] === "object") {
+          const mapFields = (item["mapValue"] as { fields?: Record<string, FirestoreValue> }).fields;
           if (mapFields) collectFieldTypes(mapFields, output, `${key}[]`);
         }
       }
