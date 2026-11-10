@@ -46,6 +46,21 @@ import kotlinx.coroutines.launch
     CatalogRail("Replays",catalog!!.replays,onChannel)
     CatalogRail("Continue watching",catalog!!.continueWatching,onChannel)
     CatalogRail("Trending",catalog!!.trending,onChannel)
+    if (catalog!!.liveNow.isEmpty() && catalog!!.startingSoon.isEmpty() &&
+        catalog!!.channels.isEmpty() && catalog!!.replays.isEmpty() &&
+        catalog!!.continueWatching.isEmpty() && catalog!!.trending.isEmpty()) {
+     Card(Modifier.fillMaxWidth().padding(horizontal=16.dp, vertical=24.dp)) {
+      Column(Modifier.padding(20.dp)) {
+       Text("Your channels are getting ready", style=MaterialTheme.typography.titleLarge)
+       Spacer(Modifier.height(6.dp))
+       Text(
+        "There are no channels available to show yet. The catalogue will appear here when approved content and the streaming service are connected.",
+        color=MaterialTheme.colorScheme.onSurfaceVariant,
+        style=MaterialTheme.typography.bodyMedium
+       )
+      }
+     }
+    }
    }
   }
  }
