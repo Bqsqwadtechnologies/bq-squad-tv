@@ -1,3 +1,5 @@
+import { toArrayBuffer } from "./firebase-admin";
+
 const PBKDF2_ITERATIONS = 210_000;
 const HASH_VERSION = 2;
 
@@ -26,9 +28,15 @@ function constantTimeEqual(left: Uint8Array, right: Uint8Array): boolean {
 }
 
 async function derivePinHash(pin: string, salt: Uint8Array): Promise<Uint8Array> {
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, ["deriveBits"]);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    toArrayBuffer(new TextEncoder().encode(pin)),
+    "PBKDF2",
+    false,
+    ["deriveBits"],
+  );
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+    { name: "PBKDF2", salt: toArrayBuffer(salt), iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
     key,
     256,
   );
@@ -38,7 +46,7 @@ async function derivePinHash(pin: string, salt: Uint8Array): Promise<Uint8Array>
 async function legacyPinHash(pin: string, uid: string): Promise<Uint8Array> {
   const digest = await crypto.subtle.digest(
     "SHA-256",
-    new TextEncoder().encode("bq-sqwad-tv:parental-pin:" + uid + ":" + pin),
+    toArrayBuffer(new TextEncoder().encode("bq-sqwad-tv:parental-pin:" + uid + ":" + pin)),
   );
   return new Uint8Array(digest);
 }
