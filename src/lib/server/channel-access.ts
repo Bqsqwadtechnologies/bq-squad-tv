@@ -33,7 +33,12 @@ export type ChannelAccess = {
   permissions: string[];
 };
 
+// These actions change the channel's ownership or destroy the channel itself.
+// They are deliberately not delegable through custom permission sets.
+const OWNER_ONLY_PERMISSIONS = new Set(["channel.delete", "ownership.transfer"]);
+
 export function hasChannelPermission(access: Pick<ChannelAccess, "role" | "permissions">, permission: string): boolean {
+  if (OWNER_ONLY_PERMISSIONS.has(permission)) return access.role === "owner";
   if (access.role === "owner") return true;
   return access.permissions.includes(permission);
 }

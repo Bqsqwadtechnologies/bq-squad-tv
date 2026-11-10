@@ -28,4 +28,15 @@ describe("channel permission templates", () => {
       expect(CHANNEL_ROLE_TEMPLATES[role]).not.toContain("ownership.transfer");
     }
   });
+
+  it("never delegates channel deletion or ownership transfer through custom permissions", () => {
+    for (const role of ["co-owner", "manager", "scheduler", "uploader", "moderator", "analyst", "finance"] as const) {
+      const access = {
+        role,
+        permissions: [...CHANNEL_ROLE_TEMPLATES[role], "channel.delete", "ownership.transfer"],
+      };
+      expect(hasChannelPermission(access, "channel.delete")).toBe(false);
+      expect(hasChannelPermission(access, "ownership.transfer")).toBe(false);
+    }
+  });
 });
