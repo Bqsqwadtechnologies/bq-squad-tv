@@ -1,4 +1,5 @@
 package com.bqsqwad.tv.ui.screens
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -9,6 +10,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -23,7 +25,11 @@ import kotlinx.coroutines.launch
  LaunchedEffect(Unit){refresh()}
  Column(Modifier.fillMaxSize().padding(top=18.dp)) {
   Row(Modifier.fillMaxWidth().padding(horizontal=20.dp),horizontalArrangement=Arrangement.SpaceBetween) {
-   Column { Text("BQ SQWAD TV",style=MaterialTheme.typography.headlineMedium);Text("LIVE ENTERTAINMENT",color=MaterialTheme.colorScheme.primary,style=MaterialTheme.typography.labelMedium) }
+   Row(verticalAlignment=androidx.compose.ui.Alignment.CenterVertically) {
+    Image(painterResource(com.bqsqwad.tv.R.drawable.bq_sqwad_tv_mark),contentDescription="BQ SQWAD TV logo",modifier=Modifier.size(46.dp))
+    Spacer(Modifier.width(10.dp))
+    Column { Text("BQ SQWAD TV",style=MaterialTheme.typography.headlineMedium);Text("WATCH • STREAM • ENJOY",color=MaterialTheme.colorScheme.primary,style=MaterialTheme.typography.labelMedium) }
+   }
    Row { TextButton(onClick=onSearch){Text("Search")}; TextButton(onClick=onWallet){Text("Wallet")}; TextButton(onClick=onProducer){Text("Producer")} }
   }
   Spacer(Modifier.height(18.dp))
