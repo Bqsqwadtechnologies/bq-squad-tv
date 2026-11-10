@@ -37,11 +37,11 @@ class PlayBillingManager(
                 val params=QueryProductDetailsParams.newBuilder().setProductList(
                     offers.map{QueryProductDetailsParams.Product.newBuilder().setProductId(it.productId).setProductType(BillingClient.ProductType.INAPP).build()}
                 ).build()
-                client.queryProductDetailsAsync(params){result->
-                    if(result.billingResult.responseCode!=BillingClient.BillingResponseCode.OK){
-                        onMessage("Could not load top-up products: "+result.billingResult.debugMessage)
+                client.queryProductDetailsAsync(params){billingResult,queryResult->
+                    if(billingResult.responseCode!=BillingClient.BillingResponseCode.OK){
+                        onMessage("Could not load top-up products: "+billingResult.debugMessage)
                     }else{
-                        details=result.productDetailsList.associateBy{it.productId}
+                        details=queryResult.productDetailsList.associateBy{it.productId}
                         onLoaded(offers.mapNotNull{offer->details[offer.productId]?.let{offer to it}})
                     }
                 }
