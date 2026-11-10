@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project architecture
+
+- Keep the website and its shared API hosted on Lovable; the native Android app consumes that API, and Firebase Authentication + Firestore remain the shared identity/data layer. This preserves the requested hosting setup and avoids a second backend.
