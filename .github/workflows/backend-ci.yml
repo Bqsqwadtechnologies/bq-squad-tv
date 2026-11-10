@@ -1,24 +1,9 @@
-name: Backend and Website CI
+name: Website and API CI
 on:
   push:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "docs/**"
-      - "package.json"
-      - "bun.lock"
-      - "vite.config.ts"
-      - "vitest.config.ts"
-      - ".github/workflows/backend-ci.yml"
+    branches:
+      - main
   pull_request:
-    paths:
-      - "src/**"
-      - "docs/**"
-      - "package.json"
-      - "bun.lock"
-      - "vite.config.ts"
-      - "vitest.config.ts"
-      - ".github/workflows/backend-ci.yml"
   workflow_dispatch:
 permissions:
   contents: read
@@ -33,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
       - name: Lint
-        run: bun run lint -- --rule 'prettier/prettier: off'
+        run: bun run lint -- --rule "prettier/prettier: off"
       - name: Unit and API tests
         run: bunx vitest run
       - name: Build website and API
