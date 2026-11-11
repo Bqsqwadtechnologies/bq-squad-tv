@@ -17,14 +17,16 @@ jobs:
           bun-version: latest
       - name: Install dependencies
         run: bun install --frozen-lockfile
+      # TanStack Router regenerates routeTree.gen.ts during the build. Build first
+      # so the subsequent typecheck sees the complete current file-route registry.
+      - name: Build website and API
+        run: bun run build
       - name: TypeScript
         run: bun x tsc --noEmit
       - name: Lint
         run: 'bun run lint -- --rule "prettier/prettier: off"'
       - name: Unit and API tests
         run: bunx vitest run
-      - name: Build website and API
-        run: bun run build
       - name: Secret scan
         uses: gitleaks/gitleaks-action@v2
         env:
