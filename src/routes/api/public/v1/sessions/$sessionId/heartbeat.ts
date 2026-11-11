@@ -82,7 +82,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             const affordableSeconds = maxAffordableSeconds(previousBilledSeconds, billableSeconds, rate, Math.min(balance, dailyRemaining));
             const charge = incrementalSessionCharge(previousBilledSeconds, affordableSeconds, rate);
             const missedTwoHeartbeats = elapsed > 45;
-            const exhausted = affordableSeconds < elapsed || balance <= charge.chargeMinor || dailyRemaining <= charge.chargeMinor;
+            const exhausted = affordableSeconds < billableSeconds || balance <= charge.chargeMinor || dailyRemaining <= charge.chargeMinor;
             const active = !missedTwoHeartbeats && !exhausted;
             const newBalance = balance - charge.chargeMinor;
             const currency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : "NGN";
