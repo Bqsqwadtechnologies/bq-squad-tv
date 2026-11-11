@@ -25,7 +25,7 @@ describe("Firestore transactional batch reads", () => {
     const requested = [walletName];
     expect(() => orderBatchGetDocuments(requested, [
       { missing: requested[0]! },
-      { missing: requested[0] },
+      { missing: walletName },
     ])).toThrow(/invalid transactional read response/i);
     expect(() => orderBatchGetDocuments(requested, [])).toThrow(/omitted a document/i);
   });
