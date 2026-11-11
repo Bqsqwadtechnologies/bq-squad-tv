@@ -50,7 +50,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
               throw new ApiError(409, "SESSION_CHANGED", "The session changed while settlement was being processed.");
             }
             const currency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : "NGN";
-            const elapsed = elapsedSeconds(session["lastHeartbeatAt"], now);
+            // The final interval has no second player sample to corroborate progress.\n            // Do not charge it; only completed heartbeat intervals are billable.
             const rate = integer(session["ratePerMinuteMinor"]);
             const previouslyBilledSeconds = integer(session["billedSeconds"]);
             const today = nowIso.slice(0, 10);
@@ -59,7 +59,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
             const dailyRemaining = typeof dailyLimit === "number" && Number.isSafeInteger(dailyLimit)
               ? Math.max(0, dailyLimit - spentToday)
               : Number.MAX_SAFE_INTEGER;
-            const affordableSeconds = maxAffordableSeconds(previouslyBilledSeconds, elapsed, rate, Math.min(balance, dailyRemaining));
+            const affordableSeconds = maxAffordableSeconds(previouslyBilledSeconds, 0, rate, Math.min(balance, dailyRemaining));
             const charge = incrementalSessionCharge(previouslyBilledSeconds, affordableSeconds, rate);
             const newBalance = balance - charge.chargeMinor;
             const newSession = {
