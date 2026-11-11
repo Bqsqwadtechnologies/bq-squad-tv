@@ -1,3 +1,5 @@
+> **Canonical specification:** See [MASTER_TECHNICAL_SPEC.md](MASTER_TECHNICAL_SPEC.md) and [IMPLEMENTATION_BLUEPRINT.md](IMPLEMENTATION_BLUEPRINT.md). This file records the existing Android API contract; new movie/match PAYG routes must follow the canonical content, rights, hybrid-delivery and billing model. For NGN, legacy `Minor` fields mean integer kobo. New content contracts should use explicit `Kobo` names and versioned responses during migration.
+
 # BQ SQWAD TV API contract (Android client)
 
 ## Contract status
