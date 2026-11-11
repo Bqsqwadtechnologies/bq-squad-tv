@@ -15,7 +15,6 @@ export function requireSessionOwned(session: SessionDoc | null, sessionId: strin
   return session;
 }
 
-/** Whole seconds elapsed between two ISO timestamps; never negative, capped at 5 minutes per interval. */
 export function elapsedSeconds(fromIso: unknown, to: Date = new Date()): number {
   if (typeof fromIso !== "string") return 0;
   const from = Date.parse(fromIso);
@@ -24,11 +23,6 @@ export function elapsedSeconds(fromIso: unknown, to: Date = new Date()): number 
   return Math.max(0, Math.min(seconds, 300));
 }
 
-/**
- * Converts cumulative watch time to minor units without rounding each
- * heartbeat independently. BigInt keeps the intermediate micro-unit
- * calculation exact; the final charge is rounded up once per cumulative total.
- */
 export function costForCumulativeSeconds(seconds: number, ratePerMinuteMinor: number): number {
   if (!Number.isSafeInteger(seconds) || seconds < 0 ||
       !Number.isSafeInteger(ratePerMinuteMinor) || ratePerMinuteMinor < 0) {
@@ -42,7 +36,6 @@ export function costForCumulativeSeconds(seconds: number, ratePerMinuteMinor: nu
   return Number(minor);
 }
 
-/** Charge only the difference between the new cumulative total and prior settlement. */
 export function incrementalSessionCharge(
   previouslyBilledSeconds: number,
   newlyElapsedSeconds: number,
@@ -62,7 +55,28 @@ export function incrementalSessionCharge(
   return { billedSeconds, chargeMinor: sessionTotalMinor - previousTotal, sessionTotalMinor };
 }
 
-/** Compatibility helper: cost for a single interval. Prefer incrementalSessionCharge for settlement. */
+/** Largest whole-second interval whose incremental charge fits the available minor units. */
+export function maxAffordableSeconds(
+  previouslyBilledSeconds: number,
+  requestedSeconds: number,
+  ratePerMinuteMinor: number,
+  availableMinor: number,
+): number {
+  if (!Number.isSafeInteger(availableMinor) || availableMinor < 0) {
+    throw new ApiError(400, "INVALID_METERING_INPUT", "Available wallet amount is invalid.");
+  }
+  let low = 0;
+  let high = Math.min(300, Math.max(0, requestedSeconds));
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    const charge = incrementalSessionCharge(previouslyBilledSeconds, middle, ratePerMinuteMinor).chargeMinor;
+    if (charge <= availableMinor) low = middle;
+    else high = middle - 1;
+  }
+  return low;
+}
+
+/** Compatibility helper: cost for a cumulative duration. */
 export function costForSeconds(seconds: number, ratePerMinuteMinor: number): number {
   return costForCumulativeSeconds(seconds, ratePerMinuteMinor);
 }
