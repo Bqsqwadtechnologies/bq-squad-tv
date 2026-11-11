@@ -20,7 +20,7 @@ jobs:
       - name: TypeScript
         run: bun x tsc --noEmit
       - name: Lint
-        run: bun run lint -- --rule "prettier/prettier: off"
+        run: 'bun run lint -- --rule "prettier/prettier: off"'
       - name: Unit and API tests
         run: bunx vitest run
       - name: Build website and API
