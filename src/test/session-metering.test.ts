@@ -6,6 +6,7 @@ import {
   maxAffordableSeconds,
   producerShareMinor,
   requireSessionOwned,
+  reportedPlaybackSeconds,
   safeAddMinor,
   toSessionSnapshot,
 } from "@/routes/api/public/v1/sessions/-shared";
@@ -29,7 +30,8 @@ describe("session metering", () => {
     expect(reportedPlaybackSeconds("playing", "playing", 10_000, 25_000, 60)).toBe(0);
     expect(reportedPlaybackSeconds("playing", "playing", 25_000, 10_000, 15)).toBe(0);
   });
-\n  it("uses the canonical half-up rule on the cumulative session total", () => {
+
+  it("uses the canonical half-up rule on the cumulative session total", () => {
     expect(costForCumulativeSeconds(1, 100)).toBe(2);
     expect(costForCumulativeSeconds(60, 100)).toBe(100);
     expect(costForCumulativeSeconds(61, 100)).toBe(102);
