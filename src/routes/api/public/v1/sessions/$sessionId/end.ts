@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import {
-  elapsedSeconds,
   incrementalSessionCharge,
   maxAffordableSeconds,
   producerShareMinor,
@@ -50,7 +49,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
               throw new ApiError(409, "SESSION_CHANGED", "The session changed while settlement was being processed.");
             }
             const currency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : "NGN";
-            // The final interval has no second player sample to corroborate progress.\n            // Do not charge it; only completed heartbeat intervals are billable.
+            // The final interval has no second player sample to corroborate progress.
+            // Do not charge it; only completed heartbeat intervals are billable.
             const rate = integer(session["ratePerMinuteMinor"]);
             const previouslyBilledSeconds = integer(session["billedSeconds"]);
             const today = nowIso.slice(0, 10);
