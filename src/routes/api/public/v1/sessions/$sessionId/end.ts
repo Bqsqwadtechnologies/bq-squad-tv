@@ -18,7 +18,7 @@ function integer(value: unknown, fallback = 0): number {
 export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
   server: {
     handlers: {
-      POST: async ({ params }) => {
+      POST: async ({ request, params }) => {
         try {
           const user = await requireUser(request);
           const sessionId = params.sessionId;
