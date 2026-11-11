@@ -1,3 +1,5 @@
+> **Canonical specification:** [MASTER_TECHNICAL_SPEC.md](MASTER_TECHNICAL_SPEC.md) defines the security requirements. This checklist describes secret names only; never commit secret values.
+
 # Lovable Cloud secrets checklist
 
 Store backend credentials and public payment configuration in Lovable Cloud → Secrets. Never commit secret values to GitHub or put private credentials in Android resources, BuildConfig, local.properties, or browser bundles.
@@ -45,3 +47,17 @@ The Firebase Android SDK still requires the generated `google-services.json` fil
 3. Paystack Dashboard: obtain both public and secret keys. Keep the secret key exclusively server-side.
 4. Release signing: create and back up the Android release keystore; store signing values in CI secrets, never in Git.
 5. Streaming: when a provider is selected, obtain the necessary distribution rights and provider credentials before enabling real channels. Until then, use permitted demo/test streams only.
+
+
+## Streaming source encryption
+
+Configure these values in Lovable Cloud → Secrets before enabling producer source-URL submission:
+
+| Variable | Value |
+|---|---|
+| `STREAMING_URL_ENCRYPTION_KEYS_JSON` | JSON object mapping key versions (for example `v1`) to base64url-encoded, cryptographically random 32-byte AES-256 keys |
+| `STREAMING_URL_ACTIVE_KEY_VERSION` | The version identifier used for new source URL encryption |
+
+Keep old key versions available during rotation until all encrypted records have been re-encrypted or intentionally retired. Generate keys with a cryptographically secure random generator, store them only in Lovable Cloud Secrets, restrict who can reveal/manage them, and test recovery before production. Never paste key values into GitHub, source code, Android resources, browser configuration, tickets or logs.
+
+Provider-specific API credentials and webhook signing keys are added only after a provider has been selected and its contract/security requirements reviewed. Use server-only secret names agreed during provider onboarding; do not expose them to clients.
