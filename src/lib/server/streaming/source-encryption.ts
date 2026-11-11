@@ -10,6 +10,9 @@ export type EncryptedStreamingSource = {
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
+// Web Crypto requires an ArrayBuffer-backed view. Copy decoded/encoded bytes
+// into a fresh ArrayBuffer to avoid SharedArrayBuffer in the wider typed-array type.
+
 /** Copies bytes into an ArrayBuffer-backed view accepted by Web Crypto typings. */
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
   const copy = new Uint8Array(bytes.byteLength);
@@ -46,6 +49,12 @@ function validateSourceUrl(value: string): string {
     throw new ApiError(400, "INVALID_STREAM_SOURCE", "Only HTTPS source URLs without embedded credentials are accepted.");
   }
   return parsed.toString();
+}
+
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const buffer = new ArrayBuffer(bytes.byteLength);
+  new Uint8Array(buffer).set(bytes);
+  return buffer;
 }
 
 async function importAesKey(keyBase64Url: string): Promise<CryptoKey> {
