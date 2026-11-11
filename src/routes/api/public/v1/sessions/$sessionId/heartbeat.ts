@@ -10,6 +10,8 @@ import {
   requireSessionOwned,
   safeAddMinor,
   toSessionSnapshot,
+  reportedPlaybackSeconds,
+  type ReportedPlaybackState,
 } from "../-shared";
 
 const bodySchema = z.object({
@@ -69,7 +71,11 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
               throw new ApiError(409, "HEARTBEAT_REPLAY", "This heartbeat sequence has already been processed.");
             }
 
-            const elapsed = elapsedSeconds(session["lastHeartbeatAt"], now);\n            const billableSeconds = reportedPlaybackSeconds(\n              session["lastPlaybackState"], playbackState as ReportedPlaybackState,\n              session["lastPlaybackPositionMs"], playbackPositionMs, elapsed,\n            );
+            const elapsed = elapsedSeconds(session["lastHeartbeatAt"], now);
+            const billableSeconds = reportedPlaybackSeconds(
+              session["lastPlaybackState"], playbackState as ReportedPlaybackState,
+              session["lastPlaybackPositionMs"], playbackPositionMs, elapsed,
+            );
             const rate = integer(session["ratePerMinuteMinor"]);
             const previousBilledSeconds = integer(session["billedSeconds"]);
             const balance = integer(wallet["balanceMinor"]);
@@ -93,6 +99,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
               sessionTotalMinor: newSessionTotal,
               lastHeartbeatAt: nowIso,
               lastClientSequence: clientSequence,
+              lastPlaybackState: playbackState,
+              lastPlaybackPositionMs: playbackPositionMs,
               active,
               ...(active ? {} : { endedAt: nowIso, endReason: missedTwoHeartbeats ? "HEARTBEAT_TIMEOUT" : "WALLET_LIMIT" }),
             };
