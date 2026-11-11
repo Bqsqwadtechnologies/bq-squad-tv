@@ -36,7 +36,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
           const readPaths = [sessionPath, walletPath, ...(producerPath ? [producerPath] : [])];
 
           const snapshot = await fs.transact(readPaths, (docs) => {
-            const session = requireSessionOwned(docs[0], sessionId, user.uid);
+            const session = requireSessionOwned(docs[0] ?? null, sessionId, user.uid);
             const wallet = docs[1] ?? {};
             const producer = producerPath ? docs[2] : null;
             const balance = integer(wallet["balanceMinor"]);
