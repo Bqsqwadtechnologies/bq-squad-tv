@@ -262,6 +262,7 @@ export class Firestore {
       orderByField?: string;
       descending?: boolean;
       limit?: number;
+      startAfter?: { fieldValue: unknown; documentId: string };
     },
   ): Promise<Array<Record<string, unknown> & { __id: string }>> {
     const structuredQuery: Record<string, unknown> = {
@@ -276,9 +277,20 @@ export class Firestore {
         filters.length === 1 ? filters[0] : { compositeFilter: { op: "AND", filters } };
     }
     if (options?.orderByField) {
+      const direction = options.descending ? "DESCENDING" : "ASCENDING";
       structuredQuery["orderBy"] = [
-        { field: { fieldPath: options.orderByField }, direction: options.descending ? "DESCENDING" : "ASCENDING" },
+        { field: { fieldPath: options.orderByField }, direction },
+        { field: { fieldPath: "__name__" }, direction },
       ];
+    }
+    if (options?.startAfter && options.orderByField) {
+      structuredQuery["startAt"] = {
+        values: [
+          encodeValue(options.startAfter.fieldValue),
+          { referenceValue: this.docName(options.startAfter.documentId) },
+        ],
+        before: false,
+      };
     }
     const response = await fetch(`${this.documentsUrl()}:runQuery`, {
       method: "POST",
