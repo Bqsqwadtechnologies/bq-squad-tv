@@ -4,7 +4,7 @@ import {
   encryptStreamingSourceUrl,
 } from "@/lib/server/streaming/source-encryption";
 
-const key = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8";
+const key = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"; //gitleaks:allow fixed non-production AES test fixture
 
 beforeAll(() => {
   if (!globalThis.crypto?.subtle) {
