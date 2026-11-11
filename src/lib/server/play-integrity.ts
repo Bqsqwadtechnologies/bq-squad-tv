@@ -47,7 +47,7 @@ function getPlayIntegrityServiceAccount(): PlayIntegrityServiceAccount {
 }
 
 function pemBytes(pem: string): Uint8Array {
-  const base64 = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\\s/g, "");
+  const base64 = pem.replace(/-----BEGIN PRIVATE KEY-----|-----END PRIVATE KEY-----|\s/g, "");
   const binary = atob(base64);
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
