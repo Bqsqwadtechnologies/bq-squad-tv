@@ -19,8 +19,8 @@ Base URL: `API_BASE_URL` from Android local.properties. All routes use HTTPS and
 ## Integrity and sessions
 - `GET /v1/security/integrity/challenge` — returns a fresh one-use `{nonce}`.
 - `POST /v1/sessions/start` — body `{channelId,integrityToken,idempotencyKey}`. Verify Play Integrity, auth, age, content rights, geo, wallet minimum and concurrent-device limit. Return `{sessionId,playbackUrl,ratePerMinuteMinor,walletBalanceMinor,currency,timeRemainingSeconds,sessionTotalMinor,active}`. Playback URL must be signed and short-lived.
-- `POST /v1/sessions/{sessionId}/heartbeat` — body `{clientSequence}`. Server uses its own clock, charges elapsed seconds atomically, returns the session snapshot. Idempotency key is session + sequence. Expected cadence: 15 seconds.
-- `POST /v1/sessions/{sessionId}/end` — settle to exact server second, revoke token and close session. Idempotent.
+- `POST /v1/sessions/{sessionId}/heartbeat` — body `{clientSequence,playbackState,playbackPositionMs}`. playbackState is one of playing, paused, buffering, idle or ended; playbackPositionMs is the Media3 media position. The server uses its own clock and bills only a completed interval where both consecutive player samples report playing, media position advanced, and advancement does not exceed server elapsed time. Paused, buffering, idle, ended, unchanged-position and stale-heartbeat intervals are not charged. Idempotency is session + sequence. Expected cadence: 15 seconds. Client-reported player telemetry is not cryptographic proof; verified Play Integrity and provider-side authorization/telemetry remain production requirements.
+- `POST /v1/sessions/{sessionId}/end` — close the session and revoke playback authorization. It does not charge an unconfirmed trailing interval after the last heartbeat; only completed playback-evidence intervals are billable.
 - Two missed heartbeats, zero balance, policy revocation or concurrent-session violation terminate the session server-side.
 
 ## Wallet and Google Play
