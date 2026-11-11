@@ -255,3 +255,11 @@ The existing API/BILLING/STREAMING/SECRETS guides now point to the canonical mas
 - Android player heartbeat calls now send the Media3 state and current media position.
 - This is conservative client-player telemetry, not cryptographic proof of playback. Play Integrity token verification and provider-side authorization/telemetry are still required before production playback.
 - Website/API build, TypeScript, lint and unit tests passed in the latest observed run before the CI guard update; Android unit tests and Kotlin compilation passed, but the Android ktlint job exposed pre-existing formatting violations in android/app/build.gradle.kts. A later CI run is required after the guard change.
+
+
+### Play Integrity verification foundation (2026-11-11)
+
+- Added server-side Google Play Integrity token decoding using the dedicated GOOGLE_PLAY_SERVICE_ACCOUNT_JSON and GOOGLE_PLAY_PACKAGE_NAME settings.
+- The verifier requires the expected package and one-use nonce, a recent token timestamp, PLAY_RECOGNIZED app verdict, MEETS_DEVICE_INTEGRITY device verdict and LICENSED app licensing verdict.
+- Added an atomic Firestore challenge-consumption helper that rejects missing, foreign, expired and previously used challenges.
+- Pure tests cover Play Integrity verdict validation and challenge ownership/expiry. These helpers are not yet wired into sessions/start; playback remains unavailable until the route is implemented and the Google Play service account is configured with Play Integrity API access.
