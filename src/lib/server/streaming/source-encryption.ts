@@ -51,12 +51,6 @@ function validateSourceUrl(value: string): string {
   return parsed.toString();
 }
 
-function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
-  const buffer = new ArrayBuffer(bytes.byteLength);
-  new Uint8Array(buffer).set(bytes);
-  return buffer;
-}
-
 async function importAesKey(keyBase64Url: string): Promise<CryptoKey> {
   const raw = decodeBase64Url(keyBase64Url);
   if (raw.length !== 32) {
