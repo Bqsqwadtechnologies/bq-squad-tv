@@ -225,3 +225,22 @@ These must remain visible as blockers, not fabricated configuration:
 - Do not edit generated `src/routeTree.gen.ts`.
 - Run relevant tests after each code slice and the full existing CI command set before calling a phase complete.
 - Report commit SHA, changed files, test commands/results and any unverified external dependency.
+
+
+## 8. Initial implementation progress (2026-11-11)
+
+Committed directly to `main`:
+
+- `src/lib/server/money.ts`: exact integer-kobo cumulative PAYG calculations, exact micro-kobo accrual representation and cumulative half-up settlement helpers.
+- `src/test/money.test.ts`: tests for per-minute calculations, cumulative rounding, heartbeat-boundary invariance and invalid inputs.
+- `src/lib/server/content-rights.ts`: fail-closed playback rights gate for publication state, verification, commercial streaming, paid-streaming permission, territory, platform and license term.
+- `src/test/content-rights.test.ts`: rights, territory, platform and expiry tests.
+- `src/lib/server/streaming/provider.ts`: provider-neutral hybrid streaming adapter contract.
+- `src/lib/server/streaming/source-encryption.ts`: server-only AES-256-GCM source URL encryption/decryption primitive with asset-bound associated data and versioned key-ring lookup.
+- `src/test/streaming-source-encryption.test.ts`: encryption round-trip, nonce uniqueness, asset binding and invalid URL/key tests.
+
+The existing API/BILLING/STREAMING/SECRETS guides now point to the canonical master spec; the secrets checklist documents the two required encryption-key secret names without including values.
+
+**Integration status:** These are foundational helpers and tests. They are not yet wired into session start, playback authorization, upload submission or the admin URL-reveal route. No real streaming provider, storage/CDN vendor or production encryption key has been configured. Do not accept or publish real source URLs until those integrations and the external secret setup are complete.
+
+**CI status:** GitHub Actions reports the recent `backend-ci.yml` push runs as failed, but the GitHub API currently returns no job records for those runs. Therefore the exact failing step cannot be established from the available run metadata, and no passing build/test result is claimed. Resolve CI observability and run the full TypeScript, lint, Vitest and build suite before marking this code slice verified.
