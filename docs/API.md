@@ -23,7 +23,7 @@ Base URL: `API_BASE_URL` from Android local.properties. All routes use HTTPS and
 
 ## Wallet and Google Play
 - `GET /v1/wallet` — `{balanceMinor,currency,dailySpendLimitMinor,spentTodayMinor}`.
-- `GET /v1/wallet/ledger` — `{items:[{id,description,amountMinor,createdAt,kind}]}`.
+- `GET /v1/wallet/ledger?limit=25&cursor=` — `{items:[{id,description,amountMinor,createdAt,kind}],nextCursor}`. `limit` is 1–100 (default 25); `nextCursor` is opaque and may be null. The server filters by the authenticated user's `uid` and orders by `createdAt` plus document id, newest first.
 - `GET /v1/wallet/google-play/products` — `[{productId,title,credits,description}]`; IDs must match Play Console consumables.
 - `POST /v1/wallet/google-play/verify` — body `{productId,purchaseToken,orderId,packageName}`; verify Google Play Developer API, package, product, purchase state, quantity, refunds and idempotency before crediting. Return `{credited,balanceMinor,currency,message}`. Android consumes only after `credited=true`.
 - Paystack initialization/webhooks are web-only. Android must not use Paystack for digital credits.
