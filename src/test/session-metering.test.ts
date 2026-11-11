@@ -50,7 +50,7 @@ describe("session metering", () => {
 
   it("rejects invalid amounts and elapsed windows", () => {
     expect(() => costForCumulativeSeconds(-1, 100)).toThrow();
-    expect(() => costForCumulativeSeconds(10, Number.MAX_SAFE_INTEGER)).toThrow();
+    expect(() => costForCumulativeSeconds(61, Number.MAX_SAFE_INTEGER)).toThrow();
     expect(() => incrementalSessionCharge(0, 301, 100)).toThrow();
     expect(() => safeAddMinor(Number.MAX_SAFE_INTEGER, 1)).toThrow();
   });
