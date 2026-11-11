@@ -3,15 +3,14 @@ import { encodeFields, orderBatchGetDocuments } from "@/lib/server/firebase-admi
 
 describe("Firestore transactional batch reads", () => {
   it("restores requested document order when Firestore returns responses out of order", () => {
-    const requested = [
-      "projects/demo/databases/(default)/documents/sessions/s1",
-      "projects/demo/databases/(default)/documents/wallets/u1",
-      "projects/demo/databases/(default)/documents/sessions/s1/heartbeats/2",
-    ];
+    const sessionName = "projects/demo/databases/(default)/documents/sessions/s1";
+    const walletName = "projects/demo/databases/(default)/documents/wallets/u1";
+    const heartbeatName = "projects/demo/databases/(default)/documents/sessions/s1/heartbeats/2";
+    const requested = [sessionName, walletName, heartbeatName];
     const responses = [
-      { found: { name: requested[1]!, fields: encodeFields({ balanceMinor: 500 }) } },
-      { missing: requested[2]! },
-      { found: { name: requested[0]!, fields: encodeFields({ active: true }) } },
+      { found: { name: walletName!, fields: encodeFields({ balanceMinor: 500 }) } },
+      { missing: heartbeatName! },
+      { found: { name: sessionName!, fields: encodeFields({ active: true }) } },
     ];
 
     expect(orderBatchGetDocuments(requested, responses)).toEqual([
@@ -22,7 +21,8 @@ describe("Firestore transactional batch reads", () => {
   });
 
   it("rejects duplicate or omitted document responses", () => {
-    const requested = ["projects/demo/databases/(default)/documents/wallets/u1"];
+    const walletName = "projects/demo/databases/(default)/documents/wallets/u1";
+    const requested = [walletName];
     expect(() => orderBatchGetDocuments(requested, [
       { missing: requested[0]! },
       { missing: requested[0] },
