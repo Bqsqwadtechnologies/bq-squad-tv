@@ -188,6 +188,24 @@ export type FirestoreWrite =
 
 export type QueryFilter = { field: string; op: "EQUAL" | "LESS_THAN" | "GREATER_THAN" | "ARRAY_CONTAINS"; value: unknown };
 
+export type FirestoreQueryTarget = { parentPath: string | null; collectionId: string };
+
+export function resolveFirestoreQueryTarget(collectionPath: string): FirestoreQueryTarget {
+  const segments = collectionPath.split("/");
+  if (
+    segments.length === 0 ||
+    segments.length % 2 !== 1 ||
+    segments.some((segment) => !/^[A-Za-z0-9_-]{1,150}$/.test(segment))
+  ) {
+    throw new ApiError(400, "INVALID_QUERY_PATH", "Firestore queries require a valid collection path.");
+  }
+  return {
+    parentPath: segments.length > 1 ? segments.slice(0, -1).join("/") : null,
+    collectionId: segments[segments.length - 1] as string,
+  };
+}
+
+
 export class Firestore {
   private constructor(
     private readonly projectId: string,
@@ -265,8 +283,12 @@ export class Firestore {
       startAfter?: { fieldValue: unknown; documentId: string };
     },
   ): Promise<Array<Record<string, unknown> & { __id: string }>> {
+    const target = resolveFirestoreQueryTarget(collectionId);
+    const queryUrl = target.parentPath
+      ? `${this.documentsUrl()}/${target.parentPath}:runQuery`
+      : `${this.documentsUrl()}:runQuery`;
     const structuredQuery: Record<string, unknown> = {
-      from: [{ collectionId }],
+      from: [{ collectionId: target.collectionId }],
       ...(options?.limit ? { limit: options.limit } : {}),
     };
     if (options?.filters && options.filters.length > 0) {
@@ -292,7 +314,7 @@ export class Firestore {
         before: false,
       };
     }
-    const response = await fetch(`${this.documentsUrl()}:runQuery`, {
+    const response = await fetch(queryUrl, {
       method: "POST",
       headers: this.headers(),
       body: JSON.stringify({ structuredQuery }),
