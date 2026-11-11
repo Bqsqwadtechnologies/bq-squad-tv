@@ -97,6 +97,26 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                 currentDocument: { exists: false },
               });
             }
+            const platformShare = charge.chargeMinor - (producerPath && producer
+              ? producerShareMinor(charge.chargeMinor, Math.min(10_000, Math.max(0, integer(session["producerShareBps"]))))
+              : 0);
+            if (platformShare > 0) {
+              writes.push({
+                update: {
+                  name: fs.docName("ledger/" + crypto.randomUUID()),
+                  fields: encodeFields({
+                    uid: "platform",
+                    sessionId,
+                    kind: "platform_earning",
+                    description: "Platform share of channel viewing",
+                    amountMinor: platformShare,
+                    createdAt: nowIso,
+                    idempotencyKey: sessionId + ":" + (typeof session["lastClientSequence"] === "number" ? session["lastClientSequence"] + 1 : 1) + ":platform",
+                  }),
+                },
+                currentDocument: { exists: false },
+              });
+            }
             if (producerPath && producer && charge.chargeMinor > 0) {
               const shareBps = Math.min(10_000, Math.max(0, integer(session["producerShareBps"])));
               const producerShare = producerShareMinor(charge.chargeMinor, shareBps);
