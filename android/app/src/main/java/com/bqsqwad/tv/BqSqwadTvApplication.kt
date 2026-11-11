@@ -13,7 +13,7 @@ class BqSqwadTvApplication : Application() {
    val options = FirebaseOptions.Builder()
     .setProjectId("bq-sqwad-tv")
     .setApplicationId("1:1053755940737:android:ac3108c076ead9bac25280")
-    .setApiKey("AIzaSyD6QfAIfn_T0YWxxYKDbw8lZfj_s81N2ow")
+    .setApiKey("AIzaSyD6QfAIfn_T0YWxxYKDbw8lZfj_s81N2ow") //gitleaks:allow Firebase client API key; not a server credential
     .setGcmSenderId("1053755940737")
     .build()
    FirebaseApp.initializeApp(this, options)
