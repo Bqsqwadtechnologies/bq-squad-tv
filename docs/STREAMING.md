@@ -1,3 +1,5 @@
+> **Canonical specification:** [MASTER_TECHNICAL_SPEC.md](MASTER_TECHNICAL_SPEC.md) and [IMPLEMENTATION_BLUEPRINT.md](IMPLEMENTATION_BLUEPRINT.md) define the approved hybrid delivery model. This file is the existing provider integration baseline, not proof that a provider is selected or configured.
+
 # Streaming provider integration
 
 The Android player must receive only a server-issued, short-lived signed HLS or DASH URL from `POST /v1/sessions/start`. Do not embed provider URLs, ingest credentials or secrets in the APK.
@@ -15,3 +17,14 @@ The client foundation includes Media3 ExoPlayer HLS/DASH modules, adaptive track
 
 ## Cost warning
 Streaming costs include ingest, transcoding, origin storage, CDN egress, DVR window, replay storage and DRM. Adaptive bitrate and data saver reduce viewer bandwidth but do not remove provider charges.
+
+
+## Approved hybrid delivery model
+
+Each content asset selects one delivery mode:
+
+- **External licensed provider:** use only provider-authorized playback and the provider's signed playback/DRM controls. Do not ingest, download, proxy, record or repackage third-party streams unless the agreement expressly permits it.
+- **BQ-hosted:** only for content BQ owns or is contractually authorized to host. Use private object storage, secure ingest, adaptive HLS/DASH transcoding, CDN delivery, short-lived signed playback authorization, revocation and cost telemetry.
+
+Both modes pass through the same BQ backend rights, territory, platform, wallet, device-limit and PAYG session checks. Provider credentials and source URLs remain server-side. Source URLs are encrypted at rest using the versioned AES-256-GCM key ring documented in [SECRETS_CHECKLIST.md](SECRETS_CHECKLIST.md). The producer receives a saved confirmation and cannot retrieve plaintext after saving; privileged admin reveal requires reauthentication and audit logging.
+
