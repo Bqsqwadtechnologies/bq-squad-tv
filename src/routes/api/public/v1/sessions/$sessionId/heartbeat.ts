@@ -38,8 +38,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           const sessionPath = "sessions/" + sessionId;
           const walletPath = "wallets/" + user.uid;
           const receiptPath = sessionPath + "/heartbeats/" + clientSequence;
-          const initialSession = await fs.getDoc(sessionPath);
-          requireSessionOwned(initialSession, sessionId, user.uid);
+          const initialSession = requireSessionOwned(await fs.getDoc(sessionPath), sessionId, user.uid);
           const producerUid = typeof initialSession["producerUid"] === "string" ? initialSession["producerUid"] as string : null;
           const producerPath = producerUid ? "producers/" + producerUid : null;
           const readPaths = [sessionPath, walletPath, receiptPath, ...(producerPath ? [producerPath] : [])];

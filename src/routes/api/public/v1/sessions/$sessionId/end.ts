@@ -18,7 +18,7 @@ function integer(value: unknown, fallback = 0): number {
 export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
   server: {
     handlers: {
-      POST: async ({ request, params }) => {
+      POST: async ({ params }) => {
         try {
           const user = await requireUser(request);
           const sessionId = params.sessionId;
@@ -30,8 +30,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
           const nowIso = now.toISOString();
           const sessionPath = "sessions/" + sessionId;
           const walletPath = "wallets/" + user.uid;
-          const initialSession = await fs.getDoc(sessionPath);
-          requireSessionOwned(initialSession, sessionId, user.uid);
+          const initialSession = requireSessionOwned(await fs.getDoc(sessionPath), sessionId, user.uid);
           const producerUid = typeof initialSession["producerUid"] === "string" ? initialSession["producerUid"] as string : null;
           const producerPath = producerUid ? "producers/" + producerUid : null;
           const readPaths = [sessionPath, walletPath, ...(producerPath ? [producerPath] : [])];
