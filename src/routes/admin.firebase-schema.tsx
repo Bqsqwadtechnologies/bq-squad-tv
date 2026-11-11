@@ -12,7 +12,7 @@ type SchemaReport = {
 };
 
 const firebaseProjectId = "bq-sqwad-tv";
-const firebaseApiKey = "AIzaSyD6QfAIfn_T0YWxxYKDbw8lZfj_s81N2ow";
+const firebaseApiKey = "AIzaSyD6QfAIfn_T0YWxxYKDbw8lZfj_s81N2ow"; //gitleaks:allow Firebase web client API key; not a server credential
 
 export const Route = createFileRoute("/admin/firebase-schema")({
   component: FirebaseSchemaPage,
