@@ -10,7 +10,7 @@ import {
   requireSessionOwned,
   safeAddMinor,
   toSessionSnapshot,
-} from "./-shared";
+} from "../-shared";
 
 const bodySchema = z.object({ clientSequence: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) });
 
