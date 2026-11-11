@@ -4,7 +4,9 @@ import {
   elapsedSeconds,
   incrementalSessionCharge,
   maxAffordableSeconds,
+  producerShareMinor,
   requireSessionOwned,
+  safeAddMinor,
   toSessionSnapshot,
 } from "@/routes/api/public/v1/sessions/-shared";
 
@@ -38,10 +40,16 @@ describe("session metering", () => {
     expect(maxAffordableSeconds(0, 60, 100, 0)).toBe(0);
   });
 
+  it("allocates producer shares with integer basis-point arithmetic", () => {
+    expect(producerShareMinor(101, 7000)).toBe(70);
+    expect(producerShareMinor(99, 3333)).toBe(32);
+  });
+
   it("rejects invalid amounts and elapsed windows", () => {
     expect(() => costForCumulativeSeconds(-1, 100)).toThrow();
     expect(() => costForCumulativeSeconds(10, Number.MAX_SAFE_INTEGER)).toThrow();
     expect(() => incrementalSessionCharge(0, 301, 100)).toThrow();
+    expect(() => safeAddMinor(Number.MAX_SAFE_INTEGER, 1)).toThrow();
   });
 
   it("enforces session ownership", () => {

@@ -5,7 +5,9 @@ import {
   elapsedSeconds,
   incrementalSessionCharge,
   maxAffordableSeconds,
+  producerShareMinor,
   requireSessionOwned,
+  safeAddMinor,
   toSessionSnapshot,
 } from "./-shared";
 
@@ -39,18 +41,16 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
             const wallet = docs[1] ?? {};
             const producer = producerPath ? docs[2] : null;
             const balance = integer(wallet["balanceMinor"]);
-            const currency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : "NGN";
-
             if (session["active"] !== true) {
-              return {
-                result: toSessionSnapshot(sessionId, session, balance, null),
-                writes: [],
-              };
+              return { result: toSessionSnapshot(sessionId, session, balance, null), writes: [] };
             }
             if (producerPath && !producer) {
               throw new ApiError(503, "PRODUCER_ACCOUNT_MISSING", "The channel producer account is not available for settlement.");
             }
-
+            if (session["producerUid"] !== producerUid) {
+              throw new ApiError(409, "SESSION_CHANGED", "The session changed while settlement was being processed.");
+            }
+            const currency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : "NGN";
             const elapsed = elapsedSeconds(session["lastHeartbeatAt"], now);
             const rate = integer(session["ratePerMinuteMinor"]);
             const previouslyBilledSeconds = integer(session["billedSeconds"]);
@@ -60,17 +60,12 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
             const dailyRemaining = typeof dailyLimit === "number" && Number.isSafeInteger(dailyLimit)
               ? Math.max(0, dailyLimit - spentToday)
               : Number.MAX_SAFE_INTEGER;
-            const affordableSeconds = maxAffordableSeconds(
-              previouslyBilledSeconds,
-              elapsed,
-              rate,
-              Math.min(balance, dailyRemaining),
-            );
+            const affordableSeconds = maxAffordableSeconds(previouslyBilledSeconds, elapsed, rate, Math.min(balance, dailyRemaining));
             const charge = incrementalSessionCharge(previouslyBilledSeconds, affordableSeconds, rate);
             const newBalance = balance - charge.chargeMinor;
             const newSession = {
               billedSeconds: charge.billedSeconds,
-              sessionTotalMinor: integer(session["sessionTotalMinor"]) + charge.chargeMinor,
+              sessionTotalMinor: safeAddMinor(integer(session["sessionTotalMinor"]), charge.chargeMinor),
               active: false,
               endedAt: nowIso,
               endReason: "USER_ENDED",
@@ -84,11 +79,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                 update: {
                   name: fs.docName(walletPath),
                   fields: encodeFields({
-                    balanceMinor: newBalance,
-                    spentDate: today,
-                    spentTodayMinor: spentToday + charge.chargeMinor,
-                    currency,
-                    updatedAt: nowIso,
+                    balanceMinor: newBalance, spentDate: today,
+                    spentTodayMinor: safeAddMinor(spentToday, charge.chargeMinor), currency, updatedAt: nowIso,
                   }),
                 },
                 updateMask: { fieldPaths: ["balanceMinor", "spentDate", "spentTodayMinor", "currency", "updatedAt"] },
@@ -99,13 +91,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                 update: {
                   name: fs.docName("ledger/" + crypto.randomUUID()),
                   fields: encodeFields({
-                    uid: user.uid,
-                    sessionId,
-                    kind: "watch_charge",
-                    description: "Channel viewing",
-                    amountMinor: -charge.chargeMinor,
-                    createdAt: nowIso,
-                    idempotencyKey: sessionId + ":end",
+                    uid: user.uid, sessionId, kind: "watch_charge", description: "Channel viewing",
+                    amountMinor: -charge.chargeMinor, createdAt: nowIso, idempotencyKey: sessionId + ":end",
                   }),
                 },
                 currentDocument: { exists: false },
@@ -113,14 +100,14 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
             }
             if (producerPath && producer && charge.chargeMinor > 0) {
               const shareBps = Math.min(10_000, Math.max(0, integer(session["producerShareBps"])));
-              const producerShare = Math.floor((charge.chargeMinor * shareBps) / 10_000);
+              const producerShare = producerShareMinor(charge.chargeMinor, shareBps);
               if (producerShare > 0) {
                 writes.push({
                   update: {
                     name: fs.docName(producerPath),
                     fields: encodeFields({
-                      earningsBalanceMinor: integer(producer["earningsBalanceMinor"]) + producerShare,
-                      earningsLifetimeMinor: integer(producer["earningsLifetimeMinor"]) + producerShare,
+                      earningsBalanceMinor: safeAddMinor(integer(producer["earningsBalanceMinor"]), producerShare),
+                      earningsLifetimeMinor: safeAddMinor(integer(producer["earningsLifetimeMinor"]), producerShare),
                       updatedAt: nowIso,
                     }),
                   },
@@ -130,13 +117,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                   update: {
                     name: fs.docName("ledger/" + crypto.randomUUID()),
                     fields: encodeFields({
-                      uid: producerUid,
-                      sessionId,
-                      kind: "producer_earning",
-                      description: "Channel viewing revenue",
-                      amountMinor: producerShare,
-                      createdAt: nowIso,
-                      idempotencyKey: sessionId + ":end:producer",
+                      uid: producerUid, sessionId, kind: "producer_earning", description: "Channel viewing revenue",
+                      amountMinor: producerShare, createdAt: nowIso, idempotencyKey: sessionId + ":end:producer",
                     }),
                   },
                   currentDocument: { exists: false },
@@ -144,12 +126,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
               }
             }
             return {
-              result: toSessionSnapshot(
-                sessionId,
-                { ...session, ...newSession },
-                newBalance,
-                null,
-              ),
+              result: toSessionSnapshot(sessionId, { ...session, ...newSession }, newBalance, null),
               writes,
             };
           });

@@ -55,7 +55,6 @@ export function incrementalSessionCharge(
   return { billedSeconds, chargeMinor: sessionTotalMinor - previousTotal, sessionTotalMinor };
 }
 
-/** Largest whole-second interval whose incremental charge fits the available minor units. */
 export function maxAffordableSeconds(
   previouslyBilledSeconds: number,
   requestedSeconds: number,
@@ -76,7 +75,22 @@ export function maxAffordableSeconds(
   return low;
 }
 
-/** Compatibility helper: cost for a cumulative duration. */
+export function producerShareMinor(chargeMinor: number, shareBps: number): number {
+  if (!Number.isSafeInteger(chargeMinor) || chargeMinor < 0 ||
+      !Number.isSafeInteger(shareBps) || shareBps < 0 || shareBps > 10_000) {
+    throw new ApiError(400, "INVALID_REVENUE_SPLIT", "The producer revenue split is invalid.");
+  }
+  return Number((BigInt(chargeMinor) * BigInt(shareBps)) / 10_000n);
+}
+
+export function safeAddMinor(left: number, right: number): number {
+  if (!Number.isSafeInteger(left) || left < 0 || !Number.isSafeInteger(right) || right < 0 ||
+      !Number.isSafeInteger(left + right)) {
+    throw new ApiError(400, "MONEY_LIMIT_EXCEEDED", "The monetary total exceeds the supported amount.");
+  }
+  return left + right;
+}
+
 export function costForSeconds(seconds: number, ratePerMinuteMinor: number): number {
   return costForCumulativeSeconds(seconds, ratePerMinuteMinor);
 }
@@ -90,13 +104,16 @@ export function toSessionSnapshot(
   const rate = typeof session["ratePerMinuteMinor"] === "number" ? session["ratePerMinuteMinor"] as number : 0;
   const billedSeconds = typeof session["billedSeconds"] === "number" ? session["billedSeconds"] as number : 0;
   const sessionTotalMinor = typeof session["sessionTotalMinor"] === "number" ? session["sessionTotalMinor"] as number : 0;
+  const remaining = rate > 0 && balanceMinor > 0
+    ? Number((BigInt(balanceMinor) * 60n) / BigInt(rate))
+    : 0;
   return {
     sessionId,
     playbackUrl: playbackUrl ?? (typeof session["playbackUrl"] === "string" ? session["playbackUrl"] : ""),
     ratePerMinuteMinor: rate,
     walletBalanceMinor: balanceMinor,
     currency: typeof session["currency"] === "string" ? session["currency"] as string : "NGN",
-    timeRemainingSeconds: rate > 0 ? Math.floor((balanceMinor * 60) / rate) : 0,
+    timeRemainingSeconds: Math.min(Number.MAX_SAFE_INTEGER, remaining),
     billedSeconds,
     sessionTotalMinor,
     active: session["active"] === true,

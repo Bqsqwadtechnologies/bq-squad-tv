@@ -6,13 +6,13 @@ import {
   elapsedSeconds,
   incrementalSessionCharge,
   maxAffordableSeconds,
+  producerShareMinor,
   requireSessionOwned,
+  safeAddMinor,
   toSessionSnapshot,
 } from "./-shared";
 
-const bodySchema = z.object({
-  clientSequence: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
-});
+const bodySchema = z.object({ clientSequence: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) });
 
 function integer(value: unknown, fallback = 0): number {
   return typeof value === "number" && Number.isSafeInteger(value) ? value : fallback;
@@ -28,12 +28,10 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           if (!/^[A-Za-z0-9_-]{1,100}$/.test(sessionId)) {
             throw new ApiError(400, "INVALID_REQUEST", "Invalid session id.");
           }
-          const { clientSequence } = await (async () => {
-            let body: unknown;
-            try { body = await request.json(); }
-            catch { throw new ApiError(400, "INVALID_REQUEST", "Request body must be valid JSON."); }
-            return bodySchema.parse(body);
-          })();
+          let rawBody: unknown;
+          try { rawBody = await request.json(); }
+          catch { throw new ApiError(400, "INVALID_REQUEST", "Request body must be valid JSON."); }
+          const { clientSequence } = bodySchema.parse(rawBody);
           const fs = await Firestore.create();
           const now = new Date();
           const nowIso = now.toISOString();
@@ -51,20 +49,24 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             const wallet = docs[1] ?? {};
             const existingReceipt = docs[2];
             const producer = producerPath ? docs[3] : null;
-
             if (existingReceipt && typeof existingReceipt["response"] === "object" && existingReceipt["response"] !== null) {
               return { result: existingReceipt["response"] as Record<string, unknown>, writes: [] };
             }
             if (session["active"] !== true) {
               throw new ApiError(409, "SESSION_INACTIVE", "This playback session is no longer active.");
             }
+            if (producerPath && !producer) {
+              throw new ApiError(503, "PRODUCER_ACCOUNT_MISSING", "The channel producer account is not available for settlement.");
+            }
+            if (session["producerUid"] !== producerUid) {
+              throw new ApiError(409, "SESSION_CHANGED", "The session changed while the heartbeat was being processed.");
+            }
             const lastSequence = integer(session["lastClientSequence"]);
             if (clientSequence <= lastSequence) {
               throw new ApiError(409, "HEARTBEAT_REPLAY", "This heartbeat sequence has already been processed.");
             }
 
-            const lastHeartbeatAt = session["lastHeartbeatAt"];
-            const elapsed = elapsedSeconds(lastHeartbeatAt, now);
+            const elapsed = elapsedSeconds(session["lastHeartbeatAt"], now);
             const rate = integer(session["ratePerMinuteMinor"]);
             const previousBilledSeconds = integer(session["billedSeconds"]);
             const balance = integer(wallet["balanceMinor"]);
@@ -74,18 +76,18 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             const dailyRemaining = typeof dailyLimit === "number" && Number.isSafeInteger(dailyLimit)
               ? Math.max(0, dailyLimit - spentToday)
               : Number.MAX_SAFE_INTEGER;
-            const available = Math.min(balance, dailyRemaining);
-            const affordableSeconds = maxAffordableSeconds(previousBilledSeconds, elapsed, rate, available);
+            const affordableSeconds = maxAffordableSeconds(previousBilledSeconds, elapsed, rate, Math.min(balance, dailyRemaining));
             const charge = incrementalSessionCharge(previousBilledSeconds, affordableSeconds, rate);
             const missedTwoHeartbeats = elapsed > 45;
             const exhausted = affordableSeconds < elapsed || balance <= charge.chargeMinor || dailyRemaining <= charge.chargeMinor;
             const active = !missedTwoHeartbeats && !exhausted;
             const newBalance = balance - charge.chargeMinor;
             const currency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : "NGN";
-            const newSpentToday = spentToday + charge.chargeMinor;
+            const newSpentToday = safeAddMinor(spentToday, charge.chargeMinor);
+            const newSessionTotal = safeAddMinor(integer(session["sessionTotalMinor"]), charge.chargeMinor);
             const newSession = {
               billedSeconds: charge.billedSeconds,
-              sessionTotalMinor: integer(session["sessionTotalMinor"]) + charge.chargeMinor,
+              sessionTotalMinor: newSessionTotal,
               lastHeartbeatAt: nowIso,
               lastClientSequence: clientSequence,
               active,
@@ -98,28 +100,18 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
               },
               {
                 update: { name: fs.docName(walletPath), fields: encodeFields({
-                  balanceMinor: newBalance,
-                  spentDate: today,
-                  spentTodayMinor: newSpentToday,
-                  currency,
-                  updatedAt: nowIso,
+                  balanceMinor: newBalance, spentDate: today, spentTodayMinor: newSpentToday, currency, updatedAt: nowIso,
                 }) },
                 updateMask: { fieldPaths: ["balanceMinor", "spentDate", "spentTodayMinor", "currency", "updatedAt"] },
               },
             ];
-            const ledgerId = crypto.randomUUID();
             if (charge.chargeMinor > 0) {
               writes.push({
                 update: {
-                  name: fs.docName("ledger/" + ledgerId),
+                  name: fs.docName("ledger/" + crypto.randomUUID()),
                   fields: encodeFields({
-                    uid: user.uid,
-                    sessionId,
-                    kind: "watch_charge",
-                    description: "Channel viewing",
-                    amountMinor: -charge.chargeMinor,
-                    createdAt: nowIso,
-                    idempotencyKey: sessionId + ":" + clientSequence,
+                    uid: user.uid, sessionId, kind: "watch_charge", description: "Channel viewing",
+                    amountMinor: -charge.chargeMinor, createdAt: nowIso, idempotencyKey: sessionId + ":" + clientSequence,
                   }),
                 },
                 currentDocument: { exists: false },
@@ -127,14 +119,14 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             }
             if (producerPath && producer && charge.chargeMinor > 0) {
               const shareBps = Math.min(10_000, Math.max(0, integer(session["producerShareBps"])));
-              const producerShare = Math.floor((charge.chargeMinor * shareBps) / 10_000);
+              const producerShare = producerShareMinor(charge.chargeMinor, shareBps);
               if (producerShare > 0) {
                 writes.push({
                   update: {
                     name: fs.docName(producerPath),
                     fields: encodeFields({
-                      earningsBalanceMinor: integer(producer["earningsBalanceMinor"]) + producerShare,
-                      earningsLifetimeMinor: integer(producer["earningsLifetimeMinor"]) + producerShare,
+                      earningsBalanceMinor: safeAddMinor(integer(producer["earningsBalanceMinor"]), producerShare),
+                      earningsLifetimeMinor: safeAddMinor(integer(producer["earningsLifetimeMinor"]), producerShare),
                       updatedAt: nowIso,
                     }),
                   },
@@ -144,20 +136,15 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
                   update: {
                     name: fs.docName("ledger/" + crypto.randomUUID()),
                     fields: encodeFields({
-                      uid: producerUid,
-                      sessionId,
-                      kind: "producer_earning",
-                      description: "Channel viewing revenue",
-                      amountMinor: producerShare,
-                      createdAt: nowIso,
-                      idempotencyKey: sessionId + ":" + clientSequence + ":producer",
+                      uid: producerUid, sessionId, kind: "producer_earning", description: "Channel viewing revenue",
+                      amountMinor: producerShare, createdAt: nowIso, idempotencyKey: sessionId + ":" + clientSequence + ":producer",
                     }),
                   },
                   currentDocument: { exists: false },
                 });
               }
             }
-            const snapshot = toSessionSnapshot(sessionId, { ...session, ...newSession, sessionTotalMinor: integer(session["sessionTotalMinor"]) + charge.chargeMinor }, newBalance, null);
+            const snapshot = toSessionSnapshot(sessionId, { ...session, ...newSession }, newBalance, null);
             writes.push({
               update: {
                 name: fs.docName(receiptPath),
