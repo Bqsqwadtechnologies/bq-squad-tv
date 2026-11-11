@@ -6,6 +6,9 @@ import { ApiError } from "@/lib/server/firebase-admin";
 
 export type SessionDoc = Record<string, unknown>;
 
+const MICRO_UNITS_PER_MINOR = 1_000_000n;
+const MICRO_UNITS_PER_MINUTE = 60n * MICRO_UNITS_PER_MINOR;
+
 export function requireSessionOwned(session: SessionDoc | null, sessionId: string, uid: string): SessionDoc {
   if (!session) throw new ApiError(404, "SESSION_NOT_FOUND", "This playback session does not exist.");
   if (session["uid"] !== uid) throw new ApiError(403, "FORBIDDEN", "This playback session belongs to another account.");
@@ -21,10 +24,47 @@ export function elapsedSeconds(fromIso: unknown, to: Date = new Date()): number 
   return Math.max(0, Math.min(seconds, 300));
 }
 
-/** Cost in minor units for a number of elapsed seconds at a per-minute rate, rounded up to the nearest second of charge. */
+/**
+ * Converts cumulative watch time to minor units without rounding each
+ * heartbeat independently. BigInt keeps the intermediate micro-unit
+ * calculation exact; the final charge is rounded up once per cumulative total.
+ */
+export function costForCumulativeSeconds(seconds: number, ratePerMinuteMinor: number): number {
+  if (!Number.isSafeInteger(seconds) || seconds < 0 ||
+      !Number.isSafeInteger(ratePerMinuteMinor) || ratePerMinuteMinor < 0) {
+    throw new ApiError(400, "INVALID_METERING_INPUT", "Session metering values must be non-negative safe integers.");
+  }
+  const accruedMicroUnits = BigInt(seconds) * BigInt(ratePerMinuteMinor) * MICRO_UNITS_PER_MINOR;
+  const minor = (accruedMicroUnits + MICRO_UNITS_PER_MINUTE - 1n) / MICRO_UNITS_PER_MINUTE;
+  if (minor > BigInt(Number.MAX_SAFE_INTEGER)) {
+    throw new ApiError(400, "METERING_LIMIT_EXCEEDED", "The session charge exceeds the supported amount.");
+  }
+  return Number(minor);
+}
+
+/** Charge only the difference between the new cumulative total and prior settlement. */
+export function incrementalSessionCharge(
+  previouslyBilledSeconds: number,
+  newlyElapsedSeconds: number,
+  ratePerMinuteMinor: number,
+): { billedSeconds: number; chargeMinor: number; sessionTotalMinor: number } {
+  if (!Number.isSafeInteger(previouslyBilledSeconds) || previouslyBilledSeconds < 0 ||
+      !Number.isSafeInteger(newlyElapsedSeconds) || newlyElapsedSeconds < 0 ||
+      newlyElapsedSeconds > 300) {
+    throw new ApiError(400, "INVALID_METERING_INPUT", "Session elapsed time is invalid.");
+  }
+  const billedSeconds = previouslyBilledSeconds + newlyElapsedSeconds;
+  if (!Number.isSafeInteger(billedSeconds)) {
+    throw new ApiError(400, "METERING_LIMIT_EXCEEDED", "The session duration exceeds the supported amount.");
+  }
+  const previousTotal = costForCumulativeSeconds(previouslyBilledSeconds, ratePerMinuteMinor);
+  const sessionTotalMinor = costForCumulativeSeconds(billedSeconds, ratePerMinuteMinor);
+  return { billedSeconds, chargeMinor: sessionTotalMinor - previousTotal, sessionTotalMinor };
+}
+
+/** Compatibility helper: cost for a single interval. Prefer incrementalSessionCharge for settlement. */
 export function costForSeconds(seconds: number, ratePerMinuteMinor: number): number {
-  if (seconds <= 0 || ratePerMinuteMinor <= 0) return 0;
-  return Math.ceil((seconds * ratePerMinuteMinor) / 60);
+  return costForCumulativeSeconds(seconds, ratePerMinuteMinor);
 }
 
 export function toSessionSnapshot(
@@ -33,17 +73,18 @@ export function toSessionSnapshot(
   balanceMinor: number,
   playbackUrl: string | null,
 ): Record<string, unknown> {
-  const rate = typeof session["ratePerMinuteMinor"] === "number" ? (session["ratePerMinuteMinor"] as number) : 0;
-  const billedSeconds = typeof session["billedSeconds"] === "number" ? (session["billedSeconds"] as number) : 0;
-  const sessionTotalMinor = typeof session["sessionTotalMinor"] === "number" ? (session["sessionTotalMinor"] as number) : 0;
+  const rate = typeof session["ratePerMinuteMinor"] === "number" ? session["ratePerMinuteMinor"] as number : 0;
+  const billedSeconds = typeof session["billedSeconds"] === "number" ? session["billedSeconds"] as number : 0;
+  const sessionTotalMinor = typeof session["sessionTotalMinor"] === "number" ? session["sessionTotalMinor"] as number : 0;
   return {
     sessionId,
     playbackUrl: playbackUrl ?? (typeof session["playbackUrl"] === "string" ? session["playbackUrl"] : ""),
     ratePerMinuteMinor: rate,
     walletBalanceMinor: balanceMinor,
-    currency: typeof session["currency"] === "string" ? session["currency"] : "NGN",
+    currency: typeof session["currency"] === "string" ? session["currency"] as string : "NGN",
     timeRemainingSeconds: rate > 0 ? Math.floor((balanceMinor * 60) / rate) : 0,
-    sessionTotalMinor: sessionTotalMinor + costForSeconds(billedSeconds, 0),
+    billedSeconds,
+    sessionTotalMinor,
     active: session["active"] === true,
   };
 }
