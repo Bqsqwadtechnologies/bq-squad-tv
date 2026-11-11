@@ -9,7 +9,7 @@ import {
   requireSessionOwned,
   safeAddMinor,
   toSessionSnapshot,
-} from "./-shared";
+} from "../-shared";
 
 function integer(value: unknown, fallback = 0): number {
   return typeof value === "number" && Number.isSafeInteger(value) ? value : fallback;
