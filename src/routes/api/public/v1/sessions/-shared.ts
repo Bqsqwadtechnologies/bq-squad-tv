@@ -7,6 +7,34 @@ import { ApiError } from "@/lib/server/firebase-admin";
 
 export type SessionDoc = Record<string, unknown>;
 
+export type ReportedPlaybackState = "playing" | "paused" | "buffering" | "idle" | "ended";
+
+/**
+ * Conservative client-player evidence: bill only when consecutive samples
+ * both report active playback and the media position advanced. The interval
+ * is capped by server elapsed time; client clocks are never used.
+ *
+ * This is not cryptographic proof of playback. Production release also
+ * requires verified app attestation and provider-side authorization/telemetry.
+ */
+export function reportedPlaybackSeconds(
+  previousState: unknown,
+  currentState: ReportedPlaybackState,
+  previousPositionMs: unknown,
+  currentPositionMs: number,
+  serverElapsedSeconds: number,
+): number {
+  if (previousState !== "playing" || currentState !== "playing") return 0;
+  if (!Number.isSafeInteger(previousPositionMs) || (previousPositionMs as number) < 0 ||
+      !Number.isSafeInteger(currentPositionMs) || currentPositionMs < 0 ||
+      !Number.isSafeInteger(serverElapsedSeconds) || serverElapsedSeconds <= 0 ||
+      serverElapsedSeconds > 45) return 0;
+  const advancedMs = currentPositionMs - (previousPositionMs as number);
+  if (advancedMs < 1000) return 0;
+  return Math.min(serverElapsedSeconds, Math.floor(advancedMs / 1000));
+}
+
+
 export function requireSessionOwned(session: SessionDoc | null, sessionId: string, uid: string): SessionDoc {
   if (!session) throw new ApiError(404, "SESSION_NOT_FOUND", "This playback session does not exist.");
   if (session["uid"] !== uid) throw new ApiError(403, "FORBIDDEN", "This playback session belongs to another account.");
