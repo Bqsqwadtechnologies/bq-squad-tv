@@ -31,6 +31,6 @@ class SessionRepository {
    .requestIntegrityToken(IntegrityTokenRequest.builder().setNonce(nonce).build()).awaitResult().token()
   return api.start(auth,StartSessionRequest(channelId,integrity,UUID.randomUUID().toString()))
  }
- suspend fun heartbeat(sessionId:String,sequence:Long)=api.heartbeat(bearer(),sessionId,HeartbeatRequest(sequence))
+ suspend fun heartbeat(sessionId:String,sequence:Long,playbackState:String,playbackPositionMs:Long)=api.heartbeat(bearer(),sessionId,HeartbeatRequest(sequence,playbackState,playbackPositionMs))
  suspend fun end(sessionId:String)=api.end(bearer(),sessionId)
 }
