@@ -28,3 +28,8 @@ Each content asset selects one delivery mode:
 
 Both modes pass through the same BQ backend rights, territory, platform, wallet, device-limit and PAYG session checks. Provider credentials and source URLs remain server-side. Source URLs are encrypted at rest using the versioned AES-256-GCM key ring documented in [SECRETS_CHECKLIST.md](SECRETS_CHECKLIST.md). The producer receives a saved confirmation and cannot retrieve plaintext after saving; privileged admin reveal requires reauthentication and audit logging.
 
+## Provider registry status
+
+The server now has a configuration-neutral registry at `src/lib/server/streaming/registry.ts`. It resolves a content asset only when its delivery mode (`external` or `bq_hosted`) and provider ID match a registered adapter, and it rejects assets that are not `ready`. The registry does not select a vendor, create credentials or make an unconfigured provider available. Session-start and playback authorization still need to call the rights gate, resolve the asset's adapter, issue a short-lived grant, persist its authorization reference and revoke it when the session ends.
+
+
