@@ -12,7 +12,11 @@ import {
   toSessionSnapshot,
 } from "../-shared";
 
-const bodySchema = z.object({ clientSequence: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) });
+const bodySchema = z.object({
+  clientSequence: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  playbackState: z.enum(["playing", "paused", "buffering", "idle", "ended"]),
+  playbackPositionMs: z.number().int().nonnegative().max(31_536_000_000),
+});
 
 function integer(value: unknown, fallback = 0): number {
   return typeof value === "number" && Number.isSafeInteger(value) ? value : fallback;
@@ -31,7 +35,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           let rawBody: unknown;
           try { rawBody = await request.json(); }
           catch { throw new ApiError(400, "INVALID_REQUEST", "Request body must be valid JSON."); }
-          const { clientSequence } = bodySchema.parse(rawBody);
+          const { clientSequence, playbackState, playbackPositionMs } = bodySchema.parse(rawBody);
           const fs = await Firestore.create();
           const now = new Date();
           const nowIso = now.toISOString();
@@ -65,7 +69,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
               throw new ApiError(409, "HEARTBEAT_REPLAY", "This heartbeat sequence has already been processed.");
             }
 
-            const elapsed = elapsedSeconds(session["lastHeartbeatAt"], now);
+            const elapsed = elapsedSeconds(session["lastHeartbeatAt"], now);\n            const billableSeconds = reportedPlaybackSeconds(\n              session["lastPlaybackState"], playbackState as ReportedPlaybackState,\n              session["lastPlaybackPositionMs"], playbackPositionMs, elapsed,\n            );
             const rate = integer(session["ratePerMinuteMinor"]);
             const previousBilledSeconds = integer(session["billedSeconds"]);
             const balance = integer(wallet["balanceMinor"]);
@@ -75,7 +79,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             const dailyRemaining = typeof dailyLimit === "number" && Number.isSafeInteger(dailyLimit)
               ? Math.max(0, dailyLimit - spentToday)
               : Number.MAX_SAFE_INTEGER;
-            const affordableSeconds = maxAffordableSeconds(previousBilledSeconds, elapsed, rate, Math.min(balance, dailyRemaining));
+            const affordableSeconds = maxAffordableSeconds(previousBilledSeconds, billableSeconds, rate, Math.min(balance, dailyRemaining));
             const charge = incrementalSessionCharge(previousBilledSeconds, affordableSeconds, rate);
             const missedTwoHeartbeats = elapsed > 45;
             const exhausted = affordableSeconds < elapsed || balance <= charge.chargeMinor || dailyRemaining <= charge.chargeMinor;
