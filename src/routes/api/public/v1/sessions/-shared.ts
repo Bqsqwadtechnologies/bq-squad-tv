@@ -2,12 +2,10 @@
 // server timestamps only; client clocks and client-supplied elapsed time are
 // never trusted.
 
+import { cumulativeCostKobo } from "@/lib/server/money";
 import { ApiError } from "@/lib/server/firebase-admin";
 
 export type SessionDoc = Record<string, unknown>;
-
-const MICRO_UNITS_PER_MINOR = 1_000_000n;
-const MICRO_UNITS_PER_MINUTE = 60n * MICRO_UNITS_PER_MINOR;
 
 export function requireSessionOwned(session: SessionDoc | null, sessionId: string, uid: string): SessionDoc {
   if (!session) throw new ApiError(404, "SESSION_NOT_FOUND", "This playback session does not exist.");
@@ -23,17 +21,13 @@ export function elapsedSeconds(fromIso: unknown, to: Date = new Date()): number 
   return Math.max(0, Math.min(seconds, 300));
 }
 
+/**
+ * Session routes use NGN minor units (kobo). Delegate to the canonical exact
+ * money helper so heartbeat and end settlement use the same half-up rounding
+ * rule and cannot drift from other PAYG calculations.
+ */
 export function costForCumulativeSeconds(seconds: number, ratePerMinuteMinor: number): number {
-  if (!Number.isSafeInteger(seconds) || seconds < 0 ||
-      !Number.isSafeInteger(ratePerMinuteMinor) || ratePerMinuteMinor < 0) {
-    throw new ApiError(400, "INVALID_METERING_INPUT", "Session metering values must be non-negative safe integers.");
-  }
-  const accruedMicroUnits = BigInt(seconds) * BigInt(ratePerMinuteMinor) * MICRO_UNITS_PER_MINOR;
-  const minor = (accruedMicroUnits + MICRO_UNITS_PER_MINUTE - 1n) / MICRO_UNITS_PER_MINUTE;
-  if (minor > BigInt(Number.MAX_SAFE_INTEGER)) {
-    throw new ApiError(400, "METERING_LIMIT_EXCEEDED", "The session charge exceeds the supported amount.");
-  }
-  return Number(minor);
+  return cumulativeCostKobo(ratePerMinuteMinor, seconds);
 }
 
 export function incrementalSessionCharge(
