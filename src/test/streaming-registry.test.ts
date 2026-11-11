@@ -43,8 +43,8 @@ describe("hybrid streaming provider registry", () => {
       providerId: "bq_origin",
     }))).toBe(hosted);
     expect(registry.list()).toEqual([
-      { providerId: "licensed_provider", deliveryMode: "external" },
       { providerId: "bq_origin", deliveryMode: "bq_hosted" },
+      { providerId: "licensed_provider", deliveryMode: "external" },
     ]);
   });
 
