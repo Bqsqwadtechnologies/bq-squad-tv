@@ -19,7 +19,7 @@ jobs:
         run: bun install --frozen-lockfile
       # TanStack Router regenerates routeTree.gen.ts during the build. Build first
       # so the subsequent typecheck sees the complete current file-route registry.
-      - name: Build website and API
+      - name: Generate routes and build website/API
         run: bun run build
       - name: TypeScript
         run: bun x tsc --noEmit
