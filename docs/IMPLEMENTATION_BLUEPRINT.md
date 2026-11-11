@@ -263,3 +263,11 @@ The existing API/BILLING/STREAMING/SECRETS guides now point to the canonical mas
 - The verifier requires the expected package and one-use nonce, a recent token timestamp, PLAY_RECOGNIZED app verdict, MEETS_DEVICE_INTEGRITY device verdict and LICENSED app licensing verdict.
 - Added an atomic Firestore challenge-consumption helper that rejects missing, foreign, expired and previously used challenges.
 - Pure tests cover Play Integrity verdict validation and challenge ownership/expiry. These helpers are not yet wired into sessions/start; playback remains unavailable until the route is implemented and the Google Play service account is configured with Play Integrity API access.
+
+### Hybrid provider registry foundation (2026-11-11)
+
+- Added `src/lib/server/streaming/registry.ts`, a server-side registry that resolves an asset only to an adapter registered for its declared `external` or `bq_hosted` delivery mode.
+- The registry rejects unready assets, unknown providers, duplicate registrations and invalid provider identifiers.
+- Added `src/test/streaming-registry.test.ts` for mode isolation, missing-provider fail-closed behavior and duplicate registration.
+- This is a configuration-neutral foundation only. No real external provider or BQ-hosted storage/CDN adapter is registered, and the registry is not yet wired into playback authorization or session start.
+
