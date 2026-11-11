@@ -18,10 +18,13 @@ describe("session metering", () => {
     expect(elapsedSeconds("not-a-date", now)).toBe(0);
   });
 
-  it("uses integer micro-units and rounds only the cumulative total", () => {
+  it("uses the canonical half-up rule on the cumulative session total", () => {
     expect(costForCumulativeSeconds(1, 100)).toBe(2);
     expect(costForCumulativeSeconds(60, 100)).toBe(100);
     expect(costForCumulativeSeconds(61, 100)).toBe(102);
+    expect(costForCumulativeSeconds(29, 1)).toBe(0);
+    expect(costForCumulativeSeconds(30, 1)).toBe(1);
+    expect(costForCumulativeSeconds(90, 1)).toBe(2);
   });
 
   it("charges only the difference since the previous heartbeat", () => {
