@@ -190,6 +190,32 @@ export type QueryFilter = { field: string; op: "EQUAL" | "LESS_THAN" | "GREATER_
 
 export type FirestoreQueryTarget = { parentPath: string | null; collectionId: string };
 
+export type FirestoreBatchGetEntry = {
+  found?: { name: string; fields?: Record<string, FirestoreValue> };
+  missing?: string;
+};
+
+export function orderBatchGetDocuments(
+  requestedNames: string[],
+  responses: FirestoreBatchGetEntry[],
+): Array<Record<string, unknown> | null> {
+  const byName = new Map<string, FirestoreBatchGetEntry>();
+  for (const response of responses) {
+    const name = response.found?.name ?? response.missing;
+    if (!name || byName.has(name)) {
+      throw new ApiError(502, "FIRESTORE_ERROR", "Firestore returned an invalid transactional read response.");
+    }
+    byName.set(name, response);
+  }
+  return requestedNames.map((name) => {
+    const response = byName.get(name);
+    if (!response) {
+      throw new ApiError(502, "FIRESTORE_ERROR", "Firestore omitted a document from a transactional read.");
+    }
+    return response.found ? decodeFields(response.found.fields ?? {}) : null;
+  });
+}
+
 export function resolveFirestoreQueryTarget(collectionPath: string): FirestoreQueryTarget {
   const segments = collectionPath.split("/");
   if (
@@ -364,14 +390,11 @@ export class Firestore {
         headers: this.headers(),
         body: JSON.stringify({ documents: readPaths.map((path) => this.docName(path)), transaction }),
       });
-      const batchBody = (await batchGet.json()) as Array<{
-        found?: { fields?: Record<string, FirestoreValue> };
-        missing?: string;
-      }> & { error?: { message?: string } };
+      const batchBody = (await batchGet.json()) as FirestoreBatchGetEntry[] & { error?: { message?: string } };
       if (!batchGet.ok) {
         throw new ApiError(502, "FIRESTORE_ERROR", (batchBody as { error?: { message?: string } }).error?.message ?? "Firestore transactional read failed.");
       }
-      docs = batchBody.map((entry) => (entry.found ? decodeFields(entry.found.fields ?? {}) : null));
+      docs = orderBatchGetDocuments(readPaths.map((path) => this.docName(path)), batchBody);
     }
 
     const { result, writes } = await fn(docs);
