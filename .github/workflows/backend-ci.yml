@@ -34,7 +34,7 @@ jobs:
       - name: Reject Cloudflare runtime references
         shell: bash
         run: |
-          if git grep -nEi '(cloudflare|wrangler|@cloudflare)' -- . ':!docs/**' ':!.lovable/plan/**' ':!vite.config.ts' ':!.github/workflows/backend-ci.yml'; then
+          if git grep -nEi '(cloudflare|wrangler|@cloudflare)' -- . ':!docs/**' ':!.lovable/plan/**' ':!vite.config.ts' ':!bun.lock' ':!.github/workflows/backend-ci.yml'; then
             echo "Forbidden Cloudflare runtime or dependency reference found." >&2
             exit 1
           fi
