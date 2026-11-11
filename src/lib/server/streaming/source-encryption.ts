@@ -10,6 +10,13 @@ export type EncryptedStreamingSource = {
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
+/** Copies bytes into an ArrayBuffer-backed view accepted by Web Crypto typings. */
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
+
 function encodeBase64Url(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -46,7 +53,7 @@ async function importAesKey(keyBase64Url: string): Promise<CryptoKey> {
   if (raw.length !== 32) {
     throw new ApiError(503, "STREAMING_ENCRYPTION_NOT_CONFIGURED", "The streaming encryption key must contain 32 bytes.");
   }
-  return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+  return crypto.subtle.importKey("raw", toArrayBuffer(raw), { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
 }
 
 function associatedData(contentAssetId: string, keyVersion: string): Uint8Array {
@@ -70,9 +77,9 @@ export async function encryptStreamingSourceUrl(
   const key = await importAesKey(keyBase64Url);
   const nonce = crypto.getRandomValues(new Uint8Array(12));
   const ciphertext = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: nonce, additionalData: associatedData(contentAssetId, keyVersion), tagLength: 128 },
+    { name: "AES-GCM", iv: toArrayBuffer(nonce), additionalData: toArrayBuffer(associatedData(contentAssetId, keyVersion)), tagLength: 128 },
     key,
-    encoder.encode(normalizedUrl),
+    toArrayBuffer(encoder.encode(normalizedUrl)),
   );
   return {
     algorithm: "A256GCM",
@@ -100,12 +107,12 @@ export async function decryptStreamingSourceUrl(
     const plaintext = await crypto.subtle.decrypt(
       {
         name: "AES-GCM",
-        iv: decodeBase64Url(envelope.nonce),
-        additionalData: associatedData(contentAssetId, envelope.keyVersion),
+        iv: toArrayBuffer(decodeBase64Url(envelope.nonce)),
+        additionalData: toArrayBuffer(associatedData(contentAssetId, envelope.keyVersion)),
         tagLength: 128,
       },
       key,
-      decodeBase64Url(envelope.ciphertext),
+      toArrayBuffer(decodeBase64Url(envelope.ciphertext)),
     );
     return validateSourceUrl(decoder.decode(plaintext));
   } catch {
