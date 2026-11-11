@@ -111,7 +111,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                     description: "Platform share of channel viewing",
                     amountMinor: platformShare,
                     createdAt: nowIso,
-                    idempotencyKey: sessionId + ":" + (typeof session["lastClientSequence"] === "number" ? session["lastClientSequence"] + 1 : 1) + ":platform",
+                    idempotencyKey: sessionId + ":end:platform",
                   }),
                 },
                 currentDocument: { exists: false },

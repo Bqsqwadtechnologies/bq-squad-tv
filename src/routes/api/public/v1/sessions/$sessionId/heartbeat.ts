@@ -130,7 +130,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
                     description: "Platform share of channel viewing",
                     amountMinor: platformShare,
                     createdAt: nowIso,
-                    idempotencyKey: sessionId + ":" + (typeof session["lastClientSequence"] === "number" ? session["lastClientSequence"] + 1 : 1) + ":platform",
+                    idempotencyKey: sessionId + ":" + clientSequence + ":platform",
                   }),
                 },
                 currentDocument: { exists: false },
