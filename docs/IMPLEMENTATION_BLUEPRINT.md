@@ -244,3 +244,14 @@ The existing API/BILLING/STREAMING/SECRETS guides now point to the canonical mas
 **Integration status:** These are foundational helpers and tests. They are not yet wired into session start, playback authorization, upload submission or the admin URL-reveal route. No real streaming provider, storage/CDN vendor or production encryption key has been configured. Do not accept or publish real source URLs until those integrations and the external secret setup are complete.
 
 **CI status:** GitHub Actions reports the recent `backend-ci.yml` push runs as failed, but the GitHub API currently returns no job records for those runs. Therefore the exact failing step cannot be established from the available run metadata, and no passing build/test result is claimed. Resolve CI observability and run the full TypeScript, lint, Vitest and build suite before marking this code slice verified.
+
+
+### Playback-evidence metering update (2026-11-11)
+
+- The heartbeat request now carries clientSequence, Media3 playbackState and playbackPositionMs.
+- The server bills only when the previous and current samples both report playing, the media position advanced, and the advancement is bounded by server elapsed time (maximum 45 seconds per accepted heartbeat interval).
+- Paused, buffering, idle, ended, unchanged-position and stale-heartbeat intervals are not billed.
+- Session end does not charge an unconfirmed trailing interval.
+- Android player heartbeat calls now send the Media3 state and current media position.
+- This is conservative client-player telemetry, not cryptographic proof of playback. Play Integrity token verification and provider-side authorization/telemetry are still required before production playback.
+- Website/API build, TypeScript, lint and unit tests passed in the latest observed run before the CI guard update; Android unit tests and Kotlin compilation passed, but the Android ktlint job exposed pre-existing formatting violations in android/app/build.gradle.kts. A later CI run is required after the guard change.
