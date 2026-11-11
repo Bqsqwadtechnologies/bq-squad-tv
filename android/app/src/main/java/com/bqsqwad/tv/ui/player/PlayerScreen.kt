@@ -81,7 +81,7 @@ fun PlayerScreen(channelId:String,onExit:()->Unit,onTopUp:()->Unit={}) {
    var updated:SessionSnapshot?=null
    var attempt=0
    while(attempt<3 && updated==null){
-    runCatching{repo.heartbeat(active.sessionId,heartbeatSequence)}.onSuccess{updated=it}.onFailure{attempt++;if(attempt<3)delay(1000L shl attempt)}
+    runCatching{repo.heartbeat(active.sessionId,heartbeatSequence,reportedPlaybackState(player),player.currentPosition.coerceAtLeast(0L))}.onSuccess{updated=it}.onFailure{attempt++;if(attempt<3)delay(1000L shl attempt)}
    }
    if(updated==null){player.pause();error="Connection lost. Playback paused until billing status can be confirmed."}
    else{
@@ -101,10 +101,10 @@ fun PlayerScreen(channelId:String,onExit:()->Unit,onTopUp:()->Unit={}) {
   val owner=androidx.lifecycle.ProcessLifecycleOwner.get()
   val observer=androidx.lifecycle.LifecycleEventObserver{_,event->
    if(event==androidx.lifecycle.Lifecycle.Event.ON_START){
-    scope.launch{session?.let{s->runCatching{repo.heartbeat(s.sessionId,++heartbeatSequence)}.onSuccess{session=it}.onFailure{player.pause()}}}
+    scope.launch{session?.let{s->runCatching{repo.heartbeat(s.sessionId,++heartbeatSequence,reportedPlaybackState(player),player.currentPosition.coerceAtLeast(0L))}.onSuccess{session=it}.onFailure{player.pause()}}}
    }
    if(event==androidx.lifecycle.Lifecycle.Event.ON_STOP){
-    scope.launch{session?.let{s->runCatching{repo.heartbeat(s.sessionId,++heartbeatSequence)}.onSuccess{session=it}}}
+    scope.launch{session?.let{s->runCatching{repo.heartbeat(s.sessionId,++heartbeatSequence,reportedPlaybackState(player),player.currentPosition.coerceAtLeast(0L))}.onSuccess{session=it}}}
    }
   }
   owner.lifecycle.addObserver(observer)
@@ -161,3 +161,11 @@ fun PlayerScreen(channelId:String,onExit:()->Unit,onTopUp:()->Unit={}) {
  if(showTopUp)AlertDialog(onDismissRequest={},title={Text("Wallet balance exhausted")},text={Text("Playback is paused. Add credits to continue watching.")},confirmButton={TextButton(onClick={scope.launch{session?.let{s->runCatching{repo.end(s.sessionId)}};onTopUp()}}){Text("Top up wallet")}})
 }
 private fun formatMoney(minor:Long,currency:String):String=currency+" "+String.format("%.2f",minor/100.0)
+
+private fun reportedPlaybackState(player: ExoPlayer): String = when {
+ player.isPlaying -> "playing"
+ player.playbackState == Player.STATE_BUFFERING -> "buffering"
+ player.playbackState == Player.STATE_ENDED -> "ended"
+ player.playbackState == Player.STATE_IDLE -> "idle"
+ else -> "paused"
+}
