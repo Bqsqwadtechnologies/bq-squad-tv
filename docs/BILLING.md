@@ -9,8 +9,8 @@ Lovable Cloud edge functions are the sole authority for wallet balances, session
 1. `startSession` validates auth, server-calculated age, channel rights, geo restrictions, concurrent streams, wallet minimum and Play Integrity.
 2. Server creates the session with serverStartTime, active pricing rule, idempotency key and signed expiring playback URL.
 3. Android sends heartbeat every 15 seconds and on foreground/background transitions.
-4. Server computes elapsed seconds from server timestamps and atomically updates wallet + ledger using Firestore transactions.
-5. Server closes sessions on zero balance, policy failure or two missed heartbeats. `endSession` settles to exact server second and revokes token.
+4. Android reports the Media3 playback state and media position at each heartbeat. The server uses its own timestamp plus two consecutive samples; it bills only when both samples report playing and the media position advanced. Paused, buffering, idle, ended, stale or unchanged-position intervals are not charged. Wallet and ledger updates remain atomic Firestore transactions. Client telemetry is not cryptographic proof and must be backed by verified app attestation and provider authorization/telemetry before production.
+5. Server closes sessions on zero balance, policy failure or two missed heartbeats. `endSession` closes and revokes playback; an unconfirmed trailing interval is not charged.
 6. Store fractional per-second prices in integer micro-units of the smallest currency unit (NGN kobo micro-units). Never use floating point for authoritative settlement.
 
 ## Google Play top-ups
