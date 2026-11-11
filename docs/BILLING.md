@@ -1,3 +1,5 @@
+> **Canonical specification:** [MASTER_TECHNICAL_SPEC.md](MASTER_TECHNICAL_SPEC.md) supersedes any conflicting draft defaults in this legacy billing note. Producer revenue splits are contract-specific and versioned; no historical example percentage is an active default unless approved in an actual producer contract. The canonical rounding rule is cumulative half-up settlement with exact carry, not independent per-heartbeat rounding.
+
 # Billing and revenue authority
 
 ## Authority
