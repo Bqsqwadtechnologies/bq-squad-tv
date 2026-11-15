@@ -1,6 +1,7 @@
 package com.bqsqwad.tv.data.auth
 
 import com.bqsqwad.tv.BuildConfig
+import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.squareup.moshi.Moshi
@@ -29,6 +30,7 @@ class AuthRepository(
             .client(
                 OkHttpClient
                     .Builder()
+                    .addInterceptor(FirebaseAppCheckInterceptor())
                     .connectTimeout(15, TimeUnit.SECONDS)
                     .readTimeout(20, TimeUnit.SECONDS)
                     .build(),
