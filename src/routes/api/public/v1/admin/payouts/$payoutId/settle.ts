@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAdminModule } from "@/lib/server/roles";
 
@@ -19,26 +19,46 @@ export const Route = createFileRoute("/api/public/v1/admin/payouts/$payoutId/set
       const fs = await Firestore.create();
       await requireAdminModule(fs, actor, "payouts");
       const payoutPath = "payouts/" + payoutId;
+      const initial = await fs.getDoc(payoutPath);
+      if (!initial || typeof initial["uid"] !== "string") throw new ApiError(404, "PAYOUT_NOT_FOUND", "The payout request was not found.");
+      const uid = initial["uid"] as string;
+      const producerPath = "producers/" + uid;
       const auditPath = "auditLog/" + crypto.randomUUID();
       const now = new Date().toISOString();
-      const result = await fs.transact([payoutPath, auditPath], ([payout, audit]) => {
-        if (!payout) throw new ApiError(404, "PAYOUT_NOT_FOUND", "The payout request was not found.");
+      const result = await fs.transact([payoutPath, producerPath, auditPath], ([payout, producer, audit]) => {
+        if (!payout || payout["uid"] !== uid) throw new ApiError(404, "PAYOUT_NOT_FOUND", "The payout request was not found.");
+        if (!producer) throw new ApiError(503, "PRODUCER_ACCOUNT_MISSING", "The producer account is unavailable.");
         if (audit) throw new ApiError(409, "AUDIT_ID_CONFLICT", "Could not record payout settlement.");
         if (payout["status"] !== "APPROVED") throw new ApiError(409, "PAYOUT_NOT_APPROVED", "Only approved payouts can be marked settled.");
+        const amount = payout["amountMinor"];
+        const currency = typeof payout["currency"] === "string" ? payout["currency"] as string : "";
+        if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount < 1 || !/^[A-Z]{3}$/.test(currency)) {
+          throw new ApiError(409, "PAYOUT_RECORD_INVALID", "The payout record is invalid.");
+        }
+        const reserved = producer["payoutReservedByCurrency"] && typeof producer["payoutReservedByCurrency"] === "object"
+          ? producer["payoutReservedByCurrency"] as Record<string, unknown> : {};
+        const currentReserved = typeof reserved[currency] === "number" ? reserved[currency] as number : 0;
+        if (!Number.isSafeInteger(currentReserved) || currentReserved < amount) {
+          throw new ApiError(409, "PAYOUT_RESERVATION_MISMATCH", "The reserved producer earnings do not match this payout.");
+        }
+        const nextReserved = { ...reserved, [currency]: currentReserved - amount };
+        const producerFields = { payoutReservedByCurrency: nextReserved, updatedAt: now };
+        const writes: FirestoreWrite[] = [
+          { update: { name: fs.docName(payoutPath), fields: encodeFields({
+            status: "SETTLED", settlementReference: body.settlementReference,
+            settledAt: now, settledBy: actor.uid, settlementReason: body.reason, updatedAt: now,
+          }) }, updateMask: { fieldPaths: ["status", "settlementReference", "settledAt", "settledBy", "settlementReason", "updatedAt"] } },
+          { update: { name: fs.docName(producerPath), fields: encodeFields(producerFields) }, updateMask: { fieldPaths: Object.keys(producerFields) } },
+          { update: { name: fs.docName(auditPath), fields: encodeFields({
+            actorUid: actor.uid, action: "payout.settled", targetType: "payout",
+            targetId: payoutId, reason: body.reason,
+            metadata: { uid, amountMinor: amount, currency, settlementReference: body.settlementReference },
+            createdAt: now,
+          }) }, currentDocument: { exists: false } },
+        ];
         return {
           result: { payoutId, status: "SETTLED", settlementReference: body.settlementReference },
-          writes: [
-            { update: { name: fs.docName(payoutPath), fields: encodeFields({
-              status: "SETTLED", settlementReference: body.settlementReference,
-              settledAt: now, settledBy: actor.uid, settlementReason: body.reason, updatedAt: now,
-            }) }, updateMask: { fieldPaths: ["status", "settlementReference", "settledAt", "settledBy", "settlementReason", "updatedAt"] } },
-            { update: { name: fs.docName(auditPath), fields: encodeFields({
-              actorUid: actor.uid, action: "payout.settled", targetType: "payout",
-              targetId: payoutId, reason: body.reason,
-              metadata: { uid: payout["uid"], amountMinor: payout["amountMinor"], currency: payout["currency"], settlementReference: body.settlementReference },
-              createdAt: now,
-            }) }, currentDocument: { exists: false } },
-          ],
+          writes,
         };
       });
       return Response.json(result);
