@@ -1,6 +1,6 @@
 import { ApiError, type Firestore } from "./firebase-admin";
 import { requireChannelPermission } from "./channel-access";
-import { requireAdminModule } from "./roles";
+import { requirePlatformRole } from "./roles";
 
 export async function requireAuthorizedChannelUpload(
   fs: Firestore,
@@ -11,10 +11,9 @@ export async function requireAuthorizedChannelUpload(
   if (!channel) throw new ApiError(404, "CHANNEL_NOT_FOUND", "This channel does not exist.");
   const ownerUid = channel["ownerUid"];
   if (ownerUid === "platform") {
-    try {
-      await requireAdminModule(fs, user, "content");
-    } catch {
-      await requireAdminModule(fs, user, "channels");
+    const access = await requirePlatformRole(fs, user, "admin");
+    if (!access.adminModules.includes("content") && !access.adminModules.includes("channels")) {
+      throw new ApiError(403, "ADMIN_SCOPE_REQUIRED", "Your ZILLIONAIRE delegation does not include content or channel uploads.");
     }
     return;
   }
