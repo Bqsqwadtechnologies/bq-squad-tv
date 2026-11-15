@@ -1,1 +1,3 @@
 one-time Android Kotlin formatting trigger
+
+retry formatter using installed gradle
