@@ -165,6 +165,25 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
   }
 }
 
+export async function getWebAccount(): Promise<{
+  uid: string;
+  email: string | null;
+  emailVerified: boolean;
+} | null> {
+  const idToken = await getActiveWebIdToken();
+  if (!idToken) return null;
+  const response = await fetch("/api/public/v1/auth/web/me", {
+    headers: { authorization: `Bearer ${idToken}` },
+    cache: "no-store",
+  });
+  if (!response.ok) return null;
+  return response.json() as Promise<{
+    uid: string;
+    email: string | null;
+    emailVerified: boolean;
+  }>;
+}
+
 export async function signOutWeb(): Promise<void> {
   try {
     await fetch("/api/public/v1/auth/web/session/logout", {
