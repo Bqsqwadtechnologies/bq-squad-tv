@@ -59,7 +59,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
         headers: { authorization: "Bearer " + secret, "content-type": "application/json" },
         body: JSON.stringify({
           email: user.email, amount: offer.amountMinor, currency: "NGN", reference,
-          callback_url: process.env["PAYSTACK_CALLBACK_URL"],
+          callback_url: process.env["PAYSTACK_CALLBACK_URL"] || new URL("/wallet", request.url).toString(),
           metadata: { uid: user.uid, packageId, creditMinor: offer.creditMinor, platform: "website" },
         }),
       });
