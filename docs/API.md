@@ -54,7 +54,7 @@ These endpoints are implemented in source. They are not considered production-re
 - Paystack is the website payment provider only. Android digital wallet credits use Google Play Billing and server-side Google Play verification.
 
 ## Ads, push and producer
-- `GET /v1/ads/next?platform=&channelId=&slot=` — eligible campaign creative or null. Current server filters by active status, platform, placement, dates and channel targeting, and blocks selected gambling categories. Full age, geography, frequency-cap and campaign-priority enforcement remains incomplete.
+- `GET /v1/ads/next?platform=&channelId=&slot=` — eligible campaign creative or null. The server filters active status, platform, placement, dates, channel targeting, viewer age eligibility, campaign age rating, restricted categories and configured territory codes. Under-18 or age-unknown profiles do not receive adult-rated or unrated campaigns. Frequency caps and campaign-priority enforcement remain incomplete.
 - `POST /v1/ads/{adId}/events` — `{event,positionSeconds,platform,slot}`; event values: impression, start, quartile_25, quartile_50, quartile_75, complete, skip, click.
 - `POST /v1/devices/push-token` — `{token,platform:"android"|"web",deviceName?}`.
 - `GET /v1/producer/mobile-summary` — `{producerStatus,earningsBalanceMinor,earningsLifetimeMinor,currency,channelCount,publishedChannelCount,channels}`; enforce producer role on server.
