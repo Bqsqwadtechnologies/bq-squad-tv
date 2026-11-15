@@ -31,9 +31,6 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
           }
           const channelId = typeof asset["channelId"] === "string" ? asset["channelId"] : "";
           await requireAuthorizedChannelUpload(fs, channelId, user);
-              await requireAdminModule(fs, user, "channels");
-            }
-          }
           const path = typeof asset["sourcePath"] === "string" ? asset["sourcePath"] : "";
           const filename = typeof asset["sourceFilename"] === "string" ? asset["sourceFilename"] : "";
           const expectedSize = typeof asset["declaredSizeBytes"] === "number" ? asset["declaredSizeBytes"] : 0;
