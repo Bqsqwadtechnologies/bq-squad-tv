@@ -64,7 +64,12 @@ export const Route = createFileRoute("/api/public/v1/admin/config/pricing")({
         await writeAuditLog(fs, {
           actorUid: user.uid, action: "pricing.updated", targetType: "pricing", targetId: "config/pricing",
           reason: "Administrator updated versioned platform pricing",
-          metadata: { version, walletTopupCount: Object.keys(body.walletTopups).length, googlePlayProductCount: body.googlePlayProducts.length },
+          metadata: {
+            version,
+            maxConcurrentSessions: body.maxConcurrentSessions,
+            walletTopupCount: Object.keys(body.walletTopups).length,
+            googlePlayProductCount: body.googlePlayProducts.length,
+          },
         });
         return Response.json({ saved: true, version });
       } catch (error) { return errorBody(error); }
