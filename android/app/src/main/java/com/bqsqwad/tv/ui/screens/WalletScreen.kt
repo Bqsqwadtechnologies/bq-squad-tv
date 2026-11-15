@@ -11,7 +11,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.bqsqwad.tv.data.wallet.*
 import kotlinx.coroutines.launch
+import java.util.Currency
 import java.util.Locale
+import java.text.NumberFormat
+import java.math.BigDecimal
 
 @Composable
 fun WalletScreen(onBack: () -> Unit) {
@@ -110,7 +113,7 @@ fun WalletScreen(onBack: () -> Unit) {
                     Text(
                         entry.createdAt + " • " + entry.kind,
                     )
-                }, trailingContent = { Text(money(entry.amountMinor, wallet?.currency ?: "NGN")) })
+                }, trailingContent = { Text(money(entry.amountMinor, entry.currency ?: wallet?.currency ?: "USD")) })
             }
         }
     }
@@ -119,4 +122,13 @@ fun WalletScreen(onBack: () -> Unit) {
 private fun money(
     minor: Long,
     currency: String,
-) = currency + " " + String.format(Locale.US, "%.2f", minor / 100.0)
+): String {
+    val isoCurrency = runCatching { Currency.getInstance(currency) }.getOrElse { Currency.getInstance("USD") }
+    val digits = isoCurrency.defaultFractionDigits.coerceAtLeast(0)
+    val amount = BigDecimal.valueOf(minor, digits)
+    return NumberFormat.getCurrencyInstance(Locale.getDefault()).apply {
+        this.currency = isoCurrency
+        minimumFractionDigits = digits
+        maximumFractionDigits = digits
+    }.format(amount)
+}
