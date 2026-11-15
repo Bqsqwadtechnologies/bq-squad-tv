@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
-import { errorBody, parseBody, requireUser } from "@/lib/server/api";
+import { errorBody, getWallet, parseBody, requireUser } from "@/lib/server/api";
 import { getPricingConfig } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getPaystackTopup } from "@/lib/server/paystack";
@@ -44,22 +44,24 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
       const { packageId } = await parseBody(request, schema);
       const fs = await Firestore.create();
       await enforceRateLimit(fs, "paystack-init:" + user.uid, { limit: 5, windowMs: 60_000 });
+      const wallet = await getWallet(fs, user.uid);
+      const currency = wallet.currency;
       const pricing = await getPricingConfig(fs);
-      const offer = getPaystackTopup(pricing, packageId);
+      const offer = getPaystackTopup(pricing, packageId, currency);
       const reference = "BQTV_" + crypto.randomUUID().replace(/-/g, "");
       const secret = process.env["PAYSTACK_SECRET_KEY"];
       if (!secret) throw new ApiError(503, "PAYSTACK_NOT_CONFIGURED", "Website payments are not configured.");
       await fs.setDoc("payments/paystack_" + reference, {
         uid: user.uid, email: user.email, reference, packageId,
         amountMinor: offer.amountMinor, creditMinor: offer.creditMinor,
-        currency: "NGN", provider: "paystack", status: "initializing",
+        currency, provider: "paystack", status: "initializing",
         createdAt: new Date().toISOString(),
       }, { mustNotExist: true });
       const response = await fetch("https://api.paystack.co/transaction/initialize", {
         method: "POST",
         headers: { authorization: "Bearer " + secret, "content-type": "application/json" },
         body: JSON.stringify({
-          email: user.email, amount: offer.amountMinor, currency: "NGN", reference,
+          email: user.email, amount: offer.amountMinor, currency, reference,
           callback_url: process.env["PAYSTACK_CALLBACK_URL"] || new URL("/wallet", request.url).toString(),
           metadata: { uid: user.uid, packageId, creditMinor: offer.creditMinor, platform: "website" },
         }),
@@ -70,7 +72,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
         throw new ApiError(502, "PAYSTACK_INITIALIZE_FAILED", "The payment provider could not start checkout.");
       }
       await markPaymentStatus(fs, "payments/paystack_" + reference, user.uid, "pending");
-      return Response.json({ authorizationUrl: result.data.authorization_url, reference, amountMinor: offer.amountMinor, currency: "NGN" }, { status: 201 });
+      return Response.json({ authorizationUrl: result.data.authorization_url, reference, amountMinor: offer.amountMinor, currency }, { status: 201 });
     } catch (error) { return errorBody(error); }
   } } },
 });
