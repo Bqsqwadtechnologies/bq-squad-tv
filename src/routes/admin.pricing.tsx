@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { LoaderCircle, ShieldCheck } from "lucide-react";
-import { signInWithEmailPassword } from "@/lib/firebase-web-auth";
+import { getWebAuthHeaders, signInWithEmailPassword } from "@/lib/firebase-web-auth";
 
 export const Route = createFileRoute("/admin/pricing")({
   component: AdminPricingPage,
