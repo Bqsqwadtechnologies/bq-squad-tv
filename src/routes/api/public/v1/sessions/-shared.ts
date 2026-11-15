@@ -50,8 +50,8 @@ export function elapsedSeconds(fromIso: unknown, to: Date = new Date()): number 
 }
 
 /**
- * Session routes use NGN minor units (kobo). Delegate to the canonical exact
- * money helper so heartbeat and end settlement use the same half-up rounding
+ * Session routes use the viewer wallet currency's minor units. Delegate to the
+ * canonical exact money helper so heartbeat and end settlement use the same half-up rounding
  * rule and cannot drift from other PAYG calculations.
  */
 export function costForCumulativeSeconds(seconds: number, ratePerMinuteMinor: number): number {
