@@ -76,7 +76,7 @@ export const Route = createFileRoute("/api/public/v1/admin/notifications")({
           continue;
         }
 
-        let delivery = { sentCount: 0, failedCount: 1, deviceCount: 0 };
+        let delivery = { sentCount: 0, failedCount: 1, deviceCount: 1 };
         try {
           delivery = await sendPushNotificationToUser(fs, recipientUid, {
             notificationId,
