@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   getActiveWebIdToken,
+  getWebAuthHeaders,
   getWebAccount,
   restoreWebSession,
 } from "@/lib/firebase-web-auth";
@@ -59,7 +60,7 @@ function WalletPage() {
   const [error, setError] = useState("");
 
   const loadWallet = useCallback(async (idToken: string) => {
-    const headers = { authorization: `Bearer ${idToken}` };
+    const headers = await getWebAuthHeaders(idToken);
     const [walletResponse, ledgerResponse, topupsResponse] = await Promise.all([
       fetch("/api/public/v1/wallet", { headers, cache: "no-store" }),
       fetch("/api/public/v1/wallet/ledger?limit=25", { headers, cache: "no-store" }),
@@ -104,7 +105,7 @@ function WalletPage() {
           const response = await fetch("/api/public/v1/payments/paystack/verify", {
             method: "POST",
             headers: {
-              authorization: `Bearer ${currentToken}`,
+              ...(await getWebAuthHeaders(currentToken)),
               "content-type": "application/json",
             },
             body: JSON.stringify({ reference }),
@@ -136,7 +137,7 @@ function WalletPage() {
       const response = await fetch("/api/public/v1/payments/paystack/initialize", {
         method: "POST",
         headers: {
-          authorization: `Bearer ${token}`,
+          ...(await getWebAuthHeaders(token)),
           "content-type": "application/json",
         },
         body: JSON.stringify({ packageId }),
