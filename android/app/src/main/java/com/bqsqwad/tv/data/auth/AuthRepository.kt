@@ -70,12 +70,12 @@ class AuthRepository(
         )
     }
 
-    suspend fun resendEmailVerification() {
+    suspend fun resendEmailVerification(): Boolean {
         val user = auth.currentUser ?: error("Sign in before requesting email verification.")
         user.reload().awaitResult()
-        if (!user.isEmailVerified) {
-            profileApi.sendEmailVerificationCode(currentBearerToken())
-        }
+        if (user.isEmailVerified) return true
+        val response = profileApi.sendEmailVerificationCode(currentBearerToken())
+        return response.alreadyVerified == true
     }
 
     suspend fun verifyEmailCode(code: String): Boolean {
