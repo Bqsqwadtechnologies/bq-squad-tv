@@ -26,13 +26,7 @@ export const Route = createFileRoute("/api/public/v1/ads/next")({
       });
       const now = Date.now();
       const eligible = campaigns.filter(campaign => {
-        const category = typeof campaign["category"] === "string"
-          ? campaign["category"].toLowerCase().replace(/[\s-]+/g, "_") : "";
-        if (!category || blockedAdCategories.has(category)) return false;
-        if (!profile.adultEligible && isAdultRestricted(campaign)) return false;
-        const territories = campaign["territoryCodes"];
-        if (Array.isArray(territories) && territories.length > 0 &&
-            (!viewerCountry || !territories.includes(viewerCountry))) return false;
+        if (!isAdSuitableForViewer(campaign, profile.adultEligible, viewerCountry)) return false;
         return Array.isArray(campaign["platforms"]) && campaign["platforms"].includes(platform) &&
         Array.isArray(campaign["placements"]) && campaign["placements"].includes(slot) &&
         (!campaign["startsAt"] || (typeof campaign["startsAt"] === "string" && Date.parse(campaign["startsAt"]) <= now)) &&
