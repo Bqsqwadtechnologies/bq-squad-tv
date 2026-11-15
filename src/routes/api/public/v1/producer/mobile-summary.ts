@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { requirePlatformRole } from "@/lib/server/roles";
+import { currencyForCountry } from "@/lib/server/currency";
 
 function amount(value: unknown): number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : 0;
@@ -13,15 +14,27 @@ export const Route = createFileRoute("/api/public/v1/producer/mobile-summary")({
       const user = await requireUser(request);
       const fs = await Firestore.create();
       await requirePlatformRole(fs, user, "producer");
-      const [producer, channels] = await Promise.all([
+      const [producer, profile, channels] = await Promise.all([
         fs.getDoc("producers/" + user.uid),
+        fs.getDoc("users/" + user.uid),
         fs.query("channels", { filters: [{ field: "ownerUid", op: "EQUAL", value: user.uid }], limit: 100 }),
       ]);
+      const currency = currencyForCountry(profile?.["countryCode"]);
+      const earningsByCurrency = producer?.["earningsBalanceByCurrency"] && typeof producer["earningsBalanceByCurrency"] === "object"
+        ? producer["earningsBalanceByCurrency"] as Record<string, unknown> : {};
+      const earningsLifetimeByCurrency = producer?.["earningsLifetimeByCurrency"] && typeof producer["earningsLifetimeByCurrency"] === "object"
+        ? producer["earningsLifetimeByCurrency"] as Record<string, unknown> : {};
+      const earningsBalanceMinor = typeof earningsByCurrency[currency] === "number"
+        ? amount(earningsByCurrency[currency])
+        : currency === "NGN" ? amount(producer?.["earningsBalanceMinor"]) : 0;
       return Response.json({
         producerStatus: typeof producer?.["planStatus"] === "string" ? producer["planStatus"] : "UNKNOWN",
-        earningsBalanceMinor: amount(producer?.["earningsBalanceMinor"]),
-        earningsLifetimeMinor: amount(producer?.["earningsLifetimeMinor"]),
-        currency: "NGN",
+        earningsBalanceMinor,
+        earningsLifetimeMinor: typeof earningsLifetimeByCurrency[currency] === "number"
+          ? amount(earningsLifetimeByCurrency[currency])
+          : currency === "NGN" ? amount(producer?.["earningsLifetimeMinor"]) : 0,
+        earningsByCurrency,
+        currency,
         channelCount: channels.length,
         publishedChannelCount: channels.filter(channel => channel["published"] === true).length,
         channels: channels.slice(0, 20).map(channel => ({
