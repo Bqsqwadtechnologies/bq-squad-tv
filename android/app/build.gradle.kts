@@ -41,7 +41,7 @@ android {
         buildConfigField(
             "String",
             "API_BASE_URL",
-            quoted("API_BASE_URL", "https://YOUR-LOVABLE-CLOUD-ENDPOINT.invalid"),
+            quoted("API_BASE_URL", "https://bqsqwad.com"),
         )
         buildConfigField(
             "String",
@@ -51,7 +51,7 @@ android {
         buildConfigField(
             "String",
             "PRODUCER_CONSOLE_URL",
-            quoted("PRODUCER_CONSOLE_URL", "https://YOUR-WEBSITE/producer"),
+            quoted("PRODUCER_CONSOLE_URL", "https://bqsqwad.com/producer"),
         )
     }
 
