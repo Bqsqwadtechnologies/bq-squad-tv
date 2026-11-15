@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Firestore } from "@/lib/server/firebase-admin";\nimport { requireAppCheck } from "@/lib/server/firebase-app-check";
+import { Firestore } from "@/lib/server/firebase-admin";
+import { requireAppCheck } from "@/lib/server/firebase-app-check";
 import { errorBody } from "@/lib/server/api";
 import { clearWebRefreshCookie, readWebRefreshCookie, requireSameOrigin, revokeWebRefreshSession } from "@/lib/server/web-session";
 
