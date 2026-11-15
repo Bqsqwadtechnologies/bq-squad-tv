@@ -71,3 +71,12 @@ Configure these values in Lovable Cloud → Secrets before enabling producer sou
 Keep old key versions available during rotation until all encrypted records have been re-encrypted or intentionally retired. Generate keys with a cryptographically secure random generator, store them only in Lovable Cloud Secrets, restrict who can reveal/manage them, and test recovery before production. Never paste key values into GitHub, source code, Android resources, browser configuration, tickets or logs.
 
 Provider-specific API credentials and webhook signing keys are added only after a provider has been selected and its contract/security requirements reviewed. Use server-only secret names agreed during provider onboarding; do not expose them to clients.
+
+
+### Firebase App Check rollout
+
+- Android source initializes the Play Integrity App Check provider and attaches App Check tokens to API requests.
+- Website source exchanges reCAPTCHA Enterprise tokens for Firebase App Check tokens and attaches them to API requests.
+- The server verifies `X-Firebase-AppCheck` tokens when `APP_CHECK_ENFORCED=true`.
+- Before enabling enforcement, register the Android app and website in Firebase App Check, configure Play Integrity and reCAPTCHA Enterprise, authorize the website domains, and confirm the service account has the Firebase App Check Token Verifier permission.
+- The server enforcement switch intentionally defaults to off until both clients are configured; do not enable it prematurely or sign-in/playback/payment API requests will be rejected.
