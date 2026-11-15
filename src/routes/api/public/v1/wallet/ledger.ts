@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { decodeLedgerCursor, encodeLedgerCursor } from "@/lib/server/ledger";
+import { getWallet } from "@/lib/server/api";
 
 const limitSchema = z.coerce.number().int().min(1).max(100).default(25);
 
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/api/public/v1/wallet/ledger")({
           const limit = limitSchema.parse(url.searchParams.get("limit") ?? 25);
           const cursor = decodeLedgerCursor(url.searchParams.get("cursor"));
           const fs = await Firestore.create();
+          const wallet = await getWallet(fs, user.uid);
           const rows = await fs.query("ledger", {
             filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
             orderByField: "createdAt",
@@ -31,12 +33,13 @@ export const Route = createFileRoute("/api/public/v1/wallet/ledger")({
             amountMinor: typeof row["amountMinor"] === "number" && Number.isSafeInteger(row["amountMinor"]) ? row["amountMinor"] : 0,
             createdAt: typeof row["createdAt"] === "string" ? row["createdAt"] : "",
             kind: typeof row["kind"] === "string" ? row["kind"] : "adjustment",
+            currency: typeof row["currency"] === "string" ? row["currency"] : wallet.currency,
           }));
           const last = page.at(-1);
           const nextCursor = hasMore && last && typeof last["createdAt"] === "string"
             ? encodeLedgerCursor({ createdAt: last["createdAt"], id: last.__id })
             : null;
-          return Response.json({ items, nextCursor });
+          return Response.json({ items, nextCursor, currency: wallet.currency }, { headers: { "cache-control": "no-store" } });
         } catch (error) {
           return errorBody(error);
         }
