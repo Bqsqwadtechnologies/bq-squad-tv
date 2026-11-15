@@ -26,6 +26,7 @@ type LedgerItem = {
 type Topup = {
   packageId: string;
   amountMinor: number;
+  displayAmountMinor?: number;
   creditMinor: number;
   currency: string;
 };
@@ -202,7 +203,7 @@ function WalletPage() {
                         <article key={item.packageId} className="rounded-2xl border border-white/10 bg-[#030b2a]/55 p-4">
                           <p className="text-xs uppercase tracking-[0.14em] text-cyan-200">{item.packageId}</p>
                           <p className="mt-2 text-xl font-extrabold">{formatMoney(item.creditMinor, item.currency)} credit</p>
-                          <p className="mt-1 text-sm text-blue-100/60">Pay {formatMoney(item.amountMinor, item.currency)}</p>
+                          <p className="mt-1 text-sm text-blue-100/60">Pay {formatMoney(item.displayAmountMinor ?? item.amountMinor, item.currency)}</p>
                           <button
                             type="button"
                             disabled={busyPackage !== ""}
