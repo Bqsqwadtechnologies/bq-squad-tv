@@ -74,9 +74,12 @@ export { toArrayBuffer };
 
 // ---- service-account OAuth access token ----
 
-let cachedAccessToken: { token: string; expiresAt: number } | null = null;
+const cachedAccessTokens = new Map<string, { token: string; expiresAt: number }>();
 
-export async function getAdminAccessToken(): Promise<string> {
+export async function getAdminAccessToken(
+  scope = "https://www.googleapis.com/auth/datastore",
+): Promise<string> {
+  const cachedAccessToken = cachedAccessTokens.get(scope);
   if (cachedAccessToken && cachedAccessToken.expiresAt > Date.now() + 60_000) {
     return cachedAccessToken.token;
   }
@@ -87,7 +90,7 @@ export async function getAdminAccessToken(): Promise<string> {
     base64UrlEncode(
       JSON.stringify({
         iss: serviceAccount.client_email,
-        scope: "https://www.googleapis.com/auth/datastore",
+        scope,
         aud: "https://oauth2.googleapis.com/token",
         iat: now,
         exp: now + 3600,
@@ -117,10 +120,10 @@ export async function getAdminAccessToken(): Promise<string> {
   if (!response.ok || !payload.access_token) {
     throw new ApiError(502, "GOOGLE_AUTH_FAILED", "Could not obtain a Google access token.");
   }
-  cachedAccessToken = {
+  cachedAccessTokens.set(scope, {
     token: payload.access_token,
     expiresAt: Date.now() + (payload.expires_in ?? 3600) * 1000,
-  };
+  });
   return payload.access_token;
 }
 
