@@ -30,7 +30,7 @@ Android uses Google Play Billing for digital credit purchases. The app sends pur
 | `BREVO_SENDER_EMAIL` | Optional sender address; defaults in code to `verification@bqsqwad.com` and must be verified in Brevo |
 | `BREVO_SENDER_NAME` | Optional display name; defaults to `BQ SQWAD TV` |
 
-The API key must never be exposed to browser or Android clients. OTP generation, hashing, expiry, one-time consumption and rate limits remain backend responsibilities; the email sender alone does not implement verification.
+The API key must never be exposed to browser or Android clients. The backend generates, hashes, expires, rate-limits and consumes six-digit email-verification codes. The current password-recovery UI still uses Firebase password-reset email links.
 
 ## Shared backend / Firebase
 
@@ -38,7 +38,7 @@ The API key must never be exposed to browser or Android clients. OTP generation,
 |---|---|
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | Full service-account JSON used for Firebase Admin and, when separately configured, Google Play verification. The backend mints separate OAuth tokens with the required API scopes. |
 | `ADMIN_EMAIL` | Owner/admin email address |
-| `GOOGLE_WEB_CLIENT_ID` | OAuth Web client ID used by Google sign-in, if the backend needs to distribute it to Android at runtime |
+| `GOOGLE_WEB_CLIENT_ID` or `web_client_id` | Public OAuth Web client ID used by Google sign-in on the website and Android. The website config endpoint accepts either environment name. |
 | `FIREBASE_WEB_CONFIG_JSON` | Firebase web client configuration JSON, only if the website is configured to retrieve its public Firebase client config from the backend |
 
 The Firebase Android SDK still requires the generated `google-services.json` file at `android/app/google-services.json`. That file contains client configuration and is not a private service-account key. It cannot be replaced by the Firebase Admin service-account JSON. Website Firebase client configuration is also public client configuration; keep access rules and authorization on the server.
@@ -46,7 +46,7 @@ The Firebase Android SDK still requires the generated `google-services.json` fil
 ## Not needed yet
 
 - No streaming-provider API key or webhook secret: no stream provider has been selected.
-- No email-provider key: email delivery provider has not been selected.
+- Brevo is the current transactional email provider; configure `BREVO_API_KEY` and verify the sender address before production OTP delivery.
 - No ad-network credentials: do not add these until an ad provider is selected.
 - No separate Paystack webhook secret: validate the webhook signature using the Paystack secret key as documented by Paystack.
 
