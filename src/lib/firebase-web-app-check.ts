@@ -13,6 +13,7 @@ declare global {
 
 type WebAppCheckConfig = {
   recaptchaSiteKey?: string;
+  firebaseWebAppId?: string;
 };
 
 type AppCheckExchangeResponse = {
@@ -20,19 +21,22 @@ type AppCheckExchangeResponse = {
   ttl?: string;
 };
 
-let siteKeyPromise: Promise<string | null> | null = null;
+let appCheckConfigPromise: Promise<{ siteKey: string | null; appId: string | null }> | null = null;
 let scriptPromise: Promise<void> | null = null;
 let cachedToken: string | null = null;
 let cachedTokenExpiresAt = 0;
 
-async function getRecaptchaSiteKey(): Promise<string | null> {
-  if (!siteKeyPromise) {
-    siteKeyPromise = fetch("/api/public/v1/auth/web/config", { cache: "no-store" })
+async function getAppCheckConfig(): Promise<{ siteKey: string | null; appId: string | null }> {
+  if (!appCheckConfigPromise) {
+    appCheckConfigPromise = fetch("/api/public/v1/auth/web/config", { cache: "no-store" })
       .then(response => response.json() as Promise<WebAppCheckConfig>)
-      .then(config => config.recaptchaSiteKey?.trim() || null)
-      .catch(() => null);
+      .then(config => ({
+        siteKey: config.recaptchaSiteKey?.trim() || null,
+        appId: config.firebaseWebAppId?.trim() || null,
+      }))
+      .catch(() => ({ siteKey: null, appId: null }));
   }
-  return siteKeyPromise;
+  return appCheckConfigPromise;
 }
 
 async function loadRecaptchaEnterprise(siteKey: string): Promise<void> {
@@ -59,8 +63,8 @@ async function loadRecaptchaEnterprise(siteKey: string): Promise<void> {
 }
 
 export async function getWebAppCheckToken(): Promise<string | null> {
-  const siteKey = await getRecaptchaSiteKey();
-  if (!siteKey) return null;
+  const { siteKey, appId } = await getAppCheckConfig();
+  if (!siteKey || !appId) return null;
   if (cachedToken && Date.now() < cachedTokenExpiresAt) return cachedToken;
 
   await loadRecaptchaEnterprise(siteKey);
@@ -77,7 +81,7 @@ export async function getWebAppCheckToken(): Promise<string | null> {
   });
 
   const response = await fetch(
-    `https://firebaseappcheck.googleapis.com/v1/projects/${firebaseProjectNumber}:exchangeRecaptchaEnterpriseToken?key=${firebaseApiKey}`,
+    `https://firebaseappcheck.googleapis.com/v1/projects/${firebaseProjectNumber}/apps/${appId}:exchangeRecaptchaEnterpriseToken?key=${firebaseApiKey}`,
     {
       method: "POST",
       headers: { "content-type": "application/json" },
