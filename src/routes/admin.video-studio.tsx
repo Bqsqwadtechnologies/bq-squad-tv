@@ -19,12 +19,13 @@ function encodeMetadata(value: string) {
 }
 
 async function tusUpload(file: File, endpoint: string, signature: string, path: string, onProgress: (value: number) => void) {
-  const metadata = [
+  const metadataFields: Array<[string, string]> = [
     ["bucketName", "bq-sqwad-source-media"],
     ["objectName", path],
     ["contentType", file.type],
     ["cacheControl", "3600"],
-  ].map(([key, value]) => key + " " + encodeMetadata(value)).join(",");
+  ];
+  const metadata = metadataFields.map(([key, value]) => key + " " + encodeMetadata(value)).join(",");
   const created = await fetch(endpoint, {
     method: "POST",
     headers: {
