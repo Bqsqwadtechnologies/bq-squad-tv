@@ -48,11 +48,11 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        let rotatedWebCookie: string | null = null;
         try {
           const user = await requireUser(request);
           const body = await parseBody(request, bodySchema);
           const fs = await Firestore.create();
-          let rotatedWebCookie: string | null = null;
           if (body.clientPlatform === "web") {
             requireSameOrigin(request);
             const refreshToken = readWebRefreshCookie(request);
@@ -223,7 +223,17 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             sessionTotalMinor: 0, active: true,
           }, { status: 201, ...(responseHeaders ? { headers: responseHeaders } : {}) });
         } catch (error) {
-          return errorBody(error);
+          const response = errorBody(error);
+          if (!rotatedWebCookie) return response;
+          const headers = new Headers(response.headers);
+          headers.set("set-cookie", rotatedWebCookie);
+          headers.set("cache-control", "no-store");
+          headers.set("pragma", "no-cache");
+          return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers,
+          });
         }
       },
     },
