@@ -1,13 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   EMAIL_OTP_MAX_ATTEMPTS,
   EMAIL_OTP_TTL_MS,
   equalOtpHashes,
+  hashEmailAddress,
   generateEmailOtp,
   hashEmailOtp,
   normalizeEmail,
   validEmail,
 } from "@/lib/server/email/otp";
+
+const originalServiceAccount = process.env["FIREBASE_SERVICE_ACCOUNT_JSON"];
+
+beforeAll(() => {
+  process.env["FIREBASE_SERVICE_ACCOUNT_JSON"] = JSON.stringify({
+    client_email: "test@example.test",
+    private_key: "not-a-real-key",
+    project_id: "test-project",
+  });
+});
+
+afterAll(() => {
+  if (originalServiceAccount === undefined) delete process.env["FIREBASE_SERVICE_ACCOUNT_JSON"];
+  else process.env["FIREBASE_SERVICE_ACCOUNT_JSON"] = originalServiceAccount;
+});
 
 describe("email OTP security primitives", () => {
   it("generates six-digit codes including leading zeroes", () => {
@@ -30,6 +46,13 @@ describe("email OTP security primitives", () => {
   it("uses bounded expiry and attempt limits", () => {
     expect(EMAIL_OTP_TTL_MS).toBe(10 * 60 * 1000);
     expect(EMAIL_OTP_MAX_ATTEMPTS).toBe(5);
+  });
+
+  it("hashes normalized email addresses for privacy-safe rate-limit keys", async () => {
+    const first = await hashEmailAddress(" Isaac@Example.com ");
+    const second = await hashEmailAddress("isaac@example.com");
+    expect(first).toBe(second);
+    expect(first).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it("normalizes and validates email addresses", () => {
