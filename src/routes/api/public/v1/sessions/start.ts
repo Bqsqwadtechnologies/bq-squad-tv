@@ -127,7 +127,9 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
 
           const profile = await getUserProfile(fs, user.uid);
           requireAdultForContent(profile, channel["adultOnly"]);
-          const viewerCountry = request.headers.get("cf-ipcountry")?.trim().toUpperCase() ?? "";
+          const viewerCountry = typeof (await fs.getDoc("users/" + user.uid))?.["countryCode"] === "string"
+            ? String((await fs.getDoc("users/" + user.uid))?.["countryCode"]).trim().toUpperCase()
+            : "";
           const rights = asset["license"] && typeof asset["license"] === "object"
             ? asset["license"] as Record<string, unknown>
             : channel["license"] && typeof channel["license"] === "object"
@@ -218,7 +220,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             uid: user.uid, channelId: body.channelId, contentAssetId: assetId,
             producerUid: producerUid || null, producerShareBps: shareBps, deliveryMode: "bq_hosted",
             storagePath, playbackUrl, clientPlatform: body.clientPlatform, viewerCountry,
-            ratePerMinuteMinor, currency, status: "active", active: true,
+            ratePerMinuteMinor, currency, paidPlayback, status: "active", active: true,
             startedAt: nowIso, lastHeartbeatAt: nowIso, lastClientSequence: 0,
             lastPlaybackState: "idle", lastPlaybackPositionMs: 0, billedSeconds: 0,
             sessionTotalMinor: 0, walletBalanceMinor: balanceMinor,
