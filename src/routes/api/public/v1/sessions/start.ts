@@ -138,32 +138,46 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             license: rights,
             viewerCountry,
             platform: body.clientPlatform as PlaybackPlatform,
-            paidPlayback: true,
+            paidPlayback: channel["paid"] !== false,
           });
 
           const pricing = await getPricingConfig(fs);
-          const ratePerMinuteMinor = requireMinorUnitAmount(
-            asset["ratePerMinuteMinor"] ?? channel["ratePerMinuteMinor"] ?? pricing["defaultRatePerMinuteMinor"],
-            "ratePerMinuteMinor",
-          );
-          if (ratePerMinuteMinor < 1) throw new ApiError(503, "CHANNEL_PRICE_INVALID", "This channel does not have a valid paid playback price.");
-          const minimumBalanceMinor = requireMinorUnitAmount(
-            channel["minimumBalanceMinor"] ?? pricing["minimumSessionBalanceMinor"] ?? 100,
-            "minimumBalanceMinor",
-          );
+          const paidPlayback = channel["paid"] !== false;
+          const ratePerMinuteMinor = paidPlayback
+            ? requireMinorUnitAmount(
+                asset["ratePerMinuteMinor"] ?? channel["ratePerMinuteMinor"] ?? pricing["defaultRatePerMinuteMinor"],
+                "ratePerMinuteMinor",
+              )
+            : 0;
+          if (paidPlayback && ratePerMinuteMinor < 1) {
+            throw new ApiError(503, "CHANNEL_PRICE_INVALID", "This paid channel does not have a valid per-minute price.");
+          }
+          const minimumBalanceMinor = paidPlayback
+            ? requireMinorUnitAmount(channel["minimumBalanceMinor"] ?? pricing["minimumSessionBalanceMinor"] ?? 100, "minimumBalanceMinor")
+            : 0;
           const wallet = await getWallet(fs, user.uid);
           const balanceMinor = requireMinorUnitAmount(wallet.balanceMinor, "wallet balance");
-          if (balanceMinor < minimumBalanceMinor) throw new ApiError(402, "INSUFFICIENT_FUNDS", "Your wallet balance is too low to start this channel.");
-          if (wallet.dailySpendLimitMinor !== null && wallet.spentTodayMinor >= wallet.dailySpendLimitMinor) {
+          if (paidPlayback && balanceMinor < minimumBalanceMinor) {
+            throw new ApiError(402, "INSUFFICIENT_FUNDS", "Your wallet balance is too low to start this channel.");
+          }
+          if (paidPlayback && wallet.dailySpendLimitMinor !== null && wallet.spentTodayMinor >= wallet.dailySpendLimitMinor) {
             throw new ApiError(402, "DAILY_SPEND_LIMIT_REACHED", "Your daily viewing limit has been reached.");
           }
 
-          const producerUid = typeof channel["ownerUid"] === "string" ? channel["ownerUid"] : "";
-          if (!/^[A-Za-z0-9_-]{1,128}$/.test(producerUid)) throw new ApiError(503, "CHANNEL_OWNER_INVALID", "The channel owner is not configured for revenue settlement.");
-          const producer = await fs.getDoc("producers/" + producerUid);
-          if (!producer) throw new ApiError(503, "PRODUCER_ACCOUNT_MISSING", "The channel producer account is not available.");
-          const shareBps = integer(channel["producerShareBps"] ?? pricing["defaultProducerShareBps"]);
-          if (shareBps === null || shareBps > 10_000) throw new ApiError(503, "REVENUE_SPLIT_INVALID", "The channel revenue split is not configured correctly.");
+          const channelOwnerUid = typeof channel["ownerUid"] === "string" ? channel["ownerUid"] : "";
+          const platformOwned = channelOwnerUid === "platform";
+          const producerUid = platformOwned ? "" : channelOwnerUid;
+          if (!platformOwned && !/^[A-Za-z0-9_-]{1,128}$/.test(producerUid)) {
+            throw new ApiError(503, "CHANNEL_OWNER_INVALID", "The channel owner is not configured for revenue settlement.");
+          }
+          const producer = producerUid ? await fs.getDoc("producers/" + producerUid) : null;
+          if (producerUid && !producer) {
+            throw new ApiError(503, "PRODUCER_ACCOUNT_MISSING", "The channel producer account is not available.");
+          }
+          const shareBps = platformOwned ? 0 : integer(channel["producerShareBps"] ?? pricing["defaultProducerShareBps"]);
+          if (shareBps === null || shareBps > 10_000) {
+            throw new ApiError(503, "REVENUE_SPLIT_INVALID", "The channel revenue split is not configured correctly.");
+          }
 
           const now = new Date();
           const nowIso = now.toISOString();
@@ -176,7 +190,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             : 2;
           const sessionFields = {
             uid: user.uid, channelId: body.channelId, contentAssetId: assetId,
-            producerUid, producerShareBps: shareBps, deliveryMode: "bq_hosted",
+            producerUid: producerUid || null, producerShareBps: shareBps, deliveryMode: "bq_hosted",
             storagePath, playbackUrl, clientPlatform: body.clientPlatform, viewerCountry,
             ratePerMinuteMinor, currency: "NGN", status: "active", active: true,
             startedAt: nowIso, lastHeartbeatAt: nowIso, lastClientSequence: 0,
