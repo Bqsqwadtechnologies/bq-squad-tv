@@ -58,7 +58,8 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
         if (response.status !== 206) throw new ApiError(502, "VERIFICATION_EVIDENCE_RANGE_UNSUPPORTED", "Private storage did not honor the bounded evidence inspection request.");
         const header = new Uint8Array(await response.arrayBuffer());
         const range = response.headers.get("content-range");
-        const actualSize = range?.match(/\\/([0-9]+)$/)?.[1] ? Number(range.match(/\\/([0-9]+)$/)?.[1]) : NaN;
+        const totalMatch = range?.match(/\\/(\\d+)$/);
+        const actualSize = totalMatch?.[1] ? Number(totalMatch[1]) : NaN;
         if (!Number.isSafeInteger(actualSize) || actualSize !== upload["declaredSizeBytes"]) {
           throw new ApiError(400, "VERIFICATION_EVIDENCE_SIZE_MISMATCH", "A verification document does not match its declared size.");
         }
