@@ -20,8 +20,18 @@ export async function hashEmailOtp(
   salt: string,
   code: string,
 ): Promise<string> {
+  const pepper = process.env["FIREBASE_SERVICE_ACCOUNT_JSON"];
+  if (!pepper) throw new Error("Email verification hashing is not configured.");
+  const pepperDigest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pepper));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    pepperDigest,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
   const input = new TextEncoder().encode(`${uid}:${purpose}:${salt}:${code}`);
-  const digest = await crypto.subtle.digest("SHA-256", input);
+  const digest = await crypto.subtle.sign("HMAC", key, input);
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
@@ -32,6 +42,11 @@ export function equalOtpHashes(left: string, right: string): boolean {
     difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
   }
   return difference === 0;
+}
+
+export async function hashEmailAddress(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(normalizeEmail(value)));
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export function normalizeEmail(value: string): string {
