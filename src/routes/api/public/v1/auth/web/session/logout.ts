@@ -26,6 +26,7 @@ export const Route = createFileRoute("/api/public/v1/auth/web/session/logout")({
               "cache-control": "no-store",
               pragma: "no-cache",
             },
+            status: signedOut ? 200 : 503,
           },
         );
       } catch (error) {
