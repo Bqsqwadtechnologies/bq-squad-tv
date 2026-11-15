@@ -2,23 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, getUserProfile, requireUser } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { isAdSuitableForViewer } from "@/lib/server/ads-policy";
 
 const slots = ["pre_roll", "mid_roll", "half_time", "between_segments", "home_banner", "web_banner"] as const;
-const blockedAdCategories = new Set([
-  "gambling", "sports_betting", "casino", "wagering", "prediction_market", "lottery",
-  "alcohol", "tobacco", "nicotine", "vaping", "adult_entertainment", "adult_dating",
-  "pornography", "sexual_content", "weapons",
-]);
-
-const adultAgeRatings = new Set(["18", "18+", "r", "nc-17", "tv-ma", "adult", "mature"]);
-
-function isAdultRestricted(campaign: Record<string, unknown>): boolean {
-  const rating = typeof campaign["ageRating"] === "string"
-    ? campaign["ageRating"].trim().toLowerCase()
-    : "";
-  return campaign["adultOnly"] === true || campaign["ageRestricted"] === true || adultAgeRatings.has(rating);
-}
-
 export const Route = createFileRoute("/api/public/v1/ads/next")({
   server: { handlers: { GET: async ({ request }) => {
     try {
