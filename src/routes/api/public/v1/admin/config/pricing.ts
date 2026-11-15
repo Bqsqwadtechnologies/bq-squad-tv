@@ -78,7 +78,7 @@ export const Route = createFileRoute("/api/public/v1/admin/config/pricing")({
           metadata: {
             version,
             maxConcurrentSessions: body.maxConcurrentSessions,
-            walletTopupCount: Object.keys(body.walletTopups).length,
+            walletTopupCount: Object.keys(body.walletTopups ?? {}).length,
             walletTopupCurrencyCount: Object.keys(body.walletTopupsByCurrency ?? {}).length,
             googlePlayProductCount: body.googlePlayProducts.length,
           },
