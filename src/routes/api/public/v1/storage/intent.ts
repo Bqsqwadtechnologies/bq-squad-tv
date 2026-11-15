@@ -65,7 +65,7 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
           }
 
           const now = new Date();
-          const expiresAt = new Date(now.getTime() + 15 * 60_000).toISOString();
+          const expiresAt = new Date(now.getTime() + 2 * 60 * 60_000).toISOString();
           await fs.setDoc("contentAssets/" + assetId, {
             channelId: body.channelId,
             ownerUid: user.uid,
@@ -78,6 +78,7 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
             deliveryMode: "bq_hosted",
             createdAt: now.toISOString(),
             uploadExpiresAt: expiresAt,
+            uploadTokenLifetimeSeconds: 7200,
           }, { mustNotExist: true });
           await writeAuditLog(fs, {
             actorUid: user.uid, action: "content.upload_intent_created",

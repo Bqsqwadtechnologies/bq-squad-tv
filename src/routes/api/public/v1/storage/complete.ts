@@ -46,8 +46,13 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             throw new ApiError(503, "STORAGE_OBJECT_UNAVAILABLE", "The uploaded file could not be inspected.");
           }
           const response = await fetch(signed.signedUrl, { headers: { Range: "bytes=0-511" } });
-          if (!response.ok && response.status !== 206) {
+          if (response.status !== 206) {
             throw new ApiError(409, "UPLOAD_OBJECT_MISSING", "The uploaded file could not be found in private storage.");
+          }
+          const contentLengthHeader = Number(response.headers.get("content-length") ?? 0);
+          if (contentLengthHeader > 512) {
+            await response.body?.cancel();
+            throw new ApiError(502, "STORAGE_RANGE_UNSUPPORTED", "Private storage did not honor the bounded media inspection request.");
           }
           const headerBytes = new Uint8Array(await response.arrayBuffer());
           const contentRange = response.headers.get("content-range");

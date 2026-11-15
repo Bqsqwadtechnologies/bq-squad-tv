@@ -100,7 +100,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           const now = new Date();
           const nowIso = now.toISOString();
           const sessionId = crypto.randomUUID().replace(/-/g, "");
-          const expiresAt = Math.floor(now.getTime() / 1000) + 300;
+          const expiresAt = Math.floor(now.getTime() / 1000) + 900;
           const token = await signPlaybackToken({
             sid: sessionId, uid: user.uid, path: storagePath,
             iat: Math.floor(now.getTime() / 1000), exp: expiresAt,
@@ -136,7 +136,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           return Response.json({
             sessionId,
             streamUrl,
-            expiresInSeconds: 300,
+            expiresInSeconds: 900,
             ratePerMinuteMinor,
             currency: "NGN",
             walletBalanceMinor: balanceMinor,

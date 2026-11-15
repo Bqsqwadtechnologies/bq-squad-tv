@@ -39,7 +39,7 @@ async function rewritePlaylistForSession(
       const childPath = resolveHlsReference(playlistPath, reference);
       const childToken = await signPlaybackToken({
         sid, uid, path: childPath,
-        iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 300,
+        iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 900,
       });
       return "/api/public/v1/streaming/hls/" + childPath.split("/").map(encodeURIComponent).join("/") +
         "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(childToken);
@@ -89,6 +89,8 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
           if (session["deliveryMode"] !== "bq_hosted") {
             throw new ApiError(403, "STREAM_DELIVERY_MODE_INVALID", "This session is not authorized for BQ-hosted playback.");
           }
+          const allowedExtension = /\.(?:m3u8|ts|m4s|mp4|vtt|aac|m4a|key|bin)$/i;
+          if (!allowedExtension.test(resourcePath)) throw new ApiError(415, "STREAM_RESOURCE_TYPE_INVALID", "This media resource type is not allowed.");
           const rootPath = typeof session["storagePath"] === "string" ? session["storagePath"] : "";
           if (!isSafeStoragePath(rootPath) || !resourcePath.startsWith(rootPath.slice(0, rootPath.lastIndexOf("/") + 1))) {
             throw new ApiError(403, "STREAM_RESOURCE_OUTSIDE_ASSET", "This resource is outside the authorized media asset.");
