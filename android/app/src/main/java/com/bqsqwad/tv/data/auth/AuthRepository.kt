@@ -64,6 +64,12 @@ class AuthRepository(
         if (!user.isEmailVerified) user.sendEmailVerification().awaitResult()
     }
 
+    suspend fun isCurrentEmailVerified(): Boolean {
+        val user = auth.currentUser ?: return false
+        user.reload().awaitResult()
+        return user.isEmailVerified
+    }
+
     suspend fun sendPasswordReset(email: String) {
         require(email.trim().isNotEmpty()) { "Enter your email address first." }
         auth.sendPasswordResetEmail(email.trim()).awaitResult()
