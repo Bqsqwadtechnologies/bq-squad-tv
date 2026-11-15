@@ -113,6 +113,25 @@ export async function verifyGooglePlayProduct(input: {
   return data;
 }
 
+export async function consumeGooglePlayProduct(input: {
+  packageName: string;
+  productId: string;
+  purchaseToken: string;
+}): Promise<void> {
+  const accessToken = await playAccessToken();
+  const url = "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/" +
+    encodeURIComponent(input.packageName) + "/purchases/products/" + encodeURIComponent(input.productId) +
+    "/tokens/" + encodeURIComponent(input.purchaseToken) + ":consume";
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { authorization: "Bearer " + accessToken, "content-type": "application/json" },
+    body: "{}",
+  });
+  if (!response.ok && response.status !== 409) {
+    throw new ApiError(502, "PLAY_PURCHASE_CONSUME_FAILED", "Google Play could not finalize this wallet purchase. Retry verification to complete it.");
+  }
+}
+
 export async function creditGooglePlayPurchase(
   fs: Firestore,
   input: { uid: string; productId: string; purchaseToken: string; orderId: string | null; creditMinor: number },
