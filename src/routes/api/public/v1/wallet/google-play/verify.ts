@@ -18,7 +18,7 @@ export const Route = createFileRoute("/api/public/v1/wallet/google-play/verify")
     try {
       const user = await requireUser(request);
       const body = await parseBody(request, schema);
-      const packageName = process.env["GOOGLE_PLAY_PACKAGE_NAME"] || body.packageName || "com.bqsqwad.tv";
+      const packageName = process.env["GOOGLE_PLAY_PACKAGE_NAME"] || "com.bqsqwad.tv";
       if (packageName !== body.packageName) throw new ApiError(400, "PLAY_PACKAGE_MISMATCH", "The Android package name does not match this app.");
       const fs = await Firestore.create();
       await enforceRateLimit(fs, "play-verify:" + user.uid, { limit: 10, windowMs: 60_000 });

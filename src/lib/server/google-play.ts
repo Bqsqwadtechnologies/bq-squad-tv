@@ -110,7 +110,12 @@ export async function creditGooglePlayPurchase(
     const payment = docs[0], wallet = docs[1] ?? {}, ledger = docs[2];
     const balance = typeof wallet["balanceMinor"] === "number" && Number.isSafeInteger(wallet["balanceMinor"])
       ? wallet["balanceMinor"] as number : 0;
-    if (payment?.["status"] === "credited" || ledger) return { result: { credited: true, balanceMinor: balance }, writes: [] };
+    if (payment || ledger) {
+      if (payment?.["uid"] !== input.uid || payment?.["productId"] !== input.productId || !ledger) {
+        throw new ApiError(409, "PLAY_PURCHASE_ALREADY_CLAIMED", "This Google Play purchase has already been claimed.");
+      }
+      return { result: { credited: false, balanceMinor: balance }, writes: [] };
+    }
     const next = balance + input.creditMinor;
     if (!Number.isSafeInteger(next)) throw new ApiError(400, "WALLET_LIMIT_EXCEEDED", "The wallet balance exceeds the supported amount.");
     const now = new Date().toISOString();
