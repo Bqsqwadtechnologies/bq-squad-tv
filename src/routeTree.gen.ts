@@ -12,11 +12,15 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminFirebaseSchemaRouteImport } from './routes/admin.firebase-schema'
 import { Route as ApiPublicFirebaseSchemaInspectRouteImport } from './routes/api/public/firebase-schema-inspect'
+import { Route as ApiPublicV1WalletRouteImport } from './routes/api/public/v1/wallet'
 import { Route as ApiPublicV1CatalogHomeRouteImport } from './routes/api/public/v1/catalog/home'
 import { Route as ApiPublicV1CatalogSearchRouteImport } from './routes/api/public/v1/catalog/search'
 import { Route as ApiPublicV1ChannelsChannelIdRouteImport } from './routes/api/public/v1/channels/$channelId'
 import { Route as ApiPublicV1ProfileCompleteRouteImport } from './routes/api/public/v1/profile/complete'
+import { Route as ApiPublicV1WalletLedgerRouteImport } from './routes/api/public/v1/wallet/ledger'
 import { Route as ApiPublicV1SecurityIntegrityChallengeRouteImport } from './routes/api/public/v1/security/integrity/challenge'
+import { Route as ApiPublicV1SessionsSessionIdEndRouteImport } from './routes/api/public/v1/sessions/$sessionId/end'
+import { Route as ApiPublicV1SessionsSessionIdHeartbeatRouteImport } from './routes/api/public/v1/sessions/$sessionId/heartbeat'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -34,6 +38,11 @@ const ApiPublicFirebaseSchemaInspectRoute =
     path: '/api/public/firebase-schema-inspect',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1WalletRoute = ApiPublicV1WalletRouteImport.update({
+  id: '/api/public/v1/wallet',
+  path: '/api/public/v1/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1CatalogHomeRoute = ApiPublicV1CatalogHomeRouteImport.update({
   id: '/api/public/v1/catalog/home',
   path: '/api/public/v1/catalog/home',
@@ -57,10 +66,27 @@ const ApiPublicV1ProfileCompleteRoute =
     path: '/api/public/v1/profile/complete',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1WalletLedgerRoute = ApiPublicV1WalletLedgerRouteImport.update({
+  id: '/ledger',
+  path: '/ledger',
+  getParentRoute: () => ApiPublicV1WalletRoute,
+} as any)
 const ApiPublicV1SecurityIntegrityChallengeRoute =
   ApiPublicV1SecurityIntegrityChallengeRouteImport.update({
     id: '/api/public/v1/security/integrity/challenge',
     path: '/api/public/v1/security/integrity/challenge',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SessionsSessionIdEndRoute =
+  ApiPublicV1SessionsSessionIdEndRouteImport.update({
+    id: '/api/public/v1/sessions/$sessionId/end',
+    path: '/api/public/v1/sessions/$sessionId/end',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SessionsSessionIdHeartbeatRoute =
+  ApiPublicV1SessionsSessionIdHeartbeatRouteImport.update({
+    id: '/api/public/v1/sessions/$sessionId/heartbeat',
+    path: '/api/public/v1/sessions/$sessionId/heartbeat',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -68,32 +94,44 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/wallet': typeof ApiPublicV1WalletRouteWithChildren
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
   '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
+  '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
+  '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
+  '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/wallet': typeof ApiPublicV1WalletRouteWithChildren
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
   '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
+  '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
+  '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
+  '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/wallet': typeof ApiPublicV1WalletRouteWithChildren
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
   '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
+  '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
+  '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
+  '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,42 +139,57 @@ export interface FileRouteTypes {
     | '/'
     | '/admin/firebase-schema'
     | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/wallet'
     | '/api/public/v1/catalog/home'
     | '/api/public/v1/catalog/search'
     | '/api/public/v1/channels/$channelId'
     | '/api/public/v1/profile/complete'
+    | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/security/integrity/challenge'
+    | '/api/public/v1/sessions/$sessionId/end'
+    | '/api/public/v1/sessions/$sessionId/heartbeat'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/admin/firebase-schema'
     | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/wallet'
     | '/api/public/v1/catalog/home'
     | '/api/public/v1/catalog/search'
     | '/api/public/v1/channels/$channelId'
     | '/api/public/v1/profile/complete'
+    | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/security/integrity/challenge'
+    | '/api/public/v1/sessions/$sessionId/end'
+    | '/api/public/v1/sessions/$sessionId/heartbeat'
   id:
     | '__root__'
     | '/'
     | '/admin/firebase-schema'
     | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/wallet'
     | '/api/public/v1/catalog/home'
     | '/api/public/v1/catalog/search'
     | '/api/public/v1/channels/$channelId'
     | '/api/public/v1/profile/complete'
+    | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/security/integrity/challenge'
+    | '/api/public/v1/sessions/$sessionId/end'
+    | '/api/public/v1/sessions/$sessionId/heartbeat'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminFirebaseSchemaRoute: typeof AdminFirebaseSchemaRoute
   ApiPublicFirebaseSchemaInspectRoute: typeof ApiPublicFirebaseSchemaInspectRoute
+  ApiPublicV1WalletRoute: typeof ApiPublicV1WalletRouteWithChildren
   ApiPublicV1CatalogHomeRoute: typeof ApiPublicV1CatalogHomeRoute
   ApiPublicV1CatalogSearchRoute: typeof ApiPublicV1CatalogSearchRoute
   ApiPublicV1ChannelsChannelIdRoute: typeof ApiPublicV1ChannelsChannelIdRoute
   ApiPublicV1ProfileCompleteRoute: typeof ApiPublicV1ProfileCompleteRoute
   ApiPublicV1SecurityIntegrityChallengeRoute: typeof ApiPublicV1SecurityIntegrityChallengeRoute
+  ApiPublicV1SessionsSessionIdEndRoute: typeof ApiPublicV1SessionsSessionIdEndRoute
+  ApiPublicV1SessionsSessionIdHeartbeatRoute: typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -160,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/firebase-schema-inspect'
       fullPath: '/api/public/firebase-schema-inspect'
       preLoaderRoute: typeof ApiPublicFirebaseSchemaInspectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/wallet': {
+      id: '/api/public/v1/wallet'
+      path: '/api/public/v1/wallet'
+      fullPath: '/api/public/v1/wallet'
+      preLoaderRoute: typeof ApiPublicV1WalletRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/catalog/home': {
@@ -190,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProfileCompleteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/wallet/ledger': {
+      id: '/api/public/v1/wallet/ledger'
+      path: '/ledger'
+      fullPath: '/api/public/v1/wallet/ledger'
+      preLoaderRoute: typeof ApiPublicV1WalletLedgerRouteImport
+      parentRoute: typeof ApiPublicV1WalletRoute
+    }
     '/api/public/v1/security/integrity/challenge': {
       id: '/api/public/v1/security/integrity/challenge'
       path: '/api/public/v1/security/integrity/challenge'
@@ -197,19 +264,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1SecurityIntegrityChallengeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/sessions/$sessionId/end': {
+      id: '/api/public/v1/sessions/$sessionId/end'
+      path: '/api/public/v1/sessions/$sessionId/end'
+      fullPath: '/api/public/v1/sessions/$sessionId/end'
+      preLoaderRoute: typeof ApiPublicV1SessionsSessionIdEndRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sessions/$sessionId/heartbeat': {
+      id: '/api/public/v1/sessions/$sessionId/heartbeat'
+      path: '/api/public/v1/sessions/$sessionId/heartbeat'
+      fullPath: '/api/public/v1/sessions/$sessionId/heartbeat'
+      preLoaderRoute: typeof ApiPublicV1SessionsSessionIdHeartbeatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
+
+interface ApiPublicV1WalletRouteChildren {
+  ApiPublicV1WalletLedgerRoute: typeof ApiPublicV1WalletLedgerRoute
+}
+
+const ApiPublicV1WalletRouteChildren: ApiPublicV1WalletRouteChildren = {
+  ApiPublicV1WalletLedgerRoute: ApiPublicV1WalletLedgerRoute,
+}
+
+const ApiPublicV1WalletRouteWithChildren =
+  ApiPublicV1WalletRoute._addFileChildren(ApiPublicV1WalletRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminFirebaseSchemaRoute: AdminFirebaseSchemaRoute,
   ApiPublicFirebaseSchemaInspectRoute: ApiPublicFirebaseSchemaInspectRoute,
+  ApiPublicV1WalletRoute: ApiPublicV1WalletRouteWithChildren,
   ApiPublicV1CatalogHomeRoute: ApiPublicV1CatalogHomeRoute,
   ApiPublicV1CatalogSearchRoute: ApiPublicV1CatalogSearchRoute,
   ApiPublicV1ChannelsChannelIdRoute: ApiPublicV1ChannelsChannelIdRoute,
   ApiPublicV1ProfileCompleteRoute: ApiPublicV1ProfileCompleteRoute,
   ApiPublicV1SecurityIntegrityChallengeRoute:
     ApiPublicV1SecurityIntegrityChallengeRoute,
+  ApiPublicV1SessionsSessionIdEndRoute: ApiPublicV1SessionsSessionIdEndRoute,
+  ApiPublicV1SessionsSessionIdHeartbeatRoute:
+    ApiPublicV1SessionsSessionIdHeartbeatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
