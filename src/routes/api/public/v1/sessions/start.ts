@@ -55,7 +55,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             const priorSession = await fs.getDoc("sessions/" + priorRequest["sessionId"]);
             if (priorSession?.["active"] === true && typeof priorSession["storagePath"] === "string") {
               const playbackUrl = await makePlaybackUrl(request.url, priorRequest["sessionId"], user.uid, priorSession["storagePath"]);
-              const balance = requireMinorUnitAmount(priorSession["walletBalanceMinor"] ?? 0, "wallet balance");
+              const currentWallet = await getWallet(fs, user.uid);
+              const balance = requireMinorUnitAmount(currentWallet.balanceMinor, "wallet balance");
               const rate = requireMinorUnitAmount(priorSession["ratePerMinuteMinor"], "ratePerMinuteMinor");
               return Response.json({
                 sessionId: priorRequest["sessionId"], playbackUrl, ratePerMinuteMinor: rate,
