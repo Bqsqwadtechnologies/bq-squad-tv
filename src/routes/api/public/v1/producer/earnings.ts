@@ -7,6 +7,10 @@ function minor(value: unknown): number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : 0;
 }
 
+function signedMinor(value: unknown): number {
+  return typeof value === "number" && Number.isSafeInteger(value) ? value : 0;
+}
+
 export const Route = createFileRoute("/api/public/v1/producer/earnings")({
   server: { handlers: { GET: async ({ request }) => {
     try {
@@ -50,7 +54,7 @@ export const Route = createFileRoute("/api/public/v1/producer/earnings")({
         const session = sessionId ? sessionById.get(sessionId) : null;
         const channelId = typeof session?.["channelId"] === "string" ? session["channelId"] as string : "unassigned";
         const currency = typeof row["currency"] === "string" ? row["currency"] as string : "USD";
-        const amount = minor(row["amountMinor"]);
+        const amount = signedMinor(row["amountMinor"]);
         const group = perChannel[channelId] ?? { channelId, earningsByCurrency: {}, earningCount: 0 };
         group.earningsByCurrency[currency] = (group.earningsByCurrency[currency] ?? 0) + amount;
         group.earningCount += 1;
