@@ -165,7 +165,6 @@ tasks.register("verifyReleaseFirebaseConfig") {
 tasks
     .matching {
         it.name.contains("Release", ignoreCase = true) && it.name.startsWith("pre")
-    }
-    .configureEach {
+    }.configureEach {
         dependsOn("verifyReleaseFirebaseConfig")
     }

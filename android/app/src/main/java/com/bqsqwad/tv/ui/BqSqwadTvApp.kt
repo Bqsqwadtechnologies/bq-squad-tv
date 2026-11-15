@@ -9,33 +9,39 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.bqsqwad.tv.data.auth.AuthRepository
-import com.google.firebase.auth.FirebaseAuth
 import com.bqsqwad.tv.ui.player.PlayerScreen
 import com.bqsqwad.tv.ui.screens.*
+import com.google.firebase.auth.FirebaseAuth
 
-private data class MainTab(val route: String, val label: String, val symbol: String)
-
-private val mainTabs = listOf(
-    MainTab("home", "Home", "⌂"),
-    MainTab("live", "Live TV", "▣"),
-    MainTab("library", "Library", "▦"),
-    MainTab("downloads", "Downloads", "↓"),
-    MainTab("settings", "Settings", "⚙"),
-    MainTab("account", "Profile", "●"),
+private data class MainTab(
+    val route: String,
+    val label: String,
+    val symbol: String,
 )
+
+private val mainTabs =
+    listOf(
+        MainTab("home", "Home", "⌂"),
+        MainTab("live", "Live TV", "▣"),
+        MainTab("library", "Library", "▦"),
+        MainTab("downloads", "Downloads", "↓"),
+        MainTab("settings", "Settings", "⚙"),
+        MainTab("account", "Profile", "●"),
+    )
 
 @Composable
 fun BqSqwadTvApp() {
     val nav = rememberNavController()
     val auth = remember { AuthRepository() }
-    val initialDestination = remember {
-        if (FirebaseAuth.getInstance().currentUser != null) "home" else "signin"
-    }
+    val initialDestination =
+        remember {
+            if (FirebaseAuth.getInstance().currentUser != null) "home" else "signin"
+        }
     val backStackEntry by nav.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = mainTabs.any { it.route == currentRoute }

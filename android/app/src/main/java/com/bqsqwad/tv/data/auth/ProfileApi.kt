@@ -6,19 +6,19 @@ import retrofit2.http.POST
 
 data class CompleteProfileRequest(
     val dateOfBirth: String,
-    val parentalPin: String?
+    val parentalPin: String?,
 )
 
 data class CompleteProfileResponse(
     val profileComplete: Boolean,
     val adultEligible: Boolean,
-    val parentalPinEnabled: Boolean
+    val parentalPinEnabled: Boolean,
 )
 
 interface ProfileApi {
     @POST("v1/profile/complete")
     suspend fun completeProfile(
         @Header("Authorization") bearerToken: String,
-        @Body request: CompleteProfileRequest
+        @Body request: CompleteProfileRequest,
     ): CompleteProfileResponse
 }

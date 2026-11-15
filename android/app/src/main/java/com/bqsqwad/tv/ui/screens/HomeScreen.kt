@@ -86,7 +86,9 @@ fun HomeScreen(
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onSearch) { Text("⌕", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface) }
+                IconButton(
+                    onClick = onSearch,
+                ) { Text("⌕", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface) }
                 IconButton(onClick = onWallet) { Text("◉", color = MaterialTheme.colorScheme.primary) }
             }
         }
@@ -127,7 +129,12 @@ fun HomeScreen(
                         .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xF5030B2A))))
                         .padding(20.dp),
                 ) {
-                    Text("PREMIUM ENTERTAINMENT", color = Color(0xFF9BEFFF), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        "PREMIUM ENTERTAINMENT",
+                        color = Color(0xFF9BEFFF),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
                     Text(
                         "Your world of entertainment.",
                         style = MaterialTheme.typography.headlineSmall,
@@ -166,11 +173,12 @@ fun HomeScreen(
 
         when {
             loading -> LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 24.dp))
-            error != null -> Column(Modifier.padding(20.dp)) {
-                Text("Catalogue unavailable", style = MaterialTheme.typography.titleLarge)
-                Text(error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick = { refresh() }) { Text("Retry") }
-            }
+            error != null ->
+                Column(Modifier.padding(20.dp)) {
+                    Text("Catalogue unavailable", style = MaterialTheme.typography.titleLarge)
+                    Text(error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(onClick = { refresh() }) { Text("Retry") }
+                }
             catalog != null -> {
                 CatalogRail("Live now", catalog!!.liveNow, onChannel)
                 CatalogRail("Trending now", catalog!!.trending, onChannel)
@@ -179,9 +187,12 @@ fun HomeScreen(
                 CatalogRail("Continue watching", catalog!!.continueWatching, onChannel)
                 CatalogRail("Replays", catalog!!.replays, onChannel)
                 if (
-                    catalog!!.liveNow.isEmpty() && catalog!!.startingSoon.isEmpty() &&
-                    catalog!!.channels.isEmpty() && catalog!!.replays.isEmpty() &&
-                    catalog!!.continueWatching.isEmpty() && catalog!!.trending.isEmpty()
+                    catalog!!.liveNow.isEmpty() &&
+                    catalog!!.startingSoon.isEmpty() &&
+                    catalog!!.channels.isEmpty() &&
+                    catalog!!.replays.isEmpty() &&
+                    catalog!!.continueWatching.isEmpty() &&
+                    catalog!!.trending.isEmpty()
                 ) {
                     Card(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp)) {
                         Column(Modifier.padding(20.dp)) {
@@ -209,7 +220,11 @@ fun HomeScreen(
 }
 
 @Composable
-private fun QuickAccessCard(title: String, symbol: String, onClick: () -> Unit) {
+private fun QuickAccessCard(
+    title: String,
+    symbol: String,
+    onClick: () -> Unit,
+) {
     Card(
         Modifier.width(88.dp).height(100.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
@@ -228,7 +243,11 @@ private fun QuickAccessCard(title: String, symbol: String, onClick: () -> Unit) 
 }
 
 @Composable
-private fun CatalogRail(title: String, items: List<ChannelSummary>, onChannel: (String) -> Unit) {
+private fun CatalogRail(
+    title: String,
+    items: List<ChannelSummary>,
+    onChannel: (String) -> Unit,
+) {
     if (items.isEmpty()) return
     Column(Modifier.padding(top = 22.dp)) {
         Text(
@@ -258,7 +277,12 @@ private fun CatalogRail(title: String, items: List<ChannelSummary>, onChannel: (
                             ),
                             contentAlignment = Alignment.Center,
                         ) {
-                            Text("BQ", color = Color(0xFF9BEFFF), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+                            Text(
+                                "BQ",
+                                color = Color(0xFF9BEFFF),
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Black,
+                            )
                         }
                     }
                     Spacer(Modifier.height(6.dp))

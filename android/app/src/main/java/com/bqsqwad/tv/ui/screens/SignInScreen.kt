@@ -37,7 +37,22 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
         Spacer(Modifier.height(14.dp))
         OutlinedTextField(email, { email = it }, label = { Text("Email address") }, singleLine = true, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
-        OutlinedTextField(password, { password = it }, label = { Text("Password") }, singleLine = true, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password), modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            password,
+            {
+                password = it
+            },
+            label = {
+                Text("Password")
+            },
+            singleLine = true,
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions =
+                KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                ),
+            modifier = Modifier.fillMaxWidth(),
+        )
         Spacer(Modifier.height(12.dp))
         Button(
             enabled = !busy && email.isNotBlank() && password.length >= 6,
@@ -51,8 +66,18 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                     busy = false
                 }
             },
-            modifier = Modifier.fillMaxWidth()
-        ) { Text(if (busy) "Please wait…" else if (createAccount) "Create account" else "Sign in") }
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                if (busy) {
+                    "Please wait…"
+                } else if (createAccount) {
+                    "Create account"
+                } else {
+                    "Sign in"
+                },
+            )
+        }
         TextButton(onClick = { createAccount = !createAccount }) {
             Text(if (createAccount) "Already have an account? Sign in" else "New here? Create an account")
         }
@@ -68,20 +93,29 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                     busy = false
                 }
             },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) { Text("Continue with Google") }
         if (BuildConfig.GOOGLE_WEB_CLIENT_ID.startsWith("REPLACE")) {
-            Text("Google sign-in needs GOOGLE_WEB_CLIENT_ID from Firebase Authentication settings.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(
+                "Google sign-in needs GOOGLE_WEB_CLIENT_ID from Firebase Authentication settings.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
         message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
 }
 
-private suspend fun googleSignIn(context: Context, repository: AuthRepository) {
-    val option = GetGoogleIdOption.Builder()
-        .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
-        .setFilterByAuthorizedAccounts(false)
-        .build()
+private suspend fun googleSignIn(
+    context: Context,
+    repository: AuthRepository,
+) {
+    val option =
+        GetGoogleIdOption
+            .Builder()
+            .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+            .setFilterByAuthorizedAccounts(false)
+            .build()
     val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
     val result = CredentialManager.create(context).getCredential(context, request)
     val token = GoogleIdTokenCredential.createFrom(result.credential.data).idToken

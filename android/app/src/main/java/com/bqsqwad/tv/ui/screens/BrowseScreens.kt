@@ -20,7 +20,6 @@ import com.bqsqwad.tv.data.catalog.CatalogHomeResponse
 import com.bqsqwad.tv.data.catalog.CatalogRepository
 import com.bqsqwad.tv.data.catalog.ChannelSummary
 import com.google.firebase.auth.FirebaseAuth
-import kotlinx.coroutines.launch
 
 @Composable
 fun LiveTvScreen(onChannel: (String) -> Unit) {
@@ -44,17 +43,19 @@ fun LiveTvScreen(onChannel: (String) -> Unit) {
         when {
             loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
             error != null -> Text(error.orEmpty(), color = MaterialTheme.colorScheme.error)
-            catalog?.liveNow.isNullOrEmpty() && catalog?.channels.isNullOrEmpty() -> EmptyPanel(
-                symbol = "▣",
-                title = "No live channels yet",
-                message = "Published and licensed channels will appear here.",
-            )
-            else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                val channels = (catalog?.liveNow.orEmpty() + catalog?.channels.orEmpty()).distinctBy { it.id }
-                items(channels, key = { it.id }) { channel ->
-                    ChannelListCard(channel = channel, onClick = { onChannel(channel.id) })
+            catalog?.liveNow.isNullOrEmpty() && catalog?.channels.isNullOrEmpty() ->
+                EmptyPanel(
+                    symbol = "▣",
+                    title = "No live channels yet",
+                    message = "Published and licensed channels will appear here.",
+                )
+            else ->
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    val channels = (catalog?.liveNow.orEmpty() + catalog?.channels.orEmpty()).distinctBy { it.id }
+                    items(channels, key = { it.id }) { channel ->
+                        ChannelListCard(channel = channel, onClick = { onChannel(channel.id) })
+                    }
                 }
-            }
         }
     }
 }
@@ -99,7 +100,10 @@ fun DownloadsScreen() {
 }
 
 @Composable
-fun SettingsScreen(onWallet: () -> Unit, onProfile: () -> Unit) {
+fun SettingsScreen(
+    onWallet: () -> Unit,
+    onProfile: () -> Unit,
+) {
     var notifications by remember { mutableStateOf(true) }
     var wifiOnly by remember { mutableStateOf(false) }
     var quality by remember { mutableStateOf("Auto") }
@@ -112,7 +116,16 @@ fun SettingsScreen(onWallet: () -> Unit, onProfile: () -> Unit) {
             headlineContent = { Text("Playback quality") },
             supportingContent = { Text(quality) },
             trailingContent = {
-                TextButton(onClick = { quality = if (quality == "Auto") "High" else if (quality == "High") "Data saver" else "Auto" }) {
+                TextButton(onClick = {
+                    quality =
+                        if (quality == "Auto") {
+                            "High"
+                        } else if (quality == "High") {
+                            "Data saver"
+                        } else {
+                            "Auto"
+                        }
+                }) {
                     Text("Change")
                 }
             },
@@ -175,7 +188,11 @@ fun AccountScreen(
 }
 
 @Composable
-private fun ProfileAction(title: String, detail: String, onClick: () -> Unit) {
+private fun ProfileAction(
+    title: String,
+    detail: String,
+    onClick: () -> Unit,
+) {
     ListItem(
         headlineContent = { Text(title) },
         supportingContent = { Text(detail) },
@@ -200,7 +217,11 @@ private fun SettingsSwitchRow(
 }
 
 @Composable
-private fun EmptyPanel(symbol: String, title: String, message: String) {
+private fun EmptyPanel(
+    symbol: String,
+    title: String,
+    message: String,
+) {
     Column(
         Modifier.fillMaxWidth().padding(top = 50.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -219,7 +240,10 @@ private fun EmptyPanel(symbol: String, title: String, message: String) {
 }
 
 @Composable
-private fun ChannelListCard(channel: ChannelSummary, onClick: () -> Unit) {
+private fun ChannelListCard(
+    channel: ChannelSummary,
+    onClick: () -> Unit,
+) {
     Card(
         Modifier.fillMaxWidth().clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
