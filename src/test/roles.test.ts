@@ -52,6 +52,36 @@ describe("platform role resolution", () => {
     vi.unstubAllEnvs();
   });
 
+  it("accepts the server-recorded six-digit OTP proof when it matches the current email", async () => {
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
+    const fs = fakeFirestore({
+      email: "OWNER@example.com",
+      appEmailVerified: true,
+    }, null);
+    const access = await requirePlatformRole(fs, {
+      uid: "owner-1",
+      email: "owner@example.com",
+      emailVerified: false,
+    }, "admin");
+    expect(access.isSuperAdmin).toBe(true);
+    expect(access.emailVerified).toBe(true);
+    vi.unstubAllEnvs();
+  });
+
+  it("does not accept an OTP verification record after the account email changes", async () => {
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
+    const fs = fakeFirestore({
+      email: "old@example.com",
+      appEmailVerified: true,
+    }, null);
+    await expect(requirePlatformRole(fs, {
+      uid: "owner-1",
+      email: "owner@example.com",
+      emailVerified: false,
+    }, "admin")).rejects.toMatchObject({ status: 403, code: "EMAIL_VERIFICATION_REQUIRED" });
+    vi.unstubAllEnvs();
+  });
+
   it("requires verified email even when an administrator role is already assigned", async () => {
     const fs = fakeFirestore({ roleTags: ["admin"] }, null);
     await expect(
