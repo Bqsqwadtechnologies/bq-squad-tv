@@ -60,8 +60,17 @@ export async function parseBody<T>(request: Request, schema: z.ZodType<T>): Prom
 
 /** Age in whole years, always computed on the server from the stored date of birth. */
 export function ageInYears(dateOfBirthIso: string, now: Date = new Date()): number {
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateOfBirthIso)) {
+    throw new ApiError(400, "INVALID_REQUEST", "dateOfBirth must be a valid YYYY-MM-DD date.");
+  }
   const dob = new Date(`${dateOfBirthIso}T00:00:00Z`);
-  if (Number.isNaN(dob.getTime())) throw new ApiError(400, "INVALID_REQUEST", "dateOfBirth must be a YYYY-MM-DD date.");
+  if (
+    Number.isNaN(dob.getTime()) ||
+    dob.toISOString().slice(0, 10) !== dateOfBirthIso ||
+    dob.getTime() > Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  ) {
+    throw new ApiError(400, "INVALID_REQUEST", "dateOfBirth must be a real date that is not in the future.");
+  }
   let age = now.getUTCFullYear() - dob.getUTCFullYear();
   const monthDelta = now.getUTCMonth() - dob.getUTCMonth();
   if (monthDelta < 0 || (monthDelta === 0 && now.getUTCDate() < dob.getUTCDate())) age -= 1;
@@ -78,7 +87,12 @@ export async function getUserProfile(fs: Firestore, uid: string): Promise<UserPr
   const doc = await fs.getDoc(`users/${uid}`);
   return {
     profileComplete: doc?.["profileComplete"] === true,
-    adultEligible: doc?.["adultEligible"] === true,
+    adultEligible:
+      doc?.["adultEligible"] === true &&
+      doc?.["adultAgeVerified"] === true &&
+      doc?.["adultIdentityVerified"] === true &&
+      typeof doc?.["dateOfBirth"] === "string" &&
+      ageInYears(doc["dateOfBirth"] as string) >= 18,
     roleTags: Array.isArray(doc?.["roleTags"]) ? (doc["roleTags"] as string[]) : [],
   };
 }
