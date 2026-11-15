@@ -7,6 +7,8 @@ export type VerifiedUser = {
   uid: string;
   email: string | null;
   emailVerified: boolean;
+  authTime: number;
+  issuedAt: number;
   customClaims: Record<string, unknown>;
 };
 
@@ -71,7 +73,9 @@ export async function verifyFirebaseIdToken(token: string, projectId: string): P
     typeof claims["exp"] !== "number" ||
     claims["exp"] <= now ||
     typeof claims["iat"] !== "number" ||
-    claims["iat"] > now + 300
+    claims["iat"] > now + 300 ||
+    typeof claims["auth_time"] !== "number" ||
+    claims["auth_time"] > now + 300
   ) {
     throw new ApiError(401, "UNAUTHENTICATED", "Authentication token is expired or invalid.");
   }
@@ -79,6 +83,8 @@ export async function verifyFirebaseIdToken(token: string, projectId: string): P
     uid,
     email: typeof claims["email"] === "string" ? claims["email"] : null,
     emailVerified: claims["email_verified"] === true,
+    authTime: claims["auth_time"] as number,
+    issuedAt: claims["iat"] as number,
     customClaims: {
       admin: claims["admin"] === true,
       producer: claims["producer"] === true,
