@@ -10,8 +10,10 @@ import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSafeStoragePath, signPlaybackToken } from "@/lib/server/storage/security";
 import { acquireSessionLease } from "@/lib/server/session-limits";
 import {
+  assertWebRefreshSessionActive,
   readWebRefreshCookie,
   refreshFirebaseWebSession,
+  rotateWebRefreshSession,
   requireSameOrigin,
   webRefreshCookie,
 } from "@/lib/server/web-session";
