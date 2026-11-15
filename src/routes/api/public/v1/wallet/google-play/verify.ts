@@ -17,6 +17,7 @@ export const Route = createFileRoute("/api/public/v1/wallet/google-play/verify")
   server: { handlers: { POST: async ({ request }) => {
     try {
       const user = await requireUser(request);
+      if (!user.emailVerified) throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email before purchasing wallet credits.");
       const body = await parseBody(request, schema);
       const packageName = process.env["GOOGLE_PLAY_PACKAGE_NAME"] || "com.bqsqwad.tv";
       if (packageName !== body.packageName) throw new ApiError(400, "PLAY_PACKAGE_MISMATCH", "The Android package name does not match this app.");
