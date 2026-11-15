@@ -14,15 +14,26 @@ const playProductSchema = z.object({
   title: z.string().min(1).max(100),
   description: z.string().max(300).default(""),
   credits: z.number().int().positive().max(1_000_000),
-  creditMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  creditMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
+  creditMinorByCurrency: z.record(z.string().regex(/^[A-Z]{3}$/), z.number().int().positive().max(Number.MAX_SAFE_INTEGER)).optional(),
   active: z.boolean().default(true),
+}).superRefine((product, context) => {
+  if (product.creditMinor === undefined && (!product.creditMinorByCurrency || Object.keys(product.creditMinorByCurrency).length === 0)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["creditMinorByCurrency"], message: "Provide a credit value for at least one wallet currency." });
+  }
 });
 const schema = z.object({
   defaultRatePerMinuteMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   minimumSessionBalanceMinor: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   defaultProducerShareBps: z.number().int().min(0).max(10_000),
   maxConcurrentSessions: z.number().int().min(1).max(5).default(2),
-  walletTopups: z.record(z.string().regex(/^[A-Za-z0-9_-]{1,80}$/), topupSchema),
+  walletTopups: z.record(z.string().regex(/^[A-Za-z0-9_-]{1,80}$/), topupSchema).default({}),
+  walletTopupsByCurrency: z.record(
+    z.string().regex(/^[A-Z]{3}$/),
+    z.record(z.string().regex(/^[A-Za-z0-9_-]{1,80}$/), topupSchema),
+  ).default({}),
+  defaultRatePerMinuteByCurrency: z.record(z.string().regex(/^[A-Z]{3}$/), z.number().int().positive().max(Number.MAX_SAFE_INTEGER)).default({}),
+  minimumSessionBalanceByCurrency: z.record(z.string().regex(/^[A-Z]{3}$/), z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)).default({}),
   googlePlayProducts: z.array(playProductSchema).max(100),
 });
 
@@ -68,6 +79,7 @@ export const Route = createFileRoute("/api/public/v1/admin/config/pricing")({
             version,
             maxConcurrentSessions: body.maxConcurrentSessions,
             walletTopupCount: Object.keys(body.walletTopups).length,
+            walletTopupCurrencyCount: Object.keys(body.walletTopupsByCurrency).length,
             googlePlayProductCount: body.googlePlayProducts.length,
           },
         });
