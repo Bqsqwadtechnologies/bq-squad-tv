@@ -93,3 +93,28 @@ Firebase Authentication + Firestore is the shared identity/data layer.
 6. No private credential is present in Git history, browser output or APK resources.
 7. Playback only accepts short-lived server-issued URLs for authorized content.
 8. Missing external credentials or licensed media produce clear disabled/configuration states, not fabricated success.
+
+
+## Implementation status — 2026-11-15
+
+The repository now contains a first implementation of the shared email-verification and website-session foundation. This section records source-code status, not a claim that the Lovable deployment has been published or that production secrets have been validated.
+
+### Implemented in source
+
+- Firebase ID tokens are verified server-side before protected API access.
+- Brevo transactional email delivery is server-only and uses `BREVO_API_KEY`.
+- Email verification codes are six digits, expire after 10 minutes, are stored as salted hashes, are single-use, and are limited to five attempts per issued code.
+- Code issuance is rate-limited per authenticated UID and normalized email address.
+- Successful code verification writes an application-level verified-email record bound to the exact Firebase email claim. The Firebase UID and signed ID token remain the identity authority.
+- Android email/password registration and sign-in are connected to the six-digit code endpoints.
+- The website has an account route for email/password registration and sign-in, six-digit verification, password reset requests, and sign-out.
+- Website refresh tokens are held in an HttpOnly, Secure, SameSite=Lax cookie; the browser receives short-lived ID tokens in memory. Session creation and refresh require same-origin POST requests.
+- Website Google sign-in uses Google Identity Services and Firebase Identity Toolkit when a public Web Client ID is configured.
+
+### Not yet accepted as complete
+
+- Production deployment and live end-to-end verification of Brevo delivery, website cookies, Google OAuth and Android API configuration.
+- Server-side password-reset using the six-digit Brevo code; the current clients still use Firebase's password-reset email flow.
+- Full account lifecycle UI, session revocation across devices, and security monitoring for anomalous sign-in activity.
+- Android CI must pass unit tests, Kotlin lint, static analysis and debug APK build on the latest commit before the Android auth slice is accepted.
+- Website auth UI and API CI must pass on the latest commit before the website auth slice is accepted.
