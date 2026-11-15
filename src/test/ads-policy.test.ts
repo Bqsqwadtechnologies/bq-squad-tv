@@ -18,7 +18,7 @@ describe("ad viewer suitability policy", () => {
   });
 
   it("requires the viewer country to match a restricted campaign", () => {
-    const campaign = { category: "entertainment", territoryCodes: ["NG", "GH"] };
+    const campaign = { category: "entertainment", ageRating: "PG", territoryCodes: ["NG", "GH"] };
     expect(isAdSuitableForViewer(campaign, false, "NG")).toBe(true);
     expect(isAdSuitableForViewer(campaign, false, "US")).toBe(false);
     expect(isAdSuitableForViewer(campaign, false, "")).toBe(false);
