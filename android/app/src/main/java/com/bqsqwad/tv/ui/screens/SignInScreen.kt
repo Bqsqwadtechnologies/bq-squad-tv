@@ -48,9 +48,10 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
     var message by remember { mutableStateOf<String?>(null) }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(28.dp),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(28.dp),
         verticalArrangement = Arrangement.Center,
     ) {
         Text("BQ SQWAD TV", style = MaterialTheme.typography.headlineLarge)
@@ -241,15 +242,13 @@ private suspend fun googleSignIn(
     context: Context,
     repository: AuthRepository,
 ) {
-    val option =
-        GetGoogleIdOption.Builder()
-            .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
-            .setFilterByAuthorizedAccounts(false)
-            .build()
-    val request =
-        GetCredentialRequest.Builder()
-            .addCredentialOption(option)
-            .build()
+    val optionBuilder = GetGoogleIdOption.Builder()
+    optionBuilder.setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+    optionBuilder.setFilterByAuthorizedAccounts(false)
+    val option = optionBuilder.build()
+    val requestBuilder = GetCredentialRequest.Builder()
+    requestBuilder.addCredentialOption(option)
+    val request = requestBuilder.build()
     val credentialManager = CredentialManager.create(context)
     val result = credentialManager.getCredential(context, request)
     val token =
