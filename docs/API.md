@@ -83,3 +83,8 @@ These endpoints are implemented in source. They are not considered production-re
 
 ## Security
 Firebase clients must not write wallets, balances, ledgers, sessions, revenue allocations, producer earnings, payouts, roles or purchase verification outcomes. Firestore rules must default-deny sensitive collections; server uses Firebase Admin credentials stored only in Lovable Cloud. Never accept client-supplied price, balance, age eligibility, role, revenue split or elapsed session time.
+
+## Content upload and rights review
+- `POST /v1/storage/intent` and `POST /v1/storage/complete` — channel owners or active channel members with `video.upload` may upload private source media. Explicitly delegated ZILLIONAIRE content/channel operators may also upload to platform-owned channels. Upload completion verifies object ownership, declared size and media signatures before accepting source media.
+- `POST /v1/admin/channels/{channelId}/assets` — a delegated platform content/channels operator submits title, description, category, distribution territories, supported platforms, license term and a separate private rights-evidence object for an uploaded asset on a platform-owned channel. The submission remains draft and pending independent review.
+- `POST /v1/admin/content-assets/{assetId}/rights` — delegated content reviewers approve or reject submitted rights. An operator cannot approve their own submission. Approval requires the private evidence object to exist. Publication remains blocked until rights, processing and delivery checks pass.
