@@ -19,7 +19,7 @@ function encodeMetadata(value: string) {
 }
 
 async function tusUpload(file: File, endpoint: string, signature: string, path: string, onProgress: (value: number) => void) {
-  const metadata: Array<[string, string]> = [
+  const metadata = [
     ["bucketName", "bq-sqwad-source-media"],
     ["objectName", path],
     ["contentType", file.type],
@@ -110,12 +110,15 @@ function VideoStudio() {
       });
       const intent = await intentResponse.json() as { assetId?: string; path?: string; signedUrl?: string; token?: string; uploadMode?: string; resumableEndpoint?: string | null; error?: string };
       if (!intentResponse.ok || !intent.assetId || !intent.path || !intent.token) throw new Error(intent.error ?? "Could not create the private upload.");
+      const assetId = intent.assetId;
+      const uploadPath = intent.path;
+      const uploadToken = intent.token;
       if (file.size > 6 * 1024 * 1024 && intent.uploadMode !== "tus") {
         throw new Error("Resumable upload is not configured for this project. The file has not been uploaded; no partial movie was published.");
       }
       setUpload({ name: file.name, progress: 0, status: "Uploading source", detail: "Sending the video directly to the existing private source-media bucket." });
       if (intent.uploadMode === "tus" && intent.resumableEndpoint) {
-        await tusUpload(file, intent.resumableEndpoint, intent.token, intent.path, progress => {
+        await tusUpload(file, intent.resumableEndpoint, uploadToken, uploadPath, progress => {
           setUpload({ name: file.name, progress, status: "Uploading source", detail: "Resumable upload · " + progress + "% complete." });
         });
       } else {
@@ -126,7 +129,7 @@ function VideoStudio() {
       const complete = await fetch("/api/public/v1/storage/complete", {
         method: "POST",
         headers: { ...headers, "content-type": "application/json" },
-        body: JSON.stringify({ assetId: intent.assetId }),
+        body: JSON.stringify({ assetId }),
       });
       const completed = await complete.json() as { status?: string; error?: string };
       if (!complete.ok) throw new Error(completed.error ?? "The uploaded file could not be verified.");
