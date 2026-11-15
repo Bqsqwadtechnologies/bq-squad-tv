@@ -7,6 +7,7 @@ import { ApiError, Firestore, getFirebaseProjectId } from "./firebase-admin";
 import { requireAppCheck } from "./firebase-app-check";
 import { verifyFirebaseIdToken, type VerifiedUser } from "./firebase-auth";
 import { assertAccountActive } from "./account-status";
+import { assertAuthenticationSessionActive } from "./auth-session-revocation";
 
 export function errorBody(error: unknown): Response {
   if (error instanceof ApiError) {
@@ -37,6 +38,7 @@ export async function requireUser(request: Request): Promise<VerifiedUser> {
   const fs = await Firestore.create();
   const profile = await fs.getDoc("users/" + user.uid);
   assertAccountActive(profile);
+  assertAuthenticationSessionActive(profile, user.authTime);
 
   // Brevo OTP verification is accepted only while bound to the exact current
   // Firebase email. Firebase token signature and UID remain authoritative.
