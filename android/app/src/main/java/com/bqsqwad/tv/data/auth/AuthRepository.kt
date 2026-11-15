@@ -10,6 +10,11 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 
+data class EmailAuthResult(
+    val emailVerified: Boolean,
+    val verificationEmailSent: Boolean,
+)
+
 class AuthRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
 ) {
@@ -36,12 +41,32 @@ class AuthRepository(
         email: String,
         password: String,
         createAccount: Boolean,
-    ) {
-        if (createAccount) {
-            auth.createUserWithEmailAndPassword(email, password).awaitResult()
+    ): EmailAuthResult {
+        val normalizedEmail = email.trim()
+        val user = if (createAccount) {
+            auth.createUserWithEmailAndPassword(normalizedEmail, password).awaitResult().user
         } else {
-            auth.signInWithEmailAndPassword(email, password).awaitResult()
+            auth.signInWithEmailAndPassword(normalizedEmail, password).awaitResult().user
+        } ?: error("Firebase did not return an authenticated account.")
+
+        user.reload().awaitResult()
+        val verified = user.isEmailVerified
+        val sent = if (verified) false else {
+            user.sendEmailVerification().awaitResult()
+            true
         }
+        return EmailAuthResult(emailVerified = verified, verificationEmailSent = sent)
+    }
+
+    suspend fun resendEmailVerification() {
+        val user = auth.currentUser ?: error("Sign in before requesting email verification.")
+        user.reload().awaitResult()
+        if (!user.isEmailVerified) user.sendEmailVerification().awaitResult()
+    }
+
+    suspend fun sendPasswordReset(email: String) {
+        require(email.trim().isNotEmpty()) { "Enter your email address first." }
+        auth.sendPasswordResetEmail(email.trim()).awaitResult()
     }
 
     suspend fun signInGoogle(idToken: String) {
@@ -54,9 +79,8 @@ class AuthRepository(
         parentalPin: String?,
     ): CompleteProfileResponse {
         val user = auth.currentUser ?: error("Sign in before completing your profile.")
-        val token =
-            user.getIdToken(false).awaitResult().token
-                ?: error("Could not obtain a Firebase authentication token.")
+        val token = user.getIdToken(false).awaitResult().token
+            ?: error("Could not obtain a Firebase authentication token.")
         return profileApi.completeProfile("Bearer $token", CompleteProfileRequest(dateOfBirth, parentalPin))
     }
 
