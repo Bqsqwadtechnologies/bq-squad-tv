@@ -39,6 +39,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
   server: { handlers: { POST: async ({ request }) => {
     try {
       const user = await requireUser(request);
+      if (!user.emailVerified) throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email before making a wallet payment.");
       if (!user.email) throw new ApiError(400, "EMAIL_REQUIRED", "Add an email address before making a website payment.");
       const { packageId } = await parseBody(request, schema);
       const fs = await Firestore.create();
