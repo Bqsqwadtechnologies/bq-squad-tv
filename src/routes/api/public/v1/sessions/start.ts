@@ -85,7 +85,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
                 walletBalanceMinor: balance, currency: "NGN",
                 timeRemainingSeconds: remainingSeconds(balance, rate),
                 sessionTotalMinor: integer(priorSession["sessionTotalMinor"]) ?? 0, active: true,
-              }, { headers: responseHeaders });
+              }, responseHeaders ? { headers: responseHeaders } : {});
             }
             throw new ApiError(409, "IDEMPOTENCY_KEY_ALREADY_USED", "This session request has already been used.");
           }
@@ -189,7 +189,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             sessionId, playbackUrl, ratePerMinuteMinor, walletBalanceMinor: balanceMinor,
             currency: "NGN", timeRemainingSeconds: remainingSeconds(balanceMinor, ratePerMinuteMinor),
             sessionTotalMinor: 0, active: true,
-          }, { status: 201, headers: responseHeaders });
+          }, { status: 201, ...(responseHeaders ? { headers: responseHeaders } : {}) });
         } catch (error) {
           return errorBody(error);
         }
