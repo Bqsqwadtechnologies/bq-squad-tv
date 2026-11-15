@@ -48,10 +48,10 @@ export async function resolvePlatformAccess(
   if (isSuperAdmin || storedRoles.includes("admin") || claimedRoles.includes("admin") || customClaims["admin"] === true) {
     roles.push("admin");
   }
-  const configuredScopes = [
-    ...stringArray(user?.["adminModules"]),
-    ...stringArray(customClaims["adminModules"]),
-  ].filter((scope): scope is AdminModule => ADMIN_MODULES.includes(scope as AdminModule));
+  // Delegated module permissions live in Firestore so the protected owner can
+  // revoke them immediately; stale Firebase custom claims must not preserve access.
+  const configuredScopes = stringArray(user?.["adminModules"])
+    .filter((scope): scope is AdminModule => ADMIN_MODULES.includes(scope as AdminModule));
   return {
     roles,
     isSuperAdmin,
