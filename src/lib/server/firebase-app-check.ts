@@ -9,7 +9,7 @@ export async function verifyFirebaseAppCheckToken(token: string): Promise<void> 
   let response: Response;
   try {
     response = await fetch(
-      `https://firebaseappcheck.googleapis.com/v1/projects/${projectId}:verifyAppCheckToken`,
+      `https://firebaseappcheck.googleapis.com/v1beta/projects/${projectId}:verifyAppCheckToken`,
       {
         method: "POST",
         headers: {
