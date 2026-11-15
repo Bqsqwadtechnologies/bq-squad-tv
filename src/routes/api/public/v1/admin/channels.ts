@@ -23,19 +23,11 @@ const schema = z.object({
   minimumBalanceByCurrency: z.record(z.string().regex(/^[A-Z]{3}$/), z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)).optional(),
   reason: z.string().trim().min(3).max(1000),
 }).superRefine((value, context) => {
-  if (value.adultOnly && value.contentRating !== "18+") {
-    context.addIssue({ code: z.ZodIssueCode.custom, path: ["contentRating"], message: "Adult-only channels must use the 18+ rating." });
-  }
-  if (!value.adultOnly && value.contentRating === "18+") {
-    context.addIssue({ code: z.ZodIssueCode.custom, path: ["adultOnly"], message: "An 18+ channel must be explicitly marked adult-only." });
-  }
+  if (value.adultOnly && value.contentRating !== "18+") context.addIssue({ code: z.ZodIssueCode.custom, path: ["contentRating"], message: "Adult-only channels must use the 18+ rating." });
+  if (!value.adultOnly && value.contentRating === "18+") context.addIssue({ code: z.ZodIssueCode.custom, path: ["adultOnly"], message: "An 18+ channel must be explicitly marked adult-only." });
   const hasCurrencyRates = Boolean(value.ratePerMinuteByCurrency && Object.keys(value.ratePerMinuteByCurrency).length > 0);
-  if (value.paid && !hasCurrencyRates && (!Number.isSafeInteger(value.ratePerMinuteMinor) || (value.ratePerMinuteMinor ?? 0) < 1)) {
-    context.addIssue({ code: z.ZodIssueCode.custom, path: ["ratePerMinuteMinor"], message: "Paid channels require a positive per-minute price or currency-specific prices." });
-  }
-  if (!value.paid && ((value.ratePerMinuteMinor !== undefined && value.ratePerMinuteMinor !== 0) || hasCurrencyRates)) {
-    context.addIssue({ code: z.ZodIssueCode.custom, path: ["ratePerMinuteMinor"], message: "Free channels must not have paid per-minute prices." });
-  }
+  if (value.paid && !hasCurrencyRates && (!Number.isSafeInteger(value.ratePerMinuteMinor) || (value.ratePerMinuteMinor ?? 0) < 1)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["ratePerMinuteMinor"], message: "Paid channels require a positive per-minute price or currency-specific prices." });
+  if (!value.paid && ((value.ratePerMinuteMinor !== undefined && value.ratePerMinuteMinor !== 0) || hasCurrencyRates)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["ratePerMinuteMinor"], message: "Free channels must not have paid per-minute prices." });
 });
 
 function numericChannelId(): string {
@@ -48,6 +40,24 @@ function numericChannelId(): string {
 export const Route = createFileRoute("/api/public/v1/admin/channels")({
   server: {
     handlers: {
+      GET: async ({ request }) => {
+        try {
+          const user = await requireUser(request);
+          const fs = await Firestore.create();
+          try { await requireAdminModule(fs, user, "content"); }
+          catch { await requireAdminModule(fs, user, "channels"); }
+          const channels = await fs.query("channels", {
+            filters: [{ field: "ownerUid", op: "EQUAL", value: "platform" }],
+            limit: 200,
+          });
+          return Response.json({ channels: channels.map(channel => ({
+            id: channel.__id,
+            title: typeof channel["title"] === "string" ? channel["title"] : "Untitled channel",
+            status: typeof channel["status"] === "string" ? channel["status"] : "DRAFT",
+            published: channel["published"] === true,
+          })) });
+        } catch (error) { return errorBody(error); }
+      },
       POST: async ({ request }) => {
         try {
           const user = await requireUser(request);
@@ -58,91 +68,39 @@ export const Route = createFileRoute("/api/public/v1/admin/channels")({
           const pricing = await getPricingConfig(fs);
           const currency = requireCurrency(body.currency);
           const ratePerMinuteByCurrency = body.paid ? (body.ratePerMinuteByCurrency ?? {}) : {};
-          const ratePerMinuteMinor = body.paid
-            ? requireMinorUnitAmount(body.ratePerMinuteMinor ?? ratePerMinuteByCurrency[currency] ?? 0, "ratePerMinuteMinor")
-            : 0;
+          const ratePerMinuteMinor = body.paid ? requireMinorUnitAmount(body.ratePerMinuteMinor ?? ratePerMinuteByCurrency[currency] ?? 0, "ratePerMinuteMinor") : 0;
           const minimumBalanceByCurrency = body.minimumBalanceByCurrency ?? {};
-          const minimumBalanceMinor = body.minimumBalanceMinor ??
-            minimumBalanceByCurrency[currency] ??
-            (body.paid ? requireMinorUnitAmount(pricing["minimumSessionBalanceMinor"] ?? 0, "minimumSessionBalanceMinor") : 0);
-
+          const minimumBalanceMinor = body.minimumBalanceMinor ?? minimumBalanceByCurrency[currency] ?? (body.paid ? requireMinorUnitAmount(pricing["minimumSessionBalanceMinor"] ?? 0, "minimumSessionBalanceMinor") : 0);
           let channelId = "";
           let created = false;
           for (let attempt = 0; attempt < 8 && !created; attempt += 1) {
             channelId = numericChannelId();
             const now = new Date().toISOString();
             const fields = {
-              channelNumber: channelId,
-              ownerUid: "platform",
-              createdBy: user.uid,
-              title: body.title,
-              category: body.category,
-              description: body.description,
-              language: body.language,
-              contentRating: body.contentRating,
-              adultOnly: body.adultOnly,
-              paid: body.paid,
-              currency,
-              ratePerMinuteMinor,
-              ratePerMinuteByCurrency,
-              minimumBalanceMinor,
-              minimumBalanceByCurrency,
-              producerShareBps: 0,
-              published: false,
-              status: "DRAFT",
-              deliveryMode: "bq_hosted",
-              providerId: "bq-storage",
-              providerSetupStatus: "AWAITING_CONTENT",
-              currentAssetId: null,
-              logoPath: null,
-              bannerPath: null,
-              pricingVersion: pricing.version,
-              createdAt: now,
-              updatedAt: now,
+              channelNumber: channelId, ownerUid: "platform", createdBy: user.uid,
+              title: body.title, category: body.category, description: body.description,
+              language: body.language, contentRating: body.contentRating, adultOnly: body.adultOnly,
+              paid: body.paid, currency, ratePerMinuteMinor, ratePerMinuteByCurrency,
+              minimumBalanceMinor, minimumBalanceByCurrency, producerShareBps: 0,
+              published: false, status: "DRAFT", deliveryMode: "bq_hosted",
+              providerId: "bq-storage", providerSetupStatus: "AWAITING_CONTENT",
+              currentAssetId: null, logoPath: null, bannerPath: null,
+              pricingVersion: pricing.version, createdAt: now, updatedAt: now,
             };
             const result = await fs.transact(["channels/" + channelId], docs => {
               if (docs[0]) return { result: false, writes: [] };
-              return {
-                result: true,
-                writes: [{
-                  update: { name: fs.docName("channels/" + channelId), fields: encodeFields(fields) },
-                  currentDocument: { exists: false },
-                }],
-              };
+              return { result: true, writes: [{ update: { name: fs.docName("channels/" + channelId), fields: encodeFields(fields) }, currentDocument: { exists: false } }] };
             });
             created = result;
           }
           if (!created) throw new ApiError(503, "CHANNEL_ID_GENERATION_FAILED", "A unique numeric channel number could not be allocated. Please retry.");
-
           await writeAuditLog(fs, {
-            actorUid: user.uid,
-            action: "channel.created",
-            targetType: "channel",
-            targetId: channelId,
+            actorUid: user.uid, action: "channel.created", targetType: "channel", targetId: channelId,
             reason: body.reason,
-            metadata: {
-              channelNumber: channelId,
-              paid: body.paid,
-              adultOnly: body.adultOnly,
-              contentRating: body.contentRating,
-              currency,
-              ratePerMinuteMinor,
-              ratePerMinuteByCurrency,
-            },
+            metadata: { channelNumber: channelId, paid: body.paid, adultOnly: body.adultOnly, contentRating: body.contentRating, currency, ratePerMinuteMinor, ratePerMinuteByCurrency },
           });
-          return Response.json({
-            channelId,
-            channelNumber: channelId,
-            status: "DRAFT",
-            published: false,
-            paid: body.paid,
-            currency,
-            adultOnly: body.adultOnly,
-            contentRating: body.contentRating,
-          }, { status: 201 });
-        } catch (error) {
-          return errorBody(error);
-        }
+          return Response.json({ channelId, channelNumber: channelId, status: "DRAFT", published: false, paid: body.paid, currency, adultOnly: body.adultOnly, contentRating: body.contentRating }, { status: 201 });
+        } catch (error) { return errorBody(error); }
       },
     },
   },

@@ -44,7 +44,7 @@ const moduleCards: Array<{
   { id: "ads", title: "Advertising providers", description: "Separate Android and website providers, placements and credentials.", href: "/admin/ads", icon: Megaphone },
   { id: "system", title: "Firebase schema inspector", description: "Inspect field names and types without exposing production document values.", href: "/admin/firebase-schema", icon: Settings2 },
   { id: "channels", title: "Channel operations", description: "Server APIs are present; the dedicated management screen is being completed.", icon: Tv2 },
-  { id: "content", title: "Content & rights", description: "Rights evidence, review state, publishing and featured-content controls.", icon: Film },
+  { id: "content", title: "Content & rights", description: "Rights evidence, review state, publishing and featured-content controls.", href: "/admin/video-studio", icon: Film },
   { id: "users", title: "Viewer accounts", description: "Account status and access administration.", icon: Users },
   { id: "producers", title: "Producer verification", description: "Review producer verification and channel ownership.", icon: BadgeCheck },
   { id: "wallets", title: "Wallet operations", description: "Wallet and ledger oversight with audited actions.", icon: Wallet },
