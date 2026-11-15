@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApiError } from "@/lib/server/firebase-admin";
+import { requireAppCheck } from "@/lib/server/firebase-app-check";
 import { errorBody } from "@/lib/server/api";
 import {
   readWebRefreshCookie,
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/api/public/v1/auth/web/session/refresh")(
     POST: async ({ request }) => {
       try {
         requireSameOrigin(request);
+        await requireAppCheck(request);
         const refreshToken = readWebRefreshCookie(request);
         if (!refreshToken) {
           throw new ApiError(401, "WEB_SESSION_MISSING", "Sign in to continue.");
