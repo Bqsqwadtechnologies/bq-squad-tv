@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { getPricingConfig } from "@/lib/server/pricing";
+import { consumeGooglePlayProduct } from "@/lib/server/google-play";
 import { creditGooglePlayPurchase, getGooglePlayProducts, googlePlayAccountId, verifyGooglePlayProduct } from "@/lib/server/google-play";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 
@@ -40,6 +41,16 @@ export const Route = createFileRoute("/api/public/v1/wallet/google-play/verify")
         uid: user.uid, productId: body.productId, purchaseToken: body.purchaseToken,
         orderId: verifiedOrderId, creditMinor: product.creditMinor,
       });
+      // Wallet top-ups are consumable products. Consume only after the
+      // idempotent wallet/ledger transaction succeeds; retries can finish this
+      // step without crediting the same purchase twice.
+      if (verified["consumptionState"] !== 1) {
+        await consumeGooglePlayProduct({
+          packageName,
+          productId: body.productId,
+          purchaseToken: body.purchaseToken,
+        });
+      }
       return Response.json({
         ...result,
         processed: true,
