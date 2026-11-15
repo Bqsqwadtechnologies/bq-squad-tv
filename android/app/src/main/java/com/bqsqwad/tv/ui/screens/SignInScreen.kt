@@ -1,10 +1,26 @@
 package com.bqsqwad.tv.ui.screens
 
 import android.content.Context
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
@@ -25,23 +41,26 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
     val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var verificationCode by remember { mutableStateOf("") }
     var createAccount by remember { mutableStateOf(false) }
     var verificationPending by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
 
     Column(
-        Modifier.fillMaxSize().padding(28.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(28.dp),
         verticalArrangement = Arrangement.Center,
     ) {
         Text("BQ SQWAD TV", style = MaterialTheme.typography.headlineLarge)
         Text("Your world. One signal.", color = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(28.dp))
         Text(
-            if (createAccount) "Create your account" else "Welcome back",
+            text = if (createAccount) "Create your account" else "Welcome back",
             style = MaterialTheme.typography.titleLarge,
         )
-        Spacer(Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(14.dp))
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
@@ -49,8 +68,9 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth(),
+            enabled = !verificationPending,
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
@@ -59,8 +79,9 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
+            enabled = !verificationPending,
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         Button(
             enabled = !busy && email.contains("@") && password.length >= 6 && !verificationPending,
             onClick = {
@@ -73,7 +94,11 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                             onAuthenticated()
                         } else {
                             verificationPending = true
-                            message = "Check your inbox for the verification link, then return here."
+                            message = if (result.verificationEmailSent) {
+                                "Enter the six-digit code sent to your email."
+                            } else {
+                                "Enter the six-digit code sent to your email, or request a new one."
+                            }
                         }
                     } catch (error: Exception) {
                         message = error.localizedMessage ?: "Authentication failed."
@@ -87,23 +112,23 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
             Text(if (busy) "Please wait…" else if (createAccount) "Create account" else "Sign in")
         }
         TextButton(
+            enabled = !verificationPending,
             onClick = {
                 createAccount = !createAccount
                 message = null
-                verificationPending = false
             },
         ) {
             Text(if (createAccount) "Already have an account? Sign in" else "New here? Create an account")
         }
         TextButton(
-            enabled = !busy && email.contains("@"),
+            enabled = !busy && email.contains("@") && !verificationPending,
             onClick = {
                 scope.launch {
                     busy = true
                     message = null
                     try {
                         repository.sendPasswordReset(email)
-                        message = "If the address is registered, a password-reset email has been sent."
+                        message = "If the address is registered, a password-reset email has been requested."
                     } catch (error: Exception) {
                         message = error.localizedMessage ?: "Could not request a password reset."
                     } finally {
@@ -116,20 +141,32 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
         }
 
         if (verificationPending) {
-            OutlinedButton(
-                enabled = !busy,
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedTextField(
+                value = verificationCode,
+                onValueChange = { value ->
+                    verificationCode = value.filter(Char::isDigit).take(6)
+                },
+                label = { Text("Six-digit email code") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Button(
+                enabled = !busy && verificationCode.length == 6,
                 onClick = {
                     scope.launch {
                         busy = true
+                        message = null
                         try {
-                            if (repository.isCurrentEmailVerified()) {
+                            if (repository.verifyEmailCode(verificationCode)) {
                                 verificationPending = false
                                 onAuthenticated()
                             } else {
-                                message = "Your email is not verified yet. Open the verification link first."
+                                message = "The code could not be verified. Request another code."
                             }
                         } catch (error: Exception) {
-                            message = error.localizedMessage ?: "Could not check email verification."
+                            message = error.localizedMessage ?: "Email verification failed."
                         } finally {
                             busy = false
                         }
@@ -137,25 +174,26 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("I've verified my email")
+                Text(if (busy) "Verifying…" else "Verify email")
             }
             TextButton(
                 enabled = !busy,
                 onClick = {
                     scope.launch {
                         busy = true
+                        message = null
                         try {
                             repository.resendEmailVerification()
-                            message = "A new verification email has been requested."
+                            message = "A new verification code has been requested."
                         } catch (error: Exception) {
-                            message = error.localizedMessage ?: "Could not resend verification email."
+                            message = error.localizedMessage ?: "Could not resend the code."
                         } finally {
                             busy = false
                         }
                     }
                 },
             ) {
-                Text("Resend verification email")
+                Text("Resend code")
             }
         }
 
@@ -181,7 +219,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
         }
         if (BuildConfig.GOOGLE_WEB_CLIENT_ID.startsWith("REPLACE")) {
             Text(
-                "Google sign-in needs GOOGLE_WEB_CLIENT_ID from Firebase Authentication settings.",
+                text = "Google sign-in needs GOOGLE_WEB_CLIENT_ID from Firebase Authentication settings.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -198,9 +236,13 @@ private suspend fun googleSignIn(
         .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
         .setFilterByAuthorizedAccounts(false)
         .build()
-    val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
+    val request = GetCredentialRequest.Builder()
+        .addCredentialOption(option)
+        .build()
     val credentialManager = CredentialManager.create(context)
     val result = credentialManager.getCredential(context, request)
-    val token = GoogleIdTokenCredential.createFrom(result.credential.data).idToken
+    val token = GoogleIdTokenCredential
+        .createFrom(result.credential.data)
+        .idToken
     repository.signInGoogle(token)
 }
