@@ -40,7 +40,7 @@ function ProducerChannelsPage() {
 
   async function loadChannels(idToken: string) {
     const response = await fetch("/api/public/v1/producer/channels", {
-      headers: { Authorization: `Bearer ${idToken}` },
+      headers: await getWebAuthHeaders(idToken),
     });
     const result = await response.json() as Channel[] | { error?: string };
     if (!response.ok || !Array.isArray(result)) {
@@ -80,7 +80,7 @@ function ProducerChannelsPage() {
     try {
       const response = await fetch("/api/public/v1/producer/channels", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
         body: JSON.stringify({
           title, category, description, deliveryMode,
           ...(deliveryMode === "external" ? { providerId, providerKey } : {}),
