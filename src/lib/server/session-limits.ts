@@ -2,11 +2,13 @@ export const ACTIVE_SESSION_LEASE_MS = 60_000;
 
 export function liveSessionLeases(value: unknown, nowMs: number): Record<string, number> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>).filter(([, expiresAt]) =>
-      typeof expiresAt === "number" && Number.isSafeInteger(expiresAt) && expiresAt > nowMs,
-    ),
-  );
+  const live: Record<string, number> = {};
+  for (const [sessionId, expiresAt] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof expiresAt === "number" && Number.isSafeInteger(expiresAt) && expiresAt > nowMs) {
+      live[sessionId] = expiresAt;
+    }
+  }
+  return live;
 }
 
 export function acquireSessionLease(
