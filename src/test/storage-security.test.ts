@@ -13,6 +13,7 @@ describe("storage path and media validation", () => {
       expect(isSafeStoragePath(path)).toBe(false);
     }
     expect(isSafeStoragePath("producers/u1/channel1/content1/video.mp4")).toBe(true);
+    expect(isSafeStoragePath("a/%252fsecret")).toBe(false);
   });
 
   it("detects common container signatures and rejects extension spoofing", () => {

@@ -13,6 +13,9 @@ function sessionId(value: string | null): string {
 }
 
 function requestPath(value: string): string {
+  if (/%2f|%5c/i.test(value)) {
+    throw new ApiError(400, "STREAM_PATH_INVALID", "The media resource path is invalid.");
+  }
   let decoded: string;
   try { decoded = value.split("/").map((part) => decodeURIComponent(part)).join("/"); }
   catch { throw new ApiError(400, "STREAM_PATH_INVALID", "The media resource path is invalid."); }
