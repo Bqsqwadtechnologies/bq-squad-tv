@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
-import { requireSessionOwned } from "./-shared";
+import { requireSessionOwned } from "../-shared";
 import { assertContentPlaybackRights } from "@/lib/server/content-rights";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSafeStoragePath, signPlaybackToken } from "@/lib/server/storage/security";
