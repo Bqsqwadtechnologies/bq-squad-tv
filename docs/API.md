@@ -95,3 +95,10 @@ Firebase clients must not write wallets, balances, ledgers, sessions, revenue al
 - `POST /v1/admin/producers/{uid}/verification` — requires the delegated `producers` module. A reviewer other than the submitting producer approves or rejects the submission. Approval rechecks that every private evidence object remains present.
 - Producer access requires both an active producer plan and `verificationStatus=APPROVED`. A paid plan or stale Firebase role claim alone does not grant producer permissions.
 - Producer verification evidence belongs in the private `bq-sqwad-source-media` bucket under `producer-verification/{uid}/`; do not make this folder public or return long-lived object URLs.
+
+## Viewer ratings and comments
+- `POST /v1/content-assets/{assetId}/rating` — authenticated viewers submit or update one 1–5 star rating per published asset. Rating counts, totals and averages are updated transactionally; changing a viewer's rating replaces their prior score instead of counting twice.
+- `GET /v1/content-assets/{assetId}/comments` — returns only approved public comments for a published asset and exposes numeric viewer numbers rather than email addresses or Firebase UIDs.
+- `POST /v1/content-assets/{assetId}/comments` — submits a plain-text comment for moderation. New comments are not public until approved.
+- `POST /v1/admin/content-comments/{commentId}/moderate` — requires the delegated `moderation` module and records approval/rejection with an audit entry. A reviewer cannot approve their own comment.
+- There is deliberately no viewer-to-viewer direct-message endpoint. Comments are public content discussion, not private messaging.
