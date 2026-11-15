@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
+import { releaseSessionLease } from "@/lib/server/session-limits";
 import {
   incrementalSessionCharge,
   maxAffordableSeconds,
@@ -71,17 +72,11 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
               endedAt: nowIso,
               endReason: "USER_ENDED",
             };
-            const rawActiveSessions = activeSessionDoc["sessions"];
-            const activeSessions = rawActiveSessions && typeof rawActiveSessions === "object" && !Array.isArray(rawActiveSessions)
-              ? rawActiveSessions as Record<string, unknown>
-              : {};
-            const nowMs = now.getTime();
-            const liveSessions = Object.fromEntries(
-              Object.entries(activeSessions).filter(([, expiresAt]) =>
-                typeof expiresAt === "number" && Number.isSafeInteger(expiresAt) && expiresAt > nowMs,
-              ),
+            const liveSessions = releaseSessionLease(
+              activeSessionDoc["sessions"],
+              sessionId,
+              now.getTime(),
             );
-            delete liveSessions[sessionId];
 
             const writes: FirestoreWrite[] = [
               {
