@@ -37,7 +37,10 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
         Text("BQ SQWAD TV", style = MaterialTheme.typography.headlineLarge)
         Text("Your world. One signal.", color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(28.dp))
-        Text(if (createAccount) "Create your account" else "Welcome back", style = MaterialTheme.typography.titleLarge)
+        Text(
+            if (createAccount) "Create your account" else "Welcome back",
+            style = MaterialTheme.typography.titleLarge,
+        )
         Spacer(Modifier.height(14.dp))
         OutlinedTextField(
             value = email,
@@ -64,24 +67,32 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                 scope.launch {
                     busy = true
                     message = null
-                    runCatching { repository.signInEmail(email, password, createAccount) }
-                        .onSuccess { result ->
-                            if (result.emailVerified) {
-                                onAuthenticated()
-                            } else {
-                                verificationPending = true
-                                message = "Check your inbox for the verification link, then return here."
-                            }
+                    try {
+                        val result = repository.signInEmail(email, password, createAccount)
+                        if (result.emailVerified) {
+                            onAuthenticated()
+                        } else {
+                            verificationPending = true
+                            message = "Check your inbox for the verification link, then return here."
                         }
-                        .onFailure { message = it.localizedMessage ?: "Authentication failed." }
-                    busy = false
+                    } catch (error: Exception) {
+                        message = error.localizedMessage ?: "Authentication failed."
+                    } finally {
+                        busy = false
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(if (busy) "Please wait…" else if (createAccount) "Create account" else "Sign in")
         }
-        TextButton(onClick = { createAccount = !createAccount; message = null; verificationPending = false }) {
+        TextButton(
+            onClick = {
+                createAccount = !createAccount
+                message = null
+                verificationPending = false
+            },
+        ) {
             Text(if (createAccount) "Already have an account? Sign in" else "New here? Create an account")
         }
         TextButton(
@@ -90,13 +101,19 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                 scope.launch {
                     busy = true
                     message = null
-                    runCatching { repository.sendPasswordReset(email) }
-                        .onSuccess { message = "If the address is registered, a password-reset email has been sent." }
-                        .onFailure { message = it.localizedMessage ?: "Could not request a password reset." }
-                    busy = false
+                    try {
+                        repository.sendPasswordReset(email)
+                        message = "If the address is registered, a password-reset email has been sent."
+                    } catch (error: Exception) {
+                        message = error.localizedMessage ?: "Could not request a password reset."
+                    } finally {
+                        busy = false
+                    }
                 }
             },
-        ) { Text("Forgot password?") }
+        ) {
+            Text("Forgot password?")
+        }
 
         if (verificationPending) {
             OutlinedButton(
@@ -104,33 +121,42 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                 onClick = {
                     scope.launch {
                         busy = true
-                        runCatching { repository.isCurrentEmailVerified() }
-                            .onSuccess { verified ->
-                                if (verified) {
-                                    verificationPending = false
-                                    onAuthenticated()
-                                } else {
-                                    message = "Your email is not verified yet. Open the verification link first."
-                                }
+                        try {
+                            if (repository.isCurrentEmailVerified()) {
+                                verificationPending = false
+                                onAuthenticated()
+                            } else {
+                                message = "Your email is not verified yet. Open the verification link first."
                             }
-                            .onFailure { message = it.localizedMessage ?: "Could not check email verification." }
-                        busy = false
+                        } catch (error: Exception) {
+                            message = error.localizedMessage ?: "Could not check email verification."
+                        } finally {
+                            busy = false
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("I've verified my email") }
+            ) {
+                Text("I've verified my email")
+            }
             TextButton(
                 enabled = !busy,
                 onClick = {
                     scope.launch {
                         busy = true
-                        runCatching { repository.resendEmailVerification() }
-                            .onSuccess { message = "A new verification email has been requested." }
-                            .onFailure { message = it.localizedMessage ?: "Could not resend verification email." }
-                        busy = false
+                        try {
+                            repository.resendEmailVerification()
+                            message = "A new verification email has been requested."
+                        } catch (error: Exception) {
+                            message = error.localizedMessage ?: "Could not resend verification email."
+                        } finally {
+                            busy = false
+                        }
                     }
                 },
-            ) { Text("Resend verification email") }
+            ) {
+                Text("Resend verification email")
+            }
         }
 
         OutlinedButton(
@@ -139,14 +165,20 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                 scope.launch {
                     busy = true
                     message = null
-                    runCatching { googleSignIn(context, repository) }
-                        .onSuccess { onAuthenticated() }
-                        .onFailure { message = it.localizedMessage ?: "Google sign-in failed." }
-                    busy = false
+                    try {
+                        googleSignIn(context, repository)
+                        onAuthenticated()
+                    } catch (error: Exception) {
+                        message = error.localizedMessage ?: "Google sign-in failed."
+                    } finally {
+                        busy = false
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("Continue with Google") }
+        ) {
+            Text("Continue with Google")
+        }
         if (BuildConfig.GOOGLE_WEB_CLIENT_ID.startsWith("REPLACE")) {
             Text(
                 "Google sign-in needs GOOGLE_WEB_CLIENT_ID from Firebase Authentication settings.",
@@ -167,7 +199,8 @@ private suspend fun googleSignIn(
         .setFilterByAuthorizedAccounts(false)
         .build()
     val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
-    val result = CredentialManager.create(context).getCredential(context, request)
+    val credentialManager = CredentialManager.create(context)
+    val result = credentialManager.getCredential(context, request)
     val token = GoogleIdTokenCredential.createFrom(result.credential.data).idToken
     repository.signInGoogle(token)
 }
