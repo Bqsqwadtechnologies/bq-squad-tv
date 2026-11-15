@@ -6,11 +6,12 @@ data class PlayProductOffer(
     val title: String,
     val credits: Int,
     val description: String? = null,
+    val currency: String = "USD",
 )
 
 data class WalletSummary(
     val balanceMinor: Long,
-    val currency: String = "NGN",
+    val currency: String = "USD",
     val dailySpendLimitMinor: Long? = null,
     val spentTodayMinor: Long? = null,
 )
@@ -21,6 +22,7 @@ data class LedgerEntry(
     val amountMinor: Long,
     val createdAt: String,
     val kind: String,
+    val currency: String? = null,
 )
 
 data class WalletLedgerResponse(
