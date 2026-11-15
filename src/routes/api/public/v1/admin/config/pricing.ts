@@ -21,6 +21,7 @@ const schema = z.object({
   defaultRatePerMinuteMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   minimumSessionBalanceMinor: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   defaultProducerShareBps: z.number().int().min(0).max(10_000),
+  maxConcurrentSessions: z.number().int().min(1).max(5).default(2),
   walletTopups: z.record(z.string().regex(/^[A-Za-z0-9_-]{1,80}$/), topupSchema),
   googlePlayProducts: z.array(playProductSchema).max(100),
 });
