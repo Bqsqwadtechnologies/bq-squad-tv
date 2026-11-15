@@ -12,14 +12,16 @@ import java.util.concurrent.TimeUnit
  */
 class FirebaseAppCheckInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        val appCheckToken = runCatching {
-            val tokenResult = Tasks.await(
-                FirebaseAppCheck.getInstance().getAppCheckToken(false),
-                3,
-                TimeUnit.SECONDS,
-            )
-            tokenResult.token
-        }.getOrNull()
+        val appCheckToken =
+            runCatching {
+                val tokenResult =
+                    Tasks.await(
+                        FirebaseAppCheck.getInstance().getAppCheckToken(false),
+                        3,
+                        TimeUnit.SECONDS,
+                    )
+                tokenResult.token
+            }.getOrNull()
 
         val requestBuilder = chain.request().newBuilder()
         if (!appCheckToken.isNullOrBlank()) {

@@ -25,16 +25,21 @@ class BqMessagingService : FirebaseMessagingService() {
         Executors.newSingleThreadExecutor().execute {
             runCatching {
                 val user = FirebaseAuth.getInstance().currentUser ?: return@runCatching
-                val idToken = Tasks.await(user.getIdToken(false), 10, TimeUnit.SECONDS).token
-                    ?: return@runCatching
-                val appCheckToken = Tasks.await(
-                    FirebaseAppCheck.getInstance().getAppCheckToken(false),
-                    10,
-                    TimeUnit.SECONDS,
-                ).token
-                val connection = URL(
-                    com.bqsqwad.tv.BuildConfig.API_BASE_URL.trimEnd('/') + "/v1/devices/push-token",
-                ).openConnection() as HttpURLConnection
+                val idToken =
+                    Tasks.await(user.getIdToken(false), 10, TimeUnit.SECONDS).token
+                        ?: return@runCatching
+                val appCheckToken =
+                    Tasks
+                        .await(
+                            FirebaseAppCheck.getInstance().getAppCheckToken(false),
+                            10,
+                            TimeUnit.SECONDS,
+                        ).token
+                val connection =
+                    URL(
+                        com.bqsqwad.tv.BuildConfig.API_BASE_URL
+                            .trimEnd('/') + "/v1/devices/push-token",
+                    ).openConnection() as HttpURLConnection
                 connection.connectTimeout = 10_000
                 connection.readTimeout = 10_000
                 connection.requestMethod = "POST"
@@ -44,9 +49,10 @@ class BqMessagingService : FirebaseMessagingService() {
                 if (appCheckToken.isNotBlank()) {
                     connection.setRequestProperty("X-Firebase-AppCheck", appCheckToken)
                 }
-                val payload = JSONObject()
-                    .put("token", token)
-                    .put("platform", "android")
+                val payload =
+                    JSONObject()
+                        .put("token", token)
+                        .put("platform", "android")
                 connection.outputStream.use { it.write(payload.toString().toByteArray(Charsets.UTF_8)) }
                 connection.responseCode
                 connection.disconnect()
