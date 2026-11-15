@@ -49,19 +49,21 @@ class AuthRepository(
         createAccount: Boolean,
     ): EmailAuthResult {
         val normalizedEmail = email.trim()
-        val user = if (createAccount) {
-            auth.createUserWithEmailAndPassword(normalizedEmail, password).awaitResult().user
-        } else {
-            auth.signInWithEmailAndPassword(normalizedEmail, password).awaitResult().user
-        } ?: error("Firebase did not return an authenticated account.")
+        val user =
+            if (createAccount) {
+                auth.createUserWithEmailAndPassword(normalizedEmail, password).awaitResult().user
+            } else {
+                auth.signInWithEmailAndPassword(normalizedEmail, password).awaitResult().user
+            } ?: error("Firebase did not return an authenticated account.")
 
         user.reload().awaitResult()
         val verified = user.isEmailVerified
-        val verification = if (verified) {
-            null
-        } else {
-            profileApi.sendEmailVerificationCode(currentBearerToken())
-        }
+        val verification =
+            if (verified) {
+                null
+            } else {
+                profileApi.sendEmailVerificationCode(currentBearerToken())
+            }
         return EmailAuthResult(
             emailVerified = verified || verification?.alreadyVerified == true,
             verificationEmailSent = verification?.sent == true,
@@ -78,10 +80,11 @@ class AuthRepository(
 
     suspend fun verifyEmailCode(code: String): Boolean {
         require(Regex("^\\d{6}$").matches(code)) { "Enter the six-digit code from your email." }
-        return profileApi.verifyEmailCode(
+        val result = profileApi.verifyEmailCode(
             currentBearerToken(),
             VerifyEmailOtpRequest(code),
-        ).verified
+        )
+        return result.verified
     }
 
     suspend fun sendPasswordReset(email: String) {
@@ -97,12 +100,11 @@ class AuthRepository(
     suspend fun completeProfile(
         dateOfBirth: String,
         parentalPin: String?,
-    ): CompleteProfileResponse {
-        return profileApi.completeProfile(
+    ): CompleteProfileResponse =
+        profileApi.completeProfile(
             currentBearerToken(),
             CompleteProfileRequest(dateOfBirth, parentalPin),
         )
-    }
 
     fun signOut() = auth.signOut()
 }
