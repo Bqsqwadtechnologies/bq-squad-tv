@@ -85,14 +85,22 @@ export type UserProfile = {
 
 export async function getUserProfile(fs: Firestore, uid: string): Promise<UserProfile> {
   const doc = await fs.getDoc(`users/${uid}`);
+  let dateOfBirthVerifiedAdult = false;
+  if (typeof doc?.["dateOfBirth"] === "string") {
+    try {
+      dateOfBirthVerifiedAdult = ageInYears(doc["dateOfBirth"] as string) >= 18;
+    } catch {
+      // Corrupt or legacy profile dates must never grant adult access.
+      dateOfBirthVerifiedAdult = false;
+    }
+  }
   return {
     profileComplete: doc?.["profileComplete"] === true,
     adultEligible:
       doc?.["adultEligible"] === true &&
       doc?.["adultAgeVerified"] === true &&
       doc?.["adultIdentityVerified"] === true &&
-      typeof doc?.["dateOfBirth"] === "string" &&
-      ageInYears(doc["dateOfBirth"] as string) >= 18,
+      dateOfBirthVerifiedAdult,
     roleTags: Array.isArray(doc?.["roleTags"]) ? (doc["roleTags"] as string[]) : [],
   };
 }
