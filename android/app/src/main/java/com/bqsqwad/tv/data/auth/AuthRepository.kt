@@ -57,12 +57,15 @@ class AuthRepository(
 
         user.reload().awaitResult()
         val verified = user.isEmailVerified
-        val sent = if (verified) {
-            false
+        val verification = if (verified) {
+            null
         } else {
-            profileApi.sendEmailVerificationCode(currentBearerToken()).sent
+            profileApi.sendEmailVerificationCode(currentBearerToken())
         }
-        return EmailAuthResult(emailVerified = verified, verificationEmailSent = sent)
+        return EmailAuthResult(
+            emailVerified = verified || verification?.alreadyVerified == true,
+            verificationEmailSent = verification?.sent == true,
+        )
     }
 
     suspend fun resendEmailVerification() {
