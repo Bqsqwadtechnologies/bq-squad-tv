@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, KeyRound, LoaderCircle, LogOut, Plus, RadioTower, ShieldCheck } from "lucide-react";
+import { ArrowLeft, KeyRound, LoaderCircle, LogOut, Plus, RadioTower, ShieldCheck, Users } from "lucide-react";
 import { getWebAuthHeaders, signInWithEmailPassword } from "@/lib/firebase-web-auth";
 
 type Channel = {
@@ -156,7 +156,10 @@ function ProducerChannelsPage() {
                 {channels.map(channel => (
                   <article key={channel.id} className="flex items-center justify-between gap-4 py-4">
                     <div className="min-w-0"><h3 className="truncate font-semibold">{channel.title}</h3><p className="mt-1 text-xs text-blue-100/50">{channel.category} · {channel.deliveryMode === "external" ? "External provider" : "BQ hosted"}</p><p className="mt-1 text-[11px] text-cyan-200/70">{channel.providerSetupStatus ?? channel.status}</p></div>
-                    <span className={channel.published ? "rounded-full bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200" : "rounded-full bg-white/10 px-3 py-1 text-xs text-white/60"}>{channel.published ? "Published" : "Draft"}</span>
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <span className={channel.published ? "rounded-full bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200" : "rounded-full bg-white/10 px-3 py-1 text-xs text-white/60"}>{channel.published ? "Published" : "Draft"}</span>
+                      <a href={"/producer/channels/" + encodeURIComponent(channel.id) + "/team"} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-300/20 px-2.5 py-1.5 text-[11px] font-bold text-cyan-200 hover:bg-cyan-300/10"><Users size={13} /> Manage team</a>
+                    </div>
                   </article>
                 ))}
               </div> : <div className="rounded-2xl border border-dashed border-white/15 p-7 text-center text-sm text-blue-100/50">No channels yet. Create your first channel.</div>}
