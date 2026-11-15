@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { LoaderCircle, ShieldCheck, Smartphone, Monitor } from "lucide-react";
-import { signInWithEmailPassword } from "@/lib/firebase-web-auth";
+import { getWebAuthHeaders, signInWithEmailPassword } from "@/lib/firebase-web-auth";
 
 export const Route = createFileRoute("/admin/ads")({
   component: AdminAdsPage,
@@ -58,7 +58,7 @@ function AdminAdsPage() {
       if (rewarded.trim()) placements["rewarded"] = rewarded.trim();
       const response = await fetch("/api/public/v1/admin/ads/providers", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
         body: JSON.stringify({ platform, providerId, publicAppId, placements, secretKey, enabled }),
       });
       const result = await response.json() as { saved?: boolean; error?: string };
