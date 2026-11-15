@@ -18,11 +18,20 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           const body = await parseBody(request, bodySchema);
           const adultEligible = ageInYears(body.dateOfBirth) >= 18;
           const fs = await Firestore.create();
+          const existingProfile = await fs.getDoc("users/" + user.uid);
+          const sameVerifiedDateOfBirth = existingProfile?.["dateOfBirth"] === body.dateOfBirth;
+          const adultAgeVerified = adultEligible && sameVerifiedDateOfBirth &&
+            existingProfile?.["adultAgeVerified"] === true;
+          const adultIdentityVerified = adultEligible && sameVerifiedDateOfBirth &&
+            existingProfile?.["adultIdentityVerified"] === true;
+          const verifiedAdultEligible = adultEligible && adultAgeVerified && adultIdentityVerified;
           const fields: Record<string, unknown> = {
             email: user.email,
             dateOfBirth: body.dateOfBirth,
             profileComplete: true,
-            adultEligible,
+            adultAgeVerified,
+            adultIdentityVerified,
+            adultEligible: verifiedAdultEligible,
             parentalPinEnabled: typeof body.parentalPin === "string",
             updatedAt: new Date().toISOString(),
           };
@@ -39,7 +48,7 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           await fs.patchDoc("users/" + user.uid, fields);
           return Response.json({
             profileComplete: true,
-            adultEligible,
+            adultEligible: verifiedAdultEligible,
             parentalPinEnabled: typeof body.parentalPin === "string",
           });
         } catch (error) {
