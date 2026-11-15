@@ -23,8 +23,10 @@ Base URL: `API_BASE_URL` from Android local.properties. All routes use HTTPS and
 These endpoints are implemented in source. They are not considered production-ready until the hosting deployment is published and live email, cookie, OAuth, expiry, rate-limit and cross-platform tests pass.
 
 ## Profile and age policy
-- `POST /v1/profile/complete` — body `{dateOfBirth,parentalPin}`; returns `{profileComplete,adultEligible,parentalPinEnabled}`. Calculate age on the server; never trust client age.
-- Re-check adult eligibility on catalog, search, channel detail, ad targeting and session start. Under-18 users receive no adult content metadata or playback URL.
+- `POST /v1/profile/complete` — body `{dateOfBirth,parentalPin}`; returns `{profileComplete,adultEligible,parentalPinEnabled}`. The server validates a real, non-future date and calculates age; never trust client age. Profile completion alone does not verify identity or age and must never grant adult access.
+- Adult eligibility requires both trusted server-side `adultAgeVerified` and `adultIdentityVerified` records, a valid date of birth showing the user is at least 18, and the server-derived `adultEligible` flag. These verification flags may only be set by a future approved verification-provider integration or a tightly authorized server-side review workflow; clients must never be able to set them.
+- Until an adult identity/age verification provider and its server callback/review workflow are implemented and live-tested, adult-only channels remain unavailable to everyone. Under-18 and unverified users receive no adult-channel metadata, verification invitation, or playback URL.
+- Re-check adult eligibility on catalog, search, channel detail, ad targeting and session start.
 
 ## Catalog
 - `GET /v1/catalog/home` — returns `{liveNow,startingSoon,channels,replays,continueWatching,trending}`. Channel summary: `{id,title,category,posterUrl,isLive,currentProgramme,language}`.
