@@ -33,8 +33,8 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlin.math.max
 import java.util.Locale
+import kotlin.math.max
 
 @Composable
 fun PlayerScreen(

@@ -7,9 +7,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import java.util.Locale
 import com.bqsqwad.tv.BuildConfig
 import com.bqsqwad.tv.data.producer.*
+import java.util.Locale
 
 @Composable fun ProducerScreen(onBack: () -> Unit) {
     val context = LocalContext.current

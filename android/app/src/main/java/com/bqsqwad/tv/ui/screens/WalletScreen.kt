@@ -9,9 +9,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import java.util.Locale
 import com.bqsqwad.tv.data.wallet.*
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 @Composable
 fun WalletScreen(onBack: () -> Unit) {
