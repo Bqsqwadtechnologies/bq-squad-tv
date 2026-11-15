@@ -89,6 +89,15 @@ describe("Paystack wallet credit validation", () => {
     );
   });
 
+  it("normalizes XOF's Paystack API subunits for wallet display", () => {
+    const config = { walletTopupsByCurrency: { XOF: { starter: { amountMinor: 10000, creditMinor: 100 } } } };
+    expect(getPaystackTopup(config, "starter", "XOF")).toEqual({
+      amountMinor: 10000, displayAmountMinor: 100, creditMinor: 100,
+    });
+    const invalid = { walletTopupsByCurrency: { XOF: { starter: { amountMinor: 10001, creditMinor: 100 } } } };
+    expect(() => getPaystackTopup(invalid, "starter", "XOF")).toThrow();
+  });
+
   it("uses the currency-specific configured top-up price", () => {
     const config = {
       walletTopups: { starter: { amountMinor: 50000, creditMinor: 50000 } },
@@ -96,7 +105,7 @@ describe("Paystack wallet credit validation", () => {
         USD: { starter: { amountMinor: 499, creditMinor: 499 } },
       },
     };
-    expect(getPaystackTopup(config, "starter", "USD")).toEqual({ amountMinor: 499, creditMinor: 499 });
+    expect(getPaystackTopup(config, "starter", "USD")).toEqual({ amountMinor: 499, displayAmountMinor: 499, creditMinor: 499 });
   });
 
   it("does not credit an already credited payment again", async () => {
