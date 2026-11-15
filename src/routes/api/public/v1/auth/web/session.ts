@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, getFirebaseProjectId } from "@/lib/server/firebase-admin";
+import { requireAppCheck } from "@/lib/server/firebase-app-check";
 import { errorBody, parseBody } from "@/lib/server/api";
 import { verifyFirebaseIdToken } from "@/lib/server/firebase-auth";
 import { refreshFirebaseWebSession, requireSameOrigin, webRefreshCookie } from "@/lib/server/web-session";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/api/public/v1/auth/web/session")({
     POST: async ({ request }) => {
       try {
         requireSameOrigin(request);
+        await requireAppCheck(request);
         const body = await parseBody(request, schema);
         const initialUser = await verifyFirebaseIdToken(body.idToken, getFirebaseProjectId());
         const session = await refreshFirebaseWebSession(body.refreshToken);
