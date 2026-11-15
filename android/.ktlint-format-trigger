@@ -3,3 +3,5 @@ one-time Android Kotlin formatting trigger
 retry formatter using installed gradle
 
 retry with Gradle 8.13
+
+retry after fixing wildcard import
