@@ -6,7 +6,6 @@ import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
-import com.android.billingclient.api.ConsumeParams
 import com.android.billingclient.api.PendingPurchasesParams
 import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
@@ -153,26 +152,18 @@ class PlayBillingManager(
                     runCatching { repository.verify(productId, purchase.purchaseToken, purchase.orderId) }
                         .onSuccess { verification ->
                             if (verification.processed) {
-                                val consume = ConsumeParams.newBuilder().setPurchaseToken(purchase.purchaseToken).build()
-                                client.consumeAsync(consume) { billingResult, _ ->
-                                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                                        onMessage(
-                                            if (verification.credited) {
-                                                "Wallet credited successfully."
-                                            } else {
-                                                "This purchase was already credited to your wallet."
-                                            },
-                                        )
-                                        onWalletUpdated()
+                                // The server consumes the purchase after its idempotent
+                                // wallet/ledger transaction; do not consume it a second time here.
+                                onMessage(
+                                    if (verification.credited) {
+                                        "Wallet credited successfully."
                                     } else {
-                                        onMessage(
-                                            "The verified purchase is ready, but Google Play consumption needs retry: " +
-                                                billingResult.debugMessage,
-                                        )
-                                    }
-                                }
+                                        "This purchase was already credited to your wallet."
+                                    },
+                                )
+                                onWalletUpdated()
                             } else {
-                                onMessage(verification.message ?: "The server has not confirmed this purchase. It will not be consumed.")
+                                onMessage(verification.message ?: "The server has not confirmed this purchase.")
                             }
                         }.onFailure { onMessage("Purchase verification failed. Do not repurchase yet. " + (it.localizedMessage ?: "")) }
                 }
