@@ -33,7 +33,7 @@ These endpoints are implemented in source. They are not considered production-re
 
 ## Integrity and sessions
 - `GET /v1/security/integrity/challenge` — returns a fresh one-use `{nonce}`.
-- `POST /v1/sessions/start` — body `{channelId,contentAssetId?,clientPlatform,integrityNonce?,integrityToken?,idempotencyKey}`. All requests require Firebase auth, age policy, content rights, geo/territory checks and wallet minimum. Android and Android TV require a fresh Play Integrity token plus a one-use challenge. Web requires a same-origin request and a matching HttpOnly web-session cookie. Return `{sessionId,playbackUrl,ratePerMinuteMinor,walletBalanceMinor,currency,timeRemainingSeconds,sessionTotalMinor,active}`. Playback URL must be signed and short-lived.
+- `POST /v1/sessions/start` — body `{channelId,contentAssetId?,clientPlatform,integrityNonce?,integrityToken?,idempotencyKey}`. All requests require Firebase auth, age policy, content rights, geo/territory checks and wallet minimum. An atomic active-session lease enforces the configured concurrent session limit (default 2, configurable from 1–5 in Admin Pricing). Android and Android TV require a fresh Play Integrity token plus a one-use challenge. Web requires a same-origin request and a matching HttpOnly web-session cookie. Return `{sessionId,playbackUrl,ratePerMinuteMinor,walletBalanceMinor,currency,timeRemainingSeconds,sessionTotalMinor,active}`. Playback URL must be signed and short-lived.
 - `POST /v1/sessions/{sessionId}/heartbeat` — body `{clientSequence,playbackState,playbackPositionMs}`. playbackState is one of playing, paused, buffering, idle or ended; playbackPositionMs is the Media3 media position. The server uses its own clock and bills only a completed interval where both consecutive player samples report playing, media position advanced, and advancement does not exceed server elapsed time. Paused, buffering, idle, ended, unchanged-position and stale-heartbeat intervals are not charged. Idempotency is session + sequence. Expected cadence: 15 seconds. Client-reported player telemetry is not cryptographic proof; verified Play Integrity and provider-side authorization/telemetry remain production requirements.
 - `POST /v1/sessions/{sessionId}/end` — close the session and revoke playback authorization. It does not charge an unconfirmed trailing interval after the last heartbeat; only completed playback-evidence intervals are billable.
 - More than 45 seconds without a heartbeat or reaching the wallet/daily spend limit terminates the session server-side. A configurable concurrent-device cap is not yet implemented.
@@ -62,7 +62,6 @@ These endpoints are implemented in source. They are not considered production-re
 ## Remaining Phase 2 security work
 
 - Configure and verify Firebase App Check for Android and website APIs. Play Integrity is currently enforced specifically by Android playback start; it is not a substitute for App Check across every API.
-- Add a configurable concurrent-device/session cap with atomic enforcement.
 - Add Google Play refund/revocation reconciliation and operational retry monitoring for failed consumption.
 - Add complete web wallet checkout UI and live Paystack test-mode verification.
 - Complete age, geography, frequency caps and priority rules for ad delivery.
