@@ -60,7 +60,7 @@ export async function parseBody<T>(request: Request, schema: z.ZodType<T>): Prom
 
 /** Age in whole years, always computed on the server from the stored date of birth. */
 export function ageInYears(dateOfBirthIso: string, now: Date = new Date()): number {
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateOfBirthIso)) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirthIso)) {
     throw new ApiError(400, "INVALID_REQUEST", "dateOfBirth must be a valid YYYY-MM-DD date.");
   }
   const dob = new Date(`${dateOfBirthIso}T00:00:00Z`);
