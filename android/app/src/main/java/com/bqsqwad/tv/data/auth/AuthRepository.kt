@@ -51,17 +51,22 @@ class AuthRepository(
 
         user.reload().awaitResult()
         val verified = user.isEmailVerified
-        val sent = if (verified) false else {
-            user.sendEmailVerification().awaitResult()
-            true
-        }
+        val sent =
+            if (verified) {
+                false
+            } else {
+                user.sendEmailVerification().awaitResult()
+                true
+            }
         return EmailAuthResult(emailVerified = verified, verificationEmailSent = sent)
     }
 
     suspend fun resendEmailVerification() {
         val user = auth.currentUser ?: error("Sign in before requesting email verification.")
         user.reload().awaitResult()
-        if (!user.isEmailVerified) user.sendEmailVerification().awaitResult()
+        if (!user.isEmailVerified) {
+            user.sendEmailVerification().awaitResult()
+        }
     }
 
     suspend fun isCurrentEmailVerified(): Boolean {
@@ -87,7 +92,10 @@ class AuthRepository(
         val user = auth.currentUser ?: error("Sign in before completing your profile.")
         val token = user.getIdToken(false).awaitResult().token
             ?: error("Could not obtain a Firebase authentication token.")
-        return profileApi.completeProfile("Bearer $token", CompleteProfileRequest(dateOfBirth, parentalPin))
+        return profileApi.completeProfile(
+            "Bearer $token",
+            CompleteProfileRequest(dateOfBirth, parentalPin),
+        )
     }
 
     fun signOut() = auth.signOut()
