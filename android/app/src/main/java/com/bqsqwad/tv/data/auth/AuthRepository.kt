@@ -37,6 +37,12 @@ class AuthRepository(
             .create(ProfileApi::class.java)
     }
 
+    private suspend fun currentBearerToken(): String {
+        val user = auth.currentUser ?: error("Sign in before continuing.")
+        val token = user.getIdToken(false).awaitResult().token
+        return "Bearer " + (token ?: error("Could not obtain a Firebase authentication token."))
+    }
+
     suspend fun signInEmail(
         email: String,
         password: String,
@@ -51,13 +57,11 @@ class AuthRepository(
 
         user.reload().awaitResult()
         val verified = user.isEmailVerified
-        val sent =
-            if (verified) {
-                false
-            } else {
-                user.sendEmailVerification().awaitResult()
-                true
-            }
+        val sent = if (verified) {
+            false
+        } else {
+            profileApi.sendEmailVerificationCode(currentBearerToken()).sent
+        }
         return EmailAuthResult(emailVerified = verified, verificationEmailSent = sent)
     }
 
@@ -65,14 +69,16 @@ class AuthRepository(
         val user = auth.currentUser ?: error("Sign in before requesting email verification.")
         user.reload().awaitResult()
         if (!user.isEmailVerified) {
-            user.sendEmailVerification().awaitResult()
+            profileApi.sendEmailVerificationCode(currentBearerToken())
         }
     }
 
-    suspend fun isCurrentEmailVerified(): Boolean {
-        val user = auth.currentUser ?: return false
-        user.reload().awaitResult()
-        return user.isEmailVerified
+    suspend fun verifyEmailCode(code: String): Boolean {
+        require(Regex("^\\d{6}$").matches(code)) { "Enter the six-digit code from your email." }
+        return profileApi.verifyEmailCode(
+            currentBearerToken(),
+            VerifyEmailOtpRequest(code),
+        ).verified
     }
 
     suspend fun sendPasswordReset(email: String) {
@@ -89,11 +95,8 @@ class AuthRepository(
         dateOfBirth: String,
         parentalPin: String?,
     ): CompleteProfileResponse {
-        val user = auth.currentUser ?: error("Sign in before completing your profile.")
-        val token = user.getIdToken(false).awaitResult().token
-            ?: error("Could not obtain a Firebase authentication token.")
         return profileApi.completeProfile(
-            "Bearer $token",
+            currentBearerToken(),
             CompleteProfileRequest(dateOfBirth, parentalPin),
         )
     }
