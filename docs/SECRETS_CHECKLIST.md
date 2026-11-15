@@ -27,7 +27,7 @@ Android uses Google Play Billing for digital credit purchases. The app sends pur
 | Variable | Value |
 |---|---|
 | `BREVO_API_KEY` | Brevo dashboard → Settings → SMTP & API → API Keys & MCP; server-only API key |
-| `BREVO_SENDER_EMAIL` | Optional sender address; defaults in code to `verification@bqsqwad.com` and must be verified in Brevo |
+| `BREVO_SENDER_EMAIL` | Optional email address shown as the sender of verification emails; defaults in code to `verification@bqsqwad.com` and must be verified in Brevo. This is separate from `ZILLIONAIRE_EMAIL`. |
 | `BREVO_SENDER_NAME` | Optional display name; defaults to `BQ SQWAD TV` |
 
 The API key must never be exposed to browser or Android clients. The backend generates, hashes, expires, rate-limits and consumes six-digit email-verification codes. The current password-recovery UI still uses Firebase password-reset email links.
@@ -37,7 +37,8 @@ The API key must never be exposed to browser or Android clients. The backend gen
 | Variable | Value |
 |---|---|
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | Full service-account JSON used for Firebase Admin and, when separately configured, Google Play verification. The backend mints separate OAuth tokens with the required API scopes. |
-| `ADMIN_EMAIL` | Owner/admin email address |
+| `ZILLIONAIRE_EMAIL` | Exact verified Firebase Authentication email address reserved for the platform owner and protected Zillionaire authority. This secret contains the email address, not an email-service API key. The backend compares it case-insensitively and requires Firebase email verification. |
+| `ADMIN_EMAIL` | Legacy compatibility only; `ZILLIONAIRE_EMAIL` takes precedence. Remove this old secret after confirming the new one is configured and tested. |
 | `GOOGLE_WEB_CLIENT_ID` or `web_client_id` | Public OAuth Web client ID used by Google sign-in. The website config endpoint accepts either environment name; Android also needs it in local.properties or the build environment. |
 | `FIREBASE_WEB_APP_ID` or `firebase_web_app_id` | Public Firebase Web App ID from the web app registered in this same Firebase project; required for website App Check token exchange. |
 | `RECAPTCHA_ENTERPRISE_SITE_KEY` or `recaptcha_enterprise_site_key` | Public reCAPTCHA Enterprise site key configured for website Firebase App Check. |
