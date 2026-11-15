@@ -33,7 +33,7 @@ export function isAdSuitableForViewer(
     : "";
   if (
     !adultEligible &&
-    (campaign["adultOnly"] === true || campaign["ageRestricted"] === true || adultAgeRatings.has(rating))
+    (campaign["adultOnly"] === true || campaign["ageRestricted"] === true || !rating || adultAgeRatings.has(rating))
   ) {
     return false;
   }
