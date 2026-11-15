@@ -7,12 +7,15 @@ import retrofit2.http.POST
 data class CompleteProfileRequest(
     val dateOfBirth: String,
     val parentalPin: String?,
+    val countryCode: String? = null,
 )
 
 data class CompleteProfileResponse(
     val profileComplete: Boolean,
     val adultEligible: Boolean,
     val parentalPinEnabled: Boolean,
+    val countryCode: String? = null,
+    val currency: String = "USD",
 )
 
 data class SendEmailOtpResponse(
