@@ -1,6 +1,7 @@
 package com.bqsqwad.tv.data.session
 import android.content.Context
 import com.bqsqwad.tv.BuildConfig
+import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.bqsqwad.tv.data.auth.awaitResult
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
@@ -24,6 +25,7 @@ class SessionRepository {
             .client(
                 OkHttpClient
                     .Builder()
+                    .addInterceptor(FirebaseAppCheckInterceptor())
                     .connectTimeout(15, TimeUnit.SECONDS)
                     .readTimeout(20, TimeUnit.SECONDS)
                     .build(),
