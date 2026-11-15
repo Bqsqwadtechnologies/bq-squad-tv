@@ -44,16 +44,18 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           const sessionPath = "sessions/" + sessionId;
           const walletPath = "wallets/" + user.uid;
           const receiptPath = sessionPath + "/heartbeats/" + clientSequence;
+          const activeSessionsPath = "activeSessions/" + user.uid;
           const initialSession = requireSessionOwned(await fs.getDoc(sessionPath), sessionId, user.uid);
           const producerUid = typeof initialSession["producerUid"] === "string" ? initialSession["producerUid"] as string : null;
           const producerPath = producerUid ? "producers/" + producerUid : null;
-          const readPaths = [sessionPath, walletPath, receiptPath, ...(producerPath ? [producerPath] : [])];
+          const readPaths = [sessionPath, walletPath, receiptPath, activeSessionsPath, ...(producerPath ? [producerPath] : [])];
 
           const response = await fs.transact(readPaths, (docs) => {
             const session = requireSessionOwned(docs[0] ?? null, sessionId, user.uid);
             const wallet = docs[1] ?? {};
             const existingReceipt = docs[2];
-            const producer = producerPath ? docs[3] : null;
+            const activeSessionDoc = docs[3] ?? {};
+            const producer = producerPath ? docs[4] : null;
             if (existingReceipt && typeof existingReceipt["response"] === "object" && existingReceipt["response"] !== null) {
               return { result: existingReceipt["response"] as Record<string, unknown>, writes: [] };
             }
@@ -104,6 +106,19 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
               active,
               ...(active ? {} : { endedAt: nowIso, endReason: missedTwoHeartbeats ? "HEARTBEAT_TIMEOUT" : "WALLET_LIMIT" }),
             };
+            const rawActiveSessions = activeSessionDoc["sessions"];
+            const activeSessions = rawActiveSessions && typeof rawActiveSessions === "object" && !Array.isArray(rawActiveSessions)
+              ? rawActiveSessions as Record<string, unknown>
+              : {};
+            const nowMs = now.getTime();
+            const liveSessions = Object.fromEntries(
+              Object.entries(activeSessions).filter(([, expiresAt]) =>
+                typeof expiresAt === "number" && Number.isSafeInteger(expiresAt) && expiresAt > nowMs,
+              ),
+            );
+            if (active) liveSessions[sessionId] = nowMs + 60_000;
+            else delete liveSessions[sessionId];
+
             const writes: FirestoreWrite[] = [
               {
                 update: { name: fs.docName(sessionPath), fields: encodeFields(newSession) },
@@ -114,6 +129,13 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
                   balanceMinor: newBalance, spentDate: today, spentTodayMinor: newSpentToday, currency, updatedAt: nowIso,
                 }) },
                 updateMask: { fieldPaths: ["balanceMinor", "spentDate", "spentTodayMinor", "currency", "updatedAt"] },
+              },
+              {
+                update: {
+                  name: fs.docName(activeSessionsPath),
+                  fields: encodeFields({ sessions: liveSessions, updatedAt: nowIso }),
+                },
+                updateMask: { fieldPaths: ["sessions", "updatedAt"] },
               },
             ];
             if (charge.chargeMinor > 0) {
