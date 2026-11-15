@@ -36,6 +36,7 @@ data class VerifyPlayPurchaseRequest(
 
 data class VerifyPlayPurchaseResponse(
     val credited: Boolean,
+    val processed: Boolean = false,
     val balanceMinor: Long,
     val currency: String = "NGN",
     val message: String? = null,
