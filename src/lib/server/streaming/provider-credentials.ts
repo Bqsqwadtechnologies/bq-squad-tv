@@ -70,7 +70,7 @@ export async function encryptProviderCredential(
   }
   const keyring = getKeyring();
   const version = keyring.activeVersion;
-  const key = await crypto.subtle.importKey("raw", toArrayBuffer(decodeKey(keyring.keys[version])), { name: "AES-GCM" }, false, ["encrypt"]);
+  const key = await crypto.subtle.importKey("raw", toArrayBuffer(decodeKey(keyring.keys[version] ?? "")), { name: "AES-GCM" }, false, ["encrypt"]);
   const nonce = crypto.getRandomValues(new Uint8Array(12));
   const ciphertext = await crypto.subtle.encrypt(
     { name: "AES-GCM", iv: toArrayBuffer(nonce), additionalData: toArrayBuffer(aad(channelId, providerId, version)), tagLength: 128 },
