@@ -17,7 +17,7 @@ The website must request the public key from a server configuration endpoint at 
 
 | Variable | Value |
 |---|---|
-| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | Full JSON key for a Google Cloud service account linked to Play Console and granted the minimum purchase/order verification permissions |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` (shared) | The same service-account JSON used by Firebase Admin; its service-account email must also be linked to Play Console and granted the minimum purchase/order verification permissions |
 | `GOOGLE_PLAY_PACKAGE_NAME` | Exact Android application package: `com.bqsqwad.tv` |
 
 Android uses Google Play Billing for digital credit purchases. The app sends purchase tokens to the backend; the backend verifies purchases with Google Play before crediting the wallet. Android must not use Paystack for in-app digital credits.
@@ -26,7 +26,7 @@ Android uses Google Play Billing for digital credit purchases. The app sends pur
 
 | Variable | Value |
 |---|---|
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | Full Firebase service-account JSON for server-side Firebase Admin operations |
+| `FIREBASE_SERVICE_ACCOUNT_JSON` | Full service-account JSON used for Firebase Admin and, when separately configured, Google Play verification. The backend mints separate OAuth tokens with the required API scopes. |
 | `ADMIN_EMAIL` | Owner/admin email address |
 | `GOOGLE_WEB_CLIENT_ID` | OAuth Web client ID used by Google sign-in, if the backend needs to distribute it to Android at runtime |
 | `FIREBASE_WEB_CONFIG_JSON` | Firebase web client configuration JSON, only if the website is configured to retrieve its public Firebase client config from the backend |
