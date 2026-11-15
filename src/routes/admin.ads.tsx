@@ -52,9 +52,10 @@ function AdminAdsPage() {
     setError("");
     setMessage("");
     try {
-      const placements = Object.fromEntries(
-        [["banner", banner], ["interstitial", interstitial], ["rewarded", rewarded]].filter(([, value]) => value.trim()),
-      );
+      const placements: Record<string, string> = {};
+      if (banner.trim()) placements["banner"] = banner.trim();
+      if (interstitial.trim()) placements["interstitial"] = interstitial.trim();
+      if (rewarded.trim()) placements["rewarded"] = rewarded.trim();
       const response = await fetch("/api/public/v1/admin/ads/providers", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
