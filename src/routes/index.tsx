@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  Bell, Cast, ChevronRight, CirclePlay, Clapperboard, Download,
+  Bell, ChevronRight, CirclePlay, Clapperboard, Download,
   Film, Grid2X2, Home, Search, Settings, ShieldCheck, Signal,
-  Sparkles, Tv2, Wallet, Smile, Play,
+  Sparkles, Tv2, Smile, Play,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -156,7 +156,7 @@ function HomePage() {
             <a href="#live-channels" className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-200">See all <ChevronRight size={15} /></a>
           </div>
           <div className="grid gap-2.5 sm:grid-cols-2">
-            {channels.map((channel, index) => (
+            {channels.map((channel) => (
               <button key={channel.name} onClick={() => setNotice(channel.name + " will be available when the channel and its licensed stream are published.")}
                 className="flex items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-[#0b1e58] to-[#07143d] p-3 text-left transition hover:border-cyan-300/40">
                 <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${channel.color} text-[10px] font-black text-white shadow-lg`}>{channel.symbol}</span>
