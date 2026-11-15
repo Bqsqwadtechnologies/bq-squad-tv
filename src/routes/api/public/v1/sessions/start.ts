@@ -7,6 +7,10 @@ import { getPricingConfig, requireMinorUnitAmount } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSafeStoragePath, signPlaybackToken } from "@/lib/server/storage/security";
 
+function integer(value: unknown): number | null {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null;
+}
+
 const bodySchema = z.object({
   channelId: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
   contentAssetId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/).optional(),
