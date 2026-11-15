@@ -8,6 +8,10 @@ describe("ad viewer suitability policy", () => {
     expect(isAdSuitableForViewer({ category: "entertainment", ageRating: "18+" }, true, "NG")).toBe(true);
   });
 
+  it("fails closed on unrated campaigns for viewers who are not adult eligible", () => {
+    expect(isAdSuitableForViewer({ category: "entertainment" }, false, "NG")).toBe(false);
+  });
+
   it("blocks restricted ad categories for every viewer", () => {
     expect(isAdSuitableForViewer({ category: "sports betting" }, true, "NG")).toBe(false);
     expect(isAdSuitableForViewer({ category: "alcohol" }, true, "NG")).toBe(false);
