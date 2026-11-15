@@ -44,6 +44,8 @@ The API key must never be exposed to browser or Android clients. The backend gen
 | `APP_CHECK_ENFORCED` | Keep `false` during setup. Set to `true` only after Android Play Integrity and website reCAPTCHA Enterprise App Check have been enabled and live-tested. |
 | `FIREBASE_WEB_CONFIG_JSON` | Firebase web client configuration JSON, only if the website is configured to retrieve its public Firebase client config from the backend |
 
+For push delivery, enable the Firebase Cloud Messaging API in the same Google Cloud project and ensure the existing service account has permission to send FCM v1 messages. The backend requests the `firebase.messaging` OAuth scope from that same service account; no additional private key or new secret is required.
+
 The Firebase Android SDK still requires the generated `google-services.json` file at `android/app/google-services.json`. That file contains client configuration and is not a private service-account key. It cannot be replaced by the Firebase Admin service-account JSON. Website Firebase client configuration is also public client configuration; keep access rules and authorization on the server.
 
 ## Not needed yet
