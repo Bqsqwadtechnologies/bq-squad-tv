@@ -1,4 +1,5 @@
 import { ApiError, type Firestore, encodeFields } from "./firebase-admin";
+import { isSupportedPaystackCurrency, requireCurrency } from "./currency";
 
 function requiredSecret(): string {
   const secret = process.env["PAYSTACK_SECRET_KEY"];
@@ -35,13 +36,15 @@ export async function fetchPaystackVerification(reference: string): Promise<Reco
 
 export async function creditPaystackPayment(
   fs: Firestore,
-  input: { reference: string; uid: string; amountMinor: number; creditMinor: number; email: string | null },
+  input: { reference: string; uid: string; amountMinor: number; creditMinor: number; email: string | null; currency?: string },
 ): Promise<{ credited: boolean; balanceMinor: number }> {
   if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor < 1 ||
       !Number.isSafeInteger(input.creditMinor) || input.creditMinor < 1) {
     throw new ApiError(400, "PAYMENT_AMOUNT_INVALID", "The verified payment amount is invalid.");
   }
   if (!/^[A-Za-z0-9_-]{8,100}$/.test(input.reference)) throw new ApiError(400, "PAYMENT_REFERENCE_INVALID", "The payment reference is invalid.");
+  const currency = requireCurrency(input.currency ?? "NGN");
+  if (!isSupportedPaystackCurrency(currency)) throw new ApiError(400, "PAYMENT_CURRENCY_UNSUPPORTED", "Paystack does not support this wallet currency.");
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input.reference));
   const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
   const paymentPath = "payments/paystack_" + input.reference;
@@ -61,7 +64,8 @@ export async function creditPaystackPayment(
       payment["reference"] !== input.reference ||
       payment["provider"] !== "paystack" ||
       payment["amountMinor"] !== input.amountMinor ||
-      payment["creditMinor"] !== input.creditMinor
+      payment["creditMinor"] !== input.creditMinor ||
+      (payment["currency"] ?? "NGN") !== currency
     ) {
       throw new ApiError(409, "PAYMENT_RECORD_MISMATCH", "The verified transaction does not match its original payment record.");
     }
@@ -77,22 +81,34 @@ export async function creditPaystackPayment(
     if (payment["status"] !== "pending" && payment["status"] !== "initializing") {
       throw new ApiError(409, "PAYMENT_NOT_CREDITABLE", "This payment is not in a creditable state.");
     }
+    const walletCurrency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : currency;
+    if (walletCurrency !== currency) throw new ApiError(409, "WALLET_CURRENCY_MISMATCH", "This payment currency does not match your wallet currency.");
     const nextBalance = currentBalance + input.creditMinor;
     if (!Number.isSafeInteger(nextBalance)) throw new ApiError(400, "WALLET_LIMIT_EXCEEDED", "The wallet balance exceeds the supported amount.");
     const now = new Date().toISOString();
     return {
       result: { credited: true, balanceMinor: nextBalance },
       writes: [
-        { update: { name: fs.docName(walletPath), fields: encodeFields({ balanceMinor: nextBalance, currency: "NGN", updatedAt: now }) }, updateMask: { fieldPaths: ["balanceMinor", "currency", "updatedAt"] } },
-        { update: { name: fs.docName(paymentPath), fields: encodeFields({ reference: input.reference, uid: input.uid, email: input.email, amountMinor: input.amountMinor, creditMinor: input.creditMinor, currency: "NGN", provider: "paystack", status: "credited", creditedAt: now }) }, updateMask: { fieldPaths: ["reference", "uid", "email", "amountMinor", "creditMinor", "currency", "provider", "status", "creditedAt"] } },
-        { update: { name: fs.docName(ledgerPath), fields: encodeFields({ uid: input.uid, kind: "wallet_topup", description: "Website wallet top-up", amountMinor: input.creditMinor, reference: input.reference, provider: "paystack", createdAt: now }) }, currentDocument: { exists: false } },
+        { update: { name: fs.docName(walletPath), fields: encodeFields({ balanceMinor: nextBalance, currency, updatedAt: now }) }, updateMask: { fieldPaths: ["balanceMinor", "currency", "updatedAt"] } },
+        { update: { name: fs.docName(paymentPath), fields: encodeFields({ reference: input.reference, uid: input.uid, email: input.email, amountMinor: input.amountMinor, creditMinor: input.creditMinor, currency, provider: "paystack", status: "credited", creditedAt: now }) }, updateMask: { fieldPaths: ["reference", "uid", "email", "amountMinor", "creditMinor", "currency", "provider", "status", "creditedAt"] } },
+        { update: { name: fs.docName(ledgerPath), fields: encodeFields({ uid: input.uid, kind: "wallet_topup", description: "Website wallet top-up", amountMinor: input.creditMinor, currency, reference: input.reference, provider: "paystack", createdAt: now }) }, currentDocument: { exists: false } },
       ],
     };
   });
 }
 
-export function getPaystackTopup(config: Record<string, unknown>, packageId: string): { amountMinor: number; creditMinor: number } {
-  const offers = config["walletTopups"];
+export function getPaystackTopup(config: Record<string, unknown>, packageId: string, requestedCurrency = "NGN"): { amountMinor: number; creditMinor: number } {
+  const currency = requireCurrency(requestedCurrency);
+  if (!isSupportedPaystackCurrency(currency)) throw new ApiError(400, "PAYMENT_CURRENCY_UNSUPPORTED", "Paystack does not support this wallet currency.");
+  const byCurrency = config["walletTopupsByCurrency"];
+  const currencyOffers = byCurrency && typeof byCurrency === "object" && !Array.isArray(byCurrency)
+    ? (byCurrency as Record<string, unknown>)[currency]
+    : null;
+  // Legacy top-up amounts are denominated in NGN kobo and must never be reused
+  // for USD or another country's currency.
+  const offers = currencyOffers && typeof currencyOffers === "object" && !Array.isArray(currencyOffers)
+    ? currencyOffers
+    : currency === "NGN" ? config["walletTopups"] : null;
   const offer = offers && typeof offers === "object" ? (offers as Record<string, unknown>)[packageId] : null;
   if (!offer || typeof offer !== "object") throw new ApiError(400, "TOPUP_UNAVAILABLE", "This wallet top-up is not available.");
   const row = offer as Record<string, unknown>;
