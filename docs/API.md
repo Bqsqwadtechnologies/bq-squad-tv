@@ -3,9 +3,24 @@
 # BQ SQWAD TV API contract (Android client)
 
 ## Contract status
-This is the Android integration contract, not evidence of deployed endpoints. Repository audit on 2026-11-08 found no Lovable Cloud edge-function source, no Supabase/functions directory, no Firestore rules, and no existing API/Billing docs. These routes must be implemented and deployed in Lovable Cloud before production flows work. Never expose stream URLs or billing mutations directly from Firestore/client code.
+This is the shared client integration contract, not evidence of a deployed production API. Route source now exists under src/routes/api/public/v1, but production readiness still requires deployment and live integration tests. Never expose stream URLs or billing mutations directly from Firestore/client code.
 
 Base URL: `API_BASE_URL` from Android local.properties. All routes use HTTPS and Firebase ID-token bearer authentication unless stated otherwise. JSON fields are camelCase. Money operations must be idempotent and atomic.
+
+## Authentication and web sessions
+
+- Firebase Authentication remains the identity provider. Protected API routes verify signed Firebase ID tokens.
+- `POST /v1/auth/email/send-code` — bearer-authenticated; sends a six-digit Brevo email-verification code. Codes expire after 10 minutes, are stored as hashes, and are rate-limited.
+- `POST /v1/auth/email/verify-code` — bearer-authenticated; body `{code}`; consumes the code once and records application-level email verification against the authenticated UID and current email claim.
+- `POST /v1/auth/web/session` — same-origin only; body `{idToken,refreshToken}`; validates both credentials belong to the same Firebase UID, then places the rotated refresh token in an HttpOnly, Secure, SameSite=Lax cookie. The browser receives a short-lived ID token.
+- `POST /v1/auth/web/session/refresh` — same-origin only; rotates the refresh token cookie and returns a fresh short-lived ID token.
+- `POST /v1/auth/web/session/logout` — same-origin only; clears the browser refresh-token cookie.
+- `GET /v1/auth/web/me` — bearer-authenticated; returns the signed-in account identity and effective email-verification state.
+- `GET /v1/auth/web/config` — public configuration containing only the Google OAuth Web Client ID, never a client secret.
+- Website Google sign-in uses Google Identity Services and Firebase Identity Toolkit. The Google provider and authorized domains must be enabled in Firebase/Google Cloud.
+- Password recovery currently uses Firebase's standard password-reset email flow. A Brevo six-digit password-reset flow is not yet implemented.
+
+These endpoints are implemented in source. They are not considered production-ready until the hosting deployment is published and live email, cookie, OAuth, expiry, rate-limit and cross-platform tests pass.
 
 ## Profile and age policy
 - `POST /v1/profile/complete` — body `{dateOfBirth,parentalPin}`; returns `{profileComplete,adultEligible,parentalPinEnabled}`. Calculate age on the server; never trust client age.
