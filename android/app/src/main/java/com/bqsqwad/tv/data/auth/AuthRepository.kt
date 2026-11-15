@@ -130,7 +130,13 @@ class AuthRepository(
     ): CompleteProfileResponse =
         profileApi.completeProfile(
             currentBearerToken(),
-            CompleteProfileRequest(dateOfBirth, parentalPin, Locale.getDefault().country.takeIf { it.matches(Regex("[A-Za-z]{2}")) }?.uppercase(Locale.ROOT)),
+            CompleteProfileRequest(
+            dateOfBirth,
+            parentalPin,
+            Locale.getDefault().country
+                .takeIf { it.matches(Regex("[A-Za-z]{2}")) }
+                ?.uppercase(Locale.ROOT),
+        ),
         )
 
     fun signOut() = auth.signOut()

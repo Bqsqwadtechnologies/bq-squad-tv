@@ -1,4 +1,5 @@
 package com.bqsqwad.tv.ui.player
+
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.view.TextureView
@@ -33,10 +34,10 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.Locale
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.Currency
+import java.util.Locale
 import kotlin.math.max
 
 @Composable
@@ -294,9 +295,14 @@ fun PlayerScreen(
                     )
                     if (error != null) {
                         Button(
-                            onClick = { error = null; retryCount++ },
+                            onClick = {
+                                error = null
+                                retryCount++
+                            },
                             modifier = Modifier.padding(top = 12.dp),
-                        ) { Text("Retry secure connection") }
+                        ) {
+                            Text("Retry secure connection")
+                        }
                     }
                 }
             } else {
@@ -487,11 +493,14 @@ private fun formatMoney(
     minor: Long,
     currency: String,
 ): String {
-    val fractionDigits = runCatching { Currency.getInstance(currency).defaultFractionDigits }
-        .getOrDefault(2)
-        .coerceAtLeast(0)
-    val amount = BigDecimal.valueOf(minor).movePointLeft(fractionDigits)
-        .setScale(fractionDigits, RoundingMode.DOWN)
+    val fractionDigits =
+        runCatching { Currency.getInstance(currency).defaultFractionDigits }
+            .getOrDefault(2)
+            .coerceAtLeast(0)
+    val amount =
+        BigDecimal.valueOf(minor)
+            .movePointLeft(fractionDigits)
+            .setScale(fractionDigits, RoundingMode.DOWN)
     return currency + " " + amount.toPlainString()
 }
 
