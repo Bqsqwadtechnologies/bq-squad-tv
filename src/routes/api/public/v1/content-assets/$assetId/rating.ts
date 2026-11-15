@@ -25,11 +25,11 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/rat
           if (!asset || asset["status"] !== "ready" || asset["contentStatus"] !== "published") {
             throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This published content is not available for rating.");
           }
-          const currentCount = Number.isSafeInteger(asset["ratingCount"]) && (asset["ratingCount"] as number) >= 0
+          const currentCount = typeof asset["ratingCount"] === "number" && Number.isSafeInteger(asset["ratingCount"]) && asset["ratingCount"] >= 0
             ? asset["ratingCount"] as number : 0;
-          const currentTotal = Number.isSafeInteger(asset["ratingTotalStars"]) && (asset["ratingTotalStars"] as number) >= 0
+          const currentTotal = typeof asset["ratingTotalStars"] === "number" && Number.isSafeInteger(asset["ratingTotalStars"]) && asset["ratingTotalStars"] >= 0
             ? asset["ratingTotalStars"] as number : 0;
-          const previousStars = existing && Number.isInteger(existing["stars"]) ? existing["stars"] as number : 0;
+          const previousStars = existing && typeof existing["stars"] === "number" && Number.isInteger(existing["stars"]) && existing["stars"] >= 1 && existing["stars"] <= 5 ? existing["stars"] : 0;
           const nextCount = currentCount + (previousStars === 0 ? 1 : 0);
           const nextTotal = currentTotal - previousStars + body.stars;
           if (!Number.isSafeInteger(nextCount) || !Number.isSafeInteger(nextTotal) || nextCount < 1 || nextTotal < 1) {
