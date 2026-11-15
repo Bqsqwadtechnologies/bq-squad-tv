@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { Firestore } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { ageInYears, errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { hashParentalPin } from "@/lib/server/parental-pin";
 import { currencyForCountry, normalizeCountryCode } from "@/lib/server/currency";
-import { ApiError } from "@/lib/server/firebase-admin";
 
 const bodySchema = z.object({
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "dateOfBirth must be YYYY-MM-DD"),
   parentalPin: z.string().regex(/^\d{4,8}$/, "parentalPin must be 4-8 digits").nullable().optional(),
+  countryCode: z.string().regex(/^[A-Za-z]{2}$/).optional(),
 });
 
 export const Route = createFileRoute("/api/public/v1/profile/complete")({
