@@ -145,9 +145,15 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           const paidPlayback = channel["paid"] !== false;
           const wallet = await getWallet(fs, user.uid);
           const walletCurrency = wallet.currency;
-          const channelCurrency = typeof asset["currency"] === "string"
+          const assetRates = asset["ratePerMinuteByCurrency"] && typeof asset["ratePerMinuteByCurrency"] === "object"
+            ? asset["ratePerMinuteByCurrency"] as Record<string, unknown> : {};
+          const channelRates = channel["ratePerMinuteByCurrency"] && typeof channel["ratePerMinuteByCurrency"] === "object"
+            ? channel["ratePerMinuteByCurrency"] as Record<string, unknown> : {};
+          const currencySpecificRate = assetRates[walletCurrency] ?? channelRates[walletCurrency];
+          const singlePriceCurrency = typeof asset["currency"] === "string"
             ? asset["currency"] as string
             : typeof channel["currency"] === "string" ? channel["currency"] as string : "NGN";
+          const channelCurrency = typeof currencySpecificRate === "number" ? walletCurrency : singlePriceCurrency;
           if (paidPlayback && channelCurrency !== walletCurrency) {
             throw new ApiError(409, "CHANNEL_CURRENCY_MISMATCH", "This channel is not priced in your wallet currency.");
           }
@@ -158,7 +164,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             : undefined;
           const ratePerMinuteMinor = paidPlayback
             ? requireMinorUnitAmount(
-                asset["ratePerMinuteMinor"] ?? channel["ratePerMinuteMinor"] ?? defaultRate ?? (currency === "NGN" ? pricing["defaultRatePerMinuteMinor"] : undefined),
+                currencySpecificRate ?? asset["ratePerMinuteMinor"] ?? channel["ratePerMinuteMinor"] ?? defaultRate ?? (currency === "NGN" ? pricing["defaultRatePerMinuteMinor"] : undefined),
                 "ratePerMinuteMinor",
               )
             : 0;
@@ -169,8 +175,12 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           const configuredMinimum = minimumBalances && typeof minimumBalances === "object"
             ? (minimumBalances as Record<string, unknown>)[currency]
             : undefined;
+          const assetMinimums = asset["minimumBalanceByCurrency"] && typeof asset["minimumBalanceByCurrency"] === "object"
+            ? asset["minimumBalanceByCurrency"] as Record<string, unknown> : {};
+          const channelMinimums = channel["minimumBalanceByCurrency"] && typeof channel["minimumBalanceByCurrency"] === "object"
+            ? channel["minimumBalanceByCurrency"] as Record<string, unknown> : {};
           const minimumBalanceMinor = paidPlayback
-            ? requireMinorUnitAmount(channel["minimumBalanceMinor"] ?? configuredMinimum ?? (currency === "NGN" ? pricing["minimumSessionBalanceMinor"] : 100), "minimumBalanceMinor")
+            ? requireMinorUnitAmount(assetMinimums[currency] ?? channelMinimums[currency] ?? asset["minimumBalanceMinor"] ?? channel["minimumBalanceMinor"] ?? configuredMinimum ?? (currency === "NGN" ? pricing["minimumSessionBalanceMinor"] : 100), "minimumBalanceMinor")
             : 0;
           const balanceMinor = requireMinorUnitAmount(wallet.balanceMinor, "wallet balance");
           if (paidPlayback && balanceMinor < minimumBalanceMinor) {
