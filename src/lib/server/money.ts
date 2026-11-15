@@ -1,6 +1,5 @@
 import { ApiError } from "./firebase-admin";
 
-const KOBO_PER_NAIRA = 100n;
 const SECONDS_PER_MINUTE = 60n;
 const MAX_SAFE = BigInt(Number.MAX_SAFE_INTEGER);
 
@@ -12,8 +11,8 @@ function requireNonNegativeSafeInteger(value: number, name: string): bigint {
 }
 
 /**
- * Returns the exact cumulative charge in kobo, rounded half-up once for the
- * cumulative session total. The rate is integer kobo per minute. Because the
+ * Returns the exact cumulative charge in the currency's minor units, rounded
+ * half-up once for the cumulative session total. Because the
  * cumulative seconds are used, heartbeat boundaries cannot introduce rounding
  * drift: incremental debits are differences between two cumulative totals.
  */
@@ -43,8 +42,8 @@ export function incrementalCostKobo(
 }
 
 /**
- * Calculates micro-kobo as an exact integer quotient plus a remainder over 60.
- * Persist both values if a workflow needs sub-kobo accrual between settlements.
+ * Calculates micro-minor-units as an exact integer quotient plus a remainder over 60.
+ * Persist both values if a workflow needs sub-minor-unit accrual between settlements.
  */
 export function accrueMicroKobo(
   ratePerMinuteKobo: number,
@@ -59,7 +58,7 @@ export function accrueMicroKobo(
   };
 }
 
-/** Converts an exact non-negative micro-kobo integer to kobo using half-up rounding. */
+/** Converts an exact non-negative micro-minor-unit integer to minor units using half-up rounding. */
 export function settleMicroKoboToKobo(microKobo: string): number {
   if (!/^(0|[1-9][0-9]*)$/.test(microKobo)) {
     throw new ApiError(400, "INVALID_MONEY_INPUT", "microKobo must be a non-negative integer string.");
@@ -71,7 +70,7 @@ export function settleMicroKoboToKobo(microKobo: string): number {
   return Number(rounded);
 }
 
-/** Validates a persisted integer-kobo amount before it reaches financial code. */
+/** Validates a persisted non-negative integer amount in a currency's minor units. */
 export function requireKoboAmount(value: unknown, fieldName = "amountKobo"): number {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
     throw new ApiError(400, "INVALID_MONEY_INPUT", `${fieldName} must be a non-negative integer number of kobo.`);
@@ -80,8 +79,14 @@ export function requireKoboAmount(value: unknown, fieldName = "amountKobo"): num
 }
 
 export const MONEY_UNITS = {
-  currency: "NGN",
-  minorUnit: "kobo",
-  koboPerNaira: Number(KOBO_PER_NAIRA),
-  microKoboPerKobo: 1_000_000,
+  defaultCurrency: "USD",
+  microUnitsPerMinorUnit: 1_000_000,
 } as const;
+
+
+/** Currency-neutral names for new code; legacy kobo exports remain compatible. */
+export const cumulativeCostMinor = cumulativeCostKobo;
+export const incrementalCostMinor = incrementalCostKobo;
+export const accrueMicroMinor = accrueMicroKobo;
+export const settleMicroMinorToMinor = settleMicroKoboToKobo;
+export const requireMinorAmount = requireKoboAmount;
