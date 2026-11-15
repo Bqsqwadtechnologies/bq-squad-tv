@@ -12,6 +12,7 @@ import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 data class EmailAuthResult(
@@ -129,7 +130,7 @@ class AuthRepository(
     ): CompleteProfileResponse =
         profileApi.completeProfile(
             currentBearerToken(),
-            CompleteProfileRequest(dateOfBirth, parentalPin),
+            CompleteProfileRequest(dateOfBirth, parentalPin, Locale.getDefault().country.takeIf { it.matches(Regex("[A-Za-z]{2}")) }?.uppercase(Locale.ROOT)),
         )
 
     fun signOut() = auth.signOut()
