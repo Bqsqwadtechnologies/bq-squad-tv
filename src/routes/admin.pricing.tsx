@@ -15,7 +15,10 @@ type PricingConfig = {
   defaultProducerShareBps: number;
   maxConcurrentSessions?: number;
   walletTopups: Record<string, { amountMinor: number; creditMinor?: number }>;
-  googlePlayProducts: Array<{ productId: string; title: string; description: string; credits: number; creditMinor: number; active: boolean }>;
+  walletTopupsByCurrency?: Record<string, Record<string, { amountMinor: number; creditMinor?: number }>>;
+  defaultRatePerMinuteByCurrency?: Record<string, number>;
+  minimumSessionBalanceByCurrency?: Record<string, number>;
+  googlePlayProducts: Array<{ productId: string; title: string; description: string; credits: number; creditMinor?: number; creditMinorByCurrency?: Record<string, number>; active: boolean }>;
 };
 
 function AdminPricingPage() {
@@ -27,6 +30,9 @@ function AdminPricingPage() {
   const [share, setShare] = useState("");
   const [sessionLimit, setSessionLimit] = useState("2");
   const [topups, setTopups] = useState("");
+  const [topupsByCurrency, setTopupsByCurrency] = useState("{}");
+  const [ratesByCurrency, setRatesByCurrency] = useState("{}");
+  const [minimumsByCurrency, setMinimumsByCurrency] = useState("{}");
   const [products, setProducts] = useState("");
   const [version, setVersion] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -45,6 +51,9 @@ function AdminPricingPage() {
     setShare(String(data.defaultProducerShareBps));
     setSessionLimit(String(data.maxConcurrentSessions ?? 2));
     setTopups(JSON.stringify(data.walletTopups ?? {}, null, 2));
+    setTopupsByCurrency(JSON.stringify(data.walletTopupsByCurrency ?? {}, null, 2));
+    setRatesByCurrency(JSON.stringify(data.defaultRatePerMinuteByCurrency ?? {}, null, 2));
+    setMinimumsByCurrency(JSON.stringify(data.minimumSessionBalanceByCurrency ?? {}, null, 2));
     setProducts(JSON.stringify(data.googlePlayProducts ?? [], null, 2));
     setVersion(data.version ?? null);
   }
@@ -74,6 +83,9 @@ function AdminPricingPage() {
     setMessage("");
     try {
       const walletTopups = JSON.parse(topups || "{}") as PricingConfig["walletTopups"];
+      const walletTopupsByCurrency = JSON.parse(topupsByCurrency || "{}") as NonNullable<PricingConfig["walletTopupsByCurrency"]>;
+      const defaultRatePerMinuteByCurrency = JSON.parse(ratesByCurrency || "{}") as NonNullable<PricingConfig["defaultRatePerMinuteByCurrency"]>;
+      const minimumSessionBalanceByCurrency = JSON.parse(minimumsByCurrency || "{}") as NonNullable<PricingConfig["minimumSessionBalanceByCurrency"]>;
       const googlePlayProducts = JSON.parse(products || "[]") as PricingConfig["googlePlayProducts"];
       const payload = {
         defaultRatePerMinuteMinor: Number(rate),
@@ -81,6 +93,9 @@ function AdminPricingPage() {
         defaultProducerShareBps: Number(share),
         maxConcurrentSessions: Number(sessionLimit),
         walletTopups,
+        walletTopupsByCurrency,
+        defaultRatePerMinuteByCurrency,
+        minimumSessionBalanceByCurrency,
         googlePlayProducts,
       };
       const response = await fetch("/api/public/v1/admin/config/pricing", {
@@ -110,7 +125,7 @@ function AdminPricingPage() {
       <section className="mx-auto max-w-5xl px-5 py-10 sm:py-14">
         <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-300"><ShieldCheck size={16} /> Billing configuration</p>
         <h1 className="mt-4 text-3xl font-black sm:text-4xl">Set platform pricing.</h1>
-        <p className="mt-3 max-w-2xl leading-7 text-blue-100/60">All money values are integer kobo. Producer share is basis points: 10,000 equals 100%. No prices or revenue splits are preselected.</p>
+        <p className="mt-3 max-w-2xl leading-7 text-blue-100/60">Money is stored in each currency's integer minor units (for example, USD cents and NGN kobo). USD is the fallback for accounts without a country. Producer share is basis points: 10,000 equals 100%.</p>
 
         {!token ? (
           <form onSubmit={login} className="mt-9 grid max-w-md gap-4 rounded-3xl border border-white/10 bg-[#07143d] p-6">
@@ -124,18 +139,27 @@ function AdminPricingPage() {
           <form onSubmit={save} className="mt-9 grid gap-6 rounded-3xl border border-white/10 bg-[#07143d] p-6">
             <div className="flex items-center justify-between"><h2 className="text-xl font-bold">Pricing configuration</h2><span className="text-xs text-cyan-200">{version === null ? "Not configured" : `Version ${version}`}</span></div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="grid gap-2 text-sm text-blue-100/70">Default rate per minute (kobo)<input type="number" min="1" step="1" required value={rate} onChange={event => setRate(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
-              <label className="grid gap-2 text-sm text-blue-100/70">Minimum session balance (kobo)<input type="number" min="0" step="1" required value={minimum} onChange={event => setMinimum(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
+              <label className="grid gap-2 text-sm text-blue-100/70">Legacy NGN default rate per minute (kobo)<input type="number" min="1" step="1" required value={rate} onChange={event => setRate(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
+              <label className="grid gap-2 text-sm text-blue-100/70">Legacy NGN minimum session balance (kobo)<input type="number" min="0" step="1" required value={minimum} onChange={event => setMinimum(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
               <label className="grid gap-2 text-sm text-blue-100/70">Producer share (basis points)<input type="number" min="0" max="10000" step="1" required value={share} onChange={event => setShare(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
               <label className="grid gap-2 text-sm text-blue-100/70">Concurrent playback sessions<input type="number" min="1" max="5" step="1" required value={sessionLimit} onChange={event => setSessionLimit(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /><span className="text-xs text-blue-100/45">1–5 devices/sessions per account; default 2.</span></label>
             </div>
-            <label className="grid gap-2 text-sm text-blue-100/70">Website wallet packages — JSON object
-              <textarea rows={7} required value={topups} onChange={event => setTopups(event.target.value)} placeholder='{"package_id":{"amountMinor":0,"creditMinor":0}}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
+            <label className="grid gap-2 text-sm text-blue-100/70">Legacy NGN wallet packages — JSON object
+              <textarea rows={7} required value={topups} onChange={event => setTopups(event.target.value)} placeholder='{"package_id":{"amountMinor":50000,"creditMinor":50000}}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
+            </label>
+            <label className="grid gap-2 text-sm text-blue-100/70">Wallet packages by currency — JSON object
+              <textarea rows={9} required value={topupsByCurrency} onChange={event => setTopupsByCurrency(event.target.value)} placeholder='{"USD":{"starter":{"amountMinor":499,"creditMinor":499}},"NGN":{"starter":{"amountMinor":50000,"creditMinor":50000}}}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
+            </label>
+            <label className="grid gap-2 text-sm text-blue-100/70">Default per-minute rates by currency — JSON object
+              <textarea rows={4} required value={ratesByCurrency} onChange={event => setRatesByCurrency(event.target.value)} placeholder='{"USD":25,"NGN":200}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
+            </label>
+            <label className="grid gap-2 text-sm text-blue-100/70">Minimum viewing balance by currency — JSON object
+              <textarea rows={4} required value={minimumsByCurrency} onChange={event => setMinimumsByCurrency(event.target.value)} placeholder='{"USD":100,"NGN":100}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
             <label className="grid gap-2 text-sm text-blue-100/70">Google Play products — JSON array
-              <textarea rows={7} required value={products} onChange={event => setProducts(event.target.value)} placeholder='[{"productId":"your_product_id","title":"Title","description":"Description","credits":1,"creditMinor":1,"active":true}]' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
+              <textarea rows={7} required value={products} onChange={event => setProducts(event.target.value)} placeholder='[{"productId":"your_product_id","title":"Title","description":"Description","credits":1,"creditMinorByCurrency":{"USD":499,"NGN":50000},"active":true}]' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <p className="text-xs leading-5 text-blue-100/45">Use real integer kobo values and the exact Google Play product IDs configured in Play Console. Saving creates a new audited pricing version.</p>
+            <p className="text-xs leading-5 text-blue-100/45">Enter amounts in each currency's minor units. For Google Play, configure creditMinorByCurrency for every wallet currency you want to support; Play displays the localized store price. Use exact product IDs from Play Console. Saving creates a new audited pricing version.</p>
             {error ? <p role="alert" className="text-sm text-rose-300">{error}</p> : null}
             {message ? <p role="status" className="text-sm text-cyan-200">{message}</p> : null}
             <button disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-5 py-3 font-extrabold text-[#031039] disabled:opacity-60">{busy ? <LoaderCircle className="animate-spin" size={17} /> : null} Save pricing version</button>
