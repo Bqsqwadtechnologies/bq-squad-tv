@@ -3,8 +3,10 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { requireAppCheck } from "@/lib/server/firebase-app-check";
 import { errorBody } from "@/lib/server/api";
 import {
+  assertWebRefreshSessionActive,
   readWebRefreshCookie,
   refreshFirebaseWebSession,
+  rotateWebRefreshSession,
   requireSameOrigin,
   webRefreshCookie,
 } from "@/lib/server/web-session";
