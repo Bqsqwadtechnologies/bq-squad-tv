@@ -1,0 +1,39 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { z } from "zod";
+import { ApiError, getFirebaseProjectId } from "@/lib/server/firebase-admin";
+import { errorBody, parseBody } from "@/lib/server/api";
+import { verifyFirebaseIdToken } from "@/lib/server/firebase-auth";
+import { refreshFirebaseWebSession, requireSameOrigin, webRefreshCookie } from "@/lib/server/web-session";
+
+const schema = z.object({
+  idToken: z.string().min(100).max(8192),
+  refreshToken: z.string().min(20).max(4096),
+});
+
+export const Route = createFileRoute("/api/public/v1/auth/web/session")({
+  server: { handlers: {
+    POST: async ({ request }) => {
+      try {
+        requireSameOrigin(request);
+        const body = await parseBody(request, schema);
+        const initialUser = await verifyFirebaseIdToken(body.idToken, getFirebaseProjectId());
+        const session = await refreshFirebaseWebSession(body.refreshToken);
+        if (session.uid !== initialUser.uid) {
+          throw new ApiError(401, "WEB_SESSION_MISMATCH", "The sign-in session did not match this account.");
+        }
+        return Response.json(
+          { idToken: session.idToken, expiresInSeconds: session.expiresInSeconds },
+          {
+            headers: {
+              "set-cookie": webRefreshCookie(session.refreshToken),
+              "cache-control": "no-store",
+              pragma: "no-cache",
+            },
+          },
+        );
+      } catch (error) {
+        return errorBody(error);
+      }
+    },
+  } },
+});
