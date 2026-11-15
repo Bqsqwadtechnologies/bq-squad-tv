@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Bell, ChevronRight, CirclePlay, Clapperboard, Download,
@@ -27,24 +28,40 @@ const quick = [
   { label: "Kids", icon: Smile, href: "#family" },
 ];
 
-const titles = [
-  { title: "The Chosen One", kind: "Featured premiere", tone: "from-blue-800 via-indigo-900 to-slate-950", icon: "✦" },
-  { title: "Love & Life", kind: "Drama", tone: "from-fuchsia-800 via-rose-950 to-slate-950", icon: "♡" },
-  { title: "Action 24/7", kind: "Action", tone: "from-cyan-800 via-blue-950 to-slate-950", icon: "⚡" },
-  { title: "Family First", kind: "Family", tone: "from-amber-700 via-orange-950 to-slate-950", icon: "✺" },
-];
-
-const channels = [
-  { name: "BQ Sports TV", category: "Sports · Live", color: "from-blue-500 to-cyan-400", symbol: "BQ" },
-  { name: "BQ News 24", category: "News · Live", color: "from-rose-500 to-red-600", symbol: "NEWS" },
-  { name: "BQ Movies", category: "Movies · Live", color: "from-indigo-500 to-blue-600", symbol: "FILM" },
-  { name: "BQ Kids", category: "Kids · Live", color: "from-amber-400 to-orange-500", symbol: "☺" },
-];
+type FeaturedItem = { id: string; title: string; category: string; posterUrl: string | null; channelId: string };
+type ChannelItem = { id: string; title: string; category: string; posterUrl: string | null; isLive: boolean; currentProgramme: string | null };
 
 function HomePage() {
   const [activeNav, setActiveNav] = useState("Home");
   const [activeQuick, setActiveQuick] = useState("Live TV");
   const [notice, setNotice] = useState("");
+  const [featuredContent, setFeaturedContent] = useState<FeaturedItem[]>([]);
+  const [channels, setChannels] = useState<ChannelItem[]>([]);
+  const [catalogState, setCatalogState] = useState<"loading" | "ready" | "signed_out" | "error">("loading");
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const token = await restoreWebSession();
+        if (!active) return;
+        if (!token) { setCatalogState("signed_out"); return; }
+        const response = await fetch("/api/public/v1/catalog/home", {
+          headers: await getWebAuthHeaders(token),
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error("Catalogue unavailable");
+        const data = await response.json() as { channels?: ChannelItem[]; featuredContent?: FeaturedItem[] };
+        if (!active) return;
+        setChannels(Array.isArray(data.channels) ? data.channels : []);
+        setFeaturedContent(Array.isArray(data.featuredContent) ? data.featuredContent : []);
+        setCatalogState("ready");
+      } catch {
+        if (active) setCatalogState("error");
+      }
+    })();
+    return () => { active = false; };
+  }, []);
 
   const nav = [
     { label: "Home", icon: Home, href: "#home" },
@@ -134,20 +151,21 @@ function HomePage() {
             <a href="#library" className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-200">See all <ChevronRight size={15} /></a>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-            {titles.map((item, index) => (
-              <button key={item.title} onClick={() => setNotice(item.title + " is a design preview. Content will appear after catalog publishing.")}
-                className="group overflow-hidden rounded-2xl border border-white/10 bg-[#07143d] text-left transition hover:-translate-y-1 hover:border-cyan-300/40">
-                <div className={`relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-gradient-to-br ${item.tone}`}>
-                  <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_35%,rgba(255,255,255,0.16),transparent_45%)]" />
-                  <div className="absolute left-3 top-3 rounded-full border border-white/20 bg-black/20 px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-white/75">Preview</div>
-                  <span className="relative text-6xl font-black text-white/30 transition group-hover:scale-110">{item.icon}</span>
-                  <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#020824] via-[#020824]/75 to-transparent px-3 pb-4 pt-12">
+            {featuredContent.map(item => (
+              <article key={item.id} className="group overflow-hidden rounded-2xl border border-white/10 bg-[#07143d]">
+                <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-gradient-to-br from-blue-800 via-indigo-950 to-slate-950">
+                  {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" /> : <Film size={48} className="text-white/30" />}
+                  <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#020824] via-[#020824]/80 to-transparent px-3 pb-4 pt-12">
                     <span className="block text-sm font-black leading-tight sm:text-base">{item.title}</span>
-                    <span className="mt-1 block text-[10px] font-semibold text-white/55">{item.kind}</span>
+                    <span className="mt-1 block text-[10px] font-semibold text-white/60">{item.category}</span>
                   </span>
                 </div>
-              </button>
+              </article>
             ))}
+            {catalogState === "loading" && <p className="col-span-full py-8 text-center text-sm text-white/50">Loading featured content…</p>}
+            {catalogState === "signed_out" && <p className="col-span-full py-8 text-center text-sm text-white/50">Sign in to view the live catalogue and featured titles.</p>}
+            {catalogState === "error" && <p className="col-span-full py-8 text-center text-sm text-white/50">The catalogue is temporarily unavailable.</p>}
+            {catalogState === "ready" && featuredContent.length === 0 && <p className="col-span-full py-8 text-center text-sm text-white/50">No featured titles have been published yet.</p>}
           </div>
         </section>
 
@@ -157,14 +175,16 @@ function HomePage() {
             <a href="#live-channels" className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-200">See all <ChevronRight size={15} /></a>
           </div>
           <div className="grid gap-2.5 sm:grid-cols-2">
-            {channels.map((channel) => (
-              <button key={channel.name} onClick={() => setNotice(channel.name + " will be available when the channel and its licensed stream are published.")}
-                className="flex items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-[#0b1e58] to-[#07143d] p-3 text-left transition hover:border-cyan-300/40">
-                <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br ${channel.color} text-[10px] font-black text-white shadow-lg`}>{channel.symbol}</span>
-                <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{channel.name}</span><span className="mt-1 block text-[11px] text-white/50">{channel.category}</span></span>
-                <span className="flex items-center gap-1.5 text-cyan-200"><Signal size={17} /><span className="hidden text-[10px] font-bold uppercase sm:inline">Preview</span></span>
-              </button>
+            {channels.map(channel => (
+              <article key={channel.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-[#0b1e58] to-[#07143d] p-3">
+                <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-lg">
+                  {channel.posterUrl ? <img src={channel.posterUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : <Tv2 size={22} />}
+                </span>
+                <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{channel.title}</span><span className="mt-1 block text-[11px] text-white/50">{channel.currentProgramme || channel.category}</span></span>
+                <span className="flex items-center gap-1.5 text-cyan-200"><Signal size={17} /><span className="hidden text-[10px] font-bold uppercase sm:inline">{channel.isLive ? "Live" : "Channel"}</span></span>
+              </article>
             ))}
+            {catalogState === "ready" && channels.length === 0 && <p className="col-span-full py-6 text-center text-sm text-white/50">No published channels are available yet.</p>}
           </div>
         </section>
 
