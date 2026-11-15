@@ -22,6 +22,16 @@ The website must request the public key from a server configuration endpoint at 
 
 Android uses Google Play Billing for digital credit purchases. The app sends purchase tokens to the backend; the backend verifies purchases with Google Play before crediting the wallet. Android must not use Paystack for in-app digital credits.
 
+## Transactional email — Brevo
+
+| Variable | Value |
+|---|---|
+| `BREVO_API_KEY` | Brevo dashboard → Settings → SMTP & API → API Keys & MCP; server-only API key |
+| `BREVO_SENDER_EMAIL` | Optional sender address; defaults in code to `verification@bqsqwad.com` and must be verified in Brevo |
+| `BREVO_SENDER_NAME` | Optional display name; defaults to `BQ SQWAD TV` |
+
+The API key must never be exposed to browser or Android clients. OTP generation, hashing, expiry, one-time consumption and rate limits remain backend responsibilities; the email sender alone does not implement verification.
+
 ## Shared backend / Firebase
 
 | Variable | Value |
