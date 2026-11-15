@@ -48,7 +48,7 @@ export function minorUnitName(currency: string): string {
 }
 
 export function isSupportedPaystackCurrency(currency: string): boolean {
-  return ["NGN", "GHS", "ZAR", "KES", "USD", "XOF", "EGP", "RWF"].includes(currency);
+  return ["NGN", "GHS", "ZAR", "KES", "USD", "XOF"].includes(currency);
 }
 
 export function requireCurrency(value: unknown): string {
