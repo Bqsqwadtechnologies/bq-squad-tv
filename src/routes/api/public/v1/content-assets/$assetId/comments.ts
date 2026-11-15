@@ -40,7 +40,13 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/com
         const body = await parseBody(request, schema);
         const assetId = params.assetId;
         if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId)) throw new ApiError(400, "ASSET_ID_INVALID", "The content identifier is invalid.");
-        const normalizedBody = body.body.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").trim();
+        const normalizedBody = Array.from(body.body)
+          .filter(character => {
+            const code = character.charCodeAt(0);
+            return code === 9 || code === 10 || code === 13 || (code >= 32 && code !== 127);
+          })
+          .join("")
+          .trim();
         if (normalizedBody.length < 2) throw new ApiError(400, "COMMENT_INVALID", "The comment must contain readable text.");
         const fs = await Firestore.create();
         await enforceRateLimit(fs, "content-comment:" + user.uid, { limit: 5, windowMs: 60 * 60_000 });
