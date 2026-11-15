@@ -18,17 +18,18 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/verify")(
       if (!payment || payment["uid"] !== user.uid || payment["provider"] !== "paystack") {
         throw new ApiError(404, "PAYMENT_NOT_FOUND", "This payment could not be found.");
       }
+      const currency = typeof payment["currency"] === "string" ? payment["currency"] as string : "NGN";
       const verified = await fetchPaystackVerification(reference);
-      if (verified["status"] !== "success" || verified["currency"] !== "NGN" ||
+      if (verified["status"] !== "success" || verified["currency"] !== currency ||
           verified["amount"] !== payment["amountMinor"] ||
           (verified["metadata"] as Record<string, unknown> | undefined)?.["uid"] !== user.uid) {
         throw new ApiError(402, "PAYMENT_NOT_CONFIRMED", "The payment has not been confirmed.");
       }
       const result = await creditPaystackPayment(fs, {
         reference, uid: user.uid, amountMinor: payment["amountMinor"] as number,
-        creditMinor: payment["creditMinor"] as number, email: user.email,
+        creditMinor: payment["creditMinor"] as number, email: user.email, currency,
       });
-      return Response.json({ ...result, currency: "NGN" });
+      return Response.json({ ...result, currency });
     } catch (error) { return errorBody(error); }
   } } },
 });
