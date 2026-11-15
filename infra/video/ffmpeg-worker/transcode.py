@@ -99,6 +99,53 @@ def write_master_playlist(output_dir: Path, variants: list[Variant]) -> None:
     temporary.replace(output_dir / "master.m3u8")
 
 
+
+def verify_hls_output(output_dir: Path) -> dict[str, int]:
+    """Fail closed unless every master/variant playlist and referenced segment exists."""
+    root = output_dir.resolve(strict=True)
+    master = root / "master.m3u8"
+    if not master.is_file() or master.stat().st_size == 0:
+        raise RuntimeError("The HLS master playlist is missing or empty.")
+    master_lines = master.read_text(encoding="utf-8").splitlines()
+    variant_paths: list[str] = []
+    expect_variant = False
+    for line in master_lines:
+        value = line.strip()
+        if value.startswith("#EXT-X-STREAM-INF:"):
+            expect_variant = True
+        elif value and not value.startswith("#") and expect_variant:
+            variant_paths.append(value)
+            expect_variant = False
+    if expect_variant or not variant_paths:
+        raise RuntimeError("The HLS master playlist contains an incomplete or empty rendition list.")
+
+    segment_count = 0
+    total_segment_bytes = 0
+    for relative_playlist in variant_paths:
+        playlist = (root / relative_playlist).resolve()
+        if not playlist.is_relative_to(root) or not playlist.is_file() or playlist.stat().st_size == 0:
+            raise RuntimeError("An HLS rendition playlist is missing or has an unsafe path.")
+        lines = playlist.read_text(encoding="utf-8").splitlines()
+        if "#EXT-X-ENDLIST" not in lines:
+            raise RuntimeError("An HLS VOD rendition is not finalized.")
+        rendition_segments = 0
+        for line in lines:
+            value = line.strip()
+            if not value or value.startswith("#"):
+                continue
+            segment = (playlist.parent / value).resolve()
+            if not segment.is_relative_to(root) or not segment.is_file():
+                raise RuntimeError("An HLS segment is missing or has an unsafe path.")
+            size = segment.stat().st_size
+            if size <= 0:
+                raise RuntimeError("An HLS segment is empty.")
+            rendition_segments += 1
+            segment_count += 1
+            total_segment_bytes += size
+        if rendition_segments == 0:
+            raise RuntimeError("An HLS rendition contains no media segments.")
+    return {"renditionCount": len(variant_paths), "segmentCount": segment_count, "segmentBytes": total_segment_bytes}
+
 def transcode(source: Path, output_dir: Path, threads: int) -> list[Variant]:
     source = source.expanduser().resolve(strict=True)
     if not source.is_file() or source.suffix.lower() not in ALLOWED_EXTENSIONS:
@@ -137,6 +184,7 @@ def transcode(source: Path, output_dir: Path, threads: int) -> list[Variant]:
             ]
             run_checked(command)
         write_master_playlist(output_dir, variants)
+        verify_hls_output(output_dir)
     except Exception:
         shutil.rmtree(output_dir, ignore_errors=True)
         raise
