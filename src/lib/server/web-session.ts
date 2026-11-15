@@ -1,6 +1,6 @@
 import { firebaseApiKey } from "../firebase-config";
 import { verifyFirebaseIdToken } from "./firebase-auth";
-import { ApiError, Firestore, encodeFields, getFirebaseProjectId } from "./firebase-admin";
+import { ApiError, Firestore, encodeFields, getFirebaseProjectId, type FirestoreWrite } from "./firebase-admin";
 
 export const WEB_REFRESH_COOKIE = "__Host-bq_sqwad_refresh";
 const COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
@@ -94,21 +94,6 @@ async function refreshTokenPath(refreshToken: string): Promise<string> {
   return "webRefreshSessions/" + hash;
 }
 
-export async function registerWebRefreshSession(
-  fs: Firestore,
-  refreshToken: string,
-  uid: string,
-): Promise<void> {
-  const now = Date.now();
-  const path = await refreshTokenPath(refreshToken);
-  await fs.setDoc(path, {
-    uid,
-    revoked: false,
-    createdAt: new Date(now).toISOString(),
-    expiresAt: now + WEB_SESSION_TTL_MS,
-  }, { mustNotExist: true });
-}
-
 export async function assertWebRefreshSessionActive(
   fs: Firestore,
   refreshToken: string,
@@ -155,13 +140,23 @@ export async function rotateWebRefreshSession(
       throw new ApiError(401, "WEB_SESSION_REVOKED", "Your website session has expired. Sign in again.");
     }
     if (next) throw new ApiError(409, "WEB_SESSION_ROTATION_CONFLICT", "The website session could not be rotated.");
-    const writes = [];
+    const writes: FirestoreWrite[] = [];
     if (previous) {
       writes.push({
         update: { name: fs.docName(previousPath), fields: encodeFields({
           revoked: true, rotatedAt: new Date(now).toISOString(),
         }) },
         updateMask: { fieldPaths: ["revoked", "rotatedAt"] },
+      });
+    } else {
+      // Tombstone legacy tokens on first use so they cannot be replayed after
+      // the new cookie has been issued.
+      writes.push({
+        update: { name: fs.docName(previousPath), fields: encodeFields({
+          uid, revoked: true, createdAt: new Date(now).toISOString(), revokedAt: new Date(now).toISOString(),
+          expiresAt: now + WEB_SESSION_TTL_MS,
+        }) },
+        currentDocument: { exists: false },
       });
     }
     writes.push({
