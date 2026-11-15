@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             throw new ApiError(410, "UPLOAD_INTENT_EXPIRED", "The upload authorization has expired.");
           }
           const channelId = typeof asset["channelId"] === "string" ? asset["channelId"] : "";
-          await requireAuthorizedChannelUpload(fs, channelId, user); catch {
+          await requireAuthorizedChannelUpload(fs, channelId, user);
               await requireAdminModule(fs, user, "channels");
             }
           }
