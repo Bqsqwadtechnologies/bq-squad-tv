@@ -20,6 +20,7 @@ type LedgerItem = {
   amountMinor: number;
   createdAt: string;
   kind: string;
+  currency?: string;
 };
 
 type Topup = {
@@ -29,13 +30,17 @@ type Topup = {
   currency: string;
 };
 
-function formatMoney(amountMinor: number, currency = "NGN") {
-  return new Intl.NumberFormat("en-NG", {
+function formatMoney(amountMinor: number, currency = "USD") {
+  const digits = new Intl.NumberFormat("en", {
     style: "currency",
     currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amountMinor / 100);
+  }).resolvedOptions().maximumFractionDigits;
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(amountMinor / (10 ** digits));
 }
 
 export const Route = createFileRoute("/wallet")({
