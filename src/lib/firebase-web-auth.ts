@@ -28,7 +28,7 @@ async function firebaseAuthRequest(
     `https://identitytoolkit.googleapis.com/v1/accounts:${operation}?key=${firebaseApiKey}`,
     {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
       body: JSON.stringify({ email: email.trim(), password, returnSecureToken: true }),
     },
   );
@@ -154,7 +154,7 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
     `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseApiKey}`,
     {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
       body: JSON.stringify({ requestType: "PASSWORD_RESET", email: email.trim() }),
     },
   );
@@ -178,7 +178,7 @@ export async function signInWithGoogleCredential(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${firebaseApiKey}`,
     {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
       body: JSON.stringify({
         postBody,
         requestUri: window.location.origin,
