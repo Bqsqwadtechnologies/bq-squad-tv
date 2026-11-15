@@ -8,6 +8,7 @@ import { verifyPlayIntegrityToken } from "@/lib/server/play-integrity";
 import { getPricingConfig, requireMinorUnitAmount } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSafeStoragePath, signPlaybackToken } from "@/lib/server/storage/security";
+import { acquireSessionLease } from "@/lib/server/session-limits";
 import {
   readWebRefreshCookie,
   refreshFirebaseWebSession,
@@ -182,24 +183,20 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           await fs.transact([idempotencyPath, activeSessionsPath], docs => {
             if (docs[0]) throw new ApiError(409, "IDEMPOTENCY_KEY_ALREADY_USED", "This session request has already been used.");
             const activeSessionDoc = docs[1] ?? {};
-            const rawSessions = activeSessionDoc["sessions"];
-            const existingSessions = rawSessions && typeof rawSessions === "object" && !Array.isArray(rawSessions)
-              ? rawSessions as Record<string, unknown>
-              : {};
             const nowMs = now.getTime();
-            const liveSessions = Object.fromEntries(
-              Object.entries(existingSessions).filter(([, expiresAt]) =>
-                typeof expiresAt === "number" && Number.isSafeInteger(expiresAt) && expiresAt > nowMs,
-              ),
+            const liveSessions = acquireSessionLease(
+              activeSessionDoc["sessions"],
+              sessionId,
+              nowMs,
+              maxConcurrentSessions,
             );
-            if (Object.keys(liveSessions).length >= maxConcurrentSessions) {
+            if (!liveSessions) {
               throw new ApiError(
                 409,
                 "CONCURRENT_SESSION_LIMIT",
                 "Your account is already using the maximum number of concurrent playback sessions.",
               );
             }
-            liveSessions[sessionId] = nowMs + 60_000;
             return {
               result: undefined,
               writes: [
