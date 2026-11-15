@@ -23,7 +23,7 @@ describe("platform role resolution", () => {
   });
 
   it("recognizes only the verified exact configured super-admin email case-insensitively", async () => {
-    vi.stubEnv("ADMIN_EMAIL", "owner@example.com");
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
     const fs = fakeFirestore(null, null);
     const access = await resolvePlatformAccess(fs, "u1", "OWNER@example.com", {}, true);
     expect(access.isSuperAdmin).toBe(true);
@@ -33,7 +33,7 @@ describe("platform role resolution", () => {
   });
 
   it("does not grant super-admin status until the configured email is verified", async () => {
-    vi.stubEnv("ADMIN_EMAIL", "owner@example.com");
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
     const fs = fakeFirestore(null, null);
     const access = await resolvePlatformAccess(fs, "u1", "owner@example.com", {}, false);
     expect(access.isSuperAdmin).toBe(false);
@@ -53,8 +53,27 @@ describe("platform role resolution", () => {
     ).rejects.toMatchObject({ status: 403, code: "EMAIL_VERIFICATION_REQUIRED" });
   });
 
+  it("supports the legacy ADMIN_EMAIL secret only when the new secret is absent", async () => {
+    vi.stubEnv("ADMIN_EMAIL", "legacy-owner@example.com");
+    const fs = fakeFirestore(null, null);
+    const access = await resolvePlatformAccess(fs, "u1", "legacy-owner@example.com", {}, true);
+    expect(access.isSuperAdmin).toBe(true);
+    vi.unstubAllEnvs();
+  });
+
+  it("prefers ZILLIONAIRE_EMAIL over the legacy ADMIN_EMAIL secret", async () => {
+    vi.stubEnv("ADMIN_EMAIL", "legacy-owner@example.com");
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
+    const fs = fakeFirestore(null, null);
+    const owner = await resolvePlatformAccess(fs, "u1", "owner@example.com", {}, true);
+    const legacy = await resolvePlatformAccess(fs, "u2", "legacy-owner@example.com", {}, true);
+    expect(owner.isSuperAdmin).toBe(true);
+    expect(legacy.isSuperAdmin).toBe(false);
+    vi.unstubAllEnvs();
+  });
+
   it("does not grant super-admin status to aliases or partial email matches", async () => {
-    vi.stubEnv("ADMIN_EMAIL", "owner@example.com");
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
     const fs = fakeFirestore(null, null);
     const access = await resolvePlatformAccess(fs, "u1", "owner+alias@example.com", {}, true);
     expect(access.isSuperAdmin).toBe(false);
