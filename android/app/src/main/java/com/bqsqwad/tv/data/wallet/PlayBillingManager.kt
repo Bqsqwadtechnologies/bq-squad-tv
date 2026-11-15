@@ -13,7 +13,6 @@ import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.google.firebase.auth.FirebaseAuth
-import java.security.MessageDigest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -104,7 +103,7 @@ class PlayBillingManager(
             return
         }
         val obfuscatedAccountId =
-            MessageDigest
+            java.security.MessageDigest
                 .getInstance("SHA-256")
                 .digest(uid.toByteArray(Charsets.UTF_8))
                 .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
