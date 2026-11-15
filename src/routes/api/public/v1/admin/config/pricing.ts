@@ -34,6 +34,23 @@ const schema = z.object({
   ).default({}),
   defaultRatePerMinuteByCurrency: z.record(z.string().regex(/^[A-Z]{3}$/), z.number().int().positive().max(Number.MAX_SAFE_INTEGER)).default({}),
   minimumSessionBalanceByCurrency: z.record(z.string().regex(/^[A-Z]{3}$/), z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)).default({}),
+  // Owner-controlled price overrides. All amounts are integer minor currency units.
+  channelRatesById: z.record(
+    z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
+    z.record(z.string().regex(/^[A-Z]{3}$/), z.number().int().positive().max(Number.MAX_SAFE_INTEGER)),
+  ).default({}),
+  assetRatesById: z.record(
+    z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),
+    z.record(z.string().regex(/^[A-Z]{3}$/), z.number().int().positive().max(Number.MAX_SAFE_INTEGER)),
+  ).default({}),
+  producerShareBpsByChannel: z.record(
+    z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
+    z.number().int().min(0).max(10_000),
+  ).default({}),
+  dailySpendLimitByCurrency: z.record(
+    z.string().regex(/^[A-Z]{3}$/),
+    z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  ).default({}),
   googlePlayProducts: z.array(playProductSchema).max(100),
 });
 
