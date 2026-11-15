@@ -106,11 +106,11 @@ export async function creditGooglePlayPurchase(
   const paymentPath = "payments/googleplay_" + hash;
   const walletPath = "wallets/" + input.uid;
   const ledgerPath = "ledger/googleplay_" + hash;
-  return fs.transact([paymentPath, walletPath, ledgerPath], docs => {
+  return fs.transact<{ credited: boolean; balanceMinor: number }>([paymentPath, walletPath, ledgerPath], docs => {
     const payment = docs[0], wallet = docs[1] ?? {}, ledger = docs[2];
     const balance = typeof wallet["balanceMinor"] === "number" && Number.isSafeInteger(wallet["balanceMinor"])
       ? wallet["balanceMinor"] as number : 0;
-    if (payment?.["status"] === "credited" || ledger) return { result: { credited: false, balanceMinor: balance }, writes: [] };
+    if (payment?.["status"] === "credited" || ledger) return { result: { credited: true, balanceMinor: balance }, writes: [] };
     const next = balance + input.creditMinor;
     if (!Number.isSafeInteger(next)) throw new ApiError(400, "WALLET_LIMIT_EXCEEDED", "The wallet balance exceeds the supported amount.");
     const now = new Date().toISOString();

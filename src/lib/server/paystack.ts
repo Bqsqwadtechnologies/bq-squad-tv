@@ -19,6 +19,7 @@ export async function verifyPaystackSignature(rawBody: string, signature: string
 }
 
 export async function fetchPaystackVerification(reference: string): Promise<Record<string, unknown>> {
+  if (!/^[A-Za-z0-9_-]{8,100}$/.test(reference)) throw new ApiError(400, "PAYMENT_REFERENCE_INVALID", "The payment reference is invalid.");
   const response = await fetch("https://api.paystack.co/transaction/verify/" + encodeURIComponent(reference), {
     headers: { authorization: "Bearer " + requiredSecret(), accept: "application/json" },
   });
@@ -43,7 +44,7 @@ export async function creditPaystackPayment(
   const paymentPath = "payments/paystack_" + input.reference;
   const walletPath = "wallets/" + input.uid;
   const ledgerPath = "ledger/paystack_" + hash;
-  return fs.transact([paymentPath, walletPath, ledgerPath], docs => {
+  return fs.transact<{ credited: boolean; balanceMinor: number }>([paymentPath, walletPath, ledgerPath], docs => {
     const payment = docs[0];
     const wallet = docs[1] ?? {};
     const ledger = docs[2];
