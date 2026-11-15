@@ -18,6 +18,10 @@ type PricingConfig = {
   walletTopupsByCurrency?: Record<string, Record<string, { amountMinor: number; creditMinor?: number }>>;
   defaultRatePerMinuteByCurrency?: Record<string, number>;
   minimumSessionBalanceByCurrency?: Record<string, number>;
+  channelRatesById?: Record<string, Record<string, number>>;
+  assetRatesById?: Record<string, Record<string, number>>;
+  producerShareBpsByChannel?: Record<string, number>;
+  dailySpendLimitByCurrency?: Record<string, number>;
   googlePlayProducts: Array<{ productId: string; title: string; description: string; credits: number; creditMinor?: number; creditMinorByCurrency?: Record<string, number>; active: boolean }>;
 };
 
@@ -33,6 +37,10 @@ function AdminPricingPage() {
   const [topupsByCurrency, setTopupsByCurrency] = useState("{}");
   const [ratesByCurrency, setRatesByCurrency] = useState("{}");
   const [minimumsByCurrency, setMinimumsByCurrency] = useState("{}");
+  const [channelRates, setChannelRates] = useState("{}");
+  const [assetRates, setAssetRates] = useState("{}");
+  const [channelShares, setChannelShares] = useState("{}");
+  const [dailyLimits, setDailyLimits] = useState("{}");
   const [products, setProducts] = useState("");
   const [version, setVersion] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
@@ -54,6 +62,10 @@ function AdminPricingPage() {
     setTopupsByCurrency(JSON.stringify(data.walletTopupsByCurrency ?? {}, null, 2));
     setRatesByCurrency(JSON.stringify(data.defaultRatePerMinuteByCurrency ?? {}, null, 2));
     setMinimumsByCurrency(JSON.stringify(data.minimumSessionBalanceByCurrency ?? {}, null, 2));
+    setChannelRates(JSON.stringify(data.channelRatesById ?? {}, null, 2));
+    setAssetRates(JSON.stringify(data.assetRatesById ?? {}, null, 2));
+    setChannelShares(JSON.stringify(data.producerShareBpsByChannel ?? {}, null, 2));
+    setDailyLimits(JSON.stringify(data.dailySpendLimitByCurrency ?? {}, null, 2));
     setProducts(JSON.stringify(data.googlePlayProducts ?? [], null, 2));
     setVersion(data.version ?? null);
   }
@@ -86,6 +98,10 @@ function AdminPricingPage() {
       const walletTopupsByCurrency = JSON.parse(topupsByCurrency || "{}") as NonNullable<PricingConfig["walletTopupsByCurrency"]>;
       const defaultRatePerMinuteByCurrency = JSON.parse(ratesByCurrency || "{}") as NonNullable<PricingConfig["defaultRatePerMinuteByCurrency"]>;
       const minimumSessionBalanceByCurrency = JSON.parse(minimumsByCurrency || "{}") as NonNullable<PricingConfig["minimumSessionBalanceByCurrency"]>;
+      const channelRatesById = JSON.parse(channelRates || "{}") as NonNullable<PricingConfig["channelRatesById"]>;
+      const assetRatesById = JSON.parse(assetRates || "{}") as NonNullable<PricingConfig["assetRatesById"]>;
+      const producerShareBpsByChannel = JSON.parse(channelShares || "{}") as NonNullable<PricingConfig["producerShareBpsByChannel"]>;
+      const dailySpendLimitByCurrency = JSON.parse(dailyLimits || "{}") as NonNullable<PricingConfig["dailySpendLimitByCurrency"]>;
       const googlePlayProducts = JSON.parse(products || "[]") as PricingConfig["googlePlayProducts"];
       const payload = {
         defaultRatePerMinuteMinor: Number(rate),
@@ -96,6 +112,10 @@ function AdminPricingPage() {
         walletTopupsByCurrency,
         defaultRatePerMinuteByCurrency,
         minimumSessionBalanceByCurrency,
+        channelRatesById,
+        assetRatesById,
+        producerShareBpsByChannel,
+        dailySpendLimitByCurrency,
         googlePlayProducts,
       };
       const response = await fetch("/api/public/v1/admin/config/pricing", {
@@ -156,10 +176,22 @@ function AdminPricingPage() {
             <label className="grid gap-2 text-sm text-blue-100/70">Minimum viewing balance by currency — JSON object
               <textarea rows={4} required value={minimumsByCurrency} onChange={event => setMinimumsByCurrency(event.target.value)} placeholder='{"USD":100,"NGN":100}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
+            <label className="grid gap-2 text-sm text-blue-100/70">Owner price overrides by channel ID and currency — JSON object
+              <textarea rows={6} required value={channelRates} onChange={event => setChannelRates(event.target.value)} placeholder='{"123456":{"NGN":200,"USD":25}}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
+            </label>
+            <label className="grid gap-2 text-sm text-blue-100/70">Owner price overrides by movie asset ID and currency — JSON object
+              <textarea rows={6} required value={assetRates} onChange={event => setAssetRates(event.target.value)} placeholder='{"asset_id":{"NGN":300,"USD":35}}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
+            </label>
+            <label className="grid gap-2 text-sm text-blue-100/70">Producer revenue share overrides by channel ID — basis points
+              <textarea rows={4} required value={channelShares} onChange={event => setChannelShares(event.target.value)} placeholder='{"123456":7000}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
+            </label>
+            <label className="grid gap-2 text-sm text-blue-100/70">Daily viewer spending limits by currency — minor units
+              <textarea rows={4} required value={dailyLimits} onChange={event => setDailyLimits(event.target.value)} placeholder='{"NGN":50000,"USD":500}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
+            </label>
             <label className="grid gap-2 text-sm text-blue-100/70">Google Play products — JSON array
               <textarea rows={7} required value={products} onChange={event => setProducts(event.target.value)} placeholder='[{"productId":"your_product_id","title":"Title","description":"Description","credits":1,"creditMinorByCurrency":{"USD":499,"NGN":50000},"active":true}]' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <p className="text-xs leading-5 text-blue-100/45">Enter amounts in each currency's minor units. Paystack's XOF API amount is configured as whole XOF multiplied by 100. For Google Play, configure creditMinorByCurrency for every wallet currency you want to support; Play displays the localized store price. Use exact product IDs from Play Console. Saving creates a new audited pricing version.</p>
+            <p className="text-xs leading-5 text-blue-100/45">Enter amounts in each currency's minor units. Paystack's XOF API amount is configured as whole XOF multiplied by 100. For Google Play, configure creditMinorByCurrency for every wallet currency you want to support; Play displays the localized store price. Use exact product IDs from Play Console. Channel and asset IDs accept exact numeric or internal channel/asset identifiers; asset rules override channel rules. Saving creates a new audited pricing version.</p>
             {error ? <p role="alert" className="text-sm text-rose-300">{error}</p> : null}
             {message ? <p role="status" className="text-sm text-cyan-200">{message}</p> : null}
             <button disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-5 py-3 font-extrabold text-[#031039] disabled:opacity-60">{busy ? <LoaderCircle className="animate-spin" size={17} /> : null} Save pricing version</button>
