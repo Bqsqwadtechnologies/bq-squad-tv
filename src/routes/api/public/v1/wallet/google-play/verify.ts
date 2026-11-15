@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
-import { errorBody, parseBody, requireUser } from "@/lib/server/api";
+import { errorBody, getWallet, parseBody, requireUser } from "@/lib/server/api";
 import { getPricingConfig } from "@/lib/server/pricing";
 import { consumeGooglePlayProduct } from "@/lib/server/google-play";
 import { creditGooglePlayPurchase, getGooglePlayProducts, googlePlayAccountId, verifyGooglePlayProduct } from "@/lib/server/google-play";
@@ -24,8 +24,10 @@ export const Route = createFileRoute("/api/public/v1/wallet/google-play/verify")
       if (packageName !== body.packageName) throw new ApiError(400, "PLAY_PACKAGE_MISMATCH", "The Android package name does not match this app.");
       const fs = await Firestore.create();
       await enforceRateLimit(fs, "play-verify:" + user.uid, { limit: 10, windowMs: 60_000 });
+      const wallet = await getWallet(fs, user.uid);
+      const currency = wallet.currency;
       const config = await getPricingConfig(fs);
-      const product = getGooglePlayProducts(config).find(item => item.productId === body.productId);
+      const product = getGooglePlayProducts(config, currency).find(item => item.productId === body.productId);
       if (!product) throw new ApiError(400, "PLAY_PRODUCT_UNAVAILABLE", "This Google Play product is not configured.");
       const verified = await verifyGooglePlayProduct({
         packageName,
@@ -39,7 +41,7 @@ export const Route = createFileRoute("/api/public/v1/wallet/google-play/verify")
       }
       const result = await creditGooglePlayPurchase(fs, {
         uid: user.uid, productId: body.productId, purchaseToken: body.purchaseToken,
-        orderId: verifiedOrderId, creditMinor: product.creditMinor,
+        orderId: verifiedOrderId, creditMinor: product.creditMinor, currency,
       });
       // Wallet top-ups are consumable products. Consume only after the
       // idempotent wallet/ledger transaction succeeds; retries can finish this
@@ -54,7 +56,7 @@ export const Route = createFileRoute("/api/public/v1/wallet/google-play/verify")
       return Response.json({
         ...result,
         processed: true,
-        currency: "NGN",
+        currency,
         message: result.credited ? "Wallet credited." : "This purchase was already processed.",
       });
     } catch (error) { return errorBody(error); }
