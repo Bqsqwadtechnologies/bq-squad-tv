@@ -1,4 +1,5 @@
 import { firebaseApiKey, firebaseProjectId } from "./firebase-config";
+import { getWebAppCheckHeaders } from "./firebase-web-app-check";
 
 type FirebaseAuthResponse = {
   idToken?: string;
@@ -58,7 +59,7 @@ async function establishWebSession(
   const response = await fetch("/api/public/v1/auth/web/session", {
     method: "POST",
     credentials: "same-origin",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
     body: JSON.stringify({ idToken, refreshToken }),
   });
   const result = await response.json() as WebSessionResponse;
@@ -94,7 +95,7 @@ export async function restoreWebSession(): Promise<string | null> {
     const response = await fetch("/api/public/v1/auth/web/session/refresh", {
       method: "POST",
       credentials: "same-origin",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
       body: "{}",
     });
     const result = await response.json() as WebSessionResponse;
@@ -123,7 +124,7 @@ export async function sendEmailVerificationCode(): Promise<{ sent: boolean; alre
   if (!idToken) throw new Error("Sign in again to verify your email.");
   const response = await fetch("/api/public/v1/auth/email/send-code", {
     method: "POST",
-    headers: { authorization: `Bearer ${idToken}` },
+    headers: { authorization: `Bearer ${idToken}`, ...await getWebAppCheckHeaders() },
   });
   const result = await response.json() as { sent?: boolean; alreadyVerified?: boolean; error?: string };
   if (!response.ok) throw new Error(result.error ?? "Could not send the verification code.");
@@ -139,6 +140,7 @@ export async function verifyEmailCode(code: string): Promise<boolean> {
     headers: {
       authorization: `Bearer ${idToken}`,
       "content-type": "application/json",
+      ...await getWebAppCheckHeaders(),
     },
     body: JSON.stringify({ code }),
   });
@@ -193,6 +195,13 @@ export async function signInWithGoogleCredential(
   return { idToken, email: result.email ?? "" };
 }
 
+export async function getWebAuthHeaders(idToken: string): Promise<Record<string, string>> {
+  return {
+    authorization: `Bearer ${idToken}`,
+    ...await getWebAppCheckHeaders(),
+  };
+}
+
 export async function getWebAccount(): Promise<{
   uid: string;
   email: string | null;
@@ -201,7 +210,7 @@ export async function getWebAccount(): Promise<{
   const idToken = await getActiveWebIdToken();
   if (!idToken) return null;
   const response = await fetch("/api/public/v1/auth/web/me", {
-    headers: { authorization: `Bearer ${idToken}` },
+    headers: { authorization: `Bearer ${idToken}`, ...await getWebAppCheckHeaders() },
     cache: "no-store",
   });
   if (!response.ok) return null;
@@ -217,7 +226,7 @@ export async function signOutWeb(): Promise<void> {
     await fetch("/api/public/v1/auth/web/session/logout", {
       method: "POST",
       credentials: "same-origin",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
       body: "{}",
     });
   } finally {
