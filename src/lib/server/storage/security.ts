@@ -72,7 +72,7 @@ export function isSafeStoragePath(path: string): boolean {
 
 export function redactSensitiveText(value: string): string {
   return value
-    .replace(/([?&](?:token|signature|sig|apikey|api_key|access_token)=)[^&\s]*/gi, "$1[REDACTED]")
+    .replace(/(^|[?&\s])((?:token|signature|sig|apikey|api_key|access_token)=)[^&\s]*/gi, "$1$2[REDACTED]")
     .replace(/Bearer\s+[A-Za-z0-9._~+/-]+=*/gi, "Bearer [REDACTED]")
     .replace(/https?:\/\/[^\s"'<>]+\/(?:storage\/v1\/object\/sign|storage\/v1\/object\/authenticated)\/[^\s"'<>]+/gi, "[PRIVATE_STORAGE_URL_REDACTED]")
     .replace(/sb_(?:secret|service_role)_[A-Za-z0-9_-]+/gi, "[STORAGE_SECRET_REDACTED]");
