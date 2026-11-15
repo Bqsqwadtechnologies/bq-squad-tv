@@ -1,5 +1,5 @@
 const firebaseProjectId = "bq-sqwad-tv";
-const firebaseApiKey = "AIzaSyD6QfAIfn_T0YWxxYKDbw8lZfj_s81N2ow"; // Public Firebase web API key; not a server credential.
+const firebaseApiKey = "AIzaSyD6QfAIfn_T0YWxxYKDbw8lZfj_s81N2ow"; //gitleaks:allow Firebase web client API key; not a server credential
 
 type FirebaseSignInResponse = {
   idToken?: string;
