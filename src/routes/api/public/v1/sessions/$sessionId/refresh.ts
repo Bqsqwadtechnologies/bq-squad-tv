@@ -42,9 +42,10 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/refresh
       }
       const now = Math.floor(Date.now() / 1000);
       const token = await signPlaybackToken({ sid, uid: user.uid, path, iat: now, exp: now + 900 });
-      const streamUrl = "/api/public/v1/streaming/hls/" + path.split("/").map(encodeURIComponent).join("/") +
-        "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(token);
-      return Response.json({ sessionId: sid, streamUrl, expiresInSeconds: 900 });
+      const playbackUrl = new URL("/api/public/v1/streaming/hls/" + path.split("/").map(encodeURIComponent).join("/") +
+        "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(token), request.url).toString();
+      await fs.patchDoc("sessions/" + sid, { playbackUrl, playbackTokenRefreshedAt: new Date().toISOString() });
+      return Response.json({ sessionId: sid, playbackUrl, expiresInSeconds: 900 });
     } catch (error) { return errorBody(error); }
   } } },
 });
