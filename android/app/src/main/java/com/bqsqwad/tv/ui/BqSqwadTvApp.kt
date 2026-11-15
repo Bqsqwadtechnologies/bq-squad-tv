@@ -90,6 +90,7 @@ fun BqSqwadTvApp() {
                         onSearch = { nav.navigate("search") },
                         onChannel = { nav.navigate("channel/$it") },
                         onWallet = { nav.navigate("wallet") },
+                        onProfile = { nav.navigate("account") },
                         onProducer = { nav.navigate("producer") },
                         onLive = { nav.navigate("live") },
                         onLibrary = { nav.navigate("library") },

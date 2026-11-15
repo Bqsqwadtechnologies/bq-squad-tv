@@ -32,6 +32,7 @@ fun HomeScreen(
     onSearch: () -> Unit = {},
     onChannel: (String) -> Unit = {},
     onWallet: () -> Unit = {},
+    onProfile: () -> Unit = {},
     onProducer: () -> Unit = {},
     onLive: () -> Unit = {},
     onLibrary: () -> Unit = {},
@@ -42,6 +43,7 @@ fun HomeScreen(
     var catalog by remember { mutableStateOf<CatalogHomeResponse?>(null) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    var showNotifications by remember { mutableStateOf(false) }
 
     fun refresh() {
         scope.launch {
@@ -55,6 +57,15 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) { refresh() }
+
+    if (showNotifications) {
+        AlertDialog(
+            onDismissRequest = { showNotifications = false },
+            title = { Text("Notifications") },
+            text = { Text("Programme, account and wallet updates will appear here.") },
+            confirmButton = { TextButton(onClick = { showNotifications = false }) { Text("Close") } },
+        )
+    }
 
     Column(
         Modifier
@@ -86,10 +97,15 @@ fun HomeScreen(
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = onSearch,
-                ) { Text("⌕", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface) }
-                IconButton(onClick = onWallet) { Text("◉", color = MaterialTheme.colorScheme.primary) }
+                IconButton(onClick = onSearch) {
+                    Text("⌕", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
+                }
+                IconButton(onClick = { showNotifications = true }) {
+                    Text("♧", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge)
+                }
+                IconButton(onClick = onProfile) {
+                    Text("●", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge)
+                }
             }
         }
 
