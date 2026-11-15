@@ -8,6 +8,7 @@ import { requireAppCheck } from "./firebase-app-check";
 import { verifyFirebaseIdToken, type VerifiedUser } from "./firebase-auth";
 import { assertAccountActive } from "./account-status";
 import { assertAuthenticationSessionActive } from "./auth-session-revocation";
+import { currencyForCountry } from "./currency";
 
 export function errorBody(error: unknown): Response {
   if (error instanceof ApiError) {
@@ -125,11 +126,12 @@ export type WalletState = {
 
 export async function getWallet(fs: Firestore, uid: string): Promise<WalletState> {
   const doc = await fs.getDoc(`wallets/${uid}`);
+  const profile = doc ? null : await fs.getDoc(`users/${uid}`);
   const today = new Date().toISOString().slice(0, 10);
   const spentDate = typeof doc?.["spentDate"] === "string" ? (doc["spentDate"] as string) : null;
   return {
     balanceMinor: typeof doc?.["balanceMinor"] === "number" ? (doc["balanceMinor"] as number) : 0,
-    currency: typeof doc?.["currency"] === "string" ? (doc["currency"] as string) : "NGN",
+    currency: typeof doc?.["currency"] === "string" ? (doc["currency"] as string) : doc ? "NGN" : currencyForCountry(profile?.["countryCode"]),
     dailySpendLimitMinor: typeof doc?.["dailySpendLimitMinor"] === "number"
       ? (doc["dailySpendLimitMinor"] as number)
       : null,
