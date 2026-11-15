@@ -4,6 +4,7 @@ import { errorBody } from "@/lib/server/api";
 import { assertContentPlaybackRights } from "@/lib/server/content-rights";
 import { isSafeStoragePath, redactSensitiveText, signPlaybackToken, verifyPlaybackToken } from "@/lib/server/storage/security";
 import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
+import { getUserProfile, requireAdultForContent } from "@/lib/server/api";
 
 function sessionId(value: string | null): string {
   if (!value || !/^[A-Za-z0-9_-]{1,100}$/.test(value)) {
@@ -112,20 +113,22 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
           }
           const channelId = typeof session["channelId"] === "string" ? session["channelId"] : "";
           const assetId = typeof session["contentAssetId"] === "string" ? session["contentAssetId"] : "";
-          const [channel, asset] = await Promise.all([
+          const [channel, asset, profile] = await Promise.all([
             fs.getDoc("channels/" + channelId),
             fs.getDoc("contentAssets/" + assetId),
+            getUserProfile(fs, uid),
           ]);
           if (!channel || channel["published"] !== true || String(channel["status"] ?? "").toUpperCase() === "SUSPENDED" ||
               !asset || asset["status"] !== "ready" || asset["deliveryMode"] !== "bq_hosted") {
             throw new ApiError(403, "STREAM_CONTENT_UNAVAILABLE", "This content is no longer available.");
           }
+          requireAdultForContent(profile, channel["adultOnly"]);
           assertContentPlaybackRights({
             contentStatus: asset["contentStatus"] ?? channel["contentStatus"] ?? "published",
             license: (asset["license"] ?? channel["license"] ?? null) as Record<string, unknown> | null,
             viewerCountry: typeof session["viewerCountry"] === "string" ? session["viewerCountry"] : "",
             platform: session["clientPlatform"] as "android" | "web" | "android_tv",
-            paidPlayback: true,
+            paidPlayback: session["paidPlayback"] !== false,
           });
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
