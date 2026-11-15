@@ -82,7 +82,7 @@ export const Route = createFileRoute("/api/public/v1/admin/notifications")({
             notificationId,
             title: body.title,
             body: body.body,
-            deepLink: body.deepLink,
+            ...(body.deepLink ? { deepLink: body.deepLink } : {}),
           });
         } catch {
           // Keep the notification in history and report delivery failure without
