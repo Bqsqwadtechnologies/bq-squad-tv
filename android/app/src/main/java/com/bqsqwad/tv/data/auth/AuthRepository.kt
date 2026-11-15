@@ -4,6 +4,7 @@ import com.bqsqwad.tv.BuildConfig
 import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.messaging.FirebaseMessaging
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
@@ -45,6 +46,18 @@ class AuthRepository(
         return "Bearer " + (token ?: error("Could not obtain a Firebase authentication token."))
     }
 
+    private suspend fun registerPushTokenIfAvailable() {
+        runCatching {
+            val token = FirebaseMessaging.getInstance().token.awaitResult()
+            if (!token.isNullOrBlank()) {
+                profileApi.registerPushToken(
+                    currentBearerToken(),
+                    PushTokenRequest(token),
+                )
+            }
+        }
+    }
+
     suspend fun signInEmail(
         email: String,
         password: String,
@@ -59,6 +72,7 @@ class AuthRepository(
             } ?: error("Firebase did not return an authenticated account.")
 
         user.reload().awaitResult()
+        registerPushTokenIfAvailable()
         val verified = user.isEmailVerified
         val verification =
             if (verified) {
@@ -98,6 +112,7 @@ class AuthRepository(
     suspend fun signInGoogle(idToken: String) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential).awaitResult()
+        registerPushTokenIfAvailable()
     }
 
     suspend fun completeProfile(
