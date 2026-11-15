@@ -61,12 +61,39 @@ fun LiveTvScreen(onChannel: (String) -> Unit) {
 }
 
 @Composable
-fun LibraryScreen() {
+fun LibraryScreen(
+    onChannel: (String) -> Unit = {},
+) {
+    val context = LocalContext.current
+    val repository = remember(context) { CatalogRepository(context) }
     var selected by remember { mutableStateOf("All") }
-    val categories = listOf("All", "Movies", "Series", "Drama", "Action", "Kids")
+    var channels by remember { mutableStateOf<List<ChannelSummary>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val categories = listOf("All", "Movies", "Series", "Sports", "Kids", "News", "Entertainment")
+
+    LaunchedEffect(Unit) {
+        runCatching { repository.home() }
+            .onSuccess { response ->
+                channels = (
+                    response.channels +
+                        response.trending +
+                        response.replays
+                ).distinctBy { it.id }
+            }
+            .onFailure { error = it.localizedMessage ?: "The catalogue is unavailable." }
+        loading = false
+    }
+
+    val visibleChannels = channels.filter { channel ->
+        selected == "All" ||
+            channel.category.equals(selected, ignoreCase = true) ||
+            (selected == "Movies" && channel.category.contains("movie", ignoreCase = true))
+    }
+
     Column(Modifier.fillMaxSize().padding(18.dp)) {
         Text("Library", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
-        Text("Explore movies, series and family entertainment.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("Browse published channels and available programmes.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             categories.forEach { category ->
@@ -78,11 +105,24 @@ fun LibraryScreen() {
             }
         }
         Spacer(Modifier.height(14.dp))
-        EmptyPanel(
-            symbol = if (selected == "Series") "▤" else "▣",
-            title = if (selected == "All") "Your library is being prepared" else "$selected are coming soon",
-            message = "Approved titles will appear here when the content catalogue is published.",
-        )
+        when {
+            loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
+            error != null -> EmptyPanel(
+                symbol = "!",
+                title = "Library unavailable",
+                message = error.orEmpty(),
+            )
+            visibleChannels.isEmpty() -> EmptyPanel(
+                symbol = if (selected == "Series") "▤" else "▣",
+                title = if (selected == "All") "No published channels yet" else "No $selected channels yet",
+                message = "Published channels appear here after their distribution rights are verified.",
+            )
+            else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                items(visibleChannels, key = { it.id }) { channel ->
+                    ChannelListCard(channel = channel, onClick = { onChannel(channel.id) })
+                }
+            }
+        }
     }
 }
 

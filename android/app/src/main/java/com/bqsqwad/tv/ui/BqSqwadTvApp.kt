@@ -99,7 +99,9 @@ fun BqSqwadTvApp() {
                 composable("live") {
                     LiveTvScreen(onChannel = { nav.navigate("channel/$it") })
                 }
-                composable("library") { LibraryScreen() }
+                composable("library") {
+                    LibraryScreen(onChannel = { nav.navigate("channel/$it") })
+                }
                 composable("downloads") { DownloadsScreen() }
                 composable("settings") {
                     SettingsScreen(
