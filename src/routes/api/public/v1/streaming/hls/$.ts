@@ -24,13 +24,40 @@ function isPlaylist(path: string): boolean {
   return path.toLowerCase().endsWith(".m3u8");
 }
 
-function proxyUrl(path: string, sid: string, uid: string): string {
-  return signPlaybackToken({
-    sid, uid, path, iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 300,
-  }).then((token) =>
-    "/api/public/v1/streaming/hls/" + path.split("/").map(encodeURIComponent).join("/") +
-    "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(token)
-  ) as unknown as string;
+async function rewritePlaylistForSession(
+  playlist: string,
+  playlistPath: string,
+  sid: string,
+  uid: string,
+): Promise<string> {
+  const lines = playlist.split(/\r?\n/);
+  const output: string[] = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) { output.push(line); continue; }
+    const makeUrl = async (reference: string) => {
+      const childPath = resolveHlsReference(playlistPath, reference);
+      const childToken = await signPlaybackToken({
+        sid, uid, path: childPath,
+        iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 300,
+      });
+      return "/api/public/v1/streaming/hls/" + childPath.split("/").map(encodeURIComponent).join("/") +
+        "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(childToken);
+    };
+    if (trimmed.startsWith("#")) {
+      const matches = [...line.matchAll(/(URI\s*=\s*")([^"]+)(")/gi)];
+      let rewritten = line;
+      for (const match of matches) {
+        const original = match[2] ?? "";
+        if (original.startsWith("data:")) continue;
+        rewritten = rewritten.replace(match[0], match[1] + await makeUrl(original) + match[3]);
+      }
+      output.push(rewritten);
+    } else {
+      output.push(await makeUrl(trimmed));
+    }
+  }
+  return output.join("\n");
 }
 
 export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
@@ -106,43 +133,15 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
 
           if (isPlaylist(resourcePath)) {
             const playlist = await upstream.text();
-            const rewritten = rewriteHlsPlaylist(playlist, resourcePath, (childPath) => {
-              // The token is generated asynchronously by Web Crypto; playlist rewriting is completed below.
-              return childPath;
-            });
-            const lines = rewritten.split(/\r?\n/);
-            const signedLines = await Promise.all(lines.map(async (line) => {
-              const replace = async (childPath: string) => {
-                const childToken = await signPlaybackToken({
-                  sid, uid, path: childPath,
-                  iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 300,
-                });
-                return "/api/public/v1/streaming/hls/" + childPath.split("/").map(encodeURIComponent).join("/") +
-                  "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(childToken);
-              };
-              if (!line.trim()) return line;
-              if (line.trimStart().startsWith("#")) {
-                const matches = [...line.matchAll(/(URI\s*=\s*")([^"]+)(")/gi)];
-                let output = line;
-                for (const match of matches) {
-                  const original = match[2] ?? "";
-                  if (!original.startsWith("/api/public/v1/streaming/hls/")) {
-                    const resolved = resolveHlsReference(resourcePath, original);
-                    output = output.replace(match[0], match[1] + await replace(resolved) + match[3]);
-                  }
-                }
-                return output;
-              }
-              return await replace(resolveHlsReference(resourcePath, line.trim()));
-            }));
-            return new Response(signedLines.join("\n"), {
+            const rewritten = await rewritePlaylistForSession(playlist, resourcePath, sid, uid);
+            return new Response(rewritten, {
               status: 200,
               headers: {
                 "content-type": "application/vnd.apple.mpegurl",
                 "cache-control": "private, no-store",
                 "x-content-type-options": "nosniff",
               },
-            });
+            });;
           }
 
           const headers = new Headers({
