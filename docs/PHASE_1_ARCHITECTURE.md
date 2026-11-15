@@ -103,7 +103,7 @@ The repository now contains a first implementation of the shared email-verificat
 
 - Firebase ID tokens are verified server-side before protected API access.
 - Brevo transactional email delivery is server-only and uses `BREVO_API_KEY`.
-- Email verification codes are six digits, expire after 10 minutes, are stored as salted hashes, are single-use, and are limited to five attempts per issued code.
+- Email verification codes are six digits, expire after 10 minutes, are stored as salted HMAC hashes using server-only Firebase service-account material as a pepper, are single-use, and are limited to five attempts per issued code.
 - Code issuance is rate-limited per authenticated UID and normalized email address.
 - Successful code verification writes an application-level verified-email record bound to the exact Firebase email claim. The Firebase UID and signed ID token remain the identity authority.
 - Android email/password registration and sign-in are connected to the six-digit code endpoints.
