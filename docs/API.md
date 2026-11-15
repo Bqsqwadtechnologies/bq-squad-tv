@@ -45,6 +45,14 @@ These endpoints are implemented in source. They are not considered production-re
 - `POST /v1/wallet/google-play/verify` — body `{productId,purchaseToken,orderId,packageName}`; verify Google Play Developer API, package, configured product, purchase state, SHA-256 obfuscated Firebase account binding, supported quantity and idempotency before crediting. Return `{credited,processed,balanceMinor,currency,message}`. Android consumes only after `processed=true`, including a verified purchase already credited to the same account. Refund/revocation reconciliation remains a separate task.
 - Paystack initialization/webhooks are web-only. Android must not use Paystack for digital credits.
 
+### Website wallet and Paystack
+
+- `GET /v1/wallet/topups` — authenticated; returns configured public package IDs with integer-kobo amounts and credits.
+- `POST /v1/payments/paystack/initialize` — authenticated with verified email; body `{packageId}`; creates a server-owned pending payment and returns a Paystack hosted `authorizationUrl`. The default return route is `/wallet`.
+- `POST /v1/payments/paystack/verify` — authenticated; body `{reference}`; independently verifies the transaction with Paystack before an idempotent wallet credit.
+- `POST /v1/payments/paystack/webhook` — Paystack HMAC-SHA512 signature required; the server re-verifies the transaction with Paystack before crediting.
+- Paystack is the website payment provider only. Android digital wallet credits use Google Play Billing and server-side Google Play verification.
+
 ## Ads, push and producer
 - `GET /v1/ads/next?platform=&channelId=&slot=` — eligible campaign creative or null. Current server filters by active status, platform, placement, dates and channel targeting, and blocks selected gambling categories. Full age, geography, frequency-cap and campaign-priority enforcement remains incomplete.
 - `POST /v1/ads/{adId}/events` — `{event,positionSeconds,platform,slot}`; event values: impression, start, quartile_25, quartile_50, quartile_75, complete, skip, click.
