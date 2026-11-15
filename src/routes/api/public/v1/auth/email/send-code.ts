@@ -3,7 +3,7 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { sendVerificationCodeEmail } from "@/lib/server/email/brevo";
-import { EMAIL_OTP_TTL_MS, generateEmailOtp, hashEmailOtp, normalizeEmail } from "@/lib/server/email/otp";
+import { EMAIL_OTP_TTL_MS, generateEmailOtp, hashEmailAddress, hashEmailOtp, normalizeEmail } from "@/lib/server/email/otp";
 
 export const Route = createFileRoute("/api/public/v1/auth/email/send-code")({
   server: { handlers: {
@@ -16,7 +16,8 @@ export const Route = createFileRoute("/api/public/v1/auth/email/send-code")({
         const email = normalizeEmail(user.email);
         const fs = await Firestore.create();
         await enforceRateLimit(fs, "email-otp-user:" + user.uid, { limit: 3, windowMs: 15 * 60_000 });
-        await enforceRateLimit(fs, "email-otp-address:" + email, { limit: 5, windowMs: 60 * 60_000 });
+        const emailRateLimitKey = await hashEmailAddress(email);
+        await enforceRateLimit(fs, "email-otp-address:" + emailRateLimitKey, { limit: 5, windowMs: 60 * 60_000 });
 
         const { code, salt } = generateEmailOtp();
         const codeHash = await hashEmailOtp(user.uid, "verify_email", salt, code);
