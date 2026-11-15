@@ -17,9 +17,20 @@ describe("platform role resolution", () => {
   });
 
   it("requires an active producer plan even when a signed custom claim exists", async () => {
-    const fs = fakeFirestore({ roleTags: [] }, { planStatus: "ACTIVE" });
+    const fs = fakeFirestore({ roleTags: [] }, { planStatus: "ACTIVE", verificationStatus: "APPROVED" });
     const access = await resolvePlatformAccess(fs, "u1", "p@example.com", { producer: true });
     expect(access.roles).toContain("producer");
+  });
+
+
+  it("does not activate producer permissions until identity and legal verification is approved", async () => {
+    const fs = fakeFirestore(
+      { roleTags: ["producer"] },
+      { planStatus: "ACTIVE", verificationStatus: "PENDING" },
+    );
+    const access = await resolvePlatformAccess(fs, "u1", "producer@example.com");
+    expect(access.producerPlanActive).toBe(true);
+    expect(access.roles).toEqual(["viewer"]);
   });
 
   it("recognizes only the verified exact configured super-admin email case-insensitively", async () => {
