@@ -25,7 +25,7 @@ export const Route = createFileRoute("/api/public/v1/admin/payments/$paymentId/r
       const ledgerPath = "ledger/reversal_" + paymentId;
       const auditPath = "auditLog/" + crypto.randomUUID();
       const now = new Date().toISOString();
-      const result = await fs.transact([paymentPath, walletPath, ledgerPath, auditPath], ([payment, wallet, ledger, audit]) => {
+      const result = await fs.transact<{ reversed: boolean; alreadyReversed?: boolean; amountMinor?: number; currency?: string; balanceMinor?: number }>([paymentPath, walletPath, ledgerPath, auditPath], ([payment, wallet, ledger, audit]) => {
         if (!payment || payment["uid"] !== uid) throw new ApiError(404, "PAYMENT_NOT_FOUND", "The payment was not found.");
         if (!wallet) throw new ApiError(409, "WALLET_NOT_FOUND", "The credited wallet could not be found.");
         if (ledger) {
