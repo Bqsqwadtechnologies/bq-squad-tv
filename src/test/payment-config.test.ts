@@ -24,7 +24,7 @@ describe("website and Android payment product configuration", () => {
       ],
     });
     expect(products).toEqual([{
-      productId: "wallet_100", title: "Wallet 100", description: "", credits: 100, creditMinor: 10000, active: true,
+      productId: "wallet_100", title: "Wallet 100", description: "", credits: 100, creditMinor: 10000, currency: "NGN", active: true,
     }]);
   });
 
