@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAdminModule } from "@/lib/server/roles";
 
@@ -47,11 +47,7 @@ export const Route = createFileRoute("/api/public/v1/admin/payouts/$payoutId/rev
             targetType: "payout", targetId: payoutId, reason: body.reason,
             metadata: { uid, amountMinor: amount, currency }, createdAt: now,
           }) }, currentDocument: { exists: false } },
-        ] as Array<{
-          update: { name: string; fields: Record<string, ReturnType<typeof encodeFields>[string]> };
-          updateMask?: { fieldPaths: string[] };
-          currentDocument?: { exists: boolean };
-        }>;
+        ] as FirestoreWrite[];
         if (body.decision === "REJECT") {
           const balances = producer["earningsBalanceByCurrency"] && typeof producer["earningsBalanceByCurrency"] === "object"
             ? producer["earningsBalanceByCurrency"] as Record<string, unknown> : {};
