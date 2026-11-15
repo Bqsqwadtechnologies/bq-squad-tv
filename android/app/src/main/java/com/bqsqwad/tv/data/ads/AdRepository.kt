@@ -1,5 +1,6 @@
 package com.bqsqwad.tv.data.ads
 import com.bqsqwad.tv.BuildConfig
+import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.bqsqwad.tv.data.auth.awaitResult
 import com.google.firebase.auth.FirebaseAuth
 import com.squareup.moshi.Moshi
@@ -19,6 +20,7 @@ class AdRepository {
             ).client(
                 OkHttpClient
                     .Builder()
+                    .addInterceptor(FirebaseAppCheckInterceptor())
                     .connectTimeout(12, TimeUnit.SECONDS)
                     .readTimeout(15, TimeUnit.SECONDS)
                     .build(),
