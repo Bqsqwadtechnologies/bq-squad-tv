@@ -170,7 +170,8 @@ export async function creditGooglePlayPurchase(
     const walletCurrency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : currency;
     if (walletCurrency !== currency) throw new ApiError(409, "WALLET_CURRENCY_MISMATCH", "This Google Play product does not match your wallet currency.");
     if (payment || ledger) {
-      if (payment?.["uid"] !== input.uid || payment?.["productId"] !== input.productId || !ledger) {
+      if (payment?.["uid"] !== input.uid || payment?.["productId"] !== input.productId ||
+          (payment?.["currency"] ?? "NGN") !== currency || ledger?.["currency"] !== currency) {
         throw new ApiError(409, "PLAY_PURCHASE_ALREADY_CLAIMED", "This Google Play purchase has already been claimed.");
       }
       return { result: { credited: false, balanceMinor: balance }, writes: [] };
@@ -182,8 +183,8 @@ export async function creditGooglePlayPurchase(
       result: { credited: true, balanceMinor: next },
       writes: [
         { update: { name: fs.docName(walletPath), fields: encodeFields({ balanceMinor: next, currency, updatedAt: now }) }, updateMask: { fieldPaths: ["balanceMinor", "currency", "updatedAt"] } },
-        { update: { name: fs.docName(paymentPath), fields: encodeFields({ uid: input.uid, productId: input.productId, orderId: input.orderId, purchaseTokenHash: hash, provider: "google_play", status: "credited", creditMinor: input.creditMinor, creditedAt: now }) }, currentDocument: { exists: false } },
-        { update: { name: fs.docName(ledgerPath), fields: encodeFields({ uid: input.uid, kind: "wallet_topup", description: "Google Play wallet top-up", amountMinor: input.creditMinor, productId: input.productId, provider: "google_play", createdAt: now }) }, currentDocument: { exists: false } },
+        { update: { name: fs.docName(paymentPath), fields: encodeFields({ uid: input.uid, productId: input.productId, orderId: input.orderId, purchaseTokenHash: hash, provider: "google_play", status: "credited", creditMinor: input.creditMinor, currency, creditedAt: now }) }, currentDocument: { exists: false } },
+        { update: { name: fs.docName(ledgerPath), fields: encodeFields({ uid: input.uid, kind: "wallet_topup", description: "Google Play wallet top-up", amountMinor: input.creditMinor, productId: input.productId, currency, provider: "google_play", createdAt: now }) }, currentDocument: { exists: false } },
       ],
     };
   });
