@@ -1,8 +1,8 @@
 package com.bqsqwad.tv.data.session
 import android.content.Context
 import com.bqsqwad.tv.BuildConfig
-import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.bqsqwad.tv.data.auth.awaitResult
+import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.google.android.play.core.integrity.IntegrityManagerFactory
 import com.google.android.play.core.integrity.IntegrityTokenRequest
 import com.google.firebase.auth.FirebaseAuth
