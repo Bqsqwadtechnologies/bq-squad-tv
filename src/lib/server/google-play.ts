@@ -3,7 +3,9 @@ import { ApiError, type Firestore, encodeFields, toArrayBuffer } from "./firebas
 type PlayServiceAccount = { client_email: string; private_key: string; token_uri?: string };
 
 function getPlayServiceAccount(): PlayServiceAccount {
-  const raw = process.env["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"];
+  // Reuse the existing Firebase service account when a separate Play secret is not configured.
+  // Google Play requires its own OAuth scope, so this module still mints an androidpublisher token.
+  const raw = process.env["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"] || process.env["FIREBASE_SERVICE_ACCOUNT_JSON"];
   if (!raw) throw new ApiError(503, "GOOGLE_PLAY_NOT_CONFIGURED", "Google Play purchase verification is not configured.");
   try {
     const value = JSON.parse(raw) as Partial<PlayServiceAccount>;
