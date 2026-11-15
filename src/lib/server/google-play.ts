@@ -1,4 +1,5 @@
 import { ApiError, type Firestore, encodeFields, toArrayBuffer } from "./firebase-admin";
+import { requireCurrency } from "./currency";
 
 type PlayServiceAccount = { client_email: string; private_key: string; token_uri?: string };
 
@@ -56,9 +57,10 @@ async function playAccessToken(): Promise<string> {
   return result.access_token;
 }
 
-export type GooglePlayProduct = { productId: string; title: string; description: string; credits: number; creditMinor: number; active: boolean };
+export type GooglePlayProduct = { productId: string; title: string; description: string; credits: number; creditMinor: number; currency: string; active: boolean };
 
-export function getGooglePlayProducts(config: Record<string, unknown>): GooglePlayProduct[] {
+export function getGooglePlayProducts(config: Record<string, unknown>, requestedCurrency = "NGN"): GooglePlayProduct[] {
+  const currency = requireCurrency(requestedCurrency);
   const raw = config["googlePlayProducts"];
   if (!Array.isArray(raw)) return [];
   return raw.flatMap((item): GooglePlayProduct[] => {
@@ -68,11 +70,16 @@ export function getGooglePlayProducts(config: Record<string, unknown>): GooglePl
         !/^[A-Za-z0-9._-]{1,150}$/.test(row["productId"]) ||
         typeof row["title"] !== "string" || typeof row["credits"] !== "number" ||
         !Number.isSafeInteger(row["credits"]) || row["credits"] < 1 ||
-        typeof row["creditMinor"] !== "number" || !Number.isSafeInteger(row["creditMinor"]) || row["creditMinor"] < 1) return [];
+        (row["creditMinorByCurrency"] === undefined && (currency !== "NGN" || typeof row["creditMinor"] !== "number"))) return [];
+    const perCurrency = row["creditMinorByCurrency"] && typeof row["creditMinorByCurrency"] === "object"
+      ? row["creditMinorByCurrency"] as Record<string, unknown>
+      : {};
+    const creditMinor = perCurrency[currency] ?? (currency === "NGN" ? row["creditMinor"] : undefined);
+    if (typeof creditMinor !== "number" || !Number.isSafeInteger(creditMinor) || creditMinor < 1) return [];
     return [{
       productId: row["productId"], title: row["title"],
       description: typeof row["description"] === "string" ? row["description"] : "",
-      credits: row["credits"], creditMinor: row["creditMinor"], active: true,
+      credits: row["credits"], creditMinor, currency, active: true,
     }];
   });
 }
@@ -145,11 +152,12 @@ export async function consumeGooglePlayProduct(input: {
 
 export async function creditGooglePlayPurchase(
   fs: Firestore,
-  input: { uid: string; productId: string; purchaseToken: string; orderId: string | null; creditMinor: number },
+  input: { uid: string; productId: string; purchaseToken: string; orderId: string | null; creditMinor: number; currency?: string },
 ): Promise<{ credited: boolean; balanceMinor: number }> {
   if (!Number.isSafeInteger(input.creditMinor) || input.creditMinor < 1) {
     throw new ApiError(400, "PLAY_CREDIT_INVALID", "The configured purchase credit is invalid.");
   }
+  const currency = requireCurrency(input.currency ?? "NGN");
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input.purchaseToken));
   const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
   const paymentPath = "payments/googleplay_" + hash;
@@ -159,6 +167,8 @@ export async function creditGooglePlayPurchase(
     const payment = docs[0], wallet = docs[1] ?? {}, ledger = docs[2];
     const balance = typeof wallet["balanceMinor"] === "number" && Number.isSafeInteger(wallet["balanceMinor"])
       ? wallet["balanceMinor"] as number : 0;
+    const walletCurrency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : currency;
+    if (walletCurrency !== currency) throw new ApiError(409, "WALLET_CURRENCY_MISMATCH", "This Google Play product does not match your wallet currency.");
     if (payment || ledger) {
       if (payment?.["uid"] !== input.uid || payment?.["productId"] !== input.productId || !ledger) {
         throw new ApiError(409, "PLAY_PURCHASE_ALREADY_CLAIMED", "This Google Play purchase has already been claimed.");
@@ -171,7 +181,7 @@ export async function creditGooglePlayPurchase(
     return {
       result: { credited: true, balanceMinor: next },
       writes: [
-        { update: { name: fs.docName(walletPath), fields: encodeFields({ balanceMinor: next, currency: "NGN", updatedAt: now }) }, updateMask: { fieldPaths: ["balanceMinor", "currency", "updatedAt"] } },
+        { update: { name: fs.docName(walletPath), fields: encodeFields({ balanceMinor: next, currency, updatedAt: now }) }, updateMask: { fieldPaths: ["balanceMinor", "currency", "updatedAt"] } },
         { update: { name: fs.docName(paymentPath), fields: encodeFields({ uid: input.uid, productId: input.productId, orderId: input.orderId, purchaseTokenHash: hash, provider: "google_play", status: "credited", creditMinor: input.creditMinor, creditedAt: now }) }, currentDocument: { exists: false } },
         { update: { name: fs.docName(ledgerPath), fields: encodeFields({ uid: input.uid, kind: "wallet_topup", description: "Google Play wallet top-up", amountMinor: input.creditMinor, productId: input.productId, provider: "google_play", createdAt: now }) }, currentDocument: { exists: false } },
       ],
