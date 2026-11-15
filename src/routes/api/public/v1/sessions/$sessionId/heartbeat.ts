@@ -175,16 +175,33 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
               const shareBps = Math.min(10_000, Math.max(0, integer(session["producerShareBps"])));
               const producerShare = producerShareMinor(charge.chargeMinor, shareBps);
               if (producerShare > 0) {
+                const currentBalances = producer["earningsBalanceByCurrency"] && typeof producer["earningsBalanceByCurrency"] === "object"
+                  ? producer["earningsBalanceByCurrency"] as Record<string, unknown> : {};
+                const currentLifetime = producer["earningsLifetimeByCurrency"] && typeof producer["earningsLifetimeByCurrency"] === "object"
+                  ? producer["earningsLifetimeByCurrency"] as Record<string, unknown> : {};
+                const currentCurrencyBalance = typeof currentBalances[currency] === "number"
+                  ? integer(currentBalances[currency])
+                  : currency === "NGN" ? integer(producer["earningsBalanceMinor"]) : 0;
+                const currentCurrencyLifetime = typeof currentLifetime[currency] === "number"
+                  ? integer(currentLifetime[currency])
+                  : currency === "NGN" ? integer(producer["earningsLifetimeMinor"]) : 0;
+                const nextBalances = { ...currentBalances, [currency]: safeAddMinor(currentCurrencyBalance, producerShare) };
+                const nextLifetime = { ...currentLifetime, [currency]: safeAddMinor(currentCurrencyLifetime, producerShare) };
+                const producerEarningsFields: Record<string, unknown> = {
+                  earningsBalanceByCurrency: nextBalances,
+                  earningsLifetimeByCurrency: nextLifetime,
+                  updatedAt: nowIso,
+                  ...(currency === "NGN" ? {
+                    earningsBalanceMinor: nextBalances["NGN"],
+                    earningsLifetimeMinor: nextLifetime["NGN"],
+                  } : {}),
+                };
                 writes.push({
                   update: {
                     name: fs.docName(producerPath),
-                    fields: encodeFields({
-                      earningsBalanceMinor: safeAddMinor(integer(producer["earningsBalanceMinor"]), producerShare),
-                      earningsLifetimeMinor: safeAddMinor(integer(producer["earningsLifetimeMinor"]), producerShare),
-                      updatedAt: nowIso,
-                    }),
+                    fields: encodeFields(producerEarningsFields),
                   },
-                  updateMask: { fieldPaths: ["earningsBalanceMinor", "earningsLifetimeMinor", "updatedAt"] },
+                  updateMask: { fieldPaths: Object.keys(producerEarningsFields) },
                 });
                 writes.push({
                   update: {
