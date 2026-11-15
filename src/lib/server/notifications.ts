@@ -1,4 +1,4 @@
-import { ApiError, type Firestore, getAdminAccessToken, getFirebaseProjectId } from "./firebase-admin";
+import { type Firestore, getAdminAccessToken, getFirebaseProjectId } from "./firebase-admin";
 
 export type PushNotification = {
   notificationId: string;
@@ -66,7 +66,7 @@ export async function sendPushNotificationToUser(
       error?: { details?: Array<{ errorCode?: string }> };
     } | null;
     const errorCodes = failure?.error?.details?.map(detail => detail.errorCode) ?? [];
-    if (errorCodes.includes("UNREGISTERED") || errorCodes.includes("INVALID_ARGUMENT")) {
+    if (errorCodes.includes("UNREGISTERED")) {
       await fs.patchDoc("users/" + uid + "/devices/" + device.id, {
         status: "INVALID",
         token: null,
