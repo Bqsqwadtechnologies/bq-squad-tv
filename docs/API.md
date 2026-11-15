@@ -31,6 +31,12 @@ These endpoints are implemented in source. They are not considered production-re
 - `GET /v1/catalog/search?q=&type=&category=&language=` — returns `{results:[ChannelSummary]}`; adult filtering happens before results are returned.
 - `GET /v1/channels/{channelId}` — returns `{channel,schedule,replays}`; enforce rights, geo and age checks.
 
+## Channel schedules
+- `POST /v1/producer/channels/{channelId}/schedule` — requires the channel's `schedule.write` permission; creates or updates a programme using `programmeId?`, `title`, `description?`, `startsAt`, `endsAt`, `contentAssetId?` and `reason?`.
+- `DELETE /v1/producer/channels/{channelId}/schedule/{programmeId}` — requires `schedule.write` permission.
+- `POST /v1/admin/channels/{channelId}/schedule` and `DELETE /v1/admin/channels/{channelId}/schedule/{programmeId}` — require the Admin `channels` module.
+- Schedule writes use a Firestore transaction-backed reservation index, reject overlapping time ranges, allow adjacent programmes, and audit create/update/delete operations. Existing schedule entries are indexed on first write; channels with more than 300 legacy entries require a controlled migration.
+
 ## Integrity and sessions
 - `GET /v1/security/integrity/challenge` — returns a fresh one-use `{nonce}`.
 - `POST /v1/sessions/start` — body `{channelId,contentAssetId?,clientPlatform,integrityNonce?,integrityToken?,idempotencyKey}`. All requests require Firebase auth, age policy, content rights, geo/territory checks and wallet minimum. An atomic active-session lease enforces the configured concurrent session limit (default 2, configurable from 1–5 in Admin Pricing). Android and Android TV require a fresh Play Integrity token plus a one-use challenge. Web requires a same-origin request and a matching HttpOnly web-session cookie. Return `{sessionId,playbackUrl,ratePerMinuteMinor,walletBalanceMinor,currency,timeRemainingSeconds,sessionTotalMinor,active}`. Playback URL must be signed and short-lived.
