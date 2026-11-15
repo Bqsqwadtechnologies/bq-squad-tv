@@ -29,6 +29,15 @@ data class VerifyEmailOtpResponse(
     val verified: Boolean,
 )
 
+data class PushTokenRequest(
+    val token: String,
+    val platform: String = "android",
+)
+
+data class PushTokenResponse(
+    val registered: Boolean,
+)
+
 interface ProfileApi {
     @POST("v1/profile/complete")
     suspend fun completeProfile(
@@ -46,4 +55,10 @@ interface ProfileApi {
         @Header("Authorization") bearerToken: String,
         @Body request: VerifyEmailOtpRequest,
     ): VerifyEmailOtpResponse
+
+    @POST("v1/devices/push-token")
+    suspend fun registerPushToken(
+        @Header("Authorization") bearerToken: String,
+        @Body request: PushTokenRequest,
+    ): PushTokenResponse
 }
