@@ -221,6 +221,22 @@ export async function getWebAccount(): Promise<{
   }>;
 }
 
+export async function revokeAllWebSessions(): Promise<void> {
+  const idToken = await getActiveWebIdToken();
+  if (!idToken) throw new Error("Sign in again before revoking your sessions.");
+  const response = await fetch("/api/public/v1/auth/session/revoke-all", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { authorization: `Bearer ${idToken}`, ...await getWebAppCheckHeaders() },
+    cache: "no-store",
+  });
+  const result = await response.json() as { revoked?: boolean; error?: string };
+  if (!response.ok || result.revoked !== true) {
+    throw new Error(result.error ?? "Could not revoke your other sessions.");
+  }
+  await signOutWeb();
+}
+
 export async function signOutWeb(): Promise<void> {
   try {
     await fetch("/api/public/v1/auth/web/session/logout", {
