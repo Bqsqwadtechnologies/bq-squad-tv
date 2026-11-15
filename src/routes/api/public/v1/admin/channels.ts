@@ -56,10 +56,6 @@ export const Route = createFileRoute("/api/public/v1/admin/channels")({
             : 0;
           const minimumBalanceMinor = body.minimumBalanceMinor ??
             (body.paid ? requireMinorUnitAmount(pricing["minimumSessionBalanceMinor"] ?? 0, "minimumSessionBalanceMinor") : 0);
-          const producerShareBps = pricing["defaultProducerShareBps"];
-          if (typeof producerShareBps !== "number" || !Number.isSafeInteger(producerShareBps) || producerShareBps < 0 || producerShareBps > 10_000) {
-            throw new ApiError(503, "REVENUE_SPLIT_INVALID", "The default producer revenue share is not configured correctly.");
-          }
 
           let channelId = "";
           let created = false;
@@ -79,7 +75,7 @@ export const Route = createFileRoute("/api/public/v1/admin/channels")({
               paid: body.paid,
               ratePerMinuteMinor,
               minimumBalanceMinor,
-              producerShareBps,
+              producerShareBps: 0,
               published: false,
               status: "DRAFT",
               deliveryMode: "bq_hosted",
