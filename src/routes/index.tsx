@@ -77,6 +77,7 @@ function HomePage() {
         <div className="flex items-center gap-2 sm:gap-3">
           <a href="#library" aria-label="Search" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50 hover:text-cyan-200"><Search size={19} /></a>
           <button onClick={() => setNotice("Notifications will appear here when your account is connected.")} aria-label="Notifications" className="relative grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50"><Bell size={18} /><span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-cyan-300" /></button>
+          <a href="/wallet" aria-label="Wallet" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-xs font-bold text-cyan-100 transition hover:border-cyan-300/50">₦</a>
           <a href="/account" aria-label="Sign in or view account" className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-600 text-sm font-black text-[#031039]">BQ</a>
         </div>
       </header>
