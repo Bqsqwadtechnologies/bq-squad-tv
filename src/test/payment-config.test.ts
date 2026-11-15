@@ -10,7 +10,7 @@ describe("website and Android payment product configuration", () => {
         invalid: { amountMinor: 1.5, creditMinor: 10 },
       },
     };
-    expect(getPaystackTopup(config, "starter")).toEqual({ amountMinor: 50000, creditMinor: 50000 });
+    expect(getPaystackTopup(config, "starter")).toEqual({ amountMinor: 50000, displayAmountMinor: 50000, creditMinor: 50000 });
     expect(() => getPaystackTopup(config, "missing")).toThrow();
     expect(() => getPaystackTopup(config, "invalid")).toThrow();
   });
