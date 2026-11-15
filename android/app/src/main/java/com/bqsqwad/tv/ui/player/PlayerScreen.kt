@@ -34,6 +34,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.max
+import java.util.Locale
 
 @Composable
 fun PlayerScreen(
@@ -392,7 +393,7 @@ fun PlayerScreen(
             }) { Text(if (fullscreen)"Exit full" else "Full screen") }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Zoom " + String.format("%.1fx", zoom))
+            Text("Zoom " + String.format(Locale.US, "%.1fx", zoom))
             Slider(zoom, { zoom = it.coerceIn(1f, 4f) }, valueRange = 1f..4f, modifier = Modifier.weight(1f).padding(horizontal = 10.dp))
             TextButton(onClick = {
                 if (activity !=
@@ -477,7 +478,7 @@ fun PlayerScreen(
 private fun formatMoney(
     minor: Long,
     currency: String,
-): String = currency + " " + String.format("%.2f", minor / 100.0)
+): String = currency + " " + String.format(Locale.US, "%.2f", minor / 100.0)
 
 private fun reportedPlaybackState(player: ExoPlayer): String =
     when {

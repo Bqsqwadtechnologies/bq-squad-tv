@@ -7,12 +7,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import java.util.Locale
 import com.bqsqwad.tv.BuildConfig
 import com.bqsqwad.tv.data.producer.*
 
 @Composable fun ProducerScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val repo = remember { ProducerRepository() }
     var data by remember { mutableStateOf<ProducerSummary?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -31,7 +31,7 @@ import com.bqsqwad.tv.data.producer.*
             Text(data!!.channelCount.toString() + " channels • " + data!!.liveViewers + " live viewers")
             Text("Watch time: " + data!!.watchSeconds + " seconds")
             Text(
-                "Earnings: " + data!!.currency + " " + String.format("%.2f", data!!.earningsMinor / 100.0),
+                "Earnings: " + data!!.currency + " " + String.format(Locale.US, "%.2f", data!!.earningsMinor / 100.0),
                 style = MaterialTheme.typography.headlineSmall,
             )
             if (data!!.roleTags.any {

@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import java.util.Locale
 import com.bqsqwad.tv.data.wallet.*
 import kotlinx.coroutines.launch
 
@@ -118,4 +119,4 @@ fun WalletScreen(onBack: () -> Unit) {
 private fun money(
     minor: Long,
     currency: String,
-) = currency + " " + String.format("%.2f", minor / 100.0)
+) = currency + " " + String.format(Locale.US, "%.2f", minor / 100.0)
