@@ -4,6 +4,7 @@ import { errorBody, requireUser } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 
 const slots = ["pre_roll", "mid_roll", "half_time", "between_segments", "home_banner", "web_banner"] as const;
+const blockedAdCategories = new Set(["gambling", "sports_betting", "casino", "wagering", "prediction_market", "lottery"]);
 
 export const Route = createFileRoute("/api/public/v1/ads/next")({
   server: { handlers: { GET: async ({ request }) => {
@@ -23,13 +24,16 @@ export const Route = createFileRoute("/api/public/v1/ads/next")({
         limit: 100,
       });
       const now = Date.now();
-      const eligible = campaigns.filter(campaign =>
-        Array.isArray(campaign["platforms"]) && campaign["platforms"].includes(platform) &&
+      const eligible = campaigns.filter(campaign => {
+        const category = typeof campaign["category"] === "string"
+          ? campaign["category"].toLowerCase().replace(/[\\s-]+/g, "_") : "";
+        if (!category || blockedAdCategories.has(category)) return false;
+        return Array.isArray(campaign["platforms"]) && campaign["platforms"].includes(platform) &&
         Array.isArray(campaign["placements"]) && campaign["placements"].includes(slot) &&
         (!campaign["startsAt"] || (typeof campaign["startsAt"] === "string" && Date.parse(campaign["startsAt"]) <= now)) &&
         (!campaign["endsAt"] || (typeof campaign["endsAt"] === "string" && Date.parse(campaign["endsAt"]) > now)) &&
-        (campaign["channelIds"] === undefined || (Array.isArray(campaign["channelIds"]) && campaign["channelIds"].includes(channelId)))
-      );
+        (campaign["channelIds"] === undefined || (Array.isArray(campaign["channelIds"]) && campaign["channelIds"].includes(channelId)));
+      });
       const ad = eligible[0];
       if (!ad) return Response.json(null);
       const creativeUrl = typeof ad["creativeUrl"] === "string" ? ad["creativeUrl"] : "";

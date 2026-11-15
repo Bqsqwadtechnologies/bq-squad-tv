@@ -26,6 +26,7 @@ export const Route = createFileRoute("/api/public/v1/ads/provider-config")({
         placements: Object.fromEntries(Object.entries(placements).filter(([key, value]) =>
           /^[a-z0-9_-]{1,40}$/.test(key) && typeof value === "string" && value.length <= 200
         )),
+        blockedCategories: ["gambling", "sports_betting", "casino", "wagering", "prediction_market", "lottery"],
       });
     } catch (error) { return errorBody(error); }
   } } },
