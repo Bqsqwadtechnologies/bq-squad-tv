@@ -29,3 +29,18 @@ Create one-time consumable products matching IDs returned by `GET v1/wallet/goog
 
 ## Run
 Open `android/` in Android Studio, sync Gradle and run. Without deployed edge endpoints, profile completion, catalog, playback and wallet flows fail closed with configuration errors.
+
+
+## Firebase App Check
+
+The Android application installs the Firebase App Check Play Integrity provider at startup and attaches App Check tokens to backend API requests. No App Check secret belongs in the APK.
+
+Before enabling server enforcement:
+
+1. Register the Android app `com.bqsqwad.tv` in Firebase App Check.
+2. Enable the Play Integrity provider for that registered Android app.
+3. Confirm the app's signing certificate fingerprints are configured in Firebase/Play Console.
+4. Install and test a signed build from the expected distribution track.
+5. Keep the Lovable server secret `APP_CHECK_ENFORCED` set to `false` until the website reCAPTCHA Enterprise provider is also configured and both clients have been tested.
+
+The website requires a Firebase Web App ID and reCAPTCHA Enterprise site key. These are public identifiers, not private service-account credentials. The backend service account must have the Firebase App Check Token Verifier role before enforcement is enabled.
