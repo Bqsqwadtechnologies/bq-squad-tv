@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireChannelPermission } from "@/lib/server/channel-access";
+import { requireAdminModule } from "@/lib/server/roles";
 import { assertMediaMatchesExtension } from "@/lib/server/storage/security";
 import { writeAuditLog } from "@/lib/server/audit";
 
@@ -30,7 +31,17 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             throw new ApiError(410, "UPLOAD_INTENT_EXPIRED", "The upload authorization has expired.");
           }
           const channelId = typeof asset["channelId"] === "string" ? asset["channelId"] : "";
-          await requireChannelPermission(fs, channelId, user.uid, "video.upload");
+          try {
+            await requireChannelPermission(fs, channelId, user.uid, "video.upload");
+          } catch {
+            // Platform-created channels have ownerUid="platform". Permit an
+            // explicitly delegated content/channels operator to upload there.
+            try {
+              await requireAdminModule(fs, user, "content");
+            } catch {
+              await requireAdminModule(fs, user, "channels");
+            }
+          }
           const path = typeof asset["sourcePath"] === "string" ? asset["sourcePath"] : "";
           const filename = typeof asset["sourceFilename"] === "string" ? asset["sourceFilename"] : "";
           const expectedSize = typeof asset["declaredSizeBytes"] === "number" ? asset["declaredSizeBytes"] : 0;
