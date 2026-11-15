@@ -59,32 +59,46 @@ export const Route = createFileRoute("/api/public/v1/producer/channels")({
         }
 
         const now = new Date().toISOString();
-        await fs.setDoc("channels/" + channelId, {
-          ownerUid: user.uid,
-          title: body.title,
-          category: body.category,
-          description: body.description,
-          language: body.language,
-          posterUrl: body.posterUrl ?? null,
-          published: false,
-          status: "DRAFT",
-          adultOnly: false,
-          deliveryMode: body.deliveryMode,
-          providerId: body.deliveryMode === "external" ? body.providerId : "bq-storage",
-          providerSetupStatus: body.deliveryMode === "external" ? "CREDENTIALS_SAVED_ADAPTER_PENDING" : "AWAITING_CONTENT",
-          producerShareBps: null,
-          pricingVersion: pricing.version,
-          createdAt: now,
-          updatedAt: now,
-        }, { mustNotExist: true });
-        if (encryptedCredential && body.providerId) {
-          await fs.setDoc("channelProviderSecrets/" + channelId, {
-            providerId: body.providerId,
-            credential: encryptedCredential,
-            updatedBy: user.uid,
-            updatedAt: now,
-          }, { mustNotExist: true });
-        }
+        await fs.transact([], () => ({
+          result: undefined,
+          writes: [
+            {
+              update: { name: fs.docName("channels/" + channelId), fields: {
+                ownerUid: { stringValue: user.uid },
+                title: { stringValue: body.title },
+                category: { stringValue: body.category },
+                description: { stringValue: body.description },
+                language: { stringValue: body.language },
+                posterUrl: body.posterUrl ? { stringValue: body.posterUrl } : { nullValue: null },
+                published: { booleanValue: false },
+                status: { stringValue: "DRAFT" },
+                adultOnly: { booleanValue: false },
+                deliveryMode: { stringValue: body.deliveryMode },
+                providerId: { stringValue: body.deliveryMode === "external" ? body.providerId! : "bq-storage" },
+                providerSetupStatus: { stringValue: body.deliveryMode === "external" ? "CREDENTIALS_SAVED_ADAPTER_PENDING" : "AWAITING_CONTENT" },
+                producerShareBps: { nullValue: null },
+                pricingVersion: { integerValue: String(pricing.version) },
+                createdAt: { stringValue: now },
+                updatedAt: { stringValue: now },
+              } },
+              currentDocument: { exists: false },
+            },
+            ...(encryptedCredential && body.providerId ? [{
+              update: { name: fs.docName("channelProviderSecrets/" + channelId), fields: {
+                providerId: { stringValue: body.providerId },
+                credential: { mapValue: { fields: {
+                  algorithm: { stringValue: encryptedCredential.algorithm },
+                  keyVersion: { stringValue: encryptedCredential.keyVersion },
+                  nonce: { stringValue: encryptedCredential.nonce },
+                  ciphertext: { stringValue: encryptedCredential.ciphertext },
+                } } },
+                updatedBy: { stringValue: user.uid },
+                updatedAt: { stringValue: now },
+              } },
+              currentDocument: { exists: false },
+            }] : []),
+          ],
+        }));
         await writeAuditLog(fs, {
           actorUid: user.uid, action: "channel.created", targetType: "channel", targetId: channelId,
           reason: "Producer created a channel",
