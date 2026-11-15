@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError, type Firestore } from "@/lib/server/firebase-admin";
-import { creditPaystackPayment } from "@/lib/server/paystack";
+import { creditPaystackPayment, getPaystackTopup } from "@/lib/server/paystack";
 
 function fakeFirestore(
   documents: Record<string, Record<string, unknown> | null>,
@@ -64,6 +64,39 @@ describe("Paystack wallet credit validation", () => {
     const result = await creditPaystackPayment(fs, input);
     expect(result).toEqual({ credited: true, balanceMinor: input.creditMinor });
     expect(capture.writes).toHaveLength(3);
+  });
+
+  it("does not allow a USD payment to credit an NGN wallet", async () => {
+    const capture = { writes: [] as unknown[] };
+    const fs = fakeFirestore({
+      ["payments/paystack_" + input.reference]: {
+        uid: input.uid, reference: input.reference, provider: "paystack",
+        amountMinor: input.amountMinor, creditMinor: input.creditMinor,
+        currency: "USD", status: "pending",
+      },
+      ["wallets/" + input.uid]: { balanceMinor: 1000, currency: "NGN" },
+    }, capture);
+    await expect(creditPaystackPayment(fs, { ...input, currency: "USD" })).rejects.toMatchObject({
+      code: "WALLET_CURRENCY_MISMATCH",
+    });
+    expect(capture.writes).toHaveLength(0);
+  });
+
+  it("does not reuse NGN kobo top-up prices for USD accounts", () => {
+    const config = { walletTopups: { starter: { amountMinor: 50000, creditMinor: 50000 } } };
+    expect(() => getPaystackTopup(config, "starter", "USD")).toThrow(
+      expect.objectContaining({ code: "TOPUP_UNAVAILABLE" }),
+    );
+  });
+
+  it("uses the currency-specific configured top-up price", () => {
+    const config = {
+      walletTopups: { starter: { amountMinor: 50000, creditMinor: 50000 } },
+      walletTopupsByCurrency: {
+        USD: { starter: { amountMinor: 499, creditMinor: 499 } },
+      },
+    };
+    expect(getPaystackTopup(config, "starter", "USD")).toEqual({ amountMinor: 499, creditMinor: 499 });
   });
 
   it("does not credit an already credited payment again", async () => {
