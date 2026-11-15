@@ -193,8 +193,13 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                         busy = true
                         message = null
                         try {
-                            repository.resendEmailVerification()
-                            message = "A new verification code has been requested."
+                            val alreadyVerified = repository.resendEmailVerification()
+                            if (alreadyVerified) {
+                                verificationPending = false
+                                onAuthenticated()
+                            } else {
+                                message = "A new verification code has been requested."
+                            }
                         } catch (error: Exception) {
                             message = error.localizedMessage ?: "Could not resend the code."
                         } finally {
