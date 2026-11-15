@@ -127,9 +127,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
 
           const profile = await getUserProfile(fs, user.uid);
           requireAdultForContent(profile, channel["adultOnly"]);
-          const viewerCountry = typeof (await fs.getDoc("users/" + user.uid))?.["countryCode"] === "string"
-            ? String((await fs.getDoc("users/" + user.uid))?.["countryCode"]).trim().toUpperCase()
-            : "";
+          const viewerCountry = profile.countryCode;
           const rights = asset["license"] && typeof asset["license"] === "object"
             ? asset["license"] as Record<string, unknown>
             : channel["license"] && typeof channel["license"] === "object"
