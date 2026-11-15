@@ -86,6 +86,7 @@ export type UserProfile = {
   profileComplete: boolean;
   adultEligible: boolean;
   roleTags: string[];
+  countryCode: string;
 };
 
 export async function getUserProfile(fs: Firestore, uid: string): Promise<UserProfile> {
@@ -107,6 +108,7 @@ export async function getUserProfile(fs: Firestore, uid: string): Promise<UserPr
       doc?.["adultIdentityVerified"] === true &&
       dateOfBirthVerifiedAdult,
     roleTags: Array.isArray(doc?.["roleTags"]) ? (doc["roleTags"] as string[]) : [],
+    countryCode: typeof doc?.["countryCode"] === "string" ? (doc["countryCode"] as string).trim().toUpperCase() : "",
   };
 }
 
