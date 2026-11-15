@@ -4,6 +4,7 @@ import { isAdSuitableForViewer } from "@/lib/server/ads-policy";
 describe("ad viewer suitability policy", () => {
   it("blocks adult-rated campaigns for viewers who are not adult eligible", () => {
     expect(isAdSuitableForViewer({ category: "entertainment", ageRating: "18+" }, false, "NG")).toBe(false);
+    expect(isAdSuitableForViewer({ category: "entertainment", ageRating: "PG-13" }, false, "NG")).toBe(false);
     expect(isAdSuitableForViewer({ category: "entertainment", adultOnly: true }, false, "NG")).toBe(false);
     expect(isAdSuitableForViewer({ category: "entertainment", ageRating: "18+" }, true, "NG")).toBe(true);
   });
