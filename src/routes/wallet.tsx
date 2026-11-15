@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   getActiveWebIdToken,
-  getWebAuthHeaders,
   getWebAccount,
+  getWebAuthHeaders,
   restoreWebSession,
 } from "@/lib/firebase-web-auth";
 
