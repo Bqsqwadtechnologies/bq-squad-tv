@@ -30,7 +30,7 @@ jobs:
           gradle-version: "8.13"
       - name: Format Kotlin sources
         run: |
-          gradle -p android ktlintFormat
+          gradle -p android ktlintFormat || echo "Some non-autocorrectable KtLint rules remain; commit safe formatting changes and verify in Android CI."
       - name: Commit formatting changes
         run: |
           git config user.name "github-actions[bot]"
