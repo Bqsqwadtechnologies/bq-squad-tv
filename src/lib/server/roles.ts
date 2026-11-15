@@ -11,6 +11,7 @@ export type PlatformAccess = {
   isSuperAdmin: boolean;
   adminModules: AdminModule[];
   producerPlanActive: boolean;
+  emailVerified: boolean;
 };
 
 const ADMIN_MODULES: AdminModule[] = [
@@ -34,9 +35,18 @@ export async function resolvePlatformAccess(
     fs.getDoc("users/" + uid),
     fs.getDoc("producers/" + uid),
   ]);
+  // The app's six-digit OTP flow records verification server-side. Accept that
+  // proof only while it remains bound to the exact current Firebase email;
+  // a changed account email invalidates the app-level verification.
+  const appEmailVerified = Boolean(
+    user?.["appEmailVerified"] === true &&
+    typeof user["email"] === "string" &&
+    email && user["email"].trim().toLowerCase() === email.trim().toLowerCase(),
+  );
+  const effectiveEmailVerified = emailVerified || appEmailVerified;
   const configuredAdmin = (process.env["ZILLIONAIRE_EMAIL"] ?? process.env["ADMIN_EMAIL"])?.trim().toLowerCase();
   const isSuperAdmin = Boolean(
-    emailVerified && configuredAdmin && email?.trim().toLowerCase() === configuredAdmin,
+    effectiveEmailVerified && configuredAdmin && email?.trim().toLowerCase() === configuredAdmin,
   );
   const storedRoles = stringArray(user?.["roleTags"]);
   const claimedRoles = stringArray(customClaims["roleTags"]);
@@ -58,6 +68,7 @@ export async function resolvePlatformAccess(
     isSuperAdmin,
     adminModules: isSuperAdmin ? ADMIN_MODULES : [...new Set(configuredScopes)],
     producerPlanActive,
+    emailVerified: effectiveEmailVerified,
   };
 }
 
@@ -66,9 +77,6 @@ export async function requirePlatformRole(
   user: { uid: string; email: string | null; emailVerified?: boolean; customClaims?: Record<string, unknown> },
   role: PlatformRole,
 ): Promise<PlatformAccess> {
-  if (role === "admin" && user.emailVerified !== true) {
-    throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email address before accessing administrator tools.");
-  }
   const access = await resolvePlatformAccess(
     fs,
     user.uid,
@@ -76,6 +84,9 @@ export async function requirePlatformRole(
     user.customClaims,
     user.emailVerified === true,
   );
+  if (role === "admin" && !access.emailVerified) {
+    throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email address before accessing administrator tools.");
+  }
   if (!access.roles.includes(role)) {
     throw new ApiError(403, "FORBIDDEN", "This account does not have the required platform role.");
   }
