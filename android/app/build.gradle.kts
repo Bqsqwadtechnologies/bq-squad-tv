@@ -151,6 +151,11 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }
 
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom(files("$rootDir/detekt.yml"))
+}
+
 tasks.register("verifyReleaseFirebaseConfig") {
     doLast {
         val config = file("google-services.json")
