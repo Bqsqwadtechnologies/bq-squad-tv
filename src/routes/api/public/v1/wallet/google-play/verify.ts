@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { getPricingConfig } from "@/lib/server/pricing";
-import { creditGooglePlayPurchase, getGooglePlayProducts, verifyGooglePlayProduct } from "@/lib/server/google-play";
+import { creditGooglePlayPurchase, getGooglePlayProducts, googlePlayAccountId, verifyGooglePlayProduct } from "@/lib/server/google-play";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 
 const schema = z.object({
@@ -26,7 +26,10 @@ export const Route = createFileRoute("/api/public/v1/wallet/google-play/verify")
       const product = getGooglePlayProducts(config).find(item => item.productId === body.productId);
       if (!product) throw new ApiError(400, "PLAY_PRODUCT_UNAVAILABLE", "This Google Play product is not configured.");
       const verified = await verifyGooglePlayProduct({
-        packageName, productId: body.productId, purchaseToken: body.purchaseToken,
+        packageName,
+        productId: body.productId,
+        purchaseToken: body.purchaseToken,
+        obfuscatedAccountId: await googlePlayAccountId(user.uid),
       });
       const verifiedOrderId = typeof verified["orderId"] === "string" ? verified["orderId"] : null;
       if (body.orderId && verifiedOrderId && body.orderId !== verifiedOrderId) {
