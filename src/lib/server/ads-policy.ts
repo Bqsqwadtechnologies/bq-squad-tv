@@ -16,7 +16,10 @@ const blockedAdCategories = new Set([
   "weapons",
 ]);
 
-const adultAgeRatings = new Set(["18", "18+", "r", "nc-17", "tv-ma", "adult", "mature"]);
+const restrictedAgeRatings = new Set([
+  "12", "12+", "13", "13+", "15", "15+", "16", "16+",
+  "18", "18+", "pg-13", "tv-14", "r", "nc-17", "tv-ma", "adult", "mature",
+]);
 
 export function isAdSuitableForViewer(
   campaign: Record<string, unknown>,
@@ -33,7 +36,7 @@ export function isAdSuitableForViewer(
     : "";
   if (
     !adultEligible &&
-    (campaign["adultOnly"] === true || campaign["ageRestricted"] === true || !rating || adultAgeRatings.has(rating))
+    (campaign["adultOnly"] === true || campaign["ageRestricted"] === true || !rating || restrictedAgeRatings.has(rating))
   ) {
     return false;
   }
