@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft, KeyRound, LoaderCircle, LogOut, Plus, RadioTower, ShieldCheck } from "lucide-react";
-import { signInWithEmailPassword } from "@/lib/firebase-web-auth";
+import { getWebAuthHeaders, signInWithEmailPassword } from "@/lib/firebase-web-auth";
 
 type Channel = {
   id: string;
