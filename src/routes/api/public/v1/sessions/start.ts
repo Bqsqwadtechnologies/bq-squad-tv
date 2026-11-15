@@ -57,10 +57,12 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             if (!refreshToken) {
               throw new ApiError(401, "WEB_SESSION_REQUIRED", "A secure website session is required for web playback.");
             }
+            await assertWebRefreshSessionActive(fs, refreshToken);
             const webSession = await refreshFirebaseWebSession(refreshToken);
             if (webSession.uid !== user.uid) {
               throw new ApiError(401, "WEB_SESSION_MISMATCH", "The website session does not match the signed-in account.");
             }
+            await rotateWebRefreshSession(fs, refreshToken, webSession.refreshToken, webSession.uid);
             rotatedWebCookie = webRefreshCookie(webSession.refreshToken);
           }
           const responseHeaders = rotatedWebCookie
