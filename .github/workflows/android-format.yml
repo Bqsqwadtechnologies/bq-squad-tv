@@ -27,8 +27,7 @@ jobs:
           java-version: "17"
       - name: Format Kotlin sources
         run: |
-          cd android
-          ./gradlew ktlintFormat
+          gradle -p android ktlintFormat
       - name: Commit formatting changes
         run: |
           git config user.name "github-actions[bot]"
