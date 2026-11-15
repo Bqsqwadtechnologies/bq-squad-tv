@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
 import { Database, LoaderCircle, LogOut, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,7 @@ function FirebaseSchemaPage() {
       }
 
       const response = await fetch("/api/public/firebase-schema-inspect", {
-        headers: { Authorization: `Bearer ${signInData.idToken}` },
+        headers: await getWebAuthHeaders(signInData.idToken),
       });
       const result = await response.json() as SchemaReport & { error?: string };
       if (!response.ok) {
