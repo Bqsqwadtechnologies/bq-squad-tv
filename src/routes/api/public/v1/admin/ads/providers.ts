@@ -23,6 +23,7 @@ export const Route = createFileRoute("/api/public/v1/admin/ads/providers")({
       const fs = await Firestore.create();
       await requireAdminModule(fs, user, "ads");
       const encrypted = await encryptProviderCredential(body.secretKey, body.platform, body.providerId);
+      const placements = body.placements ?? {};
       const now = new Date().toISOString();
       await fs.transact(["adProviders/" + body.platform, "adProviderSecrets/" + body.platform], docs => ({
         result: undefined,
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/api/public/v1/admin/ads/providers")({
               platform: { stringValue: body.platform },
               providerId: { stringValue: body.providerId },
               publicAppId: body.publicAppId ? { stringValue: body.publicAppId } : { nullValue: null },
-              placements: { mapValue: { fields: Object.fromEntries(Object.entries(body.placements ?? {}).map(([key,value]) => [key,{stringValue:value}])) } },
+              placements: { mapValue: { fields: Object.fromEntries(Object.entries(placements).map(([key,value]) => [key,{stringValue:value}])) } },
               enabled: { booleanValue: body.enabled },
               updatedAt: { stringValue: now },
               updatedBy: { stringValue: user.uid },
