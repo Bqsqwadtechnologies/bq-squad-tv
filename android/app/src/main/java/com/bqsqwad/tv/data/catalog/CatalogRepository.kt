@@ -3,9 +3,9 @@ import android.content.Context
 import androidx.room.Room
 import com.bqsqwad.tv.BuildConfig
 import com.bqsqwad.tv.data.auth.awaitResult
-import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.bqsqwad.tv.data.cache.BqTvDatabase
 import com.bqsqwad.tv.data.cache.CachedChannel
+import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.google.firebase.auth.FirebaseAuth
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
