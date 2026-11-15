@@ -87,7 +87,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
               const rate = requireMinorUnitAmount(priorSession["ratePerMinuteMinor"], "ratePerMinuteMinor");
               return Response.json({
                 sessionId: priorRequest["sessionId"], playbackUrl, ratePerMinuteMinor: rate,
-                walletBalanceMinor: balance, currency: "NGN",
+                walletBalanceMinor: balance, currency: typeof priorSession["currency"] === "string" ? priorSession["currency"] as string : currentWallet.currency,
                 timeRemainingSeconds: remainingSeconds(balance, rate),
                 sessionTotalMinor: integer(priorSession["sessionTotalMinor"]) ?? 0, active: true,
               }, responseHeaders ? { headers: responseHeaders } : {});
@@ -143,9 +143,22 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
 
           const pricing = await getPricingConfig(fs);
           const paidPlayback = channel["paid"] !== false;
+          const wallet = await getWallet(fs, user.uid);
+          const walletCurrency = wallet.currency;
+          const channelCurrency = typeof asset["currency"] === "string"
+            ? asset["currency"] as string
+            : typeof channel["currency"] === "string" ? channel["currency"] as string : "NGN";
+          if (paidPlayback && channelCurrency !== walletCurrency) {
+            throw new ApiError(409, "CHANNEL_CURRENCY_MISMATCH", "This channel is not priced in your wallet currency.");
+          }
+          const currency = paidPlayback ? channelCurrency : walletCurrency;
+          const rateDefaults = pricing["defaultRatePerMinuteByCurrency"];
+          const defaultRate = rateDefaults && typeof rateDefaults === "object"
+            ? (rateDefaults as Record<string, unknown>)[currency]
+            : undefined;
           const ratePerMinuteMinor = paidPlayback
             ? requireMinorUnitAmount(
-                asset["ratePerMinuteMinor"] ?? channel["ratePerMinuteMinor"] ?? pricing["defaultRatePerMinuteMinor"],
+                asset["ratePerMinuteMinor"] ?? channel["ratePerMinuteMinor"] ?? defaultRate ?? (currency === "NGN" ? pricing["defaultRatePerMinuteMinor"] : undefined),
                 "ratePerMinuteMinor",
               )
             : 0;
@@ -155,7 +168,6 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           const minimumBalanceMinor = paidPlayback
             ? requireMinorUnitAmount(channel["minimumBalanceMinor"] ?? pricing["minimumSessionBalanceMinor"] ?? 100, "minimumBalanceMinor")
             : 0;
-          const wallet = await getWallet(fs, user.uid);
           const balanceMinor = requireMinorUnitAmount(wallet.balanceMinor, "wallet balance");
           if (paidPlayback && balanceMinor < minimumBalanceMinor) {
             throw new ApiError(402, "INSUFFICIENT_FUNDS", "Your wallet balance is too low to start this channel.");
@@ -192,7 +204,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             uid: user.uid, channelId: body.channelId, contentAssetId: assetId,
             producerUid: producerUid || null, producerShareBps: shareBps, deliveryMode: "bq_hosted",
             storagePath, playbackUrl, clientPlatform: body.clientPlatform, viewerCountry,
-            ratePerMinuteMinor, currency: "NGN", status: "active", active: true,
+            ratePerMinuteMinor, currency, status: "active", active: true,
             startedAt: nowIso, lastHeartbeatAt: nowIso, lastClientSequence: 0,
             lastPlaybackState: "idle", lastPlaybackPositionMs: 0, billedSeconds: 0,
             sessionTotalMinor: 0, walletBalanceMinor: balanceMinor,
@@ -233,7 +245,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
 
           return Response.json({
             sessionId, playbackUrl, ratePerMinuteMinor, walletBalanceMinor: balanceMinor,
-            currency: "NGN", timeRemainingSeconds: remainingSeconds(balanceMinor, ratePerMinuteMinor),
+            currency, timeRemainingSeconds: remainingSeconds(balanceMinor, ratePerMinuteMinor),
             sessionTotalMinor: 0, active: true,
           }, { status: 201, ...(responseHeaders ? { headers: responseHeaders } : {}) });
         } catch (error) {
