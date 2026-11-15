@@ -53,6 +53,20 @@ describe("platform role resolution", () => {
     ).rejects.toMatchObject({ status: 403, code: "EMAIL_VERIFICATION_REQUIRED" });
   });
 
+
+  it("does not preserve delegated module access from stale Firebase custom claims", async () => {
+    const fs = fakeFirestore({ roleTags: ["admin"] }, null);
+    const access = await resolvePlatformAccess(
+      fs,
+      "delegated-admin",
+      "delegated@example.com",
+      { admin: true, adminModules: ["pricing", "channels"] },
+      true,
+    );
+    expect(access.roles).toContain("admin");
+    expect(access.adminModules).toEqual([]);
+  });
+
   it("supports the legacy ADMIN_EMAIL secret only when the new secret is absent", async () => {
     vi.stubEnv("ADMIN_EMAIL", "legacy-owner@example.com");
     const fs = fakeFirestore(null, null);
