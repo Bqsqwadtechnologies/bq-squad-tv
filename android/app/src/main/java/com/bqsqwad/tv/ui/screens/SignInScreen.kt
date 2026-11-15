@@ -94,11 +94,12 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                             onAuthenticated()
                         } else {
                             verificationPending = true
-                            message = if (result.verificationEmailSent) {
-                                "Enter the six-digit code sent to your email."
-                            } else {
-                                "Enter the six-digit code sent to your email, or request a new one."
-                            }
+                            message =
+                                if (result.verificationEmailSent) {
+                                    "Enter the six-digit code sent to your email."
+                                } else {
+                                    "Enter the six-digit code sent to your email, or request a new one."
+                                }
                         }
                     } catch (error: Exception) {
                         message = error.localizedMessage ?: "Authentication failed."
@@ -109,7 +110,15 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(if (busy) "Please wait…" else if (createAccount) "Create account" else "Sign in")
+            Text(
+                if (busy) {
+                    "Please wait…"
+                } else if (createAccount) {
+                    "Create account"
+                } else {
+                    "Sign in"
+                },
+            )
         }
         TextButton(
             enabled = !verificationPending,
@@ -232,17 +241,20 @@ private suspend fun googleSignIn(
     context: Context,
     repository: AuthRepository,
 ) {
-    val option = GetGoogleIdOption.Builder()
-        .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
-        .setFilterByAuthorizedAccounts(false)
-        .build()
-    val request = GetCredentialRequest.Builder()
-        .addCredentialOption(option)
-        .build()
+    val option =
+        GetGoogleIdOption.Builder()
+            .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+            .setFilterByAuthorizedAccounts(false)
+            .build()
+    val request =
+        GetCredentialRequest.Builder()
+            .addCredentialOption(option)
+            .build()
     val credentialManager = CredentialManager.create(context)
     val result = credentialManager.getCredential(context, request)
-    val token = GoogleIdTokenCredential
-        .createFrom(result.credential.data)
-        .idToken
+    val token =
+        GoogleIdTokenCredential
+            .createFrom(result.credential.data)
+            .idToken
     repository.signInGoogle(token)
 }
