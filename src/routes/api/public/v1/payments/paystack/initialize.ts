@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { ApiError, Firestore } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { getPricingConfig } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
