@@ -25,7 +25,25 @@ export async function requireUser(request: Request): Promise<VerifiedUser> {
   if (!authorization?.startsWith("Bearer ")) {
     throw new ApiError(401, "UNAUTHENTICATED", "A Firebase sign-in token is required.");
   }
-  return verifyFirebaseIdToken(authorization.slice("Bearer ".length), getFirebaseProjectId());
+  const user = await verifyFirebaseIdToken(
+    authorization.slice("Bearer ".length),
+    getFirebaseProjectId(),
+  );
+  if (user.emailVerified || !user.email) return user;
+
+  // Brevo OTP verification is the platform's email-verification authority.
+  // Keep the Firebase token signature/UID authoritative and bind the stored
+  // verification record to the exact email claim to prevent stale-email reuse.
+  const fs = await Firestore.create();
+  const profile = await fs.getDoc("users/" + user.uid);
+  const storedEmail = typeof profile?.["email"] === "string"
+    ? (profile["email"] as string).trim().toLowerCase()
+    : "";
+  const verifiedEmail = typeof user.email === "string" ? user.email.trim().toLowerCase() : "";
+  if (profile?.["appEmailVerified"] === true && storedEmail === verifiedEmail) {
+    return { ...user, emailVerified: true };
+  }
+  return user;
 }
 
 export async function parseBody<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
@@ -84,8 +102,12 @@ export async function getWallet(fs: Firestore, uid: string): Promise<WalletState
   return {
     balanceMinor: typeof doc?.["balanceMinor"] === "number" ? (doc["balanceMinor"] as number) : 0,
     currency: typeof doc?.["currency"] === "string" ? (doc["currency"] as string) : "NGN",
-    dailySpendLimitMinor: typeof doc?.["dailySpendLimitMinor"] === "number" ? (doc["dailySpendLimitMinor"] as number) : null,
-    spentTodayMinor: spentDate === today && typeof doc?.["spentTodayMinor"] === "number" ? (doc["spentTodayMinor"] as number) : 0,
+    dailySpendLimitMinor: typeof doc?.["dailySpendLimitMinor"] === "number"
+      ? (doc["dailySpendLimitMinor"] as number)
+      : null,
+    spentTodayMinor: spentDate === today && typeof doc?.["spentTodayMinor"] === "number"
+      ? (doc["spentTodayMinor"] as number)
+      : 0,
     spentDate,
   };
 }
