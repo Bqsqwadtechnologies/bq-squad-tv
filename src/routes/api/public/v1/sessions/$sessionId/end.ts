@@ -32,12 +32,14 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
           const initialSession = requireSessionOwned(await fs.getDoc(sessionPath), sessionId, user.uid);
           const producerUid = typeof initialSession["producerUid"] === "string" ? initialSession["producerUid"] as string : null;
           const producerPath = producerUid ? "producers/" + producerUid : null;
-          const readPaths = [sessionPath, walletPath, ...(producerPath ? [producerPath] : [])];
+          const activeSessionsPath = "activeSessions/" + user.uid;
+          const readPaths = [sessionPath, walletPath, activeSessionsPath, ...(producerPath ? [producerPath] : [])];
 
           const snapshot = await fs.transact(readPaths, (docs) => {
             const session = requireSessionOwned(docs[0] ?? null, sessionId, user.uid);
             const wallet = docs[1] ?? {};
-            const producer = producerPath ? docs[2] : null;
+            const activeSessionDoc = docs[2] ?? {};
+            const producer = producerPath ? docs[3] : null;
             const balance = integer(wallet["balanceMinor"]);
             if (session["active"] !== true) {
               return { result: toSessionSnapshot(sessionId, session, balance, null), writes: [] };
@@ -69,6 +71,18 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
               endedAt: nowIso,
               endReason: "USER_ENDED",
             };
+            const rawActiveSessions = activeSessionDoc["sessions"];
+            const activeSessions = rawActiveSessions && typeof rawActiveSessions === "object" && !Array.isArray(rawActiveSessions)
+              ? rawActiveSessions as Record<string, unknown>
+              : {};
+            const nowMs = now.getTime();
+            const liveSessions = Object.fromEntries(
+              Object.entries(activeSessions).filter(([, expiresAt]) =>
+                typeof expiresAt === "number" && Number.isSafeInteger(expiresAt) && expiresAt > nowMs,
+              ),
+            );
+            delete liveSessions[sessionId];
+
             const writes: FirestoreWrite[] = [
               {
                 update: { name: fs.docName(sessionPath), fields: encodeFields(newSession) },
@@ -83,6 +97,13 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                   }),
                 },
                 updateMask: { fieldPaths: ["balanceMinor", "spentDate", "spentTodayMinor", "currency", "updatedAt"] },
+              },
+              {
+                update: {
+                  name: fs.docName(activeSessionsPath),
+                  fields: encodeFields({ sessions: liveSessions, updatedAt: nowIso }),
+                },
+                updateMask: { fieldPaths: ["sessions", "updatedAt"] },
               },
             ];
             if (charge.chargeMinor > 0) {
