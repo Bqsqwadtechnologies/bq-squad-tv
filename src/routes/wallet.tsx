@@ -35,7 +35,7 @@ function formatMoney(amountMinor: number, currency = "USD") {
   const digits = new Intl.NumberFormat("en", {
     style: "currency",
     currency,
-  }).resolvedOptions().maximumFractionDigits;
+  }).resolvedOptions().maximumFractionDigits ?? 2;
   return new Intl.NumberFormat(undefined, {
     style: "currency",
     currency,
