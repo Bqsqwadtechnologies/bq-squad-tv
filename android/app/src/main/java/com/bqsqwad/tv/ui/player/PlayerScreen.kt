@@ -497,11 +497,10 @@ private fun formatMoney(
         runCatching { Currency.getInstance(currency).defaultFractionDigits }
             .getOrDefault(2)
             .coerceAtLeast(0)
-    val amount =
-        BigDecimal.valueOf(minor)
-            .movePointLeft(fractionDigits)
-            .setScale(fractionDigits, RoundingMode.DOWN)
-    return currency + " " + amount.toPlainString()
+    val rawAmount = BigDecimal.valueOf(minor)
+    val shiftedAmount = rawAmount.movePointLeft(fractionDigits)
+    val formattedAmount = shiftedAmount.setScale(fractionDigits, RoundingMode.DOWN)
+    return currency + " " + formattedAmount.toPlainString()
 }
 
 private fun reportedPlaybackState(player: ExoPlayer): String =

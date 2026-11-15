@@ -128,9 +128,9 @@ private fun money(
             .getOrElse { Currency.getInstance("USD") }
     val digits = isoCurrency.defaultFractionDigits.coerceAtLeast(0)
     val amount = BigDecimal.valueOf(minor, digits)
-    return NumberFormat.getCurrencyInstance(Locale.getDefault()).apply {
-        this.currency = isoCurrency
-        minimumFractionDigits = digits
-        maximumFractionDigits = digits
-    }.format(amount)
+    val formatter = NumberFormat.getCurrencyInstance(Locale.getDefault())
+    formatter.currency = isoCurrency
+    formatter.minimumFractionDigits = digits
+    formatter.maximumFractionDigits = digits
+    return formatter.format(amount)
 }

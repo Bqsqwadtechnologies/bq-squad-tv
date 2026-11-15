@@ -127,17 +127,22 @@ class AuthRepository(
     suspend fun completeProfile(
         dateOfBirth: String,
         parentalPin: String?,
-    ): CompleteProfileResponse =
-        profileApi.completeProfile(
+    ): CompleteProfileResponse {
+        val country = Locale.getDefault().country
+        val countryCode = if (country.matches(Regex("[A-Za-z]{2}"))) {
+            country.uppercase(Locale.ROOT)
+        } else {
+            null
+        }
+        return profileApi.completeProfile(
             currentBearerToken(),
             CompleteProfileRequest(
-            dateOfBirth,
-            parentalPin,
-            Locale.getDefault().country
-                .takeIf { it.matches(Regex("[A-Za-z]{2}")) }
-                ?.uppercase(Locale.ROOT),
-        ),
+                dateOfBirth = dateOfBirth,
+                parentalPin = parentalPin,
+                countryCode = countryCode,
+            ),
         )
+    }
 
     fun signOut() = auth.signOut()
 }
