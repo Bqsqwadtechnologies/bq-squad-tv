@@ -39,7 +39,12 @@ export const Route = createFileRoute("/api/public/v1/wallet/google-play/verify")
         uid: user.uid, productId: body.productId, purchaseToken: body.purchaseToken,
         orderId: verifiedOrderId, creditMinor: product.creditMinor,
       });
-      return Response.json({ ...result, currency: "NGN", message: result.credited ? "Wallet credited." : "This purchase was already processed." });
+      return Response.json({
+        ...result,
+        processed: true,
+        currency: "NGN",
+        message: result.credited ? "Wallet credited." : "This purchase was already processed.",
+      });
     } catch (error) { return errorBody(error); }
   } } },
 });
