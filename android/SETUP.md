@@ -8,12 +8,12 @@ Create `android/local.properties` (never commit):
 
 ```properties
 sdk.dir=/absolute/path/to/Android/Sdk
-API_BASE_URL=https://YOUR-LOVABLE-CLOUD-ENDPOINT
+API_BASE_URL=https://bqsqwad.com/api/public
 GOOGLE_WEB_CLIENT_ID=YOUR_FIREBASE_WEB_OAUTH_CLIENT_ID
 PRODUCER_CONSOLE_URL=https://YOUR-WEBSITE/producer
 ```
 
-The base URL is the API root; Android appends documented `v1/...` paths. `GOOGLE_WEB_CLIENT_ID` is a public OAuth client ID (not a client secret). Setting `web_client_id` in Lovable Cloud Secrets configures the website only; Android Studio must also receive the same public client ID through this local property or the `GOOGLE_WEB_CLIENT_ID` build environment variable. Do not put private API keys or service-account JSON here.
+The base URL must include the `/api/public` prefix because the shared routes are hosted under `/api/public/v1/...`; Android appends the `v1/...` paths. For this deployment use `https://bqsqwad.com/api/public`, not just the bare domain. `GOOGLE_WEB_CLIENT_ID` is a public OAuth client ID (not a client secret). Setting `web_client_id` in Lovable Cloud Secrets configures the website only; Android Studio must also receive the same public client ID through this local property or the `GOOGLE_WEB_CLIENT_ID` build environment variable. Do not put private API keys or service-account JSON here.
 
 Add the real Firebase config at `android/app/google-services.json`. Debug project can open before this file is supplied because Firebase initializes from public project identifiers. Release tasks fail with a clear message until the real file is present. Register the exact package `com.bqsqwad.tv` in Firebase for both debug and release.
 

@@ -41,7 +41,7 @@ android {
         buildConfigField(
             "String",
             "API_BASE_URL",
-            quoted("API_BASE_URL", "https://bqsqwad.com"),
+            quoted("API_BASE_URL", "https://bqsqwad.com/api/public"),
         )
         buildConfigField(
             "String",
