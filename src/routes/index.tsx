@@ -152,7 +152,7 @@ function HomePage() {
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             {featuredContent.map(item => (
-              <article key={item.id} className="group overflow-hidden rounded-2xl border border-white/10 bg-[#07143d]">
+              <a key={item.id} href={"/content/" + encodeURIComponent(item.id)} aria-label={"View " + item.title} className="group block overflow-hidden rounded-2xl border border-white/10 bg-[#07143d]">
                 <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-gradient-to-br from-blue-800 via-indigo-950 to-slate-950">
                   {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" /> : <Film size={48} className="text-white/30" />}
                   <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#020824] via-[#020824]/80 to-transparent px-3 pb-4 pt-12">
@@ -160,7 +160,7 @@ function HomePage() {
                     <span className="mt-1 block text-[10px] font-semibold text-white/60">{item.category}</span>
                   </span>
                 </div>
-              </article>
+              </a>
             ))}
             {catalogState === "loading" && <p className="col-span-full py-8 text-center text-sm text-white/50">Loading featured content…</p>}
             {catalogState === "signed_out" && <p className="col-span-full py-8 text-center text-sm text-white/50">Sign in to view the live catalogue and featured titles.</p>}
