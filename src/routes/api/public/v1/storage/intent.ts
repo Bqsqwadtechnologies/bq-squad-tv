@@ -41,9 +41,6 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
           const fs = await Firestore.create();
           await enforceRateLimit(fs, "storage-intent:" + user.uid, { limit: 10, windowMs: 5 * 60_000 });
           await requireAuthorizedChannelUpload(fs, body.channelId, user);
-              await requireAdminModule(fs, user, "channels");
-            }
-          }
 
           const filename = safeFilename(body.filename);
           const extension = filename.toLowerCase().split(".").pop() ?? "";
