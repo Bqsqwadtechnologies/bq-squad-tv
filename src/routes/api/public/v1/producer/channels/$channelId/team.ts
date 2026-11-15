@@ -100,7 +100,7 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
             if (!actorRole || !hasChannelPermission({ role: actorRole, permissions: actorPermissions }, "team.manage")) {
               throw new ApiError(403, "CHANNEL_PERMISSION_REQUIRED", "You no longer have permission to manage this channel team.");
             }
-            const currentRole = currentMember ? activeRole(channel, currentMember, body.memberUid) : null;
+            const currentRole = currentMember ? activeRole(channel, currentMember ?? null, body.memberUid) : null;
             if (currentRole && !mayManageRole(actorRole, currentRole)) {
               throw new ApiError(403, "TEAM_ROLE_MANAGEMENT_DENIED", "You cannot change a team member with an equal or higher role.");
             }
@@ -163,7 +163,7 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
             if (!actorRole || !hasChannelPermission({ role: actorRole, permissions: actorPermissions }, "team.manage")) {
               throw new ApiError(403, "CHANNEL_PERMISSION_REQUIRED", "You no longer have permission to manage this channel team.");
             }
-            const targetRole = targetMember ? activeRole(channel, targetMember, body.memberUid) : null;
+            const targetRole = targetMember ? activeRole(channel, targetMember ?? null, body.memberUid) : null;
             if (!targetMember || !targetRole) throw new ApiError(404, "TEAM_MEMBER_NOT_FOUND", "This account is not an active team member.");
             if (!mayManageRole(actorRole, targetRole)) throw new ApiError(403, "TEAM_ROLE_MANAGEMENT_DENIED", "You cannot remove a team member with an equal or higher role.");
             return { result: undefined, writes: [{ delete: fs.docName("channels/" + channelId + "/members/" + body.memberUid) }] };

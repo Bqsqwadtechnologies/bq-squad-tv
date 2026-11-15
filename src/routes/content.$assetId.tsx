@@ -45,7 +45,7 @@ function ContentDetailsPage() {
       cache: "no-store",
     });
     const result = await response.json() as Record<string, unknown>;
-    if (!response.ok) throw new Error(typeof result.error === "string" ? result.error : "The request could not be completed.");
+    if (!response.ok) throw new Error(typeof result["error"] === "string" ? result["error"] : "The request could not be completed.");
     return result;
   }
 
@@ -102,7 +102,7 @@ function ContentDetailsPage() {
           playbackPositionMs: Math.max(0, Math.floor(video.currentTime * 1000)),
         }),
       }).then(result => {
-        if (result.active === false) {
+        if (result["active"] === false) {
           setMessage("This playback session has ended. Check your wallet or viewing limit before starting again.");
           setPlaybackUrl("");
           setSessionId("");
@@ -133,8 +133,8 @@ function ContentDetailsPage() {
           idempotencyKey: crypto.randomUUID(),
         }),
       });
-      const id = String(result.sessionId ?? "");
-      const url = String(result.playbackUrl ?? "");
+      const id = String(result["sessionId"] ?? "");
+      const url = String(result["playbackUrl"] ?? "");
       if (!id || !url) throw new Error("The server did not return a valid playback session.");
       sessionRef.current = id;
       sequenceRef.current = 0;
