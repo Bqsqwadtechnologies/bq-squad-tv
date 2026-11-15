@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { creditPaystackPayment, fetchPaystackVerification } from "@/lib/server/paystack";
+import { enforceRateLimit } from "@/lib/server/rate-limit";
 
 const schema = z.object({ reference: z.string().min(8).max(100) });
 
@@ -12,6 +13,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/verify")(
       const user = await requireUser(request);
       const { reference } = await parseBody(request, schema);
       const fs = await Firestore.create();
+      await enforceRateLimit(fs, "paystack-verify:" + user.uid, { limit: 10, windowMs: 60_000 });
       const payment = await fs.getDoc("payments/paystack_" + reference);
       if (!payment || payment["uid"] !== user.uid || payment["provider"] !== "paystack") {
         throw new ApiError(404, "PAYMENT_NOT_FOUND", "This payment could not be found.");
