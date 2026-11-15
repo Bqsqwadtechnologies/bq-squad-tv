@@ -1,5 +1,6 @@
 package com.bqsqwad.tv.data.producer
 import com.bqsqwad.tv.BuildConfig
+import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.bqsqwad.tv.data.auth.awaitResult
 import com.google.firebase.auth.FirebaseAuth
 import com.squareup.moshi.Moshi
@@ -16,7 +17,7 @@ class ProducerRepository {
             .baseUrl(
                 BuildConfig.API_BASE_URL.trimEnd('/') + "/",
             ).client(
-                OkHttpClient.Builder().build(),
+                OkHttpClient.Builder().addInterceptor(FirebaseAppCheckInterceptor()).build(),
             ).addConverterFactory(
                 MoshiConverterFactory.create(Moshi.Builder().add(KotlinJsonAdapterFactory()).build()),
             ).build()
