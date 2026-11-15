@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
-import { errorBody, parseBody, requireUser } from "@/lib/server/api";
+import { errorBody, getUserProfile, parseBody, requireAdultForContent, requireUser } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 
 const schema = z.object({ stars: z.number().int().min(1).max(5) });
@@ -25,6 +25,9 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/rat
           if (!asset || asset["status"] !== "ready" || asset["contentStatus"] !== "published") {
             throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This published content is not available for rating.");
           }
+          const channel = typeof asset["channelId"] === "string" ? await fs.getDoc("channels/" + asset["channelId"]) : null;
+          if (!channel || channel["published"] !== true) throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This content's channel is not published.");
+          requireAdultForContent(await getUserProfile(fs, user.uid), channel["adultOnly"]);
           const currentCount = typeof asset["ratingCount"] === "number" && Number.isSafeInteger(asset["ratingCount"]) && asset["ratingCount"] >= 0
             ? asset["ratingCount"] as number : 0;
           const currentTotal = typeof asset["ratingTotalStars"] === "number" && Number.isSafeInteger(asset["ratingTotalStars"]) && asset["ratingTotalStars"] >= 0
