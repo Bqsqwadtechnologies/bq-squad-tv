@@ -15,10 +15,7 @@ export const Route = createFileRoute("/api/public/v1/profile/country")({
       if (!countryCode) throw new ApiError(400, "COUNTRY_CODE_INVALID", "Choose a valid two-letter country code.");
       const currency = currencyForCountry(countryCode);
       const fs = await Firestore.create();
-      const [profile, wallet] = await Promise.all([
-        fs.getDoc("users/" + user.uid),
-        fs.getDoc("wallets/" + user.uid),
-      ]);
+      const wallet = await fs.getDoc("wallets/" + user.uid);
       const establishedCurrency = typeof wallet?.["currency"] === "string"
         ? wallet["currency"] as string : wallet ? "NGN" : null;
       if (establishedCurrency && establishedCurrency !== currency) {
