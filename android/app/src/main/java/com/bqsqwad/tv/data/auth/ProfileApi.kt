@@ -15,10 +15,35 @@ data class CompleteProfileResponse(
     val parentalPinEnabled: Boolean,
 )
 
+data class SendEmailOtpResponse(
+    val sent: Boolean,
+    val alreadyVerified: Boolean? = null,
+    val expiresInSeconds: Long? = null,
+)
+
+data class VerifyEmailOtpRequest(
+    val code: String,
+)
+
+data class VerifyEmailOtpResponse(
+    val verified: Boolean,
+)
+
 interface ProfileApi {
     @POST("v1/profile/complete")
     suspend fun completeProfile(
         @Header("Authorization") bearerToken: String,
         @Body request: CompleteProfileRequest,
     ): CompleteProfileResponse
+
+    @POST("v1/auth/email/send-code")
+    suspend fun sendEmailVerificationCode(
+        @Header("Authorization") bearerToken: String,
+    ): SendEmailOtpResponse
+
+    @POST("v1/auth/email/verify-code")
+    suspend fun verifyEmailCode(
+        @Header("Authorization") bearerToken: String,
+        @Body request: VerifyEmailOtpRequest,
+    ): VerifyEmailOtpResponse
 }
