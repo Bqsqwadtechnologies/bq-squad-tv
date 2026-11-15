@@ -132,13 +132,15 @@ function VideoStudio() {
         headers: { ...headers, "content-type": "application/json" },
         body: JSON.stringify({ assetId }),
       });
-      const completed = await complete.json() as { status?: string; error?: string };
+      const completed = await complete.json() as { status?: string; transcodeJobStatus?: string; processingWorker?: string; error?: string };
       if (!complete.ok) throw new Error(completed.error ?? "The uploaded file could not be verified.");
       setUpload({
         name: file.name,
         progress: 100,
-        status: "Source verified · awaiting processing",
-        detail: "The private source is verified. HLS conversion is not yet connected to an always-on processing service, so this asset is not playable or publishable yet.",
+        status: "Source verified · processing job queued",
+        detail: completed.transcodeJobStatus === "queued"
+          ? "The private source is verified and a durable HLS processing job has been recorded. The FFmpeg worker is not deployed or connected yet, so this asset remains unavailable for playback and publishing."
+          : "The private source is verified. Processing has not been confirmed; this asset remains unavailable for playback and publishing.",
       });
       setFile(null);
     } catch (caught) {
