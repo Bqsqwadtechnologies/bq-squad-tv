@@ -26,61 +26,113 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var createAccount by remember { mutableStateOf(false) }
+    var verificationPending by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
 
-    Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = Arrangement.Center) {
+    Column(
+        Modifier.fillMaxSize().padding(28.dp),
+        verticalArrangement = Arrangement.Center,
+    ) {
         Text("BQ SQWAD TV", style = MaterialTheme.typography.headlineLarge)
         Text("Your world. One signal.", color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(28.dp))
         Text(if (createAccount) "Create your account" else "Welcome back", style = MaterialTheme.typography.titleLarge)
         Spacer(Modifier.height(14.dp))
-        OutlinedTextField(email, { email = it }, label = { Text("Email address") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Email address") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            modifier = Modifier.fillMaxWidth(),
+        )
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(
-            password,
-            {
-                password = it
-            },
-            label = {
-                Text("Password")
-            },
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions =
-                KeyboardOptions(
-                    keyboardType = KeyboardType.Password,
-                ),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(12.dp))
         Button(
-            enabled = !busy && email.isNotBlank() && password.length >= 6,
+            enabled = !busy && email.contains("@") && password.length >= 6 && !verificationPending,
             onClick = {
                 scope.launch {
                     busy = true
                     message = null
-                    runCatching { repository.signInEmail(email.trim(), password, createAccount) }
-                        .onSuccess { onAuthenticated() }
-                        .onFailure { message = it.localizedMessage ?: "Sign-in failed." }
+                    runCatching { repository.signInEmail(email, password, createAccount) }
+                        .onSuccess { result ->
+                            if (result.emailVerified) {
+                                onAuthenticated()
+                            } else {
+                                verificationPending = true
+                                message = "Check your inbox for the verification link, then return here."
+                            }
+                        }
+                        .onFailure { message = it.localizedMessage ?: "Authentication failed." }
                     busy = false
                 }
             },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(
-                if (busy) {
-                    "Please wait…"
-                } else if (createAccount) {
-                    "Create account"
-                } else {
-                    "Sign in"
-                },
-            )
+            Text(if (busy) "Please wait…" else if (createAccount) "Create account" else "Sign in")
         }
-        TextButton(onClick = { createAccount = !createAccount }) {
+        TextButton(onClick = { createAccount = !createAccount; message = null; verificationPending = false }) {
             Text(if (createAccount) "Already have an account? Sign in" else "New here? Create an account")
         }
+        TextButton(
+            enabled = !busy && email.contains("@"),
+            onClick = {
+                scope.launch {
+                    busy = true
+                    message = null
+                    runCatching { repository.sendPasswordReset(email) }
+                        .onSuccess { message = "If the address is registered, a password-reset email has been sent." }
+                        .onFailure { message = it.localizedMessage ?: "Could not request a password reset." }
+                    busy = false
+                }
+            },
+        ) { Text("Forgot password?") }
+
+        if (verificationPending) {
+            OutlinedButton(
+                enabled = !busy,
+                onClick = {
+                    scope.launch {
+                        busy = true
+                        runCatching { repository.isCurrentEmailVerified() }
+                            .onSuccess { verified ->
+                                if (verified) {
+                                    verificationPending = false
+                                    onAuthenticated()
+                                } else {
+                                    message = "Your email is not verified yet. Open the verification link first."
+                                }
+                            }
+                            .onFailure { message = it.localizedMessage ?: "Could not check email verification." }
+                        busy = false
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("I've verified my email") }
+            TextButton(
+                enabled = !busy,
+                onClick = {
+                    scope.launch {
+                        busy = true
+                        runCatching { repository.resendEmailVerification() }
+                            .onSuccess { message = "A new verification email has been requested." }
+                            .onFailure { message = it.localizedMessage ?: "Could not resend verification email." }
+                        busy = false
+                    }
+                },
+            ) { Text("Resend verification email") }
+        }
+
         OutlinedButton(
             enabled = !busy && !BuildConfig.GOOGLE_WEB_CLIENT_ID.startsWith("REPLACE"),
             onClick = {
@@ -110,12 +162,10 @@ private suspend fun googleSignIn(
     context: Context,
     repository: AuthRepository,
 ) {
-    val option =
-        GetGoogleIdOption
-            .Builder()
-            .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
-            .setFilterByAuthorizedAccounts(false)
-            .build()
+    val option = GetGoogleIdOption.Builder()
+        .setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+        .setFilterByAuthorizedAccounts(false)
+        .build()
     val request = GetCredentialRequest.Builder().addCredentialOption(option).build()
     val result = CredentialManager.create(context).getCredential(context, request)
     val token = GoogleIdTokenCredential.createFrom(result.credential.data).idToken
