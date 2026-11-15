@@ -98,7 +98,11 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             );
             const active = !missedTwoHeartbeats && !exhausted;
             const newBalance = balance - charge.chargeMinor;
-            const currency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : "NGN";
+            const currency = typeof session["currency"] === "string" ? session["currency"] as string :
+              typeof wallet["currency"] === "string" ? wallet["currency"] as string : "NGN";
+            if (typeof wallet["currency"] === "string" && wallet["currency"] !== currency) {
+              throw new ApiError(409, "WALLET_CURRENCY_MISMATCH", "The wallet currency changed during this playback session.");
+            }
             const newSpentToday = safeAddMinor(spentToday, charge.chargeMinor);
             const newSessionTotal = safeAddMinor(integer(session["sessionTotalMinor"]), charge.chargeMinor);
             const newSession = {
@@ -141,7 +145,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
                   name: fs.docName("ledger/" + crypto.randomUUID()),
                   fields: encodeFields({
                     uid: user.uid, sessionId, kind: "watch_charge", description: "Channel viewing",
-                    amountMinor: -charge.chargeMinor, createdAt: nowIso, idempotencyKey: sessionId + ":" + clientSequence,
+                    amountMinor: -charge.chargeMinor, currency, createdAt: nowIso, idempotencyKey: sessionId + ":" + clientSequence,
                   }),
                 },
                 currentDocument: { exists: false },
@@ -159,7 +163,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
                     sessionId,
                     kind: "platform_earning",
                     description: "Platform share of channel viewing",
-                    amountMinor: platformShare,
+                    amountMinor: platformShare, currency,
                     createdAt: nowIso,
                     idempotencyKey: sessionId + ":" + clientSequence + ":platform",
                   }),
@@ -187,7 +191,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
                     name: fs.docName("ledger/" + crypto.randomUUID()),
                     fields: encodeFields({
                       uid: producerUid, sessionId, kind: "producer_earning", description: "Channel viewing revenue",
-                      amountMinor: producerShare, createdAt: nowIso, idempotencyKey: sessionId + ":" + clientSequence + ":producer",
+                      amountMinor: producerShare, currency, createdAt: nowIso, idempotencyKey: sessionId + ":" + clientSequence + ":producer",
                     }),
                   },
                   currentDocument: { exists: false },
