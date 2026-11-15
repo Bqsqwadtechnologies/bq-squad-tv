@@ -45,10 +45,7 @@ fun WalletScreen(onBack: () -> Unit) {
         scope.launch {
             loading = true
             runCatching { repo.wallet() }.onSuccess { wallet = it }.onFailure { message = it.localizedMessage }
-            runCatching { repo.ledger() }.onSuccess {
-                ledger =
-                    it.items
-            }
+            runCatching { repo.ledger() }.onSuccess { ledger = it.items }
             loading = false
         }
     }
