@@ -49,8 +49,8 @@ docker run --rm --network none -v "$PWD/authorized-movie.mp4:/work/source.mp4:ro
   the master and child playlists/segments, then transition the Firestore asset from
   uploaded_pending_transcode to ready only after all checks pass.
 - The current app upload routes and HLS proxy use the existing private storage
-  integration. This worker intentionally does not change that storage provider or
-  introduce Cloudflare R2 credentials. A storage migration requires a separately
-  reviewed adapter and a decision about the existing private buckets.
+  integration. This worker intentionally leaves the existing Lovable-managed
+  private buckets and storage provider unchanged. Any additional storage provider
+  must be added as a separate, server-only adapter without migrating existing objects.
 - Live ingest (MediaMTX/SRS), live recording, downloads, DRM and production deployment
   are not included in this first code slice.
