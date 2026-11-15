@@ -71,7 +71,8 @@ fun LibraryScreen(onChannel: (String) -> Unit = {}) {
     val categories = listOf("All", "Movies", "Series", "Sports", "Kids", "News", "Entertainment")
 
     LaunchedEffect(Unit) {
-        runCatching { repository.home() }.onSuccess { response ->
+        runCatching { repository.home() }
+            .onSuccess { response ->
             val combinedChannels = response.channels + response.trending + response.replays
             channels = combinedChannels.distinctBy { it.id }
         }.onFailure {
