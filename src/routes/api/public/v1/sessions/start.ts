@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
-import { errorBody, getUserProfile, getWallet, parseBody, requireAdultForContent, requireUser } from "@/lib/server/api";
+import { errorBody, getUserProfile, getWallet, parseBody, requireUser } from "@/lib/server/api";
+import { assertContentAgeEligibility } from "@/lib/server/content-rating";
 import { assertContentPlaybackRights, type PlaybackPlatform } from "@/lib/server/content-rights";
 import { consumeIntegrityChallenge } from "@/lib/server/integrity-challenge";
 import { verifyPlayIntegrityToken } from "@/lib/server/play-integrity";
@@ -126,7 +127,11 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           }
 
           const profile = await getUserProfile(fs, user.uid);
-          requireAdultForContent(profile, channel["adultOnly"]);
+          assertContentAgeEligibility(
+            profile.adultEligible,
+            channel["adultOnly"] === true || asset["adultOnly"] === true,
+            asset["contentRating"] ?? channel["contentRating"],
+          );
           // A user-selected account country is suitable for currency defaults, not proof of licensed territory.
           // Fail closed until a trusted, host-provided geolocation adapter is configured.
           const viewerCountry = "";
