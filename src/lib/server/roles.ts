@@ -41,8 +41,9 @@ export async function resolvePlatformAccess(
   const storedRoles = stringArray(user?.["roleTags"]);
   const claimedRoles = stringArray(customClaims["roleTags"]);
   const producerPlanActive = producer?.["planStatus"] === "ACTIVE";
+  const producerVerified = producer?.["verificationStatus"] === "APPROVED";
   const roles: PlatformRole[] = ["viewer"];
-  if (producerPlanActive && (storedRoles.includes("producer") || claimedRoles.includes("producer") || customClaims["producer"] === true)) {
+  if (producerPlanActive && producerVerified && (storedRoles.includes("producer") || claimedRoles.includes("producer") || customClaims["producer"] === true)) {
     roles.push("producer");
   }
   if (isSuperAdmin || storedRoles.includes("admin") || claimedRoles.includes("admin") || customClaims["admin"] === true) {
