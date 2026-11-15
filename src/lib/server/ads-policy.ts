@@ -24,7 +24,7 @@ export function isAdSuitableForViewer(
   viewerCountry: string,
 ): boolean {
   const category = typeof campaign["category"] === "string"
-    ? campaign["category"].toLowerCase().replace(/[\s-]+/g, "_")
+    ? campaign["category"].trim().toLowerCase().replace(/[\s-]+/g, "_")
     : "";
   if (!category || blockedAdCategories.has(category)) return false;
 
