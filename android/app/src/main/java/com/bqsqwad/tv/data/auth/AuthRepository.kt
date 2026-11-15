@@ -11,6 +11,8 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.withTimeout
 
 data class EmailAuthResult(
     val emailVerified: Boolean,
@@ -47,14 +49,20 @@ class AuthRepository(
     }
 
     private suspend fun registerPushTokenIfAvailable() {
-        runCatching {
-            val token = FirebaseMessaging.getInstance().token.awaitResult()
-            if (!token.isNullOrBlank()) {
-                profileApi.registerPushToken(
-                    currentBearerToken(),
-                    PushTokenRequest(token),
-                )
+        try {
+            withTimeout(8_000) {
+                val token = FirebaseMessaging.getInstance().token.awaitResult()
+                if (!token.isNullOrBlank()) {
+                    profileApi.registerPushToken(
+                        currentBearerToken(),
+                        PushTokenRequest(token),
+                    )
+                }
             }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            // Push registration is best-effort and must not block sign-in.
         }
     }
 
