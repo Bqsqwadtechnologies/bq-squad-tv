@@ -35,6 +35,20 @@ docker build -t bq-sqwad-ffmpeg-worker infra/video/ffmpeg-worker
 Run with no network access. Mount the source read-only and an empty output directory:
 docker run --rm --network none -v "$PWD/authorized-movie.mp4:/work/source.mp4:ro" -v "$PWD/hls-output:/work/output" bq-sqwad-ffmpeg-worker --input /work/source.mp4 --output /work/output --threads 2
 
+## Application queue integration status
+
+After the private source upload is verified, the application now records an idempotent
+Firestore job in `videoTranscodeJobs/{assetId}` and marks the content asset as
+`uploaded_pending_transcode`. The job records the source bucket/path and the existing
+private HLS destination bucket/prefix. Video Studio reports that the job is queued.
+
+**This is a durable queue record, not a running worker.** No always-on processor has
+been deployed or connected to consume the queue yet. Jobs remain queued until a separately
+configured worker runner claims them, downloads the authorized source through a
+server-side storage adapter, runs this CLI, uploads and verifies every HLS object, and
+updates the Firestore job and asset states. Do not mark an asset ready merely because
+the queue record exists.
+
 ## Security and production integration boundaries
 
 - Process only content BQ owns or is contractually authorized to host.
