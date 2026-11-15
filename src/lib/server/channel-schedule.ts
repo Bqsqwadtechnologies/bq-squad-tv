@@ -55,7 +55,7 @@ export async function saveChannelSchedule(
   fs: Firestore,
   channelId: string,
   actorUid: string,
-  input: z.infer<typeof channelScheduleSchema>,
+  input: z.input<typeof channelScheduleSchema>,
 ): Promise<{ programmeId: string; created: boolean }> {
   const start = Date.parse(input.startsAt);
   const end = Date.parse(input.endsAt);
@@ -99,7 +99,7 @@ export async function saveChannelSchedule(
     const programmeFields = {
       channelId,
       title: input.title,
-      description: input.description,
+      description: input.description ?? "",
       startsAt: input.startsAt,
       endsAt: input.endsAt,
       contentAssetId: input.contentAssetId ?? null,
