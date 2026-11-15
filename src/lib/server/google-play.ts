@@ -77,11 +77,20 @@ export function getGooglePlayProducts(config: Record<string, unknown>): GooglePl
   });
 }
 
+export async function googlePlayAccountId(uid: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(uid));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
 export async function verifyGooglePlayProduct(input: {
-  packageName: string; productId: string; purchaseToken: string;
+  packageName: string;
+  productId: string;
+  purchaseToken: string;
+  obfuscatedAccountId: string;
 }): Promise<Record<string, unknown>> {
   if (!/^[A-Za-z0-9._]+$/.test(input.packageName) ||
       !/^[A-Za-z0-9._-]{1,150}$/.test(input.productId) ||
+      !/^[a-f0-9]{64}$/.test(input.obfuscatedAccountId) ||
       input.purchaseToken.length < 20 || input.purchaseToken.length > 4096) {
     throw new ApiError(400, "PLAY_PURCHASE_INVALID", "The Google Play purchase details are invalid.");
   }
@@ -92,7 +101,15 @@ export async function verifyGooglePlayProduct(input: {
   const response = await fetch(url, { headers: { authorization: "Bearer " + accessToken } });
   const data = await response.json() as Record<string, unknown>;
   if (!response.ok) throw new ApiError(402, "PLAY_PURCHASE_NOT_VERIFIED", "Google Play could not verify this purchase.");
-  if (data["purchaseState"] !== 0) throw new ApiError(402, "PLAY_PURCHASE_NOT_COMPLETED", "This Google Play purchase is not completed.");
+  if (data["purchaseState"] !== 0) {
+    throw new ApiError(402, "PLAY_PURCHASE_NOT_COMPLETED", "This Google Play purchase is not completed.");
+  }
+  if (data["obfuscatedExternalAccountId"] !== input.obfuscatedAccountId) {
+    throw new ApiError(403, "PLAY_ACCOUNT_MISMATCH", "This Google Play purchase is not linked to the signed-in account.");
+  }
+  if (data["quantity"] !== undefined && data["quantity"] !== 1) {
+    throw new ApiError(400, "PLAY_QUANTITY_UNSUPPORTED", "This purchase quantity is not supported.");
+  }
   return data;
 }
 
