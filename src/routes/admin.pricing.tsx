@@ -35,7 +35,7 @@ function AdminPricingPage() {
 
   async function loadConfig(idToken: string) {
     const response = await fetch("/api/public/v1/admin/config/pricing", {
-      headers: { Authorization: `Bearer ${idToken}` },
+      headers: await getWebAuthHeaders(idToken),
     });
     if (response.status === 404) return;
     const data = await response.json() as PricingConfig & { error?: string };
@@ -85,7 +85,7 @@ function AdminPricingPage() {
       };
       const response = await fetch("/api/public/v1/admin/config/pricing", {
         method: "PUT",
-        headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
         body: JSON.stringify(payload),
       });
       const result = await response.json() as { saved?: boolean; version?: number; error?: string };
