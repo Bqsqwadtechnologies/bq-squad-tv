@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ApiError } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { requireAppCheck } from "@/lib/server/firebase-app-check";
 import { errorBody } from "@/lib/server/api";
 import {
@@ -19,7 +19,10 @@ export const Route = createFileRoute("/api/public/v1/auth/web/session/refresh")(
         if (!refreshToken) {
           throw new ApiError(401, "WEB_SESSION_MISSING", "Sign in to continue.");
         }
+        const fs = await Firestore.create();
+        await assertWebRefreshSessionActive(fs, refreshToken);
         const session = await refreshFirebaseWebSession(refreshToken);
+        await rotateWebRefreshSession(fs, refreshToken, session.refreshToken, session.uid);
         return Response.json(
           { idToken: session.idToken, expiresInSeconds: session.expiresInSeconds },
           {
