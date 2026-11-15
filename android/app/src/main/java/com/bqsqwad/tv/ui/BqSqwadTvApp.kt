@@ -31,7 +31,6 @@ private val mainTabs =
         MainTab("library", "Library", "▦"),
         MainTab("downloads", "Downloads", "↓"),
         MainTab("settings", "Settings", "⚙"),
-        MainTab("account", "Profile", "●"),
     )
 
 @Composable
