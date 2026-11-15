@@ -1,4 +1,5 @@
-import { ApiError, getAdminAccessToken, getFirebaseProjectId } from "./firebase-admin";
+import { firebaseProjectNumber } from "@/lib/firebase-config";
+import { ApiError, getAdminAccessToken } from "./firebase-admin";
 
 const verifiedAppCheckTokens = new Map<string, number>();
 
@@ -26,11 +27,11 @@ export async function verifyFirebaseAppCheckToken(token: string): Promise<void> 
   if (cachedExpiry && cachedExpiry > now) return;
 
   const accessToken = await getAdminAccessToken("https://www.googleapis.com/auth/firebase");
-  const projectId = getFirebaseProjectId();
+  const projectNumber = firebaseProjectNumber;
   let response: Response;
   try {
     response = await fetch(
-      `https://firebaseappcheck.googleapis.com/v1beta/projects/${projectId}:verifyAppCheckToken`,
+      `https://firebaseappcheck.googleapis.com/v1beta/projects/${projectNumber}:verifyAppCheckToken`,
       {
         method: "POST",
         headers: {
