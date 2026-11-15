@@ -2,6 +2,7 @@ package com.bqsqwad.tv.data.catalog
 import android.content.Context
 import androidx.room.Room
 import com.bqsqwad.tv.BuildConfig
+import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.bqsqwad.tv.data.auth.awaitResult
 import com.bqsqwad.tv.data.cache.BqTvDatabase
 import com.bqsqwad.tv.data.cache.CachedChannel
@@ -35,6 +36,7 @@ class CatalogRepository(
             .client(
                 OkHttpClient
                     .Builder()
+                    .addInterceptor(FirebaseAppCheckInterceptor())
                     .connectTimeout(12, TimeUnit.SECONDS)
                     .readTimeout(18, TimeUnit.SECONDS)
                     .build(),
