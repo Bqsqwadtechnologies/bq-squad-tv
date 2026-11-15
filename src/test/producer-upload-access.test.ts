@@ -64,6 +64,25 @@ describe("authorized channel uploads", () => {
     })).rejects.toMatchObject({ status: 403, code: "PRODUCER_VERIFICATION_REQUIRED" });
   });
 
+  it("allows the verified producer account that owns an active channel", async () => {
+    const fs = firestore({
+      "channels/producer-channel": { ownerUid: "producer-1" },
+      "producers/producer-1": { planStatus: "ACTIVE", verificationStatus: "APPROVED" },
+    });
+    await expect(requireAuthorizedChannelUpload(fs, "producer-channel", {
+      uid: "producer-1", email: "producer@example.com", emailVerified: true,
+    })).resolves.toBeUndefined();
+  });
+
+  it("rejects malformed channel ownership instead of treating it as a producer channel", async () => {
+    const fs = firestore({
+      "channels/producer-channel": { ownerUid: { uid: "producer-1" } },
+    });
+    await expect(requireAuthorizedChannelUpload(fs, "producer-channel", {
+      uid: "producer-1", email: "producer@example.com", emailVerified: true,
+    })).rejects.toMatchObject({ status: 409, code: "CHANNEL_OWNER_INVALID" });
+  });
+
   it("requires video.upload membership permission for producer channel team members", async () => {
     const fs = firestore({
       "channels/producer-channel": { ownerUid: "producer-1" },
