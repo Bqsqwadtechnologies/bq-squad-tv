@@ -8,34 +8,46 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.bqsqwad.tv.MainActivity
 import com.bqsqwad.tv.R
+import com.google.android.gms.tasks.Tasks
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 class BqMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Executors.newSingleThreadExecutor().execute {
             runCatching {
-                val connection =
-                    URL(
-                        com.bqsqwad.tv.BuildConfig.API_BASE_URL
-                            .trimEnd('/') + "/v1/devices/push-token",
-                    ).openConnection() as HttpURLConnection
+                val user = FirebaseAuth.getInstance().currentUser ?: return@runCatching
+                val idToken = Tasks.await(user.getIdToken(false), 10, TimeUnit.SECONDS).token
+                    ?: return@runCatching
+                val appCheckToken = Tasks.await(
+                    FirebaseAppCheck.getInstance().getAppCheckToken(false),
+                    10,
+                    TimeUnit.SECONDS,
+                ).token
+                val connection = URL(
+                    com.bqsqwad.tv.BuildConfig.API_BASE_URL.trimEnd('/') + "/v1/devices/push-token",
+                ).openConnection() as HttpURLConnection
+                connection.connectTimeout = 10_000
+                connection.readTimeout = 10_000
                 connection.requestMethod = "POST"
                 connection.doOutput = true
                 connection.setRequestProperty("Content-Type", "application/json")
-                val idToken =
-                    com.google.firebase.auth.FirebaseAuth
-                        .getInstance()
-                        .currentUser
-                        ?.getIdToken(false)
-                        ?.result
-                        ?.token
-                if (idToken != null)connection.setRequestProperty("Authorization", "Bearer " + idToken)
-                connection.outputStream.use { it.write(("{\"token\":\"" + token + "\",\"platform\":\"android\"}").toByteArray()) }
+                connection.setRequestProperty("Authorization", "Bearer $idToken")
+                if (appCheckToken.isNotBlank()) {
+                    connection.setRequestProperty("X-Firebase-AppCheck", appCheckToken)
+                }
+                val payload = JSONObject()
+                    .put("token", token)
+                    .put("platform", "android")
+                connection.outputStream.use { it.write(payload.toString().toByteArray(Charsets.UTF_8)) }
                 connection.responseCode
                 connection.disconnect()
             }
