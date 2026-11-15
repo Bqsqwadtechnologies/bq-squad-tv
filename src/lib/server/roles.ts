@@ -34,7 +34,7 @@ export async function resolvePlatformAccess(
     fs.getDoc("users/" + uid),
     fs.getDoc("producers/" + uid),
   ]);
-  const configuredAdmin = process.env["ADMIN_EMAIL"]?.trim().toLowerCase();
+  const configuredAdmin = (process.env["ZILLIONAIRE_EMAIL"] ?? process.env["ADMIN_EMAIL"])?.trim().toLowerCase();
   const isSuperAdmin = Boolean(
     emailVerified && configuredAdmin && email?.trim().toLowerCase() === configuredAdmin,
   );
@@ -93,7 +93,10 @@ export async function requireAdminModule(
   return access;
 }
 
-export function isProtectedSuperAdmin(targetEmail: string | null, configuredAdminEmail = process.env["ADMIN_EMAIL"]): boolean {
+export function isProtectedSuperAdmin(
+  targetEmail: string | null,
+  configuredAdminEmail = process.env["ZILLIONAIRE_EMAIL"] ?? process.env["ADMIN_EMAIL"],
+): boolean {
   return Boolean(
     configuredAdminEmail?.trim() &&
     targetEmail?.trim().toLowerCase() === configuredAdminEmail.trim().toLowerCase(),
