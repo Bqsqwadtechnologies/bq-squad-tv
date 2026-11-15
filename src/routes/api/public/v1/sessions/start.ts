@@ -127,7 +127,9 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
 
           const profile = await getUserProfile(fs, user.uid);
           requireAdultForContent(profile, channel["adultOnly"]);
-          const viewerCountry = profile.countryCode;
+          // A user-selected account country is suitable for currency defaults, not proof of licensed territory.
+          // Fail closed until a trusted, host-provided geolocation adapter is configured.
+          const viewerCountry = "";
           const rights = asset["license"] && typeof asset["license"] === "object"
             ? asset["license"] as Record<string, unknown>
             : channel["license"] && typeof channel["license"] === "object"
