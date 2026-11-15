@@ -65,8 +65,32 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
           }
           const mediaKind = assertMediaMatchesExtension(headerBytes, filename);
           const now = new Date().toISOString();
+          const jobPath = "videoTranscodeJobs/" + assetId;
+          const existingJob = await fs.getDoc(jobPath);
+          if (!existingJob) {
+            await fs.setDoc(jobPath, {
+              assetId,
+              channelId,
+              ownerUid: user.uid,
+              sourceBucket: "bq-sqwad-source-media",
+              sourcePath: path,
+              sourceFilename: filename,
+              sourceSizeBytes: actualSize,
+              outputBucket: "bq-sqwad-streaming-media",
+              outputPrefix: "hls/" + assetId,
+              status: "queued",
+              workerStatus: "not_configured",
+              attempts: 0,
+              createdAt: now,
+              updatedAt: now,
+            }, { mustNotExist: true });
+          } else if (existingJob["assetId"] !== assetId || existingJob["ownerUid"] !== user.uid) {
+            throw new ApiError(409, "TRANSCODE_JOB_CONFLICT", "A conflicting processing job already exists for this asset.");
+          }
           await fs.patchDoc("contentAssets/" + assetId, {
             status: "uploaded_pending_transcode",
+            transcodeJobId: assetId,
+            transcodeJobStatus: "queued",
             sourceVerified: true,
             sourceMediaKind: mediaKind,
             actualSizeBytes: actualSize,
@@ -79,7 +103,7 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             reason: "Source upload verified before transcoding",
             metadata: { channelId, mediaKind, sizeBytes: actualSize },
           });
-          return Response.json({ assetId, status: "uploaded_pending_transcode", sourceVerified: true });
+          return Response.json({ assetId, status: "uploaded_pending_transcode", sourceVerified: true, transcodeJobId: assetId, transcodeJobStatus: "queued", processingWorker: "not_configured" });
         } catch (error) {
           return errorBody(error);
         }
