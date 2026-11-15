@@ -3,6 +3,12 @@ import { ApiError } from "../firebase-admin";
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
+
 function b64url(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -32,7 +38,7 @@ export async function signPlaybackToken(
     throw new ApiError(400, "STREAM_TOKEN_CLAIMS_INVALID", "Playback token claims are invalid.");
   }
   const payload = b64url(encoder.encode(JSON.stringify(claims)));
-  const signature = await crypto.subtle.sign("HMAC", await hmacKey(secret), encoder.encode(payload));
+  const signature = await crypto.subtle.sign("HMAC", await hmacKey(secret), toArrayBuffer(encoder.encode(payload)));
   return payload + "." + b64url(new Uint8Array(signature));
 }
 
@@ -48,7 +54,7 @@ export async function verifyPlaybackToken(
   let claims: PlaybackTokenClaims;
   try { claims = JSON.parse(decoder.decode(unb64url(parts[0]!))) as PlaybackTokenClaims; }
   catch { throw new ApiError(401, "STREAM_TOKEN_INVALID", "The playback token is invalid."); }
-  const valid = await crypto.subtle.verify("HMAC", await hmacKey(secret), unb64url(parts[1]!), encoder.encode(parts[0]!));
+  const valid = await crypto.subtle.verify("HMAC", await hmacKey(secret), toArrayBuffer(unb64url(parts[1]!)), toArrayBuffer(encoder.encode(parts[0]!)));
   if (!valid || claims.sid !== expected.sid || claims.uid !== expected.uid || claims.path !== expected.path ||
       !Number.isSafeInteger(claims.exp) || claims.exp <= nowSeconds || claims.exp - claims.iat > 900) {
     throw new ApiError(401, "STREAM_TOKEN_INVALID", "The playback token is invalid or expired.");
