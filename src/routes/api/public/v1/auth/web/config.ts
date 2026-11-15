@@ -9,8 +9,11 @@ export const Route = createFileRoute("/api/public/v1/auth/web/config")({
       const recaptchaSiteKey = process.env["RECAPTCHA_ENTERPRISE_SITE_KEY"]?.trim()
         || process.env["recaptcha_enterprise_site_key"]?.trim()
         || "";
+      const firebaseWebAppId = process.env["FIREBASE_WEB_APP_ID"]?.trim()
+        || process.env["firebase_web_app_id"]?.trim()
+        || "";
       return Response.json(
-        { googleClientId: clientId, recaptchaSiteKey },
+        { googleClientId: clientId, recaptchaSiteKey, firebaseWebAppId },
         { headers: { "cache-control": "public, max-age=300" } },
       );
     },
