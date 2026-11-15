@@ -6,6 +6,7 @@ import { z } from "zod";
 import { ApiError, Firestore, getFirebaseProjectId } from "./firebase-admin";
 import { requireAppCheck } from "./firebase-app-check";
 import { verifyFirebaseIdToken, type VerifiedUser } from "./firebase-auth";
+import { assertAccountActive } from "./account-status";
 
 export function errorBody(error: unknown): Response {
   if (error instanceof ApiError) {
@@ -31,18 +32,19 @@ export async function requireUser(request: Request): Promise<VerifiedUser> {
     authorization.slice("Bearer ".length),
     getFirebaseProjectId(),
   );
-  if (user.emailVerified || !user.email) return user;
-
-  // Brevo OTP verification is the platform's email-verification authority.
-  // Keep the Firebase token signature/UID authoritative and bind the stored
-  // verification record to the exact email claim to prevent stale-email reuse.
+  // Read the profile for every authenticated request so account suspension,
+  // deletion and app-level email verification take effect immediately.
   const fs = await Firestore.create();
   const profile = await fs.getDoc("users/" + user.uid);
+  assertAccountActive(profile);
+
+  // Brevo OTP verification is accepted only while bound to the exact current
+  // Firebase email. Firebase token signature and UID remain authoritative.
   const storedEmail = typeof profile?.["email"] === "string"
     ? (profile["email"] as string).trim().toLowerCase()
     : "";
   const verifiedEmail = typeof user.email === "string" ? user.email.trim().toLowerCase() : "";
-  if (profile?.["appEmailVerified"] === true && storedEmail === verifiedEmail) {
+  if (!user.emailVerified && user.email && profile?.["appEmailVerified"] === true && storedEmail === verifiedEmail) {
     return { ...user, emailVerified: true };
   }
   return user;
