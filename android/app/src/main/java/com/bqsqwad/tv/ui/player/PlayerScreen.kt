@@ -46,14 +46,15 @@ fun PlayerScreen(channelId:String,onExit:()->Unit,onTopUp:()->Unit={}) {
  var playing by remember{mutableStateOf(false)};var position by remember{mutableLongStateOf(0L)};var duration by remember{mutableLongStateOf(0L)}
  var fullscreen by remember{mutableStateOf(false)};var heartbeatSequence by remember{mutableLongStateOf(0L)}
  var localElapsed by remember{mutableLongStateOf(0L)};var showTopUp by remember{mutableStateOf(false)}
- val player=remember(session?.playbackUrl){
-  ExoPlayer.Builder(context).build().apply{
-   playWhenReady=true
-   session?.playbackUrl?.let{url->
-    val mime=if(url.contains(".mpd",true))MimeTypes.APPLICATION_MPD else MimeTypes.APPLICATION_M3U8
-    setMediaItem(MediaItem.Builder().setUri(url).setMimeType(mime).build());prepare()
-   }
-  }
+ val player=remember { ExoPlayer.Builder(context).build().apply { playWhenReady=true } }
+ LaunchedEffect(session?.playbackUrl){
+  val url=session?.playbackUrl ?: return@LaunchedEffect
+  val resumeAt=player.currentPosition.coerceAtLeast(0L)
+  val resumePlayback=if(player.mediaItemCount==0) true else player.playWhenReady
+  val mime=if(url.contains(".mpd",true))MimeTypes.APPLICATION_MPD else MimeTypes.APPLICATION_M3U8
+  player.setMediaItem(MediaItem.Builder().setUri(url).setMimeType(mime).build(),resumeAt)
+  player.prepare()
+  player.playWhenReady=resumePlayback
  }
  LaunchedEffect(channelId){
   runCatching{repo.start(context,channelId)}.onSuccess{session=it;error=null}.onFailure{error=it.localizedMessage?: "Could not start a secure viewing session."}
@@ -72,6 +73,18 @@ fun PlayerScreen(channelId:String,onExit:()->Unit,onTopUp:()->Unit={}) {
  }
  LaunchedEffect(player){
   while(isActive){position=player.currentPosition.coerceAtLeast(0L);duration=player.duration.coerceAtLeast(0L);delay(500)}
+ }
+ LaunchedEffect(session?.sessionId){
+  val active=session ?: return@LaunchedEffect
+  while(isActive){
+   delay(10*60*1000L)
+   runCatching{repo.refresh(active.sessionId)}.onSuccess{refreshed->
+    session=session?.copy(playbackUrl=refreshed.playbackUrl)
+   }.onFailure{
+    player.pause()
+    error="Secure playback authorization could not be renewed. Playback has been paused."
+   }
+  }
  }
  LaunchedEffect(session?.sessionId){
   val active=session ?: return@LaunchedEffect

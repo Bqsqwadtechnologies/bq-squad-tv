@@ -29,8 +29,9 @@ class SessionRepository {
   val nonce=api.integrityChallenge(auth).nonce
   val integrity=IntegrityManagerFactory.create(context)
    .requestIntegrityToken(IntegrityTokenRequest.builder().setNonce(nonce).build()).awaitResult().token()
-  return api.start(auth,StartSessionRequest(channelId,integrity,UUID.randomUUID().toString()))
+  return api.start(auth,StartSessionRequest(channelId,integrity,nonce,UUID.randomUUID().toString(),"android"))
  }
  suspend fun heartbeat(sessionId:String,sequence:Long,playbackState:String,playbackPositionMs:Long)=api.heartbeat(bearer(),sessionId,HeartbeatRequest(sequence,playbackState,playbackPositionMs))
+ suspend fun refresh(sessionId:String)=api.refresh(bearer(),sessionId)
  suspend fun end(sessionId:String)=api.end(bearer(),sessionId)
 }
