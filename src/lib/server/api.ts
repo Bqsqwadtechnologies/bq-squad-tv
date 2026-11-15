@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import { ApiError, Firestore, getFirebaseProjectId } from "./firebase-admin";
+import { requireAppCheck } from "./firebase-app-check";
 import { verifyFirebaseIdToken, type VerifiedUser } from "./firebase-auth";
 
 export function errorBody(error: unknown): Response {
@@ -21,6 +22,7 @@ export function errorBody(error: unknown): Response {
 }
 
 export async function requireUser(request: Request): Promise<VerifiedUser> {
+  await requireAppCheck(request);
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ")) {
     throw new ApiError(401, "UNAUTHENTICATED", "A Firebase sign-in token is required.");
