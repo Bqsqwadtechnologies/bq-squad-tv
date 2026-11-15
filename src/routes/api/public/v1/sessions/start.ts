@@ -164,6 +164,11 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           const nowIso = now.toISOString();
           const sessionId = crypto.randomUUID().replace(/-/g, "");
           const playbackUrl = await makePlaybackUrl(request.url, sessionId, user.uid, storagePath);
+          const activeSessionsPath = "activeSessions/" + user.uid;
+          const configuredSessionLimit = integer(pricing["maxConcurrentSessions"]);
+          const maxConcurrentSessions = configuredSessionLimit !== null && configuredSessionLimit >= 1 && configuredSessionLimit <= 5
+            ? configuredSessionLimit
+            : 2;
           const sessionFields = {
             uid: user.uid, channelId: body.channelId, contentAssetId: assetId,
             producerUid, producerShareBps: shareBps, deliveryMode: "bq_hosted",
@@ -174,13 +179,39 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             sessionTotalMinor: 0, walletBalanceMinor: balanceMinor,
             pricingVersion: pricing.version, licenseValidUntil: rights?.["validUntil"] ?? null,
           };
-          await fs.transact([idempotencyPath], docs => {
+          await fs.transact([idempotencyPath, activeSessionsPath], docs => {
             if (docs[0]) throw new ApiError(409, "IDEMPOTENCY_KEY_ALREADY_USED", "This session request has already been used.");
+            const activeSessionDoc = docs[1] ?? {};
+            const rawSessions = activeSessionDoc["sessions"];
+            const existingSessions = rawSessions && typeof rawSessions === "object" && !Array.isArray(rawSessions)
+              ? rawSessions as Record<string, unknown>
+              : {};
+            const nowMs = now.getTime();
+            const liveSessions = Object.fromEntries(
+              Object.entries(existingSessions).filter(([, expiresAt]) =>
+                typeof expiresAt === "number" && Number.isSafeInteger(expiresAt) && expiresAt > nowMs,
+              ),
+            );
+            if (Object.keys(liveSessions).length >= maxConcurrentSessions) {
+              throw new ApiError(
+                409,
+                "CONCURRENT_SESSION_LIMIT",
+                "Your account is already using the maximum number of concurrent playback sessions.",
+              );
+            }
+            liveSessions[sessionId] = nowMs + 60_000;
             return {
               result: undefined,
               writes: [
                 { update: { name: fs.docName("sessions/" + sessionId), fields: encodeFields(sessionFields) }, currentDocument: { exists: false } },
                 { update: { name: fs.docName(idempotencyPath), fields: encodeFields({ uid: user.uid, sessionId, createdAt: nowIso }) }, currentDocument: { exists: false } },
+                {
+                  update: {
+                    name: fs.docName(activeSessionsPath),
+                    fields: encodeFields({ sessions: liveSessions, updatedAt: nowIso }),
+                  },
+                  updateMask: { fieldPaths: ["sessions", "updatedAt"] },
+                },
               ],
             };
           });
