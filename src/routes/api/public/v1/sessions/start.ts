@@ -8,6 +8,12 @@ import { verifyPlayIntegrityToken } from "@/lib/server/play-integrity";
 import { getPricingConfig, requireMinorUnitAmount } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSafeStoragePath, signPlaybackToken } from "@/lib/server/storage/security";
+import {
+  readWebRefreshCookie,
+  refreshFirebaseWebSession,
+  requireSameOrigin,
+  webRefreshCookie,
+} from "@/lib/server/web-session";
 
 function integer(value: unknown): number | null {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null;
@@ -43,6 +49,22 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           const user = await requireUser(request);
           const body = await parseBody(request, bodySchema);
           const fs = await Firestore.create();
+          let rotatedWebCookie: string | null = null;
+          if (body.clientPlatform === "web") {
+            requireSameOrigin(request);
+            const refreshToken = readWebRefreshCookie(request);
+            if (!refreshToken) {
+              throw new ApiError(401, "WEB_SESSION_REQUIRED", "A secure website session is required for web playback.");
+            }
+            const webSession = await refreshFirebaseWebSession(refreshToken);
+            if (webSession.uid !== user.uid) {
+              throw new ApiError(401, "WEB_SESSION_MISMATCH", "The website session does not match the signed-in account.");
+            }
+            rotatedWebCookie = webRefreshCookie(webSession.refreshToken);
+          }
+          const responseHeaders = rotatedWebCookie
+            ? { "set-cookie": rotatedWebCookie, "cache-control": "no-store", pragma: "no-cache" }
+            : undefined;
           await enforceRateLimit(fs, "session-start:" + user.uid, { limit: 8, windowMs: 60_000 });
 
           const idempotencyDigest = await crypto.subtle.digest(
@@ -63,7 +85,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
                 walletBalanceMinor: balance, currency: "NGN",
                 timeRemainingSeconds: remainingSeconds(balance, rate),
                 sessionTotalMinor: integer(priorSession["sessionTotalMinor"]) ?? 0, active: true,
-              });
+              }, { headers: responseHeaders });
             }
             throw new ApiError(409, "IDEMPOTENCY_KEY_ALREADY_USED", "This session request has already been used.");
           }
@@ -167,7 +189,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             sessionId, playbackUrl, ratePerMinuteMinor, walletBalanceMinor: balanceMinor,
             currency: "NGN", timeRemainingSeconds: remainingSeconds(balanceMinor, ratePerMinuteMinor),
             sessionTotalMinor: 0, active: true,
-          }, { status: 201 });
+          }, { status: 201, headers: responseHeaders });
         } catch (error) {
           return errorBody(error);
         }
