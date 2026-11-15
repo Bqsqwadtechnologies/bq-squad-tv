@@ -6,6 +6,7 @@ import {
   getActiveWebIdToken,
   getWebAuthHeaders,
   restoreWebSession,
+  revokeAllWebSessions,
   sendEmailVerificationCode,
   sendPasswordResetEmail,
   signInWithEmailPassword,
@@ -286,6 +287,24 @@ function AccountPage() {
     }
   }
 
+  async function handleRevokeAllSessions() {
+    setBusy(true);
+    setMessage("");
+    try {
+      await revokeAllWebSessions();
+      setSignedIn(false);
+      setVerificationPending(false);
+      setAccountEmail("");
+      setPassword("");
+      setCode("");
+      setMessage("All active sessions have been revoked. Sign in again on this device.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not revoke your sessions.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleSignOut() {
     setBusy(true);
     try {
@@ -338,6 +357,14 @@ function AccountPage() {
                 </select>
                 <span className="mt-1 block text-xs text-blue-100/55">Wallet currency: {walletCurrency}. It cannot be changed after your wallet is established.</span>
               </label>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void handleRevokeAllSessions()}
+                className="mt-3 w-full rounded-xl border border-cyan-300/25 px-4 py-3 text-sm font-bold text-cyan-100 hover:bg-cyan-300/5 disabled:opacity-50"
+              >
+                {busy ? "Please wait…" : "Sign out on all devices"}
+              </button>
               <button
                 type="button"
                 disabled={busy}
