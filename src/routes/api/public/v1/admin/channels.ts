@@ -6,6 +6,7 @@ import { requireAdminModule } from "@/lib/server/roles";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getPricingConfig, requireMinorUnitAmount } from "@/lib/server/pricing";
 import { writeAuditLog } from "@/lib/server/audit";
+import { requireCurrency } from "@/lib/server/currency";
 
 const schema = z.object({
   title: z.string().trim().min(2).max(100),
@@ -15,8 +16,11 @@ const schema = z.object({
   contentRating: z.enum(["G", "PG", "13+", "16+", "18+"]).default("G"),
   adultOnly: z.boolean().default(false),
   paid: z.boolean().default(false),
+  currency: z.string().regex(/^[A-Z]{3}$/).default("USD"),
   ratePerMinuteMinor: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+  ratePerMinuteByCurrency: z.record(z.string().regex(/^[A-Z]{3}$/), z.number().int().positive().max(Number.MAX_SAFE_INTEGER)).optional(),
   minimumBalanceMinor: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+  minimumBalanceByCurrency: z.record(z.string().regex(/^[A-Z]{3}$/), z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER)).optional(),
   reason: z.string().trim().min(3).max(1000),
 }).superRefine((value, context) => {
   if (value.adultOnly && value.contentRating !== "18+") {
@@ -25,11 +29,12 @@ const schema = z.object({
   if (!value.adultOnly && value.contentRating === "18+") {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ["adultOnly"], message: "An 18+ channel must be explicitly marked adult-only." });
   }
-  if (value.paid && (!Number.isSafeInteger(value.ratePerMinuteMinor) || (value.ratePerMinuteMinor ?? 0) < 1)) {
-    context.addIssue({ code: z.ZodIssueCode.custom, path: ["ratePerMinuteMinor"], message: "Paid channels require a positive per-minute price in minor currency units." });
+  const hasCurrencyRates = Boolean(value.ratePerMinuteByCurrency && Object.keys(value.ratePerMinuteByCurrency).length > 0);
+  if (value.paid && !hasCurrencyRates && (!Number.isSafeInteger(value.ratePerMinuteMinor) || (value.ratePerMinuteMinor ?? 0) < 1)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["ratePerMinuteMinor"], message: "Paid channels require a positive per-minute price or currency-specific prices." });
   }
-  if (!value.paid && value.ratePerMinuteMinor !== undefined && value.ratePerMinuteMinor !== 0) {
-    context.addIssue({ code: z.ZodIssueCode.custom, path: ["ratePerMinuteMinor"], message: "Free channels must have a zero price." });
+  if (!value.paid && ((value.ratePerMinuteMinor !== undefined && value.ratePerMinuteMinor !== 0) || hasCurrencyRates)) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["ratePerMinuteMinor"], message: "Free channels must not have paid per-minute prices." });
   }
 });
 
@@ -51,10 +56,14 @@ export const Route = createFileRoute("/api/public/v1/admin/channels")({
           await requireAdminModule(fs, user, "channels");
           await enforceRateLimit(fs, "platform-channel-create:" + user.uid, { limit: 30, windowMs: 60 * 60_000 });
           const pricing = await getPricingConfig(fs);
+          const currency = requireCurrency(body.currency);
+          const ratePerMinuteByCurrency = body.paid ? (body.ratePerMinuteByCurrency ?? {}) : {};
           const ratePerMinuteMinor = body.paid
-            ? requireMinorUnitAmount(body.ratePerMinuteMinor, "ratePerMinuteMinor")
+            ? requireMinorUnitAmount(body.ratePerMinuteMinor ?? ratePerMinuteByCurrency[currency], "ratePerMinuteMinor")
             : 0;
+          const minimumBalanceByCurrency = body.minimumBalanceByCurrency ?? {};
           const minimumBalanceMinor = body.minimumBalanceMinor ??
+            minimumBalanceByCurrency[currency] ??
             (body.paid ? requireMinorUnitAmount(pricing["minimumSessionBalanceMinor"] ?? 0, "minimumSessionBalanceMinor") : 0);
 
           let channelId = "";
@@ -73,8 +82,11 @@ export const Route = createFileRoute("/api/public/v1/admin/channels")({
               contentRating: body.contentRating,
               adultOnly: body.adultOnly,
               paid: body.paid,
+              currency,
               ratePerMinuteMinor,
+              ratePerMinuteByCurrency,
               minimumBalanceMinor,
+              minimumBalanceByCurrency,
               producerShareBps: 0,
               published: false,
               status: "DRAFT",
@@ -113,7 +125,9 @@ export const Route = createFileRoute("/api/public/v1/admin/channels")({
               paid: body.paid,
               adultOnly: body.adultOnly,
               contentRating: body.contentRating,
+              currency,
               ratePerMinuteMinor,
+              ratePerMinuteByCurrency,
             },
           });
           return Response.json({
@@ -122,6 +136,7 @@ export const Route = createFileRoute("/api/public/v1/admin/channels")({
             status: "DRAFT",
             published: false,
             paid: body.paid,
+            currency,
             adultOnly: body.adultOnly,
             contentRating: body.contentRating,
           }, { status: 201 });
