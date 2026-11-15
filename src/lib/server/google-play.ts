@@ -127,8 +127,19 @@ export async function consumeGooglePlayProduct(input: {
     headers: { authorization: "Bearer " + accessToken, "content-type": "application/json" },
     body: "{}",
   });
-  if (!response.ok && response.status !== 409) {
-    throw new ApiError(502, "PLAY_PURCHASE_CONSUME_FAILED", "Google Play could not finalize this wallet purchase. Retry verification to complete it.");
+  if (!response.ok) {
+    // Two concurrent verification retries can race to consume the same token.
+    // Confirm the provider state before deciding whether the retry failed.
+    const confirmation = await fetch(
+      "https://androidpublisher.googleapis.com/androidpublisher/v3/applications/" +
+        encodeURIComponent(input.packageName) + "/purchases/products/" + encodeURIComponent(input.productId) +
+        "/tokens/" + encodeURIComponent(input.purchaseToken),
+      { headers: { authorization: "Bearer " + accessToken } },
+    );
+    const state = confirmation.ok ? await confirmation.json() as Record<string, unknown> : null;
+    if (state?.["consumptionState"] !== 1) {
+      throw new ApiError(502, "PLAY_PURCHASE_CONSUME_FAILED", "Google Play could not finalize this wallet purchase. Retry verification to complete it.");
+    }
   }
 }
 
