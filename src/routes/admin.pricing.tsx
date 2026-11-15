@@ -13,6 +13,7 @@ type PricingConfig = {
   defaultRatePerMinuteMinor: number;
   minimumSessionBalanceMinor: number;
   defaultProducerShareBps: number;
+  maxConcurrentSessions?: number;
   walletTopups: Record<string, { amountMinor: number; creditMinor?: number }>;
   googlePlayProducts: Array<{ productId: string; title: string; description: string; credits: number; creditMinor: number; active: boolean }>;
 };
@@ -24,6 +25,7 @@ function AdminPricingPage() {
   const [rate, setRate] = useState("");
   const [minimum, setMinimum] = useState("");
   const [share, setShare] = useState("");
+  const [sessionLimit, setSessionLimit] = useState("2");
   const [topups, setTopups] = useState("");
   const [products, setProducts] = useState("");
   const [version, setVersion] = useState<number | null>(null);
@@ -41,6 +43,7 @@ function AdminPricingPage() {
     setRate(String(data.defaultRatePerMinuteMinor));
     setMinimum(String(data.minimumSessionBalanceMinor));
     setShare(String(data.defaultProducerShareBps));
+    setSessionLimit(String(data.maxConcurrentSessions ?? 2));
     setTopups(JSON.stringify(data.walletTopups ?? {}, null, 2));
     setProducts(JSON.stringify(data.googlePlayProducts ?? [], null, 2));
     setVersion(data.version ?? null);
@@ -76,6 +79,7 @@ function AdminPricingPage() {
         defaultRatePerMinuteMinor: Number(rate),
         minimumSessionBalanceMinor: Number(minimum),
         defaultProducerShareBps: Number(share),
+        maxConcurrentSessions: Number(sessionLimit),
         walletTopups,
         googlePlayProducts,
       };
@@ -119,10 +123,11 @@ function AdminPricingPage() {
         ) : (
           <form onSubmit={save} className="mt-9 grid gap-6 rounded-3xl border border-white/10 bg-[#07143d] p-6">
             <div className="flex items-center justify-between"><h2 className="text-xl font-bold">Pricing configuration</h2><span className="text-xs text-cyan-200">{version === null ? "Not configured" : `Version ${version}`}</span></div>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <label className="grid gap-2 text-sm text-blue-100/70">Default rate per minute (kobo)<input type="number" min="1" step="1" required value={rate} onChange={event => setRate(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
               <label className="grid gap-2 text-sm text-blue-100/70">Minimum session balance (kobo)<input type="number" min="0" step="1" required value={minimum} onChange={event => setMinimum(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
               <label className="grid gap-2 text-sm text-blue-100/70">Producer share (basis points)<input type="number" min="0" max="10000" step="1" required value={share} onChange={event => setShare(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
+              <label className="grid gap-2 text-sm text-blue-100/70">Concurrent playback sessions<input type="number" min="1" max="5" step="1" required value={sessionLimit} onChange={event => setSessionLimit(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /><span className="text-xs text-blue-100/45">1–5 devices/sessions per account; default 2.</span></label>
             </div>
             <label className="grid gap-2 text-sm text-blue-100/70">Website wallet packages — JSON object
               <textarea rows={7} required value={topups} onChange={event => setTopups(event.target.value)} placeholder='{"package_id":{"amountMinor":0,"creditMinor":0}}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
