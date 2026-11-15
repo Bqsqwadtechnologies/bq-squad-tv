@@ -37,9 +37,10 @@ export async function creditPaystackPayment(
       !Number.isSafeInteger(input.creditMinor) || input.creditMinor < 1) {
     throw new ApiError(400, "PAYMENT_AMOUNT_INVALID", "The verified payment amount is invalid.");
   }
+  if (!/^[A-Za-z0-9_-]{8,100}$/.test(input.reference)) throw new ApiError(400, "PAYMENT_REFERENCE_INVALID", "The payment reference is invalid.");
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input.reference));
   const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
-  const paymentPath = "payments/paystack_" + hash;
+  const paymentPath = "payments/paystack_" + input.reference;
   const walletPath = "wallets/" + input.uid;
   const ledgerPath = "ledger/paystack_" + hash;
   return fs.transact([paymentPath, walletPath, ledgerPath], docs => {
