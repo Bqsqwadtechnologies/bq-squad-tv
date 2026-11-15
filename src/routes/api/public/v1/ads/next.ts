@@ -20,6 +20,7 @@ export const Route = createFileRoute("/api/public/v1/ads/next")({
       const profile = await getUserProfile(fs, user.uid);
       const viewerCountry = request.headers.get("cf-ipcountry")?.trim().toUpperCase() ?? "";
       const provider = await fs.getDoc("adProviders/" + platform);
+      if (!provider || provider["enabled"] !== true) return Response.json(null);
       const campaigns = await fs.query("adCampaigns", {
         filters: [{ field: "status", op: "EQUAL", value: "ACTIVE" }],
         limit: 100,
