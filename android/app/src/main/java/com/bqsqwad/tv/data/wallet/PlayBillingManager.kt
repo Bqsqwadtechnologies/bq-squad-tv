@@ -3,6 +3,8 @@ package com.bqsqwad.tv.data.wallet
 import android.app.Activity
 import android.content.Context
 import com.android.billingclient.api.*
+import com.google.firebase.auth.FirebaseAuth
+import java.security.MessageDigest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -87,8 +89,26 @@ class PlayBillingManager(
                 .newBuilder()
                 .setProductDetails(product)
                 .build()
-        val result = client.launchBillingFlow(activity, BillingFlowParams.newBuilder().setProductDetailsParamsList(listOf(params)).build())
-        if (result.responseCode != BillingClient.BillingResponseCode.OK)onMessage(result.debugMessage)
+        val uid = FirebaseAuth.getInstance().currentUser?.uid
+        if (uid.isNullOrBlank()) {
+            onMessage("Sign in before purchasing wallet credits.")
+            return
+        }
+        val obfuscatedAccountId =
+            MessageDigest
+                .getInstance("SHA-256")
+                .digest(uid.toByteArray(Charsets.UTF_8))
+                .joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
+        val flowParams =
+            BillingFlowParams
+                .newBuilder()
+                .setProductDetailsParamsList(listOf(params))
+                .setObfuscatedAccountId(obfuscatedAccountId)
+                .build()
+        val result = client.launchBillingFlow(activity, flowParams)
+        if (result.responseCode != BillingClient.BillingResponseCode.OK) {
+            onMessage(result.debugMessage)
+        }
     }
 
     fun restore() {
