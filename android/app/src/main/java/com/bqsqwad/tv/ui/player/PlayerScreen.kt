@@ -34,6 +34,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Locale
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.util.Currency
 import kotlin.math.max
 
 @Composable
@@ -60,6 +63,7 @@ fun PlayerScreen(
     var heartbeatSequence by remember { mutableLongStateOf(0L) }
     var localElapsed by remember { mutableLongStateOf(0L) }
     var showTopUp by remember { mutableStateOf(false) }
+    var retryCount by remember(channelId) { mutableIntStateOf(0) }
     val player = remember { ExoPlayer.Builder(context).build().apply { playWhenReady = true } }
     LaunchedEffect(session?.playbackUrl) {
         val url = session?.playbackUrl ?: return@LaunchedEffect
@@ -77,7 +81,7 @@ fun PlayerScreen(
         player.prepare()
         player.playWhenReady = resumePlayback
     }
-    LaunchedEffect(channelId) {
+    LaunchedEffect(channelId, retryCount) {
         runCatching { repo.start(context, channelId) }
             .onSuccess {
                 session = it
@@ -281,15 +285,19 @@ fun PlayerScreen(
                 },
             contentAlignment = androidx.compose.ui.Alignment.Center,
         ) {
-            if (session ==
-                null
-            ) {
+            if (session == null) {
                 Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
-                    CircularProgressIndicator()
+                    if (error == null) CircularProgressIndicator()
                     Text(
                         error ?: "Verifying account, age policy and stream rights…",
                         Modifier.padding(top = 12.dp),
                     )
+                    if (error != null) {
+                        Button(
+                            onClick = { error = null; retryCount++ },
+                            modifier = Modifier.padding(top = 12.dp),
+                        ) { Text("Retry secure connection") }
+                    }
                 }
             } else {
                 AndroidView(
@@ -478,7 +486,14 @@ fun PlayerScreen(
 private fun formatMoney(
     minor: Long,
     currency: String,
-): String = currency + " " + String.format(Locale.US, "%.2f", minor / 100.0)
+): String {
+    val fractionDigits = runCatching { Currency.getInstance(currency).defaultFractionDigits }
+        .getOrDefault(2)
+        .coerceAtLeast(0)
+    val amount = BigDecimal.valueOf(minor).movePointLeft(fractionDigits)
+        .setScale(fractionDigits, RoundingMode.DOWN)
+    return currency + " " + amount.toPlainString()
+}
 
 private fun reportedPlaybackState(player: ExoPlayer): String =
     when {
