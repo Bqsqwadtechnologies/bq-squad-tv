@@ -34,7 +34,7 @@ These endpoints are implemented in source. They are not considered production-re
 - `GET /v1/channels/{channelId}` — returns `{channel,schedule,replays}`; enforce rights, geo and age checks.
 
 ## Platform channel management
-- `POST /v1/admin/channels` — requires the Zilonia owner's protected identity or an explicitly delegated `channels` module permission. Creates an unpublished platform-owned channel with a randomly generated 12-digit numeric channel number, title, category, description, language, content rating, adult-only flag, free/paid setting and optional per-minute price. The channel begins in `DRAFT`; it cannot be played until content, rights, storage processing and publication checks pass. There is no total channel-count cap; request rate limiting protects the endpoint from abuse. Platform-owned channels have no producer revenue allocation.
+- `POST /v1/admin/channels` — requires the ZILLIONAIRE owner's protected identity or an explicitly delegated `channels` module permission. Creates an unpublished platform-owned channel with a randomly generated 12-digit numeric channel number, title, category, description, language, content rating, adult-only flag, free/paid setting and optional per-minute price. The channel begins in `DRAFT`; it cannot be played until content, rights, storage processing and publication checks pass. There is no total channel-count cap; request rate limiting protects the endpoint from abuse. Platform-owned channels have no producer revenue allocation.
 
 ## Channel schedules
 - `POST /v1/producer/channels/{channelId}/schedule` — requires the channel's `schedule.write` permission; creates or updates a programme using `programmeId?`, `title`, `description?`, `startsAt`, `endsAt`, `contentAssetId?` and `reason?`.
