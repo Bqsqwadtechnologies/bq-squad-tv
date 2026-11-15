@@ -15,17 +15,17 @@ const MAX_BYTES = 5 * 1024 * 1024 * 1024;
 const CHUNK_BYTES = 6 * 1024 * 1024;
 
 function encodeMetadata(value: string) {
-  return btoa(unescape(encodeURIComponent(value)));
+  // Storage upload metadata values are normalized ASCII strings.
+  return btoa(value);
 }
 
 async function tusUpload(file: File, endpoint: string, signature: string, path: string, onProgress: (value: number) => void) {
-  const metadataFields: Array<[string, string]> = [
-    ["bucketName", "bq-sqwad-source-media"],
-    ["objectName", path],
-    ["contentType", file.type],
-    ["cacheControl", "3600"],
-  ];
-  const metadata = metadataFields.map(([key, value]) => key + " " + encodeMetadata(value)).join(",");
+  const metadata = [
+    "bucketName " + encodeMetadata("bq-sqwad-source-media"),
+    "objectName " + encodeMetadata(path),
+    "contentType " + encodeMetadata(file.type),
+    "cacheControl " + encodeMetadata("3600"),
+  ].join(",");
   const created = await fetch(endpoint, {
     method: "POST",
     headers: {
