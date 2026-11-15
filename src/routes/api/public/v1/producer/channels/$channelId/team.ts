@@ -91,7 +91,7 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
             if (!targetUser || targetUser["status"] === "SUSPENDED" || targetUser["status"] === "DELETED") {
               throw new ApiError(404, "TEAM_USER_NOT_FOUND", "The selected account is unavailable.");
             }
-            const actorRole = activeRole(channel, actorMember, user.uid);
+            const actorRole = activeRole(channel, actorMember ?? null, user.uid);
             const actorPermissions = actorRole === "owner"
               ? [...CHANNEL_ROLE_TEMPLATES.owner]
               : Array.isArray(actorMember?.["permissions"])
@@ -154,7 +154,7 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
             const [channel, actorMember, targetMember] = docs;
             if (!channel) throw new ApiError(404, "CHANNEL_NOT_FOUND", "This channel does not exist.");
             if (channel["ownerUid"] === body.memberUid) throw new ApiError(403, "CHANNEL_OWNER_PROTECTED", "The channel owner cannot be removed from the team.");
-            const actorRole = activeRole(channel, actorMember, user.uid);
+            const actorRole = activeRole(channel, actorMember ?? null, user.uid);
             const actorPermissions = actorRole === "owner"
               ? [...CHANNEL_ROLE_TEMPLATES.owner]
               : Array.isArray(actorMember?.["permissions"])
