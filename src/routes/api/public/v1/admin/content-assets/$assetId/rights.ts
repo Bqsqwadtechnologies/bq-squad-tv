@@ -19,6 +19,9 @@ export const Route = createFileRoute("/api/public/v1/admin/content-assets/$asset
       const asset = await fs.getDoc("contentAssets/" + params.assetId);
       if (!asset || !asset["license"] || typeof asset["license"] !== "object") throw new ApiError(404, "ASSET_RIGHTS_NOT_FOUND", "No rights submission exists for this asset.");
       const license = asset["license"] as Record<string, unknown>;
+      if (body.approved && license["submittedBy"] === user.uid) {
+        throw new ApiError(403, "INDEPENDENT_REVIEW_REQUIRED", "A different authorized reviewer must approve the rights submission.");
+      }
       if (license["status"] !== "pending" || license["verificationStatus"] !== "pending") {
         throw new ApiError(409, "RIGHTS_ALREADY_REVIEWED", "This rights submission has already been reviewed.");
       }
