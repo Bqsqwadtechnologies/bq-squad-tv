@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/public/v1/admin/users/$uid/permission
             fs, actor.uid, actor.email, actor.customClaims, actor.emailVerified === true,
           );
           if (!actorAccess.isSuperAdmin) {
-            throw new ApiError(403, "OWNER_AUTHORITY_REQUIRED", "Only the protected Zilonia owner can delegate platform-control permissions.");
+            throw new ApiError(403, "OWNER_AUTHORITY_REQUIRED", "Only the protected ZILLIONAIRE owner can delegate platform-control permissions.");
           }
           if (uid === actor.uid) {
             throw new ApiError(403, "OWNER_ACCOUNT_PROTECTED", "The protected platform-owner account cannot be modified through delegated permissions.");
