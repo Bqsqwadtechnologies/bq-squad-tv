@@ -29,7 +29,7 @@ describe("concurrent playback session leases", () => {
 
   it("renews active leases and releases ended sessions", () => {
     const renewed = renewSessionLease({ sessionA: 15_000, stale: 1 }, "sessionA", 10_000);
-    expect(renewed.sessionA).toBe(10_000 + ACTIVE_SESSION_LEASE_MS);
+    expect(renewed["sessionA"]).toBe(10_000 + ACTIVE_SESSION_LEASE_MS);
     const released = releaseSessionLease(renewed, "sessionA", 11_000);
     expect(released).toEqual({});
   });
