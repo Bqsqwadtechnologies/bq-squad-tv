@@ -38,7 +38,10 @@ The API key must never be exposed to browser or Android clients. The backend gen
 |---|---|
 | `FIREBASE_SERVICE_ACCOUNT_JSON` | Full service-account JSON used for Firebase Admin and, when separately configured, Google Play verification. The backend mints separate OAuth tokens with the required API scopes. |
 | `ADMIN_EMAIL` | Owner/admin email address |
-| `GOOGLE_WEB_CLIENT_ID` or `web_client_id` | Public OAuth Web client ID used by Google sign-in on the website and Android. The website config endpoint accepts either environment name. |
+| `GOOGLE_WEB_CLIENT_ID` or `web_client_id` | Public OAuth Web client ID used by Google sign-in. The website config endpoint accepts either environment name; Android also needs it in local.properties or the build environment. |
+| `FIREBASE_WEB_APP_ID` or `firebase_web_app_id` | Public Firebase Web App ID from the web app registered in this same Firebase project; required for website App Check token exchange. |
+| `RECAPTCHA_ENTERPRISE_SITE_KEY` or `recaptcha_enterprise_site_key` | Public reCAPTCHA Enterprise site key configured for website Firebase App Check. |
+| `APP_CHECK_ENFORCED` | Keep `false` during setup. Set to `true` only after Android Play Integrity and website reCAPTCHA Enterprise App Check have been enabled and live-tested. |
 | `FIREBASE_WEB_CONFIG_JSON` | Firebase web client configuration JSON, only if the website is configured to retrieve its public Firebase client config from the backend |
 
 The Firebase Android SDK still requires the generated `google-services.json` file at `android/app/google-services.json`. That file contains client configuration and is not a private service-account key. It cannot be replaced by the Firebase Admin service-account JSON. Website Firebase client configuration is also public client configuration; keep access rules and authorization on the server.
