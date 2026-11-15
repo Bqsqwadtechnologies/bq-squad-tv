@@ -20,22 +20,25 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/rat
       if (!visibleAsset || visibleAsset["status"] !== "ready" || visibleAsset["contentStatus"] !== "published") {
         throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This published content is not available for rating.");
       }
-      const visibleChannel = typeof visibleAsset["channelId"] === "string"
-        ? await fs.getDoc("channels/" + visibleAsset["channelId"])
-        : null;
+      const channelId = typeof visibleAsset["channelId"] === "string" ? visibleAsset["channelId"] : "";
+      const visibleChannel = channelId ? await fs.getDoc("channels/" + channelId) : null;
       if (!visibleChannel || visibleChannel["published"] !== true) {
         throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This content's channel is not published.");
       }
-      requireAdultForContent(await getUserProfile(fs, user.uid), visibleChannel["adultOnly"]);
+      const viewerProfile = await getUserProfile(fs, user.uid);
+      requireAdultForContent(viewerProfile, visibleChannel["adultOnly"]);
       const ratingPath = "contentRatings/" + assetId + "_" + user.uid;
       const result = await fs.transact<{ ratingCount: number; averageStars: number; updated: boolean }>(
-        [ratingPath, assetPath],
+        [ratingPath, assetPath, "channels/" + channelId],
         docs => {
           const existing = docs[0];
           const asset = docs[1];
+          const channel = docs[2];
           if (!asset || asset["status"] !== "ready" || asset["contentStatus"] !== "published") {
             throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This published content is not available for rating.");
           }
+          if (!channel || channel["published"] !== true) throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This content's channel is not published.");
+          requireAdultForContent(viewerProfile, channel["adultOnly"]);
           const currentCount = typeof asset["ratingCount"] === "number" && Number.isSafeInteger(asset["ratingCount"]) && asset["ratingCount"] >= 0
             ? asset["ratingCount"] as number : 0;
           const currentTotal = typeof asset["ratingTotalStars"] === "number" && Number.isSafeInteger(asset["ratingTotalStars"]) && asset["ratingTotalStars"] >= 0
