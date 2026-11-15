@@ -33,23 +33,32 @@ These endpoints are implemented in source. They are not considered production-re
 
 ## Integrity and sessions
 - `GET /v1/security/integrity/challenge` — returns a fresh one-use `{nonce}`.
-- `POST /v1/sessions/start` — body `{channelId,integrityToken,idempotencyKey}`. Verify Play Integrity, auth, age, content rights, geo, wallet minimum and concurrent-device limit. Return `{sessionId,playbackUrl,ratePerMinuteMinor,walletBalanceMinor,currency,timeRemainingSeconds,sessionTotalMinor,active}`. Playback URL must be signed and short-lived.
+- `POST /v1/sessions/start` — body `{channelId,contentAssetId?,clientPlatform,integrityNonce?,integrityToken?,idempotencyKey}`. All requests require Firebase auth, age policy, content rights, geo/territory checks and wallet minimum. Android and Android TV require a fresh Play Integrity token plus a one-use challenge. Web requires a same-origin request and a matching HttpOnly web-session cookie. Return `{sessionId,playbackUrl,ratePerMinuteMinor,walletBalanceMinor,currency,timeRemainingSeconds,sessionTotalMinor,active}`. Playback URL must be signed and short-lived.
 - `POST /v1/sessions/{sessionId}/heartbeat` — body `{clientSequence,playbackState,playbackPositionMs}`. playbackState is one of playing, paused, buffering, idle or ended; playbackPositionMs is the Media3 media position. The server uses its own clock and bills only a completed interval where both consecutive player samples report playing, media position advanced, and advancement does not exceed server elapsed time. Paused, buffering, idle, ended, unchanged-position and stale-heartbeat intervals are not charged. Idempotency is session + sequence. Expected cadence: 15 seconds. Client-reported player telemetry is not cryptographic proof; verified Play Integrity and provider-side authorization/telemetry remain production requirements.
 - `POST /v1/sessions/{sessionId}/end` — close the session and revoke playback authorization. It does not charge an unconfirmed trailing interval after the last heartbeat; only completed playback-evidence intervals are billable.
-- Two missed heartbeats, zero balance, policy revocation or concurrent-session violation terminate the session server-side.
+- More than 45 seconds without a heartbeat or reaching the wallet/daily spend limit terminates the session server-side. A configurable concurrent-device cap is not yet implemented.
 
 ## Wallet and Google Play
 - `GET /v1/wallet` — `{balanceMinor,currency,dailySpendLimitMinor,spentTodayMinor}`.
 - `GET /v1/wallet/ledger?limit=25&cursor=` — `{items:[{id,description,amountMinor,createdAt,kind}],nextCursor}`. `limit` is 1–100 (default 25); `nextCursor` is opaque and may be null. The server filters by the authenticated user's `uid` and orders by `createdAt` plus document id, newest first.
 - `GET /v1/wallet/google-play/products` — `[{productId,title,credits,description}]`; IDs must match Play Console consumables.
-- `POST /v1/wallet/google-play/verify` — body `{productId,purchaseToken,orderId,packageName}`; verify Google Play Developer API, package, product, purchase state, quantity, refunds and idempotency before crediting. Return `{credited,balanceMinor,currency,message}`. Android consumes only after `credited=true`.
+- `POST /v1/wallet/google-play/verify` — body `{productId,purchaseToken,orderId,packageName}`; verify Google Play Developer API, package, configured product, purchase state, SHA-256 obfuscated Firebase account binding, supported quantity and idempotency before crediting. Return `{credited,processed,balanceMinor,currency,message}`. Android consumes only after `processed=true`, including a verified purchase already credited to the same account. Refund/revocation reconciliation remains a separate task.
 - Paystack initialization/webhooks are web-only. Android must not use Paystack for digital credits.
 
 ## Ads, push and producer
-- `GET /v1/ads/next?channelId=&slot=` — eligible ad or null after age, geo and frequency rules.
-- `POST /v1/ads/{adId}/events` — `{event,positionSeconds}`; event values: impression, quartile_25, quartile_50, quartile_75, complete, skip.
-- `POST /v1/devices/push-token` — `{token,platform:"android"}`.
-- `GET /v1/producer/mobile-summary` — `{approved,roleTags,channelCount,liveViewers,watchSeconds,earningsMinor,currency}`; enforce producer role on server.
+- `GET /v1/ads/next?platform=&channelId=&slot=` — eligible campaign creative or null. Current server filters by active status, platform, placement, dates and channel targeting, and blocks selected gambling categories. Full age, geography, frequency-cap and campaign-priority enforcement remains incomplete.
+- `POST /v1/ads/{adId}/events` — `{event,positionSeconds,platform,slot}`; event values: impression, start, quartile_25, quartile_50, quartile_75, complete, skip, click.
+- `POST /v1/devices/push-token` — `{token,platform:"android"|"web",deviceName?}`.
+- `GET /v1/producer/mobile-summary` — `{producerStatus,earningsBalanceMinor,earningsLifetimeMinor,currency,channelCount,publishedChannelCount,channels}`; enforce producer role on server.
+
+## Remaining Phase 2 security work
+
+- Configure and verify Firebase App Check for Android and website APIs. Play Integrity is currently enforced specifically by Android playback start; it is not a substitute for App Check across every API.
+- Add a configurable concurrent-device/session cap with atomic enforcement.
+- Add Google Play refund/revocation reconciliation and operational retry monitoring for failed consumption.
+- Add complete web wallet checkout UI and live Paystack test-mode verification.
+- Complete age, geography, frequency caps and priority rules for ad delivery.
+- Validate push-token ownership, invalid-token cleanup and delivery provider integration.
 
 ## Security
 Firebase clients must not write wallets, balances, ledgers, sessions, revenue allocations, producer earnings, payouts, roles or purchase verification outcomes. Firestore rules must default-deny sensitive collections; server uses Firebase Admin credentials stored only in Lovable Cloud. Never accept client-supplied price, balance, age eligibility, role, revenue split or elapsed session time.
