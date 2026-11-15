@@ -78,7 +78,7 @@ function GoogleSignInButton({
       script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
       script.defer = true;
-      script.dataset.googleIdentity = "true";
+      script.dataset["googleIdentity"] = "true";
       script.addEventListener("load", renderButton, { once: true });
       document.head.appendChild(script);
     }
