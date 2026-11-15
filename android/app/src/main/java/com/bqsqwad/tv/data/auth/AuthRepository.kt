@@ -128,10 +128,9 @@ class AuthRepository(
         dateOfBirth: String,
         parentalPin: String?,
     ): CompleteProfileResponse {
-        val countryCode =
-            Locale.getDefault().country
-                .takeIf { it.matches(Regex("[A-Za-z]{2}")) }
-                ?.uppercase(Locale.ROOT)
+        val country = Locale.getDefault().country
+        val countryCode: String? =
+            if (country.matches(Regex("[A-Za-z]{2}"))) country.uppercase(Locale.ROOT) else null
         return profileApi.completeProfile(
             currentBearerToken(),
             CompleteProfileRequest(
