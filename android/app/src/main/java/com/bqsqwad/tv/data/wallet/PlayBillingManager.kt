@@ -144,15 +144,21 @@ class PlayBillingManager(
                 scope.launch(Dispatchers.IO) {
                     runCatching { repository.verify(productId, purchase.purchaseToken, purchase.orderId) }
                         .onSuccess { verification ->
-                            if (verification.credited) {
+                            if (verification.processed) {
                                 val consume = ConsumeParams.newBuilder().setPurchaseToken(purchase.purchaseToken).build()
                                 client.consumeAsync(consume) { billingResult, _ ->
                                     if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                                        onMessage("Wallet credited successfully.")
+                                        onMessage(
+                                            if (verification.credited) {
+                                                "Wallet credited successfully."
+                                            } else {
+                                                "This purchase was already credited to your wallet."
+                                            },
+                                        )
                                         onWalletUpdated()
                                     } else {
                                         onMessage(
-                                            "Wallet was credited, but Google Play consumption needs retry: " + billingResult.debugMessage,
+                                            "The verified purchase is ready, but Google Play consumption needs retry: " + billingResult.debugMessage,
                                         )
                                     }
                                 }
