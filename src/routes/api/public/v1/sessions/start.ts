@@ -165,8 +165,12 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           if (paidPlayback && ratePerMinuteMinor < 1) {
             throw new ApiError(503, "CHANNEL_PRICE_INVALID", "This paid channel does not have a valid per-minute price.");
           }
+          const minimumBalances = pricing["minimumSessionBalanceByCurrency"];
+          const configuredMinimum = minimumBalances && typeof minimumBalances === "object"
+            ? (minimumBalances as Record<string, unknown>)[currency]
+            : undefined;
           const minimumBalanceMinor = paidPlayback
-            ? requireMinorUnitAmount(channel["minimumBalanceMinor"] ?? pricing["minimumSessionBalanceMinor"] ?? 100, "minimumBalanceMinor")
+            ? requireMinorUnitAmount(channel["minimumBalanceMinor"] ?? configuredMinimum ?? (currency === "NGN" ? pricing["minimumSessionBalanceMinor"] : 100), "minimumBalanceMinor")
             : 0;
           const balanceMinor = requireMinorUnitAmount(wallet.balanceMinor, "wallet balance");
           if (paidPlayback && balanceMinor < minimumBalanceMinor) {
