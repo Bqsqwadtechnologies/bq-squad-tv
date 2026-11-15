@@ -103,7 +103,7 @@ fun WalletScreen(onBack: () -> Unit) {
                 }) { Text(details.oneTimePurchaseOfferDetails?.formattedPrice ?: "Buy") }
             })
         }
-        TextButton(onClick = { manager::restore }) { Text("Restore / check previous purchases") }
+        TextButton(onClick = { manager.restore() }) { Text("Restore / check previous purchases") }
         message?.let { Text(it, color = MaterialTheme.colorScheme.secondary) }
         Spacer(Modifier.height(12.dp))
         Text("Recent activity", style = MaterialTheme.typography.titleLarge)
