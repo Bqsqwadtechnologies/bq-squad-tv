@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { ApiError, getFirebaseProjectId } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore, getFirebaseProjectId } from "@/lib/server/firebase-admin";
 import { requireAppCheck } from "@/lib/server/firebase-app-check";
 import { errorBody, parseBody } from "@/lib/server/api";
 import { verifyFirebaseIdToken } from "@/lib/server/firebase-auth";
-import { refreshFirebaseWebSession, requireSameOrigin, webRefreshCookie } from "@/lib/server/web-session";
+import { refreshFirebaseWebSession, registerWebRefreshSession, requireSameOrigin, webRefreshCookie } from "@/lib/server/web-session";
 
 const schema = z.object({
   idToken: z.string().min(100).max(8192),
@@ -23,6 +23,7 @@ export const Route = createFileRoute("/api/public/v1/auth/web/session")({
         if (session.uid !== initialUser.uid) {
           throw new ApiError(401, "WEB_SESSION_MISMATCH", "The sign-in session did not match this account.");
         }
+        await registerWebRefreshSession(await Firestore.create(), session.refreshToken, session.uid);
         return Response.json(
           { idToken: session.idToken, expiresInSeconds: session.expiresInSeconds },
           {
