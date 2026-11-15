@@ -14,7 +14,7 @@ Base URL: `API_BASE_URL` from Android local.properties. All routes use HTTPS and
 - `POST /v1/auth/email/verify-code` — bearer-authenticated; body `{code}`; consumes the code once and records application-level email verification against the authenticated UID and current email claim.
 - `POST /v1/auth/web/session` — same-origin only; body `{idToken,refreshToken}`; validates both credentials belong to the same Firebase UID, then places the rotated refresh token in an HttpOnly, Secure, SameSite=Lax cookie. The browser receives a short-lived ID token.
 - `POST /v1/auth/web/session/refresh` — same-origin only; rotates the refresh token cookie and returns a fresh short-lived ID token.
-- `POST /v1/auth/web/session/logout` — same-origin only; clears the browser refresh-token cookie.
+- `POST /v1/auth/web/session/logout` — same-origin only; revokes the server-tracked refresh-token session and clears the browser cookie. If Firestore revocation fails, the endpoint returns 503 while still clearing the local cookie.
 - `GET /v1/auth/web/me` — bearer-authenticated; returns the signed-in account identity and effective email-verification state.
 - `GET /v1/auth/web/config` — public configuration containing only the Google OAuth Web Client ID, never a client secret.
 - Website Google sign-in uses Google Identity Services and Firebase Identity Toolkit. The Google provider and authorized domains must be enabled in Firebase/Google Cloud.
@@ -56,7 +56,10 @@ These endpoints are implemented in source. They are not considered production-re
 ## Ads, push and producer
 - `GET /v1/ads/next?platform=&channelId=&slot=` — eligible campaign creative or null. The server filters active status, platform, placement, dates, channel targeting, viewer age eligibility, campaign age rating, restricted categories and configured territory codes. Under-18 or age-unknown profiles do not receive adult-rated or unrated campaigns. Frequency caps and campaign-priority enforcement remain incomplete.
 - `POST /v1/ads/{adId}/events` — `{event,positionSeconds,platform,slot}`; event values: impression, start, quartile_25, quartile_50, quartile_75, complete, skip, click.
-- `POST /v1/devices/push-token` — `{token,platform:"android"|"web",deviceName?}`.
+- `POST /v1/devices/push-token` — `{token,platform:"android"|"web",deviceName?}`; token is stored under the authenticated user's device collection.
+- `GET /v1/notifications` — authenticated user's latest 50 notification records; returns only that user's inbox.
+- `POST /v1/notifications/{notificationId}/read` — marks one of the authenticated user's own notifications as read.
+- `POST /v1/admin/notifications` — requires the Admin `notifications` module; sends a title/body and optional same-site deep link to up to 25 explicitly selected user UIDs. The UUID idempotency key prevents duplicate inbox entries for the same administrator/recipient request. FCM delivery requires the existing Firebase service account to have Firebase Cloud Messaging send permission.
 - `GET /v1/producer/mobile-summary` — `{producerStatus,earningsBalanceMinor,earningsLifetimeMinor,currency,channelCount,publishedChannelCount,channels}`; enforce producer role on server.
 
 ## Remaining Phase 2 security work
@@ -65,7 +68,7 @@ These endpoints are implemented in source. They are not considered production-re
 - Add Google Play refund/revocation reconciliation and operational retry monitoring for failed consumption.
 - Add complete web wallet checkout UI and live Paystack test-mode verification.
 - Complete age, geography, frequency caps and priority rules for ad delivery.
-- Validate push-token ownership, invalid-token cleanup and delivery provider integration.
+- Validate FCM delivery in the Firebase project, including service-account permission and Android notification-channel behavior; invalid unregistered device tokens are marked inactive.
 
 ## Security
 Firebase clients must not write wallets, balances, ledgers, sessions, revenue allocations, producer earnings, payouts, roles or purchase verification outcomes. Firestore rules must default-deny sensitive collections; server uses Firebase Admin credentials stored only in Lovable Cloud. Never accept client-supplied price, balance, age eligibility, role, revenue split or elapsed session time.
