@@ -6,6 +6,10 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import java.util.concurrent.TimeUnit
 
+/**
+ * Adds Play Integrity-backed Firebase App Check attestation to authenticated API calls.
+ * The server rollout flag remains disabled until the web and Android providers are registered.
+ */
 class FirebaseAppCheckInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val appCheckToken =
