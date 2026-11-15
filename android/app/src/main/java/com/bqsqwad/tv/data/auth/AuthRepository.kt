@@ -80,10 +80,11 @@ class AuthRepository(
 
     suspend fun verifyEmailCode(code: String): Boolean {
         require(Regex("^\\d{6}$").matches(code)) { "Enter the six-digit code from your email." }
-        val result = profileApi.verifyEmailCode(
-            currentBearerToken(),
-            VerifyEmailOtpRequest(code),
-        )
+        val result =
+            profileApi.verifyEmailCode(
+                currentBearerToken(),
+                VerifyEmailOtpRequest(code),
+            )
         return result.verified
     }
 
