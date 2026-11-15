@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
-import { errorBody, parseBody, requireUser } from "@/lib/server/api";
+import { errorBody, getUserProfile, parseBody, requireUser } from "@/lib/server/api";
+import { isAdSuitableForViewer } from "@/lib/server/ads-policy";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 
 const schema = z.object({
@@ -20,7 +21,22 @@ export const Route = createFileRoute("/api/public/v1/ads/$adId/events")({
       const fs = await Firestore.create();
       await enforceRateLimit(fs, "ad-event:" + user.uid, { limit: 120, windowMs: 60_000 });
       const campaign = await fs.getDoc("adCampaigns/" + params.adId);
-      if (!campaign || campaign["status"] !== "ACTIVE") throw new ApiError(404, "AD_NOT_FOUND", "This advertisement is unavailable.");
+      if (!campaign || campaign["status"] !== "ACTIVE") {
+        throw new ApiError(404, "AD_NOT_FOUND", "This advertisement is unavailable.");
+      }
+      if (
+        !Array.isArray(campaign["platforms"]) ||
+        !campaign["platforms"].includes(body.platform) ||
+        !Array.isArray(campaign["placements"]) ||
+        !campaign["placements"].includes(body.slot)
+      ) {
+        throw new ApiError(403, "AD_PLACEMENT_MISMATCH", "This advertisement is not configured for the reported platform or placement.");
+      }
+      const profile = await getUserProfile(fs, user.uid);
+      const viewerCountry = request.headers.get("cf-ipcountry")?.trim().toUpperCase() ?? "";
+      if (!isAdSuitableForViewer(campaign, profile.adultEligible, viewerCountry)) {
+        throw new ApiError(403, "AD_NOT_ELIGIBLE", "This advertisement is not eligible for this viewer.");
+      }
       const eventId = crypto.randomUUID();
       await fs.setDoc("adEvents/" + eventId, {
         adId: params.adId, campaignId: campaign["campaignId"] ?? params.adId,
