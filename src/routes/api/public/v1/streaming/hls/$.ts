@@ -3,7 +3,7 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody } from "@/lib/server/api";
 import { assertContentPlaybackRights } from "@/lib/server/content-rights";
 import { isSafeStoragePath, redactSensitiveText, signPlaybackToken, verifyPlaybackToken } from "@/lib/server/storage/security";
-import { resolveHlsReference, rewriteHlsPlaylist } from "@/lib/server/streaming/hls-playlist";
+import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
 
 function sessionId(value: string | null): string {
   if (!value || !/^[A-Za-z0-9_-]{1,100}$/.test(value)) {

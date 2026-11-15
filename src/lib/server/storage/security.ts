@@ -56,7 +56,9 @@ export async function verifyPlaybackToken(
   catch { throw new ApiError(401, "STREAM_TOKEN_INVALID", "The playback token is invalid."); }
   const valid = await crypto.subtle.verify("HMAC", await hmacKey(secret), toArrayBuffer(unb64url(parts[1]!)), toArrayBuffer(encoder.encode(parts[0]!)));
   if (!valid || claims.sid !== expected.sid || claims.uid !== expected.uid || claims.path !== expected.path ||
-      !Number.isSafeInteger(claims.exp) || claims.exp <= nowSeconds || claims.exp - claims.iat > 900) {
+      !Number.isSafeInteger(claims.iat) || claims.iat > nowSeconds + 60 ||
+      !Number.isSafeInteger(claims.exp) || claims.exp <= nowSeconds ||
+      claims.exp <= claims.iat || claims.exp - claims.iat > 900) {
     throw new ApiError(401, "STREAM_TOKEN_INVALID", "The playback token is invalid or expired.");
   }
   return claims;

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, getUserProfile, getWallet, parseBody, requireAdultForContent, requireUser } from "@/lib/server/api";
 import { assertContentPlaybackRights, type PlaybackPlatform } from "@/lib/server/content-rights";
 import { getPricingConfig, requireMinorUnitAmount } from "@/lib/server/pricing";
@@ -12,10 +12,6 @@ const bodySchema = z.object({
   contentAssetId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/).optional(),
   clientPlatform: z.enum(["android", "web", "android_tv"]),
 });
-
-function integer(value: unknown): number | null {
-  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : null;
-}
 
 export const Route = createFileRoute("/api/public/v1/sessions/start")({
   server: {
@@ -78,7 +74,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             "minimumBalanceMinor",
           );
           const wallet = await getWallet(fs, user.uid);
-          if (wallet.balanceMinor < minimumBalanceMinor) {
+          const balanceMinor = requireMinorUnitAmount(wallet.balanceMinor, "wallet balance");
+          if (balanceMinor < minimumBalanceMinor) {
             throw new ApiError(402, "INSUFFICIENT_FUNDS", "Your wallet balance is too low to start this channel.");
           }
           if (wallet.dailySpendLimitMinor !== null && wallet.spentTodayMinor >= wallet.dailySpendLimitMinor) {
@@ -138,7 +135,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             expiresInSeconds: 300,
             ratePerMinuteMinor,
             currency: "NGN",
-            walletBalanceMinor: wallet.balanceMinor,
+            walletBalanceMinor: balanceMinor,
           }, { status: 201 });
         } catch (error) {
           return errorBody(error);
