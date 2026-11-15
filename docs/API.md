@@ -102,3 +102,7 @@ Firebase clients must not write wallets, balances, ledgers, sessions, revenue al
 - `POST /v1/content-assets/{assetId}/comments` — submits a plain-text comment for moderation. New comments are not public until approved.
 - `POST /v1/admin/content-comments/{commentId}/moderate` — requires the delegated `moderation` module and records approval/rejection with an audit entry. A reviewer cannot approve their own comment.
 - There is deliberately no viewer-to-viewer direct-message endpoint. Comments are public content discussion, not private messaging.
+
+## Featured home content
+- `POST /v1/admin/content-assets/{assetId}/feature` — requires the delegated `content` module. ZILLIONAIRE operators can feature/unfeature only published, ready assets whose channel is published, and assign a display rank. Every change is audited.
+- `GET /v1/catalog/home` — retains the existing channel sections and adds `featuredContent`, ranked by the configured feature rank and filtered through the viewer's channel visibility/age eligibility. Each item includes rating aggregate data where available; private storage paths are never exposed.
