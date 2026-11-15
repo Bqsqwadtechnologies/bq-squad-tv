@@ -2,8 +2,8 @@ package com.bqsqwad.tv.data.catalog
 import android.content.Context
 import androidx.room.Room
 import com.bqsqwad.tv.BuildConfig
-import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.bqsqwad.tv.data.auth.awaitResult
+import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.bqsqwad.tv.data.cache.BqTvDatabase
 import com.bqsqwad.tv.data.cache.CachedChannel
 import com.google.firebase.auth.FirebaseAuth
