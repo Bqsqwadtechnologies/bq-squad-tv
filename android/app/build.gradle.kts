@@ -12,11 +12,11 @@ plugins {
 
 val localProperties =
     Properties().apply {
-    val propertiesFile = rootProject.file("local.properties")
-    if (propertiesFile.exists()) {
-        propertiesFile.inputStream().use { load(it) }
+        val propertiesFile = rootProject.file("local.properties")
+        if (propertiesFile.exists()) {
+            propertiesFile.inputStream().use { load(it) }
+        }
     }
-}
 
 fun quoted(
     name: String,
@@ -67,14 +67,14 @@ android {
             )
             signingConfig =
                 signingConfigs.create("release") {
-                val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
-                if (!keystorePath.isNullOrBlank()) {
-                    storeFile = file(keystorePath)
-                    storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
-                    keyAlias = System.getenv("ANDROID_KEY_ALIAS")
-                    keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+                    val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+                    if (!keystorePath.isNullOrBlank()) {
+                        storeFile = file(keystorePath)
+                        storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                        keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                        keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+                    }
                 }
-            }
         }
     }
 
@@ -165,6 +165,7 @@ tasks.register("verifyReleaseFirebaseConfig") {
 tasks
     .matching {
         it.name.contains("Release", ignoreCase = true) && it.name.startsWith("pre")
-    }.configureEach {
-    dependsOn("verifyReleaseFirebaseConfig")
-}
+    }
+    .configureEach {
+        dependsOn("verifyReleaseFirebaseConfig")
+    }
