@@ -59,7 +59,7 @@ export const Route = createFileRoute("/api/public/v1/admin/channels")({
           const currency = requireCurrency(body.currency);
           const ratePerMinuteByCurrency = body.paid ? (body.ratePerMinuteByCurrency ?? {}) : {};
           const ratePerMinuteMinor = body.paid
-            ? requireMinorUnitAmount(body.ratePerMinuteMinor ?? ratePerMinuteByCurrency[currency], "ratePerMinuteMinor")
+            ? requireMinorUnitAmount(body.ratePerMinuteMinor ?? ratePerMinuteByCurrency[currency] ?? 0, "ratePerMinuteMinor")
             : 0;
           const minimumBalanceByCurrency = body.minimumBalanceByCurrency ?? {};
           const minimumBalanceMinor = body.minimumBalanceMinor ??
