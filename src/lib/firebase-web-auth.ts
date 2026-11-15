@@ -165,6 +165,34 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
   }
 }
 
+export async function signInWithGoogleCredential(
+  googleIdToken: string,
+): Promise<{ idToken: string; email: string }> {
+  const postBody = new URLSearchParams({
+    id_token: googleIdToken,
+    providerId: "google.com",
+  }).toString();
+  const response = await fetch(
+    `https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${firebaseApiKey}`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        postBody,
+        requestUri: window.location.origin,
+        returnSecureToken: true,
+        returnIdpCredential: true,
+      }),
+    },
+  );
+  const result = await response.json() as FirebaseAuthResponse;
+  if (!response.ok || !result.idToken || !result.refreshToken) {
+    throw new Error("Google sign-in could not be completed. Check that Google is enabled in Firebase Authentication.");
+  }
+  const idToken = await establishWebSession(result.idToken, result.refreshToken);
+  return { idToken, email: result.email ?? "" };
+}
+
 export async function getWebAccount(): Promise<{
   uid: string;
   email: string | null;
