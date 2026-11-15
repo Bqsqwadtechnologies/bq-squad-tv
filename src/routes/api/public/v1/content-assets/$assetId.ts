@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
-import { errorBody, getUserProfile, requireAdultForContent, requireUser } from "@/lib/server/api";
+import { errorBody, getUserProfile, requireUser } from "@/lib/server/api";
+import { assertContentAgeEligibility } from "@/lib/server/content-rating";
 
 export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
   server: {
@@ -23,7 +24,11 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
             throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This content's channel is not published.");
           }
           const profile = await getUserProfile(fs, user.uid);
-          requireAdultForContent(profile, channel["adultOnly"] === true || asset["adultOnly"] === true);
+          assertContentAgeEligibility(
+            profile.adultEligible,
+            channel["adultOnly"] === true || asset["adultOnly"] === true,
+            asset["contentRating"] ?? channel["contentRating"],
+          );
           const license = asset["license"] && typeof asset["license"] === "object"
             ? asset["license"] as Record<string, unknown> : {};
           const now = Date.now();
