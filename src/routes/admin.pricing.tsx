@@ -159,7 +159,7 @@ function AdminPricingPage() {
             <label className="grid gap-2 text-sm text-blue-100/70">Google Play products — JSON array
               <textarea rows={7} required value={products} onChange={event => setProducts(event.target.value)} placeholder='[{"productId":"your_product_id","title":"Title","description":"Description","credits":1,"creditMinorByCurrency":{"USD":499,"NGN":50000},"active":true}]' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <p className="text-xs leading-5 text-blue-100/45">Enter amounts in each currency's minor units. For Google Play, configure creditMinorByCurrency for every wallet currency you want to support; Play displays the localized store price. Use exact product IDs from Play Console. Saving creates a new audited pricing version.</p>
+            <p className="text-xs leading-5 text-blue-100/45">Enter amounts in each currency's minor units. Paystack's XOF API amount is configured as whole XOF multiplied by 100. For Google Play, configure creditMinorByCurrency for every wallet currency you want to support; Play displays the localized store price. Use exact product IDs from Play Console. Saving creates a new audited pricing version.</p>
             {error ? <p role="alert" className="text-sm text-rose-300">{error}</p> : null}
             {message ? <p role="status" className="text-sm text-cyan-200">{message}</p> : null}
             <button disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-5 py-3 font-extrabold text-[#031039] disabled:opacity-60">{busy ? <LoaderCircle className="animate-spin" size={17} /> : null} Save pricing version</button>
