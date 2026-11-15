@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
-import { errorBody, parseBody, requireUser } from "@/lib/server/api";
+import { errorBody, getUserProfile, parseBody, requireAdultForContent, requireUser } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 
 const schema = z.object({ body: z.string().trim().min(2).max(1500) });
@@ -10,6 +10,7 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/com
   server: { handlers: {
     GET: async ({ request, params }) => {
       try {
+        const user = await requireUser(request);
         const assetId = params.assetId;
         if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId)) throw new ApiError(400, "ASSET_ID_INVALID", "The content identifier is invalid.");
         const fs = await Firestore.create();
@@ -17,6 +18,9 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/com
         if (!asset || asset["status"] !== "ready" || asset["contentStatus"] !== "published") {
           throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This published content is not available.");
         }
+        const channel = typeof asset["channelId"] === "string" ? await fs.getDoc("channels/" + asset["channelId"]) : null;
+        if (!channel || channel["published"] !== true) throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This content's channel is not published.");
+        requireAdultForContent(await getUserProfile(fs, user.uid), channel["adultOnly"]);
         const comments = await fs.query("contentComments", {
           filters: [
             { field: "assetId", op: "EQUAL", value: assetId },
@@ -54,6 +58,9 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/com
         if (!asset || asset["status"] !== "ready" || asset["contentStatus"] !== "published") {
           throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This published content is not available for commenting.");
         }
+        const channel = typeof asset["channelId"] === "string" ? await fs.getDoc("channels/" + asset["channelId"]) : null;
+        if (!channel || channel["published"] !== true) throw new ApiError(404, "CONTENT_NOT_AVAILABLE", "This content's channel is not published.");
+        requireAdultForContent(await getUserProfile(fs, user.uid), channel["adultOnly"]);
         const profile = await fs.getDoc("users/" + user.uid);
         const viewerNumber = typeof profile?.["userNumber"] === "string" && /^[0-9]{6,20}$/.test(profile["userNumber"])
           ? profile["userNumber"] : "Viewer";
