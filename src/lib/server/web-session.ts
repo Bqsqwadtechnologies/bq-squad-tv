@@ -1,7 +1,6 @@
-import { ApiError } from "./firebase-admin";
 import { firebaseApiKey } from "../firebase-config";
 import { verifyFirebaseIdToken } from "./firebase-auth";
-import { getFirebaseProjectId } from "./firebase-admin";
+import { ApiError, getFirebaseProjectId } from "./firebase-admin";
 
 export const WEB_REFRESH_COOKIE = "__Host-bq_sqwad_refresh";
 const COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
@@ -69,7 +68,11 @@ export function readWebRefreshCookie(request: Request): string | null {
     if (separator < 0) continue;
     const name = item.slice(0, separator).trim();
     if (name !== WEB_REFRESH_COOKIE) continue;
-    return decodeURIComponent(item.slice(separator + 1).trim());
+    try {
+      return decodeURIComponent(item.slice(separator + 1).trim());
+    } catch {
+      return null;
+    }
   }
   return null;
 }
