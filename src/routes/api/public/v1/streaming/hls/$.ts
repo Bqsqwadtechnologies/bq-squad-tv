@@ -81,6 +81,18 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
             await fs.patchDoc("sessions/" + sid, { active: false, status: "ended", endedAt: new Date().toISOString(), endReason: "HEARTBEAT_TIMEOUT" });
             throw new ApiError(403, "STREAM_SESSION_EXPIRED", "Playback authorization has expired.");
           }
+          const wallet = await fs.getDoc("wallets/" + uid);
+          const walletBalance = typeof wallet?.["balanceMinor"] === "number" && Number.isSafeInteger(wallet["balanceMinor"])
+            ? wallet["balanceMinor"] as number : 0;
+          const today = new Date().toISOString().slice(0, 10);
+          const spentToday = wallet?.["spentDate"] === today && typeof wallet["spentTodayMinor"] === "number"
+            ? wallet["spentTodayMinor"] as number : 0;
+          const dailyLimit = typeof wallet?.["dailySpendLimitMinor"] === "number" && Number.isSafeInteger(wallet["dailySpendLimitMinor"])
+            ? wallet["dailySpendLimitMinor"] as number : null;
+          if (walletBalance <= 0 || (dailyLimit !== null && spentToday >= dailyLimit)) {
+            await fs.patchDoc("sessions/" + sid, { active: false, status: "ended", endedAt: new Date().toISOString(), endReason: "WALLET_LIMIT" });
+            throw new ApiError(403, "STREAM_WALLET_EXHAUSTED", "The wallet or daily viewing limit no longer allows playback.");
+          }
           const licenseUntil = typeof session["licenseValidUntil"] === "string" ? Date.parse(session["licenseValidUntil"]) : Number.NaN;
           if (!Number.isFinite(licenseUntil) || Date.now() >= licenseUntil) {
             await fs.patchDoc("sessions/" + sid, { active: false, status: "ended", endedAt: new Date().toISOString(), endReason: "LICENSE_EXPIRED" });
