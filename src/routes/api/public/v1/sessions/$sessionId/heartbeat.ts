@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
+import { releaseSessionLease, renewSessionLease } from "@/lib/server/session-limits";
 import {
   elapsedSeconds,
   incrementalSessionCharge,
@@ -106,18 +107,10 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
               active,
               ...(active ? {} : { endedAt: nowIso, endReason: missedTwoHeartbeats ? "HEARTBEAT_TIMEOUT" : "WALLET_LIMIT" }),
             };
-            const rawActiveSessions = activeSessionDoc["sessions"];
-            const activeSessions = rawActiveSessions && typeof rawActiveSessions === "object" && !Array.isArray(rawActiveSessions)
-              ? rawActiveSessions as Record<string, unknown>
-              : {};
             const nowMs = now.getTime();
-            const liveSessions = Object.fromEntries(
-              Object.entries(activeSessions).filter(([, expiresAt]) =>
-                typeof expiresAt === "number" && Number.isSafeInteger(expiresAt) && expiresAt > nowMs,
-              ),
-            );
-            if (active) liveSessions[sessionId] = nowMs + 60_000;
-            else delete liveSessions[sessionId];
+            const liveSessions = active
+              ? renewSessionLease(activeSessionDoc["sessions"], sessionId, nowMs)
+              : releaseSessionLease(activeSessionDoc["sessions"], sessionId, nowMs);
 
             const writes: FirestoreWrite[] = [
               {
