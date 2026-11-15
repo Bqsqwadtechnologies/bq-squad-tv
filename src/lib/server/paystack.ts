@@ -27,6 +27,9 @@ export async function fetchPaystackVerification(reference: string): Promise<Reco
   if (!response.ok || payload.status !== true || !payload.data) {
     throw new ApiError(502, "PAYSTACK_VERIFY_FAILED", "The payment provider could not verify this transaction.");
   }
+  if (payload.data["reference"] !== reference) {
+    throw new ApiError(502, "PAYSTACK_REFERENCE_MISMATCH", "The payment provider returned a different transaction reference.");
+  }
   return payload.data;
 }
 
@@ -50,8 +53,29 @@ export async function creditPaystackPayment(
     const ledger = docs[2];
     const currentBalance = typeof wallet["balanceMinor"] === "number" && Number.isSafeInteger(wallet["balanceMinor"])
       ? wallet["balanceMinor"] as number : 0;
-    if (payment?.["status"] === "credited" || ledger) {
+    if (!payment) {
+      throw new ApiError(404, "PAYMENT_NOT_FOUND", "The payment record could not be found.");
+    }
+    if (
+      payment["uid"] !== input.uid ||
+      payment["reference"] !== input.reference ||
+      payment["provider"] !== "paystack" ||
+      payment["amountMinor"] !== input.amountMinor ||
+      payment["creditMinor"] !== input.creditMinor
+    ) {
+      throw new ApiError(409, "PAYMENT_RECORD_MISMATCH", "The verified transaction does not match its original payment record.");
+    }
+    if (ledger) {
+      if (ledger["uid"] !== input.uid || ledger["reference"] !== input.reference) {
+        throw new ApiError(409, "PAYMENT_LEDGER_MISMATCH", "The payment ledger record does not match this account.");
+      }
       return { result: { credited: false, balanceMinor: currentBalance }, writes: [] };
+    }
+    if (payment["status"] === "credited") {
+      return { result: { credited: false, balanceMinor: currentBalance }, writes: [] };
+    }
+    if (payment["status"] !== "pending" && payment["status"] !== "initializing") {
+      throw new ApiError(409, "PAYMENT_NOT_CREDITABLE", "This payment is not in a creditable state.");
     }
     const nextBalance = currentBalance + input.creditMinor;
     if (!Number.isSafeInteger(nextBalance)) throw new ApiError(400, "WALLET_LIMIT_EXCEEDED", "The wallet balance exceeds the supported amount.");
