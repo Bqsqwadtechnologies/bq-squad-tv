@@ -116,7 +116,7 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
             fs.getDoc("channels/" + channelId),
             fs.getDoc("contentAssets/" + assetId),
           ]);
-          if (!channel || channel["published"] !== true || channel["status"] === "suspended" ||
+          if (!channel || channel["published"] !== true || String(channel["status"] ?? "").toUpperCase() === "SUSPENDED" ||
               !asset || asset["status"] !== "ready" || asset["deliveryMode"] !== "bq_hosted") {
             throw new ApiError(403, "STREAM_CONTENT_UNAVAILABLE", "This content is no longer available.");
           }

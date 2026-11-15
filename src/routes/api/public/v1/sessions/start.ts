@@ -77,7 +77,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           }
 
           const channel = await fs.getDoc("channels/" + body.channelId);
-          if (!channel || channel["published"] !== true || channel["status"] === "suspended") {
+          if (!channel || channel["published"] !== true || String(channel["status"] ?? "").toUpperCase() === "SUSPENDED") {
             throw new ApiError(404, "CHANNEL_NOT_AVAILABLE", "This channel is not available for playback.");
           }
           const assetId = body.contentAssetId ??

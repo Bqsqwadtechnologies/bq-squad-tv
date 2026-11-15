@@ -48,7 +48,7 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
             throw new ApiError(415, "UPLOAD_TYPE_NOT_ALLOWED", "Only MP4, MOV, MKV and WebM source videos are accepted.");
           }
           const channel = await fs.getDoc("channels/" + body.channelId);
-          if (!channel || channel["status"] === "suspended" || channel["deleted"] === true) {
+          if (!channel || String(channel["status"] ?? "").toUpperCase() === "SUSPENDED" || channel["deleted"] === true) {
             throw new ApiError(404, "CHANNEL_NOT_AVAILABLE", "This channel is not available for uploads.");
           }
 
