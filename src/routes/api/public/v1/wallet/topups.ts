@@ -12,8 +12,14 @@ export const Route = createFileRoute("/api/public/v1/wallet/topups")({
         const fs = await Firestore.create();
         const wallet = await getWallet(fs, user.uid);
         const pricing = await getPricingConfig(fs);
-        const raw = pricing["walletTopups"];
-        if (!raw || typeof raw !== "object" || Array.isArray(raw)) return Response.json([]);
+        const byCurrency = pricing["walletTopupsByCurrency"];
+        const currencyOffers = byCurrency && typeof byCurrency === "object" && !Array.isArray(byCurrency)
+          ? (byCurrency as Record<string, unknown>)[wallet.currency]
+          : null;
+        const raw = currencyOffers && typeof currencyOffers === "object" && !Array.isArray(currencyOffers)
+          ? currencyOffers
+          : wallet.currency === "NGN" ? pricing["walletTopups"] : null;
+        if (!raw || typeof raw !== "object" || Array.isArray(raw)) return Response.json([], { headers: { "cache-control": "no-store" } });
         const packages = Object.keys(raw as Record<string, unknown>)
           .filter(packageId => /^[A-Za-z0-9_-]{1,80}$/.test(packageId))
           .flatMap(packageId => {
