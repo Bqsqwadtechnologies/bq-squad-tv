@@ -35,8 +35,8 @@ const schema = z.object({
 
 function numericChannelId(): string {
   const bytes = crypto.getRandomValues(new Uint8Array(12));
-  let result = String((bytes[0] % 9) + 1);
-  for (let index = 1; index < bytes.length; index += 1) result += String(bytes[index] % 10);
+  let result = String((bytes[0]! % 9) + 1);
+  for (let index = 1; index < bytes.length; index += 1) result += String(bytes[index]! % 10);
   return result;
 }
 
