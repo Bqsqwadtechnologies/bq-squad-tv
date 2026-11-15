@@ -151,7 +151,15 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             ? asset["ratePerMinuteByCurrency"] as Record<string, unknown> : {};
           const channelRates = channel["ratePerMinuteByCurrency"] && typeof channel["ratePerMinuteByCurrency"] === "object"
             ? channel["ratePerMinuteByCurrency"] as Record<string, unknown> : {};
-          const currencySpecificRate = assetRates[walletCurrency] ?? channelRates[walletCurrency];
+          const configuredAssetRates = pricing["assetRatesById"] && typeof pricing["assetRatesById"] === "object"
+            ? (pricing["assetRatesById"] as Record<string, Record<string, unknown>>)[assetId] ?? {} : {};
+          const configuredChannelRates = pricing["channelRatesById"] && typeof pricing["channelRatesById"] === "object"
+            ? (pricing["channelRatesById"] as Record<string, Record<string, unknown>>)[body.channelId] ?? {} : {};
+          const currencySpecificRate =
+            configuredAssetRates[walletCurrency] ??
+            configuredChannelRates[walletCurrency] ??
+            assetRates[walletCurrency] ??
+            channelRates[walletCurrency];
           const singlePriceCurrency = typeof asset["currency"] === "string"
             ? asset["currency"] as string
             : typeof channel["currency"] === "string" ? channel["currency"] as string : "NGN";
@@ -188,7 +196,12 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           if (paidPlayback && balanceMinor < minimumBalanceMinor) {
             throw new ApiError(402, "INSUFFICIENT_FUNDS", "Your wallet balance is too low to start this channel.");
           }
-          if (paidPlayback && wallet.dailySpendLimitMinor !== null && wallet.spentTodayMinor >= wallet.dailySpendLimitMinor) {
+          const configuredDailyLimits = pricing["dailySpendLimitByCurrency"] && typeof pricing["dailySpendLimitByCurrency"] === "object"
+            ? pricing["dailySpendLimitByCurrency"] as Record<string, unknown> : {};
+          const configuredDailyLimit = configuredDailyLimits[currency];
+          const dailySpendLimitMinor = wallet.dailySpendLimitMinor ??
+            (configuredDailyLimit === undefined ? null : requireMinorUnitAmount(configuredDailyLimit, "dailySpendLimitMinor"));
+          if (paidPlayback && dailySpendLimitMinor !== null && wallet.spentTodayMinor >= dailySpendLimitMinor) {
             throw new ApiError(402, "DAILY_SPEND_LIMIT_REACHED", "Your daily viewing limit has been reached.");
           }
 
@@ -202,7 +215,9 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           if (producerUid && !producer) {
             throw new ApiError(503, "PRODUCER_ACCOUNT_MISSING", "The channel producer account is not available.");
           }
-          const shareBps = platformOwned ? 0 : integer(channel["producerShareBps"] ?? pricing["defaultProducerShareBps"]);
+          const configuredShares = pricing["producerShareBpsByChannel"] && typeof pricing["producerShareBpsByChannel"] === "object"
+            ? pricing["producerShareBpsByChannel"] as Record<string, unknown> : {};
+          const shareBps = platformOwned ? 0 : integer(configuredShares[body.channelId] ?? channel["producerShareBps"] ?? pricing["defaultProducerShareBps"]);
           if (shareBps === null || shareBps > 10_000) {
             throw new ApiError(503, "REVENUE_SPLIT_INVALID", "The channel revenue split is not configured correctly.");
           }
@@ -220,7 +235,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             uid: user.uid, channelId: body.channelId, contentAssetId: assetId,
             producerUid: producerUid || null, producerShareBps: shareBps, deliveryMode: "bq_hosted",
             storagePath, playbackUrl, clientPlatform: body.clientPlatform, viewerCountry,
-            ratePerMinuteMinor, currency, paidPlayback, status: "active", active: true,
+            ratePerMinuteMinor, currency, paidPlayback, dailySpendLimitMinor, status: "active", active: true,
             startedAt: nowIso, lastHeartbeatAt: nowIso, lastClientSequence: 0,
             lastPlaybackState: "idle", lastPlaybackPositionMs: 0, billedSeconds: 0,
             sessionTotalMinor: 0, walletBalanceMinor: balanceMinor,
