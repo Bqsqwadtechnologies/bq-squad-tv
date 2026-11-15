@@ -139,6 +139,9 @@ export async function rotateWebRefreshSession(
         (previous && (typeof previous["expiresAt"] !== "number" || previous["expiresAt"] <= now))) {
       throw new ApiError(401, "WEB_SESSION_REVOKED", "Your website session has expired. Sign in again.");
     }
+    if (previous && previous["uid"] !== uid) {
+      throw new ApiError(401, "WEB_SESSION_MISMATCH", "Your website session does not match this account.");
+    }
     if (next) throw new ApiError(409, "WEB_SESSION_ROTATION_CONFLICT", "The website session could not be rotated.");
     const writes: FirestoreWrite[] = [];
     if (previous) {
