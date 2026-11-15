@@ -29,11 +29,11 @@ class VariantLadderTests(unittest.TestCase):
             variant = root / "v360"
             variant.mkdir()
             (root / "master.m3u8").write_text(
-                "#EXTM3U\\n#EXT-X-STREAM-INF:BANDWIDTH=1000\\nv360/index.m3u8\\n",
+                "#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1000\nv360/index.m3u8\n",
                 encoding="utf-8",
             )
             (variant / "index.m3u8").write_text(
-                "#EXTM3U\\n#EXTINF:4.0,\\nsegment_00000.ts\\n#EXT-X-ENDLIST\\n",
+                "#EXTM3U\n#EXTINF:4.0,\nsegment_00000.ts\n#EXT-X-ENDLIST\n",
                 encoding="utf-8",
             )
             (variant / "segment_00000.ts").write_bytes(b"media")
@@ -46,11 +46,11 @@ class VariantLadderTests(unittest.TestCase):
             variant = root / "v360"
             variant.mkdir()
             (root / "master.m3u8").write_text(
-                "#EXTM3U\\n#EXT-X-STREAM-INF:BANDWIDTH=1000\\nv360/index.m3u8\\n",
+                "#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=1000\nv360/index.m3u8\n",
                 encoding="utf-8",
             )
             (variant / "index.m3u8").write_text(
-                "#EXTM3U\\n#EXTINF:4.0,\\nmissing.ts\\n#EXT-X-ENDLIST\\n",
+                "#EXTM3U\n#EXTINF:4.0,\nmissing.ts\n#EXT-X-ENDLIST\n",
                 encoding="utf-8",
             )
             with self.assertRaises(RuntimeError):
