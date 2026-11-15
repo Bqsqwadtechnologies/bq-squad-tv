@@ -14,11 +14,12 @@ import kotlinx.coroutines.launch
     ad: AdBreak,
     repository: AdRepository,
     onFinished: () -> Unit,
+    slot: String = "pre_roll",
 ) {
     val scope = rememberCoroutineScope()
     var elapsed by remember { mutableIntStateOf(0) }
     LaunchedEffect(ad.id) {
-        runCatching { repository.track(ad.id, "impression") }
+        runCatching { repository.track(ad.id, "impression", slot = slot) }
         while (elapsed <
             ad.durationSeconds
         ) {
@@ -27,20 +28,20 @@ import kotlinx.coroutines.launch
             if (elapsed ==
                 ad.durationSeconds / 4
             ) {
-                repository.track(ad.id, "quartile_25", elapsed)
+                repository.track(ad.id, "quartile_25", elapsed, slot)
             }
             if (elapsed ==
                 ad.durationSeconds / 2
             ) {
-                repository.track(ad.id, "quartile_50", elapsed)
+                repository.track(ad.id, "quartile_50", elapsed, slot)
             }
             if (elapsed ==
                 ad.durationSeconds * 3 / 4
             ) {
-                repository.track(ad.id, "quartile_75", elapsed)
+                repository.track(ad.id, "quartile_75", elapsed, slot)
             }
         }
-        repository.track(ad.id, "complete", elapsed)
+        repository.track(ad.id, "complete", elapsed, slot)
         onFinished()
     }
     Card(Modifier.fillMaxWidth().padding(12.dp)) {
@@ -53,7 +54,7 @@ import kotlinx.coroutines.launch
             if (skip != null && elapsed >= skip) {
                 TextButton(onClick = {
                     scope.launch {
-                        repository.track(ad.id, "skip", elapsed)
+                        repository.track(ad.id, "skip", elapsed, slot)
                         onFinished()
                     }
                 }) { Text("Skip ad") }

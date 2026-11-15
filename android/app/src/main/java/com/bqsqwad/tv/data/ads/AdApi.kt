@@ -16,6 +16,8 @@ data class AdBreak(
 data class AdEventRequest(
     val event: String,
     val positionSeconds: Int = 0,
+    val platform: String = "android",
+    val slot: String = "pre_roll",
 )
 
 interface AdApi {
@@ -24,6 +26,7 @@ interface AdApi {
         @Header("Authorization") bearer: String,
         @Query("channelId") channelId: String,
         @Query("slot") slot: String,
+        @Query("platform") platform: String = "android",
     ): AdBreak?
 
     @POST("v1/ads/{adId}/events")

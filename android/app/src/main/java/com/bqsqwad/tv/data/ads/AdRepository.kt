@@ -42,5 +42,6 @@ class AdRepository {
         adId: String,
         event: String,
         position: Int = 0,
-    ) = api.event(bearer(), adId, AdEventRequest(event, position))
+        slot: String = "pre_roll",
+    ) = api.event(bearer(), adId, AdEventRequest(event, position, "android", slot))
 }
