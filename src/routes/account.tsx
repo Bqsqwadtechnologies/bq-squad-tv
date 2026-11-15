@@ -131,7 +131,7 @@ function AccountPage() {
     };
   }, []);
 
-  async function continueWithEmailAccount(accountEmailValue: string) {
+  const continueWithEmailAccount = useCallback(async (accountEmailValue: string) => {
     setEmail(accountEmailValue);
     setAccountEmail(accountEmailValue);
     const account = await getWebAccount();
@@ -152,7 +152,7 @@ function AccountPage() {
         ? "A six-digit verification code has been sent to your email."
         : "Request a new verification code to continue.");
     }
-  }
+  }, []);
 
   async function handleAuthentication(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -181,7 +181,7 @@ function AccountPage() {
     } finally {
       setBusy(false);
     }
-  }, []);
+  }, [continueWithEmailAccount]);
 
   async function handleVerify(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
