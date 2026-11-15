@@ -84,7 +84,9 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             const balance = integer(wallet["balanceMinor"]);
             const today = nowIso.slice(0, 10);
             const spentToday = wallet["spentDate"] === today ? integer(wallet["spentTodayMinor"]) : 0;
-            const dailyLimit = wallet["dailySpendLimitMinor"];
+            const dailyLimit = Object.prototype.hasOwnProperty.call(session, "dailySpendLimitMinor")
+              ? session["dailySpendLimitMinor"]
+              : wallet["dailySpendLimitMinor"];
             const dailyRemaining = typeof dailyLimit === "number" && Number.isSafeInteger(dailyLimit)
               ? Math.max(0, dailyLimit - spentToday)
               : Number.MAX_SAFE_INTEGER;
