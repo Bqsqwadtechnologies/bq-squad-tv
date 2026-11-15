@@ -5,3 +5,5 @@ retry formatter using installed gradle
 retry with Gradle 8.13
 
 retry after fixing wildcard import
+
+retry with Compose lint rules
