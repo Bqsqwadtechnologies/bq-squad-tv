@@ -12,7 +12,7 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
 function b64url(bytes: Uint8Array): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  return btoa(binary).replace(/\+/g, "-").replace(///g, "_").replace(/=+$/g, "");
 }
 
 function unb64url(value: string): Uint8Array {
@@ -73,8 +73,8 @@ export function isSafeStoragePath(path: string): boolean {
 export function redactSensitiveText(value: string): string {
   return value
     .replace(/([?&](?:token|signature|sig|apikey|api_key|access_token)=)[^&\s]*/gi, "$1[REDACTED]")
-    .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+=*/gi, "Bearer [REDACTED]")
-    .replace(/https?:\/\/[^\s"'<>]+\/(?:storage\/v1\/object\/sign|storage\/v1\/object\/authenticated)\/[^\s"'<>]+/gi, "[PRIVATE_STORAGE_URL_REDACTED]")
+    .replace(/Bearer\s+[A-Za-z0-9._~+/-]+=*/gi, "Bearer [REDACTED]")
+    .replace(/https?://[^\s"'<>]+/(?:storage/v1/object/sign|storage/v1/object/authenticated)/[^\s"'<>]+/gi, "[PRIVATE_STORAGE_URL_REDACTED]")
     .replace(/sb_(?:secret|service_role)_[A-Za-z0-9_-]+/gi, "[STORAGE_SECRET_REDACTED]");
 }
 
