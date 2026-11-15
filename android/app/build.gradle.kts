@@ -10,14 +10,18 @@ plugins {
     id("io.gitlab.arturbosch.detekt")
 }
 
-val localProperties = Properties().apply {
+val localProperties =
+    Properties().apply {
     val propertiesFile = rootProject.file("local.properties")
     if (propertiesFile.exists()) {
         propertiesFile.inputStream().use { load(it) }
     }
 }
 
-fun quoted(name: String, fallback: String): String {
+fun quoted(
+    name: String,
+    fallback: String,
+): String {
     val value = localProperties.getProperty(name) ?: System.getenv(name) ?: fallback
     return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 }
@@ -61,7 +65,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
-            signingConfig = signingConfigs.create("release") {
+            signingConfig =
+                signingConfigs.create("release") {
                 val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
                 if (!keystorePath.isNullOrBlank()) {
                     storeFile = file(keystorePath)
@@ -157,8 +162,9 @@ tasks.register("verifyReleaseFirebaseConfig") {
     }
 }
 
-tasks.matching {
-    it.name.contains("Release", ignoreCase = true) && it.name.startsWith("pre")
-}.configureEach {
+tasks
+    .matching {
+        it.name.contains("Release", ignoreCase = true) && it.name.startsWith("pre")
+    }.configureEach {
     dependsOn("verifyReleaseFirebaseConfig")
 }
