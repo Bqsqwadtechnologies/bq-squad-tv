@@ -97,7 +97,7 @@ export async function creditPaystackPayment(
   });
 }
 
-export function getPaystackTopup(config: Record<string, unknown>, packageId: string, requestedCurrency = "NGN"): { amountMinor: number; creditMinor: number } {
+export function getPaystackTopup(config: Record<string, unknown>, packageId: string, requestedCurrency = "NGN"): { amountMinor: number; displayAmountMinor: number; creditMinor: number } {
   const currency = requireCurrency(requestedCurrency);
   if (!isSupportedPaystackCurrency(currency)) throw new ApiError(400, "PAYMENT_CURRENCY_UNSUPPORTED", "Paystack does not support this wallet currency.");
   const byCurrency = config["walletTopupsByCurrency"];
@@ -118,5 +118,8 @@ export function getPaystackTopup(config: Record<string, unknown>, packageId: str
       typeof creditMinor !== "number" || !Number.isSafeInteger(creditMinor) || creditMinor < 1) {
     throw new ApiError(503, "TOPUP_CONFIG_INVALID", "The wallet top-up configuration is invalid.");
   }
-  return { amountMinor, creditMinor };
+  if (currency === "XOF" && amountMinor % 100 !== 0) {
+    throw new ApiError(503, "TOPUP_CONFIG_INVALID", "XOF Paystack amounts must be configured as whole XOF units multiplied by 100.");
+  }
+  return { amountMinor, displayAmountMinor: currency === "XOF" ? amountMinor / 100 : amountMinor, creditMinor };
 }
