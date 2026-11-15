@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   createAccountWithEmailPassword,
   getWebAccount,
+  getActiveWebIdToken,
+  getWebAuthHeaders,
   restoreWebSession,
   sendEmailVerificationCode,
   sendPasswordResetEmail,
@@ -102,6 +104,8 @@ function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [accountEmail, setAccountEmail] = useState("");
+  const [countryCode, setCountryCode] = useState("US");
+  const [walletCurrency, setWalletCurrency] = useState("USD");
 
   useEffect(() => {
     let active = true;
@@ -120,6 +124,7 @@ function AccountPage() {
       if (!active || !account) return;
       setAccountEmail(account.email ?? "");
       setEmail(account.email ?? "");
+      void loadAccountCountry();
       setSignedIn(account.emailVerified);
       setVerificationPending(!account.emailVerified);
       if (!account.emailVerified) {
@@ -131,9 +136,53 @@ function AccountPage() {
     };
   }, []);
 
+  async function loadAccountCountry() {
+    const token = await getActiveWebIdToken();
+    if (!token) return;
+    const response = await fetch("/api/public/v1/profile/country", {
+      headers: await getWebAuthHeaders(token),
+      cache: "no-store",
+    });
+    if (!response.ok) return;
+    const data = await response.json() as { countryCode?: string | null; currency?: string; walletCurrencyLocked?: boolean };
+    if (data.countryCode) {
+      setCountryCode(data.countryCode);
+    } else if (!data.walletCurrencyLocked) {
+      const region = new Intl.Locale(navigator.language).region;
+      if (region && /^[A-Z]{2}$/.test(region)) {
+        setCountryCode(region);
+        await saveAccountCountry(region, token, false);
+        return;
+      }
+    }
+    setWalletCurrency(data.currency ?? "USD");
+  }
+
+  async function saveAccountCountry(nextCountry: string, token?: string, showStatus = true) {
+    const idToken = token ?? await getActiveWebIdToken();
+    if (!idToken) return;
+    const response = await fetch("/api/public/v1/profile/country", {
+      method: "POST",
+      headers: {
+        ...(await getWebAuthHeaders(idToken)),
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ countryCode: nextCountry }),
+    });
+    const result = await response.json() as { currency?: string; error?: string };
+    if (!response.ok) {
+      if (showStatus) setMessage(result.error ?? "Could not update your country.");
+      return;
+    }
+    setCountryCode(nextCountry);
+    setWalletCurrency(result.currency ?? "USD");
+    if (showStatus) setMessage("Country saved. Your wallet uses " + (result.currency ?? "USD") + ".");
+  }
+
   const continueWithEmailAccount = useCallback(async (accountEmailValue: string) => {
     setEmail(accountEmailValue);
     setAccountEmail(accountEmailValue);
+    await loadAccountCountry();
     const account = await getWebAccount();
     if (account?.emailVerified) {
       setSignedIn(true);
@@ -265,8 +314,30 @@ function AccountPage() {
               <h1 className="mt-3 text-2xl font-black">Welcome to BQ SQWAD TV</h1>
               <p className="mt-3 break-all text-sm text-blue-100/70">{accountEmail}</p>
               <p className="mt-5 text-sm leading-6 text-blue-100/70">
-                Your account is signed in. Account settings and viewing features will appear here as they are connected.
+                Your account is signed in. Your wallet uses the currency assigned to your account country.
               </p>
+              <label className="mt-5 block text-sm font-semibold text-blue-50">
+                Account country
+                <select
+                  value={countryCode}
+                  onChange={event => void saveAccountCountry(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-3 py-3 text-white"
+                >
+                  <option value="US">United States — USD</option>
+                  <option value="NG">Nigeria — NGN</option>
+                  <option value="GB">United Kingdom — GBP</option>
+                  <option value="GH">Ghana — GHS</option>
+                  <option value="KE">Kenya — KES</option>
+                  <option value="ZA">South Africa — ZAR</option>
+                  <option value="CA">Canada — CAD</option>
+                  <option value="AU">Australia — AUD</option>
+                  <option value="IN">India — INR</option>
+                  <option value="DE">Germany — EUR</option>
+                  <option value="FR">France — EUR</option>
+                  <option value="JP">Japan — JPY</option>
+                </select>
+                <span className="mt-1 block text-xs text-blue-100/55">Wallet currency: {walletCurrency}. It cannot be changed after your wallet is established.</span>
+              </label>
               <button
                 type="button"
                 disabled={busy}
