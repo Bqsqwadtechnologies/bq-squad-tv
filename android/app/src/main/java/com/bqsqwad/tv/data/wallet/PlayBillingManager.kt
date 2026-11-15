@@ -158,7 +158,8 @@ class PlayBillingManager(
                                         onWalletUpdated()
                                     } else {
                                         onMessage(
-                                            "The verified purchase is ready, but Google Play consumption needs retry: " + billingResult.debugMessage,
+                                            "The verified purchase is ready, but Google Play consumption needs retry: " +
+                                                billingResult.debugMessage,
                                         )
                                     }
                                 }
