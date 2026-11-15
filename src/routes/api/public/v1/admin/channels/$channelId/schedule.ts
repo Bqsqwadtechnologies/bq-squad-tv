@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/public/v1/admin/channels/$channelId/s
         action: result.created ? "channel.schedule_created" : "channel.schedule_updated",
         targetType: "channelSchedule",
         targetId: result.programmeId,
-        reason: body.reason,
+        reason: body.reason ?? "Channel schedule updated",
         metadata: { channelId, startsAt: body.startsAt, endsAt: body.endsAt },
       });
       return Response.json({ ...result, channelId }, { status: result.created ? 201 : 200 });
