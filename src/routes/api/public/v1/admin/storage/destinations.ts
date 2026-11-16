@@ -86,11 +86,20 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/destinations"
                   accountGroup: { stringValue: metadata.accountGroup },
                   mode: { stringValue: metadata.mode },
                   replicaOf: metadata.replicaOf === null ? { nullValue: null } : { stringValue: metadata.replicaOf },
+                  healthStatus: { stringValue: "unknown" },
+                  healthCheckedAt: { nullValue: null },
+                  lastErrorCode: { nullValue: null },
                   createdAt: { stringValue: createdAt },
                   updatedAt: { stringValue: now },
                   updatedBy: { stringValue: user.uid },
                 },
               },
+              updateMask: { fieldPaths: [
+                "destinationId", "providerType", "accountAlias", "secretPrefix", "bucketName", "region",
+                "purpose", "softCapBytes", "accountCapBytes", "dailyEgressCapBytes", "priority", "enabled",
+                "paidEgressEnabled", "freeEgressBudgetBytes", "accountGroup", "mode", "replicaOf",
+                "healthStatus", "healthCheckedAt", "lastErrorCode", "createdAt", "updatedAt", "updatedBy",
+              ] },
             }],
           };
         });
