@@ -216,7 +216,7 @@ function AdminStoragePage() {
       <section className="mx-auto max-w-6xl px-5 py-10">
         <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-300"><ShieldCheck size={16} /> Owner-only storage controls</p>
         <h1 className="mt-4 text-3xl font-black sm:text-4xl">Storage destinations</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-7 text-blue-100/60">Register existing Lovable Storage buckets and authorized Backblaze B2 buckets. This page stores routing metadata only; credentials must be configured separately as server environment secrets.</p>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-blue-100/60">Register existing Lovable Storage buckets and authorized Backblaze B2 buckets. This page manages private destination metadata, owner-triggered provider checks, manual usage snapshots and shared account limits. Credentials must be configured separately as server environment secrets.</p>
 
         {!token ? (
           <form onSubmit={login} className="mt-8 grid max-w-md gap-4 rounded-3xl border border-white/10 bg-[#07143d] p-6">
@@ -229,7 +229,7 @@ function AdminStoragePage() {
         ) : (
           <>
             <div className="mt-8 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-xs leading-6 text-amber-100/80">
-              Registration does not create buckets, measure actual provider usage, move files or enable automatic upload routing. The existing source and streaming buckets remain unchanged. A destination is marked configured only when its required server secrets are present; a real provider health check and storage adapter are still required before routing.
+              Registration does not create buckets or move files. Usage must be entered from a provider report or reconciled by an automated provider reader. A destination is eligible for new assignments only after its credentials, real provider health check, usage snapshot, shared account capacity and shared egress settings are verified.
             </div>
             <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]">
               <div className="grid content-start gap-3">
