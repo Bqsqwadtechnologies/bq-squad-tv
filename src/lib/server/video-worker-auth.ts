@@ -13,13 +13,13 @@ function fromHex(value: string): Uint8Array {
   return Uint8Array.from(value.match(/.{2}/g) ?? [], pair => Number.parseInt(pair, 16));
 }
 async function sha256(value: string): Promise<string> {
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(value)));
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", toBuffer(encoder.encode(value))));
   return Array.from(digest, byte => byte.toString(16).padStart(2, "0")).join("");
 }
 async function workerKey(): Promise<CryptoKey> {
   const master = process.env["STREAMING_HMAC_SECRET"] ?? "";
   if (master.length < 32) throw new ApiError(503, "WORKER_AUTH_NOT_CONFIGURED", "The processing service is not configured.");
-  const key = await crypto.subtle.importKey("raw", encoder.encode(master), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const key = await crypto.subtle.importKey("raw", toBuffer(encoder.encode(master)), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const derived = await crypto.subtle.sign("HMAC", key, toBuffer(encoder.encode("BQ-SQWAD-TV:VIDEO-WORKER:V1")));
   return crypto.subtle.importKey("raw", derived, { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
 }
