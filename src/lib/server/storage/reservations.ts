@@ -80,7 +80,7 @@ export async function reserveStorageDestination(
         accountGroupCapBytes: accountCap,
       });
     }
-    const cursorPath = "storageRoutingCursors/" + input.purpose;
+    const cursorPath = "storageRoutingCursors/global";
     const cursorDoc = await fs.getDoc(cursorPath);
     const cursor = asSafeBytes(cursorDoc?.["cursor"]);
     const pick = pickDestination(candidates, input.incomingBytes, input.purpose, cursor);
@@ -165,4 +165,60 @@ export async function releaseStorageReservation(fs: Firestore, reservationId: st
     }
   }
   throw new ApiError(409, "STORAGE_RESERVATION_CONFLICT", "The storage reservation could not be released; retry.");
+}
+
+
+/** Convert a completed upload reservation into ledger usage exactly once. */
+export async function commitStorageReservation(fs: Firestore, reservationId: string, actualBytes: number): Promise<void> {
+  if (!/^[A-Za-z0-9_-]{8,100}$/.test(reservationId) || !Number.isSafeInteger(actualBytes) || actualBytes < 1) {
+    throw new ApiError(400, "STORAGE_RESERVATION_INVALID", "The completed storage reservation is invalid.");
+  }
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const reservation = await fs.getDoc("storageReservations/" + reservationId);
+    if (!reservation) throw new ApiError(404, "STORAGE_RESERVATION_NOT_FOUND", "The storage reservation could not be found.");
+    if (reservation["status"] === "committed") return;
+    if (reservation["status"] !== "reserved") throw new ApiError(409, "STORAGE_RESERVATION_NOT_ACTIVE", "The storage reservation is no longer active.");
+    const destinationId = typeof reservation["destinationId"] === "string" ? reservation["destinationId"] : "";
+    const reservedBytes = asSafeBytes(reservation["reservedBytes"]);
+    if (!destinationId || reservedBytes < 1 || actualBytes > reservedBytes) throw new ApiError(409, "STORAGE_RESERVATION_SIZE_MISMATCH", "The uploaded object exceeds its reserved capacity.");
+    try {
+      await fs.transact(["storageReservations/" + reservationId, "storageDestinations/" + destinationId], docs => {
+        const current = docs[0];
+        const destination = docs[1];
+        if (!current || current["status"] !== "reserved") {
+          if (current?.["status"] === "committed") return { result: undefined, writes: [] };
+          throw new ApiError(409, "STORAGE_RESERVATION_NOT_ACTIVE", "The storage reservation is no longer active.");
+        }
+        if (!destination) throw new ApiError(409, "STORAGE_DESTINATION_MISSING", "The reserved storage destination is missing.");
+        const currentReserved = asSafeBytes(destination["reservedBytes"]);
+        const currentUsage = asSafeBytes(destination["usageBytes"]);
+        if (currentReserved < reservedBytes || currentUsage + actualBytes > Number.MAX_SAFE_INTEGER) {
+          throw new ApiError(409, "STORAGE_RESERVATION_CORRUPT", "The storage reservation counters are inconsistent.");
+        }
+        const now = new Date().toISOString();
+        return {
+          result: undefined,
+          writes: [
+            { update: { name: fs.docName("storageDestinations/" + destinationId), fields: {
+              reservedBytes: { integerValue: String(currentReserved - reservedBytes) },
+              usageBytes: { integerValue: String(currentUsage + actualBytes) },
+              usageSource: { stringValue: "ledger" },
+              usageCheckedAt: { stringValue: now },
+              updatedAt: { stringValue: now },
+            } } },
+            { update: { name: fs.docName("storageReservations/" + reservationId), fields: {
+              status: { stringValue: "committed" },
+              actualBytes: { integerValue: String(actualBytes) },
+              committedAt: { stringValue: now },
+            } } },
+          ],
+        };
+      });
+      return;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409 && attempt < 2) continue;
+      throw error;
+    }
+  }
+  throw new ApiError(409, "STORAGE_RESERVATION_CONFLICT", "The storage reservation could not be committed; retry.");
 }
