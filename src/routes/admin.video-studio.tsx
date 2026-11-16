@@ -66,11 +66,10 @@ function VideoStudio() {
       if (!intentResponse.ok || !intent.assetId || !intent.path || !intent.signedUrl) throw new Error(intent.error ?? "Could not create the private upload.");
       const assetId = intent.assetId;
       const uploadPath = intent.path;
-      const uploadToken = intent.token;
       setUpload({ name: file.name, progress: 0, status: "Uploading source", detail: "Sending the video directly to its assigned private storage destination." });
       const response = await fetch(intent.signedUrl, {
         method: intent.method ?? "PUT",
-        headers: { "content-type": file.type, "x-upsert": "false", ...(intent.token ? { "x-upload-token": intent.token } : {}) },
+        headers: { "content-type": file.type, "x-upsert": "false" },
         body: file,
       });
       if (!response.ok) throw new Error("Private storage rejected the upload (" + response.status + ").");
