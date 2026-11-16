@@ -66,7 +66,7 @@ export async function createStorageUploadTarget(
   const client = createClient(c.url, c.serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
   const { data, error } = await client.storage.from(config.metadata.bucketName).createSignedUploadUrl(key, { upsert: false });
   if (error || !data?.signedUrl || !data.token) throw new ApiError(503, "STORAGE_UPLOAD_UNAVAILABLE", "A private upload session could not be created.");
-  return { signedUrl: data.signedUrl, token: data.token, expiresInSeconds, method: "PUT" };
+  return { signedUrl: data.signedUrl, token: data.token, expiresInSeconds: 7200, method: "PUT" };
 }
 
 export async function inspectStorageObject(
