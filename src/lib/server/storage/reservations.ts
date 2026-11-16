@@ -1,4 +1,5 @@
 import { ApiError, Firestore } from "../firebase-admin";
+import { calculateEgressLevel } from "./ledger";
 import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata, type StoragePurpose } from "./registry";
 import { pickDestination, type StorageCandidate } from "./routing";
 
@@ -65,7 +66,7 @@ export async function reserveStorageDestination(
         ? Number.MAX_SAFE_INTEGER
         : egressBudget === null || egressBudget === undefined
           ? null
-          : Math.max(0, egressBudget - asSafeBytes(item.metadata.egressMonthBytes) - input.incomingBytes);
+          : Math.max(0, egressBudget - asSafeBytes(item.metadata.egressMonthBytes));
       candidates.push({
         id: item.metadata.destinationId,
         priority: item.metadata.priority,
@@ -119,6 +120,18 @@ export async function reserveStorageDestination(
           throw new ApiError(409, "STORAGE_ACCOUNT_CAPACITY_CHANGED", "The shared storage account has insufficient remaining capacity.");
         }
         const currentDestination = validGroupDocs[selectedGroupIndex];
+        if (input.purpose === "hls_streaming") {
+          const paidEgressEnabled = currentDestination["paidEgressEnabled"] === true;
+          const egressBudget = currentDestination["freeEgressBudgetBytes"];
+          const egressMonthKey = new Date().toISOString().slice(0, 7);
+          const egressUsed = currentDestination["egressMonthKey"] === egressMonthKey ? asSafeBytes(currentDestination["egressMonthBytes"]) : 0;
+          if ((typeof egressBudget !== "number" || !Number.isSafeInteger(egressBudget) || egressBudget < 0) && !paidEgressEnabled) {
+            throw new ApiError(409, "STORAGE_EGRESS_BUDGET_UNKNOWN", "The HLS destination requires a configured egress budget or explicit paid-egress approval.");
+          }
+          if (calculateEgressLevel(egressUsed, typeof egressBudget === "number" ? egressBudget : 0, paidEgressEnabled) === "blocked") {
+            throw new ApiError(409, "STORAGE_EGRESS_LIMIT_REACHED", "The HLS destination has reached its safe egress limit.");
+          }
+        }
         if (currentDestination["enabled"] !== true || currentDestination["mode"] !== "active" || currentDestination["healthStatus"] !== "healthy") {
           throw new ApiError(409, "STORAGE_DESTINATION_CHANGED", "The selected storage destination is no longer eligible.");
         }
