@@ -1,95 +1,77 @@
 # BQ SQWAD TV storage destination registry
 
-This document describes the storage registry and the safe, staged rollout of storage federation.
+This document describes the current storage federation implementation and its production gates.
 
 ## Non-negotiable boundaries
 
-- The existing `bq-sqwad-source-media` and `bq-sqwad-streaming-media` buckets remain in place and are the permanent fallback for legacy assets.
+- The existing `bq-sqwad-source-media` and `bq-sqwad-streaming-media` buckets remain in place for legacy assets.
 - Firebase Firestore remains the application metadata database.
 - Firestore stores destination metadata only. Credentials stay in server environment secrets.
 - A configured soft cap is an application safety ceiling, not proof of provider quota or free capacity.
-- Unknown usage or unknown streaming egress is not treated as zero.
-- Adding a destination to the registry does not create a bucket, verify its billing allowance, copy data, or prove it is healthy.
-- Storage routing must remain disabled until real provider health, object upload/read/delete and usage checks pass.
-- A complete movie ladder must stay in one destination; never distribute a single title's HLS files across unrelated buckets.
+- Unknown usage, unknown shared account capacity or unknown HLS egress is not treated as zero.
+- Adding a destination does not create a bucket, verify its billing allowance, copy data or prove it is healthy.
+- A complete movie ladder must stay in one destination; never distribute one title's HLS files across unrelated buckets.
+- Never expose private bucket URLs, signed URLs or provider credentials to viewers.
 
-## Firestore document
+## Destination metadata
 
-Collection: `storageDestinations`
+Collection: `storageDestinations`; document ID: `destinationId`.
 
-Document ID: `destinationId`
+Important fields include provider type, account alias, secret prefix, bucket name, region, purpose, soft cap, shared account cap, account group, mode, priority, health state, usage snapshot, monthly egress budget, paid-egress approval, daily egress cap and audit timestamps.
 
-Existing fields:
-- `providerType`: `lovable_storage` or `backblaze_b2`
-- `accountAlias`: non-secret operator label
-- `secretPrefix`: environment-variable prefix only
-- `bucketName`: provider bucket name used for object operations
-- `region`: provider region
-- `purpose`: source_media, hls_streaming, posters, thumbnails, downloads, temporary, or backup
-- `softCapBytes`: owner-configured safety ceiling
-- `dailyEgressCapBytes`: optional owner-configured ceiling
-- `priority`: lower values are preferred
-- `enabled`: routing enablement
-- `createdAt`, `updatedAt`, `updatedBy`: audit metadata
+Every bucket belonging to the same provider account/workspace must use one identical `accountGroup`. For multi-bucket groups, set the same verified `accountCapBytes` on every destination. Set the same verified `freeEgressBudgetBytes` and `paidEgressEnabled` on every destination in the group. Never multiply an account-level allowance by its bucket count.
 
-The routing selector in `src/lib/server/storage/routing.ts` is a pure, tested selection function. It filters by purpose, active mode, healthy/configured state, known usage, destination capacity, account-group capacity and (for HLS) known egress headroom. Firestore cursor persistence and provider adapters are not yet connected to upload or playback routes.
+## Secret naming
 
-## Secret naming compatibility
-
-For a Lovable/Supabase Storage destination:
+Lovable/Supabase Storage:
 - `<PREFIX>_URL`
 - `<PREFIX>_SERVICE_ROLE_KEY`
 
-For Backblaze B2:
+Backblaze B2:
 - `<PREFIX>_KEY_ID`
 - `<PREFIX>_APP_KEY`
 - `<PREFIX>_BUCKET_ID`
 - `<PREFIX>_ENDPOINT`
 
-Both numbered conventions are accepted by the registry as prefixes:
-- Earlier inventory: `STORAGE_B2_NN01` through `STORAGE_B2_NN10`.
-- Prompt 2 convention: `STORAGE_B2_01` through `STORAGE_B2_11`.
+Both B2 prefix conventions are accepted: `STORAGE_B2_NN01`…`STORAGE_B2_NN10` and `STORAGE_B2_01`…`STORAGE_B2_11`. Do not assume they represent 21 distinct accounts. Add credentials only through the hosting provider's secret manager.
 
-Do not assume both naming schemes refer to eleven unique accounts. The owner must register the actual destination and provide its secrets in the hosting secret manager. B2 endpoints must use HTTPS and a Backblaze B2 S3 endpoint hostname. The B2 bucket name in destination metadata is the S3 object bucket name; the `_BUCKET_ID` secret is retained for account/bucket identity checks. Never expose credentials in API responses or logs.
+## Owner-only storage API
 
-## Provider quota and cost facts
+All routes below require the verified platform owner and the `system` module.
 
-Official Backblaze pricing was checked on **16 November 2026**:
-- The first 10 GB of stored data is free per B2 account, not per bucket.
-- Standard B2 egress is free up to 3x the account's average monthly stored data; additional egress is listed at $0.01/GB.
-- Egress to eligible partner CDNs/compute providers may be free beyond the standard allowance, subject to the provider's terms.
-- Current published storage pricing starts at $6.95/TB/month after the free allowance. Prices and regional details can change.
+- `GET /api/public/v1/admin/storage/destinations`: list redacted destination metadata.
+- `PUT /api/public/v1/admin/storage/destinations`: create/update metadata and audit the change.
+- `POST /api/public/v1/admin/storage/seed`: seed metadata only; it does not create buckets or verify quota.
+- `POST /api/public/v1/admin/storage/health`: perform a private write/head/read/delete health check and audit the result.
+- `POST /api/public/v1/admin/storage/usage`: record an owner-attested manual usage snapshot with an audit reason. This is not automatic provider discovery.
 
-Source: [Backblaze B2 official pricing](https://www.backblaze.com/cloud-storage/pricing).
+The owner Storage Destinations page exposes metadata editing, legacy bucket seeding, provider health checks, manual usage reporting, shared capacity and shared egress configuration. A successful configuration check only means the required secret values are present and syntactically valid; the separate live health check must pass.
 
-The 10 GB free storage allowance must not be multiplied by the number of buckets belonging to the same account. For B2 egress, the allowance is account-level and based on average stored data over the billing cycle; a simple current-usage estimate is only a conservative application guard, not an exact invoice calculation.
+## Routing and reservations
 
-Lovable buckets in the same workspace may share one storage quota. Until the workspace quota and billing model are verified in the actual account, destinations belonging to that workspace must share an `accountGroup` and must not be counted as independent free capacity. The reported 328 buckets / 1.64 TB and 338-bucket / 1.74 TB totals are unverified inventory claims, not enabled capacity.
+The server selects destinations by purpose, active mode, enabled state, configured credentials, healthy status, known usage, bucket soft cap and shared account cap. Multi-bucket groups require a common verified account cap on every member. Upload and HLS reservations are written transactionally with the routing cursor.
 
-## API and current implementation status
+HLS reservations require a shared account-group egress budget or explicit paid-egress approval. Monthly egress is recorded in `storageAccountEgress`, shared across all buckets in the account group. Daily egress caps remain per bucket. Thresholds are:
+- 70%: warn.
+- 85%: throttle high-resolution delivery.
+- 95%: block delivery unless paid egress is explicitly enabled for the entire account group.
 
-Owner-only, `system` module:
-- `GET /api/public/v1/admin/storage/destinations`
-- `PUT /api/public/v1/admin/storage/destinations`
+The owner must set consistent account-group egress settings on all destinations. Inconsistent or unknown settings fail closed.
 
-The PUT operation registers or updates non-secret metadata and records an audit event. A response of `configured` means required environment variables are present and syntactically valid; it is not a live provider health check.
+## Provider adapters and upload/streaming
 
-Implemented in this batch:
-- Pure capacity-aware priority/round-robin selection.
-- Unknown usage and unknown HLS egress fail closed.
-- 10% reservation overhead helper for estimated output size.
-- B2 3x egress budget helper with an 80% safety factor.
-- 70% / 85% / 95% egress state calculation.
-- Tests for rotation, wraparound, full destinations, health/mode filtering, priority fallback, shared account caps, unknown usage and egress thresholds.
-- Registry secret-prefix tests for both naming conventions.
+The current adapters support private object write/read/head/delete and owner-triggered health checks for registered B2 and Lovable destinations. Upload intents and HLS delivery resolve the destination assigned to each asset; legacy assets continue to resolve to their original Lovable buckets. HLS output is verified before an asset becomes ready.
 
-Not yet implemented or activated:
-- Real B2 and Lovable provider adapters and live health checks.
-- Transactional Firestore cursor persistence and concurrency tests.
-- Account-group usage aggregation and sharded storage/egress ledgers.
-- Upload-target gating and wiring existing upload/processing/playback routes through adapters.
-- Multipart B2 upload, owner seed action, full owner controls, source cleanup and replica jobs.
-- Real provider quota reconciliation and billing verification.
+Current large-source upload is a single signed PUT. Multipart/resumable upload is not implemented. The 5 GB intent limit is not a promise that every browser, provider or hosting path can reliably upload a 5 GB file.
 
-Do not mark a destination healthy or route production uploads to it until its real adapter health test has passed. Until then, legacy upload and playback paths remain unchanged.
+## Remaining production gates
 
+- Provider-driven usage discovery and scheduled reconciliation.
+- Live health checks and verified quota/account grouping for every configured destination.
+- Multipart/resumable large uploads and interruption/retry tests.
+- Calibrated HLS reservation profiles; the current 2.5x source-size plus 10% estimate remains a heuristic.
+- Persistent worker host deployment and Firestore TTL configuration.
+- Source/temp cleanup, reversible retention grace, failed-output cleanup, backups and restore tests.
+- End-to-end licensed test upload, processing, HLS playback, metering and payment tests.
+
+Do not enable production movie uploads until these gates are complete. See [production readiness](production-readiness.md) and [worker operations](video-worker-operations.md).
