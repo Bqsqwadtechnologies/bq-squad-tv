@@ -20,6 +20,7 @@ export type StorageDestinationMetadata = {
   region: string;
   purpose: StoragePurpose;
   softCapBytes: number;
+  accountCapBytes?: number | null;
   dailyEgressCapBytes: number | null;
   priority: number;
   enabled: boolean;
@@ -81,6 +82,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
   const bucketName = input["bucketName"];
   const region = input["region"];
   const softCapBytes = input["softCapBytes"];
+  const accountCapBytes = input["accountCapBytes"] ?? null;
   const dailyEgressCapBytes = input["dailyEgressCapBytes"] ?? null;
   const priority = input["priority"];
   const enabled = input["enabled"];
@@ -107,6 +109,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
       !["active", "drain", "retired"].includes(String(mode)) ||
       (replicaOf !== null && (typeof replicaOf !== "string" || !DESTINATION_ID.test(replicaOf))) ||
       typeof softCapBytes !== "number" || !Number.isSafeInteger(softCapBytes) || softCapBytes < 1 ||
+      (accountCapBytes !== null && (typeof accountCapBytes !== "number" || !Number.isSafeInteger(accountCapBytes) || accountCapBytes < 1)) ||
       (dailyEgressCapBytes !== null && (typeof dailyEgressCapBytes !== "number" || !Number.isSafeInteger(dailyEgressCapBytes) || dailyEgressCapBytes < 1)) ||
       typeof priority !== "number" || !Number.isInteger(priority) || priority < 0 || priority > 10000 ||
       typeof enabled !== "boolean" ||
@@ -130,6 +133,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
     region,
     purpose: purpose as StoragePurpose,
     softCapBytes,
+    accountCapBytes: accountCapBytes as number | null,
     dailyEgressCapBytes: dailyEgressCapBytes as number | null,
     priority,
     enabled,
