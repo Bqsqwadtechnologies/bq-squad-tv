@@ -54,7 +54,6 @@ def poll_firestore_queue() -> None:
     secrets=[worker_secret],
     cpu=2,
     memory=4096,
-    ephemeral_disk=20_000,
     timeout=10_800,
     max_containers=2,
 )
