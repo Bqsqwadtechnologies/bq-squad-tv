@@ -21,16 +21,21 @@ function safeProviderError(): ApiError {
 function bytesOf(body: ArrayBuffer | Uint8Array): Uint8Array {
   return body instanceof Uint8Array ? body : new Uint8Array(body);
 }
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
 function hex(bytes: Uint8Array): string {
   return Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
 }
 async function sha256(value: Uint8Array | string): Promise<string> {
-  return hex(new Uint8Array(await crypto.subtle.digest("SHA-256", typeof value === "string" ? encoder.encode(value) : value)));
+  return hex(new Uint8Array(await crypto.subtle.digest("SHA-256", toArrayBuffer(typeof value === "string" ? encoder.encode(value) : value))));
 }
 async function hmac(key: Uint8Array | string, value: string): Promise<Uint8Array> {
   const raw = typeof key === "string" ? encoder.encode(key) : key;
-  const cryptoKey = await crypto.subtle.importKey("raw", raw, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return new Uint8Array(await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(value)));
+  const cryptoKey = await crypto.subtle.importKey("raw", toArrayBuffer(raw), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return new Uint8Array(await crypto.subtle.sign("HMAC", cryptoKey, toArrayBuffer(encoder.encode(value))));
 }
 function awsEncodePath(value: string): string {
   return value.split("/").map(part => encodeURIComponent(part).replace(/[!'()*]/g, char => "%" + char.charCodeAt(0).toString(16).toUpperCase())).join("/");
@@ -82,7 +87,7 @@ async function b2Request(
         "x-amz-date": amzDate,
         ...(method === "PUT" ? { "content-type": contentType } : {}),
       },
-      ...(method === "PUT" ? { body: body ?? new Uint8Array() } : {}),
+      ...(method === "PUT" ? { body: toArrayBuffer(body ?? new Uint8Array()) } : {}),
       signal: timeoutSignal(),
     });
   } catch {
