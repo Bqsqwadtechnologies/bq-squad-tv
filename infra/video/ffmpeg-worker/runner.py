@@ -115,7 +115,21 @@ def process_job(job: dict) -> None:
             "python", "/app/transcode.py", "--input", str(source),
             "--output", str(output), "--threads", str(max(1, min(8, int(os.environ.get("FFMPEG_THREADS", "2"))))),
         ]
-        completed = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        stop_heartbeat = threading.Event()
+        def renew_lease() -> None:
+            while not stop_heartbeat.wait(90):
+                try:
+                    signed_request("POST", f"/api/public/v1/worker/jobs/{asset_id}/heartbeat", {"claimToken": job["claimToken"]})
+                except Exception:
+                    # Completion will be rejected if the lease cannot be renewed.
+                    return
+        heartbeat = threading.Thread(target=renew_lease, daemon=True)
+        heartbeat.start()
+        try:
+            completed = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+        finally:
+            stop_heartbeat.set()
+            heartbeat.join(timeout=2)
         if completed.returncode != 0:
             raise RuntimeError("FFmpeg processing failed.")
         files = sorted(path for path in output.rglob("*") if path.is_file())
