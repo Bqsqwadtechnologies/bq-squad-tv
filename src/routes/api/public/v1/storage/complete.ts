@@ -75,6 +75,14 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
           } else if (existingJob["assetId"] !== assetId || existingJob["ownerUid"] !== user.uid) {
             throw new ApiError(409, "TRANSCODE_JOB_CONFLICT", "A conflicting processing job already exists for this asset.");
           }
+          const reservationId = typeof asset["storageReservationId"] === "string" ? asset["storageReservationId"] : null;
+          if (reservationId) await commitStorageReservation(fs, reservationId, actualSize);
+          await fs.patchDoc("contentAssets/" + assetId, {
+            sourceDestinationId,
+            sourceObjectKey,
+            sourceBucket: typeof asset["sourceBucket"] === "string" ? asset["sourceBucket"] : "bq-sqwad-source-media",
+            storageReservationStatus: reservationId ? "committed" : "legacy_unreserved",
+          });
           await fs.patchDoc("contentAssets/" + assetId, {
             status: "uploaded_pending_transcode",
             transcodeJobId: assetId,
@@ -84,14 +92,6 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             actualSizeBytes: actualSize,
             sourceVerifiedAt: now,
             updatedAt: now,
-          });
-          const reservationId = typeof asset["storageReservationId"] === "string" ? asset["storageReservationId"] : null;
-          if (reservationId) await commitStorageReservation(fs, reservationId, actualSize);
-          await fs.patchDoc("contentAssets/" + assetId, {
-            sourceDestinationId,
-            sourceObjectKey,
-            sourceBucket: typeof asset["sourceBucket"] === "string" ? asset["sourceBucket"] : "bq-sqwad-source-media",
-            storageReservationStatus: reservationId ? "committed" : "legacy_unreserved",
           });
           await writeAuditLog(fs, {
             actorUid: user.uid, action: "content.upload_verified",
