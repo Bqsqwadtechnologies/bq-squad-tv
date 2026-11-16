@@ -51,12 +51,15 @@ export async function reserveStorageDestination(
       const group = groups.get(item.metadata.accountGroup) ?? [];
       const reported = group.map(value => value.metadata.usageBytes).filter((value): value is number => value !== null && Number.isSafeInteger(value));
       if (reported.length !== group.length || reported.length === 0) continue;
-      // Shared workspace/account usage is represented by the largest reported
-      // snapshot, not the sum (which would count the same quota repeatedly).
-      const accountUsage = Math.max(...reported) + group.reduce((sum, value) => sum + value.reservedBytes, 0);
-      // Until a verified account-level quota is configured, use the smallest
-      // declared soft cap as a conservative group-wide ceiling.
-      const accountCap = Math.min(...group.map(value => value.metadata.softCapBytes));
+      // Usage is measured per bucket, so account usage is the sum of bucket
+      // usage plus reservations. Shared quota must be configured explicitly
+      // for multi-bucket accounts; a bucket soft cap is not an account quota.
+      const accountUsage = reported.reduce((sum, value) => sum + value, 0) + group.reduce((sum, value) => sum + value.reservedBytes, 0);
+      const configuredCaps = group.map(value => value.metadata.accountCapBytes).filter((value): value is number => value !== null && value !== undefined && Number.isSafeInteger(value));
+      const accountCap = group.length === 1
+        ? (configuredCaps[0] ?? group[0]!.metadata.softCapBytes)
+        : configuredCaps.length === group.length && new Set(configuredCaps).size === 1 ? configuredCaps[0]! : null;
+      if (accountCap === null) continue;
       const egressBudget = item.metadata.freeEgressBudgetBytes;
       const egressHeadroom = item.metadata.paidEgressEnabled === true
         ? Number.MAX_SAFE_INTEGER
@@ -106,8 +109,12 @@ export async function reserveStorageDestination(
         if (groupUsageValues.some(value => typeof value !== "number" || !Number.isSafeInteger(value) || value < 0)) {
           throw new ApiError(409, "STORAGE_USAGE_UNKNOWN", "Storage usage must be reconciled before automatic assignment.");
         }
-        const groupUsage = Math.max(...(groupUsageValues as number[])) + validGroupDocs.reduce((sum, doc) => sum + asSafeBytes(doc["reservedBytes"]), 0);
-        const groupCap = Math.min(...groupItems.map(item => item.metadata.softCapBytes));
+        const groupUsage = (groupUsageValues as number[]).reduce((sum, value) => sum + value, 0) + validGroupDocs.reduce((sum, doc) => sum + asSafeBytes(doc["reservedBytes"]), 0);
+        const configuredCaps = validGroupDocs.map(doc => doc["accountCapBytes"]).filter((value): value is number => typeof value === "number" && Number.isSafeInteger(value) && value > 0);
+        const groupCap = groupItems.length === 1
+          ? (configuredCaps[0] ?? selected.metadata.softCapBytes)
+          : configuredCaps.length === groupItems.length && new Set(configuredCaps).size === 1 ? configuredCaps[0]! : null;
+        if (groupCap === null) throw new ApiError(409, "STORAGE_ACCOUNT_CAPACITY_UNKNOWN", "The shared storage account quota must be configured before assignment.");
         if (groupUsage + input.incomingBytes > groupCap) {
           throw new ApiError(409, "STORAGE_ACCOUNT_CAPACITY_CHANGED", "The shared storage account has insufficient remaining capacity.");
         }
