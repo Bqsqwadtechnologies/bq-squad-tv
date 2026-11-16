@@ -139,7 +139,7 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
           const objectInfo = await storageAdapter.headObject(resourcePath);
           if (!objectInfo) throw new ApiError(404, "STREAM_RESOURCE_NOT_FOUND", "The requested media resource is unavailable.");
           if (typeof asset["streamDestinationId"] === "string") {
-            const highResolution = /\\/v(?:720|1080)\\//i.test("/" + resourcePath);
+            const highResolution = /(?:^|\\/)v(?:720|1080)\\//i.test(resourcePath);
             await recordStorageEgress(fs, asset["streamDestinationId"], Math.max(1, objectInfo.sizeBytes), highResolution);
           }
           const signed = await createStorageDownloadTarget(storageConfig, resourcePath, 60);
