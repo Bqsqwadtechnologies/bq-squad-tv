@@ -34,6 +34,7 @@ export type StorageDestinationMetadata = {
   egressDayBytes?: number;
   egressDayKey?: string;
   freeEgressBudgetBytes?: number | null;
+  paidEgressEnabled?: boolean;
   healthStatus?: "healthy" | "degraded" | "misconfigured" | "unreachable" | "unknown";
   healthCheckedAt?: string | null;
   lastErrorCode?: string | null;
@@ -92,6 +93,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
   const egressMonthBytes = input["egressMonthBytes"] ?? 0;
   const egressDayBytes = input["egressDayBytes"] ?? 0;
   const freeEgressBudgetBytes = input["freeEgressBudgetBytes"] ?? null;
+  const paidEgressEnabled = input["paidEgressEnabled"] ?? false;
   const lastErrorCode = input["lastErrorCode"] ?? null;
 
   if (typeof destinationId !== "string" || !DESTINATION_ID.test(destinationId) ||
@@ -114,6 +116,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
       typeof egressMonthBytes !== "number" || !Number.isSafeInteger(egressMonthBytes) || egressMonthBytes < 0 ||
       typeof egressDayBytes !== "number" || !Number.isSafeInteger(egressDayBytes) || egressDayBytes < 0 ||
       (freeEgressBudgetBytes !== null && (typeof freeEgressBudgetBytes !== "number" || !Number.isSafeInteger(freeEgressBudgetBytes) || freeEgressBudgetBytes < 0)) ||
+      typeof paidEgressEnabled !== "boolean" ||
       (lastErrorCode !== null && (typeof lastErrorCode !== "string" || !/^[A-Z0-9_]{1,80}$/.test(lastErrorCode)))) {
     throw new ApiError(400, "STORAGE_DESTINATION_INVALID", "One or more storage destination fields are invalid.");
   }
@@ -141,6 +144,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
     egressDayBytes,
     egressDayKey: typeof input["egressDayKey"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input["egressDayKey"]) ? input["egressDayKey"] : undefined,
     freeEgressBudgetBytes: freeEgressBudgetBytes as number | null,
+    paidEgressEnabled,
     healthStatus: healthStatus as StorageDestinationMetadata["healthStatus"],
     healthCheckedAt: typeof input["healthCheckedAt"] === "string" ? input["healthCheckedAt"] : null,
     lastErrorCode: lastErrorCode as string | null,
