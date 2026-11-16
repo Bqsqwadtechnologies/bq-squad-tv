@@ -22,7 +22,7 @@ The container needs outbound HTTPS to the BQ SQWAD TV API and the configured pri
 
 Provider-driven usage discovery and scheduled reconciliation are not yet implemented. An owner can submit a manual snapshot through `POST /api/public/v1/admin/storage/usage` with `destinationId`, `usageBytes` and an audit `reason`. The endpoint records the snapshot as `manual`; it does not query the provider. Refresh it after any storage changes made outside BQ SQWAD TV.
 
-For multi-bucket account groups, set the same verified `accountCapBytes` on every destination in that account group. The router sums per-bucket usage and reservations and refuses to assign new uploads if any bucket usage or the shared account cap is unknown.
+For multi-bucket account groups, set the same verified `accountCapBytes` on every destination in that account group. The router sums per-bucket usage and reservations and refuses to assign new uploads if any bucket usage or the shared account cap is unknown. Set the same verified `freeEgressBudgetBytes` and `paidEgressEnabled` value on every destination in the account group as well. Monthly egress is now recorded in a shared account-group ledger, while daily egress caps remain per bucket. Do not multiply a provider account's free egress allowance by the number of buckets.
 
 ## Firestore TTL
 
@@ -34,7 +34,7 @@ The worker API creates one-use replay-protection documents in `videoWorkerNonces
 - Provider usage must be reconciled; unknown usage is not treated as zero.
 - Every multi-bucket account group must have the same verified `accountCapBytes` set on all its destination records. Single-bucket groups can use the bucket soft cap.
 - HLS destinations require a configured `freeEgressBudgetBytes`, or the owner must explicitly enable `paidEgressEnabled`. Paid egress is off by default.
-- At 70% of the monthly egress budget the destination warns; at 85% high-resolution HLS is throttled; at 95% new delivery is blocked unless paid egress was explicitly enabled.
+- At 70% of the shared account-group monthly egress budget the account warns; at 85% high-resolution HLS is throttled; at 95% new delivery is blocked unless paid egress was explicitly enabled for every destination in that account group.
 - One asset's master playlist, renditions and segments are uploaded to the same reserved destination.
 
 The initial HLS output reservation estimates 2.5 times the source bytes plus 10% headroom. This is a conservative starting heuristic, not a calibrated guarantee. If actual output exceeds the reservation, the API refuses to publish it and the job must be retried with an appropriately sized reservation.
