@@ -30,6 +30,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Validate worker Python syntax
+        run: python -m py_compile infra/video/ffmpeg-worker/transcode.py infra/video/ffmpeg-worker/runner.py
       - name: FFmpeg worker unit tests
         run: python -m unittest discover -s infra/video/ffmpeg-worker -v
       - name: Secret scan
