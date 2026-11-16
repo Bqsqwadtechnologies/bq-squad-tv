@@ -14,12 +14,14 @@ HERE = Path(__file__).resolve().parent
 APP_NAME = "bq-sqwad-tv-video-worker"
 SECRET_NAME = "bq-sqwad-tv-worker"
 
+# Modal requires add_local_* operations to be the final image-building steps.
+# Keep workdir before them so the image builder can package local source files.
 image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("ffmpeg")
+    .workdir("/app")
     .add_local_file(str(HERE / "runner.py"), remote_path="/app/runner.py")
     .add_local_file(str(HERE / "transcode.py"), remote_path="/app/transcode.py")
-    .workdir("/app")
 )
 
 app = modal.App(APP_NAME)
