@@ -219,7 +219,7 @@ function ZillionaireDashboard() {
                 <p className="text-xs text-blue-100/45">Only modules granted by the server are shown.</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {moduleCards.filter(item => allowedModules.has(item.id)).map(item => {
+                {moduleCards.filter(item => allowedModules.has(item.id) && (item.title !== "Storage destinations" || access.owner)).map(item => {
                   const Icon = item.icon;
                   return (
                     <article key={item.title} className="rounded-2xl border border-white/10 bg-[#07143d] p-5 transition hover:border-cyan-300/30">
