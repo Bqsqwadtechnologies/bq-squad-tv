@@ -160,3 +160,39 @@ export async function createStorageDownloadTarget(
   if (error || !data?.signedUrl) throw new ApiError(503, "STORAGE_DOWNLOAD_UNAVAILABLE", "A private download authorization could not be created.");
   return { signedUrl: data.signedUrl, expiresInSeconds };
 }
+
+
+export async function loadStreamStorageConfiguration(
+  fs: import("../firebase-admin").Firestore,
+  asset: Record<string, unknown>,
+): Promise<StorageDestinationConfiguration> {
+  const destinationId = typeof asset["streamDestinationId"] === "string" ? asset["streamDestinationId"] : null;
+  if (destinationId) {
+    const raw = await fs.getDoc("storageDestinations/" + destinationId);
+    if (!raw) throw new ApiError(503, "STREAM_DESTINATION_MISSING", "The streaming storage destination is unavailable.");
+    const { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } = await import("./registry");
+    return resolveStorageDestinationConfiguration(validateStorageDestinationMetadata({ ...raw, destinationId }));
+  }
+  const { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } = await import("./registry");
+  const bucketName = typeof asset["streamBucket"] === "string" ? asset["streamBucket"] : "bq-sqwad-streaming-media";
+  const legacy = validateStorageDestinationMetadata({
+    destinationId: "lovable-stream-legacy",
+    providerType: "lovable_storage",
+    accountAlias: "Legacy Lovable streaming storage",
+    secretPrefix: "SUPABASE",
+    bucketName,
+    region: "africa-south1",
+    purpose: "hls_streaming",
+    softCapBytes: 5_000_000_000,
+    dailyEgressCapBytes: null,
+    priority: 0,
+    enabled: true,
+    accountGroup: "lovable-default-workspace",
+    mode: "active",
+    replicaOf: null,
+  });
+  return resolveStorageDestinationConfiguration(legacy, {
+    ...process.env,
+    SUPABASE_URL: process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"],
+  });
+}
