@@ -135,7 +135,8 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
           });
 
           const storageConfig = await loadStreamStorageConfiguration(fs, asset);
-          if (storageConfig.configurationStatus !== "configured" || !storageConfig.metadata.enabled || storageConfig.metadata.mode === "retired") {
+          if (storageConfig.configurationStatus !== "configured" || !storageConfig.metadata.enabled || storageConfig.metadata.mode === "retired" ||
+              (typeof asset["streamDestinationId"] === "string" && storageConfig.metadata.healthStatus !== "healthy")) {
             throw new ApiError(503, "STREAM_DESTINATION_UNAVAILABLE", "The assigned streaming destination is not available.");
           }
           const storageAdapter = createStorageProviderAdapter(storageConfig);
