@@ -46,7 +46,7 @@ export async function recordStorageEgress(
         egressDayBytes: { integerValue: String(nextDay) },
         egressDayKey: { stringValue: dayKey },
         updatedAt: { stringValue: updatedAt },
-      } } }],
+      } }, updateMask: { fieldPaths: ["egressMonthBytes", "egressMonthKey", "egressDayBytes", "egressDayKey", "updatedAt"] } }],
     };
   });
 }
