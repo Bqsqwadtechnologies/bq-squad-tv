@@ -31,6 +31,7 @@ export type StorageDestinationMetadata = {
   usageSource?: "ledger" | "provider" | "manual" | null;
   usageCheckedAt?: string | null;
   egressMonthBytes?: number;
+  egressAccountMonthBytes?: number;
   egressMonthKey?: string;
   egressDayBytes?: number;
   egressDayKey?: string;
@@ -95,6 +96,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
   const usageSource = input["usageSource"] ?? null;
   const healthStatus = input["healthStatus"] ?? "unknown";
   const egressMonthBytes = input["egressMonthBytes"] ?? 0;
+  const egressAccountMonthBytes = input["egressAccountMonthBytes"] ?? 0;
   const egressDayBytes = input["egressDayBytes"] ?? 0;
   const freeEgressBudgetBytes = input["freeEgressBudgetBytes"] ?? null;
   const paidEgressEnabled = input["paidEgressEnabled"] ?? false;
@@ -120,6 +122,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
       (usageSource !== null && usageSource !== "ledger" && usageSource !== "provider" && usageSource !== "manual") ||
       !["healthy", "degraded", "misconfigured", "unreachable", "unknown"].includes(String(healthStatus)) ||
       typeof egressMonthBytes !== "number" || !Number.isSafeInteger(egressMonthBytes) || egressMonthBytes < 0 ||
+      typeof egressAccountMonthBytes !== "number" || !Number.isSafeInteger(egressAccountMonthBytes) || egressAccountMonthBytes < 0 ||
       typeof egressDayBytes !== "number" || !Number.isSafeInteger(egressDayBytes) || egressDayBytes < 0 ||
       (freeEgressBudgetBytes !== null && (typeof freeEgressBudgetBytes !== "number" || !Number.isSafeInteger(freeEgressBudgetBytes) || freeEgressBudgetBytes < 0)) ||
       typeof paidEgressEnabled !== "boolean" ||
@@ -148,6 +151,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
     usageSource: usageSource as "ledger" | "provider" | "manual" | null,
     usageCheckedAt: typeof input["usageCheckedAt"] === "string" ? input["usageCheckedAt"] : null,
     egressMonthBytes,
+    egressAccountMonthBytes,
     egressMonthKey: typeof input["egressMonthKey"] === "string" && /^\d{4}-\d{2}$/.test(input["egressMonthKey"]) ? input["egressMonthKey"] : undefined,
     egressDayBytes,
     egressDayKey: typeof input["egressDayKey"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input["egressDayKey"]) ? input["egressDayKey"] : undefined,
