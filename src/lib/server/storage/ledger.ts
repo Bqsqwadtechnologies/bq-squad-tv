@@ -15,7 +15,7 @@ export function calculateEgressLevel(usedBytes: number, budgetBytes: number, all
   if (budgetBytes === 0) return allowPaidEgress ? "paid" : "blocked";
   const ratio = usedBytes / budgetBytes;
   if (ratio >= 1) return allowPaidEgress ? "paid" : "blocked";
-  if (ratio >= 0.95) return "blocked";
+  if (ratio >= 0.95) return allowPaidEgress ? "paid" : "blocked";
   if (ratio >= 0.85) return "throttle";
   if (ratio >= 0.70) return "warn";
   return "normal";
