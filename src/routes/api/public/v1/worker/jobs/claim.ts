@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           const sourceConfig = await loadSourceStorageConfiguration(fs, asset);
           const sourceTarget = await createStorageDownloadTarget(sourceConfig, job["sourceObjectKey"], 3600);
           const reservedBytes = estimateReservedBytes(job["sourceSizeBytes"], 2.5);
-          const outputReservationId = "hls-" + assetId;
+          const outputReservationId = "hls-" + assetId + "-" + claimToken;
           const outputReservation = await reserveStorageDestination(fs, {
             purpose: "hls_streaming", incomingBytes: reservedBytes,
             reservationId: outputReservationId, ttlMs: 24 * 60 * 60_000,
