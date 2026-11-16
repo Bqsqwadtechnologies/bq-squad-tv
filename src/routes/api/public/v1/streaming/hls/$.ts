@@ -32,12 +32,12 @@ function isPlaylist(path: string): boolean {
 }
 
 function capMasterPlaylistAt480p(playlist: string): string {
-  const lines = playlist.split(/\\r?\\n/);
+  const lines = playlist.split(/\r?\n/);
   const output: string[] = [];
   for (let index = 0; index < lines.length; index++) {
     const line = lines[index] ?? "";
     if (line.startsWith("#EXT-X-STREAM-INF:")) {
-      const resolution = line.match(/RESOLUTION=\\d+x(\\d+)/i);
+      const resolution = line.match(/RESOLUTION=\d+x(\d+)/i);
       const height = resolution ? Number(resolution[1]) : 0;
       const next = lines[index + 1] ?? "";
       if (height > 480) { index++; continue; }
@@ -47,7 +47,7 @@ function capMasterPlaylistAt480p(playlist: string): string {
     }
     output.push(line);
   }
-  return output.join("\\n");
+  return output.join("\n");
 }
 
 async function rewritePlaylistForSession(
@@ -166,7 +166,7 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
           }
           let egressLevel: Awaited<ReturnType<typeof recordStorageEgress>> | null = null;
           if (typeof asset["streamDestinationId"] === "string") {
-            const highResolution = /(?:^|\\/)v(?:720|1080)\\//i.test(resourcePath);
+            const highResolution = /(?:^|\/)v(?:720|1080)\//i.test(resourcePath);
             egressLevel = await recordStorageEgress(fs, asset["streamDestinationId"], objectInfo.sizeBytes, highResolution);
           }
           const signed = await createStorageDownloadTarget(storageConfig, resourcePath, 60);
@@ -185,7 +185,7 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
 
           if (isPlaylist(resourcePath)) {
             let playlist = await upstream.text();
-            if (egressLevel === "throttle" && /(?:^|\\/)master\\.m3u8$/i.test(resourcePath)) {
+            if (egressLevel === "throttle" && /(?:^|\/)master\.m3u8$/i.test(resourcePath)) {
               playlist = capMasterPlaylistAt480p(playlist);
             }
             const rewritten = await rewritePlaylistForSession(playlist, resourcePath, sid, uid);
@@ -196,7 +196,7 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
                 "cache-control": "private, no-store",
                 "x-content-type-options": "nosniff",
               },
-            });;
+            });
           }
 
           const headers = new Headers({

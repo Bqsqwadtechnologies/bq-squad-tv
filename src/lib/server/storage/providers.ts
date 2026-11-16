@@ -163,6 +163,7 @@ function createLovableAdapter(config: StorageDestinationConfiguration): StorageP
       const safeKey = assertStorageObjectKey(key);
       const parts = safeKey.split("/");
       const filename = parts.pop();
+      if (!filename) throw new ApiError(400, "STORAGE_OBJECT_KEY_INVALID", "The storage object key is invalid.");
       const folder = parts.join("/");
       const { data, error } = await bucket.list(folder, { search: filename, limit: 100 });
       if (error) throw safeProviderError();

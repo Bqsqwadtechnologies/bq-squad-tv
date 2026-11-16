@@ -23,7 +23,7 @@ function credentials(config: StorageDestinationConfiguration) {
   if (config.configurationStatus !== "configured" || !config.credentials) throw new ApiError(503, "STORAGE_DESTINATION_MISCONFIGURED", "The storage destination is not configured.");
   return config.credentials;
 }
-function b2Url(config: StorageDestinationConfiguration, key: string, method: "PUT" | "GET", expiresSeconds: number): Promise<string> {
+async function b2Url(config: StorageDestinationConfiguration, key: string, method: "PUT" | "GET", expiresSeconds: number): Promise<string> {
   const c = credentials(config);
   if (!c.keyId || !c.applicationKey || !c.endpoint) throw new ApiError(503, "STORAGE_DESTINATION_MISCONFIGURED", "The storage destination is not configured.");
   const endpoint = new URL(c.endpoint);

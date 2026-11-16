@@ -51,16 +51,16 @@ export async function recordStorageEgress(
       const destination = docs[0];
       const accountLedger = docs[1];
       if (!destination) throw new ApiError(503, "STREAM_DESTINATION_MISSING", "The streaming destination is unavailable.");
-      const currentMonth = accountLedger?.["monthKey"] === monthKey
-        ? safeBytes(accountLedger["monthBytes"])
-        : accountLedger ? 0 : Math.max(legacyMonth, destinationLegacyMonth);
-      const currentDay = accountLedger?.["dayKey"] === dayKey
-        ? safeBytes(accountLedger["dayBytes"])
-        : accountLedger ? 0 : Math.max(legacyDay, destinationLegacyDay);
-      const nextMonth = currentMonth + bytes;
-      const nextDay = currentDay + bytes;
       const destinationMonth = destination["egressMonthKey"] === monthKey ? safeBytes(destination["egressMonthBytes"]) : 0;
       const destinationDay = destination["egressDayKey"] === dayKey ? safeBytes(destination["egressDayBytes"]) : 0;
+      const currentMonth = accountLedger?.["monthKey"] === monthKey
+        ? safeBytes(accountLedger["monthBytes"])
+        : accountLedger ? 0 : Math.max(legacyMonth, destinationMonth);
+      const currentDay = accountLedger?.["dayKey"] === dayKey
+        ? safeBytes(accountLedger["dayBytes"])
+        : accountLedger ? 0 : Math.max(legacyDay, destinationDay);
+      const nextMonth = currentMonth + bytes;
+      const nextDay = currentDay + bytes;
       const nextDestinationMonth = destinationMonth + bytes;
       const nextDestinationDay = destinationDay + bytes;
       const dailyCap = destination["dailyEgressCapBytes"];
@@ -84,7 +84,7 @@ export async function recordStorageEgress(
           egressDayKey: { stringValue: dayKey },
           egressAccountMonthBytes: { integerValue: String(nextMonth) },
           egressLevel: { stringValue: level },
-          egressAlertAt: level === "warn" || level === "throttle" || level === "blocked" ? { stringValue: updatedAt } : { nullValue: null },
+          egressAlertAt: level === "warn" || level === "throttle" ? { stringValue: updatedAt } : { nullValue: null },
           updatedAt: { stringValue: updatedAt },
         } }, updateMask: { fieldPaths: ["egressMonthBytes", "egressMonthKey", "egressDayBytes", "egressDayKey", "egressAccountMonthBytes", "egressLevel", "egressAlertAt", "updatedAt"] } },
         { update: { name: fs.docName(accountLedgerPath), fields: {

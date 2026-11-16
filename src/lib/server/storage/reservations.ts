@@ -66,7 +66,7 @@ export async function reserveStorageDestination(
     const candidates: StorageCandidate[] = [];
     for (const item of parsed) {
       const group = groups.get(item.metadata.accountGroup) ?? [];
-      const reported = group.map(value => value.metadata.usageBytes).filter((value): value is number => value !== null && Number.isSafeInteger(value));
+      const reported = group.map(value => value.metadata.usageBytes).filter((value): value is number => typeof value === "number" && Number.isSafeInteger(value));
       if (reported.length !== group.length || reported.length === 0) continue;
       // Usage is measured per bucket, so account usage is the sum of bucket
       // usage plus reservations. Shared quota must be configured explicitly
@@ -74,8 +74,8 @@ export async function reserveStorageDestination(
       const accountUsage = reported.reduce((sum, value) => sum + value, 0) + group.reduce((sum, value) => sum + value.reservedBytes, 0);
       const configuredCaps = group.map(value => value.metadata.accountCapBytes).filter((value): value is number => value !== null && value !== undefined && Number.isSafeInteger(value));
       const accountCap = group.length === 1
-        ? (configuredCaps[0] ?? group[0]!.metadata.softCapBytes)
-        : configuredCaps.length === group.length && new Set(configuredCaps).size === 1 ? configuredCaps[0]! : null;
+        ? (configuredCaps[0] ?? group[0]?.metadata.softCapBytes ?? null)
+        : configuredCaps.length === group.length && new Set(configuredCaps).size === 1 ? configuredCaps[0] ?? null : null;
       if (accountCap === null) continue;
       const sharedEgress = accountEgress.get(item.metadata.accountGroup);
       const egressHeadroom = sharedEgress?.paidEnabled
@@ -87,7 +87,7 @@ export async function reserveStorageDestination(
         id: item.metadata.destinationId,
         priority: item.metadata.priority,
         purpose: item.metadata.purpose,
-        usageBytes: item.metadata.usageBytes === null ? null : item.metadata.usageBytes + item.reservedBytes,
+        usageBytes: typeof item.metadata.usageBytes === "number" ? item.metadata.usageBytes + item.reservedBytes : null,
         softCapBytes: item.metadata.softCapBytes,
         healthStatus: item.metadata.healthStatus ?? "unknown",
         mode: item.metadata.mode,
@@ -135,12 +135,13 @@ export async function reserveStorageDestination(
         const configuredCaps = validGroupDocs.map(doc => doc["accountCapBytes"]).filter((value): value is number => typeof value === "number" && Number.isSafeInteger(value) && value > 0);
         const groupCap = groupItems.length === 1
           ? (configuredCaps[0] ?? selected.metadata.softCapBytes)
-          : configuredCaps.length === groupItems.length && new Set(configuredCaps).size === 1 ? configuredCaps[0]! : null;
+          : configuredCaps.length === groupItems.length && new Set(configuredCaps).size === 1 ? configuredCaps[0] ?? null : null;
         if (groupCap === null) throw new ApiError(409, "STORAGE_ACCOUNT_CAPACITY_UNKNOWN", "The shared storage account quota must be configured before assignment.");
         if (groupUsage + input.incomingBytes > groupCap) {
           throw new ApiError(409, "STORAGE_ACCOUNT_CAPACITY_CHANGED", "The shared storage account has insufficient remaining capacity.");
         }
         const currentDestination = validGroupDocs[selectedGroupIndex];
+        if (!currentDestination) throw new ApiError(409, "STORAGE_DESTINATION_CHANGED", "The selected storage destination is unavailable.");
         if (input.purpose === "hls_streaming") {
           const paidEgressEnabled = currentDestination["paidEgressEnabled"] === true;
           const egressBudget = currentDestination["freeEgressBudgetBytes"];
