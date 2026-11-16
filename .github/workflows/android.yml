@@ -1,11 +1,7 @@
 name: Android CI
 on:
-  push:
-    branches: [main]
-    paths: ["android/**", ".github/workflows/android.yml"]
-  pull_request:
-    paths: ["android/**", ".github/workflows/android.yml"]
-  workflow_dispatch:
+  # Manual only per owner instruction; do not run automatically on pushes or PRs.
+  workflow_dispatch: {}
 permissions:
   contents: read
 jobs:
