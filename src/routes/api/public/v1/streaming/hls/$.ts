@@ -5,6 +5,9 @@ import { assertContentPlaybackRights } from "@/lib/server/content-rights";
 import { isSafeStoragePath, redactSensitiveText, signPlaybackToken, verifyPlaybackToken } from "@/lib/server/storage/security";
 import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
 import { getUserProfile, requireAdultForContent } from "@/lib/server/api";
+import { loadStreamStorageConfiguration, createStorageDownloadTarget } from "@/lib/server/storage/transfers";
+import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
+import { recordStorageEgress } from "@/lib/server/storage/egress";
 
 function sessionId(value: string | null): string {
   if (!value || !/^[A-Za-z0-9_-]{1,100}$/.test(value)) {
@@ -131,19 +134,21 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
             paidPlayback: session["paidPlayback"] !== false,
           });
 
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { data: signed, error: signedError } = await supabaseAdmin.storage
-            .from("bq-sqwad-streaming-media")
-            .createSignedUrl(resourcePath, 60);
-          if (signedError || !signed?.signedUrl) {
-            throw new ApiError(404, "STREAM_RESOURCE_NOT_FOUND", "The requested media resource is unavailable.");
+          const storageConfig = await loadStreamStorageConfiguration(fs, asset);
+          const storageAdapter = createStorageProviderAdapter(storageConfig);
+          const objectInfo = await storageAdapter.headObject(resourcePath);
+          if (!objectInfo) throw new ApiError(404, "STREAM_RESOURCE_NOT_FOUND", "The requested media resource is unavailable.");
+          if (typeof asset["streamDestinationId"] === "string") {
+            const highResolution = /\\/v(?:720|1080)\\//i.test("/" + resourcePath);
+            await recordStorageEgress(fs, asset["streamDestinationId"], Math.max(1, objectInfo.sizeBytes), highResolution);
           }
+          const signed = await createStorageDownloadTarget(storageConfig, resourcePath, 60);
           const upstreamHeaders = new Headers();
           const range = request.headers.get("range");
           if (range && !isPlaylist(resourcePath)) upstreamHeaders.set("Range", range);
           let upstream: Response;
           try {
-            upstream = await fetch(signed.signedUrl, { headers: upstreamHeaders });
+            upstream = await fetch(signed.signedUrl, { headers: upstreamHeaders, signal: AbortSignal.timeout(30_000) });
           } catch {
             throw new ApiError(502, "STREAM_STORAGE_UNAVAILABLE", "The media storage service is temporarily unavailable.");
           }
