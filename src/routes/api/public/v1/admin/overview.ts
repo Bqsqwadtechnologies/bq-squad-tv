@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/v1/admin/overview")({
           const access = await requireAdminModule(fs, user, "overview");
 
           return Response.json({
-            controlCentre: "ZILLIONAIRE",
+            ...(access.isSuperAdmin ? { controlCentre: "ZILLIONAIRE" } : {}),
             owner: access.isSuperAdmin,
             emailVerified: access.emailVerified,
             producerPlanActive: access.producerPlanActive,

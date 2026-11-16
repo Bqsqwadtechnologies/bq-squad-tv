@@ -27,7 +27,7 @@ type AdminModule =
   | "moderation" | "security" | "system";
 
 type Access = {
-  controlCentre: "ZILLIONAIRE";
+  controlCentre?: "ZILLIONAIRE";
   owner: boolean;
   emailVerified: boolean;
   producerPlanActive: boolean;
