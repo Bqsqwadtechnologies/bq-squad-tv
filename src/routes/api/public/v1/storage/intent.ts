@@ -10,7 +10,8 @@ import { reserveStorageDestination, releaseStorageReservation } from "@/lib/serv
 import { createStorageUploadTarget } from "@/lib/server/storage/transfers";
 import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
 
-const MAX_SOURCE_BYTES = 5 * 1024 * 1024 * 1024;
+// Single-request S3 PUT ceiling; multipart upload support is a later storage batch.
+const MAX_SOURCE_BYTES = 5_000_000_000;
 const mimeByExtension: Record<string, string[]> = {
   mp4: ["video/mp4"],
   mov: ["video/quicktime"],
