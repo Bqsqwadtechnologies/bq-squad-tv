@@ -1,0 +1,37 @@
+name: Deploy Modal FFmpeg worker
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: modal-video-worker-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy existing FFmpeg worker to Modal
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Modal CLI
+        run: python -m pip install "modal==1.6.1"
+
+      - name: Deploy worker
+        env:
+          MODAL_TOKEN_ID: ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+        run: |
+          test -n "$MODAL_TOKEN_ID"
+          test -n "$MODAL_TOKEN_SECRET"
+          modal deploy infra/video/ffmpeg-worker/modal_app.py
