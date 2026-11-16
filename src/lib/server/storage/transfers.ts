@@ -4,12 +4,17 @@ import { assertStorageObjectKey } from "./ledger";
 import type { StorageDestinationConfiguration } from "./registry";
 
 const encoder = new TextEncoder();
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  const copy = new Uint8Array(bytes.byteLength);
+  copy.set(bytes);
+  return copy.buffer;
+}
 function hex(bytes: Uint8Array): string { return Array.from(bytes, value => value.toString(16).padStart(2, "0")).join(""); }
-async function digest(value: string): Promise<string> { return hex(new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(value)))); }
+async function digest(value: string): Promise<string> { return hex(new Uint8Array(await crypto.subtle.digest("SHA-256", toArrayBuffer(encoder.encode(value))))); }
 async function sign(key: Uint8Array | string, value: string): Promise<Uint8Array> {
   const raw = typeof key === "string" ? encoder.encode(key) : key;
-  const imported = await crypto.subtle.importKey("raw", raw, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  return new Uint8Array(await crypto.subtle.sign("HMAC", imported, encoder.encode(value)));
+  const imported = await crypto.subtle.importKey("raw", toArrayBuffer(raw), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return new Uint8Array(await crypto.subtle.sign("HMAC", imported, toArrayBuffer(encoder.encode(value))));
 }
 function encodePath(value: string): string {
   return value.split("/").map(part => encodeURIComponent(part).replace(/[!'()*]/g, c => "%" + c.charCodeAt(0).toString(16).toUpperCase())).join("/");
