@@ -58,9 +58,11 @@ export async function reserveStorageDestination(
       // declared soft cap as a conservative group-wide ceiling.
       const accountCap = Math.min(...group.map(value => value.metadata.softCapBytes));
       const egressBudget = item.metadata.freeEgressBudgetBytes;
-      const egressHeadroom = egressBudget === null || egressBudget === undefined
-        ? null
-        : Math.max(0, egressBudget - asSafeBytes(item.metadata.egressMonthBytes) - input.incomingBytes);
+      const egressHeadroom = item.metadata.paidEgressEnabled === true
+        ? Number.MAX_SAFE_INTEGER
+        : egressBudget === null || egressBudget === undefined
+          ? null
+          : Math.max(0, egressBudget - asSafeBytes(item.metadata.egressMonthBytes) - input.incomingBytes);
       candidates.push({
         id: item.metadata.destinationId,
         priority: item.metadata.priority,
