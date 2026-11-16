@@ -86,3 +86,15 @@ Provider-specific API credentials and webhook signing keys are added only after 
 - The server verifies `X-Firebase-AppCheck` tokens when `APP_CHECK_ENFORCED=true`.
 - Before enabling enforcement, register the Android app and website in Firebase App Check, configure Play Integrity and reCAPTCHA Enterprise, authorize the website domains, and confirm the service account has the Firebase App Check Token Verifier permission.
 - The server enforcement switch intentionally defaults to off until both clients are configured; do not enable it prematurely or sign-in/playback/payment API requests will be rejected.
+
+
+## Storage federation (server-side only)
+
+Storage credentials use the secret prefix registered for each storage destination. The application stores routing metadata only; it never stores secret values in the database or client applications.
+
+- Lovable Storage destination prefix: `<PREFIX>_URL` and `<PREFIX>_SERVICE_ROLE_KEY`.
+- Backblaze B2 destination prefix: `<PREFIX>_KEY_ID`, `<PREFIX>_APP_KEY`, `<PREFIX>_BUCKET_ID` and `<PREFIX>_ENDPOINT`.
+
+Obtain these values from the relevant storage account's developer/API settings. Add them only in the server hosting environment's secret manager. Do not add secret values to the destination form, source control, Android build settings or public client configuration.
+
+Further worker and storage-provider secret names will be appended after the remaining batch specifications are received and their exact requirements are confirmed.

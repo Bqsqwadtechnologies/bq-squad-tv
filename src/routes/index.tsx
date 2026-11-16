@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  Bell, ChevronRight, CirclePlay, Clapperboard, Download,
+  Bell, ChevronRight, CirclePlay, Clapperboard,
   Film, Grid2X2, Home, Search, Settings, ShieldCheck, Signal,
   Sparkles, Tv2, Smile, Play,
 } from "lucide-react";
@@ -67,7 +67,6 @@ function HomePage() {
     { label: "Home", icon: Home, href: "#home" },
     { label: "Live TV", icon: Tv2, href: "#live-channels" },
     { label: "Library", icon: Grid2X2, href: "#library" },
-    { label: "Downloads", icon: Download, href: "#downloads" },
     { label: "Settings", icon: Settings, href: "#settings" },
   ];
 
@@ -194,11 +193,7 @@ function HomePage() {
             <h2 className="mt-4 text-2xl font-black">Your viewing, with clarity.</h2>
             <p className="mt-3 max-w-xl text-sm leading-6 text-blue-100/65">Clear session pricing, account controls and content availability checks are part of the BQ SQWAD TV experience.</p>
           </div>
-          <div id="downloads" className="rounded-3xl border border-white/10 bg-[#07143d] p-6 sm:p-8">
-            <div className="flex items-center gap-2 text-cyan-200"><Download size={18} /><span className="text-xs font-bold uppercase tracking-[0.18em]">Your library</span></div>
-            <h2 className="mt-4 text-xl font-black">Downloads & watchlist</h2>
-            <p className="mt-3 text-sm leading-6 text-white/50">Your saved programmes and downloads will appear here after you sign in.</p>
-          </div>
+          
         </section>
 
         {notice && <div role="status" className="fixed bottom-24 left-1/2 z-50 w-[min(92vw,440px)] -translate-x-1/2 rounded-2xl border border-cyan-200/30 bg-[#061a4d] px-5 py-4 text-sm text-white shadow-2xl shadow-black/50 md:bottom-6"><div className="flex items-start justify-between gap-4"><p>{notice}</p><button onClick={() => setNotice("")} className="text-cyan-200">Close</button></div></div>}

@@ -7,6 +7,7 @@ import { encryptProviderCredential } from "@/lib/server/streaming/provider-crede
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { writeAuditLog } from "@/lib/server/audit";
 import { getPricingConfig } from "@/lib/server/pricing";
+import { getPlatformFlags } from "@/lib/server/flags";
 
 const schema = z.object({
   title: z.string().trim().min(2).max(100),
@@ -45,6 +46,10 @@ export const Route = createFileRoute("/api/public/v1/producer/channels")({
         const body = await parseBody(request, schema);
         const fs = await Firestore.create();
         await requirePlatformRole(fs, user, "producer");
+        const flags = await getPlatformFlags(fs);
+        if (!flags.producerChannelCreation) {
+          throw new ApiError(403, "CHANNEL_CREATION_UNAVAILABLE", "Channel creation is currently unavailable.");
+        }
         await enforceRateLimit(fs, "channel-create:" + user.uid, { limit: 5, windowMs: 60 * 60_000 });
         const pricing = await getPricingConfig(fs);
         const channelId = crypto.randomUUID().replace(/-/g, "");

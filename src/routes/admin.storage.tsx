@@ -62,10 +62,10 @@ function AdminStoragePage() {
     setError("");
     try {
       const result = await signInWithEmailPassword(email, password);
-      setToken(result.idToken);
       setEmail(result.email);
       setPassword("");
       await loadDestinations(result.idToken);
+      setToken(result.idToken);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Owner sign-in failed.");
       setPassword("");

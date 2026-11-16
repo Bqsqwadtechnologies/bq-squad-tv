@@ -151,7 +151,7 @@ function ZillionaireDashboard() {
               Manage BQ SQWAD TV through server-authorized modules. Access is checked against the verified account and current Firestore permissions on every request.
             </p>
           </div>
-          {access ? (
+          {access?.owner ? (
             <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/5 px-4 py-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-200">Access verified</p>
               <p className="mt-1 text-sm font-bold">{access.owner ? "Protected owner account" : "Delegated operator"}</p>
