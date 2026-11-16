@@ -17,7 +17,10 @@ const schema = z.object({
   secretPrefix: z.string().regex(/^[A-Z][A-Z0-9_]{1,47}$/),
   bucketName: z.string().min(2).max(64),
   region: z.string().min(1).max(80),
-  purpose: z.enum(["source_media", "hls_streaming", "posters", "thumbnails", "downloads", "temporary", "backup"]),
+  purpose: z.enum(["source_media", "hls_streaming", "posters", "thumbnails", "downloads", "temporary", "backup", "producer_verification"]),
+  accountGroup: z.string().regex(/^[a-zA-Z0-9][a-zA-Z0-9:_-]{1,99}$/).optional(),
+  mode: z.enum(["active", "drain", "retired"]).default("active"),
+  replicaOf: z.string().regex(/^[a-z0-9][a-z0-9_-]{1,79}$/).nullable().default(null),
   softCapBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   dailyEgressCapBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).nullable().default(null),
   priority: z.number().int().min(0).max(10000).default(100),
@@ -32,7 +35,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/destinations"
         const fs = await Firestore.create();
         const access = await requireAdminModule(fs, user, "system");
         if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "Only the protected platform owner can manage storage destinations.");
-        const rows = await fs.query("storageDestinations", { limit: 100, orderByField: "priority" });
+        const rows = await fs.query("storageDestinations", { limit: 500, orderByField: "priority" });
         const destinations = rows.map(row => {
           const { __id, ...metadata } = row;
           const normalized = validateStorageDestinationMetadata({ ...metadata, destinationId: __id });
@@ -74,6 +77,9 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/destinations"
                     ? { nullValue: null } : { integerValue: String(metadata.dailyEgressCapBytes) },
                   priority: { integerValue: String(metadata.priority) },
                   enabled: { booleanValue: metadata.enabled },
+                  accountGroup: { stringValue: metadata.accountGroup },
+                  mode: { stringValue: metadata.mode },
+                  replicaOf: metadata.replicaOf === null ? { nullValue: null } : { stringValue: metadata.replicaOf },
                   createdAt: { stringValue: createdAt },
                   updatedAt: { stringValue: now },
                   updatedBy: { stringValue: user.uid },

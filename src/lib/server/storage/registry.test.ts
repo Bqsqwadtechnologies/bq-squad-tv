@@ -18,6 +18,9 @@ function metadata(secretPrefix: string): StorageDestinationMetadata {
     dailyEgressCapBytes: null,
     priority: 10,
     enabled: true,
+    accountGroup: "b2:account-01",
+    mode: "active",
+    replicaOf: null,
   };
 }
 
@@ -66,6 +69,17 @@ describe("storage destination registry", () => {
     });
     expect(result.configurationStatus).toBe("misconfigured");
     expect(result.missingSecretNames).toEqual(["VALID_BACKBLAZE_HTTPS_ENDPOINT"]);
+  });
+
+  it("supports account groups, drain mode, replicas and producer verification", () => {
+    const value = validateStorageDestinationMetadata({
+      ...metadata("STORAGE_B2_01"), purpose: "producer_verification",
+      accountGroup: "b2:account-01", mode: "drain", replicaOf: "b2-primary-01",
+    });
+    expect(value.purpose).toBe("producer_verification");
+    expect(value.accountGroup).toBe("b2:account-01");
+    expect(value.mode).toBe("drain");
+    expect(value.replicaOf).toBe("b2-primary-01");
   });
 
   it("rejects invalid destination metadata", () => {

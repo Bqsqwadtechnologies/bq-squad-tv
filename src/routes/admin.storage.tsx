@@ -20,11 +20,14 @@ type Destination = {
   dailyEgressCapBytes: number | null;
   priority: number;
   enabled: boolean;
+  accountGroup: string;
+  mode: "active" | "drain" | "retired";
+  replicaOf: string | null;
   configurationStatus: "configured" | "misconfigured" | "disabled";
   missingSecretNames: string[];
 };
 
-const PURPOSES = ["source_media", "hls_streaming", "posters", "thumbnails", "downloads", "temporary", "backup"];
+const PURPOSES = ["source_media", "hls_streaming", "posters", "thumbnails", "downloads", "temporary", "backup", "producer_verification"];
 
 function AdminStoragePage() {
   const [email, setEmail] = useState("");
@@ -34,6 +37,9 @@ function AdminStoragePage() {
   const [destinationId, setDestinationId] = useState("");
   const [providerType, setProviderType] = useState<Destination["providerType"]>("lovable_storage");
   const [accountAlias, setAccountAlias] = useState("");
+  const [accountGroup, setAccountGroup] = useState("lovable-default-workspace");
+  const [mode, setMode] = useState<Destination["mode"]>("active");
+  const [replicaOf, setReplicaOf] = useState("");
   const [secretPrefix, setSecretPrefix] = useState("LOVABLE_STORAGE_01");
   const [bucketName, setBucketName] = useState("bq-sqwad-source-media");
   const [region, setRegion] = useState("africa-south1");
@@ -78,6 +84,9 @@ function AdminStoragePage() {
     setDestinationId(item.destinationId);
     setProviderType(item.providerType);
     setAccountAlias(item.accountAlias);
+    setAccountGroup(item.accountGroup);
+    setMode(item.mode);
+    setReplicaOf(item.replicaOf ?? "");
     setSecretPrefix(item.secretPrefix);
     setBucketName(item.bucketName);
     setRegion(item.region);
@@ -102,7 +111,7 @@ function AdminStoragePage() {
         throw new Error("Enter positive storage and optional egress limits in decimal GB.");
       }
       const payload = {
-        destinationId, providerType, accountAlias, secretPrefix, bucketName, region, purpose,
+        destinationId, providerType, accountAlias, accountGroup, mode, replicaOf: replicaOf.trim() || null, secretPrefix, bucketName, region, purpose,
         softCapBytes: Math.floor(cap * 1_000_000_000),
         dailyEgressCapBytes: egress === null ? null : Math.floor(egress * 1_000_000_000),
         priority: Number(priority), enabled,
@@ -158,7 +167,7 @@ function AdminStoragePage() {
                       <div><h3 className="font-bold">{item.accountAlias}</h3><p className="mt-1 text-xs text-blue-100/55">{item.destinationId} · {item.providerType}</p></div>
                       <span className={"rounded-full px-3 py-1 text-[10px] font-bold uppercase " + (item.configurationStatus === "configured" ? "bg-emerald-300/10 text-emerald-200" : "bg-amber-300/10 text-amber-200")}>{item.configurationStatus}</span>
                     </div>
-                    <p className="mt-3 break-all text-xs text-blue-100/70">{item.bucketName} · {item.region} · {item.purpose}</p>
+                    <p className="mt-3 break-all text-xs text-blue-100/70">{item.bucketName} · {item.region} · {item.purpose} · group {item.accountGroup} · {item.mode}</p>
                     <p className="mt-1 text-xs text-blue-100/45">Soft cap {(item.softCapBytes / 1_000_000_000).toFixed(2)} GB · priority {item.priority} · {item.enabled ? "enabled" : "disabled"}</p>
                     {item.missingSecretNames.length > 0 ? <p className="mt-2 break-all text-xs text-amber-200">Missing/configuration requirements: {item.missingSecretNames.join(", ")}</p> : null}
                     <button onClick={() => editDestination(item)} className="mt-4 rounded-lg border border-cyan-300/25 px-3 py-2 text-xs font-bold text-cyan-200">Edit metadata</button>
@@ -170,6 +179,9 @@ function AdminStoragePage() {
                 <label className="grid gap-2 text-xs text-blue-100/70">Destination ID<input required pattern="[a-z0-9][a-z0-9_-]{1,79}" value={destinationId} onChange={event => setDestinationId(event.target.value)} placeholder="lovable_source_01" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Provider<select value={providerType} onChange={event => { const value = event.target.value as Destination["providerType"]; setProviderType(value); setSecretPrefix(value === "lovable_storage" ? "LOVABLE_STORAGE_01" : "B2_ACCOUNT_01"); }} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white"><option value="lovable_storage">Lovable Cloud Storage</option><option value="backblaze_b2">Backblaze B2</option></select></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Account alias<input required minLength={2} value={accountAlias} onChange={event => setAccountAlias(event.target.value)} placeholder="Lovable primary" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Account group (same provider account/workspace must share one group)<input required minLength={2} maxLength={100} value={accountGroup} onChange={event => setAccountGroup(event.target.value)} placeholder="lovable-default-workspace or b2:account-01" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Destination mode<select value={mode} onChange={event => setMode(event.target.value as Destination["mode"])} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white"><option value="active">Active — accept new assignments</option><option value="drain">Drain — keep existing objects, no new assignments</option><option value="retired">Retired — unavailable</option></select></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Replica of destination ID (optional)<input value={replicaOf} onChange={event => setReplicaOf(event.target.value)} placeholder="existing-destination-id" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Server secret prefix<input required pattern="[A-Z][A-Z0-9_]{1,47}" value={secretPrefix} onChange={event => setSecretPrefix(event.target.value.toUpperCase())} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 font-mono text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Bucket name<input required value={bucketName} onChange={event => setBucketName(event.target.value)} placeholder="bq-sqwad-source-media" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Region<input required value={region} onChange={event => setRegion(event.target.value)} placeholder="us-west-004" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>

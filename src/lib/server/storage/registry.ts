@@ -8,7 +8,8 @@ export type StoragePurpose =
   | "thumbnails"
   | "downloads"
   | "temporary"
-  | "backup";
+  | "backup"
+  | "producer_verification";
 
 export type StorageDestinationMetadata = {
   destinationId: string;
@@ -22,6 +23,9 @@ export type StorageDestinationMetadata = {
   dailyEgressCapBytes: number | null;
   priority: number;
   enabled: boolean;
+  accountGroup: string;
+  mode: "active" | "drain" | "retired";
+  replicaOf: string | null;
   createdAt?: string;
   updatedAt?: string;
   updatedBy?: string;
@@ -68,6 +72,9 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
   const dailyEgressCapBytes = input["dailyEgressCapBytes"] ?? null;
   const priority = input["priority"];
   const enabled = input["enabled"];
+  const accountGroup = input["accountGroup"] ?? (providerType === "lovable_storage" ? "lovable-default-workspace" : `b2:${String(secretPrefix ?? "")}`);
+  const mode = input["mode"] ?? (enabled === true ? "active" : "retired");
+  const replicaOf = input["replicaOf"] ?? null;
 
   if (typeof destinationId !== "string" || !DESTINATION_ID.test(destinationId) ||
       (providerType !== "lovable_storage" && providerType !== "backblaze_b2") ||
@@ -75,7 +82,10 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
       typeof secretPrefix !== "string" || !SECRET_PREFIX.test(secretPrefix) ||
       typeof bucketName !== "string" || !BUCKET_NAME.test(bucketName) ||
       typeof region !== "string" || !/^[A-Za-z0-9-]{1,80}$/.test(region) ||
-      !["source_media", "hls_streaming", "posters", "thumbnails", "downloads", "temporary", "backup"].includes(String(purpose)) ||
+      !["source_media", "hls_streaming", "posters", "thumbnails", "downloads", "temporary", "backup", "producer_verification"].includes(String(purpose)) ||
+      typeof accountGroup !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9:_-]{1,99}$/.test(accountGroup) ||
+      !["active", "drain", "retired"].includes(String(mode)) ||
+      (replicaOf !== null && (typeof replicaOf !== "string" || !DESTINATION_ID.test(replicaOf))) ||
       typeof softCapBytes !== "number" || !Number.isSafeInteger(softCapBytes) || softCapBytes < 1 ||
       (dailyEgressCapBytes !== null && (typeof dailyEgressCapBytes !== "number" || !Number.isSafeInteger(dailyEgressCapBytes) || dailyEgressCapBytes < 1)) ||
       typeof priority !== "number" || !Number.isInteger(priority) || priority < 0 || priority > 10000 ||
@@ -95,6 +105,9 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
     dailyEgressCapBytes: dailyEgressCapBytes as number | null,
     priority,
     enabled,
+    accountGroup,
+    mode: mode as "active" | "drain" | "retired",
+    replicaOf: replicaOf as string | null,
   };
 }
 
@@ -173,6 +186,7 @@ export function isStorageDestinationEligible(
 ): boolean {
   if (destination.configurationStatus !== "configured" ||
       !destination.metadata.enabled ||
+      destination.metadata.mode !== "active" ||
       destination.metadata.purpose !== purpose ||
       !Number.isSafeInteger(incomingBytes) || incomingBytes < 0) return false;
 
