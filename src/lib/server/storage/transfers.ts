@@ -1,0 +1,104 @@
+import { createClient } from "@supabase/supabase-js";
+import { ApiError } from "../firebase-admin";
+import { assertStorageObjectKey } from "./ledger";
+import type { StorageDestinationConfiguration } from "./registry";
+
+const encoder = new TextEncoder();
+function hex(bytes: Uint8Array): string { return Array.from(bytes, value => value.toString(16).padStart(2, "0")).join(""); }
+async function digest(value: string): Promise<string> { return hex(new Uint8Array(await crypto.subtle.digest("SHA-256", encoder.encode(value)))); }
+async function sign(key: Uint8Array | string, value: string): Promise<Uint8Array> {
+  const raw = typeof key === "string" ? encoder.encode(key) : key;
+  const imported = await crypto.subtle.importKey("raw", raw, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return new Uint8Array(await crypto.subtle.sign("HMAC", imported, encoder.encode(value)));
+}
+function encodePath(value: string): string {
+  return value.split("/").map(part => encodeURIComponent(part).replace(/[!'()*]/g, c => "%" + c.charCodeAt(0).toString(16).toUpperCase())).join("/");
+}
+function credentials(config: StorageDestinationConfiguration) {
+  if (config.configurationStatus !== "configured" || !config.credentials) throw new ApiError(503, "STORAGE_DESTINATION_MISCONFIGURED", "The storage destination is not configured.");
+  return config.credentials;
+}
+function b2Url(config: StorageDestinationConfiguration, key: string, method: "PUT" | "GET", expiresSeconds: number): Promise<string> {
+  const c = credentials(config);
+  if (!c.keyId || !c.applicationKey || !c.endpoint) throw new ApiError(503, "STORAGE_DESTINATION_MISCONFIGURED", "The storage destination is not configured.");
+  const endpoint = new URL(c.endpoint);
+  if (endpoint.protocol !== "https:" || !endpoint.hostname.endsWith(".backblazeb2.com") || endpoint.username || endpoint.password || endpoint.search || endpoint.hash) {
+    throw new ApiError(503, "STORAGE_DESTINATION_MISCONFIGURED", "The storage destination endpoint is invalid.");
+  }
+  const url = new URL(endpoint.origin + "/" + encodePath(config.metadata.bucketName) + "/" + encodePath(assertStorageObjectKey(key)));
+  const now = new Date();
+  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
+  const date = amzDate.slice(0, 8);
+  const scope = date + "/" + config.metadata.region + "/s3/aws4_request";
+  const params: Array<[string, string]> = [
+    ["X-Amz-Algorithm", "AWS4-HMAC-SHA256"],
+    ["X-Amz-Credential", c.keyId + "/" + scope],
+    ["X-Amz-Date", amzDate],
+    ["X-Amz-Expires", String(expiresSeconds)],
+    ["X-Amz-SignedHeaders", "host"],
+  ];
+  const canonicalQuery = params.map(([k, v]) => encodeURIComponent(k) + "=" + encodeURIComponent(v)).sort().join("&");
+  const canonicalRequest = [method, url.pathname, canonicalQuery, "host:" + url.host + "\n", "host", "UNSIGNED-PAYLOAD"].join("\n");
+  const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, await digest(canonicalRequest)].join("\n");
+  const dateKey = await sign("AWS4" + c.applicationKey, date);
+  const regionKey = await sign(dateKey, config.metadata.region);
+  const serviceKey = await sign(regionKey, "s3");
+  const signingKey = await sign(serviceKey, "aws4_request");
+  const signature = hex(await sign(signingKey, stringToSign));
+  url.search = canonicalQuery + "&X-Amz-Signature=" + signature;
+  return url.toString();
+}
+
+export type StorageUploadTarget = { signedUrl: string; token?: string; expiresInSeconds: number; method: "PUT" };
+
+export async function createStorageUploadTarget(
+  config: StorageDestinationConfiguration,
+  key: string,
+  expiresInSeconds = 900,
+): Promise<StorageUploadTarget> {
+  assertStorageObjectKey(key);
+  if (!Number.isSafeInteger(expiresInSeconds) || expiresInSeconds < 60 || expiresInSeconds > 3600) throw new ApiError(400, "UPLOAD_EXPIRY_INVALID", "The upload authorization lifetime is invalid.");
+  if (config.metadata.providerType === "backblaze_b2") {
+    return { signedUrl: await b2Url(config, key, "PUT", expiresInSeconds), expiresInSeconds, method: "PUT" };
+  }
+  const c = credentials(config);
+  if (!c.url || !c.serviceRoleKey) throw new ApiError(503, "STORAGE_DESTINATION_MISCONFIGURED", "The storage destination is not configured.");
+  const client = createClient(c.url, c.serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  const { data, error } = await client.storage.from(config.metadata.bucketName).createSignedUploadUrl(key, { upsert: false });
+  if (error || !data?.signedUrl || !data.token) throw new ApiError(503, "STORAGE_UPLOAD_UNAVAILABLE", "A private upload session could not be created.");
+  return { signedUrl: data.signedUrl, token: data.token, expiresInSeconds, method: "PUT" };
+}
+
+export async function inspectStorageObject(
+  config: StorageDestinationConfiguration,
+  key: string,
+): Promise<{ sizeBytes: number; headerBytes: Uint8Array; contentType: string | null }> {
+  assertStorageObjectKey(key);
+  let signedUrl: string;
+  if (config.metadata.providerType === "backblaze_b2") {
+    signedUrl = await b2Url(config, key, "GET", 60);
+  } else {
+    const c = credentials(config);
+    if (!c.url || !c.serviceRoleKey) throw new ApiError(503, "STORAGE_DESTINATION_MISCONFIGURED", "The storage destination is not configured.");
+    const client = createClient(c.url, c.serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+    const { data, error } = await client.storage.from(config.metadata.bucketName).createSignedUrl(key, 60);
+    if (error || !data?.signedUrl) throw new ApiError(503, "STORAGE_OBJECT_UNAVAILABLE", "The uploaded file could not be inspected.");
+    signedUrl = data.signedUrl;
+  }
+  let response: Response;
+  try {
+    response = await fetch(signedUrl, { headers: { Range: "bytes=0-511" }, signal: AbortSignal.timeout(15_000) });
+  } catch {
+    throw new ApiError(503, "STORAGE_OBJECT_UNAVAILABLE", "The uploaded file could not be inspected.");
+  }
+  if (response.status !== 206) {
+    await response.body?.cancel();
+    throw new ApiError(409, "UPLOAD_OBJECT_MISSING", "The uploaded file could not be found or private storage did not support bounded inspection.");
+  }
+  const headerBytes = new Uint8Array(await response.arrayBuffer());
+  if (headerBytes.byteLength > 512) throw new ApiError(502, "STORAGE_RANGE_UNSUPPORTED", "Private storage returned more data than the bounded inspection limit.");
+  const total = response.headers.get("content-range")?.match(/\/(\d+)$/)?.[1];
+  const sizeBytes = total ? Number(total) : NaN;
+  if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 1) throw new ApiError(502, "STORAGE_SIZE_UNAVAILABLE", "The uploaded file size could not be verified.");
+  return { sizeBytes, headerBytes, contentType: response.headers.get("content-type") };
+}
