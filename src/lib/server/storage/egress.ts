@@ -14,7 +14,8 @@ export async function recordStorageEgress(
   const now = new Date();
   const monthKey = now.toISOString().slice(0, 7);
   const dayKey = now.toISOString().slice(0, 10);
-  return fs.transact([path], docs => {
+  try {
+    return await fs.transact([path], docs => {
     const destination = docs[0];
     if (!destination) throw new ApiError(503, "STREAM_DESTINATION_MISSING", "The streaming destination is unavailable.");
     const budget = destination["freeEgressBudgetBytes"];
@@ -45,8 +46,16 @@ export async function recordStorageEgress(
         egressMonthKey: { stringValue: monthKey },
         egressDayBytes: { integerValue: String(nextDay) },
         egressDayKey: { stringValue: dayKey },
+        egressLevel: { stringValue: level },
+        egressAlertAt: level === "warn" || level === "throttle" || level === "blocked" ? { stringValue: updatedAt } : { nullValue: null },
         updatedAt: { stringValue: updatedAt },
-      } }, updateMask: { fieldPaths: ["egressMonthBytes", "egressMonthKey", "egressDayBytes", "egressDayKey", "updatedAt"] } }],
+      } }, updateMask: { fieldPaths: ["egressMonthBytes", "egressMonthKey", "egressDayBytes", "egressDayKey", "egressLevel", "egressAlertAt", "updatedAt"] } }],
     };
-  });
+    });
+  } catch (error) {
+    if (error instanceof ApiError && (error.code === "STORAGE_EGRESS_LIMIT_REACHED" || error.code === "STORAGE_DAILY_EGRESS_LIMIT")) {
+      await fs.patchDoc(path, { egressLevel: "blocked", egressAlertAt: new Date().toISOString() }).catch(() => undefined);
+    }
+    throw error;
+  }
 }
