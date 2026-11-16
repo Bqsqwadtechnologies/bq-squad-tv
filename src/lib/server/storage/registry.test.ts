@@ -82,6 +82,17 @@ describe("storage destination registry", () => {
     expect(value.replicaOf).toBe("b2-primary-01");
   });
 
+  it("keeps paid egress off and accepts an explicit shared account cap", () => {
+    const value = validateStorageDestinationMetadata({
+      ...metadata("STORAGE_B2_01"),
+      accountCapBytes: 20_000_000_000,
+      freeEgressBudgetBytes: 30_000_000_000,
+    });
+    expect(value.accountCapBytes).toBe(20_000_000_000);
+    expect(value.paidEgressEnabled).toBe(false);
+    expect(value.freeEgressBudgetBytes).toBe(30_000_000_000);
+  });
+
   it("rejects invalid destination metadata", () => {
     expect(() => validateStorageDestinationMetadata({})).toThrow();
   });
