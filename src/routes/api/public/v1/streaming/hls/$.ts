@@ -135,9 +135,15 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
           });
 
           const storageConfig = await loadStreamStorageConfiguration(fs, asset);
+          if (storageConfig.configurationStatus !== "configured" || !storageConfig.metadata.enabled || storageConfig.metadata.mode === "retired") {
+            throw new ApiError(503, "STREAM_DESTINATION_UNAVAILABLE", "The assigned streaming destination is not available.");
+          }
           const storageAdapter = createStorageProviderAdapter(storageConfig);
           const objectInfo = await storageAdapter.headObject(resourcePath);
           if (!objectInfo) throw new ApiError(404, "STREAM_RESOURCE_NOT_FOUND", "The requested media resource is unavailable.");
+          if (!Number.isSafeInteger(objectInfo.sizeBytes) || objectInfo.sizeBytes < 1) {
+            throw new ApiError(503, "STREAM_OBJECT_SIZE_UNKNOWN", "The media object size could not be verified for delivery.");
+          }
           if (typeof asset["streamDestinationId"] === "string") {
             const highResolution = /(?:^|\\/)v(?:720|1080)\\//i.test(resourcePath);
             await recordStorageEgress(fs, asset["streamDestinationId"], Math.max(1, objectInfo.sizeBytes), highResolution);
