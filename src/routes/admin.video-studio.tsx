@@ -62,10 +62,9 @@ function VideoStudio() {
         headers: { ...headers, "content-type": "application/json" },
         body: JSON.stringify({ channelId, filename: file.name, sizeBytes: file.size, mimeType: file.type }),
       });
-      const intent = await intentResponse.json() as { assetId?: string; path?: string; signedUrl?: string; token?: string; method?: string; uploadMode?: string; resumableEndpoint?: string | null; error?: string };
+      const intent = await intentResponse.json() as { assetId?: string; path?: string; signedUrl?: string; method?: string; error?: string };
       if (!intentResponse.ok || !intent.assetId || !intent.path || !intent.signedUrl) throw new Error(intent.error ?? "Could not create the private upload.");
       const assetId = intent.assetId;
-      const uploadPath = intent.path;
       setUpload({ name: file.name, progress: 0, status: "Uploading source", detail: "Sending the video directly to its assigned private storage destination." });
       const response = await fetch(intent.signedUrl, {
         method: intent.method ?? "PUT",
