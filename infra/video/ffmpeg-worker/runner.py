@@ -24,6 +24,11 @@ POLL_SECONDS = max(5, int(os.environ.get("WORKER_POLL_SECONDS", "15")))
 MAX_SOURCE_BYTES = 5 * 1024 * 1024 * 1024
 
 
+def canonical_message(timestamp: str, nonce: str, method: str, path: str, body_hash: str) -> bytes:
+    """Match the server verifier's newline-delimited HMAC canonical request."""
+    return "\n".join([timestamp, nonce, method.upper(), path, body_hash]).encode()
+
+
 def signed_request(method: str, path: str, payload: dict | None = None) -> dict:
     if not API_BASE.startswith("https://") or len(WORKER_SECRET) < 32:
         raise RuntimeError("Worker API URL or signing secret is not configured.")
@@ -31,7 +36,7 @@ def signed_request(method: str, path: str, payload: dict | None = None) -> dict:
     timestamp = str(int(time.time()))
     nonce = secrets.token_hex(16)
     body_hash = hashlib.sha256(body).hexdigest()
-    message = "\n".join([timestamp, nonce, method.upper(), path, body_hash]).encode()
+    message = canonical_message(timestamp, nonce, method, path, body_hash)
     derived_key = hmac.new(WORKER_SECRET.encode(), b"BQ-SQWAD-TV:VIDEO-WORKER:V1", hashlib.sha256).digest()
     signature = hmac.new(derived_key, message, hashlib.sha256).hexdigest()
     request = urllib.request.Request(
