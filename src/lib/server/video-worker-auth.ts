@@ -38,7 +38,7 @@ export async function requireVideoWorker(request: Request, fs: Firestore): Promi
     throw new ApiError(401, "WORKER_AUTH_EXPIRED", "The worker authorization has expired.");
   }
   const body = await request.clone().text();
-  if (body.length > 256_000) throw new ApiError(413, "WORKER_REQUEST_TOO_LARGE", "The worker request is too large.");
+  if (body.length > 8 * 1024 * 1024) throw new ApiError(413, "WORKER_REQUEST_TOO_LARGE", "The worker request is too large.");
   const url = new URL(request.url);
   const message = [timestamp, nonce, request.method.toUpperCase(), url.pathname, await sha256(body)].join("\n");
   const valid = await crypto.subtle.verify("HMAC", await workerKey(), toBuffer(fromHex(signature)), toBuffer(encoder.encode(message)));
