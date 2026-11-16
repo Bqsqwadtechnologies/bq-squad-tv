@@ -64,7 +64,8 @@ describe("storage destination registry", () => {
       LOVABLE_STORAGE_01_SERVICE_ROLE_KEY: "private-service-role-key",
     });
     expect(isStorageDestinationEligible(resolved, "source_media", 100, null)).toBe(false);
-    expect(isStorageDestinationEligible(resolved, "source_media", 100, 8_999_999_000)).toBe(false);
+    expect(isStorageDestinationEligible(resolved, "source_media", 100, 8_999_999_950)).toBe(false);
+    expect(isStorageDestinationEligible(resolved, "source_media", 100, 8_999_999_000)).toBe(true);
     expect(isStorageDestinationEligible(resolved, "source_media", 100, 8_000_000_000)).toBe(true);
   });
 });

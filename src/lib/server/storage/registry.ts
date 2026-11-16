@@ -157,9 +157,9 @@ export function resolveStorageDestinationConfiguration(
     configurationStatus: "configured",
     missingSecretNames: [],
     credentials: {
-      keyId: env[`${metadata.secretPrefix}_KEY_ID`],
-      applicationKey: env[`${metadata.secretPrefix}_APP_KEY`],
-      bucketId: env[`${metadata.secretPrefix}_BUCKET_ID`],
+      keyId: env[`${metadata.secretPrefix}_KEY_ID`] ?? "",
+      applicationKey: env[`${metadata.secretPrefix}_APP_KEY`] ?? "",
+      bucketId: env[`${metadata.secretPrefix}_BUCKET_ID`] ?? "",
       endpoint,
     },
   };

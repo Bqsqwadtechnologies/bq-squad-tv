@@ -10,7 +10,7 @@ export const DEFAULT_FLAGS = {
   adultChannels: false,
 } as const;
 
-export type PlatformFlags = { [K in keyof typeof DEFAULT_FLAGS]: boolean };
+export type PlatformFlags = { -readonly [K in keyof typeof DEFAULT_FLAGS]: boolean };
 
 export function normalizePlatformFlags(value: Record<string, unknown> | null | undefined): PlatformFlags {
   const flags: PlatformFlags = { ...DEFAULT_FLAGS };
