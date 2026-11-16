@@ -54,6 +54,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
         if (!info || info.sizeBytes !== file.sizeBytes) throw new ApiError(409, "HLS_OBJECT_VERIFICATION_FAILED", "An uploaded HLS object failed storage verification.");
       }
       const playlistKeys = body.files.filter(file => file.key.toLowerCase().endsWith(".m3u8")).map(file => file.key);
+      let masterRenditionCount = 0;
       for (const playlistKey of playlistKeys) {
         const downloaded = await adapter.getObject(playlistKey);
         if (downloaded.info.sizeBytes > 2_000_000) throw new ApiError(413, "HLS_PLAYLIST_TOO_LARGE", "An HLS playlist exceeds the verification limit.");
@@ -63,6 +64,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
         }
         const lines = playlist.split(/\r?\n/);
         let expectReference = false;
+        let referenceCount = 0;
         for (const line of lines) {
           const trimmed = line.trim();
           if (!trimmed) continue;
@@ -74,11 +76,15 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
           for (const reference of references) {
             const resolved = resolveHlsReference(playlistKey, reference);
             if (!keys.has(resolved)) throw new ApiError(409, "HLS_REFERENCE_MISSING", "An HLS playlist references an object that was not uploaded.");
+            referenceCount++;
+            if (playlistKey === masterKey) masterRenditionCount++;
             expectReference = false;
           }
         }
         if (expectReference) throw new ApiError(409, "HLS_PLAYLIST_INVALID", "The HLS master playlist contains an incomplete rendition reference.");
+        if (referenceCount === 0) throw new ApiError(409, "HLS_PLAYLIST_EMPTY", "An HLS playlist does not reference any media objects.");
       }
+      if (masterRenditionCount === 0) throw new ApiError(409, "HLS_MASTER_EMPTY", "The HLS master playlist contains no verified renditions.");
       const reservation = await fs.getDoc("storageReservations/" + reservationId);
       const reservedBytes = typeof reservation?.["reservedBytes"] === "number" ? reservation["reservedBytes"] : 0;
       if (totalBytes > reservedBytes) throw new ApiError(409, "HLS_OUTPUT_EXCEEDS_RESERVATION", "The HLS output exceeded its reserved storage capacity.");
