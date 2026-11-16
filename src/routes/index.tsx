@@ -38,14 +38,28 @@ function HomePage() {
   const [featuredContent, setFeaturedContent] = useState<FeaturedItem[]>([]);
   const [channels, setChannels] = useState<ChannelItem[]>([]);
   const [catalogState, setCatalogState] = useState<"loading" | "ready" | "signed_out" | "error">("loading");
+  const [walletCurrencySymbol, setWalletCurrencySymbol] = useState("$");
 
   useEffect(() => {
     let active = true;
     void (async () => {
       try {
+        const publicConfigResponse = await fetch("/api/public/v1/config/client", { cache: "no-store" });
+        if (publicConfigResponse.ok) {
+          const publicConfig = await publicConfigResponse.json() as { currencySymbol?: string };
+          if (active && typeof publicConfig.currencySymbol === "string") setWalletCurrencySymbol(publicConfig.currencySymbol);
+        }
         const token = await restoreWebSession();
         if (!active) return;
         if (!token) { setCatalogState("signed_out"); return; }
+        const walletResponse = await fetch("/api/public/v1/wallet/summary", {
+          headers: await getWebAuthHeaders(token),
+          cache: "no-store",
+        });
+        if (walletResponse.ok) {
+          const wallet = await walletResponse.json() as { currencySymbol?: string };
+          if (active && typeof wallet.currencySymbol === "string") setWalletCurrencySymbol(wallet.currencySymbol);
+        }
         const response = await fetch("/api/public/v1/catalog/home", {
           headers: await getWebAuthHeaders(token),
           cache: "no-store",
@@ -93,7 +107,7 @@ function HomePage() {
         <div className="flex items-center gap-2 sm:gap-3">
           <a href="#library" aria-label="Search" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50 hover:text-cyan-200"><Search size={19} /></a>
           <button onClick={() => setNotice("Notifications will appear here when your account is connected.")} aria-label="Notifications" className="relative grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50"><Bell size={18} /><span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-cyan-300" /></button>
-          <a href="/wallet" aria-label="Wallet" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-xs font-bold text-cyan-100 transition hover:border-cyan-300/50">₦</a>
+          <a href="/wallet" aria-label="Wallet" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-xs font-bold text-cyan-100 transition hover:border-cyan-300/50">{walletCurrencySymbol}</a>
           <a href="/account" aria-label="Sign in or view account" className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-600 text-sm font-black text-[#031039]">BQ</a>
         </div>
       </header>

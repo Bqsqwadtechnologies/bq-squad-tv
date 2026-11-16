@@ -4,7 +4,7 @@ import { getPlatformFlags, publicFlags } from "@/lib/server/flags";
 import { currencyForCountry } from "@/lib/server/currency";
 
 function countryFromRequest(request: Request): string | null {
-  const explicit = request.headers.get("x-country-code")?.trim().toUpperCase();
+  const explicit = (request.headers.get("x-vercel-ip-country") ?? request.headers.get("x-country-code"))?.trim().toUpperCase();
   if (explicit && /^[A-Z]{2}$/.test(explicit)) return explicit;
   const language = request.headers.get("accept-language")?.split(",")[0]?.trim() ?? "";
   const match = language.match(/[-_]([A-Za-z]{2})(?:$|[-_])/);
