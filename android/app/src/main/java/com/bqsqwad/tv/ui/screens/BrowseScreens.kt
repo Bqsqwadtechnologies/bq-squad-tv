@@ -73,11 +73,11 @@ fun LibraryScreen(onChannel: (String) -> Unit = {}) {
     LaunchedEffect(Unit) {
         runCatching { repository.home() }
             .onSuccess { response ->
-            val combinedChannels = response.channels + response.trending + response.replays
-            channels = combinedChannels.distinctBy { it.id }
-        }.onFailure {
-            error = it.localizedMessage ?: "The catalogue is unavailable."
-        }
+                val combinedChannels = response.channels + response.trending + response.replays
+                channels = combinedChannels.distinctBy { it.id }
+            }.onFailure {
+                error = it.localizedMessage ?: "The catalogue is unavailable."
+            }
         loading = false
     }
 
