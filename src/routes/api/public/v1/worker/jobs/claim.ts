@@ -13,9 +13,9 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
       const fs = await Firestore.create();
       await requireVideoWorker(request, fs);
       const queued = await fs.query("videoTranscodeJobs", { filters: [{ field: "status", op: "EQUAL", value: "queued" }], orderByField: "createdAt", limit: 10 });
-      const processing = await fs.query("videoTranscodeJobs", { filters: [{ field: "status", op: "EQUAL", value: "processing" }], orderByField: "leaseExpiresAt", limit: 10 });
+      const processing = await fs.query("videoTranscodeJobs", { filters: [{ field: "status", op: "EQUAL", value: "processing" }], limit: 500 });
       const now = new Date();
-      const candidates = [...queued, ...processing.filter(row => typeof row["leaseExpiresAt"] === "string" && Date.parse(row["leaseExpiresAt"]) <= now.getTime())];
+      const candidates = [...queued, ...processing.filter(row => typeof row["leaseExpiresAt"] !== "string" || !Number.isFinite(Date.parse(row["leaseExpiresAt"])) || Date.parse(row["leaseExpiresAt"]) <= now.getTime())];
       for (const row of candidates) {
         const assetId = row.__id;
         if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId)) continue;
