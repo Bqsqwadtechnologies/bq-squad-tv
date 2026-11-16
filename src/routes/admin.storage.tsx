@@ -29,7 +29,7 @@ type Destination = {
   usageBytes?: number | null;
   usageSource?: string | null;
   usageCheckedAt?: string | null;
-  healthStatus?: "unknown" | "healthy" | "unreachable" | "misconfigured";
+  healthStatus?: "unknown" | "healthy" | "degraded" | "unreachable" | "misconfigured";
   healthCheckedAt?: string | null;
   egressMonthBytes?: number | null;
   egressLevel?: string | null;
