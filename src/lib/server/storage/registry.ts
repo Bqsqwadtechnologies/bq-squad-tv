@@ -26,6 +26,17 @@ export type StorageDestinationMetadata = {
   accountGroup: string;
   mode: "active" | "drain" | "retired";
   replicaOf: string | null;
+  usageBytes?: number | null;
+  usageSource?: "ledger" | "provider" | null;
+  usageCheckedAt?: string | null;
+  egressMonthBytes?: number;
+  egressMonthKey?: string;
+  egressDayBytes?: number;
+  egressDayKey?: string;
+  freeEgressBudgetBytes?: number | null;
+  healthStatus?: "healthy" | "degraded" | "misconfigured" | "unreachable" | "unknown";
+  healthCheckedAt?: string | null;
+  lastErrorCode?: string | null;
   createdAt?: string;
   updatedAt?: string;
   updatedBy?: string;
@@ -75,6 +86,13 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
   const accountGroup = input["accountGroup"] ?? (providerType === "lovable_storage" ? "lovable-default-workspace" : `b2:${String(secretPrefix ?? "")}`);
   const mode = input["mode"] ?? (enabled === true ? "active" : "retired");
   const replicaOf = input["replicaOf"] ?? null;
+  const usageBytes = input["usageBytes"] ?? null;
+  const usageSource = input["usageSource"] ?? null;
+  const healthStatus = input["healthStatus"] ?? "unknown";
+  const egressMonthBytes = input["egressMonthBytes"] ?? 0;
+  const egressDayBytes = input["egressDayBytes"] ?? 0;
+  const freeEgressBudgetBytes = input["freeEgressBudgetBytes"] ?? null;
+  const lastErrorCode = input["lastErrorCode"] ?? null;
 
   if (typeof destinationId !== "string" || !DESTINATION_ID.test(destinationId) ||
       (providerType !== "lovable_storage" && providerType !== "backblaze_b2") ||
@@ -89,7 +107,14 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
       typeof softCapBytes !== "number" || !Number.isSafeInteger(softCapBytes) || softCapBytes < 1 ||
       (dailyEgressCapBytes !== null && (typeof dailyEgressCapBytes !== "number" || !Number.isSafeInteger(dailyEgressCapBytes) || dailyEgressCapBytes < 1)) ||
       typeof priority !== "number" || !Number.isInteger(priority) || priority < 0 || priority > 10000 ||
-      typeof enabled !== "boolean") {
+      typeof enabled !== "boolean" ||
+      (usageBytes !== null && (typeof usageBytes !== "number" || !Number.isSafeInteger(usageBytes) || usageBytes < 0)) ||
+      (usageSource !== null && usageSource !== "ledger" && usageSource !== "provider") ||
+      !["healthy", "degraded", "misconfigured", "unreachable", "unknown"].includes(String(healthStatus)) ||
+      typeof egressMonthBytes !== "number" || !Number.isSafeInteger(egressMonthBytes) || egressMonthBytes < 0 ||
+      typeof egressDayBytes !== "number" || !Number.isSafeInteger(egressDayBytes) || egressDayBytes < 0 ||
+      (freeEgressBudgetBytes !== null && (typeof freeEgressBudgetBytes !== "number" || !Number.isSafeInteger(freeEgressBudgetBytes) || freeEgressBudgetBytes < 0)) ||
+      (lastErrorCode !== null && (typeof lastErrorCode !== "string" || !/^[A-Z0-9_]{1,80}$/.test(lastErrorCode)))) {
     throw new ApiError(400, "STORAGE_DESTINATION_INVALID", "One or more storage destination fields are invalid.");
   }
 
@@ -108,6 +133,17 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
     accountGroup,
     mode: mode as "active" | "drain" | "retired",
     replicaOf: replicaOf as string | null,
+    usageBytes: usageBytes as number | null,
+    usageSource: usageSource as "ledger" | "provider" | null,
+    usageCheckedAt: typeof input["usageCheckedAt"] === "string" ? input["usageCheckedAt"] : null,
+    egressMonthBytes,
+    egressMonthKey: typeof input["egressMonthKey"] === "string" && /^\d{4}-\d{2}$/.test(input["egressMonthKey"]) ? input["egressMonthKey"] : undefined,
+    egressDayBytes,
+    egressDayKey: typeof input["egressDayKey"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input["egressDayKey"]) ? input["egressDayKey"] : undefined,
+    freeEgressBudgetBytes: freeEgressBudgetBytes as number | null,
+    healthStatus: healthStatus as StorageDestinationMetadata["healthStatus"],
+    healthCheckedAt: typeof input["healthCheckedAt"] === "string" ? input["healthCheckedAt"] : null,
+    lastErrorCode: lastErrorCode as string | null,
   };
 }
 
