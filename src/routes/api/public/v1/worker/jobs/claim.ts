@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
             claimToken: { stringValue: claimToken }, leaseExpiresAt: { stringValue: leaseExpiresAt },
             attempts: { integerValue: String((typeof job["attempts"] === "number" ? job["attempts"] : 0) + 1) },
             startedAt: { stringValue: now.toISOString() }, updatedAt: { stringValue: now.toISOString() },
-          } } }] };
+          } }, updateMask: { fieldPaths: ["status", "workerStatus", "claimToken", "leaseExpiresAt", "attempts", "startedAt", "updatedAt"] } }] };
         });
         if (!claimed) continue;
         let newReservationId = "";
