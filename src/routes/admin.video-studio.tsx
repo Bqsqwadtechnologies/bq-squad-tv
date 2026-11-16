@@ -11,7 +11,7 @@ export const Route = createFileRoute("/admin/video-studio")({
   head: () => ({ meta: [{ title: "Video Studio | ZILLIONAIRE" }, { name: "description", content: "Private source-video uploads for BQ SQWAD TV." }] }),
 });
 
-const MAX_BYTES = 5 * 1024 * 1024 * 1024;
+const MAX_BYTES = 5_000_000_000;
 
 function VideoStudio() {
   const [token, setToken] = useState("");
