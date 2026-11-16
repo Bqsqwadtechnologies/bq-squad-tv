@@ -12,53 +12,6 @@ export const Route = createFileRoute("/admin/video-studio")({
 });
 
 const MAX_BYTES = 5 * 1024 * 1024 * 1024;
-const CHUNK_BYTES = 6 * 1024 * 1024;
-
-function encodeMetadata(value: string) {
-  // Storage upload metadata values are normalized ASCII strings.
-  return btoa(value);
-}
-
-async function tusUpload(file: File, endpoint: string, signature: string, path: string, onProgress: (value: number) => void) {
-  const metadata = [
-    "bucketName " + encodeMetadata("bq-sqwad-source-media"),
-    "objectName " + encodeMetadata(path),
-    "contentType " + encodeMetadata(file.type),
-    "cacheControl " + encodeMetadata("3600"),
-  ].join(",");
-  const created = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Tus-Resumable": "1.0.0",
-      "Upload-Length": String(file.size),
-      "Upload-Metadata": metadata,
-      "x-signature": signature,
-    },
-  });
-  if (!created.ok) throw new Error("Resumable upload could not be started (" + created.status + ").");
-  const location = created.headers.get("Location");
-  if (!location) throw new Error("Storage did not return a resumable upload location.");
-  const uploadUrl = new URL(location, endpoint).toString();
-  let offset = 0;
-  while (offset < file.size) {
-    const chunk = file.slice(offset, Math.min(offset + CHUNK_BYTES, file.size));
-    const response = await fetch(uploadUrl, {
-      method: "PATCH",
-      headers: {
-        "Tus-Resumable": "1.0.0",
-        "Upload-Offset": String(offset),
-        "Content-Type": "application/offset+octet-stream",
-        "x-signature": signature,
-      },
-      body: chunk,
-    });
-    if (!response.ok) throw new Error("Resumable upload paused at " + Math.round((offset / file.size) * 100) + "% (" + response.status + "). Please retry the upload.");
-    const nextOffset = Number(response.headers.get("Upload-Offset"));
-    if (!Number.isSafeInteger(nextOffset) || nextOffset <= offset || nextOffset > file.size) throw new Error("Storage returned an invalid upload offset.");
-    offset = nextOffset;
-    onProgress(Math.round((offset / file.size) * 100));
-  }
-}
 
 function VideoStudio() {
   const [token, setToken] = useState("");
@@ -109,24 +62,19 @@ function VideoStudio() {
         headers: { ...headers, "content-type": "application/json" },
         body: JSON.stringify({ channelId, filename: file.name, sizeBytes: file.size, mimeType: file.type }),
       });
-      const intent = await intentResponse.json() as { assetId?: string; path?: string; signedUrl?: string; token?: string; uploadMode?: string; resumableEndpoint?: string | null; error?: string };
-      if (!intentResponse.ok || !intent.assetId || !intent.path || !intent.token) throw new Error(intent.error ?? "Could not create the private upload.");
+      const intent = await intentResponse.json() as { assetId?: string; path?: string; signedUrl?: string; token?: string; method?: string; uploadMode?: string; resumableEndpoint?: string | null; error?: string };
+      if (!intentResponse.ok || !intent.assetId || !intent.path || !intent.signedUrl) throw new Error(intent.error ?? "Could not create the private upload.");
       const assetId = intent.assetId;
       const uploadPath = intent.path;
       const uploadToken = intent.token;
-      if (file.size > 6 * 1024 * 1024 && intent.uploadMode !== "tus") {
-        throw new Error("Resumable upload is not configured for this project. The file has not been uploaded; no partial movie was published.");
-      }
-      setUpload({ name: file.name, progress: 0, status: "Uploading source", detail: "Sending the video directly to the existing private source-media bucket." });
-      if (intent.uploadMode === "tus" && intent.resumableEndpoint) {
-        await tusUpload(file, intent.resumableEndpoint, uploadToken, uploadPath, progress => {
-          setUpload({ name: file.name, progress, status: "Uploading source", detail: "Resumable upload · " + progress + "% complete." });
-        });
-      } else {
-        const response = await fetch(intent.signedUrl!, { method: "PUT", headers: { "content-type": file.type, "x-upsert": "false" }, body: file });
-        if (!response.ok) throw new Error("Private storage rejected the upload (" + response.status + ").");
-        setUpload({ name: file.name, progress: 100, status: "Verifying source", detail: "Checking the stored file and its media signature." });
-      }
+      setUpload({ name: file.name, progress: 0, status: "Uploading source", detail: "Sending the video directly to its assigned private storage destination." });
+      const response = await fetch(intent.signedUrl, {
+        method: intent.method ?? "PUT",
+        headers: { "content-type": file.type, "x-upsert": "false", ...(intent.token ? { "x-upload-token": intent.token } : {}) },
+        body: file,
+      });
+      if (!response.ok) throw new Error("Private storage rejected the upload (" + response.status + ").");
+      setUpload({ name: file.name, progress: 100, status: "Verifying source", detail: "Checking the stored file and its media signature." });
       const complete = await fetch("/api/public/v1/storage/complete", {
         method: "POST",
         headers: { ...headers, "content-type": "application/json" },
@@ -139,7 +87,7 @@ function VideoStudio() {
         progress: 100,
         status: "Source verified · processing job queued",
         detail: completed.transcodeJobStatus === "queued"
-          ? "The private source is verified and a durable HLS processing job has been recorded. The FFmpeg worker is not deployed or connected yet, so this asset remains unavailable for playback and publishing."
+          ? "The private source is verified and a durable HLS processing job has been recorded. The authenticated FFmpeg queue runner is implemented, but an always-on worker host has not been deployed. This asset remains unavailable for playback and publishing until processing finishes."
           : "The private source is verified. Processing has not been confirmed; this asset remains unavailable for playback and publishing.",
       });
       setFile(null);
@@ -163,9 +111,9 @@ function VideoStudio() {
       <section className="mx-auto max-w-6xl px-5 py-10">
         <div className="flex items-center gap-3 text-cyan-200"><Film size={22} /><span className="text-xs font-bold uppercase tracking-[0.2em]">Content operations</span></div>
         <h1 className="mt-3 text-3xl font-black sm:text-5xl">Video Studio</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-7 text-blue-100/60">Upload a source movie from your phone or computer browser into the existing private Lovable storage. Every upload is checked against your platform channel permissions and verified before it enters the processing queue.</p>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-blue-100/60">Upload a source movie from your phone or computer browser into an assigned private storage destination. Legacy Lovable storage remains supported. Every upload is checked against your platform channel permissions and verified before it enters the processing queue.</p>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-cyan-300/20 bg-[#07143d] p-5"><UploadCloud className="text-cyan-200" /><p className="mt-3 font-bold">1 · Secure upload</p><p className="mt-1 text-xs leading-5 text-blue-100/55">Private source bucket, signed upload authorization and resumable transfer for large files.</p></div>
+          <div className="rounded-2xl border border-cyan-300/20 bg-[#07143d] p-5"><UploadCloud className="text-cyan-200" /><p className="mt-3 font-bold">1 · Secure upload</p><p className="mt-1 text-xs leading-5 text-blue-100/55">Private source storage, a short-lived upload authorization and server-side file verification.</p></div>
           <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5"><Clock3 className="text-cyan-200" /><p className="mt-3 font-bold">2 · Video processing</p><p className="mt-1 text-xs leading-5 text-blue-100/55">HLS conversion worker is not connected yet. Uploads remain pending and cannot be published until processing is verified.</p></div>
           <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5"><ShieldCheck className="text-cyan-200" /><p className="mt-3 font-bold">3 · Rights & publishing</p><p className="mt-1 text-xs leading-5 text-blue-100/55">Independent rights review, HLS verification and existing publish safeguards remain required.</p></div>
         </div>
@@ -197,7 +145,7 @@ function VideoStudio() {
             <p className="mt-2 text-xs leading-5 text-blue-100/55">{upload.detail}</p>
           </div> : null}
         </div>
-        <p className="mt-6 text-xs leading-6 text-blue-100/40">Storage destinations remain unchanged: source uploads use the existing private source-media bucket; processed HLS output remains in the existing private streaming-media bucket. No phone-side conversion or storage migration is used.</p>
+        <p className="mt-6 text-xs leading-6 text-blue-100/40">Existing private Lovable buckets remain registered and legacy assets remain readable. New uploads and HLS output use one assigned destination per asset. No phone-side conversion is used.</p>
       </section>
     </main>
   );
