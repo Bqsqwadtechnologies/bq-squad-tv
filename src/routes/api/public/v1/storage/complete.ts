@@ -64,10 +64,10 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
               sourceObjectKey,
               sourceFilename: filename,
               sourceSizeBytes: actualSize,
-              outputBucket: "bq-sqwad-streaming-media",
-              outputPrefix: "hls/" + assetId,
+              outputDestinationId: null,
+              outputPrefix: null,
               status: "queued",
-              workerStatus: "not_configured",
+              workerStatus: "waiting_for_worker",
               attempts: 0,
               createdAt: now,
               updatedAt: now,
@@ -99,7 +99,7 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             reason: "Source upload verified before transcoding",
             metadata: { channelId, mediaKind, sizeBytes: actualSize, sourceDestinationId },
           });
-          return Response.json({ assetId, status: "uploaded_pending_transcode", sourceVerified: true, transcodeJobId: assetId, transcodeJobStatus: "queued", processingWorker: "not_configured" });
+          return Response.json({ assetId, status: "uploaded_pending_transcode", sourceVerified: true, transcodeJobId: assetId, transcodeJobStatus: "queued", processingWorker: "waiting_for_worker" });
         } catch (error) {
           return errorBody(error);
         }
