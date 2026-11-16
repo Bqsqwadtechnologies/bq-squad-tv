@@ -28,7 +28,7 @@ export type StorageDestinationMetadata = {
   mode: "active" | "drain" | "retired";
   replicaOf: string | null;
   usageBytes?: number | null;
-  usageSource?: "ledger" | "provider" | null;
+  usageSource?: "ledger" | "provider" | "manual" | null;
   usageCheckedAt?: string | null;
   egressMonthBytes?: number;
   egressMonthKey?: string;
@@ -117,7 +117,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
       typeof priority !== "number" || !Number.isInteger(priority) || priority < 0 || priority > 10000 ||
       typeof enabled !== "boolean" ||
       (usageBytes !== null && (typeof usageBytes !== "number" || !Number.isSafeInteger(usageBytes) || usageBytes < 0)) ||
-      (usageSource !== null && usageSource !== "ledger" && usageSource !== "provider") ||
+      (usageSource !== null && usageSource !== "ledger" && usageSource !== "provider" && usageSource !== "manual") ||
       !["healthy", "degraded", "misconfigured", "unreachable", "unknown"].includes(String(healthStatus)) ||
       typeof egressMonthBytes !== "number" || !Number.isSafeInteger(egressMonthBytes) || egressMonthBytes < 0 ||
       typeof egressDayBytes !== "number" || !Number.isSafeInteger(egressDayBytes) || egressDayBytes < 0 ||
@@ -145,7 +145,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
     mode: mode as "active" | "drain" | "retired",
     replicaOf: replicaOf as string | null,
     usageBytes: usageBytes as number | null,
-    usageSource: usageSource as "ledger" | "provider" | null,
+    usageSource: usageSource as "ledger" | "provider" | "manual" | null,
     usageCheckedAt: typeof input["usageCheckedAt"] === "string" ? input["usageCheckedAt"] : null,
     egressMonthBytes,
     egressMonthKey: typeof input["egressMonthKey"] === "string" && /^\d{4}-\d{2}$/.test(input["egressMonthKey"]) ? input["egressMonthKey"] : undefined,
