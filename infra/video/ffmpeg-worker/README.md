@@ -1,8 +1,6 @@
 # BQ SQWAD TV FFmpeg VOD worker — first implementation slice
 
-This is a provider-neutral local-file transcoding worker. It converts an authorized
-source movie into an adaptive HLS VOD ladder. It does not upload files, write to
-Firestore, publish content, issue playback URLs, or deduct viewer wallet balances.
+This worker polls the authenticated BQ SQWAD TV processing API, downloads an authorized source through a short-lived private URL, converts it locally, uploads HLS files to one reserved private destination, and asks the API to verify the complete output before publishing. It never handles viewer wallets or billing.
 
 ## Why it is separate
 
@@ -32,39 +30,39 @@ python infra/video/ffmpeg-worker/transcode.py --input ./authorized-movie.mp4 --o
 Build:
 docker build -t bq-sqwad-ffmpeg-worker infra/video/ffmpeg-worker
 
-Run with no network access. Mount the source read-only and an empty output directory:
-docker run --rm --network none -v "$PWD/authorized-movie.mp4:/work/source.mp4:ro" -v "$PWD/hls-output:/work/output" bq-sqwad-ffmpeg-worker --input /work/source.mp4 --output /work/output --threads 2
+Run the persistent queue runner with outbound HTTPS access to the BQ SQWAD TV API and the configured private storage provider. Supply secrets through the container host secret manager, never in the image or command line.
 
-## Application queue integration status
+## Application queue integration
 
-After the private source upload is verified, the application now records an idempotent
-Firestore job in `videoTranscodeJobs/{assetId}` and marks the content asset as
-`uploaded_pending_transcode`. The job records the source bucket/path and the existing
-private HLS destination bucket/prefix. Video Studio reports that the job is queued.
+The worker now consumes `videoTranscodeJobs` through authenticated API endpoints:
 
-**This is a durable queue record, not a running worker.** No always-on processor has
-been deployed or connected to consume the queue yet. Jobs remain queued until a separately
-configured worker runner claims them, downloads the authorized source through a
-server-side storage adapter, runs this CLI, uploads and verifies every HLS object, and
-updates the Firestore job and asset states. Do not mark an asset ready merely because
-the queue record exists.
+1. Claim a queued job with a short-lived lease.
+2. Download the verified source using a short-lived private URL.
+3. Reserve one HLS destination for the entire ladder.
+4. Transcode locally using the same tested FFmpeg pipeline.
+5. Request a scoped upload URL for each HLS object and upload it.
+6. Submit the object manifest; the API checks object sizes, playlists and referenced segments.
+7. The API marks the asset ready only after every check passes.
+
+The worker signs each API request with a domain-separated key derived from the existing `STREAMING_HMAC_SECRET`. Requests include a timestamp and one-use nonce. The API rejects stale, invalid and replayed requests. The worker renews its lease while FFmpeg is running, and failed jobs retry up to five attempts.
+
+### Runtime configuration
+
+- `BQ_TV_API_BASE_URL`: HTTPS origin of the deployed BQ SQWAD TV API.
+- `STREAMING_HMAC_SECRET`: existing server secret, injected into the worker using the host's secret manager.
+- Optional `WORKER_POLL_SECONDS` and `FFMPEG_THREADS`.
+
+Build the image using the manual GitHub Actions workflow. Publishing the image does not deploy or start a persistent worker. An owner must configure an approved always-on container host, inject the secrets securely, provide persistent logs and temporary disk, and set CPU, memory, disk, duration and concurrency limits. Until that host is running, jobs remain queued.
 
 ## Security and production integration boundaries
 
 - Process only content BQ owns or is contractually authorized to host.
 - The worker accepts local paths only; it does not fetch arbitrary URLs.
-- Run as an unprivileged user, with network disabled unless a separately reviewed
-  upload adapter is added.
+- Run as an unprivileged user. Allow only outbound HTTPS required for the application API and configured private storage endpoints; do not expose inbound worker ports.
 - Give each job an isolated temporary directory and enforce host-level CPU, memory,
   disk, duration and concurrency limits.
 - Do not expose the worker filesystem or FFmpeg process to viewer clients.
-- A separate authenticated orchestrator must verify the source object, enqueue a job,
-  invoke this worker, upload the generated HLS tree to private object storage, verify
-  the master and child playlists/segments, then transition the Firestore asset from
-  uploaded_pending_transcode to ready only after all checks pass.
-- The current app upload routes and HLS proxy use the existing private storage
-  integration. This worker intentionally leaves the existing Lovable-managed
-  private buckets and storage provider unchanged. Any additional storage provider
-  must be added as a separate, server-only adapter without migrating existing objects.
+- The API is the authority for source verification, job leases, output reservation, object verification and the final uploaded_pending_transcode to ready transition.
+- Existing Lovable-managed buckets remain registered and readable. New HLS output uses one selected destination per asset; legacy assets retain their existing playback fallback.
 - Live ingest (MediaMTX/SRS), live recording, downloads, DRM and production deployment
   are not included in this first code slice.
