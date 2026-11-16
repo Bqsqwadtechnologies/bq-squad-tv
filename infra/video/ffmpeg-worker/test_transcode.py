@@ -3,6 +3,17 @@ import unittest
 from pathlib import Path
 
 from transcode import build_variant_ladder, verify_hls_output
+from runner import canonical_message
+
+
+class WorkerAuthenticationTests(unittest.TestCase):
+    def test_canonical_message_uses_real_newline_delimiters(self):
+        message = canonical_message("1794850000", "a" * 32, "post", "/api/public/v1/worker/jobs/claim", "b" * 64)
+        self.assertEqual(
+            "1794850000\n" + "a" * 32 + "\nPOST\n/api/public/v1/worker/jobs/claim\n" + "b" * 64,
+            message.decode(),
+        )
+        self.assertNotIn(b"\\\\n", message)
 
 
 class VariantLadderTests(unittest.TestCase):
