@@ -37,8 +37,9 @@ async function walk(directory) {
 
 function isOwnerOnlyRoute(file) {
   const relative = path.relative(path.join(root, "src/routes"), file).split(path.sep).join("/");
-  return relative.startsWith("admin.") || relative.startsWith("admin/") ||
-    relative.startsWith("api/public/v1/admin/");
+  return relative === "admin.index.tsx" || relative === "admin.storage.tsx" ||
+    relative.startsWith("api/public/v1/admin/storage/") ||
+    relative === "api/public/v1/admin/config/flags.ts";
 }
 
 function publicTextOnly(source) {
