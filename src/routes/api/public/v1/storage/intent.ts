@@ -63,7 +63,7 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
             purpose: "source_media",
             incomingBytes: body.sizeBytes,
             reservationId: assetId,
-            ttlMs: 15 * 60_000,
+            ttlMs: 2 * 60 * 60_000,
           });
           try {
             const rawDestination = await fs.getDoc("storageDestinations/" + reservation.destinationId);
