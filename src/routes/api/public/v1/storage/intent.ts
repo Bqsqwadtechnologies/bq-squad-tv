@@ -6,6 +6,9 @@ import { requireAuthorizedChannelUpload } from "@/lib/server/producer-upload-acc
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSafeStoragePath } from "@/lib/server/storage/security";
 import { writeAuditLog } from "@/lib/server/audit";
+import { reserveStorageDestination, releaseStorageReservation } from "@/lib/server/storage/reservations";
+import { createStorageUploadTarget } from "@/lib/server/storage/transfers";
+import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
 
 const MAX_SOURCE_BYTES = 5 * 1024 * 1024 * 1024;
 const mimeByExtension: Record<string, string[]> = {
@@ -56,30 +59,63 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
           const path = `producers/${user.uid}/${body.channelId}/${assetId}/${filename}`;
           if (!isSafeStoragePath(path)) throw new ApiError(400, "UPLOAD_PATH_INVALID", "The generated upload path is invalid.");
 
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { data, error } = await supabaseAdmin.storage
-            .from("bq-sqwad-source-media")
-            .createSignedUploadUrl(path, { upsert: false });
-          if (error || !data?.signedUrl || !data.token) {
-            throw new ApiError(503, "STORAGE_UPLOAD_UNAVAILABLE", "A private upload session could not be created.");
+          const reservation = await reserveStorageDestination(fs, {
+            purpose: "source_media",
+            incomingBytes: body.sizeBytes,
+            reservationId: assetId,
+            ttlMs: 15 * 60_000,
+          });
+          try {
+            const rawDestination = await fs.getDoc("storageDestinations/" + reservation.destinationId);
+            if (!rawDestination) throw new ApiError(503, "STORAGE_DESTINATION_MISSING", "The selected storage destination is unavailable.");
+            const metadata = validateStorageDestinationMetadata({ ...rawDestination, destinationId: reservation.destinationId });
+            const configuration = resolveStorageDestinationConfiguration(metadata);
+            const target = await createStorageUploadTarget(configuration, path, 900);
+            const now = new Date();
+            const expiresAt = new Date(now.getTime() + target.expiresInSeconds * 1000).toISOString();
+            await fs.setDoc("contentAssets/" + assetId, {
+              channelId: body.channelId,
+              ownerUid: user.uid,
+              sourceDestinationId: reservation.destinationId,
+              sourceBucket: metadata.bucketName,
+              sourcePath: path,
+              sourceObjectKey: path,
+              sourceFilename: filename,
+              declaredSizeBytes: body.sizeBytes,
+              declaredMimeType: body.mimeType.toLowerCase(),
+              storageReservationId: reservation.reservationId,
+              storageReservationBytes: reservation.reservedBytes,
+              status: "uploading",
+              deliveryMode: "bq_hosted",
+              createdAt: now.toISOString(),
+              uploadExpiresAt: expiresAt,
+              uploadTokenLifetimeSeconds: target.expiresInSeconds,
+            }, { mustNotExist: true });
+            await writeAuditLog(fs, {
+              actorUid: user.uid, action: "content.upload_intent_created",
+              targetType: "contentAsset", targetId: assetId,
+              reason: "Authorized channel source upload",
+              metadata: { channelId: body.channelId, sizeBytes: body.sizeBytes, extension, destinationId: reservation.destinationId },
+            });
+            return Response.json({
+              assetId,
+              path,
+              bucket: metadata.bucketName,
+              destinationId: reservation.destinationId,
+              providerType: metadata.providerType,
+              signedUrl: target.signedUrl,
+              ...(target.token ? { token: target.token } : {}),
+              expiresAt,
+              method: target.method,
+              uploadMode: "signed_put",
+              resumableEndpoint: null,
+              resumableSignatureHeader: null,
+            }, { status: 201 });
+          } catch (error) {
+            await releaseStorageReservation(fs, reservation.reservationId).catch(() => undefined);
+            throw error;
           }
 
-          const now = new Date();
-          const expiresAt = new Date(now.getTime() + 2 * 60 * 60_000).toISOString();
-          await fs.setDoc("contentAssets/" + assetId, {
-            channelId: body.channelId,
-            ownerUid: user.uid,
-            sourceBucket: "bq-sqwad-source-media",
-            sourcePath: path,
-            sourceFilename: filename,
-            declaredSizeBytes: body.sizeBytes,
-            declaredMimeType: body.mimeType.toLowerCase(),
-            status: "uploading",
-            deliveryMode: "bq_hosted",
-            createdAt: now.toISOString(),
-            uploadExpiresAt: expiresAt,
-            uploadTokenLifetimeSeconds: 7200,
-          }, { mustNotExist: true });
           await writeAuditLog(fs, {
             actorUid: user.uid, action: "content.upload_intent_created",
             targetType: "contentAsset", targetId: assetId,
