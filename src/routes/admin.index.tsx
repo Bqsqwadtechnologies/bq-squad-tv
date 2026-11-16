@@ -63,8 +63,8 @@ export const Route = createFileRoute("/admin/")({
   component: ZillionaireDashboard,
   head: () => ({
     meta: [
-      { title: "ZILLIONAIRE Control Centre | BQ SQWAD TV" },
-      { name: "description", content: "Protected owner control centre for BQ SQWAD TV." },
+      { title: "Dashboard | BQ SQWAD TV" },
+      { name: "description", content: "Secure account access for BQ SQWAD TV." },
     ],
   }),
 });
@@ -86,7 +86,7 @@ function ZillionaireDashboard() {
     if (!response.ok) {
       setAccess(null);
       throw new Error(result.error ?? (response.status === 403
-        ? "This account does not have ZILLIONAIRE control-centre access."
+        ? "This account does not have dashboard access."
         : "Could not verify control-centre access."));
     }
     setAccess(result);
@@ -134,9 +134,11 @@ function ZillionaireDashboard() {
           <a href="/" aria-label="BQ SQWAD TV home">
             <img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="w-44" />
           </a>
-          <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-cyan-200">
-            ZILLIONAIRE
-          </span>
+          {access?.owner ? (
+            <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-cyan-200">
+              ZILLIONAIRE
+            </span>
+          ) : null}
         </div>
       </header>
 
@@ -146,7 +148,7 @@ function ZillionaireDashboard() {
             <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
               <ShieldCheck size={16} /> Protected platform controls
             </p>
-            <h1 className="mt-4 text-3xl font-black sm:text-5xl">ZILLIONAIRE Control Centre</h1>
+            <h1 className="mt-4 text-3xl font-black sm:text-5xl">{access?.owner ? "ZILLIONAIRE Control Centre" : "Secure dashboard access"}</h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100/60">
               Manage BQ SQWAD TV through server-authorized modules. Access is checked against the verified account and current Firestore permissions on every request.
             </p>

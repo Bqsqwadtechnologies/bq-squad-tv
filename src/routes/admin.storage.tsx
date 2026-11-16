@@ -127,7 +127,7 @@ function AdminStoragePage() {
     <main className="min-h-screen bg-[#030b2a] text-white">
       <header className="border-b border-cyan-300/15 bg-[#050f35]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5">
-          <a href="/admin/" className="text-sm font-bold text-cyan-200">← ZILLIONAIRE Control Centre</a>
+          <a href="/admin/" className="text-sm font-bold text-cyan-200">← {token ? "ZILLIONAIRE Control Centre" : "Dashboard"}</a>
           <span className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Storage registry</span>
         </div>
       </header>
