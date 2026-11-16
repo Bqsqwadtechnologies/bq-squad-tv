@@ -42,6 +42,9 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
               typeof job["sourceObjectKey"] !== "string" || typeof job["sourceSizeBytes"] !== "number") {
             throw new ApiError(409, "TRANSCODE_SOURCE_INVALID", "The queued source asset is not ready for processing.");
           }
+          if (typeof job["outputReservationId"] === "string") {
+            await releaseStorageReservation(fs, job["outputReservationId"]);
+          }
           const sourceConfig = await loadSourceStorageConfiguration(fs, asset);
           const sourceTarget = await createStorageDownloadTarget(sourceConfig, job["sourceObjectKey"], 3600);
           const reservedBytes = estimateReservedBytes(job["sourceSizeBytes"], 2.5);
