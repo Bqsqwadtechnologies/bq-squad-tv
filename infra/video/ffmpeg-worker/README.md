@@ -66,3 +66,53 @@ Build the image using the manual GitHub Actions workflow. Publishing the image d
 - Existing Lovable-managed buckets remain registered and readable. New HLS output uses one selected destination per asset; legacy assets retain their existing playback fallback.
 - Live ingest (MediaMTX/SRS), live recording, downloads, DRM and production deployment
   are not included in this first code slice.
+
+
+## Modal deployment adapter
+
+`modal_app.py` runs the existing authenticated queue worker on Modal. It does
+not replace the Firestore queue, worker API, storage adapters, FFmpeg pipeline,
+or HLS completion checks.
+
+Initial safety limits for testing:
+
+- One queue poller, scheduled every 30 seconds.
+- At most two concurrent transcode containers.
+- Two CPU cores and 4 GiB memory per transcode container.
+- 20,000 MiB ephemeral disk per container.
+- Three-hour maximum job runtime.
+- The existing worker heartbeat renews the job lease during FFmpeg processing.
+
+These are conservative starting limits, not a promise of throughput or a
+production capacity target. Modal account/workspace limits and the Starter
+credit allowance may reduce actual concurrency. Increase limits only after
+measuring a real test job and confirming the budget.
+
+### One-time Modal setup
+
+1. Create a Modal account and a Secret named `bq-sqwad-tv-worker`.
+2. Add these two environment variables to that Modal Secret:
+   - `BQ_TV_API_BASE_URL`: the deployed BQ SQWAD TV API origin, without a trailing slash.
+   - `STREAMING_HMAC_SECRET`: the existing worker HMAC secret. Never commit or paste it into GitHub source.
+3. In GitHub repository Actions secrets, add `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET` from the Modal account's deployment token.
+4. Run **Actions → Deploy Modal FFmpeg worker → Run workflow** on `main`.
+
+The GitHub workflow only deploys the Modal application. FFmpeg jobs execute on
+Modal, not on GitHub Actions runners. The workflow is manual and does not run
+until an owner starts it.
+
+Until the Modal Secret and deployment token are configured and the workflow
+succeeds, queued jobs remain queued. Deployment must be followed by a real
+authorized test upload and verification of the completed HLS asset.
+
+### Important limits
+
+- Modal processes uploads; it does not deliver video to viewers.
+- The existing HLS application proxy is still the viewer-delivery path. It
+  remains a scalability bottleneck and must not be described as supporting
+  million-scale concurrency.
+- A CDN/direct-segment delivery adapter is a separate provider-dependent
+  change. Do not bypass session, wallet, rights, territory, age, or revocation
+  checks with long-lived public object URLs.
+- Do not increase Modal container limits or enable paid overages until the
+  owner has reviewed actual measured costs and approved the budget.
