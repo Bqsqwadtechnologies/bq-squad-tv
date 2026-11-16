@@ -116,39 +116,6 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
             throw error;
           }
 
-          await writeAuditLog(fs, {
-            actorUid: user.uid, action: "content.upload_intent_created",
-            targetType: "contentAsset", targetId: assetId,
-            reason: "Authorized channel source upload",
-            metadata: { channelId: body.channelId, sizeBytes: body.sizeBytes, extension },
-          });
-
-          const storageBase = process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"];
-          let resumableEndpoint: string | null = null;
-          if (storageBase) {
-            try {
-              const parsed = new URL(storageBase);
-              const host = parsed.hostname.endsWith(".supabase.co")
-                ? parsed.hostname.replace(/\.supabase\.co$/, ".storage.supabase.co")
-                : parsed.hostname;
-              resumableEndpoint = parsed.protocol + "//" + host + "/storage/v1/upload/resumable";
-            } catch {
-              resumableEndpoint = null;
-            }
-          }
-
-          return Response.json({
-            assetId,
-            path,
-            bucket: "bq-sqwad-source-media",
-            signedUrl: data.signedUrl,
-            token: data.token,
-            expiresAt,
-            method: body.sizeBytes > 6 * 1024 * 1024 && resumableEndpoint ? "TUS" : "PUT",
-            uploadMode: body.sizeBytes > 6 * 1024 * 1024 && resumableEndpoint ? "tus" : "signed_put",
-            resumableEndpoint: body.sizeBytes > 6 * 1024 * 1024 ? resumableEndpoint : null,
-            resumableSignatureHeader: body.sizeBytes > 6 * 1024 * 1024 && resumableEndpoint ? "x-signature" : null,
-          }, { status: 201 });
         } catch (error) {
           return errorBody(error);
         }
