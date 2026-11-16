@@ -13,7 +13,7 @@ class WorkerAuthenticationTests(unittest.TestCase):
             "1794850000\n" + "a" * 32 + "\nPOST\n/api/public/v1/worker/jobs/claim\n" + "b" * 64,
             message.decode(),
         )
-        self.assertNotIn(b"\\\\n", message)
+        self.assertNotIn(b"\\n", message)
 
 
 class VariantLadderTests(unittest.TestCase):
