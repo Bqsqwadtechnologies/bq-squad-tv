@@ -139,3 +139,24 @@ export async function loadSourceStorageConfiguration(
     SUPABASE_URL: process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"],
   });
 }
+
+
+export async function createStorageDownloadTarget(
+  config: StorageDestinationConfiguration,
+  key: string,
+  expiresInSeconds = 900,
+): Promise<{ signedUrl: string; expiresInSeconds: number }> {
+  assertStorageObjectKey(key);
+  if (!Number.isSafeInteger(expiresInSeconds) || expiresInSeconds < 60 || expiresInSeconds > 3600) {
+    throw new ApiError(400, "DOWNLOAD_EXPIRY_INVALID", "The download authorization lifetime is invalid.");
+  }
+  if (config.metadata.providerType === "backblaze_b2") {
+    return { signedUrl: await b2Url(config, key, "GET", expiresInSeconds), expiresInSeconds };
+  }
+  const c = credentials(config);
+  if (!c.url || !c.serviceRoleKey) throw new ApiError(503, "STORAGE_DESTINATION_MISCONFIGURED", "The storage destination is not configured.");
+  const client = createClient(c.url, c.serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  const { data, error } = await client.storage.from(config.metadata.bucketName).createSignedUrl(key, expiresInSeconds);
+  if (error || !data?.signedUrl) throw new ApiError(503, "STORAGE_DOWNLOAD_UNAVAILABLE", "A private download authorization could not be created.");
+  return { signedUrl: data.signedUrl, expiresInSeconds };
+}
