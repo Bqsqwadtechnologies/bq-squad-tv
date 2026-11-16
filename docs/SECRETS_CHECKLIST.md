@@ -97,4 +97,11 @@ Storage credentials use the secret prefix registered for each storage destinatio
 
 Obtain these values from the relevant storage account's developer/API settings. Add them only in the server hosting environment's secret manager. Do not add secret values to the destination form, source control, Android build settings or public client configuration.
 
+For the storage federation rollout, the registry accepts these B2 secret-prefix groups (add values only for buckets/accounts that actually exist and have been verified):
+- Prompt 2 naming: `STORAGE_B2_01` through `STORAGE_B2_11`, each with `_KEY_ID`, `_APP_KEY`, `_BUCKET_ID`, and `_ENDPOINT`.
+- Earlier inventory compatibility: `STORAGE_B2_NN01` through `STORAGE_B2_NN10`, with the same four suffixes.
+- Additional Lovable project prefixes, only if provisioned: `STORAGE_LOV_01` through `STORAGE_LOV_05`, each with `_URL` and `_SERVICE_ROLE_KEY`.
+
+Do not create duplicate secret groups just to satisfy both naming conventions. Register each real destination with the matching prefix. For multiple Lovable buckets in one workspace, use one shared quota group until the workspace's actual quota model is verified. Never paste secret values into chat or GitHub.
+
 Further worker and storage-provider secret names will be appended after the remaining batch specifications are received and their exact requirements are confirmed.
