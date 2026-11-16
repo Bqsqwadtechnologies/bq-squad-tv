@@ -22,6 +22,7 @@ const schema = z.object({
   mode: z.enum(["active", "drain", "retired"]).default("active"),
   replicaOf: z.string().regex(/^[a-z0-9][a-z0-9_-]{1,79}$/).nullable().default(null),
   softCapBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  accountCapBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).nullable().default(null),
   dailyEgressCapBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).nullable().default(null),
   priority: z.number().int().min(0).max(10000).default(100),
   enabled: z.boolean().default(true),
@@ -75,6 +76,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/destinations"
                   region: { stringValue: metadata.region },
                   purpose: { stringValue: metadata.purpose },
                   softCapBytes: { integerValue: String(metadata.softCapBytes) },
+                  accountCapBytes: metadata.accountCapBytes == null ? { nullValue: null } : { integerValue: String(metadata.accountCapBytes) },
                   dailyEgressCapBytes: metadata.dailyEgressCapBytes === null
                     ? { nullValue: null } : { integerValue: String(metadata.dailyEgressCapBytes) },
                   priority: { integerValue: String(metadata.priority) },
