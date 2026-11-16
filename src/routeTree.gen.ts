@@ -10,26 +10,160 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountRouteImport } from './routes/account'
+import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAdsRouteImport } from './routes/admin.ads'
 import { Route as AdminFirebaseSchemaRouteImport } from './routes/admin.firebase-schema'
+import { Route as AdminPricingRouteImport } from './routes/admin.pricing'
+import { Route as AdminReportsRouteImport } from './routes/admin.reports'
+import { Route as AdminStorageRouteImport } from './routes/admin.storage'
+import { Route as AdminVideoStudioRouteImport } from './routes/admin.video-studio'
+import { Route as ContentAssetIdRouteImport } from './routes/content.$assetId'
+import { Route as ProducerIndexRouteImport } from './routes/producer.index'
+import { Route as ProducerChannelsRouteImport } from './routes/producer.channels'
 import { Route as ApiPublicFirebaseSchemaInspectRouteImport } from './routes/api/public/firebase-schema-inspect'
+import { Route as ApiPublicV1NotificationsRouteImport } from './routes/api/public/v1/notifications'
 import { Route as ApiPublicV1WalletRouteImport } from './routes/api/public/v1/wallet'
+import { Route as ProducerChannelsChannelIdTeamRouteImport } from './routes/producer.channels.$channelId.team'
+import { Route as ApiPublicV1AdminAuditRouteImport } from './routes/api/public/v1/admin/audit'
+import { Route as ApiPublicV1AdminChannelsRouteImport } from './routes/api/public/v1/admin/channels'
+import { Route as ApiPublicV1AdminNotificationsRouteImport } from './routes/api/public/v1/admin/notifications'
+import { Route as ApiPublicV1AdminOverviewRouteImport } from './routes/api/public/v1/admin/overview'
+import { Route as ApiPublicV1AdsNextRouteImport } from './routes/api/public/v1/ads/next'
+import { Route as ApiPublicV1AdsProviderConfigRouteImport } from './routes/api/public/v1/ads/provider-config'
 import { Route as ApiPublicV1CatalogHomeRouteImport } from './routes/api/public/v1/catalog/home'
 import { Route as ApiPublicV1CatalogSearchRouteImport } from './routes/api/public/v1/catalog/search'
 import { Route as ApiPublicV1ChannelsChannelIdRouteImport } from './routes/api/public/v1/channels/$channelId'
+import { Route as ApiPublicV1ConfigClientRouteImport } from './routes/api/public/v1/config/client'
+import { Route as ApiPublicV1ContentAssetsAssetIdRouteImport } from './routes/api/public/v1/content-assets/$assetId'
+import { Route as ApiPublicV1DevicesPushTokenRouteImport } from './routes/api/public/v1/devices/push-token'
+import { Route as ApiPublicV1ProducerChannelsRouteImport } from './routes/api/public/v1/producer/channels'
+import { Route as ApiPublicV1ProducerEarningsRouteImport } from './routes/api/public/v1/producer/earnings'
+import { Route as ApiPublicV1ProducerMobileSummaryRouteImport } from './routes/api/public/v1/producer/mobile-summary'
+import { Route as ApiPublicV1ProducerPayoutsRouteImport } from './routes/api/public/v1/producer/payouts'
+import { Route as ApiPublicV1ProducerVerificationRouteImport } from './routes/api/public/v1/producer/verification'
 import { Route as ApiPublicV1ProfileCompleteRouteImport } from './routes/api/public/v1/profile/complete'
+import { Route as ApiPublicV1ProfileCountryRouteImport } from './routes/api/public/v1/profile/country'
+import { Route as ApiPublicV1SessionsStartRouteImport } from './routes/api/public/v1/sessions/start'
+import { Route as ApiPublicV1StorageCompleteRouteImport } from './routes/api/public/v1/storage/complete'
+import { Route as ApiPublicV1StorageIntentRouteImport } from './routes/api/public/v1/storage/intent'
 import { Route as ApiPublicV1WalletLedgerRouteImport } from './routes/api/public/v1/wallet/ledger'
+import { Route as ApiPublicV1WalletSummaryRouteImport } from './routes/api/public/v1/wallet/summary'
+import { Route as ApiPublicV1WalletTopupsRouteImport } from './routes/api/public/v1/wallet/topups'
+import { Route as ApiPublicV1AdminAdsCampaignsRouteImport } from './routes/api/public/v1/admin/ads/campaigns'
+import { Route as ApiPublicV1AdminAdsProvidersRouteImport } from './routes/api/public/v1/admin/ads/providers'
+import { Route as ApiPublicV1AdminConfigFlagsRouteImport } from './routes/api/public/v1/admin/config/flags'
+import { Route as ApiPublicV1AdminConfigPricingRouteImport } from './routes/api/public/v1/admin/config/pricing'
+import { Route as ApiPublicV1AdminReportsMonthlyRouteImport } from './routes/api/public/v1/admin/reports/monthly'
+import { Route as ApiPublicV1AdminStorageDestinationsRouteImport } from './routes/api/public/v1/admin/storage/destinations'
+import { Route as ApiPublicV1AdsAdIdEventsRouteImport } from './routes/api/public/v1/ads/$adId/events'
+import { Route as ApiPublicV1AuthEmailSendCodeRouteImport } from './routes/api/public/v1/auth/email/send-code'
+import { Route as ApiPublicV1AuthEmailVerifyCodeRouteImport } from './routes/api/public/v1/auth/email/verify-code'
+import { Route as ApiPublicV1AuthSessionRevokeAllRouteImport } from './routes/api/public/v1/auth/session/revoke-all'
+import { Route as ApiPublicV1AuthWebConfigRouteImport } from './routes/api/public/v1/auth/web/config'
+import { Route as ApiPublicV1AuthWebMeRouteImport } from './routes/api/public/v1/auth/web/me'
+import { Route as ApiPublicV1AuthWebSessionRouteImport } from './routes/api/public/v1/auth/web/session'
+import { Route as ApiPublicV1ContentAssetsAssetIdCommentsRouteImport } from './routes/api/public/v1/content-assets/$assetId/comments'
+import { Route as ApiPublicV1ContentAssetsAssetIdRatingRouteImport } from './routes/api/public/v1/content-assets/$assetId/rating'
+import { Route as ApiPublicV1NotificationsNotificationIdReadRouteImport } from './routes/api/public/v1/notifications/$notificationId/read'
+import { Route as ApiPublicV1PaymentsPaystackInitializeRouteImport } from './routes/api/public/v1/payments/paystack/initialize'
+import { Route as ApiPublicV1PaymentsPaystackVerifyRouteImport } from './routes/api/public/v1/payments/paystack/verify'
+import { Route as ApiPublicV1PaymentsPaystackWebhookRouteImport } from './routes/api/public/v1/payments/paystack/webhook'
+import { Route as ApiPublicV1ProducerPayoutsRequestRouteImport } from './routes/api/public/v1/producer/payouts/request'
+import { Route as ApiPublicV1ProducerVerificationUploadIntentRouteImport } from './routes/api/public/v1/producer/verification/upload-intent'
 import { Route as ApiPublicV1SecurityIntegrityChallengeRouteImport } from './routes/api/public/v1/security/integrity/challenge'
 import { Route as ApiPublicV1SessionsSessionIdEndRouteImport } from './routes/api/public/v1/sessions/$sessionId/end'
 import { Route as ApiPublicV1SessionsSessionIdHeartbeatRouteImport } from './routes/api/public/v1/sessions/$sessionId/heartbeat'
+import { Route as ApiPublicV1SessionsSessionIdRefreshRouteImport } from './routes/api/public/v1/sessions/$sessionId/refresh'
+import { Route as ApiPublicV1StreamingHlsSplatRouteImport } from './routes/api/public/v1/streaming/hls/$'
+import { Route as ApiPublicV1WalletGooglePlayProductsRouteImport } from './routes/api/public/v1/wallet/google-play/products'
+import { Route as ApiPublicV1WalletGooglePlayVerifyRouteImport } from './routes/api/public/v1/wallet/google-play/verify'
+import { Route as ApiPublicV1AdminAdsCampaignsCampaignIdRouteImport } from './routes/api/public/v1/admin/ads/campaigns/$campaignId'
+import { Route as ApiPublicV1AdminChannelsChannelIdAssetsRouteImport } from './routes/api/public/v1/admin/channels/$channelId/assets'
+import { Route as ApiPublicV1AdminChannelsChannelIdPublishRouteImport } from './routes/api/public/v1/admin/channels/$channelId/publish'
+import { Route as ApiPublicV1AdminChannelsChannelIdScheduleRouteImport } from './routes/api/public/v1/admin/channels/$channelId/schedule'
+import { Route as ApiPublicV1AdminContentAssetsAssetIdFeatureRouteImport } from './routes/api/public/v1/admin/content-assets/$assetId/feature'
+import { Route as ApiPublicV1AdminContentAssetsAssetIdReadyRouteImport } from './routes/api/public/v1/admin/content-assets/$assetId/ready'
+import { Route as ApiPublicV1AdminContentAssetsAssetIdRightsRouteImport } from './routes/api/public/v1/admin/content-assets/$assetId/rights'
+import { Route as ApiPublicV1AdminContentCommentsCommentIdModerateRouteImport } from './routes/api/public/v1/admin/content-comments/$commentId/moderate'
+import { Route as ApiPublicV1AdminPaymentsPaymentIdReverseRouteImport } from './routes/api/public/v1/admin/payments/$paymentId/reverse'
+import { Route as ApiPublicV1AdminPayoutsPayoutIdReviewRouteImport } from './routes/api/public/v1/admin/payouts/$payoutId/review'
+import { Route as ApiPublicV1AdminPayoutsPayoutIdSettleRouteImport } from './routes/api/public/v1/admin/payouts/$payoutId/settle'
+import { Route as ApiPublicV1AdminProducersUidVerificationRouteImport } from './routes/api/public/v1/admin/producers/$uid/verification'
+import { Route as ApiPublicV1AdminUsersUidPermissionsRouteImport } from './routes/api/public/v1/admin/users/$uid/permissions'
+import { Route as ApiPublicV1AdminUsersUidStatusRouteImport } from './routes/api/public/v1/admin/users/$uid/status'
+import { Route as ApiPublicV1AuthWebSessionLogoutRouteImport } from './routes/api/public/v1/auth/web/session/logout'
+import { Route as ApiPublicV1AuthWebSessionRefreshRouteImport } from './routes/api/public/v1/auth/web/session/refresh'
+import { Route as ApiPublicV1ProducerChannelsChannelIdAssetsRouteImport } from './routes/api/public/v1/producer/channels/$channelId/assets'
+import { Route as ApiPublicV1ProducerChannelsChannelIdScheduleRouteImport } from './routes/api/public/v1/producer/channels/$channelId/schedule'
+import { Route as ApiPublicV1ProducerChannelsChannelIdTeamRouteImport } from './routes/api/public/v1/producer/channels/$channelId/team'
+import { Route as ApiPublicV1AdminChannelsChannelIdScheduleProgrammeIdRouteImport } from './routes/api/public/v1/admin/channels/$channelId/schedule/$programmeId'
+import { Route as ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRouteImport } from './routes/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAdsRoute = AdminAdsRouteImport.update({
+  id: '/admin/ads',
+  path: '/admin/ads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminFirebaseSchemaRoute = AdminFirebaseSchemaRouteImport.update({
   id: '/admin/firebase-schema',
   path: '/admin/firebase-schema',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminPricingRoute = AdminPricingRouteImport.update({
+  id: '/admin/pricing',
+  path: '/admin/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/admin/reports',
+  path: '/admin/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminStorageRoute = AdminStorageRouteImport.update({
+  id: '/admin/storage',
+  path: '/admin/storage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminVideoStudioRoute = AdminVideoStudioRouteImport.update({
+  id: '/admin/video-studio',
+  path: '/admin/video-studio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContentAssetIdRoute = ContentAssetIdRouteImport.update({
+  id: '/content/$assetId',
+  path: '/content/$assetId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProducerIndexRoute = ProducerIndexRouteImport.update({
+  id: '/producer/',
+  path: '/producer/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProducerChannelsRoute = ProducerChannelsRouteImport.update({
+  id: '/producer/channels',
+  path: '/producer/channels',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicFirebaseSchemaInspectRoute =
@@ -38,11 +172,57 @@ const ApiPublicFirebaseSchemaInspectRoute =
     path: '/api/public/firebase-schema-inspect',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1NotificationsRoute =
+  ApiPublicV1NotificationsRouteImport.update({
+    id: '/api/public/v1/notifications',
+    path: '/api/public/v1/notifications',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1WalletRoute = ApiPublicV1WalletRouteImport.update({
   id: '/api/public/v1/wallet',
   path: '/api/public/v1/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProducerChannelsChannelIdTeamRoute =
+  ProducerChannelsChannelIdTeamRouteImport.update({
+    id: '/$channelId/team',
+    path: '/$channelId/team',
+    getParentRoute: () => ProducerChannelsRoute,
+  } as any)
+const ApiPublicV1AdminAuditRoute = ApiPublicV1AdminAuditRouteImport.update({
+  id: '/api/public/v1/admin/audit',
+  path: '/api/public/v1/admin/audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1AdminChannelsRoute =
+  ApiPublicV1AdminChannelsRouteImport.update({
+    id: '/api/public/v1/admin/channels',
+    path: '/api/public/v1/admin/channels',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminNotificationsRoute =
+  ApiPublicV1AdminNotificationsRouteImport.update({
+    id: '/api/public/v1/admin/notifications',
+    path: '/api/public/v1/admin/notifications',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminOverviewRoute =
+  ApiPublicV1AdminOverviewRouteImport.update({
+    id: '/api/public/v1/admin/overview',
+    path: '/api/public/v1/admin/overview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdsNextRoute = ApiPublicV1AdsNextRouteImport.update({
+  id: '/api/public/v1/ads/next',
+  path: '/api/public/v1/ads/next',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1AdsProviderConfigRoute =
+  ApiPublicV1AdsProviderConfigRouteImport.update({
+    id: '/api/public/v1/ads/provider-config',
+    path: '/api/public/v1/ads/provider-config',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1CatalogHomeRoute = ApiPublicV1CatalogHomeRouteImport.update({
   id: '/api/public/v1/catalog/home',
   path: '/api/public/v1/catalog/home',
@@ -60,10 +240,81 @@ const ApiPublicV1ChannelsChannelIdRoute =
     path: '/api/public/v1/channels/$channelId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ConfigClientRoute = ApiPublicV1ConfigClientRouteImport.update({
+  id: '/api/public/v1/config/client',
+  path: '/api/public/v1/config/client',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1ContentAssetsAssetIdRoute =
+  ApiPublicV1ContentAssetsAssetIdRouteImport.update({
+    id: '/api/public/v1/content-assets/$assetId',
+    path: '/api/public/v1/content-assets/$assetId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1DevicesPushTokenRoute =
+  ApiPublicV1DevicesPushTokenRouteImport.update({
+    id: '/api/public/v1/devices/push-token',
+    path: '/api/public/v1/devices/push-token',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerChannelsRoute =
+  ApiPublicV1ProducerChannelsRouteImport.update({
+    id: '/api/public/v1/producer/channels',
+    path: '/api/public/v1/producer/channels',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerEarningsRoute =
+  ApiPublicV1ProducerEarningsRouteImport.update({
+    id: '/api/public/v1/producer/earnings',
+    path: '/api/public/v1/producer/earnings',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerMobileSummaryRoute =
+  ApiPublicV1ProducerMobileSummaryRouteImport.update({
+    id: '/api/public/v1/producer/mobile-summary',
+    path: '/api/public/v1/producer/mobile-summary',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerPayoutsRoute =
+  ApiPublicV1ProducerPayoutsRouteImport.update({
+    id: '/api/public/v1/producer/payouts',
+    path: '/api/public/v1/producer/payouts',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerVerificationRoute =
+  ApiPublicV1ProducerVerificationRouteImport.update({
+    id: '/api/public/v1/producer/verification',
+    path: '/api/public/v1/producer/verification',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ProfileCompleteRoute =
   ApiPublicV1ProfileCompleteRouteImport.update({
     id: '/api/public/v1/profile/complete',
     path: '/api/public/v1/profile/complete',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProfileCountryRoute =
+  ApiPublicV1ProfileCountryRouteImport.update({
+    id: '/api/public/v1/profile/country',
+    path: '/api/public/v1/profile/country',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SessionsStartRoute =
+  ApiPublicV1SessionsStartRouteImport.update({
+    id: '/api/public/v1/sessions/start',
+    path: '/api/public/v1/sessions/start',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1StorageCompleteRoute =
+  ApiPublicV1StorageCompleteRouteImport.update({
+    id: '/api/public/v1/storage/complete',
+    path: '/api/public/v1/storage/complete',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1StorageIntentRoute =
+  ApiPublicV1StorageIntentRouteImport.update({
+    id: '/api/public/v1/storage/intent',
+    path: '/api/public/v1/storage/intent',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1WalletLedgerRoute = ApiPublicV1WalletLedgerRouteImport.update({
@@ -71,6 +322,142 @@ const ApiPublicV1WalletLedgerRoute = ApiPublicV1WalletLedgerRouteImport.update({
   path: '/ledger',
   getParentRoute: () => ApiPublicV1WalletRoute,
 } as any)
+const ApiPublicV1WalletSummaryRoute =
+  ApiPublicV1WalletSummaryRouteImport.update({
+    id: '/summary',
+    path: '/summary',
+    getParentRoute: () => ApiPublicV1WalletRoute,
+  } as any)
+const ApiPublicV1WalletTopupsRoute = ApiPublicV1WalletTopupsRouteImport.update({
+  id: '/topups',
+  path: '/topups',
+  getParentRoute: () => ApiPublicV1WalletRoute,
+} as any)
+const ApiPublicV1AdminAdsCampaignsRoute =
+  ApiPublicV1AdminAdsCampaignsRouteImport.update({
+    id: '/api/public/v1/admin/ads/campaigns',
+    path: '/api/public/v1/admin/ads/campaigns',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminAdsProvidersRoute =
+  ApiPublicV1AdminAdsProvidersRouteImport.update({
+    id: '/api/public/v1/admin/ads/providers',
+    path: '/api/public/v1/admin/ads/providers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminConfigFlagsRoute =
+  ApiPublicV1AdminConfigFlagsRouteImport.update({
+    id: '/api/public/v1/admin/config/flags',
+    path: '/api/public/v1/admin/config/flags',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminConfigPricingRoute =
+  ApiPublicV1AdminConfigPricingRouteImport.update({
+    id: '/api/public/v1/admin/config/pricing',
+    path: '/api/public/v1/admin/config/pricing',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminReportsMonthlyRoute =
+  ApiPublicV1AdminReportsMonthlyRouteImport.update({
+    id: '/api/public/v1/admin/reports/monthly',
+    path: '/api/public/v1/admin/reports/monthly',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminStorageDestinationsRoute =
+  ApiPublicV1AdminStorageDestinationsRouteImport.update({
+    id: '/api/public/v1/admin/storage/destinations',
+    path: '/api/public/v1/admin/storage/destinations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdsAdIdEventsRoute =
+  ApiPublicV1AdsAdIdEventsRouteImport.update({
+    id: '/api/public/v1/ads/$adId/events',
+    path: '/api/public/v1/ads/$adId/events',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AuthEmailSendCodeRoute =
+  ApiPublicV1AuthEmailSendCodeRouteImport.update({
+    id: '/api/public/v1/auth/email/send-code',
+    path: '/api/public/v1/auth/email/send-code',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AuthEmailVerifyCodeRoute =
+  ApiPublicV1AuthEmailVerifyCodeRouteImport.update({
+    id: '/api/public/v1/auth/email/verify-code',
+    path: '/api/public/v1/auth/email/verify-code',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AuthSessionRevokeAllRoute =
+  ApiPublicV1AuthSessionRevokeAllRouteImport.update({
+    id: '/api/public/v1/auth/session/revoke-all',
+    path: '/api/public/v1/auth/session/revoke-all',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AuthWebConfigRoute =
+  ApiPublicV1AuthWebConfigRouteImport.update({
+    id: '/api/public/v1/auth/web/config',
+    path: '/api/public/v1/auth/web/config',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AuthWebMeRoute = ApiPublicV1AuthWebMeRouteImport.update({
+  id: '/api/public/v1/auth/web/me',
+  path: '/api/public/v1/auth/web/me',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1AuthWebSessionRoute =
+  ApiPublicV1AuthWebSessionRouteImport.update({
+    id: '/api/public/v1/auth/web/session',
+    path: '/api/public/v1/auth/web/session',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ContentAssetsAssetIdCommentsRoute =
+  ApiPublicV1ContentAssetsAssetIdCommentsRouteImport.update({
+    id: '/comments',
+    path: '/comments',
+    getParentRoute: () => ApiPublicV1ContentAssetsAssetIdRoute,
+  } as any)
+const ApiPublicV1ContentAssetsAssetIdRatingRoute =
+  ApiPublicV1ContentAssetsAssetIdRatingRouteImport.update({
+    id: '/rating',
+    path: '/rating',
+    getParentRoute: () => ApiPublicV1ContentAssetsAssetIdRoute,
+  } as any)
+const ApiPublicV1NotificationsNotificationIdReadRoute =
+  ApiPublicV1NotificationsNotificationIdReadRouteImport.update({
+    id: '/$notificationId/read',
+    path: '/$notificationId/read',
+    getParentRoute: () => ApiPublicV1NotificationsRoute,
+  } as any)
+const ApiPublicV1PaymentsPaystackInitializeRoute =
+  ApiPublicV1PaymentsPaystackInitializeRouteImport.update({
+    id: '/api/public/v1/payments/paystack/initialize',
+    path: '/api/public/v1/payments/paystack/initialize',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1PaymentsPaystackVerifyRoute =
+  ApiPublicV1PaymentsPaystackVerifyRouteImport.update({
+    id: '/api/public/v1/payments/paystack/verify',
+    path: '/api/public/v1/payments/paystack/verify',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1PaymentsPaystackWebhookRoute =
+  ApiPublicV1PaymentsPaystackWebhookRouteImport.update({
+    id: '/api/public/v1/payments/paystack/webhook',
+    path: '/api/public/v1/payments/paystack/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerPayoutsRequestRoute =
+  ApiPublicV1ProducerPayoutsRequestRouteImport.update({
+    id: '/request',
+    path: '/request',
+    getParentRoute: () => ApiPublicV1ProducerPayoutsRoute,
+  } as any)
+const ApiPublicV1ProducerVerificationUploadIntentRoute =
+  ApiPublicV1ProducerVerificationUploadIntentRouteImport.update({
+    id: '/upload-intent',
+    path: '/upload-intent',
+    getParentRoute: () => ApiPublicV1ProducerVerificationRoute,
+  } as any)
 const ApiPublicV1SecurityIntegrityChallengeRoute =
   ApiPublicV1SecurityIntegrityChallengeRouteImport.update({
     id: '/api/public/v1/security/integrity/challenge',
@@ -89,107 +476,789 @@ const ApiPublicV1SessionsSessionIdHeartbeatRoute =
     path: '/api/public/v1/sessions/$sessionId/heartbeat',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1SessionsSessionIdRefreshRoute =
+  ApiPublicV1SessionsSessionIdRefreshRouteImport.update({
+    id: '/api/public/v1/sessions/$sessionId/refresh',
+    path: '/api/public/v1/sessions/$sessionId/refresh',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1StreamingHlsSplatRoute =
+  ApiPublicV1StreamingHlsSplatRouteImport.update({
+    id: '/api/public/v1/streaming/hls/$',
+    path: '/api/public/v1/streaming/hls/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1WalletGooglePlayProductsRoute =
+  ApiPublicV1WalletGooglePlayProductsRouteImport.update({
+    id: '/google-play/products',
+    path: '/google-play/products',
+    getParentRoute: () => ApiPublicV1WalletRoute,
+  } as any)
+const ApiPublicV1WalletGooglePlayVerifyRoute =
+  ApiPublicV1WalletGooglePlayVerifyRouteImport.update({
+    id: '/google-play/verify',
+    path: '/google-play/verify',
+    getParentRoute: () => ApiPublicV1WalletRoute,
+  } as any)
+const ApiPublicV1AdminAdsCampaignsCampaignIdRoute =
+  ApiPublicV1AdminAdsCampaignsCampaignIdRouteImport.update({
+    id: '/$campaignId',
+    path: '/$campaignId',
+    getParentRoute: () => ApiPublicV1AdminAdsCampaignsRoute,
+  } as any)
+const ApiPublicV1AdminChannelsChannelIdAssetsRoute =
+  ApiPublicV1AdminChannelsChannelIdAssetsRouteImport.update({
+    id: '/$channelId/assets',
+    path: '/$channelId/assets',
+    getParentRoute: () => ApiPublicV1AdminChannelsRoute,
+  } as any)
+const ApiPublicV1AdminChannelsChannelIdPublishRoute =
+  ApiPublicV1AdminChannelsChannelIdPublishRouteImport.update({
+    id: '/$channelId/publish',
+    path: '/$channelId/publish',
+    getParentRoute: () => ApiPublicV1AdminChannelsRoute,
+  } as any)
+const ApiPublicV1AdminChannelsChannelIdScheduleRoute =
+  ApiPublicV1AdminChannelsChannelIdScheduleRouteImport.update({
+    id: '/$channelId/schedule',
+    path: '/$channelId/schedule',
+    getParentRoute: () => ApiPublicV1AdminChannelsRoute,
+  } as any)
+const ApiPublicV1AdminContentAssetsAssetIdFeatureRoute =
+  ApiPublicV1AdminContentAssetsAssetIdFeatureRouteImport.update({
+    id: '/api/public/v1/admin/content-assets/$assetId/feature',
+    path: '/api/public/v1/admin/content-assets/$assetId/feature',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminContentAssetsAssetIdReadyRoute =
+  ApiPublicV1AdminContentAssetsAssetIdReadyRouteImport.update({
+    id: '/api/public/v1/admin/content-assets/$assetId/ready',
+    path: '/api/public/v1/admin/content-assets/$assetId/ready',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminContentAssetsAssetIdRightsRoute =
+  ApiPublicV1AdminContentAssetsAssetIdRightsRouteImport.update({
+    id: '/api/public/v1/admin/content-assets/$assetId/rights',
+    path: '/api/public/v1/admin/content-assets/$assetId/rights',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminContentCommentsCommentIdModerateRoute =
+  ApiPublicV1AdminContentCommentsCommentIdModerateRouteImport.update({
+    id: '/api/public/v1/admin/content-comments/$commentId/moderate',
+    path: '/api/public/v1/admin/content-comments/$commentId/moderate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminPaymentsPaymentIdReverseRoute =
+  ApiPublicV1AdminPaymentsPaymentIdReverseRouteImport.update({
+    id: '/api/public/v1/admin/payments/$paymentId/reverse',
+    path: '/api/public/v1/admin/payments/$paymentId/reverse',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminPayoutsPayoutIdReviewRoute =
+  ApiPublicV1AdminPayoutsPayoutIdReviewRouteImport.update({
+    id: '/api/public/v1/admin/payouts/$payoutId/review',
+    path: '/api/public/v1/admin/payouts/$payoutId/review',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminPayoutsPayoutIdSettleRoute =
+  ApiPublicV1AdminPayoutsPayoutIdSettleRouteImport.update({
+    id: '/api/public/v1/admin/payouts/$payoutId/settle',
+    path: '/api/public/v1/admin/payouts/$payoutId/settle',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminProducersUidVerificationRoute =
+  ApiPublicV1AdminProducersUidVerificationRouteImport.update({
+    id: '/api/public/v1/admin/producers/$uid/verification',
+    path: '/api/public/v1/admin/producers/$uid/verification',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminUsersUidPermissionsRoute =
+  ApiPublicV1AdminUsersUidPermissionsRouteImport.update({
+    id: '/api/public/v1/admin/users/$uid/permissions',
+    path: '/api/public/v1/admin/users/$uid/permissions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminUsersUidStatusRoute =
+  ApiPublicV1AdminUsersUidStatusRouteImport.update({
+    id: '/api/public/v1/admin/users/$uid/status',
+    path: '/api/public/v1/admin/users/$uid/status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AuthWebSessionLogoutRoute =
+  ApiPublicV1AuthWebSessionLogoutRouteImport.update({
+    id: '/logout',
+    path: '/logout',
+    getParentRoute: () => ApiPublicV1AuthWebSessionRoute,
+  } as any)
+const ApiPublicV1AuthWebSessionRefreshRoute =
+  ApiPublicV1AuthWebSessionRefreshRouteImport.update({
+    id: '/refresh',
+    path: '/refresh',
+    getParentRoute: () => ApiPublicV1AuthWebSessionRoute,
+  } as any)
+const ApiPublicV1ProducerChannelsChannelIdAssetsRoute =
+  ApiPublicV1ProducerChannelsChannelIdAssetsRouteImport.update({
+    id: '/$channelId/assets',
+    path: '/$channelId/assets',
+    getParentRoute: () => ApiPublicV1ProducerChannelsRoute,
+  } as any)
+const ApiPublicV1ProducerChannelsChannelIdScheduleRoute =
+  ApiPublicV1ProducerChannelsChannelIdScheduleRouteImport.update({
+    id: '/$channelId/schedule',
+    path: '/$channelId/schedule',
+    getParentRoute: () => ApiPublicV1ProducerChannelsRoute,
+  } as any)
+const ApiPublicV1ProducerChannelsChannelIdTeamRoute =
+  ApiPublicV1ProducerChannelsChannelIdTeamRouteImport.update({
+    id: '/$channelId/team',
+    path: '/$channelId/team',
+    getParentRoute: () => ApiPublicV1ProducerChannelsRoute,
+  } as any)
+const ApiPublicV1AdminChannelsChannelIdScheduleProgrammeIdRoute =
+  ApiPublicV1AdminChannelsChannelIdScheduleProgrammeIdRouteImport.update({
+    id: '/$programmeId',
+    path: '/$programmeId',
+    getParentRoute: () => ApiPublicV1AdminChannelsChannelIdScheduleRoute,
+  } as any)
+const ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute =
+  ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRouteImport.update({
+    id: '/$programmeId',
+    path: '/$programmeId',
+    getParentRoute: () => ApiPublicV1ProducerChannelsChannelIdScheduleRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
+  '/wallet': typeof WalletRoute
+  '/admin/ads': typeof AdminAdsRoute
   '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
+  '/admin/pricing': typeof AdminPricingRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/storage': typeof AdminStorageRoute
+  '/admin/video-studio': typeof AdminVideoStudioRoute
+  '/content/$assetId': typeof ContentAssetIdRoute
+  '/producer/channels': typeof ProducerChannelsRouteWithChildren
+  '/admin/': typeof AdminIndexRoute
+  '/producer/': typeof ProducerIndexRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/notifications': typeof ApiPublicV1NotificationsRouteWithChildren
   '/api/public/v1/wallet': typeof ApiPublicV1WalletRouteWithChildren
+  '/producer/channels/$channelId/team': typeof ProducerChannelsChannelIdTeamRoute
+  '/api/public/v1/admin/audit': typeof ApiPublicV1AdminAuditRoute
+  '/api/public/v1/admin/channels': typeof ApiPublicV1AdminChannelsRouteWithChildren
+  '/api/public/v1/admin/notifications': typeof ApiPublicV1AdminNotificationsRoute
+  '/api/public/v1/admin/overview': typeof ApiPublicV1AdminOverviewRoute
+  '/api/public/v1/ads/next': typeof ApiPublicV1AdsNextRoute
+  '/api/public/v1/ads/provider-config': typeof ApiPublicV1AdsProviderConfigRoute
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
   '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
+  '/api/public/v1/config/client': typeof ApiPublicV1ConfigClientRoute
+  '/api/public/v1/content-assets/$assetId': typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
+  '/api/public/v1/devices/push-token': typeof ApiPublicV1DevicesPushTokenRoute
+  '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
+  '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
+  '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
+  '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
+  '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
+  '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
+  '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
+  '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
+  '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
+  '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
+  '/api/public/v1/admin/ads/campaigns': typeof ApiPublicV1AdminAdsCampaignsRouteWithChildren
+  '/api/public/v1/admin/ads/providers': typeof ApiPublicV1AdminAdsProvidersRoute
+  '/api/public/v1/admin/config/flags': typeof ApiPublicV1AdminConfigFlagsRoute
+  '/api/public/v1/admin/config/pricing': typeof ApiPublicV1AdminConfigPricingRoute
+  '/api/public/v1/admin/reports/monthly': typeof ApiPublicV1AdminReportsMonthlyRoute
+  '/api/public/v1/admin/storage/destinations': typeof ApiPublicV1AdminStorageDestinationsRoute
+  '/api/public/v1/ads/$adId/events': typeof ApiPublicV1AdsAdIdEventsRoute
+  '/api/public/v1/auth/email/send-code': typeof ApiPublicV1AuthEmailSendCodeRoute
+  '/api/public/v1/auth/email/verify-code': typeof ApiPublicV1AuthEmailVerifyCodeRoute
+  '/api/public/v1/auth/session/revoke-all': typeof ApiPublicV1AuthSessionRevokeAllRoute
+  '/api/public/v1/auth/web/config': typeof ApiPublicV1AuthWebConfigRoute
+  '/api/public/v1/auth/web/me': typeof ApiPublicV1AuthWebMeRoute
+  '/api/public/v1/auth/web/session': typeof ApiPublicV1AuthWebSessionRouteWithChildren
+  '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
+  '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
+  '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
+  '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
+  '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
+  '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
+  '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
+  '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
   '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
+  '/api/public/v1/sessions/$sessionId/refresh': typeof ApiPublicV1SessionsSessionIdRefreshRoute
+  '/api/public/v1/streaming/hls/$': typeof ApiPublicV1StreamingHlsSplatRoute
+  '/api/public/v1/wallet/google-play/products': typeof ApiPublicV1WalletGooglePlayProductsRoute
+  '/api/public/v1/wallet/google-play/verify': typeof ApiPublicV1WalletGooglePlayVerifyRoute
+  '/api/public/v1/admin/ads/campaigns/$campaignId': typeof ApiPublicV1AdminAdsCampaignsCampaignIdRoute
+  '/api/public/v1/admin/channels/$channelId/assets': typeof ApiPublicV1AdminChannelsChannelIdAssetsRoute
+  '/api/public/v1/admin/channels/$channelId/publish': typeof ApiPublicV1AdminChannelsChannelIdPublishRoute
+  '/api/public/v1/admin/channels/$channelId/schedule': typeof ApiPublicV1AdminChannelsChannelIdScheduleRouteWithChildren
+  '/api/public/v1/admin/content-assets/$assetId/feature': typeof ApiPublicV1AdminContentAssetsAssetIdFeatureRoute
+  '/api/public/v1/admin/content-assets/$assetId/ready': typeof ApiPublicV1AdminContentAssetsAssetIdReadyRoute
+  '/api/public/v1/admin/content-assets/$assetId/rights': typeof ApiPublicV1AdminContentAssetsAssetIdRightsRoute
+  '/api/public/v1/admin/content-comments/$commentId/moderate': typeof ApiPublicV1AdminContentCommentsCommentIdModerateRoute
+  '/api/public/v1/admin/payments/$paymentId/reverse': typeof ApiPublicV1AdminPaymentsPaymentIdReverseRoute
+  '/api/public/v1/admin/payouts/$payoutId/review': typeof ApiPublicV1AdminPayoutsPayoutIdReviewRoute
+  '/api/public/v1/admin/payouts/$payoutId/settle': typeof ApiPublicV1AdminPayoutsPayoutIdSettleRoute
+  '/api/public/v1/admin/producers/$uid/verification': typeof ApiPublicV1AdminProducersUidVerificationRoute
+  '/api/public/v1/admin/users/$uid/permissions': typeof ApiPublicV1AdminUsersUidPermissionsRoute
+  '/api/public/v1/admin/users/$uid/status': typeof ApiPublicV1AdminUsersUidStatusRoute
+  '/api/public/v1/auth/web/session/logout': typeof ApiPublicV1AuthWebSessionLogoutRoute
+  '/api/public/v1/auth/web/session/refresh': typeof ApiPublicV1AuthWebSessionRefreshRoute
+  '/api/public/v1/producer/channels/$channelId/assets': typeof ApiPublicV1ProducerChannelsChannelIdAssetsRoute
+  '/api/public/v1/producer/channels/$channelId/schedule': typeof ApiPublicV1ProducerChannelsChannelIdScheduleRouteWithChildren
+  '/api/public/v1/producer/channels/$channelId/team': typeof ApiPublicV1ProducerChannelsChannelIdTeamRoute
+  '/api/public/v1/admin/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1AdminChannelsChannelIdScheduleProgrammeIdRoute
+  '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
+  '/wallet': typeof WalletRoute
+  '/admin/ads': typeof AdminAdsRoute
   '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
+  '/admin/pricing': typeof AdminPricingRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/storage': typeof AdminStorageRoute
+  '/admin/video-studio': typeof AdminVideoStudioRoute
+  '/content/$assetId': typeof ContentAssetIdRoute
+  '/producer/channels': typeof ProducerChannelsRouteWithChildren
+  '/admin': typeof AdminIndexRoute
+  '/producer': typeof ProducerIndexRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/notifications': typeof ApiPublicV1NotificationsRouteWithChildren
   '/api/public/v1/wallet': typeof ApiPublicV1WalletRouteWithChildren
+  '/producer/channels/$channelId/team': typeof ProducerChannelsChannelIdTeamRoute
+  '/api/public/v1/admin/audit': typeof ApiPublicV1AdminAuditRoute
+  '/api/public/v1/admin/channels': typeof ApiPublicV1AdminChannelsRouteWithChildren
+  '/api/public/v1/admin/notifications': typeof ApiPublicV1AdminNotificationsRoute
+  '/api/public/v1/admin/overview': typeof ApiPublicV1AdminOverviewRoute
+  '/api/public/v1/ads/next': typeof ApiPublicV1AdsNextRoute
+  '/api/public/v1/ads/provider-config': typeof ApiPublicV1AdsProviderConfigRoute
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
   '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
+  '/api/public/v1/config/client': typeof ApiPublicV1ConfigClientRoute
+  '/api/public/v1/content-assets/$assetId': typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
+  '/api/public/v1/devices/push-token': typeof ApiPublicV1DevicesPushTokenRoute
+  '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
+  '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
+  '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
+  '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
+  '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
+  '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
+  '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
+  '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
+  '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
+  '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
+  '/api/public/v1/admin/ads/campaigns': typeof ApiPublicV1AdminAdsCampaignsRouteWithChildren
+  '/api/public/v1/admin/ads/providers': typeof ApiPublicV1AdminAdsProvidersRoute
+  '/api/public/v1/admin/config/flags': typeof ApiPublicV1AdminConfigFlagsRoute
+  '/api/public/v1/admin/config/pricing': typeof ApiPublicV1AdminConfigPricingRoute
+  '/api/public/v1/admin/reports/monthly': typeof ApiPublicV1AdminReportsMonthlyRoute
+  '/api/public/v1/admin/storage/destinations': typeof ApiPublicV1AdminStorageDestinationsRoute
+  '/api/public/v1/ads/$adId/events': typeof ApiPublicV1AdsAdIdEventsRoute
+  '/api/public/v1/auth/email/send-code': typeof ApiPublicV1AuthEmailSendCodeRoute
+  '/api/public/v1/auth/email/verify-code': typeof ApiPublicV1AuthEmailVerifyCodeRoute
+  '/api/public/v1/auth/session/revoke-all': typeof ApiPublicV1AuthSessionRevokeAllRoute
+  '/api/public/v1/auth/web/config': typeof ApiPublicV1AuthWebConfigRoute
+  '/api/public/v1/auth/web/me': typeof ApiPublicV1AuthWebMeRoute
+  '/api/public/v1/auth/web/session': typeof ApiPublicV1AuthWebSessionRouteWithChildren
+  '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
+  '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
+  '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
+  '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
+  '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
+  '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
+  '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
+  '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
   '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
+  '/api/public/v1/sessions/$sessionId/refresh': typeof ApiPublicV1SessionsSessionIdRefreshRoute
+  '/api/public/v1/streaming/hls/$': typeof ApiPublicV1StreamingHlsSplatRoute
+  '/api/public/v1/wallet/google-play/products': typeof ApiPublicV1WalletGooglePlayProductsRoute
+  '/api/public/v1/wallet/google-play/verify': typeof ApiPublicV1WalletGooglePlayVerifyRoute
+  '/api/public/v1/admin/ads/campaigns/$campaignId': typeof ApiPublicV1AdminAdsCampaignsCampaignIdRoute
+  '/api/public/v1/admin/channels/$channelId/assets': typeof ApiPublicV1AdminChannelsChannelIdAssetsRoute
+  '/api/public/v1/admin/channels/$channelId/publish': typeof ApiPublicV1AdminChannelsChannelIdPublishRoute
+  '/api/public/v1/admin/channels/$channelId/schedule': typeof ApiPublicV1AdminChannelsChannelIdScheduleRouteWithChildren
+  '/api/public/v1/admin/content-assets/$assetId/feature': typeof ApiPublicV1AdminContentAssetsAssetIdFeatureRoute
+  '/api/public/v1/admin/content-assets/$assetId/ready': typeof ApiPublicV1AdminContentAssetsAssetIdReadyRoute
+  '/api/public/v1/admin/content-assets/$assetId/rights': typeof ApiPublicV1AdminContentAssetsAssetIdRightsRoute
+  '/api/public/v1/admin/content-comments/$commentId/moderate': typeof ApiPublicV1AdminContentCommentsCommentIdModerateRoute
+  '/api/public/v1/admin/payments/$paymentId/reverse': typeof ApiPublicV1AdminPaymentsPaymentIdReverseRoute
+  '/api/public/v1/admin/payouts/$payoutId/review': typeof ApiPublicV1AdminPayoutsPayoutIdReviewRoute
+  '/api/public/v1/admin/payouts/$payoutId/settle': typeof ApiPublicV1AdminPayoutsPayoutIdSettleRoute
+  '/api/public/v1/admin/producers/$uid/verification': typeof ApiPublicV1AdminProducersUidVerificationRoute
+  '/api/public/v1/admin/users/$uid/permissions': typeof ApiPublicV1AdminUsersUidPermissionsRoute
+  '/api/public/v1/admin/users/$uid/status': typeof ApiPublicV1AdminUsersUidStatusRoute
+  '/api/public/v1/auth/web/session/logout': typeof ApiPublicV1AuthWebSessionLogoutRoute
+  '/api/public/v1/auth/web/session/refresh': typeof ApiPublicV1AuthWebSessionRefreshRoute
+  '/api/public/v1/producer/channels/$channelId/assets': typeof ApiPublicV1ProducerChannelsChannelIdAssetsRoute
+  '/api/public/v1/producer/channels/$channelId/schedule': typeof ApiPublicV1ProducerChannelsChannelIdScheduleRouteWithChildren
+  '/api/public/v1/producer/channels/$channelId/team': typeof ApiPublicV1ProducerChannelsChannelIdTeamRoute
+  '/api/public/v1/admin/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1AdminChannelsChannelIdScheduleProgrammeIdRoute
+  '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
+  '/wallet': typeof WalletRoute
+  '/admin/ads': typeof AdminAdsRoute
   '/admin/firebase-schema': typeof AdminFirebaseSchemaRoute
+  '/admin/pricing': typeof AdminPricingRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/storage': typeof AdminStorageRoute
+  '/admin/video-studio': typeof AdminVideoStudioRoute
+  '/content/$assetId': typeof ContentAssetIdRoute
+  '/producer/channels': typeof ProducerChannelsRouteWithChildren
+  '/admin/': typeof AdminIndexRoute
+  '/producer/': typeof ProducerIndexRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/notifications': typeof ApiPublicV1NotificationsRouteWithChildren
   '/api/public/v1/wallet': typeof ApiPublicV1WalletRouteWithChildren
+  '/producer/channels/$channelId/team': typeof ProducerChannelsChannelIdTeamRoute
+  '/api/public/v1/admin/audit': typeof ApiPublicV1AdminAuditRoute
+  '/api/public/v1/admin/channels': typeof ApiPublicV1AdminChannelsRouteWithChildren
+  '/api/public/v1/admin/notifications': typeof ApiPublicV1AdminNotificationsRoute
+  '/api/public/v1/admin/overview': typeof ApiPublicV1AdminOverviewRoute
+  '/api/public/v1/ads/next': typeof ApiPublicV1AdsNextRoute
+  '/api/public/v1/ads/provider-config': typeof ApiPublicV1AdsProviderConfigRoute
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
   '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
+  '/api/public/v1/config/client': typeof ApiPublicV1ConfigClientRoute
+  '/api/public/v1/content-assets/$assetId': typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
+  '/api/public/v1/devices/push-token': typeof ApiPublicV1DevicesPushTokenRoute
+  '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
+  '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
+  '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
+  '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
+  '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
+  '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
+  '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
+  '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
+  '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
+  '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
+  '/api/public/v1/admin/ads/campaigns': typeof ApiPublicV1AdminAdsCampaignsRouteWithChildren
+  '/api/public/v1/admin/ads/providers': typeof ApiPublicV1AdminAdsProvidersRoute
+  '/api/public/v1/admin/config/flags': typeof ApiPublicV1AdminConfigFlagsRoute
+  '/api/public/v1/admin/config/pricing': typeof ApiPublicV1AdminConfigPricingRoute
+  '/api/public/v1/admin/reports/monthly': typeof ApiPublicV1AdminReportsMonthlyRoute
+  '/api/public/v1/admin/storage/destinations': typeof ApiPublicV1AdminStorageDestinationsRoute
+  '/api/public/v1/ads/$adId/events': typeof ApiPublicV1AdsAdIdEventsRoute
+  '/api/public/v1/auth/email/send-code': typeof ApiPublicV1AuthEmailSendCodeRoute
+  '/api/public/v1/auth/email/verify-code': typeof ApiPublicV1AuthEmailVerifyCodeRoute
+  '/api/public/v1/auth/session/revoke-all': typeof ApiPublicV1AuthSessionRevokeAllRoute
+  '/api/public/v1/auth/web/config': typeof ApiPublicV1AuthWebConfigRoute
+  '/api/public/v1/auth/web/me': typeof ApiPublicV1AuthWebMeRoute
+  '/api/public/v1/auth/web/session': typeof ApiPublicV1AuthWebSessionRouteWithChildren
+  '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
+  '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
+  '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
+  '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
+  '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
+  '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
+  '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
+  '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
   '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
+  '/api/public/v1/sessions/$sessionId/refresh': typeof ApiPublicV1SessionsSessionIdRefreshRoute
+  '/api/public/v1/streaming/hls/$': typeof ApiPublicV1StreamingHlsSplatRoute
+  '/api/public/v1/wallet/google-play/products': typeof ApiPublicV1WalletGooglePlayProductsRoute
+  '/api/public/v1/wallet/google-play/verify': typeof ApiPublicV1WalletGooglePlayVerifyRoute
+  '/api/public/v1/admin/ads/campaigns/$campaignId': typeof ApiPublicV1AdminAdsCampaignsCampaignIdRoute
+  '/api/public/v1/admin/channels/$channelId/assets': typeof ApiPublicV1AdminChannelsChannelIdAssetsRoute
+  '/api/public/v1/admin/channels/$channelId/publish': typeof ApiPublicV1AdminChannelsChannelIdPublishRoute
+  '/api/public/v1/admin/channels/$channelId/schedule': typeof ApiPublicV1AdminChannelsChannelIdScheduleRouteWithChildren
+  '/api/public/v1/admin/content-assets/$assetId/feature': typeof ApiPublicV1AdminContentAssetsAssetIdFeatureRoute
+  '/api/public/v1/admin/content-assets/$assetId/ready': typeof ApiPublicV1AdminContentAssetsAssetIdReadyRoute
+  '/api/public/v1/admin/content-assets/$assetId/rights': typeof ApiPublicV1AdminContentAssetsAssetIdRightsRoute
+  '/api/public/v1/admin/content-comments/$commentId/moderate': typeof ApiPublicV1AdminContentCommentsCommentIdModerateRoute
+  '/api/public/v1/admin/payments/$paymentId/reverse': typeof ApiPublicV1AdminPaymentsPaymentIdReverseRoute
+  '/api/public/v1/admin/payouts/$payoutId/review': typeof ApiPublicV1AdminPayoutsPayoutIdReviewRoute
+  '/api/public/v1/admin/payouts/$payoutId/settle': typeof ApiPublicV1AdminPayoutsPayoutIdSettleRoute
+  '/api/public/v1/admin/producers/$uid/verification': typeof ApiPublicV1AdminProducersUidVerificationRoute
+  '/api/public/v1/admin/users/$uid/permissions': typeof ApiPublicV1AdminUsersUidPermissionsRoute
+  '/api/public/v1/admin/users/$uid/status': typeof ApiPublicV1AdminUsersUidStatusRoute
+  '/api/public/v1/auth/web/session/logout': typeof ApiPublicV1AuthWebSessionLogoutRoute
+  '/api/public/v1/auth/web/session/refresh': typeof ApiPublicV1AuthWebSessionRefreshRoute
+  '/api/public/v1/producer/channels/$channelId/assets': typeof ApiPublicV1ProducerChannelsChannelIdAssetsRoute
+  '/api/public/v1/producer/channels/$channelId/schedule': typeof ApiPublicV1ProducerChannelsChannelIdScheduleRouteWithChildren
+  '/api/public/v1/producer/channels/$channelId/team': typeof ApiPublicV1ProducerChannelsChannelIdTeamRoute
+  '/api/public/v1/admin/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1AdminChannelsChannelIdScheduleProgrammeIdRoute
+  '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account'
+    | '/wallet'
+    | '/admin/ads'
     | '/admin/firebase-schema'
+    | '/admin/pricing'
+    | '/admin/reports'
+    | '/admin/storage'
+    | '/admin/video-studio'
+    | '/content/$assetId'
+    | '/producer/channels'
+    | '/admin/'
+    | '/producer/'
     | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/notifications'
     | '/api/public/v1/wallet'
+    | '/producer/channels/$channelId/team'
+    | '/api/public/v1/admin/audit'
+    | '/api/public/v1/admin/channels'
+    | '/api/public/v1/admin/notifications'
+    | '/api/public/v1/admin/overview'
+    | '/api/public/v1/ads/next'
+    | '/api/public/v1/ads/provider-config'
     | '/api/public/v1/catalog/home'
     | '/api/public/v1/catalog/search'
     | '/api/public/v1/channels/$channelId'
+    | '/api/public/v1/config/client'
+    | '/api/public/v1/content-assets/$assetId'
+    | '/api/public/v1/devices/push-token'
+    | '/api/public/v1/producer/channels'
+    | '/api/public/v1/producer/earnings'
+    | '/api/public/v1/producer/mobile-summary'
+    | '/api/public/v1/producer/payouts'
+    | '/api/public/v1/producer/verification'
     | '/api/public/v1/profile/complete'
+    | '/api/public/v1/profile/country'
+    | '/api/public/v1/sessions/start'
+    | '/api/public/v1/storage/complete'
+    | '/api/public/v1/storage/intent'
     | '/api/public/v1/wallet/ledger'
+    | '/api/public/v1/wallet/summary'
+    | '/api/public/v1/wallet/topups'
+    | '/api/public/v1/admin/ads/campaigns'
+    | '/api/public/v1/admin/ads/providers'
+    | '/api/public/v1/admin/config/flags'
+    | '/api/public/v1/admin/config/pricing'
+    | '/api/public/v1/admin/reports/monthly'
+    | '/api/public/v1/admin/storage/destinations'
+    | '/api/public/v1/ads/$adId/events'
+    | '/api/public/v1/auth/email/send-code'
+    | '/api/public/v1/auth/email/verify-code'
+    | '/api/public/v1/auth/session/revoke-all'
+    | '/api/public/v1/auth/web/config'
+    | '/api/public/v1/auth/web/me'
+    | '/api/public/v1/auth/web/session'
+    | '/api/public/v1/content-assets/$assetId/comments'
+    | '/api/public/v1/content-assets/$assetId/rating'
+    | '/api/public/v1/notifications/$notificationId/read'
+    | '/api/public/v1/payments/paystack/initialize'
+    | '/api/public/v1/payments/paystack/verify'
+    | '/api/public/v1/payments/paystack/webhook'
+    | '/api/public/v1/producer/payouts/request'
+    | '/api/public/v1/producer/verification/upload-intent'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
     | '/api/public/v1/sessions/$sessionId/heartbeat'
+    | '/api/public/v1/sessions/$sessionId/refresh'
+    | '/api/public/v1/streaming/hls/$'
+    | '/api/public/v1/wallet/google-play/products'
+    | '/api/public/v1/wallet/google-play/verify'
+    | '/api/public/v1/admin/ads/campaigns/$campaignId'
+    | '/api/public/v1/admin/channels/$channelId/assets'
+    | '/api/public/v1/admin/channels/$channelId/publish'
+    | '/api/public/v1/admin/channels/$channelId/schedule'
+    | '/api/public/v1/admin/content-assets/$assetId/feature'
+    | '/api/public/v1/admin/content-assets/$assetId/ready'
+    | '/api/public/v1/admin/content-assets/$assetId/rights'
+    | '/api/public/v1/admin/content-comments/$commentId/moderate'
+    | '/api/public/v1/admin/payments/$paymentId/reverse'
+    | '/api/public/v1/admin/payouts/$payoutId/review'
+    | '/api/public/v1/admin/payouts/$payoutId/settle'
+    | '/api/public/v1/admin/producers/$uid/verification'
+    | '/api/public/v1/admin/users/$uid/permissions'
+    | '/api/public/v1/admin/users/$uid/status'
+    | '/api/public/v1/auth/web/session/logout'
+    | '/api/public/v1/auth/web/session/refresh'
+    | '/api/public/v1/producer/channels/$channelId/assets'
+    | '/api/public/v1/producer/channels/$channelId/schedule'
+    | '/api/public/v1/producer/channels/$channelId/team'
+    | '/api/public/v1/admin/channels/$channelId/schedule/$programmeId'
+    | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/account'
+    | '/wallet'
+    | '/admin/ads'
     | '/admin/firebase-schema'
+    | '/admin/pricing'
+    | '/admin/reports'
+    | '/admin/storage'
+    | '/admin/video-studio'
+    | '/content/$assetId'
+    | '/producer/channels'
+    | '/admin'
+    | '/producer'
     | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/notifications'
     | '/api/public/v1/wallet'
+    | '/producer/channels/$channelId/team'
+    | '/api/public/v1/admin/audit'
+    | '/api/public/v1/admin/channels'
+    | '/api/public/v1/admin/notifications'
+    | '/api/public/v1/admin/overview'
+    | '/api/public/v1/ads/next'
+    | '/api/public/v1/ads/provider-config'
     | '/api/public/v1/catalog/home'
     | '/api/public/v1/catalog/search'
     | '/api/public/v1/channels/$channelId'
+    | '/api/public/v1/config/client'
+    | '/api/public/v1/content-assets/$assetId'
+    | '/api/public/v1/devices/push-token'
+    | '/api/public/v1/producer/channels'
+    | '/api/public/v1/producer/earnings'
+    | '/api/public/v1/producer/mobile-summary'
+    | '/api/public/v1/producer/payouts'
+    | '/api/public/v1/producer/verification'
     | '/api/public/v1/profile/complete'
+    | '/api/public/v1/profile/country'
+    | '/api/public/v1/sessions/start'
+    | '/api/public/v1/storage/complete'
+    | '/api/public/v1/storage/intent'
     | '/api/public/v1/wallet/ledger'
+    | '/api/public/v1/wallet/summary'
+    | '/api/public/v1/wallet/topups'
+    | '/api/public/v1/admin/ads/campaigns'
+    | '/api/public/v1/admin/ads/providers'
+    | '/api/public/v1/admin/config/flags'
+    | '/api/public/v1/admin/config/pricing'
+    | '/api/public/v1/admin/reports/monthly'
+    | '/api/public/v1/admin/storage/destinations'
+    | '/api/public/v1/ads/$adId/events'
+    | '/api/public/v1/auth/email/send-code'
+    | '/api/public/v1/auth/email/verify-code'
+    | '/api/public/v1/auth/session/revoke-all'
+    | '/api/public/v1/auth/web/config'
+    | '/api/public/v1/auth/web/me'
+    | '/api/public/v1/auth/web/session'
+    | '/api/public/v1/content-assets/$assetId/comments'
+    | '/api/public/v1/content-assets/$assetId/rating'
+    | '/api/public/v1/notifications/$notificationId/read'
+    | '/api/public/v1/payments/paystack/initialize'
+    | '/api/public/v1/payments/paystack/verify'
+    | '/api/public/v1/payments/paystack/webhook'
+    | '/api/public/v1/producer/payouts/request'
+    | '/api/public/v1/producer/verification/upload-intent'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
     | '/api/public/v1/sessions/$sessionId/heartbeat'
+    | '/api/public/v1/sessions/$sessionId/refresh'
+    | '/api/public/v1/streaming/hls/$'
+    | '/api/public/v1/wallet/google-play/products'
+    | '/api/public/v1/wallet/google-play/verify'
+    | '/api/public/v1/admin/ads/campaigns/$campaignId'
+    | '/api/public/v1/admin/channels/$channelId/assets'
+    | '/api/public/v1/admin/channels/$channelId/publish'
+    | '/api/public/v1/admin/channels/$channelId/schedule'
+    | '/api/public/v1/admin/content-assets/$assetId/feature'
+    | '/api/public/v1/admin/content-assets/$assetId/ready'
+    | '/api/public/v1/admin/content-assets/$assetId/rights'
+    | '/api/public/v1/admin/content-comments/$commentId/moderate'
+    | '/api/public/v1/admin/payments/$paymentId/reverse'
+    | '/api/public/v1/admin/payouts/$payoutId/review'
+    | '/api/public/v1/admin/payouts/$payoutId/settle'
+    | '/api/public/v1/admin/producers/$uid/verification'
+    | '/api/public/v1/admin/users/$uid/permissions'
+    | '/api/public/v1/admin/users/$uid/status'
+    | '/api/public/v1/auth/web/session/logout'
+    | '/api/public/v1/auth/web/session/refresh'
+    | '/api/public/v1/producer/channels/$channelId/assets'
+    | '/api/public/v1/producer/channels/$channelId/schedule'
+    | '/api/public/v1/producer/channels/$channelId/team'
+    | '/api/public/v1/admin/channels/$channelId/schedule/$programmeId'
+    | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
   id:
     | '__root__'
     | '/'
+    | '/account'
+    | '/wallet'
+    | '/admin/ads'
     | '/admin/firebase-schema'
+    | '/admin/pricing'
+    | '/admin/reports'
+    | '/admin/storage'
+    | '/admin/video-studio'
+    | '/content/$assetId'
+    | '/producer/channels'
+    | '/admin/'
+    | '/producer/'
     | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/notifications'
     | '/api/public/v1/wallet'
+    | '/producer/channels/$channelId/team'
+    | '/api/public/v1/admin/audit'
+    | '/api/public/v1/admin/channels'
+    | '/api/public/v1/admin/notifications'
+    | '/api/public/v1/admin/overview'
+    | '/api/public/v1/ads/next'
+    | '/api/public/v1/ads/provider-config'
     | '/api/public/v1/catalog/home'
     | '/api/public/v1/catalog/search'
     | '/api/public/v1/channels/$channelId'
+    | '/api/public/v1/config/client'
+    | '/api/public/v1/content-assets/$assetId'
+    | '/api/public/v1/devices/push-token'
+    | '/api/public/v1/producer/channels'
+    | '/api/public/v1/producer/earnings'
+    | '/api/public/v1/producer/mobile-summary'
+    | '/api/public/v1/producer/payouts'
+    | '/api/public/v1/producer/verification'
     | '/api/public/v1/profile/complete'
+    | '/api/public/v1/profile/country'
+    | '/api/public/v1/sessions/start'
+    | '/api/public/v1/storage/complete'
+    | '/api/public/v1/storage/intent'
     | '/api/public/v1/wallet/ledger'
+    | '/api/public/v1/wallet/summary'
+    | '/api/public/v1/wallet/topups'
+    | '/api/public/v1/admin/ads/campaigns'
+    | '/api/public/v1/admin/ads/providers'
+    | '/api/public/v1/admin/config/flags'
+    | '/api/public/v1/admin/config/pricing'
+    | '/api/public/v1/admin/reports/monthly'
+    | '/api/public/v1/admin/storage/destinations'
+    | '/api/public/v1/ads/$adId/events'
+    | '/api/public/v1/auth/email/send-code'
+    | '/api/public/v1/auth/email/verify-code'
+    | '/api/public/v1/auth/session/revoke-all'
+    | '/api/public/v1/auth/web/config'
+    | '/api/public/v1/auth/web/me'
+    | '/api/public/v1/auth/web/session'
+    | '/api/public/v1/content-assets/$assetId/comments'
+    | '/api/public/v1/content-assets/$assetId/rating'
+    | '/api/public/v1/notifications/$notificationId/read'
+    | '/api/public/v1/payments/paystack/initialize'
+    | '/api/public/v1/payments/paystack/verify'
+    | '/api/public/v1/payments/paystack/webhook'
+    | '/api/public/v1/producer/payouts/request'
+    | '/api/public/v1/producer/verification/upload-intent'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
     | '/api/public/v1/sessions/$sessionId/heartbeat'
+    | '/api/public/v1/sessions/$sessionId/refresh'
+    | '/api/public/v1/streaming/hls/$'
+    | '/api/public/v1/wallet/google-play/products'
+    | '/api/public/v1/wallet/google-play/verify'
+    | '/api/public/v1/admin/ads/campaigns/$campaignId'
+    | '/api/public/v1/admin/channels/$channelId/assets'
+    | '/api/public/v1/admin/channels/$channelId/publish'
+    | '/api/public/v1/admin/channels/$channelId/schedule'
+    | '/api/public/v1/admin/content-assets/$assetId/feature'
+    | '/api/public/v1/admin/content-assets/$assetId/ready'
+    | '/api/public/v1/admin/content-assets/$assetId/rights'
+    | '/api/public/v1/admin/content-comments/$commentId/moderate'
+    | '/api/public/v1/admin/payments/$paymentId/reverse'
+    | '/api/public/v1/admin/payouts/$payoutId/review'
+    | '/api/public/v1/admin/payouts/$payoutId/settle'
+    | '/api/public/v1/admin/producers/$uid/verification'
+    | '/api/public/v1/admin/users/$uid/permissions'
+    | '/api/public/v1/admin/users/$uid/status'
+    | '/api/public/v1/auth/web/session/logout'
+    | '/api/public/v1/auth/web/session/refresh'
+    | '/api/public/v1/producer/channels/$channelId/assets'
+    | '/api/public/v1/producer/channels/$channelId/schedule'
+    | '/api/public/v1/producer/channels/$channelId/team'
+    | '/api/public/v1/admin/channels/$channelId/schedule/$programmeId'
+    | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRoute
+  WalletRoute: typeof WalletRoute
+  AdminAdsRoute: typeof AdminAdsRoute
   AdminFirebaseSchemaRoute: typeof AdminFirebaseSchemaRoute
+  AdminPricingRoute: typeof AdminPricingRoute
+  AdminReportsRoute: typeof AdminReportsRoute
+  AdminStorageRoute: typeof AdminStorageRoute
+  AdminVideoStudioRoute: typeof AdminVideoStudioRoute
+  ContentAssetIdRoute: typeof ContentAssetIdRoute
+  ProducerChannelsRoute: typeof ProducerChannelsRouteWithChildren
+  AdminIndexRoute: typeof AdminIndexRoute
+  ProducerIndexRoute: typeof ProducerIndexRoute
   ApiPublicFirebaseSchemaInspectRoute: typeof ApiPublicFirebaseSchemaInspectRoute
+  ApiPublicV1NotificationsRoute: typeof ApiPublicV1NotificationsRouteWithChildren
   ApiPublicV1WalletRoute: typeof ApiPublicV1WalletRouteWithChildren
+  ApiPublicV1AdminAuditRoute: typeof ApiPublicV1AdminAuditRoute
+  ApiPublicV1AdminChannelsRoute: typeof ApiPublicV1AdminChannelsRouteWithChildren
+  ApiPublicV1AdminNotificationsRoute: typeof ApiPublicV1AdminNotificationsRoute
+  ApiPublicV1AdminOverviewRoute: typeof ApiPublicV1AdminOverviewRoute
+  ApiPublicV1AdsNextRoute: typeof ApiPublicV1AdsNextRoute
+  ApiPublicV1AdsProviderConfigRoute: typeof ApiPublicV1AdsProviderConfigRoute
   ApiPublicV1CatalogHomeRoute: typeof ApiPublicV1CatalogHomeRoute
   ApiPublicV1CatalogSearchRoute: typeof ApiPublicV1CatalogSearchRoute
   ApiPublicV1ChannelsChannelIdRoute: typeof ApiPublicV1ChannelsChannelIdRoute
+  ApiPublicV1ConfigClientRoute: typeof ApiPublicV1ConfigClientRoute
+  ApiPublicV1ContentAssetsAssetIdRoute: typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
+  ApiPublicV1DevicesPushTokenRoute: typeof ApiPublicV1DevicesPushTokenRoute
+  ApiPublicV1ProducerChannelsRoute: typeof ApiPublicV1ProducerChannelsRouteWithChildren
+  ApiPublicV1ProducerEarningsRoute: typeof ApiPublicV1ProducerEarningsRoute
+  ApiPublicV1ProducerMobileSummaryRoute: typeof ApiPublicV1ProducerMobileSummaryRoute
+  ApiPublicV1ProducerPayoutsRoute: typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  ApiPublicV1ProducerVerificationRoute: typeof ApiPublicV1ProducerVerificationRouteWithChildren
   ApiPublicV1ProfileCompleteRoute: typeof ApiPublicV1ProfileCompleteRoute
+  ApiPublicV1ProfileCountryRoute: typeof ApiPublicV1ProfileCountryRoute
+  ApiPublicV1SessionsStartRoute: typeof ApiPublicV1SessionsStartRoute
+  ApiPublicV1StorageCompleteRoute: typeof ApiPublicV1StorageCompleteRoute
+  ApiPublicV1StorageIntentRoute: typeof ApiPublicV1StorageIntentRoute
+  ApiPublicV1AdminAdsCampaignsRoute: typeof ApiPublicV1AdminAdsCampaignsRouteWithChildren
+  ApiPublicV1AdminAdsProvidersRoute: typeof ApiPublicV1AdminAdsProvidersRoute
+  ApiPublicV1AdminConfigFlagsRoute: typeof ApiPublicV1AdminConfigFlagsRoute
+  ApiPublicV1AdminConfigPricingRoute: typeof ApiPublicV1AdminConfigPricingRoute
+  ApiPublicV1AdminReportsMonthlyRoute: typeof ApiPublicV1AdminReportsMonthlyRoute
+  ApiPublicV1AdminStorageDestinationsRoute: typeof ApiPublicV1AdminStorageDestinationsRoute
+  ApiPublicV1AdsAdIdEventsRoute: typeof ApiPublicV1AdsAdIdEventsRoute
+  ApiPublicV1AuthEmailSendCodeRoute: typeof ApiPublicV1AuthEmailSendCodeRoute
+  ApiPublicV1AuthEmailVerifyCodeRoute: typeof ApiPublicV1AuthEmailVerifyCodeRoute
+  ApiPublicV1AuthSessionRevokeAllRoute: typeof ApiPublicV1AuthSessionRevokeAllRoute
+  ApiPublicV1AuthWebConfigRoute: typeof ApiPublicV1AuthWebConfigRoute
+  ApiPublicV1AuthWebMeRoute: typeof ApiPublicV1AuthWebMeRoute
+  ApiPublicV1AuthWebSessionRoute: typeof ApiPublicV1AuthWebSessionRouteWithChildren
+  ApiPublicV1PaymentsPaystackInitializeRoute: typeof ApiPublicV1PaymentsPaystackInitializeRoute
+  ApiPublicV1PaymentsPaystackVerifyRoute: typeof ApiPublicV1PaymentsPaystackVerifyRoute
+  ApiPublicV1PaymentsPaystackWebhookRoute: typeof ApiPublicV1PaymentsPaystackWebhookRoute
   ApiPublicV1SecurityIntegrityChallengeRoute: typeof ApiPublicV1SecurityIntegrityChallengeRoute
   ApiPublicV1SessionsSessionIdEndRoute: typeof ApiPublicV1SessionsSessionIdEndRoute
   ApiPublicV1SessionsSessionIdHeartbeatRoute: typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
+  ApiPublicV1SessionsSessionIdRefreshRoute: typeof ApiPublicV1SessionsSessionIdRefreshRoute
+  ApiPublicV1StreamingHlsSplatRoute: typeof ApiPublicV1StreamingHlsSplatRoute
+  ApiPublicV1AdminContentAssetsAssetIdFeatureRoute: typeof ApiPublicV1AdminContentAssetsAssetIdFeatureRoute
+  ApiPublicV1AdminContentAssetsAssetIdReadyRoute: typeof ApiPublicV1AdminContentAssetsAssetIdReadyRoute
+  ApiPublicV1AdminContentAssetsAssetIdRightsRoute: typeof ApiPublicV1AdminContentAssetsAssetIdRightsRoute
+  ApiPublicV1AdminContentCommentsCommentIdModerateRoute: typeof ApiPublicV1AdminContentCommentsCommentIdModerateRoute
+  ApiPublicV1AdminPaymentsPaymentIdReverseRoute: typeof ApiPublicV1AdminPaymentsPaymentIdReverseRoute
+  ApiPublicV1AdminPayoutsPayoutIdReviewRoute: typeof ApiPublicV1AdminPayoutsPayoutIdReviewRoute
+  ApiPublicV1AdminPayoutsPayoutIdSettleRoute: typeof ApiPublicV1AdminPayoutsPayoutIdSettleRoute
+  ApiPublicV1AdminProducersUidVerificationRoute: typeof ApiPublicV1AdminProducersUidVerificationRoute
+  ApiPublicV1AdminUsersUidPermissionsRoute: typeof ApiPublicV1AdminUsersUidPermissionsRoute
+  ApiPublicV1AdminUsersUidStatusRoute: typeof ApiPublicV1AdminUsersUidStatusRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -201,11 +1270,88 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/ads': {
+      id: '/admin/ads'
+      path: '/admin/ads'
+      fullPath: '/admin/ads'
+      preLoaderRoute: typeof AdminAdsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/firebase-schema': {
       id: '/admin/firebase-schema'
       path: '/admin/firebase-schema'
       fullPath: '/admin/firebase-schema'
       preLoaderRoute: typeof AdminFirebaseSchemaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/pricing': {
+      id: '/admin/pricing'
+      path: '/admin/pricing'
+      fullPath: '/admin/pricing'
+      preLoaderRoute: typeof AdminPricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/admin/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/storage': {
+      id: '/admin/storage'
+      path: '/admin/storage'
+      fullPath: '/admin/storage'
+      preLoaderRoute: typeof AdminStorageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/video-studio': {
+      id: '/admin/video-studio'
+      path: '/admin/video-studio'
+      fullPath: '/admin/video-studio'
+      preLoaderRoute: typeof AdminVideoStudioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/content/$assetId': {
+      id: '/content/$assetId'
+      path: '/content/$assetId'
+      fullPath: '/content/$assetId'
+      preLoaderRoute: typeof ContentAssetIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/producer/': {
+      id: '/producer/'
+      path: '/producer'
+      fullPath: '/producer/'
+      preLoaderRoute: typeof ProducerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/producer/channels': {
+      id: '/producer/channels'
+      path: '/producer/channels'
+      fullPath: '/producer/channels'
+      preLoaderRoute: typeof ProducerChannelsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/firebase-schema-inspect': {
@@ -215,11 +1361,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFirebaseSchemaInspectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/notifications': {
+      id: '/api/public/v1/notifications'
+      path: '/api/public/v1/notifications'
+      fullPath: '/api/public/v1/notifications'
+      preLoaderRoute: typeof ApiPublicV1NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/wallet': {
       id: '/api/public/v1/wallet'
       path: '/api/public/v1/wallet'
       fullPath: '/api/public/v1/wallet'
       preLoaderRoute: typeof ApiPublicV1WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/producer/channels/$channelId/team': {
+      id: '/producer/channels/$channelId/team'
+      path: '/$channelId/team'
+      fullPath: '/producer/channels/$channelId/team'
+      preLoaderRoute: typeof ProducerChannelsChannelIdTeamRouteImport
+      parentRoute: typeof ProducerChannelsRoute
+    }
+    '/api/public/v1/admin/audit': {
+      id: '/api/public/v1/admin/audit'
+      path: '/api/public/v1/admin/audit'
+      fullPath: '/api/public/v1/admin/audit'
+      preLoaderRoute: typeof ApiPublicV1AdminAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/channels': {
+      id: '/api/public/v1/admin/channels'
+      path: '/api/public/v1/admin/channels'
+      fullPath: '/api/public/v1/admin/channels'
+      preLoaderRoute: typeof ApiPublicV1AdminChannelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/notifications': {
+      id: '/api/public/v1/admin/notifications'
+      path: '/api/public/v1/admin/notifications'
+      fullPath: '/api/public/v1/admin/notifications'
+      preLoaderRoute: typeof ApiPublicV1AdminNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/overview': {
+      id: '/api/public/v1/admin/overview'
+      path: '/api/public/v1/admin/overview'
+      fullPath: '/api/public/v1/admin/overview'
+      preLoaderRoute: typeof ApiPublicV1AdminOverviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/ads/next': {
+      id: '/api/public/v1/ads/next'
+      path: '/api/public/v1/ads/next'
+      fullPath: '/api/public/v1/ads/next'
+      preLoaderRoute: typeof ApiPublicV1AdsNextRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/ads/provider-config': {
+      id: '/api/public/v1/ads/provider-config'
+      path: '/api/public/v1/ads/provider-config'
+      fullPath: '/api/public/v1/ads/provider-config'
+      preLoaderRoute: typeof ApiPublicV1AdsProviderConfigRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/catalog/home': {
@@ -243,11 +1445,95 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ChannelsChannelIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/config/client': {
+      id: '/api/public/v1/config/client'
+      path: '/api/public/v1/config/client'
+      fullPath: '/api/public/v1/config/client'
+      preLoaderRoute: typeof ApiPublicV1ConfigClientRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/content-assets/$assetId': {
+      id: '/api/public/v1/content-assets/$assetId'
+      path: '/api/public/v1/content-assets/$assetId'
+      fullPath: '/api/public/v1/content-assets/$assetId'
+      preLoaderRoute: typeof ApiPublicV1ContentAssetsAssetIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/devices/push-token': {
+      id: '/api/public/v1/devices/push-token'
+      path: '/api/public/v1/devices/push-token'
+      fullPath: '/api/public/v1/devices/push-token'
+      preLoaderRoute: typeof ApiPublicV1DevicesPushTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/channels': {
+      id: '/api/public/v1/producer/channels'
+      path: '/api/public/v1/producer/channels'
+      fullPath: '/api/public/v1/producer/channels'
+      preLoaderRoute: typeof ApiPublicV1ProducerChannelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/earnings': {
+      id: '/api/public/v1/producer/earnings'
+      path: '/api/public/v1/producer/earnings'
+      fullPath: '/api/public/v1/producer/earnings'
+      preLoaderRoute: typeof ApiPublicV1ProducerEarningsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/mobile-summary': {
+      id: '/api/public/v1/producer/mobile-summary'
+      path: '/api/public/v1/producer/mobile-summary'
+      fullPath: '/api/public/v1/producer/mobile-summary'
+      preLoaderRoute: typeof ApiPublicV1ProducerMobileSummaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/payouts': {
+      id: '/api/public/v1/producer/payouts'
+      path: '/api/public/v1/producer/payouts'
+      fullPath: '/api/public/v1/producer/payouts'
+      preLoaderRoute: typeof ApiPublicV1ProducerPayoutsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/verification': {
+      id: '/api/public/v1/producer/verification'
+      path: '/api/public/v1/producer/verification'
+      fullPath: '/api/public/v1/producer/verification'
+      preLoaderRoute: typeof ApiPublicV1ProducerVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/profile/complete': {
       id: '/api/public/v1/profile/complete'
       path: '/api/public/v1/profile/complete'
       fullPath: '/api/public/v1/profile/complete'
       preLoaderRoute: typeof ApiPublicV1ProfileCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/profile/country': {
+      id: '/api/public/v1/profile/country'
+      path: '/api/public/v1/profile/country'
+      fullPath: '/api/public/v1/profile/country'
+      preLoaderRoute: typeof ApiPublicV1ProfileCountryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sessions/start': {
+      id: '/api/public/v1/sessions/start'
+      path: '/api/public/v1/sessions/start'
+      fullPath: '/api/public/v1/sessions/start'
+      preLoaderRoute: typeof ApiPublicV1SessionsStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/storage/complete': {
+      id: '/api/public/v1/storage/complete'
+      path: '/api/public/v1/storage/complete'
+      fullPath: '/api/public/v1/storage/complete'
+      preLoaderRoute: typeof ApiPublicV1StorageCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/storage/intent': {
+      id: '/api/public/v1/storage/intent'
+      path: '/api/public/v1/storage/intent'
+      fullPath: '/api/public/v1/storage/intent'
+      preLoaderRoute: typeof ApiPublicV1StorageIntentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/wallet/ledger': {
@@ -256,6 +1542,167 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/v1/wallet/ledger'
       preLoaderRoute: typeof ApiPublicV1WalletLedgerRouteImport
       parentRoute: typeof ApiPublicV1WalletRoute
+    }
+    '/api/public/v1/wallet/summary': {
+      id: '/api/public/v1/wallet/summary'
+      path: '/summary'
+      fullPath: '/api/public/v1/wallet/summary'
+      preLoaderRoute: typeof ApiPublicV1WalletSummaryRouteImport
+      parentRoute: typeof ApiPublicV1WalletRoute
+    }
+    '/api/public/v1/wallet/topups': {
+      id: '/api/public/v1/wallet/topups'
+      path: '/topups'
+      fullPath: '/api/public/v1/wallet/topups'
+      preLoaderRoute: typeof ApiPublicV1WalletTopupsRouteImport
+      parentRoute: typeof ApiPublicV1WalletRoute
+    }
+    '/api/public/v1/admin/ads/campaigns': {
+      id: '/api/public/v1/admin/ads/campaigns'
+      path: '/api/public/v1/admin/ads/campaigns'
+      fullPath: '/api/public/v1/admin/ads/campaigns'
+      preLoaderRoute: typeof ApiPublicV1AdminAdsCampaignsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/ads/providers': {
+      id: '/api/public/v1/admin/ads/providers'
+      path: '/api/public/v1/admin/ads/providers'
+      fullPath: '/api/public/v1/admin/ads/providers'
+      preLoaderRoute: typeof ApiPublicV1AdminAdsProvidersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/config/flags': {
+      id: '/api/public/v1/admin/config/flags'
+      path: '/api/public/v1/admin/config/flags'
+      fullPath: '/api/public/v1/admin/config/flags'
+      preLoaderRoute: typeof ApiPublicV1AdminConfigFlagsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/config/pricing': {
+      id: '/api/public/v1/admin/config/pricing'
+      path: '/api/public/v1/admin/config/pricing'
+      fullPath: '/api/public/v1/admin/config/pricing'
+      preLoaderRoute: typeof ApiPublicV1AdminConfigPricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/reports/monthly': {
+      id: '/api/public/v1/admin/reports/monthly'
+      path: '/api/public/v1/admin/reports/monthly'
+      fullPath: '/api/public/v1/admin/reports/monthly'
+      preLoaderRoute: typeof ApiPublicV1AdminReportsMonthlyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/storage/destinations': {
+      id: '/api/public/v1/admin/storage/destinations'
+      path: '/api/public/v1/admin/storage/destinations'
+      fullPath: '/api/public/v1/admin/storage/destinations'
+      preLoaderRoute: typeof ApiPublicV1AdminStorageDestinationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/ads/$adId/events': {
+      id: '/api/public/v1/ads/$adId/events'
+      path: '/api/public/v1/ads/$adId/events'
+      fullPath: '/api/public/v1/ads/$adId/events'
+      preLoaderRoute: typeof ApiPublicV1AdsAdIdEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/email/send-code': {
+      id: '/api/public/v1/auth/email/send-code'
+      path: '/api/public/v1/auth/email/send-code'
+      fullPath: '/api/public/v1/auth/email/send-code'
+      preLoaderRoute: typeof ApiPublicV1AuthEmailSendCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/email/verify-code': {
+      id: '/api/public/v1/auth/email/verify-code'
+      path: '/api/public/v1/auth/email/verify-code'
+      fullPath: '/api/public/v1/auth/email/verify-code'
+      preLoaderRoute: typeof ApiPublicV1AuthEmailVerifyCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/session/revoke-all': {
+      id: '/api/public/v1/auth/session/revoke-all'
+      path: '/api/public/v1/auth/session/revoke-all'
+      fullPath: '/api/public/v1/auth/session/revoke-all'
+      preLoaderRoute: typeof ApiPublicV1AuthSessionRevokeAllRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/web/config': {
+      id: '/api/public/v1/auth/web/config'
+      path: '/api/public/v1/auth/web/config'
+      fullPath: '/api/public/v1/auth/web/config'
+      preLoaderRoute: typeof ApiPublicV1AuthWebConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/web/me': {
+      id: '/api/public/v1/auth/web/me'
+      path: '/api/public/v1/auth/web/me'
+      fullPath: '/api/public/v1/auth/web/me'
+      preLoaderRoute: typeof ApiPublicV1AuthWebMeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/web/session': {
+      id: '/api/public/v1/auth/web/session'
+      path: '/api/public/v1/auth/web/session'
+      fullPath: '/api/public/v1/auth/web/session'
+      preLoaderRoute: typeof ApiPublicV1AuthWebSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/content-assets/$assetId/comments': {
+      id: '/api/public/v1/content-assets/$assetId/comments'
+      path: '/comments'
+      fullPath: '/api/public/v1/content-assets/$assetId/comments'
+      preLoaderRoute: typeof ApiPublicV1ContentAssetsAssetIdCommentsRouteImport
+      parentRoute: typeof ApiPublicV1ContentAssetsAssetIdRoute
+    }
+    '/api/public/v1/content-assets/$assetId/rating': {
+      id: '/api/public/v1/content-assets/$assetId/rating'
+      path: '/rating'
+      fullPath: '/api/public/v1/content-assets/$assetId/rating'
+      preLoaderRoute: typeof ApiPublicV1ContentAssetsAssetIdRatingRouteImport
+      parentRoute: typeof ApiPublicV1ContentAssetsAssetIdRoute
+    }
+    '/api/public/v1/notifications/$notificationId/read': {
+      id: '/api/public/v1/notifications/$notificationId/read'
+      path: '/$notificationId/read'
+      fullPath: '/api/public/v1/notifications/$notificationId/read'
+      preLoaderRoute: typeof ApiPublicV1NotificationsNotificationIdReadRouteImport
+      parentRoute: typeof ApiPublicV1NotificationsRoute
+    }
+    '/api/public/v1/payments/paystack/initialize': {
+      id: '/api/public/v1/payments/paystack/initialize'
+      path: '/api/public/v1/payments/paystack/initialize'
+      fullPath: '/api/public/v1/payments/paystack/initialize'
+      preLoaderRoute: typeof ApiPublicV1PaymentsPaystackInitializeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/payments/paystack/verify': {
+      id: '/api/public/v1/payments/paystack/verify'
+      path: '/api/public/v1/payments/paystack/verify'
+      fullPath: '/api/public/v1/payments/paystack/verify'
+      preLoaderRoute: typeof ApiPublicV1PaymentsPaystackVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/payments/paystack/webhook': {
+      id: '/api/public/v1/payments/paystack/webhook'
+      path: '/api/public/v1/payments/paystack/webhook'
+      fullPath: '/api/public/v1/payments/paystack/webhook'
+      preLoaderRoute: typeof ApiPublicV1PaymentsPaystackWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/payouts/request': {
+      id: '/api/public/v1/producer/payouts/request'
+      path: '/request'
+      fullPath: '/api/public/v1/producer/payouts/request'
+      preLoaderRoute: typeof ApiPublicV1ProducerPayoutsRequestRouteImport
+      parentRoute: typeof ApiPublicV1ProducerPayoutsRoute
+    }
+    '/api/public/v1/producer/verification/upload-intent': {
+      id: '/api/public/v1/producer/verification/upload-intent'
+      path: '/upload-intent'
+      fullPath: '/api/public/v1/producer/verification/upload-intent'
+      preLoaderRoute: typeof ApiPublicV1ProducerVerificationUploadIntentRouteImport
+      parentRoute: typeof ApiPublicV1ProducerVerificationRoute
     }
     '/api/public/v1/security/integrity/challenge': {
       id: '/api/public/v1/security/integrity/challenge'
@@ -278,34 +1725,473 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1SessionsSessionIdHeartbeatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/sessions/$sessionId/refresh': {
+      id: '/api/public/v1/sessions/$sessionId/refresh'
+      path: '/api/public/v1/sessions/$sessionId/refresh'
+      fullPath: '/api/public/v1/sessions/$sessionId/refresh'
+      preLoaderRoute: typeof ApiPublicV1SessionsSessionIdRefreshRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/streaming/hls/$': {
+      id: '/api/public/v1/streaming/hls/$'
+      path: '/api/public/v1/streaming/hls/$'
+      fullPath: '/api/public/v1/streaming/hls/$'
+      preLoaderRoute: typeof ApiPublicV1StreamingHlsSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/wallet/google-play/products': {
+      id: '/api/public/v1/wallet/google-play/products'
+      path: '/google-play/products'
+      fullPath: '/api/public/v1/wallet/google-play/products'
+      preLoaderRoute: typeof ApiPublicV1WalletGooglePlayProductsRouteImport
+      parentRoute: typeof ApiPublicV1WalletRoute
+    }
+    '/api/public/v1/wallet/google-play/verify': {
+      id: '/api/public/v1/wallet/google-play/verify'
+      path: '/google-play/verify'
+      fullPath: '/api/public/v1/wallet/google-play/verify'
+      preLoaderRoute: typeof ApiPublicV1WalletGooglePlayVerifyRouteImport
+      parentRoute: typeof ApiPublicV1WalletRoute
+    }
+    '/api/public/v1/admin/ads/campaigns/$campaignId': {
+      id: '/api/public/v1/admin/ads/campaigns/$campaignId'
+      path: '/$campaignId'
+      fullPath: '/api/public/v1/admin/ads/campaigns/$campaignId'
+      preLoaderRoute: typeof ApiPublicV1AdminAdsCampaignsCampaignIdRouteImport
+      parentRoute: typeof ApiPublicV1AdminAdsCampaignsRoute
+    }
+    '/api/public/v1/admin/channels/$channelId/assets': {
+      id: '/api/public/v1/admin/channels/$channelId/assets'
+      path: '/$channelId/assets'
+      fullPath: '/api/public/v1/admin/channels/$channelId/assets'
+      preLoaderRoute: typeof ApiPublicV1AdminChannelsChannelIdAssetsRouteImport
+      parentRoute: typeof ApiPublicV1AdminChannelsRoute
+    }
+    '/api/public/v1/admin/channels/$channelId/publish': {
+      id: '/api/public/v1/admin/channels/$channelId/publish'
+      path: '/$channelId/publish'
+      fullPath: '/api/public/v1/admin/channels/$channelId/publish'
+      preLoaderRoute: typeof ApiPublicV1AdminChannelsChannelIdPublishRouteImport
+      parentRoute: typeof ApiPublicV1AdminChannelsRoute
+    }
+    '/api/public/v1/admin/channels/$channelId/schedule': {
+      id: '/api/public/v1/admin/channels/$channelId/schedule'
+      path: '/$channelId/schedule'
+      fullPath: '/api/public/v1/admin/channels/$channelId/schedule'
+      preLoaderRoute: typeof ApiPublicV1AdminChannelsChannelIdScheduleRouteImport
+      parentRoute: typeof ApiPublicV1AdminChannelsRoute
+    }
+    '/api/public/v1/admin/content-assets/$assetId/feature': {
+      id: '/api/public/v1/admin/content-assets/$assetId/feature'
+      path: '/api/public/v1/admin/content-assets/$assetId/feature'
+      fullPath: '/api/public/v1/admin/content-assets/$assetId/feature'
+      preLoaderRoute: typeof ApiPublicV1AdminContentAssetsAssetIdFeatureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/content-assets/$assetId/ready': {
+      id: '/api/public/v1/admin/content-assets/$assetId/ready'
+      path: '/api/public/v1/admin/content-assets/$assetId/ready'
+      fullPath: '/api/public/v1/admin/content-assets/$assetId/ready'
+      preLoaderRoute: typeof ApiPublicV1AdminContentAssetsAssetIdReadyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/content-assets/$assetId/rights': {
+      id: '/api/public/v1/admin/content-assets/$assetId/rights'
+      path: '/api/public/v1/admin/content-assets/$assetId/rights'
+      fullPath: '/api/public/v1/admin/content-assets/$assetId/rights'
+      preLoaderRoute: typeof ApiPublicV1AdminContentAssetsAssetIdRightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/content-comments/$commentId/moderate': {
+      id: '/api/public/v1/admin/content-comments/$commentId/moderate'
+      path: '/api/public/v1/admin/content-comments/$commentId/moderate'
+      fullPath: '/api/public/v1/admin/content-comments/$commentId/moderate'
+      preLoaderRoute: typeof ApiPublicV1AdminContentCommentsCommentIdModerateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/payments/$paymentId/reverse': {
+      id: '/api/public/v1/admin/payments/$paymentId/reverse'
+      path: '/api/public/v1/admin/payments/$paymentId/reverse'
+      fullPath: '/api/public/v1/admin/payments/$paymentId/reverse'
+      preLoaderRoute: typeof ApiPublicV1AdminPaymentsPaymentIdReverseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/payouts/$payoutId/review': {
+      id: '/api/public/v1/admin/payouts/$payoutId/review'
+      path: '/api/public/v1/admin/payouts/$payoutId/review'
+      fullPath: '/api/public/v1/admin/payouts/$payoutId/review'
+      preLoaderRoute: typeof ApiPublicV1AdminPayoutsPayoutIdReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/payouts/$payoutId/settle': {
+      id: '/api/public/v1/admin/payouts/$payoutId/settle'
+      path: '/api/public/v1/admin/payouts/$payoutId/settle'
+      fullPath: '/api/public/v1/admin/payouts/$payoutId/settle'
+      preLoaderRoute: typeof ApiPublicV1AdminPayoutsPayoutIdSettleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/producers/$uid/verification': {
+      id: '/api/public/v1/admin/producers/$uid/verification'
+      path: '/api/public/v1/admin/producers/$uid/verification'
+      fullPath: '/api/public/v1/admin/producers/$uid/verification'
+      preLoaderRoute: typeof ApiPublicV1AdminProducersUidVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/users/$uid/permissions': {
+      id: '/api/public/v1/admin/users/$uid/permissions'
+      path: '/api/public/v1/admin/users/$uid/permissions'
+      fullPath: '/api/public/v1/admin/users/$uid/permissions'
+      preLoaderRoute: typeof ApiPublicV1AdminUsersUidPermissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/users/$uid/status': {
+      id: '/api/public/v1/admin/users/$uid/status'
+      path: '/api/public/v1/admin/users/$uid/status'
+      fullPath: '/api/public/v1/admin/users/$uid/status'
+      preLoaderRoute: typeof ApiPublicV1AdminUsersUidStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/web/session/logout': {
+      id: '/api/public/v1/auth/web/session/logout'
+      path: '/logout'
+      fullPath: '/api/public/v1/auth/web/session/logout'
+      preLoaderRoute: typeof ApiPublicV1AuthWebSessionLogoutRouteImport
+      parentRoute: typeof ApiPublicV1AuthWebSessionRoute
+    }
+    '/api/public/v1/auth/web/session/refresh': {
+      id: '/api/public/v1/auth/web/session/refresh'
+      path: '/refresh'
+      fullPath: '/api/public/v1/auth/web/session/refresh'
+      preLoaderRoute: typeof ApiPublicV1AuthWebSessionRefreshRouteImport
+      parentRoute: typeof ApiPublicV1AuthWebSessionRoute
+    }
+    '/api/public/v1/producer/channels/$channelId/assets': {
+      id: '/api/public/v1/producer/channels/$channelId/assets'
+      path: '/$channelId/assets'
+      fullPath: '/api/public/v1/producer/channels/$channelId/assets'
+      preLoaderRoute: typeof ApiPublicV1ProducerChannelsChannelIdAssetsRouteImport
+      parentRoute: typeof ApiPublicV1ProducerChannelsRoute
+    }
+    '/api/public/v1/producer/channels/$channelId/schedule': {
+      id: '/api/public/v1/producer/channels/$channelId/schedule'
+      path: '/$channelId/schedule'
+      fullPath: '/api/public/v1/producer/channels/$channelId/schedule'
+      preLoaderRoute: typeof ApiPublicV1ProducerChannelsChannelIdScheduleRouteImport
+      parentRoute: typeof ApiPublicV1ProducerChannelsRoute
+    }
+    '/api/public/v1/producer/channels/$channelId/team': {
+      id: '/api/public/v1/producer/channels/$channelId/team'
+      path: '/$channelId/team'
+      fullPath: '/api/public/v1/producer/channels/$channelId/team'
+      preLoaderRoute: typeof ApiPublicV1ProducerChannelsChannelIdTeamRouteImport
+      parentRoute: typeof ApiPublicV1ProducerChannelsRoute
+    }
+    '/api/public/v1/admin/channels/$channelId/schedule/$programmeId': {
+      id: '/api/public/v1/admin/channels/$channelId/schedule/$programmeId'
+      path: '/$programmeId'
+      fullPath: '/api/public/v1/admin/channels/$channelId/schedule/$programmeId'
+      preLoaderRoute: typeof ApiPublicV1AdminChannelsChannelIdScheduleProgrammeIdRouteImport
+      parentRoute: typeof ApiPublicV1AdminChannelsChannelIdScheduleRoute
+    }
+    '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': {
+      id: '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
+      path: '/$programmeId'
+      fullPath: '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
+      preLoaderRoute: typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRouteImport
+      parentRoute: typeof ApiPublicV1ProducerChannelsChannelIdScheduleRoute
+    }
   }
 }
 
+interface ProducerChannelsRouteChildren {
+  ProducerChannelsChannelIdTeamRoute: typeof ProducerChannelsChannelIdTeamRoute
+}
+
+const ProducerChannelsRouteChildren: ProducerChannelsRouteChildren = {
+  ProducerChannelsChannelIdTeamRoute: ProducerChannelsChannelIdTeamRoute,
+}
+
+const ProducerChannelsRouteWithChildren =
+  ProducerChannelsRoute._addFileChildren(ProducerChannelsRouteChildren)
+
+interface ApiPublicV1NotificationsRouteChildren {
+  ApiPublicV1NotificationsNotificationIdReadRoute: typeof ApiPublicV1NotificationsNotificationIdReadRoute
+}
+
+const ApiPublicV1NotificationsRouteChildren: ApiPublicV1NotificationsRouteChildren =
+  {
+    ApiPublicV1NotificationsNotificationIdReadRoute:
+      ApiPublicV1NotificationsNotificationIdReadRoute,
+  }
+
+const ApiPublicV1NotificationsRouteWithChildren =
+  ApiPublicV1NotificationsRoute._addFileChildren(
+    ApiPublicV1NotificationsRouteChildren,
+  )
+
 interface ApiPublicV1WalletRouteChildren {
   ApiPublicV1WalletLedgerRoute: typeof ApiPublicV1WalletLedgerRoute
+  ApiPublicV1WalletSummaryRoute: typeof ApiPublicV1WalletSummaryRoute
+  ApiPublicV1WalletTopupsRoute: typeof ApiPublicV1WalletTopupsRoute
+  ApiPublicV1WalletGooglePlayProductsRoute: typeof ApiPublicV1WalletGooglePlayProductsRoute
+  ApiPublicV1WalletGooglePlayVerifyRoute: typeof ApiPublicV1WalletGooglePlayVerifyRoute
 }
 
 const ApiPublicV1WalletRouteChildren: ApiPublicV1WalletRouteChildren = {
   ApiPublicV1WalletLedgerRoute: ApiPublicV1WalletLedgerRoute,
+  ApiPublicV1WalletSummaryRoute: ApiPublicV1WalletSummaryRoute,
+  ApiPublicV1WalletTopupsRoute: ApiPublicV1WalletTopupsRoute,
+  ApiPublicV1WalletGooglePlayProductsRoute:
+    ApiPublicV1WalletGooglePlayProductsRoute,
+  ApiPublicV1WalletGooglePlayVerifyRoute:
+    ApiPublicV1WalletGooglePlayVerifyRoute,
 }
 
 const ApiPublicV1WalletRouteWithChildren =
   ApiPublicV1WalletRoute._addFileChildren(ApiPublicV1WalletRouteChildren)
 
+interface ApiPublicV1AdminChannelsChannelIdScheduleRouteChildren {
+  ApiPublicV1AdminChannelsChannelIdScheduleProgrammeIdRoute: typeof ApiPublicV1AdminChannelsChannelIdScheduleProgrammeIdRoute
+}
+
+const ApiPublicV1AdminChannelsChannelIdScheduleRouteChildren: ApiPublicV1AdminChannelsChannelIdScheduleRouteChildren =
+  {
+    ApiPublicV1AdminChannelsChannelIdScheduleProgrammeIdRoute:
+      ApiPublicV1AdminChannelsChannelIdScheduleProgrammeIdRoute,
+  }
+
+const ApiPublicV1AdminChannelsChannelIdScheduleRouteWithChildren =
+  ApiPublicV1AdminChannelsChannelIdScheduleRoute._addFileChildren(
+    ApiPublicV1AdminChannelsChannelIdScheduleRouteChildren,
+  )
+
+interface ApiPublicV1AdminChannelsRouteChildren {
+  ApiPublicV1AdminChannelsChannelIdAssetsRoute: typeof ApiPublicV1AdminChannelsChannelIdAssetsRoute
+  ApiPublicV1AdminChannelsChannelIdPublishRoute: typeof ApiPublicV1AdminChannelsChannelIdPublishRoute
+  ApiPublicV1AdminChannelsChannelIdScheduleRoute: typeof ApiPublicV1AdminChannelsChannelIdScheduleRouteWithChildren
+}
+
+const ApiPublicV1AdminChannelsRouteChildren: ApiPublicV1AdminChannelsRouteChildren =
+  {
+    ApiPublicV1AdminChannelsChannelIdAssetsRoute:
+      ApiPublicV1AdminChannelsChannelIdAssetsRoute,
+    ApiPublicV1AdminChannelsChannelIdPublishRoute:
+      ApiPublicV1AdminChannelsChannelIdPublishRoute,
+    ApiPublicV1AdminChannelsChannelIdScheduleRoute:
+      ApiPublicV1AdminChannelsChannelIdScheduleRouteWithChildren,
+  }
+
+const ApiPublicV1AdminChannelsRouteWithChildren =
+  ApiPublicV1AdminChannelsRoute._addFileChildren(
+    ApiPublicV1AdminChannelsRouteChildren,
+  )
+
+interface ApiPublicV1ContentAssetsAssetIdRouteChildren {
+  ApiPublicV1ContentAssetsAssetIdCommentsRoute: typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
+  ApiPublicV1ContentAssetsAssetIdRatingRoute: typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
+}
+
+const ApiPublicV1ContentAssetsAssetIdRouteChildren: ApiPublicV1ContentAssetsAssetIdRouteChildren =
+  {
+    ApiPublicV1ContentAssetsAssetIdCommentsRoute:
+      ApiPublicV1ContentAssetsAssetIdCommentsRoute,
+    ApiPublicV1ContentAssetsAssetIdRatingRoute:
+      ApiPublicV1ContentAssetsAssetIdRatingRoute,
+  }
+
+const ApiPublicV1ContentAssetsAssetIdRouteWithChildren =
+  ApiPublicV1ContentAssetsAssetIdRoute._addFileChildren(
+    ApiPublicV1ContentAssetsAssetIdRouteChildren,
+  )
+
+interface ApiPublicV1ProducerChannelsChannelIdScheduleRouteChildren {
+  ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute: typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
+}
+
+const ApiPublicV1ProducerChannelsChannelIdScheduleRouteChildren: ApiPublicV1ProducerChannelsChannelIdScheduleRouteChildren =
+  {
+    ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute:
+      ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute,
+  }
+
+const ApiPublicV1ProducerChannelsChannelIdScheduleRouteWithChildren =
+  ApiPublicV1ProducerChannelsChannelIdScheduleRoute._addFileChildren(
+    ApiPublicV1ProducerChannelsChannelIdScheduleRouteChildren,
+  )
+
+interface ApiPublicV1ProducerChannelsRouteChildren {
+  ApiPublicV1ProducerChannelsChannelIdAssetsRoute: typeof ApiPublicV1ProducerChannelsChannelIdAssetsRoute
+  ApiPublicV1ProducerChannelsChannelIdScheduleRoute: typeof ApiPublicV1ProducerChannelsChannelIdScheduleRouteWithChildren
+  ApiPublicV1ProducerChannelsChannelIdTeamRoute: typeof ApiPublicV1ProducerChannelsChannelIdTeamRoute
+}
+
+const ApiPublicV1ProducerChannelsRouteChildren: ApiPublicV1ProducerChannelsRouteChildren =
+  {
+    ApiPublicV1ProducerChannelsChannelIdAssetsRoute:
+      ApiPublicV1ProducerChannelsChannelIdAssetsRoute,
+    ApiPublicV1ProducerChannelsChannelIdScheduleRoute:
+      ApiPublicV1ProducerChannelsChannelIdScheduleRouteWithChildren,
+    ApiPublicV1ProducerChannelsChannelIdTeamRoute:
+      ApiPublicV1ProducerChannelsChannelIdTeamRoute,
+  }
+
+const ApiPublicV1ProducerChannelsRouteWithChildren =
+  ApiPublicV1ProducerChannelsRoute._addFileChildren(
+    ApiPublicV1ProducerChannelsRouteChildren,
+  )
+
+interface ApiPublicV1ProducerPayoutsRouteChildren {
+  ApiPublicV1ProducerPayoutsRequestRoute: typeof ApiPublicV1ProducerPayoutsRequestRoute
+}
+
+const ApiPublicV1ProducerPayoutsRouteChildren: ApiPublicV1ProducerPayoutsRouteChildren =
+  {
+    ApiPublicV1ProducerPayoutsRequestRoute:
+      ApiPublicV1ProducerPayoutsRequestRoute,
+  }
+
+const ApiPublicV1ProducerPayoutsRouteWithChildren =
+  ApiPublicV1ProducerPayoutsRoute._addFileChildren(
+    ApiPublicV1ProducerPayoutsRouteChildren,
+  )
+
+interface ApiPublicV1ProducerVerificationRouteChildren {
+  ApiPublicV1ProducerVerificationUploadIntentRoute: typeof ApiPublicV1ProducerVerificationUploadIntentRoute
+}
+
+const ApiPublicV1ProducerVerificationRouteChildren: ApiPublicV1ProducerVerificationRouteChildren =
+  {
+    ApiPublicV1ProducerVerificationUploadIntentRoute:
+      ApiPublicV1ProducerVerificationUploadIntentRoute,
+  }
+
+const ApiPublicV1ProducerVerificationRouteWithChildren =
+  ApiPublicV1ProducerVerificationRoute._addFileChildren(
+    ApiPublicV1ProducerVerificationRouteChildren,
+  )
+
+interface ApiPublicV1AdminAdsCampaignsRouteChildren {
+  ApiPublicV1AdminAdsCampaignsCampaignIdRoute: typeof ApiPublicV1AdminAdsCampaignsCampaignIdRoute
+}
+
+const ApiPublicV1AdminAdsCampaignsRouteChildren: ApiPublicV1AdminAdsCampaignsRouteChildren =
+  {
+    ApiPublicV1AdminAdsCampaignsCampaignIdRoute:
+      ApiPublicV1AdminAdsCampaignsCampaignIdRoute,
+  }
+
+const ApiPublicV1AdminAdsCampaignsRouteWithChildren =
+  ApiPublicV1AdminAdsCampaignsRoute._addFileChildren(
+    ApiPublicV1AdminAdsCampaignsRouteChildren,
+  )
+
+interface ApiPublicV1AuthWebSessionRouteChildren {
+  ApiPublicV1AuthWebSessionLogoutRoute: typeof ApiPublicV1AuthWebSessionLogoutRoute
+  ApiPublicV1AuthWebSessionRefreshRoute: typeof ApiPublicV1AuthWebSessionRefreshRoute
+}
+
+const ApiPublicV1AuthWebSessionRouteChildren: ApiPublicV1AuthWebSessionRouteChildren =
+  {
+    ApiPublicV1AuthWebSessionLogoutRoute: ApiPublicV1AuthWebSessionLogoutRoute,
+    ApiPublicV1AuthWebSessionRefreshRoute:
+      ApiPublicV1AuthWebSessionRefreshRoute,
+  }
+
+const ApiPublicV1AuthWebSessionRouteWithChildren =
+  ApiPublicV1AuthWebSessionRoute._addFileChildren(
+    ApiPublicV1AuthWebSessionRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRoute,
+  WalletRoute: WalletRoute,
+  AdminAdsRoute: AdminAdsRoute,
   AdminFirebaseSchemaRoute: AdminFirebaseSchemaRoute,
+  AdminPricingRoute: AdminPricingRoute,
+  AdminReportsRoute: AdminReportsRoute,
+  AdminStorageRoute: AdminStorageRoute,
+  AdminVideoStudioRoute: AdminVideoStudioRoute,
+  ContentAssetIdRoute: ContentAssetIdRoute,
+  ProducerChannelsRoute: ProducerChannelsRouteWithChildren,
+  AdminIndexRoute: AdminIndexRoute,
+  ProducerIndexRoute: ProducerIndexRoute,
   ApiPublicFirebaseSchemaInspectRoute: ApiPublicFirebaseSchemaInspectRoute,
+  ApiPublicV1NotificationsRoute: ApiPublicV1NotificationsRouteWithChildren,
   ApiPublicV1WalletRoute: ApiPublicV1WalletRouteWithChildren,
+  ApiPublicV1AdminAuditRoute: ApiPublicV1AdminAuditRoute,
+  ApiPublicV1AdminChannelsRoute: ApiPublicV1AdminChannelsRouteWithChildren,
+  ApiPublicV1AdminNotificationsRoute: ApiPublicV1AdminNotificationsRoute,
+  ApiPublicV1AdminOverviewRoute: ApiPublicV1AdminOverviewRoute,
+  ApiPublicV1AdsNextRoute: ApiPublicV1AdsNextRoute,
+  ApiPublicV1AdsProviderConfigRoute: ApiPublicV1AdsProviderConfigRoute,
   ApiPublicV1CatalogHomeRoute: ApiPublicV1CatalogHomeRoute,
   ApiPublicV1CatalogSearchRoute: ApiPublicV1CatalogSearchRoute,
   ApiPublicV1ChannelsChannelIdRoute: ApiPublicV1ChannelsChannelIdRoute,
+  ApiPublicV1ConfigClientRoute: ApiPublicV1ConfigClientRoute,
+  ApiPublicV1ContentAssetsAssetIdRoute:
+    ApiPublicV1ContentAssetsAssetIdRouteWithChildren,
+  ApiPublicV1DevicesPushTokenRoute: ApiPublicV1DevicesPushTokenRoute,
+  ApiPublicV1ProducerChannelsRoute:
+    ApiPublicV1ProducerChannelsRouteWithChildren,
+  ApiPublicV1ProducerEarningsRoute: ApiPublicV1ProducerEarningsRoute,
+  ApiPublicV1ProducerMobileSummaryRoute: ApiPublicV1ProducerMobileSummaryRoute,
+  ApiPublicV1ProducerPayoutsRoute: ApiPublicV1ProducerPayoutsRouteWithChildren,
+  ApiPublicV1ProducerVerificationRoute:
+    ApiPublicV1ProducerVerificationRouteWithChildren,
   ApiPublicV1ProfileCompleteRoute: ApiPublicV1ProfileCompleteRoute,
+  ApiPublicV1ProfileCountryRoute: ApiPublicV1ProfileCountryRoute,
+  ApiPublicV1SessionsStartRoute: ApiPublicV1SessionsStartRoute,
+  ApiPublicV1StorageCompleteRoute: ApiPublicV1StorageCompleteRoute,
+  ApiPublicV1StorageIntentRoute: ApiPublicV1StorageIntentRoute,
+  ApiPublicV1AdminAdsCampaignsRoute:
+    ApiPublicV1AdminAdsCampaignsRouteWithChildren,
+  ApiPublicV1AdminAdsProvidersRoute: ApiPublicV1AdminAdsProvidersRoute,
+  ApiPublicV1AdminConfigFlagsRoute: ApiPublicV1AdminConfigFlagsRoute,
+  ApiPublicV1AdminConfigPricingRoute: ApiPublicV1AdminConfigPricingRoute,
+  ApiPublicV1AdminReportsMonthlyRoute: ApiPublicV1AdminReportsMonthlyRoute,
+  ApiPublicV1AdminStorageDestinationsRoute:
+    ApiPublicV1AdminStorageDestinationsRoute,
+  ApiPublicV1AdsAdIdEventsRoute: ApiPublicV1AdsAdIdEventsRoute,
+  ApiPublicV1AuthEmailSendCodeRoute: ApiPublicV1AuthEmailSendCodeRoute,
+  ApiPublicV1AuthEmailVerifyCodeRoute: ApiPublicV1AuthEmailVerifyCodeRoute,
+  ApiPublicV1AuthSessionRevokeAllRoute: ApiPublicV1AuthSessionRevokeAllRoute,
+  ApiPublicV1AuthWebConfigRoute: ApiPublicV1AuthWebConfigRoute,
+  ApiPublicV1AuthWebMeRoute: ApiPublicV1AuthWebMeRoute,
+  ApiPublicV1AuthWebSessionRoute: ApiPublicV1AuthWebSessionRouteWithChildren,
+  ApiPublicV1PaymentsPaystackInitializeRoute:
+    ApiPublicV1PaymentsPaystackInitializeRoute,
+  ApiPublicV1PaymentsPaystackVerifyRoute:
+    ApiPublicV1PaymentsPaystackVerifyRoute,
+  ApiPublicV1PaymentsPaystackWebhookRoute:
+    ApiPublicV1PaymentsPaystackWebhookRoute,
   ApiPublicV1SecurityIntegrityChallengeRoute:
     ApiPublicV1SecurityIntegrityChallengeRoute,
   ApiPublicV1SessionsSessionIdEndRoute: ApiPublicV1SessionsSessionIdEndRoute,
   ApiPublicV1SessionsSessionIdHeartbeatRoute:
     ApiPublicV1SessionsSessionIdHeartbeatRoute,
+  ApiPublicV1SessionsSessionIdRefreshRoute:
+    ApiPublicV1SessionsSessionIdRefreshRoute,
+  ApiPublicV1StreamingHlsSplatRoute: ApiPublicV1StreamingHlsSplatRoute,
+  ApiPublicV1AdminContentAssetsAssetIdFeatureRoute:
+    ApiPublicV1AdminContentAssetsAssetIdFeatureRoute,
+  ApiPublicV1AdminContentAssetsAssetIdReadyRoute:
+    ApiPublicV1AdminContentAssetsAssetIdReadyRoute,
+  ApiPublicV1AdminContentAssetsAssetIdRightsRoute:
+    ApiPublicV1AdminContentAssetsAssetIdRightsRoute,
+  ApiPublicV1AdminContentCommentsCommentIdModerateRoute:
+    ApiPublicV1AdminContentCommentsCommentIdModerateRoute,
+  ApiPublicV1AdminPaymentsPaymentIdReverseRoute:
+    ApiPublicV1AdminPaymentsPaymentIdReverseRoute,
+  ApiPublicV1AdminPayoutsPayoutIdReviewRoute:
+    ApiPublicV1AdminPayoutsPayoutIdReviewRoute,
+  ApiPublicV1AdminPayoutsPayoutIdSettleRoute:
+    ApiPublicV1AdminPayoutsPayoutIdSettleRoute,
+  ApiPublicV1AdminProducersUidVerificationRoute:
+    ApiPublicV1AdminProducersUidVerificationRoute,
+  ApiPublicV1AdminUsersUidPermissionsRoute:
+    ApiPublicV1AdminUsersUidPermissionsRoute,
+  ApiPublicV1AdminUsersUidStatusRoute: ApiPublicV1AdminUsersUidStatusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
