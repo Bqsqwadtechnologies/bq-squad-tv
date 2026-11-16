@@ -53,7 +53,7 @@ export async function requireUser(request: Request): Promise<VerifiedUser> {
   return user;
 }
 
-export async function parseBody<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
+export async function parseBody<S extends z.ZodTypeAny>(request: Request, schema: S): Promise<z.output<S>> {
   let raw: unknown;
   try {
     raw = await request.json();
