@@ -25,6 +25,7 @@ const schema = z.object({
   dailyEgressCapBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).nullable().default(null),
   priority: z.number().int().min(0).max(10000).default(100),
   enabled: z.boolean().default(true),
+  paidEgressEnabled: z.boolean().default(false),
 });
 
 export const Route = createFileRoute("/api/public/v1/admin/storage/destinations")({
@@ -77,6 +78,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/destinations"
                     ? { nullValue: null } : { integerValue: String(metadata.dailyEgressCapBytes) },
                   priority: { integerValue: String(metadata.priority) },
                   enabled: { booleanValue: metadata.enabled },
+                  paidEgressEnabled: { booleanValue: metadata.paidEgressEnabled ?? false },
                   accountGroup: { stringValue: metadata.accountGroup },
                   mode: { stringValue: metadata.mode },
                   replicaOf: metadata.replicaOf === null ? { nullValue: null } : { stringValue: metadata.replicaOf },
