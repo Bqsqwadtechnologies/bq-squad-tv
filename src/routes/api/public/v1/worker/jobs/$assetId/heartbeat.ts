@@ -23,7 +23,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/heartb
         }
         return { result: undefined, writes: [{ update: { name: fs.docName(path), fields: {
           leaseExpiresAt: { stringValue: nextExpiry }, updatedAt: { stringValue: new Date().toISOString() },
-        } } }] };
+        } }, updateMask: { fieldPaths: ["leaseExpiresAt", "updatedAt"] } }] };
       });
       return Response.json({ assetId, leaseExpiresAt: nextExpiry });
     } catch (error) { return errorBody(error); }
