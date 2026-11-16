@@ -33,6 +33,9 @@ type Destination = {
   healthCheckedAt?: string | null;
   egressMonthBytes?: number | null;
   egressLevel?: string | null;
+  freeEgressBudgetBytes?: number | null;
+  paidEgressEnabled?: boolean;
+  egressAccountMonthBytes?: number | null;
 };
 
 const PURPOSES = ["source_media", "hls_streaming", "posters", "thumbnails", "downloads", "temporary", "backup", "producer_verification"];
@@ -55,6 +58,8 @@ function AdminStoragePage() {
   const [softCapGb, setSoftCapGb] = useState("9");
   const [accountCapGb, setAccountCapGb] = useState("");
   const [dailyEgressGb, setDailyEgressGb] = useState("");
+  const [monthlyEgressGb, setMonthlyEgressGb] = useState("");
+  const [paidEgressEnabled, setPaidEgressEnabled] = useState(false);
   const [priority, setPriority] = useState("100");
   const [enabled, setEnabled] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -154,6 +159,8 @@ function AdminStoragePage() {
     setSoftCapGb(String(item.softCapBytes / 1_000_000_000));
     setAccountCapGb(item.accountCapBytes == null ? "" : String(item.accountCapBytes / 1_000_000_000));
     setDailyEgressGb(item.dailyEgressCapBytes === null ? "" : String(item.dailyEgressCapBytes / 1_000_000_000));
+    setMonthlyEgressGb(item.freeEgressBudgetBytes == null ? "" : String(item.freeEgressBudgetBytes / 1_000_000_000));
+    setPaidEgressEnabled(item.paidEgressEnabled === true);
     setPriority(String(item.priority));
     setEnabled(item.enabled);
     setMessage("Editing " + item.destinationId + ". Save to update its non-secret metadata.");
@@ -169,7 +176,8 @@ function AdminStoragePage() {
       const cap = Number(softCapGb);
       const egress = dailyEgressGb.trim() ? Number(dailyEgressGb) : null;
       const accountCap = accountCapGb.trim() ? Number(accountCapGb) : null;
-      if (!Number.isFinite(cap) || cap <= 0 || (egress !== null && (!Number.isFinite(egress) || egress <= 0)) || (accountCap !== null && (!Number.isFinite(accountCap) || accountCap <= 0))) {
+      const monthlyEgress = monthlyEgressGb.trim() ? Number(monthlyEgressGb) : null;
+      if (!Number.isFinite(cap) || cap <= 0 || (egress !== null && (!Number.isFinite(egress) || egress <= 0)) || (accountCap !== null && (!Number.isFinite(accountCap) || accountCap <= 0)) || (monthlyEgress !== null && (!Number.isFinite(monthlyEgress) || monthlyEgress < 0))) {
         throw new Error("Enter positive storage and optional egress limits in decimal GB.");
       }
       const payload = {
@@ -177,6 +185,8 @@ function AdminStoragePage() {
         softCapBytes: Math.floor(cap * 1_000_000_000),
         accountCapBytes: accountCap === null ? null : Math.floor(accountCap * 1_000_000_000),
         dailyEgressCapBytes: egress === null ? null : Math.floor(egress * 1_000_000_000),
+        freeEgressBudgetBytes: monthlyEgress === null ? null : Math.floor(monthlyEgress * 1_000_000_000),
+        paidEgressEnabled,
         priority: Number(priority), enabled,
       };
       const response = await fetch("/api/public/v1/admin/storage/destinations", {
@@ -233,7 +243,7 @@ function AdminStoragePage() {
                     <p className="mt-3 break-all text-xs text-blue-100/70">{item.bucketName} · {item.region} · {item.purpose} · group {item.accountGroup} · {item.mode}</p>
                     <p className="mt-1 text-xs text-blue-100/45">Soft cap {(item.softCapBytes / 1_000_000_000).toFixed(2)} GB · priority {item.priority} · {item.enabled ? "enabled" : "disabled"}</p>
                     <p className="mt-1 text-xs text-blue-100/55">Health: {item.healthStatus ?? "unknown"}{item.healthCheckedAt ? " · " + new Date(item.healthCheckedAt).toLocaleString() : ""} · Usage: {item.usageBytes == null ? "unknown" : (item.usageBytes / 1_000_000_000).toFixed(2) + " GB"}{item.usageSource ? " (" + item.usageSource + ")" : ""}</p>
-                    <p className="mt-1 text-xs text-blue-100/45">Shared account cap: {item.accountCapBytes == null ? "not configured" : (item.accountCapBytes / 1_000_000_000).toFixed(2) + " GB"} · Egress: {item.egressLevel ?? "unknown"}</p>
+                    <p className="mt-1 text-xs text-blue-100/45">Shared account cap: {item.accountCapBytes == null ? "not configured" : (item.accountCapBytes / 1_000_000_000).toFixed(2) + " GB"} · Account egress: {item.egressAccountMonthBytes == null ? "unknown" : (item.egressAccountMonthBytes / 1_000_000_000).toFixed(2) + " GB"} / {item.freeEgressBudgetBytes == null ? "budget unknown" : (item.freeEgressBudgetBytes / 1_000_000_000).toFixed(2) + " GB"} · {item.egressLevel ?? "unknown"}</p>
                     <div className="mt-3 flex flex-wrap gap-2"><button onClick={() => void checkHealth(item)} disabled={busy} className="rounded-lg border border-cyan-300/25 px-3 py-2 text-xs font-bold text-cyan-200">Test provider</button><button onClick={() => void recordUsage(item)} disabled={busy} className="rounded-lg border border-white/15 px-3 py-2 text-xs font-bold text-blue-100">Record usage report</button></div>
                     {item.missingSecretNames.length > 0 ? <p className="mt-2 break-all text-xs text-amber-200">Missing/configuration requirements: {item.missingSecretNames.join(", ")}</p> : null}
                     <button onClick={() => editDestination(item)} className="mt-4 rounded-lg border border-cyan-300/25 px-3 py-2 text-xs font-bold text-cyan-200">Edit metadata</button>
@@ -254,7 +264,9 @@ function AdminStoragePage() {
                 <label className="grid gap-2 text-xs text-blue-100/70">Purpose<select value={purpose} onChange={event => setPurpose(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white">{PURPOSES.map(value => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Soft capacity cap (decimal GB)<input required type="number" min="0.01" step="0.01" value={softCapGb} onChange={event => setSoftCapGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Verified shared account capacity cap (decimal GB, optional; enter the same value on every bucket in one provider account)<input type="number" min="0.01" step="0.01" value={accountCapGb} onChange={event => setAccountCapGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
-                <label className="grid gap-2 text-xs text-blue-100/70">Daily egress cap (decimal GB, optional)<input type="number" min="0.01" step="0.01" value={dailyEgressGb} onChange={event => setDailyEgressGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Shared monthly account egress budget (decimal GB; same value on every bucket in the account)<input type="number" min="0" step="0.01" value={monthlyEgressGb} onChange={event => setMonthlyEgressGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+                <label className="flex items-center gap-3 text-xs text-blue-100/70"><input type="checkbox" checked={paidEgressEnabled} onChange={event => setPaidEgressEnabled(event.target.checked)} /> Explicitly allow paid egress for this entire provider account</label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Per-bucket daily egress cap (decimal GB, optional)<input type="number" min="0.01" step="0.01" value={dailyEgressGb} onChange={event => setDailyEgressGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Priority (lower is preferred)<input required type="number" min="0" max="10000" value={priority} onChange={event => setPriority(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="flex items-center gap-3 text-xs text-blue-100/70"><input type="checkbox" checked={enabled} onChange={event => setEnabled(event.target.checked)} /> Enable destination metadata</label>
                 {error ? <p role="alert" className="text-sm text-rose-300">{error}</p> : null}
