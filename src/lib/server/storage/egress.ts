@@ -28,6 +28,10 @@ export async function recordStorageEgress(
       ? destination["egressDayBytes"] : 0;
     const nextMonth = currentMonth + bytes;
     const nextDay = currentDay + bytes;
+    const dailyCap = destination["dailyEgressCapBytes"];
+    if (typeof dailyCap === "number" && Number.isSafeInteger(dailyCap) && nextDay > dailyCap) {
+      throw new ApiError(429, "STORAGE_DAILY_EGRESS_LIMIT", "This streaming destination has reached its configured daily delivery limit.");
+    }
     if (!Number.isSafeInteger(nextMonth) || !Number.isSafeInteger(nextDay)) throw new ApiError(409, "EGRESS_COUNTER_OVERFLOW", "The storage egress counter is unavailable.");
     const level = calculateEgressLevel(nextMonth, budget, paidEnabled);
     if (level === "blocked") throw new ApiError(429, "STORAGE_EGRESS_LIMIT_REACHED", "This streaming destination has reached its safe monthly delivery limit.");
