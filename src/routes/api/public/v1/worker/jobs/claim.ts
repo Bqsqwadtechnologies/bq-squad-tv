@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody } from "@/lib/server/api";
 import { requireVideoWorker } from "@/lib/server/video-worker-auth";
-import { reserveStorageDestination } from "@/lib/server/storage/reservations";
+import { reserveStorageDestination, releaseStorageReservation } from "@/lib/server/storage/reservations";
 import { estimateReservedBytes } from "@/lib/server/storage/routing";
 import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata } from "@/lib/server/storage/registry";
 import { loadSourceStorageConfiguration, createStorageDownloadTarget } from "@/lib/server/storage/transfers";
@@ -34,6 +34,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           } } }] };
         });
         if (!claimed) continue;
+        let newReservationId = "";
         try {
           const job = await fs.getDoc(jobPath);
           const asset = await fs.getDoc("contentAssets/" + assetId);
@@ -45,6 +46,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           const sourceTarget = await createStorageDownloadTarget(sourceConfig, job["sourceObjectKey"], 3600);
           const reservedBytes = estimateReservedBytes(job["sourceSizeBytes"], 2.5);
           const outputReservationId = "hls-" + assetId + "-" + claimToken;
+          newReservationId = outputReservationId;
           const outputReservation = await reserveStorageDestination(fs, {
             purpose: "hls_streaming", incomingBytes: reservedBytes,
             reservationId: outputReservationId, ttlMs: 24 * 60 * 60_000,
@@ -67,6 +69,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
             outputDestinationId: outputReservation.destinationId, outputPrefix, outputReservedBytes: reservedBytes,
           } });
         } catch (error) {
+          if (newReservationId) await releaseStorageReservation(fs, newReservationId).catch(() => undefined);
           await fs.patchDoc(jobPath, {
             status: "queued", workerStatus: "waiting_for_storage", claimToken: null,
             leaseExpiresAt: null, lastErrorCode: error instanceof ApiError ? error.code : "WORKER_CLAIM_FAILED",
