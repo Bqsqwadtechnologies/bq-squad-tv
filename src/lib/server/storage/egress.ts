@@ -46,8 +46,6 @@ export async function recordStorageEgress(
     const legacyMonth = group.reduce((sum, row) => sum + (row["egressMonthKey"] === monthKey ? safeBytes(row["egressMonthBytes"]) : 0), 0);
     const legacyDay = group.reduce((sum, row) => sum + (row["egressDayKey"] === dayKey ? safeBytes(row["egressDayBytes"]) : 0), 0);
     const accountLedgerPath = "storageAccountEgress/" + storageAccountEgressId(accountGroup);
-    const destinationLegacyMonth = initial["egressMonthKey"] === monthKey ? safeBytes(initial["egressMonthBytes"]) : 0;
-    const destinationLegacyDay = initial["egressDayKey"] === dayKey ? safeBytes(initial["egressDayBytes"]) : 0;
 
     return await fs.transact([path, accountLedgerPath], docs => {
       const destination = docs[0];
@@ -61,8 +59,12 @@ export async function recordStorageEgress(
         : accountLedger ? 0 : Math.max(legacyDay, destinationLegacyDay);
       const nextMonth = currentMonth + bytes;
       const nextDay = currentDay + bytes;
+      const destinationMonth = destination["egressMonthKey"] === monthKey ? safeBytes(destination["egressMonthBytes"]) : 0;
+      const destinationDay = destination["egressDayKey"] === dayKey ? safeBytes(destination["egressDayBytes"]) : 0;
+      const nextDestinationMonth = destinationMonth + bytes;
+      const nextDestinationDay = destinationDay + bytes;
       const dailyCap = destination["dailyEgressCapBytes"];
-      if (typeof dailyCap === "number" && Number.isSafeInteger(dailyCap) && nextDay > dailyCap) {
+      if (typeof dailyCap === "number" && Number.isSafeInteger(dailyCap) && nextDestinationDay > dailyCap) {
         throw new ApiError(429, "STORAGE_DAILY_EGRESS_LIMIT", "This streaming destination has reached its configured daily delivery limit.");
       }
       if (!Number.isSafeInteger(nextMonth) || !Number.isSafeInteger(nextDay)) {
@@ -76,9 +78,9 @@ export async function recordStorageEgress(
       const updatedAt = now.toISOString();
       const writes = [
         { update: { name: fs.docName(path), fields: {
-          egressMonthBytes: { integerValue: String(destinationLegacyMonth + bytes) },
+          egressMonthBytes: { integerValue: String(nextDestinationMonth) },
           egressMonthKey: { stringValue: monthKey },
-          egressDayBytes: { integerValue: String(destinationLegacyDay + bytes) },
+          egressDayBytes: { integerValue: String(nextDestinationDay) },
           egressDayKey: { stringValue: dayKey },
           egressAccountMonthBytes: { integerValue: String(nextMonth) },
           egressLevel: { stringValue: level },
