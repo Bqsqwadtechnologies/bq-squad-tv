@@ -55,6 +55,8 @@ export async function recordStorageEgress(
   } catch (error) {
     if (error instanceof ApiError && (error.code === "STORAGE_EGRESS_LIMIT_REACHED" || error.code === "STORAGE_DAILY_EGRESS_LIMIT")) {
       await fs.patchDoc(path, { egressLevel: "blocked", egressAlertAt: new Date().toISOString() }).catch(() => undefined);
+    } else if (error instanceof ApiError && error.code === "STORAGE_EGRESS_QUALITY_LIMIT") {
+      await fs.patchDoc(path, { egressLevel: "throttle", egressAlertAt: new Date().toISOString() }).catch(() => undefined);
     }
     throw error;
   }
