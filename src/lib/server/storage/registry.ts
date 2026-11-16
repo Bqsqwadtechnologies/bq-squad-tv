@@ -179,7 +179,7 @@ export function isStorageDestinationEligible(
   // Unknown usage is not treated as zero. Until a provider usage check is
   // available, the destination is not eligible for automatic capacity routing.
   if (reportedUsageBytes === null || !Number.isSafeInteger(reportedUsageBytes) || reportedUsageBytes < 0) return false;
-  return reportedUsageBytes + incomingBytes <= destination.metadata.softCapBytes;
+  return reportedUsageBytes <= destination.metadata.softCapBytes - incomingBytes;
 }
 
 export function redactStorageDestination(destination: StorageDestinationConfiguration) {
