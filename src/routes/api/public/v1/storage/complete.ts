@@ -5,6 +5,8 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAuthorizedChannelUpload } from "@/lib/server/producer-upload-access";
 import { assertMediaMatchesExtension } from "@/lib/server/storage/security";
 import { writeAuditLog } from "@/lib/server/audit";
+import { loadSourceStorageConfiguration, inspectStorageObject } from "@/lib/server/storage/transfers";
+import { commitStorageReservation } from "@/lib/server/storage/reservations";
 
 const bodySchema = z.object({
   assetId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),
@@ -38,33 +40,17 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             throw new ApiError(409, "UPLOAD_METADATA_INVALID", "The upload metadata is invalid.");
           }
 
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { data: signed, error: signError } = await supabaseAdmin.storage
-            .from("bq-sqwad-source-media")
-            .createSignedUrl(path, 60);
-          if (signError || !signed?.signedUrl) {
-            throw new ApiError(503, "STORAGE_OBJECT_UNAVAILABLE", "The uploaded file could not be inspected.");
-          }
-          const response = await fetch(signed.signedUrl, { headers: { Range: "bytes=0-511" } });
-          if (response.status !== 206) {
-            throw new ApiError(409, "UPLOAD_OBJECT_MISSING", "The uploaded file could not be found in private storage.");
-          }
-          const contentLengthHeader = Number(response.headers.get("content-length") ?? 0);
-          if (contentLengthHeader > 512) {
-            await response.body?.cancel();
-            throw new ApiError(502, "STORAGE_RANGE_UNSUPPORTED", "Private storage did not honor the bounded media inspection request.");
-          }
-          const headerBytes = new Uint8Array(await response.arrayBuffer());
-          const contentRange = response.headers.get("content-range");
-          const contentLength = response.headers.get("content-length");
-          const actualSize = contentRange?.match(/\/([0-9]+)$/)?.[1]
-            ? Number(contentRange.match(/\/([0-9]+)$/)?.[1])
-            : Number(contentLength);
-          if (!Number.isSafeInteger(actualSize) || actualSize !== expectedSize) {
+          const sourceConfiguration = await loadSourceStorageConfiguration(fs, asset);
+          const sourceObjectKey = typeof asset["sourceObjectKey"] === "string" ? asset["sourceObjectKey"] : path;
+          const inspected = await inspectStorageObject(sourceConfiguration, sourceObjectKey);
+          const actualSize = inspected.sizeBytes;
+          if (actualSize !== expectedSize) {
             throw new ApiError(400, "UPLOAD_SIZE_MISMATCH", "The uploaded file size does not match the declared size.");
           }
-          const mediaKind = assertMediaMatchesExtension(headerBytes, filename);
+          const mediaKind = assertMediaMatchesExtension(inspected.headerBytes, filename);
           const now = new Date().toISOString();
+          const sourceDestinationId = typeof asset["sourceDestinationId"] === "string"
+            ? asset["sourceDestinationId"] : "lovable-source-legacy";
           const jobPath = "videoTranscodeJobs/" + assetId;
           const existingJob = await fs.getDoc(jobPath);
           if (!existingJob) {
@@ -72,8 +58,10 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
               assetId,
               channelId,
               ownerUid: user.uid,
-              sourceBucket: "bq-sqwad-source-media",
+              sourceDestinationId,
+              sourceBucket: typeof asset["sourceBucket"] === "string" ? asset["sourceBucket"] : "bq-sqwad-source-media",
               sourcePath: path,
+              sourceObjectKey,
               sourceFilename: filename,
               sourceSizeBytes: actualSize,
               outputBucket: "bq-sqwad-streaming-media",
@@ -97,11 +85,19 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             sourceVerifiedAt: now,
             updatedAt: now,
           });
+          const reservationId = typeof asset["storageReservationId"] === "string" ? asset["storageReservationId"] : null;
+          if (reservationId) await commitStorageReservation(fs, reservationId, actualSize);
+          await fs.patchDoc("contentAssets/" + assetId, {
+            sourceDestinationId,
+            sourceObjectKey,
+            sourceBucket: typeof asset["sourceBucket"] === "string" ? asset["sourceBucket"] : "bq-sqwad-source-media",
+            storageReservationStatus: reservationId ? "committed" : "legacy_unreserved",
+          });
           await writeAuditLog(fs, {
             actorUid: user.uid, action: "content.upload_verified",
             targetType: "contentAsset", targetId: assetId,
             reason: "Source upload verified before transcoding",
-            metadata: { channelId, mediaKind, sizeBytes: actualSize },
+            metadata: { channelId, mediaKind, sizeBytes: actualSize, sourceDestinationId },
           });
           return Response.json({ assetId, status: "uploaded_pending_transcode", sourceVerified: true, transcodeJobId: assetId, transcodeJobStatus: "queued", processingWorker: "not_configured" });
         } catch (error) {
