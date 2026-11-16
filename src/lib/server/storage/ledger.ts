@@ -4,9 +4,8 @@ export const STORAGE_LEDGER_SHARDS = 20;
 
 export function storageAccountEgressId(accountGroup: string): string {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9:_-]{1,99}$/.test(accountGroup)) throw new RangeError("Invalid storage account group.");
-  let hash = 2166136261;
-  for (let i = 0; i < accountGroup.length; i++) hash = Math.imul(hash ^ accountGroup.charCodeAt(i), 16777619);
-  return (hash >>> 0).toString(16).padStart(8, "0");
+  // Preserve the full group identity rather than using a short hash that could collide.
+  return encodeURIComponent(accountGroup);
 }
 export type EgressLevel = "normal" | "warn" | "throttle" | "blocked" | "paid";
 
