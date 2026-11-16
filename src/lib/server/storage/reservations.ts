@@ -84,8 +84,13 @@ export async function reserveStorageDestination(
       });
     }
     const cursorPath = "storageRoutingCursors/global";
-    const cursorDoc = await fs.getDoc(cursorPath);
-    const cursor = asSafeBytes(cursorDoc?.["cursor"]);
+    let cursorDoc = await fs.getDoc(cursorPath);
+    if (!cursorDoc) {
+      await fs.setDoc(cursorPath, { cursor: 0, updatedAt: new Date().toISOString() }, { mustNotExist: true }).catch(() => undefined);
+      cursorDoc = await fs.getDoc(cursorPath);
+    }
+    if (!cursorDoc) throw new ApiError(503, "STORAGE_CURSOR_UNAVAILABLE", "The storage routing cursor could not be initialized.");
+    const cursor = asSafeBytes(cursorDoc["cursor"]);
     const pick = pickDestination(candidates, input.incomingBytes, input.purpose, cursor);
     if (!pick) {
       throw new ApiError(507, "STORAGE_CAPACITY_UNAVAILABLE", "No verified storage destination currently has enough available capacity.");
@@ -144,8 +149,8 @@ export async function reserveStorageDestination(
         return {
           result: undefined,
           writes: [
-            { update: { name: fs.docName("storageDestinations/" + pick.id), fields: { reservedBytes: { integerValue: String(nextReserved) }, updatedAt: { stringValue: now } } } },
-            { update: { name: fs.docName(cursorPath), fields: { cursor: { integerValue: String(cursor + 1) }, updatedAt: { stringValue: now } } } },
+            { update: { name: fs.docName("storageDestinations/" + pick.id), fields: { reservedBytes: { integerValue: String(nextReserved) }, updatedAt: { stringValue: now } } }, updateMask: { fieldPaths: ["reservedBytes", "updatedAt"] } },
+            { update: { name: fs.docName(cursorPath), fields: { cursor: { integerValue: String(cursor + 1) }, updatedAt: { stringValue: now } } }, updateMask: { fieldPaths: ["cursor", "updatedAt"] } },
             { update: { name: fs.docName("storageReservations/" + reservationId), fields: {
               reservationId: { stringValue: reservationId },
               destinationId: { stringValue: pick.id },
@@ -187,8 +192,8 @@ export async function releaseStorageReservation(fs: Firestore, reservationId: st
         return {
           result: undefined,
           writes: [
-            { update: { name: fs.docName("storageDestinations/" + destinationId), fields: { reservedBytes: { integerValue: String(currentReserved - bytes) }, updatedAt: { stringValue: now } } } },
-            { update: { name: fs.docName("storageReservations/" + reservationId), fields: { status: { stringValue: "released" }, releasedAt: { stringValue: now } } } },
+            { update: { name: fs.docName("storageDestinations/" + destinationId), fields: { reservedBytes: { integerValue: String(currentReserved - bytes) }, updatedAt: { stringValue: now } } }, updateMask: { fieldPaths: ["reservedBytes", "updatedAt"] } },
+            { update: { name: fs.docName("storageReservations/" + reservationId), fields: { status: { stringValue: "released" }, releasedAt: { stringValue: now } } }, updateMask: { fieldPaths: ["status", "releasedAt"] } },
           ],
         };
       });
@@ -239,12 +244,12 @@ export async function commitStorageReservation(fs: Firestore, reservationId: str
               usageSource: { stringValue: "ledger" },
               usageCheckedAt: { stringValue: now },
               updatedAt: { stringValue: now },
-            } } },
+            } }, updateMask: { fieldPaths: ["reservedBytes", "usageBytes", "usageSource", "usageCheckedAt", "updatedAt"] } },
             { update: { name: fs.docName("storageReservations/" + reservationId), fields: {
               status: { stringValue: "committed" },
               actualBytes: { integerValue: String(actualBytes) },
               committedAt: { stringValue: now },
-            } } },
+            } }, updateMask: { fieldPaths: ["status", "actualBytes", "committedAt"] } },
           ],
         };
       });
