@@ -1,5 +1,5 @@
 import { ApiError, Firestore } from "../firebase-admin";
-import { calculateEgressLevel } from "./ledger";
+import { calculateEgressLevel, storageAccountEgressId } from "./ledger";
 import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata, type StoragePurpose } from "./registry";
 import { pickDestination, type StorageCandidate } from "./routing";
 
@@ -47,6 +47,22 @@ export async function reserveStorageDestination(
       group.push(item);
       groups.set(item.metadata.accountGroup, group);
     }
+    const accountEgress = new Map<string, { usedBytes: number; budgetBytes: number | null; paidEnabled: boolean }>();
+    const monthKey = new Date().toISOString().slice(0, 7);
+    for (const [groupName, items] of groups) {
+      const ledger = await fs.getDoc("storageAccountEgress/" + storageAccountEgressId(groupName));
+      const budgets = items.map(item => item.metadata.freeEgressBudgetBytes);
+      const paidChoices = items.map(item => item.metadata.paidEgressEnabled === true);
+      const budgetValue = budgets[0] ?? null;
+      const paidEnabled = paidChoices[0] === true;
+      const consistent = budgets.every(value => value === budgetValue) && paidChoices.every(value => value === paidEnabled);
+      const legacyUsage = items.reduce((sum, item) => sum + (item.metadata.egressMonthKey === monthKey ? asSafeBytes(item.metadata.egressMonthBytes) : 0), 0);
+      accountEgress.set(groupName, {
+        usedBytes: ledger?.["monthKey"] === monthKey ? asSafeBytes(ledger["monthBytes"]) : legacyUsage,
+        budgetBytes: consistent && typeof budgetValue === "number" && Number.isSafeInteger(budgetValue) && budgetValue >= 0 ? budgetValue : null,
+        paidEnabled: consistent && paidEnabled,
+      });
+    }
     const candidates: StorageCandidate[] = [];
     for (const item of parsed) {
       const group = groups.get(item.metadata.accountGroup) ?? [];
@@ -61,12 +77,12 @@ export async function reserveStorageDestination(
         ? (configuredCaps[0] ?? group[0]!.metadata.softCapBytes)
         : configuredCaps.length === group.length && new Set(configuredCaps).size === 1 ? configuredCaps[0]! : null;
       if (accountCap === null) continue;
-      const egressBudget = item.metadata.freeEgressBudgetBytes;
-      const egressHeadroom = item.metadata.paidEgressEnabled === true
+      const sharedEgress = accountEgress.get(item.metadata.accountGroup);
+      const egressHeadroom = sharedEgress?.paidEnabled
         ? Number.MAX_SAFE_INTEGER
-        : egressBudget === null || egressBudget === undefined
+        : sharedEgress?.budgetBytes === null || sharedEgress?.budgetBytes === undefined
           ? null
-          : Math.max(0, egressBudget - asSafeBytes(item.metadata.egressMonthBytes));
+          : Math.max(0, sharedEgress.budgetBytes - (sharedEgress.usedBytes ?? 0));
       candidates.push({
         id: item.metadata.destinationId,
         priority: item.metadata.priority,
