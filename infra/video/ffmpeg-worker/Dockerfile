@@ -7,7 +7,7 @@ RUN apt-get update \
     && useradd --uid 10001 --gid bqvideo --create-home --shell /usr/sbin/nologin bqvideo
 
 WORKDIR /app
-COPY --chown=bqvideo:bqvideo transcode.py /app/transcode.py
+COPY --chown=bqvideo:bqvideo transcode.py runner.py /app/
 USER 10001:10001
 
-ENTRYPOINT ["python", "/app/transcode.py"]
+ENTRYPOINT ["python", "/app/runner.py"]
