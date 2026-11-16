@@ -2,9 +2,6 @@ import { ApiError, Firestore } from "../firebase-admin";
 import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata, type StoragePurpose } from "./registry";
 import { pickDestination, type StorageCandidate } from "./routing";
 
-const LEGACY_SOURCE_ID = "lovable-source-legacy";
-const LEGACY_STREAM_ID = "lovable-stream-legacy";
-
 export type StorageReservation = {
   reservationId: string;
   destinationId: string;
@@ -89,19 +86,34 @@ export async function reserveStorageDestination(
     }
     const selected = parsed.find(item => item.metadata.destinationId === pick.id);
     if (!selected) throw new ApiError(503, "STORAGE_ROUTING_RETRY", "Storage routing changed; please retry.");
+    const groupItems = groups.get(selected.metadata.accountGroup) ?? [];
+    const groupPaths = groupItems.map(item => "storageDestinations/" + item.metadata.destinationId);
+    const selectedGroupIndex = groupItems.findIndex(item => item.metadata.destinationId === pick.id);
+    if (selectedGroupIndex < 0) throw new ApiError(503, "STORAGE_ROUTING_RETRY", "Storage routing changed; please retry.");
     try {
-      await fs.transact([cursorPath, "storageDestinations/" + pick.id, "storageReservations/" + reservationId], docs => {
+      await fs.transact([cursorPath, ...groupPaths, "storageReservations/" + reservationId], docs => {
         const currentCursor = docs[0];
-        const currentDestination = docs[1];
-        const existingReservation = docs[2];
+        const currentCursorValue = asSafeBytes(currentCursor?.["cursor"]);
+        const groupDocs = docs.slice(1, 1 + groupItems.length);
+        const existingReservation = docs[1 + groupItems.length];
+        if (currentCursorValue !== cursor) throw new ApiError(409, "STORAGE_CURSOR_CHANGED", "Storage routing changed; retry selection.");
         if (existingReservation) throw new ApiError(409, "STORAGE_RESERVATION_EXISTS", "This storage reservation already exists.");
-        if (!currentDestination || currentDestination["enabled"] !== true || currentDestination["mode"] !== "active" || currentDestination["healthStatus"] !== "healthy") {
-          throw new ApiError(409, "STORAGE_DESTINATION_CHANGED", "The selected storage destination is no longer eligible.");
-        }
-        const currentUsage = currentDestination["usageBytes"];
-        if (typeof currentUsage !== "number" || !Number.isSafeInteger(currentUsage) || currentUsage < 0) {
+        if (groupDocs.some(doc => !doc)) throw new ApiError(409, "STORAGE_DESTINATION_CHANGED", "A storage destination in this account group is unavailable.");
+        const validGroupDocs = groupDocs as Array<Record<string, unknown>>;
+        const groupUsageValues = validGroupDocs.map(doc => doc["usageBytes"]);
+        if (groupUsageValues.some(value => typeof value !== "number" || !Number.isSafeInteger(value) || value < 0)) {
           throw new ApiError(409, "STORAGE_USAGE_UNKNOWN", "Storage usage must be reconciled before automatic assignment.");
         }
+        const groupUsage = Math.max(...(groupUsageValues as number[])) + validGroupDocs.reduce((sum, doc) => sum + asSafeBytes(doc["reservedBytes"]), 0);
+        const groupCap = Math.min(...groupItems.map(item => item.metadata.softCapBytes));
+        if (groupUsage + input.incomingBytes > groupCap) {
+          throw new ApiError(409, "STORAGE_ACCOUNT_CAPACITY_CHANGED", "The shared storage account has insufficient remaining capacity.");
+        }
+        const currentDestination = validGroupDocs[selectedGroupIndex];
+        if (currentDestination["enabled"] !== true || currentDestination["mode"] !== "active" || currentDestination["healthStatus"] !== "healthy") {
+          throw new ApiError(409, "STORAGE_DESTINATION_CHANGED", "The selected storage destination is no longer eligible.");
+        }
+        const currentUsage = currentDestination["usageBytes"] as number;
         const nextReserved = asSafeBytes(currentDestination["reservedBytes"]) + input.incomingBytes;
         if (currentUsage + nextReserved > selected.metadata.softCapBytes) {
           throw new ApiError(409, "STORAGE_CAPACITY_CHANGED", "Storage capacity changed during reservation.");
@@ -111,7 +123,7 @@ export async function reserveStorageDestination(
           result: undefined,
           writes: [
             { update: { name: fs.docName("storageDestinations/" + pick.id), fields: { reservedBytes: { integerValue: String(nextReserved) }, updatedAt: { stringValue: now } } } },
-            { update: { name: fs.docName(cursorPath), fields: { cursor: { integerValue: String(pick.nextCursor) }, updatedAt: { stringValue: now } } } },
+            { update: { name: fs.docName(cursorPath), fields: { cursor: { integerValue: String(cursor + 1) }, updatedAt: { stringValue: now } } } },
             { update: { name: fs.docName("storageReservations/" + reservationId), fields: {
               reservationId: { stringValue: reservationId },
               destinationId: { stringValue: pick.id },
