@@ -31,6 +31,25 @@ function isPlaylist(path: string): boolean {
   return path.toLowerCase().endsWith(".m3u8");
 }
 
+function capMasterPlaylistAt480p(playlist: string): string {
+  const lines = playlist.split(/\\r?\\n/);
+  const output: string[] = [];
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index] ?? "";
+    if (line.startsWith("#EXT-X-STREAM-INF:")) {
+      const resolution = line.match(/RESOLUTION=\\d+x(\\d+)/i);
+      const height = resolution ? Number(resolution[1]) : 0;
+      const next = lines[index + 1] ?? "";
+      if (height > 480) { index++; continue; }
+      output.push(line);
+      if (next && !next.startsWith("#")) { output.push(next); index++; }
+      continue;
+    }
+    output.push(line);
+  }
+  return output.join("\\n");
+}
+
 async function rewritePlaylistForSession(
   playlist: string,
   playlistPath: string,
@@ -145,9 +164,10 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
           if (!Number.isSafeInteger(objectInfo.sizeBytes) || objectInfo.sizeBytes < 1) {
             throw new ApiError(503, "STREAM_OBJECT_SIZE_UNKNOWN", "The media object size could not be verified for delivery.");
           }
+          let egressLevel: Awaited<ReturnType<typeof recordStorageEgress>> | null = null;
           if (typeof asset["streamDestinationId"] === "string") {
             const highResolution = /(?:^|\\/)v(?:720|1080)\\//i.test(resourcePath);
-            await recordStorageEgress(fs, asset["streamDestinationId"], Math.max(1, objectInfo.sizeBytes), highResolution);
+            egressLevel = await recordStorageEgress(fs, asset["streamDestinationId"], objectInfo.sizeBytes, highResolution);
           }
           const signed = await createStorageDownloadTarget(storageConfig, resourcePath, 60);
           const upstreamHeaders = new Headers();
@@ -164,7 +184,10 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
           }
 
           if (isPlaylist(resourcePath)) {
-            const playlist = await upstream.text();
+            let playlist = await upstream.text();
+            if (egressLevel === "throttle" && /(?:^|\\/)master\\.m3u8$/i.test(resourcePath)) {
+              playlist = capMasterPlaylistAt480p(playlist);
+            }
             const rewritten = await rewritePlaylistForSession(playlist, resourcePath, sid, uid);
             return new Response(rewritten, {
               status: 200,
