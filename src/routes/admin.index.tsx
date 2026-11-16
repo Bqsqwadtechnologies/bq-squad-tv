@@ -4,6 +4,7 @@ import {
   ArrowUpRight,
   BadgeCheck,
   CircleAlert,
+  Database,
   Film,
   Gauge,
   LockKeyhole,
@@ -44,6 +45,7 @@ const moduleCards: Array<{
   { id: "ads", title: "Advertising providers", description: "Separate Android and website providers, placements and credentials.", href: "/admin/ads", icon: Megaphone },
   { id: "overview", title: "Monthly operations reports", description: "Review monthly ledger, payout, advertising and producer-review activity.", href: "/admin/reports", icon: Gauge },
   { id: "system", title: "Firebase schema inspector", description: "Inspect field names and types without exposing production document values.", href: "/admin/firebase-schema", icon: Settings2 },
+  { id: "system", title: "Storage destinations", description: "Register Lovable Storage and Backblaze destinations, inspect secret configuration and manage routing metadata.", href: "/admin/storage", icon: Database },
   { id: "channels", title: "Channel operations", description: "Server APIs are present; the dedicated management screen is being completed.", icon: Tv2 },
   { id: "content", title: "Content & rights", description: "Rights evidence, review state, publishing and featured-content controls.", href: "/admin/video-studio", icon: Film },
   { id: "users", title: "Viewer accounts", description: "Account status and access administration.", icon: Users },
@@ -220,7 +222,7 @@ function ZillionaireDashboard() {
                 {moduleCards.filter(item => allowedModules.has(item.id)).map(item => {
                   const Icon = item.icon;
                   return (
-                    <article key={item.id} className="rounded-2xl border border-white/10 bg-[#07143d] p-5 transition hover:border-cyan-300/30">
+                    <article key={item.title} className="rounded-2xl border border-white/10 bg-[#07143d] p-5 transition hover:border-cyan-300/30">
                       <div className="flex items-start justify-between gap-3">
                         <span className="grid h-10 w-10 place-items-center rounded-xl bg-cyan-300/10 text-cyan-200"><Icon size={20} /></span>
                         {item.href ? <a href={item.href} aria-label={"Open " + item.title} className="text-cyan-200 hover:text-white"><ArrowUpRight size={19} /></a> : <span className="text-[10px] font-bold uppercase tracking-wider text-blue-100/35">API scope</span>}
