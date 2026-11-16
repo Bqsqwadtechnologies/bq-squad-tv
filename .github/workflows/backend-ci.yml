@@ -23,6 +23,8 @@ jobs:
         run: bun x tsc --noEmit
       - name: Lint
         run: 'bun run lint -- --rule "prettier/prettier: off"'
+      - name: Public-facing text guard
+        run: bun run scan:public-text
       - name: Unit and API tests
         run: bunx vitest run
       - uses: actions/setup-python@v5
