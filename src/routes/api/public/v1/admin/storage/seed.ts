@@ -21,6 +21,7 @@ const metadataSchema = z.object({
   dailyEgressCapBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).nullable(),
   priority: z.number().int().min(0).max(10000),
   enabled: z.boolean(),
+  paidEgressEnabled: z.boolean().default(false),
 });
 const bodySchema = z.object({
   reason: z.string().trim().min(3).max(1000),
@@ -62,6 +63,8 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/seed")({
                     dailyEgressCapBytes: metadata.dailyEgressCapBytes === null ? { nullValue: null } : { integerValue: String(metadata.dailyEgressCapBytes) },
                     priority: { integerValue: String(metadata.priority) },
                     enabled: { booleanValue: metadata.enabled },
+                    paidEgressEnabled: { booleanValue: metadata.paidEgressEnabled ?? false },
+                  paidEgressEnabled: { booleanValue: metadata.paidEgressEnabled ?? false },
                     accountGroup: { stringValue: metadata.accountGroup },
                     mode: { stringValue: metadata.mode },
                     replicaOf: metadata.replicaOf === null ? { nullValue: null } : { stringValue: metadata.replicaOf },
