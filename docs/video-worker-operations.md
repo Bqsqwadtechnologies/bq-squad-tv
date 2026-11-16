@@ -18,6 +18,12 @@ Optional non-secret settings:
 
 The container needs outbound HTTPS to the BQ SQWAD TV API and the configured private storage endpoints. Do not expose an inbound worker port. Run one worker initially and increase concurrency only after measuring CPU, RAM, temporary disk, upload throughput and API/storage limits.
 
+## Storage usage snapshots
+
+Provider-driven usage discovery and scheduled reconciliation are not yet implemented. An owner can submit a manual snapshot through `POST /api/public/v1/admin/storage/usage` with `destinationId`, `usageBytes` and an audit `reason`. The endpoint records the snapshot as `manual`; it does not query the provider. Refresh it after any storage changes made outside BQ SQWAD TV.
+
+For multi-bucket account groups, set the same verified `accountCapBytes` on every destination in that account group. The router sums per-bucket usage and reservations and refuses to assign new uploads if any bucket usage or the shared account cap is unknown.
+
 ## Firestore TTL
 
 The worker API creates one-use replay-protection documents in `videoWorkerNonces`, each with an `expiresAt` timestamp. Configure a Firestore TTL policy for collection group `videoWorkerNonces` on field `expiresAt`. Without that owner-side TTL setting, the nonce collection will grow over time. TTL deletion is asynchronous and is not part of the request security decision.
