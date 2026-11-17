@@ -301,7 +301,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
               if (docs[0]) throw new ApiError(409, "IDEMPOTENCY_KEY_ALREADY_USED", "This session request has already been used.");
               const activeSessionDoc = docs[1] ?? {};
               const currentWallet = docs[2] ?? {};
-              const currentBalance = requireMinorUnitAmount(currentWallet["balanceMinor"], "wallet balance");
+              const currentBalance = currentWallet["balanceMinor"] === undefined
+                ? 0 : requireMinorUnitAmount(currentWallet["balanceMinor"], "wallet balance");
               const heldBalance = integer(currentWallet["heldBalanceMinor"]) ?? 0;
               const today = nowIso.slice(0, 10);
               const spentToday = currentWallet["spentDate"] === today ? integer(currentWallet["spentTodayMinor"]) ?? 0 : 0;
@@ -351,13 +352,17 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
                     },
                     updateMask: { fieldPaths: ["sessions", "updatedAt"] },
                   },
-                  ...(docs[2] ? [{
+                  {
                     update: {
                       name: fs.docName(walletPath),
-                      fields: encodeFields({ heldBalanceMinor: hold.heldBalanceMinor, currency, updatedAt: nowIso }),
+                      fields: encodeFields({
+                        balanceMinor: currentBalance, heldBalanceMinor: hold.heldBalanceMinor,
+                        currency, updatedAt: nowIso,
+                      }),
                     },
-                    updateMask: { fieldPaths: ["heldBalanceMinor", "currency", "updatedAt"] },
-                  }] : []),
+                    updateMask: { fieldPaths: ["balanceMinor", "heldBalanceMinor", "currency", "updatedAt"] },
+                    ...(docs[2] ? {} : { currentDocument: { exists: false } }),
+                  },
                   {
                     update: {
                       name: fs.docName(holdPath),
