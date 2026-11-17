@@ -1,4 +1,5 @@
 package com.bqsqwad.tv.ui.screens
+import com.bqsqwad.tv.ui.ErrorMessages
 
 import android.content.Context
 import androidx.compose.foundation.Image
@@ -105,7 +106,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                             googleSignIn(context, repository)
                             onAuthenticated()
                         } catch (error: Exception) {
-                            message = error.localizedMessage ?: "Google sign-in failed."
+                            message = ErrorMessages.SIGN_IN_FAILED
                         } finally {
                             busy = false
                         }
@@ -137,7 +138,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                                 }
                         }
                     } catch (error: Exception) {
-                        message = error.localizedMessage ?: "Authentication failed."
+                        message = ErrorMessages.SIGN_IN_FAILED
                     } finally {
                         busy = false
                     }
@@ -174,7 +175,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                         repository.sendPasswordReset(email)
                         message = "If the address is registered, a password-reset email has been requested."
                     } catch (error: Exception) {
-                        message = error.localizedMessage ?: "Could not request a password reset."
+                        message = ErrorMessages.PASSWORD_RESET_FAILED
                     } finally {
                         busy = false
                     }
@@ -210,7 +211,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                                 message = "The code could not be verified. Request another code."
                             }
                         } catch (error: Exception) {
-                            message = error.localizedMessage ?: "Email verification failed."
+                            message = ErrorMessages.VERIFICATION_FAILED
                         } finally {
                             busy = false
                         }
@@ -235,7 +236,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                                 message = "A new verification code has been requested."
                             }
                         } catch (error: Exception) {
-                            message = error.localizedMessage ?: "Could not resend the code."
+                            message = ErrorMessages.VERIFICATION_FAILED
                         } finally {
                             busy = false
                         }
