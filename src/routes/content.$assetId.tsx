@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { formatMinorCurrency as money } from "@/lib/format-money";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft, LoaderCircle, Play, Send, ShieldCheck, Star, Tv2 } from "lucide-react";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
@@ -10,40 +11,6 @@ type Content = {
 };
 type Comment = { id: string; body: string; viewerNumber: string; createdAt: string | null };
 type PlaybackState = "playing" | "paused" | "buffering" | "idle" | "ended";
-
-function money(minor: number, currency: string) {
-  if (!Number.isSafeInteger(minor)) return "—";
-  try {
-    const digits = new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
-    const amount = BigInt(minor);
-    const scale = 10n ** BigInt(digits);
-    const whole = amount / scale;
-    const fraction = (amount < 0n ? -amount : amount) % scale;
-    const formatter = new Intl.NumberFormat(undefined, {
-      style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0,
-    });
-    const parts = formatter.formatToParts(amount < 0n && whole === 0n ? -1n : whole);
-    if (amount < 0n && whole === 0n) {
-      const zero = new Intl.NumberFormat(undefined, { useGrouping: false, maximumFractionDigits: 0 }).format(0);
-      for (let index = parts.length - 1; index >= 0; index--) {
-        if (parts[index].type === "group") parts.splice(index, 1);
-        else if (parts[index].type === "integer") parts[index] = { ...parts[index], value: zero };
-      }
-    }
-    if (digits === 0) return parts.map(part => part.value).join("");
-    const decimal = new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
-      .formatToParts(1.1).find(part => part.type === "decimal")?.value ?? ".";
-    const digitFormatter = new Intl.NumberFormat(undefined, { useGrouping: false, maximumFractionDigits: 0 });
-    const fractionText = fraction.toString().padStart(digits, "0").split("")
-      .map(digit => digitFormatter.format(Number(digit))).join("");
-    let lastNumeric = -1;
-    parts.forEach((part, index) => { if (part.type === "integer" || part.type === "group") lastNumeric = index; });
-    parts.splice(lastNumeric + 1, 0, { type: "decimal", value: decimal }, { type: "fraction", value: fractionText });
-    return parts.map(part => part.value).join("");
-  } catch {
-    return currency + " " + minor;
-  }
-}
 
 export const Route = createFileRoute("/content/$assetId")({
   component: ContentDetailsPage,
