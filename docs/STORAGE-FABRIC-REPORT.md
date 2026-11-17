@@ -36,7 +36,7 @@ Execution method: direct GitHub main-branch edits. No local checkout, browser, T
 ## Latest follow-up
 
 - `0c453f87d18f90066cae1152935a49ef7127b4a0` — consolidated duplicate imports in the maintenance worker (the same reservation function and cleanup helpers had been imported more than once). This is a source-level correction only; no compiler or test runner was available to verify it.
-- Destination-wide draining remains unimplemented. The source-retention and orphan tasks still need cursor-based coverage beyond the current bounded query sizes. The owner screen still needs true windowed virtualization and complete explanations.
+- Destination-wide draining is now implemented in the maintenance scheduler and worker: draining destinations enqueue a task, assets are enumerated with an update-time/document cursor, each asset is copied to a different healthy account group, and the task waits for verified copy completion before advancing. A final fresh query is required before retirement. Source-retention also uses bounded pages with a persisted cursor; missing cursor dates pause safely. These worker paths still need full-scale integration tests and current-SHA CI verification. The owner screen still uses progressive rendering rather than true windowed virtualization.
 
 ## Verification
 
@@ -45,7 +45,7 @@ Execution method: direct GitHub main-branch edits. No local checkout, browser, T
 - Vitest, typecheck, website build, Android build, browser viewport checks and production provider checks: **not run**. No local runtime was available.
 - The maintenance listing-count contract was corrected. The replica verification response also uses the provider listing's actual object count; source-reviewed only, not runtime-verified.
 - The worker now records each newly bound primary stream reservation ID so later verified old-copy cleanup can release that exact reservation. Older assets without this field retain conservative accounting until separately reconciled.
-- The orphan and source-retention scans currently process up to 500 asset records per scheduled task. Larger collections need cursor-based pagination before claiming complete coverage.
+- The orphan scan and source-retention worker use bounded continuation cursors; verify continuation, equal timestamps and concurrent updates in tests before claiming full production coverage.
 - The most recent GitHub Actions runs visible during this session were for older commit SHAs and do not verify the latest File 03 commits.
 - No claim is made that all 15 batches are production-complete. Batches 07, 09–15 retain the integration, coverage or verification gaps listed above.
 
