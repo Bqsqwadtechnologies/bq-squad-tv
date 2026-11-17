@@ -23,7 +23,7 @@ export const Route = createFileRoute("/admin/firebase-schema")({
       { name: "description", content: "Private platform data structure." },
       { name: "robots", content: "noindex, nofollow, noarchive" },
       { property: "og:title", content: "Data structure | BQ SQWAD TV" },
-      { property: "og:description", content: "Private administrator view of platform data structure." },
+      { property: "og:description", content: "Private platform data structure." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
