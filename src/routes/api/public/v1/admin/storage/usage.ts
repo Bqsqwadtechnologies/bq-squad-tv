@@ -5,6 +5,7 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAdminModule } from "@/lib/server/roles";
 import { validateStorageDestinationMetadata } from "@/lib/server/storage/registry";
 import { writeAuditLog } from "@/lib/server/audit";
+import { refreshStoragePoolDestination } from "@/lib/server/storage/pool-index";
 
 const schema = z.object({
   destinationId: z.string().regex(/^[a-z0-9][a-z0-9_-]{1,79}$/),
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/usage")({
         updatedAt: now,
         updatedBy: user.uid,
       });
+      await refreshStoragePoolDestination(fs, body.destinationId).catch(() => undefined);
       await writeAuditLog(fs, {
         actorUid: user.uid,
         action: "storage.destination_usage_attested",
