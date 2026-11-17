@@ -28,7 +28,9 @@ export function resolveAssetStreamBinding(
     : [];
   const storedPrefix = typeof asset["objectPrefix"] === "string"
     ? asset["objectPrefix"]
-    : typeof asset["streamObjectPrefix"] === "string" ? asset["streamObjectPrefix"] : "";
+    : typeof asset["streamObjectPrefix"] === "string" ? asset["streamObjectPrefix"]
+      : typeof asset["hlsManifestKey"] === "string" && asset["hlsManifestKey"].includes("/")
+        ? asset["hlsManifestKey"].slice(0, asset["hlsManifestKey"].lastIndexOf("/")) : "";
   const prefixBase = "hls/" + assetId + "/";
   const attemptSegment = storedPrefix.startsWith(prefixBase) ? storedPrefix.slice(prefixBase.length) : "";
   const objectPrefix = /^a[1-9][0-9]*$/.test(attemptSegment) ? storedPrefix : "hls/" + assetId;
@@ -107,9 +109,10 @@ export async function bindAssetStreamStorage(
     }
     const metadata = validateStorageDestinationMetadata({ ...destination, destinationId: input.destinationId });
     const configuration = resolveStorageDestinationConfiguration(metadata);
+    const degradedUntil = typeof destination["degradedUntil"] === "string" ? Date.parse(destination["degradedUntil"]) : 0;
     if (metadata.purpose !== "hls_streaming" || !metadata.enabled || metadata.mode !== "active" ||
-        metadata.healthStatus !== "healthy" || metadata.paidEgressEnabled === true ||
-        configuration.configurationStatus !== "configured") {
+        metadata.healthStatus !== "healthy" || (Number.isFinite(degradedUntil) && degradedUntil > Date.now()) ||
+        metadata.paidEgressEnabled === true || configuration.configurationStatus !== "configured") {
       throw new ApiError(409, "ASSET_STORAGE_DESTINATION_UNAVAILABLE", "The new streaming location is not ready.");
     }
     if (reservation["status"] !== "committed" || reservation["destinationId"] !== input.destinationId ||
