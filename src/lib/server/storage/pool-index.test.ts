@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { decodeFields, Firestore } from "../firebase-admin";
-import { getStoragePoolEntries, rebuildStoragePoolIndex, adjustPoolShardEntries } from "./pool-index";
+import { calculateStorageGroupCap, getStoragePoolEntries, rebuildStoragePoolIndex, adjustPoolShardEntries } from "./pool-index";
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -88,8 +88,20 @@ describe("compact storage pool index", () => {
     vi.stubEnv("STORAGE_B2_01_ENDPOINT", "https://s3.us-west-004.backblazeb2.com");
     const { fs } = fakeFirestore([destination("b2-known", 10), destination("b2-unknown", null)]);
     const result = await rebuildStoragePoolIndex(fs, ["source_media"]);
-    expect(result.eligibleCount).toBe(1);
-    expect((await getStoragePoolEntries(fs, "source_media")).map(item => item.id)).toEqual(["b2-known"]);
+    expect(result.eligibleCount).toBe(0);
+    expect(await getStoragePoolEntries(fs, "source_media")).toEqual([]);
+  });
+
+  it("applies one conservative capacity cap across buckets sharing an account", () => {
+    expect(calculateStorageGroupCap([
+      { softCapBytes: 4_500_000_000, accountCapBytes: 4_500_000_000 },
+      { softCapBytes: 4_500_000_000, accountCapBytes: 4_500_000_000 },
+      { softCapBytes: 4_500_000_000, accountCapBytes: 4_500_000_000 },
+    ])).toBe(4_500_000_000);
+    expect(calculateStorageGroupCap([
+      { softCapBytes: 4_500_000_000, accountCapBytes: 4_500_000_000 },
+      { softCapBytes: 4_500_000_000, accountCapBytes: 5_000_000_000 },
+    ])).toBeNull();
   });
 
   it("adjusts only the selected destination entry and marks it full at zero", () => {
