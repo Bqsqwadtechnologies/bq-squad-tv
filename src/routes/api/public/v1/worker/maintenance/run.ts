@@ -95,6 +95,7 @@ async function processReplicaCopyTask(fs: Firestore, taskPath: string, task: Rec
       reservationId, sizeBytes: copiedBytes, objectCount: copiedObjectCount,
     });
     const switchPrimary = payload?.["switchPrimary"] === true;
+    const previousReservationId = typeof asset["streamReservationId"] === "string" ? asset["streamReservationId"] : "";
     if (switchPrimary) {
       await bindAssetStreamStorage(fs, {
         assetId,
@@ -109,7 +110,10 @@ async function processReplicaCopyTask(fs: Firestore, taskPath: string, task: Rec
         const notBefore = new Date(Date.now() + 7 * 86_400_000).toISOString();
         await fs.setDoc("videoMaintenanceJobs/" + cleanupId, {
           taskType: "storage_rebalance_cleanup",
-          payload: { assetId, destinationId: sourceId, prefix: sourcePrefix, targetDestinationId: targetId },
+          payload: {
+            assetId, destinationId: sourceId, prefix: sourcePrefix, targetDestinationId: targetId,
+            ...(previousReservationId ? { previousReservationId } : {}),
+          },
           status: "queued", attempts: 0, notBefore,
           reason: "Remove an old streaming copy after a seven-day verified grace period",
           createdAt: now, updatedAt: now,
@@ -423,6 +427,25 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
             ],
           };
         });
+        const previousReservationId = typeof payload?.["previousReservationId"] === "string" ? payload["previousReservationId"] : "";
+        if (/^[A-Za-z0-9_-]{8,100}$/.test(previousReservationId)) {
+          const previousReservation = await fs.getDoc("storageReservations/" + previousReservationId);
+          if (previousReservation?.["status"] === "committed" &&
+              previousReservation["destinationId"] === destinationId &&
+              previousReservation["assetId"] === assetId &&
+              previousReservation["purpose"] === "hls_streaming" &&
+              typeof previousReservation["actualBytes"] === "number" &&
+              Number.isSafeInteger(previousReservation["actualBytes"]) &&
+              previousReservation["actualBytes"] > 0) {
+            await fs.patchDoc("storageReservations/" + previousReservationId, {
+              status: "released_after_delete",
+              deletedBytes: previousReservation["actualBytes"],
+              actualBytes: 0,
+              deletedAt: now,
+              updatedAt: now,
+            });
+          }
+        }
         await rebuildStoragePoolIndex(fs, ["hls_streaming"]);
         await fs.patchDoc(taskPath, { phase: "done", completedAt: now, updatedAt: now });
         return Response.json({ done: true, deletedCount: typeof task["deletedObjectCount"] === "number" ? task["deletedObjectCount"] : 0 });
