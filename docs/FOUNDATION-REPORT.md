@@ -17,7 +17,7 @@ Branch: `main`
 - **Batch 08 — Themes:** added semantic light palette tokens to `src/styles.css` and a light Android Material theme. Theme persistence, account sync and first-paint flash prevention are not implemented.
 - **Batch 09 — Shared components:** added website primitives in `src/components/shared.tsx` (card, avatar, empty/error state, skeleton, list row, price chip, rating and segmented control). Android counterparts, bottom sheet, confirm dialog, toast and Learn more integration remain outstanding.
 - **Batch 10 — Currency:** wallet summary now returns `currencyCode`, `symbol`, `minorUnitDigits` and `formattedBalance`; added Android BigDecimal minor-unit formatter and unit tests for NGN, USD, GBP, GHS, KES, ZAR, JPY and KWD. The formatter has not been integrated into all Android wallet displays.
-- **Batch 11 — Remove producer/download features:** not coded. Full dependency search was unavailable, so deleting producer client classes or navigation without verifying all references would risk breaking the app.
+- **Batch 11 — Producer/download scope:** producer code is intentionally preserved. The latest owner instruction explicitly says not to remove producer code, so no producer screens, repositories, routes, navigation or related functionality are to be deleted as part of File 01. This supersedes the earlier File 00 Batch 11 removal request. Downloads are also left untouched unless separately authorised.
 - **Batch 12 — Flags and client config:** expanded server defaults and owner update validation for live TV, provider console, HLS encryption, For You and reminders. Owner UI controls and safe-client config exposure for every intended public flag remain incomplete.
 - **Batch 13 — Page set:** not coded. The requested set requires a dedicated route inventory and functional account/payment/help integrations; no placeholder-only set was added.
 - **Batch 14 — Accessibility:** added `docs/ACCESSIBILITY.md` recording changes and unverified checks. A full accessibility audit has not been performed.
@@ -44,7 +44,7 @@ No tests are reported as passed.
 - Website and Android jargon cleanup is partial.
 - Light/dark preference persistence and cross-account sync are not implemented.
 - Full shared component set and requested pages are not implemented.
-- Android producer/download removal is deferred pending a complete reference/dependency inventory.
+- Producer code is preserved by explicit owner instruction; the earlier removal request is superseded. Download functionality is also preserved in this pass.
 - Expanded flag controls are not yet wired into the owner dashboard.
 - Currency output is not fully integrated throughout both clients.
 - Full accessibility, browser and device verification remains outstanding.
@@ -59,7 +59,7 @@ No tests are reported as passed.
 
 ## Current completion status
 
-File 00 standing documentation is present on `main`. File 01 is **not complete**: batches 05, 11 and 13 remain unimplemented, and several other batches are partial or unverified as listed above. This report intentionally does not mark File 01 complete or authorize File 02 until those gaps are resolved and the required checks are run.
+File 00 standing documentation is present on `main`. File 01 is **not complete**: hidden console routing/security (Batch 05) and the requested functional page set (Batch 13) remain unimplemented, and several other batches are partial or unverified as listed above. Batch 11's original removal instruction is superseded by the latest owner instruction: preserve producer code. The report does not mark File 01 complete or authorize File 02 until the remaining gaps are resolved and required checks are run.
 
 ## Next file
 
