@@ -65,6 +65,30 @@ describe("expected playback egress", () => {
     expect([...docs.values()].some(value => value["reasonCode"] === "STORAGE_EGRESS_BLOCKED")).toBe(true);
   });
 
+  it("uses the monthly budget as the daily ceiling when no provider daily cap exists", async () => {
+    const { fs } = fakeFirestore();
+    const monthlyOnly = {
+      ...metadata,
+      dailyEgressCapBytes: null,
+      freeEgressBudgetBytes: 100,
+      accountGroup: "lovable:monthly-only",
+      destinationId: "lov-monthly-only",
+    } as StorageDestinationMetadata;
+    const result = await reserveExpectedStorageEgress(fs, monthlyOnly, "egress-monthly-01", 70);
+    expect(result.level).toBe("warn");
+    expect(result.qualityCap).toBeNull();
+  });
+
+  it("rejects different monthly or daily budgets inside one shared account group", async () => {
+    const { fs } = fakeFirestore();
+    await reserveExpectedStorageEgress(fs, metadata, "egress-budget-01", 10);
+    await expect(reserveExpectedStorageEgress(fs, {
+      ...metadata,
+      freeEgressBudgetBytes: 200,
+    } as StorageDestinationMetadata, "egress-budget-02", 10))
+      .rejects.toMatchObject({ code: "EGRESS_ACCOUNT_CONFIGURATION_MISMATCH" });
+  });
+
   it("tracks heartbeat progress in the reserved window and adds extra expected bytes after it", async () => {
     const { fs, docs } = fakeFirestore();
     await reserveExpectedStorageEgress(fs, metadata, "egress-progress-01", 20);
