@@ -113,10 +113,7 @@ function addLovableDestination(
     replicaOf: null,
     freeEgressBudgetBytes: DEFAULT_LOVABLE_EGRESS,
     paidEgressEnabled: false,
-    egressBudgetSource: "Conservative default: 2× soft cap shared across the project account group",
-    egressBudgetCheckedAt: new Date().toISOString(),
-    egressBudgetSourceUrl: null,
-    credentialSource: input.secretPrefix,
+          credentialSource: input.secretPrefix,
   });
 }
 
