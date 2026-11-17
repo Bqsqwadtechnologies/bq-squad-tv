@@ -33,7 +33,7 @@ Complete the checks above on real browsers and Android emulator/device before de
 - Added a `prefers-reduced-motion: reduce` override to minimize animation and transition durations and disable smooth scrolling.
 - Added reusable status-page layouts for maintenance, offline, high demand, country unavailability and age restriction.
 - Added Android Compose status screens with clear messages and 48 dp minimum primary actions.
-- Added About and Contact pages. The contact form opens the user's email application addressed to `tv@bqsqwad.com`; it does **not** submit directly to a server or guarantee delivery.
+- Added About and Contact pages. The contact form submits to the existing validated and rate-limited contact endpoint, which uses the configured email delivery service to send to `tv@bqsqwad.com`. Live delivery has not been verified.
 - Added Privacy, Terms and Producer Terms route shells. They are intentionally marked **Publication pending** and set to noindex; they are not approved legal policies and must not be treated as final terms.
 - Added date of birth to website registration and connected it to the existing profile-completion endpoint. Added Terms and Privacy links to the registration flow.
 - Added homepage links to About, Contact, Privacy and Terms; Android Settings links to About, Privacy and Terms.
@@ -62,3 +62,13 @@ No accessibility conformance claim is made. Automated and manual checks remain r
 
 - The Android player already exposes a **Subtitles** track-selection control; the current work retained it. Its behavior and accessibility labels were not tested on a device.
 - Recent wording cleanup replaced raw exception text from Android catalogue, channel, search, wallet, profile, sign-in, producer and player flows with the central safe-message mapping. This avoids exposing vendor/library error details to people using the app.
+
+
+## Latest navigation and responsive updates (2026-11-17)
+
+- Website profile control displays the signed-in member's initial and retains a generic person icon when signed out.
+- Website bottom navigation includes five destinations; logo sizing has a compact intermediate breakpoint for 400–430 px widths.
+- Android bottom navigation uses five Material vector icons with accessible labels. The home feed now scrolls below a fixed, safe-inset-aware header; quick-access tiles use vector icons.
+- Android Library uses a two-column poster grid. The account screen displays a ringed avatar and Viewer badge.
+- Sign-in and registration now expose Terms and Privacy links.
+- These are source-level changes only. No small-screen browser screenshot, notch emulator, TalkBack, keyboard, 200% zoom or contrast verification was run.
