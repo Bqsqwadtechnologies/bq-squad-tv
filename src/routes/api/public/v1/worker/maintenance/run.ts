@@ -212,7 +212,8 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         let flaggedCount = typeof task["flaggedCount"] === "number" ? task["flaggedCount"] as number : 0;
         for (const payment of page) {
           const provider = payment["provider"];
-          const reference = typeof payment["reference"] === "string" ? payment["reference"] : "";
+          const reference = typeof payment["reference"] === "string" ? payment["reference"] :
+            provider === "google_play" && typeof payment["orderId"] === "string" ? payment["orderId"] : "";
           if (!reference || (provider !== "paystack" && provider !== "google_play")) continue;
           if (provider === "google_play") {
             // Purchase tokens are deliberately not retained. Do not invent a provider check:
@@ -244,13 +245,13 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           const finding = classifyPaymentReconciliation(
             {
               reference,
-              amountMinor: typeof payment["amountMinor"] === "number" ? payment["amountMinor"] : -1,
+              amountMinor: typeof payment["amountMinor"] === "number" && Number.isSafeInteger(payment["amountMinor"]) && payment["amountMinor"] >= 0 ? payment["amountMinor"] : 0,
               currency: typeof payment["currency"] === "string" ? payment["currency"] : "NGN",
               status: localStatus,
             },
             {
               reference,
-              amountMinor: typeof verified["amount"] === "number" ? verified["amount"] : -1,
+              amountMinor: typeof verified["amount"] === "number" && Number.isSafeInteger(verified["amount"]) && verified["amount"] >= 0 ? verified["amount"] : 0,
               currency: typeof verified["currency"] === "string" ? verified["currency"] : "NGN",
               status: providerStatus,
             },
