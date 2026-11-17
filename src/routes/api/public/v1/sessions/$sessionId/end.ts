@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { releaseSessionLease } from "@/lib/server/session-limits";
+import { releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
 import {
   incrementalSessionCharge,
   maxAffordableSeconds,
@@ -188,6 +189,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
               writes,
             };
           });
+          await releaseExpectedStorageEgress(fs, sessionId).catch(() => undefined);
           return Response.json(snapshot);
         } catch (error) {
           return errorBody(error);
