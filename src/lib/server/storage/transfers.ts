@@ -185,38 +185,93 @@ export async function loadStreamStorageConfiguration(
     (typeof asset["assetId"] === "string" ? asset["assetId"] : typeof asset["id"] === "string" ? asset["id"] : "");
   if (!resolvedAssetId) throw new ApiError(400, "ASSET_ID_INVALID", "The content identifier is missing.");
   const binding = resolveAssetStreamBinding(asset, resolvedAssetId);
-  if (binding.streamDestinationId !== LEGACY_STREAM_DESTINATION_ID) {
-    const raw = await fs.getDoc("storageDestinations/" + binding.streamDestinationId);
-    if (!raw) throw new ApiError(503, "STREAM_DESTINATION_MISSING", "The streaming storage destination is unavailable.");
-    const { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } = await import("./registry");
-    return resolveStorageDestinationConfiguration(validateStorageDestinationMetadata({
-      ...raw,
-      destinationId: binding.streamDestinationId,
-    }));
-  }
   const { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } = await import("./registry");
-  const bucketName = typeof asset["streamBucket"] === "string" ? asset["streamBucket"] : "bq-sqwad-streaming-media";
-  const legacy = validateStorageDestinationMetadata({
-    destinationId: LEGACY_STREAM_DESTINATION_ID,
-    providerType: "lovable_storage",
-    accountAlias: "Legacy Lovable streaming storage",
-    secretPrefix: "SUPABASE",
-    bucketName,
-    region: "africa-south1",
-    purpose: "hls_streaming",
-    softCapBytes: 4_500_000_000,
-    accountCapBytes: 4_500_000_000,
-    dailyEgressCapBytes: null,
-    freeEgressBudgetBytes: 9_000_000_000,
-    paidEgressEnabled: false,
-    priority: 0,
-    enabled: true,
-    accountGroup: "lovable-default-workspace",
-    mode: "active",
-    replicaOf: null,
-  });
-  return resolveStorageDestinationConfiguration(legacy, {
-    ...process.env,
-    SUPABASE_URL: process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"],
-  });
+  const { choosePlaybackLocation, requirePlaybackLocation } = await import("./failover");
+
+  const loadCandidate = async (destinationId: string): Promise<{
+    destinationId: string;
+    configuration: StorageDestinationConfiguration;
+    healthStatus: string;
+    mode: string;
+    enabled: boolean;
+    degradedUntil?: string | null;
+  } | null> => {
+    if (destinationId === LEGACY_STREAM_DESTINATION_ID) {
+      const bucketName = typeof asset["streamBucket"] === "string" ? asset["streamBucket"] : "bq-sqwad-streaming-media";
+      const metadata = validateStorageDestinationMetadata({
+        destinationId: LEGACY_STREAM_DESTINATION_ID,
+        providerType: "lovable_storage",
+        accountAlias: "Legacy Lovable streaming storage",
+        secretPrefix: "SUPABASE",
+        bucketName,
+        region: "africa-south1",
+        purpose: "hls_streaming",
+        softCapBytes: 4_500_000_000,
+        accountCapBytes: 4_500_000_000,
+        dailyEgressCapBytes: null,
+        freeEgressBudgetBytes: 9_000_000_000,
+        paidEgressEnabled: false,
+        priority: 0,
+        enabled: true,
+        accountGroup: "lovable-default-workspace",
+        mode: "active",
+        replicaOf: null,
+      });
+      const configuration = resolveStorageDestinationConfiguration(metadata, {
+        ...process.env,
+        SUPABASE_URL: process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"],
+      });
+      return {
+        destinationId,
+        configuration,
+        healthStatus: "unknown",
+        mode: "active",
+        enabled: true,
+      };
+    }
+
+    const raw = await fs.getDoc("storageDestinations/" + destinationId);
+    if (!raw) return null;
+    const metadata = validateStorageDestinationMetadata({ ...raw, destinationId });
+    return {
+      destinationId,
+      configuration: resolveStorageDestinationConfiguration(metadata),
+      healthStatus: metadata.healthStatus ?? "unknown",
+      mode: metadata.mode,
+      enabled: metadata.enabled,
+      degradedUntil: typeof raw["degradedUntil"] === "string" ? raw["degradedUntil"] : null,
+    };
+  };
+
+  const ids = [...new Set([binding.streamDestinationId, ...binding.streamReplicaIds])].slice(0, 9);
+  const candidates = (await Promise.all(ids.map(loadCandidate))).filter(
+    (item): item is NonNullable<typeof item> => item !== null &&
+      item.configuration.configurationStatus === "configured",
+  );
+  const selected = requirePlaybackLocation(choosePlaybackLocation(
+    candidates.map(item => ({
+      destinationId: item.destinationId,
+      healthStatus: item.healthStatus,
+      mode: item.mode,
+      enabled: item.enabled,
+      degradedUntil: item.degradedUntil,
+    })).find(item => item.destinationId === binding.streamDestinationId) ?? {
+      destinationId: binding.streamDestinationId,
+      healthStatus: "unreachable",
+      mode: "retired",
+      enabled: false,
+    },
+    candidates.filter(item => item.destinationId !== binding.streamDestinationId).map(item => ({
+      destinationId: item.destinationId,
+      healthStatus: item.healthStatus,
+      mode: item.mode,
+      enabled: item.enabled,
+      degradedUntil: item.degradedUntil,
+    })),
+  ));
+  const configuration = candidates.find(item => item.destinationId === selected.destinationId)?.configuration;
+  if (!configuration || configuration.configurationStatus !== "configured") {
+    throw new ApiError(503, "STREAM_REPLICAS_UNAVAILABLE", "This title is temporarily unavailable while its streaming locations are checked.");
+  }
+  return configuration;
 }
