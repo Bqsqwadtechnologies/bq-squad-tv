@@ -558,50 +558,99 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         const config = resolveStorageDestinationConfiguration(metadata);
         if (config.configurationStatus !== "configured") throw new ApiError(503, "SOURCE_RETENTION_DESTINATION_MISCONFIGURED", "The original-file location needs its connection settings checked.");
         const adapter = createStorageProviderAdapter(config);
-        const assets = await fs.query("contentAssets", {
-          filters: [{ field: "sourceDestinationId", op: "EQUAL", value: destinationId }],
-          limit: 500,
-        });
-        const processed = new Set(Array.isArray(payload?.["processedAssetIds"])
-          ? payload["processedAssetIds"].filter((id): id is string => typeof id === "string") : []);
-        const batch = assets.filter(asset => !processed.has(asset.__id)).slice(0, 20);
+
+        // Keep a bounded page in the task payload while processing it in small
+        // slices. Once exhausted, advance with an exclusive timestamp+document
+        // cursor so collections larger than 500 are fully covered.
+        const pageSize = 100;
+        const sliceSize = 20;
+        let pageIds = Array.isArray(payload?.["pageAssetIds"])
+          ? payload["pageAssetIds"].filter((id): id is string => typeof id === "string").slice(0, pageSize)
+          : [];
+        let pageIndex = typeof payload?.["pageIndex"] === "number" && Number.isSafeInteger(payload["pageIndex"])
+          ? Math.max(0, Math.min(pageIds.length, payload["pageIndex"])) : 0;
+        let cursorValue = typeof payload?.["cursorValue"] === "string" ? payload["cursorValue"] : null;
+        let cursorId = typeof payload?.["cursorId"] === "string" ? payload["cursorId"] : null;
+        let pageLastValue = typeof payload?.["pageLastValue"] === "string" ? payload["pageLastValue"] : null;
+        let pageLastId = typeof payload?.["pageLastId"] === "string" ? payload["pageLastId"] : null;
+
+        if (pageIds.length === 0) {
+          const page = await fs.query("contentAssets", {
+            filters: [{ field: "sourceDestinationId", op: "EQUAL", value: destinationId }],
+            orderByField: "updatedAt",
+            ...(cursorValue && cursorId ? { startAfter: { fieldValue: cursorValue, documentId: "contentAssets/" + cursorId } } : {}),
+            limit: pageSize,
+          });
+          if (page.length === 0) {
+            await rebuildStoragePoolIndex(fs, ["source_media"]);
+            await fs.patchDoc(taskPath, {
+              phase: "done",
+              completedAt: now,
+              inspectedCount: typeof task["inspectedCount"] === "number" ? task["inspectedCount"] : 0,
+              deletedCount: typeof task["deletedCount"] === "number" ? task["deletedCount"] : 0,
+              updatedAt: now,
+            });
+            return Response.json({ done: true, inspectedCount: task["inspectedCount"] ?? 0, deletedCount: task["deletedCount"] ?? 0 });
+          }
+          pageIds = page.map(asset => asset.__id);
+          const last = page[page.length - 1]!;
+          pageLastValue = typeof last["updatedAt"] === "string" ? last["updatedAt"] : null;
+          pageLastId = last.__id;
+          if (!pageLastValue) {
+            throw new ApiError(409, "SOURCE_RETENTION_CURSOR_UNAVAILABLE", "A source record is missing its update date; automatic cleanup paused for a safe owner review.");
+          }
+          pageIndex = 0;
+        }
+
+        const batchIds = pageIds.slice(pageIndex, pageIndex + sliceSize);
         let deletedCount = 0;
-        for (const asset of batch) {
+        let inspectedCount = 0;
+        for (const assetId of batchIds) {
+          const asset = await fs.getDoc("contentAssets/" + assetId);
+          inspectedCount++;
+          if (!asset || asset["sourceDestinationId"] !== destinationId) continue;
           const publishedAt = typeof asset["publishedAt"] === "string" ? asset["publishedAt"] : null;
           const sourceObjectKey = typeof asset["sourceObjectKey"] === "string" ? asset["sourceObjectKey"] : "";
           const ownerUid = typeof asset["ownerUid"] === "string" ? asset["ownerUid"] : "";
           const channelId = typeof asset["channelId"] === "string" ? asset["channelId"] : "";
-          const expectedPrefix = "producers/" + ownerUid + "/" + channelId + "/" + asset.__id + "/";
+          const expectedPrefix = "producers/" + ownerUid + "/" + channelId + "/" + assetId + "/";
           const eligible = asset["status"] === "ready" && asset["contentStatus"] === "published" &&
             sourceObjectKey.startsWith(expectedPrefix) && sourceCanBeDeleted({
               publishedAt,
               pinned: asset["sourcePinned"] === true,
               graceDays: 7,
             });
-          if (eligible) {
-            const { assertStorageObjectKey } = await import("@/lib/server/storage/ledger");
-            await adapter.deleteObject(assertStorageObjectKey(sourceObjectKey));
-            await fs.patchDoc("contentAssets/" + asset.__id, {
-              sourceRetentionStatus: "deleted_after_grace_period",
-              sourceFileDeletedAt: now,
-              sourceFileDeletedByPolicy: true,
-              updatedAt: now,
-            });
-            deletedCount++;
-          }
-          processed.add(asset.__id);
-        }
-        const remaining = assets.some(asset => !processed.has(asset.__id));
-        if (remaining) {
-          await fs.patchDoc(taskPath, {
-            payload: { ...payload, processedAssetIds: [...processed] },
-            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+          if (!eligible) continue;
+          const { assertStorageObjectKey } = await import("@/lib/server/storage/ledger");
+          await adapter.deleteObject(assertStorageObjectKey(sourceObjectKey));
+          await fs.patchDoc("contentAssets/" + assetId, {
+            sourceRetentionStatus: "deleted_after_grace_period",
+            sourceFileDeletedAt: now,
+            sourceFileDeletedByPolicy: true,
+            updatedAt: now,
           });
-          return Response.json({ done: false, inspectedCount: batch.length, deletedCount });
+          deletedCount++;
         }
-        await rebuildStoragePoolIndex(fs, ["source_media"]);
-        await fs.patchDoc(taskPath, { phase: "done", completedAt: now, inspectedCount: processed.size, deletedCount, updatedAt: now });
-        return Response.json({ done: true, inspectedCount: processed.size, deletedCount });
+
+        const nextIndex = pageIndex + batchIds.length;
+        const pageComplete = nextIndex >= pageIds.length;
+        const nextPayload = pageComplete
+          ? { destinationId, cursorValue: pageLastValue, cursorId: pageLastId, pageAssetIds: [], pageIndex: 0, pageLastValue: null, pageLastId: null }
+          : { ...payload, destinationId, cursorValue, cursorId, pageAssetIds: pageIds, pageIndex: nextIndex, pageLastValue, pageLastId };
+        await fs.patchDoc(taskPath, {
+          payload: nextPayload,
+          inspectedCount: (typeof task["inspectedCount"] === "number" ? task["inspectedCount"] : 0) + inspectedCount,
+          deletedCount: (typeof task["deletedCount"] === "number" ? task["deletedCount"] : 0) + deletedCount,
+          leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()),
+          updatedAt: now,
+        });
+        return Response.json({
+          done: false,
+          inspectedCount,
+          deletedCount,
+          pageComplete,
+          cursorAdvanced: pageComplete,
+        });
       }
 
       if (task["taskType"] === "storage_orphan_scan") {
