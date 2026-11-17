@@ -1,4 +1,5 @@
 package com.bqsqwad.tv.ui.screens
+import com.bqsqwad.tv.ui.ErrorMessages
 
 import android.app.Activity
 import androidx.compose.foundation.layout.*
@@ -45,7 +46,7 @@ fun WalletScreen(onBack: () -> Unit) {
     fun refresh() {
         scope.launch {
             loading = true
-            runCatching { repo.wallet() }.onSuccess { wallet = it }.onFailure { message = it.localizedMessage }
+            runCatching { repo.wallet() }.onSuccess { wallet = it }.onFailure { message = ErrorMessages.WALLET_UNAVAILABLE }
             runCatching { repo.ledger() }.onSuccess { ledger = it.items }
             loading = false
         }
