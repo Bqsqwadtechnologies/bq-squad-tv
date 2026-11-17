@@ -8,6 +8,7 @@ import { refreshStoragePoolDestination } from "@/lib/server/storage/pool-index";
 import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata } from "@/lib/server/storage/registry";
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 import { isStorageQuotaOrRateLimit, storageFailureCode, storageFailureMessage } from "@/lib/server/storage/maintenance";
+import { nextHealthRecoveryState } from "@/lib/server/storage/failover";
 
 const bodySchema = z.object({
   destinationId: z.string().regex(/^[a-z0-9][a-z0-9_-]{1,79}$/),
@@ -46,18 +47,28 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/health")({
         try {
           await createStorageProviderAdapter(configuration).healthCheck();
           const now = new Date().toISOString();
+          const recovering = raw["healthStatus"] === "degraded" || raw["healthStatus"] === "unreachable";
+          const recovery = recovering
+            ? nextHealthRecoveryState({
+                status: String(raw["healthStatus"]),
+                cleanChecks: typeof raw["cleanHealthChecks"] === "number" ? raw["cleanHealthChecks"] : 0,
+              }, "clean")
+            : { status: "healthy", cleanChecks: 3 };
+          const healthStatus = recovery.status;
           await fs.patchDoc("storageDestinations/" + destinationId, {
-            healthStatus: "healthy",
+            healthStatus,
+            cleanHealthChecks: recovery.cleanChecks,
             healthCheckedAt: now,
             lastErrorCode: null,
+            degradedUntil: healthStatus === "healthy" ? null : new Date(Date.now() + 60 * 60_000).toISOString(),
           });
           await refreshStoragePoolDestination(fs, destinationId).catch(() => undefined);
           await writeAuditLog(fs, {
             actorUid, action: "storage.destination_health_check_passed",
             targetType: "storageDestination", targetId: destinationId, reason,
-            metadata: { providerType: metadata.providerType, bucketName: metadata.bucketName },
+            metadata: { providerType: metadata.providerType, bucketName: metadata.bucketName, healthStatus, cleanChecks: recovery.cleanChecks },
           });
-          return Response.json({ destinationId, healthStatus: "healthy", healthCheckedAt: now });
+          return Response.json({ destinationId, healthStatus, cleanHealthChecks: recovery.cleanChecks, healthCheckedAt: now });
         } catch (error) {
           const now = new Date().toISOString();
           const code = storageFailureCode(error);
@@ -66,6 +77,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/health")({
           const message = storageFailureMessage(code);
           await fs.patchDoc("storageDestinations/" + destinationId, {
             healthStatus,
+            cleanHealthChecks: 0,
             healthCheckedAt: now,
             lastErrorCode: code,
             degradedUntil: degraded ? new Date(Date.now() + 24 * 60 * 60_000).toISOString() : null,
