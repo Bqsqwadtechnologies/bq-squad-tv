@@ -26,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -36,6 +37,7 @@ import com.bqsqwad.tv.data.catalog.CatalogHomeResponse
 import com.bqsqwad.tv.data.catalog.CatalogRepository
 import com.bqsqwad.tv.data.catalog.ChannelSummary
 import kotlinx.coroutines.launch
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun HomeScreen(
@@ -54,6 +56,8 @@ fun HomeScreen(
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var showNotifications by remember { mutableStateOf(false) }
+    val profileInitial = remember { (FirebaseAuth.getInstance().currentUser?.displayName?.trim()?.firstOrNull()
+        ?: FirebaseAuth.getInstance().currentUser?.email?.trim()?.firstOrNull())?.uppercaseChar() ?: 'P' }
 
     fun refresh() {
         scope.launch {
@@ -87,6 +91,7 @@ fun HomeScreen(
         Row(
             Modifier
                 .fillMaxWidth()
+                .heightIn(min = 56.dp)
                 .padding(horizontal = 18.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -107,9 +112,24 @@ fun HomeScreen(
                 }
                 IconButton(
                     onClick = onProfile,
-                    modifier = Modifier.size(48.dp).border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                    modifier = Modifier
+                        .size(48.dp)
+                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+                        .clip(CircleShape),
                 ) {
-                    Icon(Icons.Default.Person, contentDescription = "Profile", tint = MaterialTheme.colorScheme.onSurface)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), CircleShape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = profileInitial.toString(),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                 }
             }
         }
