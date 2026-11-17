@@ -4,11 +4,13 @@ import { readFile } from "node:fs/promises";
 const requiredSecretNames = [
   "ZILLIONAIRE_EMAIL",
   "FIREBASE_SERVICE_ACCOUNT_JSON",
-  "ADMIN_EMAIL",
   "PAYSTACK_SECRET_KEY",
   "PAYSTACK_PUBLIC_KEY",
   "GOOGLE_PLAY_SERVICE_ACCOUNT_JSON",
   "GOOGLE_PLAY_PACKAGE_NAME",
+  "VIDEO_WORKER_KEYS_JSON",
+  "MODAL_WAKE_URL",
+  "MODAL_WAKE_SECRET",
 ];
 
 const ownerActions = await readFile(new URL("../docs/OWNER-ACTIONS.md", import.meta.url), "utf8");
