@@ -351,8 +351,8 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         if (pendingCopyTaskId) {
           const pendingCopy = await fs.getDoc("videoMaintenanceJobs/" + pendingCopyTaskId);
           if (!pendingCopy) throw new ApiError(409, "STORAGE_DRAIN_COPY_MISSING", "The film move task could not be found; the drain remains paused.");
-          if (pendingCopy["status"] !== "done" && pendingCopy["phase"] !== "done") {
-            if (pendingCopy["status"] === "failed" || pendingCopy["status"] === "blocked") {
+          if (pendingCopy["status"] !== "completed" && pendingCopy["phase"] !== "done") {
+            if (["failed", "blocked", "dead"].includes(String(pendingCopy["status"]))) {
               throw new ApiError(409, "STORAGE_DRAIN_COPY_FAILED", "A film could not be moved safely; the drain remains paused.");
             }
             return Response.json({ done: false, waitingForVerifiedCopy: true, copyTaskId: pendingCopyTaskId });
