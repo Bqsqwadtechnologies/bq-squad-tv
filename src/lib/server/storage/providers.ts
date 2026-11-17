@@ -16,8 +16,19 @@ export type StorageProviderAdapter = {
 const REQUEST_TIMEOUT_MS = 15_000;
 const encoder = new TextEncoder();
 
-function safeProviderError(): ApiError {
+function safeProviderError(status?: number): ApiError {
+  if (status === 402) return new ApiError(429, "STORAGE_PROVIDER_PAYMENT_REQUIRED", "The storage provider requires an account allowance review.");
+  if (status === 429) return new ApiError(429, "STORAGE_PROVIDER_RATE_LIMITED", "The storage provider temporarily limited requests.");
+  if (status === 413 || status === 507) return new ApiError(429, "STORAGE_PROVIDER_QUOTA", "The storage provider reports that its storage allowance is exhausted.");
+  if (status === 403) return new ApiError(503, "STORAGE_PROVIDER_PERMISSION_DENIED", "The storage provider denied access to this location.");
   return new ApiError(503, "STORAGE_PROVIDER_UNAVAILABLE", "The storage provider could not complete the requested operation.");
+}
+
+function providerErrorStatus(error: unknown): number | undefined {
+  if (!error || typeof error !== "object") return undefined;
+  const value = error as Record<string, unknown>;
+  const status = Number(value["statusCode"] ?? value["status"]);
+  return Number.isInteger(status) && status >= 400 && status <= 599 ? status : undefined;
 }
 function bytesOf(body: ArrayBuffer | Uint8Array): Uint8Array {
   return body instanceof Uint8Array ? body : new Uint8Array(body);
@@ -107,35 +118,39 @@ function createB2Adapter(config: StorageDestinationConfiguration): StorageProvid
   return {
     async healthCheck() {
       const key = "health-check/" + crypto.randomUUID() + ".txt";
-      await this.putObject(key, encoder.encode("bq-sqwad-storage-health-check"), "text/plain");
-      const info = await this.headObject(key);
-      if (!info || info.sizeBytes !== 29) throw safeProviderError();
-      const downloaded = await this.getObject(key);
-      if (new TextDecoder().decode(downloaded.body) !== "bq-sqwad-storage-health-check") throw safeProviderError();
-      await this.deleteObject(key);
-      return { healthy: true };
+      try {
+        await this.putObject(key, encoder.encode("bq-sqwad-storage-health-check"), "text/plain");
+        const info = await this.headObject(key);
+        if (!info || info.sizeBytes !== 29) throw safeProviderError();
+        const downloaded = await this.getObject(key);
+        if (new TextDecoder().decode(downloaded.body) !== "bq-sqwad-storage-health-check") throw safeProviderError();
+        return { healthy: true };
+      } finally {
+        await this.deleteObject(key);
+      }
     },
     async putObject(key, body, contentType) {
       const response = await b2Request(config, "PUT", key, bytesOf(body), contentType);
-      if (!response.ok) throw safeProviderError();
+      if (!response.ok) throw safeProviderError(response.status);
     },
     async getObject(key) {
       const response = await b2Request(config, "GET", key);
-      if (!response.ok) throw safeProviderError();
+      if (!response.ok) throw safeProviderError(response.status);
       const body = await response.arrayBuffer();
       return { body, info: { sizeBytes: body.byteLength, etag: response.headers.get("etag"), contentType: response.headers.get("content-type") } };
     },
     async headObject(key) {
       const response = await b2Request(config, "HEAD", key);
       if (response.status === 404) return null;
-      if (!response.ok) throw safeProviderError();
+      if (!response.ok) throw safeProviderError(response.status);
       return { sizeBytes: Number(response.headers.get("content-length") ?? 0), etag: response.headers.get("etag"), contentType: response.headers.get("content-type") };
     },
     async listObjects(prefix, cursor) {
-      const query: Record<string, string> = { "list-type": "2", prefix: assertStorageObjectKey(prefix).replace(/\/$/, "") + "/" };
+      const query: Record<string, string> = { "list-type": "2" };
+      if (prefix) query["prefix"] = assertStorageObjectKey(prefix).replace(/\/$/, "") + "/";
       if (cursor) query["continuation-token"] = cursor;
       const response = await b2Request(config, "GET", "", undefined, "application/octet-stream", query);
-      if (!response.ok) throw safeProviderError();
+      if (!response.ok) throw safeProviderError(response.status);
       const xml = await response.text();
       const decodeXml = (value: string) => value.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
       const objects: Array<{ key: string; sizeBytes: number }> = [];
@@ -152,7 +167,7 @@ function createB2Adapter(config: StorageDestinationConfiguration): StorageProvid
     },
     async deleteObject(key) {
       const response = await b2Request(config, "DELETE", key);
-      if (!response.ok && response.status !== 404) throw safeProviderError();
+      if (!response.ok && response.status !== 404) throw safeProviderError(response.status);
     },
   };
 }
@@ -168,21 +183,24 @@ function createLovableAdapter(config: StorageDestinationConfiguration): StorageP
   return {
     async healthCheck() {
       const key = "health-check/" + crypto.randomUUID() + ".txt";
-      await this.putObject(key, encoder.encode("bq-sqwad-storage-health-check"), "text/plain");
-      const info = await this.headObject(key);
-      if (!info || info.sizeBytes !== 29) throw safeProviderError();
-      const result = await this.getObject(key);
-      if (new TextDecoder().decode(result.body) !== "bq-sqwad-storage-health-check") throw safeProviderError();
-      await this.deleteObject(key);
-      return { healthy: true };
+      try {
+        await this.putObject(key, encoder.encode("bq-sqwad-storage-health-check"), "text/plain");
+        const info = await this.headObject(key);
+        if (!info || info.sizeBytes !== 29) throw safeProviderError();
+        const result = await this.getObject(key);
+        if (new TextDecoder().decode(result.body) !== "bq-sqwad-storage-health-check") throw safeProviderError();
+        return { healthy: true };
+      } finally {
+        await this.deleteObject(key);
+      }
     },
     async putObject(key, body, contentType) {
       const { error } = await bucket.upload(assertStorageObjectKey(key), bytesOf(body), { contentType, upsert: false });
-      if (error) throw safeProviderError();
+      if (error) throw safeProviderError(providerErrorStatus(error));
     },
     async getObject(key) {
       const { data, error } = await bucket.download(assertStorageObjectKey(key));
-      if (error || !data) throw safeProviderError();
+      if (error || !data) throw safeProviderError(providerErrorStatus(error));
       const body = await data.arrayBuffer();
       return { body, info: { sizeBytes: body.byteLength, etag: null, contentType: data.type || null } };
     },
@@ -193,14 +211,14 @@ function createLovableAdapter(config: StorageDestinationConfiguration): StorageP
       if (!filename) throw new ApiError(400, "STORAGE_OBJECT_KEY_INVALID", "The storage object key is invalid.");
       const folder = parts.join("/");
       const { data, error } = await bucket.list(folder, { search: filename, limit: 100 });
-      if (error) throw safeProviderError();
+      if (error) throw safeProviderError(providerErrorStatus(error));
       const item = data.find(entry => entry.name === filename);
       if (!item) return null;
       const size = item.metadata && typeof item.metadata === "object" && "size" in item.metadata ? Number(item.metadata.size) : 0;
       return { sizeBytes: Number.isSafeInteger(size) && size >= 0 ? size : 0, etag: item.id ?? null, contentType: typeof item.metadata?.["mimetype"] === "string" ? item.metadata["mimetype"] : null };
     },
     async listObjects(prefix, cursor) {
-      const safePrefix = assertStorageObjectKey(prefix).replace(/\/$/, "");
+      const safePrefix = prefix ? assertStorageObjectKey(prefix).replace(/\/$/, "") : "";
       const state = cursor ? (() => {
         try {
           const decoded = JSON.parse(atob(cursor)) as { folders?: Array<{ path: string; offset: number }> };
@@ -213,9 +231,9 @@ function createLovableAdapter(config: StorageDestinationConfiguration): StorageP
         const current = state.shift();
         if (!current) break;
         const { data, error } = await bucket.list(current.path, { limit: 1000, offset: current.offset, sortBy: { column: "name", order: "asc" } });
-        if (error) throw safeProviderError();
+        if (error) throw safeProviderError(providerErrorStatus(error));
         for (const item of data) {
-          const key = current.path + "/" + item.name;
+          const key = current.path ? current.path + "/" + item.name : item.name;
           if (item.id === null) state.push({ path: key, offset: 0 });
           else {
             const size = item.metadata && typeof item.metadata === "object" && "size" in item.metadata ? Number(item.metadata.size) : NaN;
