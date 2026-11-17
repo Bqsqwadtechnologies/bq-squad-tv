@@ -351,6 +351,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
                       fields: encodeFields({ sessions: liveSessions, updatedAt: nowIso }),
                     },
                     updateMask: { fieldPaths: ["sessions", "updatedAt"] },
+                    ...(docs[1] ? {} : { currentDocument: { exists: false } }),
                   },
                   {
                     update: {
