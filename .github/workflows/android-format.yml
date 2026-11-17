@@ -1,10 +1,8 @@
 name: Android Kotlin Formatter
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "android/.ktlint-format-trigger"
+  # Manual only: formatting must never run automatically on a push.
+  workflow_dispatch: {}
 
 permissions:
   contents: write
