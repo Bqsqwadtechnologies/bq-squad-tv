@@ -5,7 +5,8 @@ import { attachSupabaseAuth } from "@/integrations/supabase/auth-attacher";
 import { applySecurityHeaders } from "@/lib/server/security-headers";
 
 const securityHeadersMiddleware = createMiddleware().server(async ({ next }) => {
-  return applySecurityHeaders(await next());
+  const result = await next();
+  return { ...result, response: applySecurityHeaders(result.response) };
 });
 
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
