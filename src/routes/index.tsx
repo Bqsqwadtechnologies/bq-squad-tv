@@ -234,7 +234,7 @@ function HomePage() {
           <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="mx-auto h-auto w-40 object-contain" />
           <p className="mt-2">© {new Date().getFullYear()} Bq Sqwad Technologies. All rights reserved.</p>
           <p className="mt-1">Content availability depends on distribution rights and your region.</p>
-          <div className="mt-3 flex justify-center gap-5"><a href="/search" className="font-semibold text-blue-700 hover:underline">Search channels</a><a href="/help" className="font-semibold text-blue-700 hover:underline">Help centre</a><a href="/account" className="font-semibold text-blue-700 hover:underline">Account</a></div>
+          <div className="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-2"><a href="/search" className="font-semibold text-blue-700 hover:underline">Search channels</a><a href="/help" className="font-semibold text-blue-700 hover:underline">Help centre</a><a href="/contact" className="font-semibold text-blue-700 hover:underline">Contact</a><a href="/about" className="font-semibold text-blue-700 hover:underline">About</a><a href="/privacy" className="font-semibold text-blue-700 hover:underline">Privacy</a><a href="/terms" className="font-semibold text-blue-700 hover:underline">Terms</a><a href="/account" className="font-semibold text-blue-700 hover:underline">Account</a></div>
         </footer>
       </div>
 
