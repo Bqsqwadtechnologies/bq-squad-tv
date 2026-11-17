@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
+import { getWebAccount, getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Bell, ChevronRight, CirclePlay, Clapperboard,
@@ -40,6 +40,7 @@ function HomePage() {
   const [channels, setChannels] = useState<ChannelItem[]>([]);
   const [catalogState, setCatalogState] = useState<"loading" | "ready" | "signed_out" | "error">("loading");
   const [walletCurrencySymbol, setWalletCurrencySymbol] = useState("");
+  const [profileInitial, setProfileInitial] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -63,6 +64,8 @@ function HomePage() {
         const token = await restoreWebSession();
         if (!active) return;
         if (!token) { setCatalogState("signed_out"); return; }
+        const account = await getWebAccount();
+        if (active && account?.email) setProfileInitial(account.email.trim().charAt(0).toUpperCase() || null);
         const walletResponse = await fetch("/api/public/v1/wallet/summary", {
           headers: await getWebAuthHeaders(token),
           cache: "no-store",
@@ -93,6 +96,7 @@ function HomePage() {
     { label: "Live TV", icon: Tv2, href: "#live-channels" },
     { label: "Library", icon: Grid2X2, href: "#library" },
     { label: "Settings", icon: Settings, href: "#settings" },
+    { label: "Profile", icon: UserRound, href: "/account" },
   ];
 
   return (
@@ -104,7 +108,7 @@ function HomePage() {
 
       <header className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-3 pb-4 pt-[calc(1.25rem+env(safe-area-inset-top))] sm:gap-5 sm:px-7 lg:px-10">
         <a href="#home" className="shrink-0" aria-label="BQ SQWAD TV home">
-          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-auto w-[120px] object-contain min-[400px]:w-[168px] sm:w-[205px]" />
+          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-auto w-[120px] object-contain min-[400px]:w-[150px] min-[440px]:w-[168px] sm:w-[205px]" />
         </a>
         <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 lg:flex">
           {nav.slice(0, 3).map(item => (
@@ -117,7 +121,7 @@ function HomePage() {
         </nav>
         <div className="relative flex shrink-0 items-center gap-1.5 sm:gap-3">
           <a href="/account" aria-label="Sign in or view account" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-cyan-200/50 bg-white text-blue-700 ring-2 ring-cyan-300/15">
-            <UserRound size={21} aria-hidden="true" />
+            {profileInitial ? <span aria-hidden="true" className="text-sm font-black">{profileInitial}</span> : <UserRound size={21} aria-hidden="true" />}
           </a>
           <a href="/wallet" aria-label="Wallet" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-blue-100 bg-blue-50 text-xs font-bold text-blue-700 transition hover:border-cyan-300/50">{walletCurrencySymbol || <Wallet size={18} aria-hidden="true" />}</a>
           <a aria-label="Search" href="/search" className="hidden h-10 w-10 place-items-center rounded-full border border-blue-100 bg-white text-blue-700 transition hover:border-cyan-300/50 hover:text-cyan-200 min-[381px]:grid"><Search size={19} /></a>
