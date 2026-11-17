@@ -37,7 +37,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/destinations"
         const user = await requireUser(request);
         const fs = await Firestore.create();
         const access = await requireAdminModule(fs, user, "system");
-        if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "Only the protected platform owner can manage storage destinations.");
+        if (!access.isZillionaireOwner) throw new ApiError(403, "OWNER_ONLY", "Only the Zillionaire owner can manage storage destinations.");
         const rows = await fs.query("storageDestinations", { limit: 500, orderByField: "priority" });
         const destinations = rows.map(row => {
           const { __id, ...metadata } = row;
@@ -55,7 +55,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/destinations"
         const body = await parseBody(request, schema);
         const fs = await Firestore.create();
         const access = await requireAdminModule(fs, user, "system");
-        if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "Only the protected platform owner can manage storage destinations.");
+        if (!access.isZillionaireOwner) throw new ApiError(403, "OWNER_ONLY", "Only the Zillionaire owner can manage storage destinations.");
         const metadata = validateStorageDestinationMetadata(body);
         const configuration = resolveStorageDestinationConfiguration(metadata);
         const now = new Date().toISOString();
