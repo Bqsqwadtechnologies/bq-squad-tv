@@ -131,19 +131,6 @@ fun LibraryScreen(onChannel: (String) -> Unit = {}) {
 }
 
 @Composable
-fun DownloadsScreen() {
-    Column(Modifier.fillMaxSize().padding(18.dp)) {
-        Text("Downloads", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
-        Spacer(Modifier.height(14.dp))
-        EmptyPanel(
-            symbol = "↓",
-            title = "No downloads yet",
-            message = "Offline downloads will appear here when supported titles are enabled.",
-        )
-    }
-}
-
-@Composable
 fun SettingsScreen(
     onWallet: () -> Unit,
     onProfile: () -> Unit,
@@ -152,7 +139,6 @@ fun SettingsScreen(
 ) {
     val uriHandler = LocalUriHandler.current
     var notifications by remember { mutableStateOf(true) }
-    var wifiOnly by remember { mutableStateOf(false) }
     var quality by remember { mutableStateOf("Auto") }
     Column(Modifier.fillMaxSize().padding(18.dp)) {
         Text("Settings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
@@ -174,7 +160,6 @@ fun SettingsScreen(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Spacer(Modifier.height(14.dp))
         SettingsSwitchRow("Notifications", "Programme and account updates", notifications) { notifications = it }
-        SettingsSwitchRow("Wi-Fi only downloads", "Use Wi-Fi for offline downloads", wifiOnly) { wifiOnly = it }
         ListItem(
             headlineContent = { Text("Playback quality") },
             supportingContent = { Text(quality) },
