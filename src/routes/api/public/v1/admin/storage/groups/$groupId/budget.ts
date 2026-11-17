@@ -93,7 +93,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/groups/$group
         const monthLevel = calculateEgressLevel(monthExpected, body.monthlyBudgetBytes, false);
         const dayLevel = calculateEgressLevel(dayExpected, effectiveDailyBudget, false);
         const rank: Record<string, number> = { normal: 0, warn: 1, throttle: 2, blocked: 3 };
-        const level = rank[monthLevel] >= rank[dayLevel] ? monthLevel : dayLevel;
+        const level = (rank[monthLevel] ?? 0) >= (rank[dayLevel] ?? 0) ? monthLevel : dayLevel;
         const writes = [
           {
             update: {
