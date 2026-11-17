@@ -178,7 +178,7 @@ function ZillionaireDashboard() {
       <header className="border-b border-cyan-300/15 bg-[#050f35]">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-5">
           <a href="/" aria-label="BQ SQWAD TV home">
-            <img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="w-44" />
+            <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="w-44" />
           </a>
           {access?.owner ? (
             <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-cyan-200">
