@@ -229,7 +229,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             throw new ApiError(503, "REVENUE_SPLIT_INVALID", "The channel revenue split is not configured correctly.");
           }
 
-          const streamConfiguration = await loadStreamStorageConfiguration(fs, asset, assetId);
+          const streamConfiguration = await loadStreamStorageConfiguration(fs, asset);
           if (streamConfiguration.configurationStatus !== "configured") {
             throw new ApiError(503, "STREAM_DESTINATION_UNAVAILABLE", "The streaming location is not ready for playback.");
           }
