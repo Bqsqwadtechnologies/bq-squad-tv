@@ -15,9 +15,9 @@ Source reviewed: `money.ts`, `ledger.ts`, `pricing.ts`, `currency.ts`, wallet su
 
 - The session must retain its currency and the selected price snapshot; later catalogue changes must not change an active session's price.
 - A debit must be represented by an idempotent ledger entry in the same transaction as the wallet update.
-- The wallet balance must never become negative. Any hold is reserved before playback and counts against available funds and applicable limits.
-- Daily spending checks must include settled spending and outstanding holds.
-- Producer/provider allocation is calculated from the session's snapshotted basis points. The platform receives the exact integer remainder so shares sum to the viewer debit.
+- The wallet balance must never become negative. The current session path checks the available balance and configured daily limit transactionally; the planned ten-minute wallet hold and block-based settlement are not yet integrated.
+- The current daily limit checks settled spending. Outstanding-hold accounting must be added together with the ten-minute hold before block settlement is enabled.
+- Producer allocation uses the session's snapshotted basis points and integer division rounded down. The platform receives every remaining minor unit, so producer plus platform shares equal the viewer debit exactly. Heartbeat and final-session settlement now share the same `splitRevenueMinor` calculation.
 
 ## Payment verification
 
@@ -34,7 +34,7 @@ Source reviewed: `money.ts`, `ledger.ts`, `pricing.ts`, `currency.ts`, wallet su
 
 ## Verification boundary
 
-The existing `src/test/money.test.ts`, `src/test/wallet-ledger.test.ts`, `src/test/paystack-credit.test.ts`, and `src/test/google-play-account-binding.test.ts` cover selected arithmetic and payment invariants. File 05 changes must add focused tests for every new policy. CI results are recorded in the implementation report; a source commit alone is not evidence that a test passed.
+The existing money, wallet-ledger, Paystack, Google Play account-binding and session-metering tests cover selected arithmetic and payment invariants. The session-metering suite now also checks exact producer/platform reconciliation across NGN, USD, JPY and KWD with varied integer amounts. CI results are recorded against exact commits; a source commit alone is not evidence that a test passed.
 
 ## Remaining integration scope
 
