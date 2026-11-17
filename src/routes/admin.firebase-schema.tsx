@@ -20,7 +20,7 @@ export const Route = createFileRoute("/admin/firebase-schema")({
   head: () => ({
     meta: [
       { title: "Data structure | BQ SQWAD TV" },
-      { name: "description", content: "Private administrator view of platform data structure." },
+      { name: "description", content: "Private platform data structure." },
       { name: "robots", content: "noindex, nofollow, noarchive" },
       { property: "og:title", content: "Data structure | BQ SQWAD TV" },
       { property: "og:description", content: "Private administrator view of platform data structure." },
@@ -111,7 +111,7 @@ function FirebaseSchemaPage() {
         {!report ? (
           <form onSubmit={inspectSchema} className="mt-9 grid max-w-md gap-5">
             <div className="grid gap-2">
-              <Label htmlFor="admin-email">Owner email</Label>
+              <Label htmlFor="owner-email">Owner email</Label>
               <Input id="admin-email" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} />
             </div>
             <div className="grid gap-2">
