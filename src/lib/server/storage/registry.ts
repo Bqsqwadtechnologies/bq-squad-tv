@@ -1,6 +1,7 @@
 import { ApiError } from "../firebase-admin";
 
 export type StorageProviderType = "lovable_storage" | "backblaze_b2";
+export type DeliveryMode = "direct_signed" | "api_proxy";
 export type StoragePurpose =
   | "source_media"
   | "hls_streaming"
@@ -26,6 +27,7 @@ export type StorageDestinationMetadata = {
   enabled: boolean;
   accountGroup: string;
   mode: "active" | "drain" | "retired";
+  deliveryMode: DeliveryMode;
   replicaOf: string | null;
   usageBytes?: number | null;
   usageSource?: "ledger" | "provider" | "provider_listing" | "manual" | null;
@@ -138,6 +140,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
   const enabled = input["enabled"];
   const accountGroup = input["accountGroup"] ?? (providerType === "lovable_storage" ? "lovable-default-workspace" : `b2:${String(secretPrefix ?? "")}`);
   const mode = input["mode"] ?? (enabled === true ? "active" : "retired");
+  const deliveryMode = input["deliveryMode"] ?? "direct_signed";
   const replicaOf = input["replicaOf"] ?? null;
   const usageBytes = input["usageBytes"] ?? null;
   const usageSource = input["usageSource"] ?? null;
@@ -162,6 +165,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
       !["source_media", "hls_streaming", "posters", "thumbnails", "downloads", "temporary", "backup", "producer_verification"].includes(String(purpose)) ||
       typeof accountGroup !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9:_-]{1,99}$/.test(accountGroup) ||
       !["active", "drain", "retired"].includes(String(mode)) ||
+      !["direct_signed", "api_proxy"].includes(String(deliveryMode)) ||
       (replicaOf !== null && (typeof replicaOf !== "string" || !DESTINATION_ID.test(replicaOf))) ||
       typeof softCapBytes !== "number" || !Number.isSafeInteger(softCapBytes) || softCapBytes < 1 ||
       (accountCapBytes !== null && (typeof accountCapBytes !== "number" || !Number.isSafeInteger(accountCapBytes) || accountCapBytes < 1)) ||
@@ -198,6 +202,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
     enabled,
     accountGroup,
     mode: mode as "active" | "drain" | "retired",
+    deliveryMode: deliveryMode as DeliveryMode,
     replicaOf: replicaOf as string | null,
     usageBytes: usageBytes as number | null,
     usageSource: usageSource as "ledger" | "provider" | "provider_listing" | "manual" | null,
