@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { ApiError, Firestore } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAdminModule } from "@/lib/server/roles";
 import { validateStorageDestinationMetadata, redactStorageDestination, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
@@ -27,7 +27,7 @@ const metadataSchema = z.object({
 });
 const bodySchema = z.object({
   reason: z.string().trim().min(3).max(1000),
-  destinations: z.array(metadataSchema).min(1).max(18),
+  destinations: z.array(metadataSchema).min(1).max(500),
 });
 
 export const Route = createFileRoute("/api/public/v1/admin/storage/seed")({
@@ -41,48 +41,65 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/seed")({
         if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "Only the protected platform owner can seed storage metadata.");
         const ids = body.destinations.map(item => item.destinationId);
         if (new Set(ids).size !== ids.length) throw new ApiError(400, "DUPLICATE_DESTINATION", "Destination IDs must be unique in a seed request.");
+        const existingRows = await fs.query("storageDestinations", { limit: 500 });
+        const existingIds = new Set(existingRows.map(row => row.__id));
         const created: string[] = [];
-        const skipped: string[] = [];
-        for (const raw of body.destinations) {
+        const skipped: string[] = ids.filter(id => existingIds.has(id));
+        const pending = body.destinations.filter(item => !existingIds.has(item.destinationId));
+        const now = new Date().toISOString();
+        const writes: FirestoreWrite[] = pending.map(raw => {
           const metadata = validateStorageDestinationMetadata(raw);
-          const now = new Date().toISOString();
-          const result = await fs.transact(["storageDestinations/" + metadata.destinationId], docs => {
-            if (docs[0]) return { result: false, writes: [] };
-            return {
-              result: true,
-              writes: [{
-                update: {
-                  name: fs.docName("storageDestinations/" + metadata.destinationId),
-                  fields: {
-                    destinationId: { stringValue: metadata.destinationId },
-                    providerType: { stringValue: metadata.providerType },
-                    accountAlias: { stringValue: metadata.accountAlias },
-                    secretPrefix: { stringValue: metadata.secretPrefix },
-                    bucketName: { stringValue: metadata.bucketName },
-                    region: { stringValue: metadata.region },
-                    purpose: { stringValue: metadata.purpose },
-                    softCapBytes: { integerValue: String(metadata.softCapBytes) },
-                    accountCapBytes: metadata.accountCapBytes == null ? { nullValue: null } : { integerValue: String(metadata.accountCapBytes) },
-                    dailyEgressCapBytes: metadata.dailyEgressCapBytes === null ? { nullValue: null } : { integerValue: String(metadata.dailyEgressCapBytes) },
-                    priority: { integerValue: String(metadata.priority) },
-                    enabled: { booleanValue: metadata.enabled },
-                    paidEgressEnabled: { booleanValue: metadata.paidEgressEnabled ?? false },
-                    freeEgressBudgetBytes: metadata.freeEgressBudgetBytes == null ? { nullValue: null } : { integerValue: String(metadata.freeEgressBudgetBytes) },
-                    accountGroup: { stringValue: metadata.accountGroup },
-                    mode: { stringValue: metadata.mode },
-                    replicaOf: metadata.replicaOf === null ? { nullValue: null } : { stringValue: metadata.replicaOf },
-                    usageBytes: { nullValue: null },
-                    usageSource: { nullValue: null },
-                    healthStatus: { stringValue: "unknown" },
-                    createdAt: { stringValue: now },
-                    updatedAt: { stringValue: now },
-                    updatedBy: { stringValue: user.uid },
+          return {
+            update: {
+              name: fs.docName("storageDestinations/" + metadata.destinationId),
+              fields: encodeFields({
+                ...metadata,
+                usageBytes: null,
+                usageSource: null,
+                usageCheckedAt: null,
+                reservedBytes: 0,
+                healthStatus: "unknown",
+                healthCheckedAt: null,
+                lastErrorCode: null,
+                degradedUntil: null,
+                createdAt: now,
+                updatedAt: now,
+                updatedBy: user.uid,
+              }),
+            },
+            currentDocument: { exists: false },
+          };
+        });
+        if (writes.length) {
+          try {
+            await fs.commit(writes);
+            created.push(...pending.map(item => item.destinationId));
+          } catch (error) {
+            if (!(error instanceof ApiError) || error.status !== 409) throw error;
+            const refreshed = await fs.query("storageDestinations", { limit: 500 });
+            const refreshedIds = new Set(refreshed.map(row => row.__id));
+            const retry = pending.filter(item => !refreshedIds.has(item.destinationId));
+            skipped.push(...pending.filter(item => refreshedIds.has(item.destinationId)).map(item => item.destinationId));
+            if (retry.length) {
+              const retryWrites: FirestoreWrite[] = retry.map(raw => {
+                const metadata = validateStorageDestinationMetadata(raw);
+                return {
+                  update: {
+                    name: fs.docName("storageDestinations/" + metadata.destinationId),
+                    fields: encodeFields({
+                      ...metadata, usageBytes: null, usageSource: null, usageCheckedAt: null,
+                      reservedBytes: 0, healthStatus: "unknown", healthCheckedAt: null,
+                      lastErrorCode: null, degradedUntil: null, createdAt: now,
+                      updatedAt: now, updatedBy: user.uid,
+                    }),
                   },
-                },
-              }],
-            };
-          });
-          (result ? created : skipped).push(metadata.destinationId);
+                  currentDocument: { exists: false },
+                };
+              });
+              await fs.commit(retryWrites);
+              created.push(...retry.map(item => item.destinationId));
+            }
+          }
         }
         await writeAuditLog(fs, {
           actorUid: user.uid,
