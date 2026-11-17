@@ -61,30 +61,73 @@ def build_variant_ladder(source_width: int, source_height: int) -> list[Variant]
     return variants
 
 
-def run_checked(command: list[str]) -> None:
-    completed = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-    if completed.returncode != 0:
-        details = completed.stderr[-4_000:].strip()
-        raise RuntimeError("Media processing failed. " + details)
-
-
-def probe_source(source: Path) -> tuple[int, int]:
-    command = [
-        "ffprobe", "-v", "error", "-select_streams", "v:0",
-        "-show_entries", "stream=width,height", "-of", "json", str(source),
-    ]
-    completed = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
-    if completed.returncode != 0:
-        raise RuntimeError("The source video could not be inspected.")
+def run_checked(command: list[str], timeout_seconds: int = 10_800) -> None:
     try:
-        streams = json.loads(completed.stdout).get("streams", [])
-        width = int(streams[0]["width"])
-        height = int(streams[0]["height"])
-    except (ValueError, TypeError, KeyError, IndexError, json.JSONDecodeError) as error:
-        raise RuntimeError("The source does not contain a supported video stream.") from error
-    if width < 2 or height < 2:
-        raise RuntimeError("The source video dimensions are invalid.")
-    return width, height
+        completed = subprocess.run(
+            command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            check=False, timeout=max(1800, min(21_600, timeout_seconds)),
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("MEDIA_PROCESSING_TIMEOUT") from None
+    if completed.returncode != 0:
+        raise RuntimeError("MEDIA_PROCESSING_FAILED")
+
+
+def verify_source_magic(source: Path) -> None:
+    with source.open("rb") as media:
+        header = media.read(16)
+    extension = source.suffix.lower()
+    valid = (
+        extension in {".mp4", ".mov"} and len(header) >= 8 and header[4:8] == b"ftyp"
+    ) or (
+        extension == ".mkv" and header.startswith(b"\x1aE\xdf\xa3")
+    ) or (
+        extension == ".webm" and header.startswith(b"\x1aE\xdf\xa3")
+    )
+    if not valid:
+        raise RuntimeError("SOURCE_SIGNATURE_INVALID")
+
+
+def probe_source(source: Path) -> tuple[int, int, float]:
+    command = [
+        "ffprobe", "-v", "error", "-protocol_whitelist", "file,pipe",
+        "-probesize", "10000000", "-analyzeduration", "10000000",
+        "-show_entries", "format=format_name,duration:stream=codec_type,codec_name,width,height",
+        "-of", "json", str(source),
+    ]
+    try:
+        completed = subprocess.run(
+            command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            check=False, timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError("SOURCE_INSPECTION_TIMEOUT") from None
+    if completed.returncode != 0:
+        raise RuntimeError("SOURCE_INSPECTION_FAILED")
+    try:
+        payload = json.loads(completed.stdout)
+        streams = payload.get("streams", [])
+        video = next(item for item in streams if item.get("codec_type") == "video")
+        width = int(video["width"])
+        height = int(video["height"])
+        duration = float(payload.get("format", {}).get("duration", 0))
+        container = str(payload.get("format", {}).get("format_name", ""))
+        video_codec = str(video.get("codec_name", ""))
+    except (ValueError, TypeError, KeyError, StopIteration, json.JSONDecodeError):
+        raise RuntimeError("SOURCE_MEDIA_UNSUPPORTED") from None
+    allowed_containers = {"mov", "mp4", "m4a", "3gp", "3g2", "mj2", "matroska", "webm"}
+    allowed_video = {"h264", "hevc", "vp9", "av1", "mpeg4"}
+    allowed_audio = {"aac", "opus", "vorbis", "mp3", "ac3", "eac3", "flac", "pcm_s16le"}
+    if not any(item in allowed_containers for item in container.split(",")) or video_codec not in allowed_video:
+        raise RuntimeError("SOURCE_CODEC_UNSUPPORTED")
+    for stream in streams:
+        if stream.get("codec_type") == "audio" and stream.get("codec_name") not in allowed_audio:
+            raise RuntimeError("SOURCE_AUDIO_CODEC_UNSUPPORTED")
+    if width < 2 or height < 2 or width > 3840 or height > 2160:
+        raise RuntimeError("SOURCE_RESOLUTION_UNSUPPORTED")
+    if duration <= 0 or duration > 6 * 60 * 60:
+        raise RuntimeError("SOURCE_DURATION_UNSUPPORTED")
+    return width, height, duration
 
 
 def write_master_playlist(output_dir: Path, variants: list[Variant]) -> None:
@@ -137,8 +180,8 @@ def verify_hls_output(output_dir: Path) -> dict[str, int]:
             if not segment.is_relative_to(root) or not segment.is_file():
                 raise RuntimeError("An HLS segment is missing or has an unsafe path.")
             size = segment.stat().st_size
-            if size <= 0:
-                raise RuntimeError("An HLS segment is empty.")
+            if size <= 0 or size > 2 * 1024 * 1024 * 1024:
+                raise RuntimeError("An HLS segment is empty or exceeds the file size limit.")
             rendition_segments += 1
             segment_count += 1
             total_segment_bytes += size
@@ -160,7 +203,9 @@ def transcode(source: Path, output_dir: Path, threads: int) -> list[Variant]:
         raise ValueError("The output directory must be empty.")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    width, height = probe_source(source)
+    verify_source_magic(source)
+    width, height, duration = probe_source(source)
+    processing_timeout = max(1800, int(duration * 6))
     variants = build_variant_ladder(width, height)
     try:
         for variant in variants:
@@ -168,7 +213,7 @@ def transcode(source: Path, output_dir: Path, threads: int) -> list[Variant]:
             variant_dir.mkdir(parents=True, exist_ok=True)
             segment_pattern = variant_dir / "segment_%05d.ts"
             command = [
-                "ffmpeg", "-hide_banner", "-nostdin", "-y", "-i", str(source),
+                "ffmpeg", "-hide_banner", "-nostdin", "-y", "-protocol_whitelist", "file,pipe", "-i", str(source),
                 "-map", "0:v:0", "-map", "0:a:0?", "-sn", "-dn", "-map_metadata", "-1",
                 "-vf", f"scale={variant.width}:{variant.height}:flags=lanczos",
                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "22",
@@ -182,7 +227,7 @@ def transcode(source: Path, output_dir: Path, threads: int) -> list[Variant]:
                 "-hls_segment_filename", str(segment_pattern),
                 str(variant_dir / "index.m3u8"),
             ]
-            run_checked(command)
+            run_checked(command, processing_timeout)
         write_master_playlist(output_dir, variants)
         verify_hls_output(output_dir)
     except Exception:
