@@ -10,7 +10,7 @@ import { assertStorageObjectKey } from "@/lib/server/storage/ledger";
 const schema = z.object({
   claimToken: z.string().regex(/^[a-f0-9]{32}$/),
   objectKey: z.string().min(1).max(1024),
-  contentType: z.enum(["application/vnd.apple.mpegurl", "video/mp2t", "video/mp4", "text/vtt", "audio/aac", "application/octet-stream"]),
+  contentType: z.enum(["application/vnd.apple.mpegurl", "video/mp2t", "video/iso.segment", "video/mp4", "text/vtt", "image/jpeg", "image/png", "image/webp", "audio/aac"]),
 });
 
 export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/target")({
@@ -28,9 +28,23 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/target
       }
       const prefix = typeof job["outputPrefix"] === "string" ? job["outputPrefix"] : "";
       const objectKey = assertStorageObjectKey(body.objectKey);
-      if (!prefix || !objectKey.startsWith(prefix + "/") || objectKey.length > prefix.length + 220 ||
-          !/\.(m3u8|ts)$/i.test(objectKey)) {
-        throw new ApiError(400, "WORKER_OBJECT_KEY_INVALID", "The output object key is outside the assigned HLS prefix.");
+      const relativePath = objectKey.startsWith(prefix + "/") ? objectKey.slice(prefix.length + 1) : "";
+      const extension = relativePath.split(".").pop()?.toLowerCase() ?? "";
+      const expectedType: Record<string, string> = {
+        m3u8: "application/vnd.apple.mpegurl", ts: "video/mp2t", m4s: "video/iso.segment",
+        mp4: "video/mp4", vtt: "text/vtt", jpg: "image/jpeg", jpeg: "image/jpeg",
+        png: "image/png", webp: "image/webp", aac: "audio/aac",
+      };
+      const allowedName =
+        /^(?:[A-Za-z0-9_-]+\/)*(?:master|index)\.m3u8$/.test(relativePath) ||
+        /^(?:[A-Za-z0-9_-]+\/)*segment_[0-9]{5}\.(?:ts|m4s)$/.test(relativePath) ||
+        /^(?:[A-Za-z0-9_-]+\/)*init\.mp4$/.test(relativePath) ||
+        /^(?:[A-Za-z0-9_-]+\/)*subtitle_[A-Za-z0-9_-]+\.vtt$/.test(relativePath) ||
+        /^(?:[A-Za-z0-9_-]+\/)*(?:thumbnail|sprite)[A-Za-z0-9_-]*\.(?:jpg|jpeg|png|webp)$/.test(relativePath) ||
+        /^(?:[A-Za-z0-9_-]+\/)*audio_[A-Za-z0-9_-]+\.aac$/.test(relativePath);
+      if (!prefix || !allowedName || objectKey.length > prefix.length + 220 ||
+          expectedType[extension] !== body.contentType) {
+        throw new ApiError(400, "WORKER_OBJECT_KEY_INVALID", "The output object key is outside the assigned HLS file allow-list.");
       }
       const destinationId = typeof job["outputDestinationId"] === "string" ? job["outputDestinationId"] : "";
       const raw = destinationId ? await fs.getDoc("storageDestinations/" + destinationId) : null;
