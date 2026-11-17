@@ -6,7 +6,7 @@ import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 import { videoWorkerLeaseExpiry } from "@/lib/server/video-worker-policy";
-import { accumulateStorageUsage, isStorageQuotaOrRateLimit, storageFailureCode, storageFailureMessage } from "@/lib/server/storage/maintenance";
+import { checkStorageProviderHealth, isStorageQuotaOrRateLimit, readStorageUsagePage, storageFailureCode, storageFailureMessage } from "@/lib/server/storage/maintenance";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
@@ -85,7 +85,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         const adapter = createStorageProviderAdapter(config);
         if (task["phase"] !== "listing") {
           try {
-            await adapter.healthCheck();
+            await checkStorageProviderHealth(adapter);
             await fs.patchDoc("storageDestinations/" + storageId, {
               healthStatus: "healthy", healthCheckedAt: now, lastErrorCode: null,
               degradedUntil: null, updatedAt: now,
@@ -103,15 +103,13 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
 
         const cursor = typeof task["listingCursor"] === "string" ? task["listingCursor"] : null;
         try {
-          const page = await adapter.listObjects("", cursor);
-          if (page.nextCursor && page.nextCursor === cursor) {
-            throw new ApiError(409, "STORAGE_LISTING_CURSOR_STALLED", "The storage listing did not advance.");
-          }
-          const totals = accumulateStorageUsage(
+          const page = await readStorageUsagePage(
+            adapter,
+            cursor,
             typeof task["usageBytes"] === "number" ? task["usageBytes"] : 0,
             typeof task["objectCount"] === "number" ? task["objectCount"] : 0,
-            page.objects,
           );
+          const totals = { usageBytes: page.usageBytes, objectCount: page.objectCount };
           if (page.nextCursor) {
             await fs.patchDoc(taskPath, {
               listingCursor: page.nextCursor,
