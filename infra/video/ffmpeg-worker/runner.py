@@ -78,23 +78,66 @@ def signed_request(method: str, path: str, payload: dict | None = None) -> dict:
         raise RuntimeError("Worker API is temporarily unavailable.") from error
 
 
-def download_source(url: str, destination: Path, expected_size: int) -> None:
-    request = urllib.request.Request(url, headers={"Accept-Encoding": "identity"})
-    total = 0
-    with urllib.request.urlopen(request, timeout=60) as response, destination.open("wb") as output:
-        declared = response.headers.get("Content-Length")
-        if declared and int(declared) != expected_size:
-            raise RuntimeError("Source size does not match the queued asset.")
-        while True:
-            chunk = response.read(1024 * 1024)
-            if not chunk:
-                break
-            total += len(chunk)
-            if total > MAX_SOURCE_BYTES or total > expected_size:
-                raise RuntimeError("Source download exceeded its declared size.")
-            output.write(chunk)
-    if total != expected_size:
-        raise RuntimeError("Source download was incomplete.")
+def download_source(
+    url: str,
+    destination: Path,
+    expected_size: int,
+    lease_lost: threading.Event | None = None,
+) -> None:
+    partial = destination.with_suffix(destination.suffix + ".part")
+    if expected_size <= 0 or expected_size > MAX_SOURCE_BYTES:
+        raise RuntimeError("SOURCE_SIZE_INVALID")
+    for attempt in range(4):
+        if lease_lost is not None and lease_lost.is_set():
+            raise RuntimeError("WORKER_LEASE_LOST")
+        offset = partial.stat().st_size if partial.exists() else 0
+        if offset > expected_size:
+            partial.unlink(missing_ok=True)
+            offset = 0
+        if offset == expected_size:
+            partial.replace(destination)
+            return
+        headers = {"Accept-Encoding": "identity"}
+        if offset:
+            headers["Range"] = f"bytes={offset}-"
+        request = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(request, timeout=90) as response:
+                if offset and response.status != 206:
+                    offset = 0
+                if offset:
+                    content_range = response.headers.get("Content-Range", "")
+                    if not content_range.startswith(f"bytes {offset}-"):
+                        raise RuntimeError("SOURCE_RANGE_INVALID")
+                declared = response.headers.get("Content-Length")
+                expected_remaining = expected_size - offset
+                if declared and int(declared) != expected_remaining:
+                    if offset:
+                        raise RuntimeError("SOURCE_RANGE_SIZE_INVALID")
+                    raise RuntimeError("SOURCE_SIZE_MISMATCH")
+                total = offset
+                mode = "ab" if offset else "wb"
+                with partial.open(mode) as output:
+                    while True:
+                        if lease_lost is not None and lease_lost.is_set():
+                            raise RuntimeError("WORKER_LEASE_LOST")
+                        chunk = response.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        total += len(chunk)
+                        if total > MAX_SOURCE_BYTES or total > expected_size:
+                            raise RuntimeError("SOURCE_SIZE_LIMIT")
+                        output.write(chunk)
+                if total == expected_size:
+                    partial.replace(destination)
+                    return
+                if total < expected_size:
+                    continue
+                raise RuntimeError("SOURCE_SIZE_MISMATCH")
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            if attempt == 3:
+                raise RuntimeError("SOURCE_DOWNLOAD_FAILED") from None
+    raise RuntimeError("SOURCE_DOWNLOAD_INCOMPLETE")
 
 
 def content_type_for(path: Path) -> str:
@@ -123,14 +166,17 @@ def iter_file_chunks(file_path: Path):
 
 def upload_file(job: dict, file_path: Path, root: Path, target: dict, lease_lost: threading.Event) -> dict:
     if lease_lost.is_set():
-        raise RuntimeError("The processing lease was lost.")
+        raise RuntimeError("WORKER_LEASE_LOST")
+    file_size = file_path.stat().st_size
+    if file_size <= 0 or file_size > 2 * 1024 * 1024 * 1024:
+        raise RuntimeError("OUTPUT_FILE_SIZE_INVALID")
     request = urllib.request.Request(
         target["signedUrl"],
         data=iter_file_chunks(file_path),
         method="PUT",
         headers={
             "content-type": content_type_for(file_path),
-            "Content-Length": str(file_path.stat().st_size),
+            "Content-Length": str(file_size),
             "Cache-Control": "public, max-age=31536000, immutable",
             "x-upsert": "false",
         },
@@ -157,6 +203,10 @@ def process_job(job: dict) -> None:
         raise RuntimeError("Queued source file type is not supported.")
     with tempfile.TemporaryDirectory(prefix="bq-tv-worker-") as temporary:
         root = Path(temporary)
+        root.chmod(0o700)
+        required_free_bytes = int(job["sourceSizeBytes"]) * 4 + 2 * 1024 * 1024 * 1024
+        if shutil.disk_usage(root).free < required_free_bytes:
+            raise RuntimeError("WORKER_DISK_SPACE_LOW")
         source = root / ("source" + extension)
         output = root / "hls"
         lease_lost = threading.Event()
@@ -170,7 +220,7 @@ def process_job(job: dict) -> None:
 
         def ensure_lease() -> None:
             if lease_lost.is_set():
-                raise RuntimeError("The processing lease was lost.")
+                raise RuntimeError("WORKER_LEASE_LOST")
 
         def renew_lease() -> None:
             while not lease_lost.wait(30):
@@ -190,11 +240,11 @@ def process_job(job: dict) -> None:
         heartbeat.start()
         try:
             ensure_lease()
-            download_source(job["sourceDownloadUrl"], source, int(job["sourceSizeBytes"]))
+            download_source(job["sourceDownloadUrl"], source, int(job["sourceSizeBytes"]), lease_lost)
             ensure_lease()
             update_stage("encode", 0)
             command = [
-                "python", "/app/transcode.py", "--input", str(source),
+                "nice", "-n", "10", "python", "/app/transcode.py", "--input", str(source),
                 "--output", str(output), "--threads", str(max(1, min(8, int(os.environ.get("FFMPEG_THREADS", "2"))))),
             ]
             completed = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
