@@ -20,7 +20,7 @@ The project must treat an exhausted or unknown allowance as unavailable and stop
 
 1. Sign in to the existing video-processing account.
 2. Open **Settings** and locate the spending or usage limit.
-3. Have the billing owner set a conservative limit. The proposed example is **$5 above the applicable free credit**, only if the account supports that setting and the billing owner approves it.
+3. Have the billing owner confirm the account plan and included monthly compute allowance. The application-side monthly estimate limit defaults to **$25**. Keep the guard enabled; confirm any provider-side budget limit with the billing owner.
 4. Keep deployment manual through the repository's existing manual deployment workflow.
 5. Confirm the current usage and limit in the provider console.
 
