@@ -66,8 +66,10 @@ function AdminStoragePage() {
   const [purpose, setPurpose] = useState("source_media");
   const [softCapGb, setSoftCapGb] = useState("9");
   const [accountCapGb, setAccountCapGb] = useState("");
-  const [dailyEgressGb, setDailyEgressGb] = useState("");
-  const [monthlyEgressGb, setMonthlyEgressGb] = useState("");
+  const [budgetGroupId, setBudgetGroupId] = useState("");
+  const [groupMonthlyEgressGb, setGroupMonthlyEgressGb] = useState("");
+  const [groupDailyEgressGb, setGroupDailyEgressGb] = useState("");
+  const [groupBudgetReason, setGroupBudgetReason] = useState("");
   const [priority, setPriority] = useState("100");
   const [enabled, setEnabled] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -81,7 +83,14 @@ function AdminStoragePage() {
     });
     const data = await response.json() as { destinations?: Destination[]; error?: string };
     if (!response.ok) throw new Error(data.error ?? "Could not load storage destinations.");
-    setDestinations(data.destinations ?? []);
+    const rows = data.destinations ?? [];
+    setDestinations(rows);
+    const selectedGroup = rows.some(item => item.accountGroup === budgetGroupId)
+      ? budgetGroupId : rows[0]?.accountGroup ?? "";
+    setBudgetGroupId(selectedGroup);
+    const groupItem = rows.find(item => item.accountGroup === selectedGroup);
+    setGroupMonthlyEgressGb(groupItem?.freeEgressBudgetBytes == null ? "" : String(groupItem.freeEgressBudgetBytes / 1_000_000_000));
+    setGroupDailyEgressGb(groupItem?.dailyEgressCapBytes == null ? "" : String(groupItem.dailyEgressCapBytes / 1_000_000_000));
   }
 
   async function login(event: FormEvent<HTMLFormElement>) {
@@ -153,6 +162,38 @@ function AdminStoragePage() {
     finally { setBusy(false); }
   }
 
+  async function saveGroupBudget(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!token || !budgetGroupId || busy) return;
+    const monthly = Number(groupMonthlyEgressGb);
+    const daily = groupDailyEgressGb.trim() ? Number(groupDailyEgressGb) : null;
+    if (!Number.isFinite(monthly) || monthly <= 0 ||
+        (daily !== null && (!Number.isFinite(daily) || daily <= 0)) ||
+        groupBudgetReason.trim().length < 3) {
+      setError("Enter a positive monthly limit, an optional positive daily limit, and a reason of at least three characters.");
+      return;
+    }
+    setBusy(true); setError(""); setMessage("Updating the shared account allowance…");
+    try {
+      const response = await fetch("/api/public/v1/admin/storage/groups/" + encodeURIComponent(budgetGroupId) + "/budget", {
+        method: "PUT",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({
+          monthlyBudgetBytes: Math.floor(monthly * 1_000_000_000),
+          dailyBudgetBytes: daily === null ? null : Math.floor(daily * 1_000_000_000),
+          reason: groupBudgetReason.trim(),
+        }),
+      });
+      const data = await response.json() as { saved?: boolean; error?: string };
+      if (!response.ok || !data.saved) throw new Error(data.error ?? "The shared allowance could not be updated.");
+      await loadDestinations(token);
+      setGroupBudgetReason("");
+      setMessage("Shared allowance saved for every location in this account group.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The shared allowance could not be updated.");
+    } finally { setBusy(false); }
+  }
+
   function editDestination(item: Destination) {
     setDestinationId(item.destinationId);
     setProviderType(item.providerType);
@@ -166,8 +207,6 @@ function AdminStoragePage() {
     setPurpose(item.purpose);
     setSoftCapGb(String(item.softCapBytes / 1_000_000_000));
     setAccountCapGb(item.accountCapBytes == null ? "" : String(item.accountCapBytes / 1_000_000_000));
-    setDailyEgressGb(item.dailyEgressCapBytes === null ? "" : String(item.dailyEgressCapBytes / 1_000_000_000));
-    setMonthlyEgressGb(item.freeEgressBudgetBytes == null ? "" : String(item.freeEgressBudgetBytes / 1_000_000_000));
     setPriority(String(item.priority));
     setEnabled(item.enabled);
     setMessage("Editing " + item.destinationId + ". Save to update its non-secret metadata.");
@@ -181,18 +220,14 @@ function AdminStoragePage() {
     setMessage("");
     try {
       const cap = Number(softCapGb);
-      const egress = dailyEgressGb.trim() ? Number(dailyEgressGb) : null;
       const accountCap = accountCapGb.trim() ? Number(accountCapGb) : null;
-      const monthlyEgress = monthlyEgressGb.trim() ? Number(monthlyEgressGb) : null;
-      if (!Number.isFinite(cap) || cap <= 0 || (egress !== null && (!Number.isFinite(egress) || egress <= 0)) || (accountCap !== null && (!Number.isFinite(accountCap) || accountCap <= 0)) || (monthlyEgress !== null && (!Number.isFinite(monthlyEgress) || monthlyEgress < 0))) {
-        throw new Error("Enter positive storage and optional egress limits in decimal GB.");
+      if (!Number.isFinite(cap) || cap <= 0 || (accountCap !== null && (!Number.isFinite(accountCap) || accountCap <= 0))) {
+        throw new Error("Enter positive storage capacity limits in decimal GB.");
       }
       const payload = {
         destinationId, providerType, accountAlias, accountGroup, mode, replicaOf: replicaOf.trim() || null, secretPrefix, bucketName, region, purpose,
         softCapBytes: Math.floor(cap * 1_000_000_000),
         accountCapBytes: accountCap === null ? null : Math.floor(accountCap * 1_000_000_000),
-        dailyEgressCapBytes: egress === null ? null : Math.floor(egress * 1_000_000_000),
-        freeEgressBudgetBytes: monthlyEgress === null ? null : Math.floor(monthlyEgress * 1_000_000_000),
         priority: Number(priority), enabled,
       };
       const response = await fetch("/api/public/v1/admin/storage/destinations", {
@@ -237,6 +272,26 @@ function AdminStoragePage() {
             <div className="mt-8 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-xs leading-6 text-amber-100/80">
               Registering a location does not create it or move files. Enter usage exactly as shown in a provider report. A location can receive new files only after its connection, usage, shared capacity and transfer allowance have been checked.
             </div>
+            <form onSubmit={saveGroupBudget} className="mt-6 grid gap-3 rounded-2xl border border-cyan-300/20 bg-[#07143d] p-5">
+              <div><h2 className="text-lg font-bold">Shared delivery allowance</h2><p className="mt-1 text-xs leading-5 text-blue-100/55">One limit applies to every location in the same account. Changes are saved together and require a reason.</p></div>
+              <label className="grid gap-2 text-xs text-blue-100/70">Storage account<select value={budgetGroupId} onChange={event => {
+                const value = event.target.value;
+                setBudgetGroupId(value);
+                const selected = destinations.find(item => item.accountGroup === value);
+                setGroupMonthlyEgressGb(selected?.freeEgressBudgetBytes == null ? "" : String(selected.freeEgressBudgetBytes / 1_000_000_000));
+                setGroupDailyEgressGb(selected?.dailyEgressCapBytes == null ? "" : String(selected.dailyEgressCapBytes / 1_000_000_000));
+              }} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white">
+                {[...new Set(destinations.map(item => item.accountGroup))].map(group => {
+                  const members = destinations.filter(item => item.accountGroup === group);
+                  return <option key={group} value={group}>{members[0]?.accountAlias ?? "Storage account"} ({members.length} locations)</option>;
+                })}
+              </select></label>
+              <label className="grid gap-2 text-xs text-blue-100/70">Monthly free delivery limit (GB)<input type="number" min="0.01" step="0.01" value={groupMonthlyEgressGb} onChange={event => setGroupMonthlyEgressGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+              <label className="grid gap-2 text-xs text-blue-100/70">Daily free delivery limit (GB, optional)<input type="number" min="0.01" step="0.01" value={groupDailyEgressGb} onChange={event => setGroupDailyEgressGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+              {destinations.find(item => item.accountGroup === budgetGroupId)?.providerType === "backblaze_b2" && <p className="text-xs leading-5 text-blue-100/55">The free allowance uses the lower published limit: up to three times the amount stored each month or 1 GB per day. We apply an extra safety margin. Source: published pricing page and help article. Checked 17 November 2026.</p>}
+              <label className="grid gap-2 text-xs text-blue-100/70">Reason for this allowance change<textarea required minLength={3} maxLength={500} value={groupBudgetReason} onChange={event => setGroupBudgetReason(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" rows={2} /></label>
+              <button disabled={busy || !budgetGroupId} className="rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-4 py-3 text-sm font-bold text-cyan-100 disabled:opacity-50">{busy ? "Saving…" : "Save shared allowance"}</button>
+            </form>
             <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]">
               <div className="grid content-start gap-3">
                 <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-bold">Registered locations</h2><div className="flex gap-3"><button onClick={() => void seedLegacyBuckets()} disabled={busy} className="text-xs font-bold text-cyan-200">Add existing locations</button><button onClick={() => void loadDestinations(token)} disabled={busy} className="text-xs font-bold text-cyan-200">Refresh</button></div></div>
@@ -270,8 +325,7 @@ function AdminStoragePage() {
                 <label className="grid gap-2 text-xs text-blue-100/70">Used for<select value={purpose} onChange={event => setPurpose(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white">{PURPOSES.map(value => <option key={value} value={value}>{PURPOSE_LABELS[value] ?? "Other files"}</option>)}</select></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Location capacity limit (GB)<input required type="number" min="0.01" step="0.01" value={softCapGb} onChange={event => setSoftCapGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Shared account capacity limit (GB, optional; use the same value for all locations in one account)<input type="number" min="0.01" step="0.01" value={accountCapGb} onChange={event => setAccountCapGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
-                <label className="grid gap-2 text-xs text-blue-100/70">Monthly data transfer allowance (GB; shared by all locations in the account)<input type="number" min="0" step="0.01" value={monthlyEgressGb} onChange={event => setMonthlyEgressGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
-                <label className="grid gap-2 text-xs text-blue-100/70">Daily data transfer limit (GB, optional)<input type="number" min="0.01" step="0.01" value={dailyEgressGb} onChange={event => setDailyEgressGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+                 <p className="rounded-xl border border-cyan-300/15 bg-cyan-300/5 p-3 text-xs leading-5 text-blue-100/60">Delivery allowances are set for the whole account group. Use the shared allowance panel and include a reason.</p>
                  {providerType === "backblaze_b2" && <p className="text-xs leading-5 text-blue-100/55">The free allowance uses the lower published limit: up to three times the amount stored each month or 1 GB per day. We apply an extra safety margin to prevent unexpected charges. Source: published pricing page and help article. Checked 17 November 2026.</p>}
                 <label className="grid gap-2 text-xs text-blue-100/70">Priority (lower is preferred)<input required type="number" min="0" max="10000" value={priority} onChange={event => setPriority(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="flex items-center gap-3 text-xs text-blue-100/70"><input type="checkbox" checked={enabled} onChange={event => setEnabled(event.target.checked)} /> Enable this location</label>
