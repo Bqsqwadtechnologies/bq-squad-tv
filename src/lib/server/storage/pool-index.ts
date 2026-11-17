@@ -146,6 +146,7 @@ export async function rebuildStoragePoolIndex(
         metadata.healthStatus === "healthy" &&
         item.configuration.configurationStatus === "configured" &&
         Number.isSafeInteger(usage) && (usage as number) >= 0 &&
+        (metadata.usageSource === "provider_listing" || metadata.usageSource === "ledger") &&
         Number.isFinite(degradedUntil) && degradedUntil <= Date.now() &&
         group?.usageBytes !== null && group?.capBytes !== null && (group?.freeBytes ?? 0) > 0;
     }).map(item => {
@@ -383,7 +384,8 @@ export async function refreshStoragePoolDestination(fs: Firestore, destinationId
     (row["entries"] as Array<Record<string, unknown>>).some(entry => entry?.["id"] === destinationId));
   const eligible = metadata.enabled && metadata.mode === "active" &&
     metadata.healthStatus === "healthy" && config.configurationStatus === "configured" &&
-    typeof metadata.usageBytes === "number" && Number.isSafeInteger(metadata.usageBytes);
+    typeof metadata.usageBytes === "number" && Number.isSafeInteger(metadata.usageBytes) &&
+    (metadata.usageSource === "provider_listing" || metadata.usageSource === "ledger");
   if (!eligible) {
     if (shard) {
       const entries = (shard["entries"] as Array<Record<string, unknown>>).filter(entry => entry["id"] !== destinationId);
