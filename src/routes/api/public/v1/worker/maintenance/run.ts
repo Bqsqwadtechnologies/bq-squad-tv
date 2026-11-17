@@ -17,6 +17,8 @@ import { reserveStorageDestination, releaseStorageReservation, commitStorageRese
 import { fetchPaystackVerification } from "@/lib/server/paystack";
 import { classifyPaymentReconciliation, paymentReviewKey } from "@/lib/server/payment-reconciliation";
 import { verifyAuditChain } from "@/lib/server/audit";
+import { releaseSessionLease } from "@/lib/server/session-limits";
+import { releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
@@ -195,6 +197,117 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         throw new ApiError(409, "MAINTENANCE_LEASE_INVALID", "The maintenance task lease is no longer valid.");
       }
       const now = new Date().toISOString();
+      if (task["taskType"] === "wallet_hold_reconcile") {
+        const payload = task["payload"] as Record<string, unknown> | undefined;
+        const cursorValue = typeof payload?.["cursorValue"] === "string" ? payload["cursorValue"] : null;
+        const cursorId = typeof payload?.["cursorId"] === "string" ? payload["cursorId"] : null;
+        const cutoff = new Date(Date.now() + 1).toISOString();
+        const page = await fs.query("walletHolds", {
+          filters: [
+            { field: "status", op: "EQUAL", value: "active" },
+            { field: "expiresAt", op: "LESS_THAN", value: cutoff },
+          ],
+          orderByField: "expiresAt",
+          ...(cursorValue && cursorId ? { startAfter: { fieldValue: cursorValue, documentId: "walletHolds/" + cursorId } } : {}),
+          limit: 50,
+        });
+        let processedCount = typeof payload?.["processedCount"] === "number" ? payload["processedCount"] : 0;
+        for (const holdRow of page) {
+          const uid = typeof holdRow["uid"] === "string" ? holdRow["uid"] : "";
+          const sessionId = typeof holdRow["sessionId"] === "string" ? holdRow["sessionId"] : "";
+          if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid) || !/^[A-Za-z0-9_-]{1,100}$/.test(sessionId)) {
+            throw new ApiError(409, "WALLET_HOLD_RECORD_INVALID", "An expired viewing hold could not be verified.");
+          }
+          const holdPath = "walletHolds/" + holdRow.__id;
+          const walletPath = "wallets/" + uid;
+          const sessionPath = "sessions/" + sessionId;
+          const activeSessionsPath = "activeSessions/" + uid;
+          const expired = await fs.transact([walletPath, holdPath, sessionPath, activeSessionsPath], docs => {
+            const wallet = docs[0] ?? {};
+            const hold = docs[1];
+            const session = docs[2];
+            const activeSessions = docs[3] ?? {};
+            if (!hold || hold["status"] !== "active" ||
+                typeof hold["expiresAt"] !== "string" || Date.parse(hold["expiresAt"]) > Date.now()) {
+              return { result: false, writes: [] };
+            }
+            const amountMinor = typeof hold["amountMinor"] === "number" &&
+              Number.isSafeInteger(hold["amountMinor"]) && hold["amountMinor"] >= 0
+              ? hold["amountMinor"] : 0;
+            const heldBalance = typeof wallet["heldBalanceMinor"] === "number" &&
+              Number.isSafeInteger(wallet["heldBalanceMinor"]) && wallet["heldBalanceMinor"] >= 0
+              ? wallet["heldBalanceMinor"] : 0;
+            if (amountMinor > heldBalance) {
+              throw new ApiError(409, "WALLET_HOLD_TOTAL_MISMATCH", "The wallet hold total needs owner review before it can be released.");
+            }
+            const writes = [
+              {
+                update: {
+                  name: fs.docName(holdPath),
+                  fields: encodeFields({ amountMinor: 0, status: "expired", expiresAt: null, expiredAt: now, updatedAt: now }),
+                },
+                updateMask: { fieldPaths: ["amountMinor", "status", "expiresAt", "expiredAt", "updatedAt"] },
+              },
+            ];
+            if (docs[0]) {
+              writes.push({
+                update: {
+                  name: fs.docName(walletPath),
+                  fields: encodeFields({ heldBalanceMinor: heldBalance - amountMinor, updatedAt: now }),
+                },
+                updateMask: { fieldPaths: ["heldBalanceMinor", "updatedAt"] },
+              });
+            }
+            if (session) {
+              writes.push({
+                update: {
+                  name: fs.docName(sessionPath),
+                  fields: encodeFields({
+                    active: false, walletHoldMinor: 0,
+                    ...(session["active"] === true ? { endedAt: now, endReason: "HEARTBEAT_TIMEOUT" } : {}),
+                    updatedAt: now,
+                  }),
+                },
+                updateMask: { fieldPaths: ["active", "walletHoldMinor", "endedAt", "endReason", "updatedAt"] },
+              });
+            }
+            if (docs[3]) {
+              writes.push({
+                update: {
+                  name: fs.docName(activeSessionsPath),
+                  fields: encodeFields({
+                    sessions: releaseSessionLease(activeSessions["sessions"], sessionId, Date.now()),
+                    updatedAt: now,
+                  }),
+                },
+                updateMask: { fieldPaths: ["sessions", "updatedAt"] },
+              });
+            }
+            return { result: true, writes };
+          });
+          if (expired) {
+            processedCount++;
+            await releaseExpectedStorageEgress(fs, sessionId).catch(() => undefined);
+          }
+        }
+        const last = page[page.length - 1];
+        const nextCursorValue = typeof last?.["expiresAt"] === "string" ? last["expiresAt"] : null;
+        const nextCursorId = last?.__id ?? null;
+        const done = page.length < 50;
+        await fs.patchDoc(taskPath, {
+          payload: {
+            cursorValue: done ? null : nextCursorValue,
+            cursorId: done ? null : nextCursorId,
+            processedCount,
+          },
+          phase: done ? "done" : "releasing",
+          ...(done ? { completedAt: now } : {}),
+          leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()),
+          updatedAt: now,
+        });
+        return Response.json({ done, processedObjectCount: processedCount, processedCount });
+      }
+
       if (task["taskType"] === "audit_chain_verify") {
         const payload = task["payload"] as Record<string, unknown> | undefined;
         const pageSize = typeof payload?.["pageSize"] === "number" ? payload["pageSize"] : 500;
