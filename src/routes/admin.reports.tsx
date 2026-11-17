@@ -115,7 +115,7 @@ function MonthlyReportsPage() {
     <main className="min-h-screen bg-[#030b2a] text-white">
       <header className="border-b border-cyan-300/15 bg-[#050f35]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
-          <a href="/admin/" className="flex items-center gap-3"><img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="w-40" /></a>
+          <a href="/admin/" className="flex items-center gap-3"><img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="w-40" /></a>
           <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-cyan-200"><ShieldCheck size={15}/> Zillionaire Dashboard · Reports</span>
         </div>
       </header>
