@@ -282,8 +282,6 @@ export async function updateStorageUsageAndPool(
     }
     const groupId = raw["accountGroup"];
     const groupPath = groupCapacityPath(groupId);
-    const oldUsage = typeof raw["usageBytes"] === "number" && Number.isSafeInteger(raw["usageBytes"]) && raw["usageBytes"] >= 0
-      ? raw["usageBytes"] : null;
     const groupBefore = await fs.getDoc(groupPath);
     if (!groupBefore ||
         !Number.isSafeInteger(groupBefore["knownUsageBytes"]) ||
@@ -303,6 +301,9 @@ export async function updateStorageUsageAndPool(
       const nextKnownUsage = currentUsage === null
         ? knownUsage + newUsageBytes
         : knownUsage + newUsageBytes - currentUsage;
+      if (currentUsage === null && unknownCount === 0) {
+        throw new ApiError(409, "STORAGE_GROUP_USAGE_STALE", "The shared storage usage summary needs to be rebuilt.");
+      }
       const nextUnknownCount = currentUsage === null ? Math.max(0, unknownCount - 1) : unknownCount;
       if (!Number.isSafeInteger(nextKnownUsage) || nextKnownUsage < 0) {
         throw new ApiError(409, "STORAGE_GROUP_USAGE_INVALID", "The shared storage usage counter is inconsistent.");
