@@ -15,11 +15,12 @@ describe("default legal page drafts", () => {
       expect(page.body.startsWith("# ")).toBe(true);
       expect(page.body).toContain("{{effective_date}}");
       expect(page.body).toContain("{{last_updated}}");
-      expect(page.body).not.toMatch(/<\\/?script/i);
+      expect(page.body).not.toMatch(/<\/?script/i);
     }
     expect(pages.find(page => page.slug === "privacy-policy")?.audience).toBe("public");
     expect(pages.find(page => page.slug === "producer-terms")?.audience).toBe("producer");
     expect(pages.find(page => page.slug === "provider-terms")?.audience).toBe("provider");
+    expect(pages.find(page => page.slug === "provider-terms")?.body.toLowerCase()).toContain("gross profit");
   });
 
   it("detects every unfilled placeholder and allows completed copy", () => {
