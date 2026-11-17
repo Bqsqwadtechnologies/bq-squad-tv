@@ -56,12 +56,14 @@ The Zillionaire dashboard is the only top-level control centre. Configure only `
 - Use the protected Storage locations screen to discover and register destinations. Discovery and registration require a recent sign-in confirmation.
 - Do not create a new storage account or paid service to work around a missing credential. Keep credentials server-side and never expose them to browser or Android clients.
 
-## 6. Encrypted storage configuration backup (not active)
+## 6. Encrypted storage configuration backups (owner setup required)
 
-- Do not add `CONFIG_BACKUP_KEY` yet.
-- The source currently contains AES-GCM encryption/decryption safeguards only. Weekly export, backup-destination upload, eight-copy retention and owner restore are not integrated.
-- Do not treat backups as active or rely on this code for disaster recovery.
-- After the export and restore workflow is implemented, an adult account owner must select and verify a dedicated backup destination and test restore against a non-production copy before enabling scheduled backups.
+- The source now includes an AES-GCM export worker, a weekly task-queue hook, eight-copy retention, and a step-up-protected preview/apply restore route.
+- An adult account owner must generate a high-entropy `CONFIG_BACKUP_KEY` (at least 32 characters) and add it only in the hosting provider's server-side secret settings. Never share the value in chat or commit it.
+- Register a dedicated destination with purpose **Backup files**, verify its connection and usage, and confirm it has sufficient free capacity.
+- The backup worker runs only when the existing worker scheduler calls the maintenance schedule endpoint, the key is configured, and a healthy active backup destination exists. Confirm that the existing Modal scheduler invokes this endpoint weekly; do not assume a schedule exists until verified.
+- Restore is intentionally scoped: it restores existing non-legacy destination settings, preserves each destination's current connection-setting reference, marks restored locations unverified and rebuilds the pool index. It does not overwrite playback bindings or delivery ledgers. Run fresh health and usage checks after restore.
+- Test export and restore with a non-production copy before relying on the process for disaster recovery. The latest source changes have not yet passed CI or runtime tests.
 
 ## 7. Owner review checklist
 
@@ -82,6 +84,7 @@ The checker reports names only. Add or verify each name in the hosting provider'
 - `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` — Google Play Console API access service account credentials; server-side only.
 - `GOOGLE_PLAY_PACKAGE_NAME` — the Android application ID configured in the Play Console; this is a setting, not a credential.
 - `VIDEO_WORKER_KEYS_JSON` — JSON map of worker IDs to independent random credentials (each at least 48 characters); add only to the server environment and the Modal worker secret.
+- `CONFIG_BACKUP_KEY` — optional until an adult account owner configures and tests encrypted storage backups; server-side hosting secret only.
 - `MODAL_WAKE_URL` — the deployed Modal secured wake endpoint URL; store as a server-side setting.
 - `MODAL_WAKE_SECRET` — random secret of at least 32 characters shared by the API and Modal wake endpoint; secret-manager only.
 - `VIDEO_WORKER_LEASE_MINUTES` — optional server setting for the worker lease (default 10, bounded 2–30 minutes).
