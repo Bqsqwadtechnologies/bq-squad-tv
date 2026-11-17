@@ -214,7 +214,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
         hlsEncryptionEnabled: flags.hlsEncryption,
         ...(encryptedHlsKey ? { encryptedHlsKey } : {}),
         storagePath: masterKey, hlsManifestKey: masterKey,
-        actualHlsBytes: totalBytes, hlsVerifiedAt: now,
+        actualHlsBytes: totalBytes, streamBytes: totalBytes, hlsVerifiedAt: now,
         outputResolutions: body.outputResolutions ?? [],
         masterPlaylistValid: true, allSegmentsVerified: true,
         expectedObjectCount: body.files.length, uploadedObjectCount: listedObjects.length,
