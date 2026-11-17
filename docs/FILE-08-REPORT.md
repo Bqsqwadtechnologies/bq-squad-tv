@@ -27,6 +27,7 @@
 
 ## Verification
 - `scripts/scan-public-text.mjs`: **not run**. The repository runtime was not available in this session. No claim of a clean scan is made.
+- `node --check` on the standalone seed script syntax: **passed** using the current script source copied for syntax validation; the script itself and full repository scanner were not executed.
 - New `src/test/legal-acceptance.test.ts` coverage was committed but has not been executed.
 - Vitest: **not run**.
 - Website typecheck/build and Android build: **not run**.
@@ -40,7 +41,7 @@
 
 - The provider invitation flow and provider console are File 06 dependencies; provider acceptance must be called by that flow before invitation activation.
 - The owner still needs a complete Markdown editing, preview, diff and rollback interface. Current owner controls cover safe initial seeding, placeholder settings and publication but not the full editorial workflow.
-- Android initial acceptance is implemented in profile setup; Android sign-in reacceptance must be verified and completed against the same authenticated status endpoint before claiming cross-platform parity.
+- Android sign-up now requires the Terms and Privacy checkbox, records acceptance before profile completion, and checks the server's current-version status at sign-in/email verification. A changed version requiring renewed acceptance is shown with Terms and Privacy links before continuing. Device/build verification remains outstanding.
 - The Cookie Notice footer link currently leads to the cookie section in the Privacy Policy; there is no standalone Cookie Notice document.
 
 ## Dependencies outside File 08
