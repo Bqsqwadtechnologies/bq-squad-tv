@@ -270,7 +270,7 @@ def process_job(job: dict) -> None:
                 key_path.chmod(0o600)
                 key_info_path = root / "hls-key-info.txt"
                 key_uri = API_BASE + "/api/public/v1/streaming/key/" + asset_id
-                key_info_path.write_text(key_uri + "\\n" + str(key_path) + "\\n", encoding="utf-8")
+                key_info_path.write_text(key_uri + "\n" + str(key_path) + "\n", encoding="utf-8")
                 key_info_path.chmod(0o600)
             command = [
                 "nice", "-n", "10", "python", "/app/transcode.py", "--input", str(source),
