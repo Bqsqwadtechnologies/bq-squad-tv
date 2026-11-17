@@ -76,7 +76,7 @@ function NotificationsPage() {
           {busy ? <p className="mt-8 flex items-center justify-center gap-2 text-sm text-muted-foreground"><LoaderCircle className="animate-spin" size={18} /> Loading notifications…</p> : null}
           {error ? <p role="alert" className="mt-5 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm">{error}</p> : null}
           {!busy && !token ? <p className="mt-6 rounded-xl bg-muted p-4 text-sm">Sign in to view your notifications. <a href="/account" className="font-bold text-primary underline">Sign in</a>.</p> : null}
-          {!busy && token && items.length === 0 ? <div className="mt-8 rounded-2xl border border-dashed border-border p-8 text-center"><CheckCheck className="mx-auto text-primary" size={30} /><h2 className="mt-3 font-bold">You're all caught up</h2><p className="mt-1 text-sm text-muted-foreground">New account updates will appear here.</p></div> : null}
+          {!busy && token && items.length === 0 ? <div className="mt-8 rounded-2xl border border-dashed border-border p-8 text-center"><CheckCheck className="mx-auto text-primary" size={30} /><h2 className="mt-3 font-bold">All caught up</h2><p className="mt-1 text-sm text-muted-foreground">New account updates will appear here.</p></div> : null}
           <div className="mt-6 grid gap-3">
             {items.map(item => (
               <article key={item.id} className={"rounded-2xl border p-4 " + (item.read ? "border-border bg-background" : "border-primary/30 bg-primary/5")}>
