@@ -6,7 +6,7 @@ import { getPricingConfig } from "@/lib/server/pricing";
 import { consumeGooglePlayProduct } from "@/lib/server/google-play";
 import { creditGooglePlayPurchase, getGooglePlayProducts, googlePlayAccountId, verifyGooglePlayProduct } from "@/lib/server/google-play";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
-import { recordRiskSignal } from "@/lib/server/risk-engine";
+import { assertRiskStepUp, recordRiskSignal } from "@/lib/server/risk-engine";
 
 const schema = z.object({
   productId: z.string().min(1).max(150),
@@ -25,6 +25,7 @@ export const Route = createFileRoute("/api/public/v1/wallet/google-play/verify")
       if (packageName !== body.packageName) throw new ApiError(400, "PLAY_PACKAGE_MISMATCH", "The Android package name does not match this app.");
       const fs = await Firestore.create();
       await enforceRateLimit(fs, "play-verify:" + user.uid, { limit: 10, windowMs: 60_000 });
+      await assertRiskStepUp(fs, user.uid, user.authTime);
       const wallet = await getWallet(fs, user.uid);
       const currency = wallet.currency;
       const config = await getPricingConfig(fs);
