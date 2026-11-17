@@ -5,6 +5,7 @@ import { errorBody, getWallet, parseBody, requireUser } from "@/lib/server/api";
 import { getPricingConfig } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getPaystackTopup } from "@/lib/server/paystack";
+import { recordRiskSignal } from "@/lib/server/risk-engine";
 
 const schema = z.object({ packageId: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/) });
 
@@ -57,6 +58,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
         currency, provider: "paystack", status: "initializing",
         createdAt: new Date().toISOString(),
       }, { mustNotExist: true });
+      await recordRiskSignal(fs, user.uid, "topup");
       const response = await fetch("https://api.paystack.co/transaction/initialize", {
         method: "POST",
         headers: { authorization: "Bearer " + secret, "content-type": "application/json" },
@@ -69,6 +71,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
       const result = await response.json() as { status?: boolean; message?: string; data?: { authorization_url?: string; access_code?: string; reference?: string } };
       if (!response.ok || result.status !== true || !result.data?.authorization_url) {
         await markPaymentStatus(fs, "payments/paystack_" + reference, user.uid, "initialize_failed");
+        await recordRiskSignal(fs, user.uid, "failed_payment");
         throw new ApiError(502, "PAYSTACK_INITIALIZE_FAILED", "The payment provider could not start checkout.");
       }
       await markPaymentStatus(fs, "payments/paystack_" + reference, user.uid, "pending");
