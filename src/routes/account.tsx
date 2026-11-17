@@ -477,11 +477,7 @@ function AccountPage() {
                 </label>
                 {googleClientId ? (
                   <GoogleSignInButton clientId={googleClientId} onCredential={handleGoogleCredential} />
-                ) : (
-                  <p className="text-center text-xs text-blue-100/55">
-                    Google sign-in will appear here when the Google Web Client ID is configured.
-                  </p>
-                )}
+                ) : null}
                 <button
                   type="submit"
                   disabled={busy || !email.includes("@") || password.length < 6}
