@@ -100,6 +100,19 @@ def transcode_claimed_job(job: dict) -> None:
         raise
 
 
+@app.function(
+    image=image,
+    secrets=[worker_secret],
+    schedule=modal.Period(seconds=604800),
+    **MODAL_RESOURCE_CONFIG["maintenance"],
+)
+def schedule_storage_maintenance() -> None:
+    """Queue one bounded health-and-usage sweep per registered storage location weekly."""
+    import runner
+
+    runner.signed_request("POST", "/api/public/v1/worker/maintenance/schedule", {})
+
+
 @app.function(image=image, secrets=[worker_secret], **MODAL_RESOURCE_CONFIG["wake"])
 @modal.fastapi_endpoint(method="POST")
 def wake(request: Request) -> dict:
