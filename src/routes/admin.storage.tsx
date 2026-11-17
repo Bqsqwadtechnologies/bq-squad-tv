@@ -5,7 +5,7 @@ import { getWebAuthHeaders, signInWithEmailPassword } from "@/lib/firebase-web-a
 
 export const Route = createFileRoute("/admin/storage")({
   component: AdminStoragePage,
-  head: () => ({ meta: [{ title: "Storage destinations | BQ SQWAD TV" }] }),
+  head: () => ({ meta: [{ title: "Storage destinations | BQ SQWAD TV" }, { name: "robots", content: "noindex, nofollow, noarchive" }] }),
 });
 
 type Destination = {
