@@ -5,6 +5,7 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAdminModule } from "@/lib/server/roles";
 import { discoverStorageDestinations, storageMetadataFromDiscovery } from "@/lib/server/storage/discovery";
 import { writeAuditLog } from "@/lib/server/audit";
+import { rebuildStoragePoolIndex } from "@/lib/server/storage/pool-index";
 
 const bodySchema = z.object({
   reason: z.string().trim().min(3).max(1000),
@@ -109,6 +110,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/register-disc
         }
       }
 
+      await rebuildStoragePoolIndex(fs);
       await writeAuditLog(fs, {
         actorUid: user.uid,
         action: "storage.destinations_discovered_registered",
