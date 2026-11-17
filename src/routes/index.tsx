@@ -187,7 +187,7 @@ function HomePage() {
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             {featuredContent.map(item => (
-              <a key={item.id} href={"/channels/" + encodeURIComponent(item.channelId)} aria-label={"View " + item.title} className="group block overflow-hidden rounded-2xl border border-blue-100 bg-white">
+              <a key={item.id} href={"/content/" + encodeURIComponent(item.id)} aria-label={"View " + item.title} className="group block overflow-hidden rounded-2xl border border-blue-100 bg-white">
                 <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-gradient-to-br from-blue-100 via-sky-100 to-slate-100">
                   {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" /> : <Film size={48} className="text-blue-300" />}
                   <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-900/80 to-transparent px-3 pb-4 pt-12">
