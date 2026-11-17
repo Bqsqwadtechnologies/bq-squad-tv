@@ -26,9 +26,24 @@ export async function getRequiredLegalPages(fs: Firestore, audience: LegalAudien
 export async function assertLegalAcceptance(fs: Firestore, uid: string, audience: LegalAudience = "public"): Promise<void> {
   const pages = await getRequiredLegalPages(fs, audience);
   for (const page of pages) {
-    const accepted = await fs.getDoc("legalAcceptances/" + uid + "_" + page.slug + "_v" + page.version);
-    if (!accepted || accepted["uid"] !== uid || accepted["slug"] !== page.slug || accepted["version"] !== page.version) {
-      throw new ApiError(403, "LEGAL_ACCEPTANCE_REQUIRED", "Please review and accept the latest service terms and privacy notice before continuing.");
+    const exact = await fs.getDoc("legalAcceptances/" + uid + "_" + page.slug + "_v" + page.version);
+    let accepted = exact;
+    if (!accepted && !page.requiresReacceptance) {
+      const previous = await fs.query("legalAcceptances", {
+        filters: [
+          { field: "uid", op: "EQUAL", value: uid },
+          { field: "slug", op: "EQUAL", value: page.slug },
+        ],
+        orderByField: "version",
+        descending: true,
+        limit: 1,
+      });
+      accepted = previous[0] ?? null;
+    }
+    if (!accepted || accepted["uid"] !== uid || accepted["slug"] !== page.slug ||
+      !Number.isSafeInteger(accepted["version"]) ||
+      (page.requiresReacceptance && accepted["version"] !== page.version)) {
+      throw new ApiError(403, "LEGAL_ACCEPTANCE_REQUIRED", "Please review and accept the current service terms and privacy notice before continuing.");
     }
   }
 }
