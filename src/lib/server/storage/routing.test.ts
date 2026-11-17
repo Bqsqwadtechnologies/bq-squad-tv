@@ -69,8 +69,8 @@ describe("storage destination selection", () => {
       candidate("no-egress", { purpose: "hls_streaming", egressHeadroomBytes: null }),
     ], 1, "source_media", 0)).toBeNull();
     expect(pickDestination([
-      candidate("no-egress", { purpose: "hls_streaming", egressHeadroomBytes: 0 }),
-    ], 1, "hls_streaming", 0)).toBeNull();
+      candidate("zero-known-egress", { purpose: "hls_streaming", egressHeadroomBytes: 0 }),
+    ], 1, "hls_streaming", 0)?.id).toBe("zero-known-egress");
   });
 
   it("returns null when every candidate is full", () => {
