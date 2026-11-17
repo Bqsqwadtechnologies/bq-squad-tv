@@ -60,6 +60,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
             degradedUntil: degraded ? new Date(Date.now() + 24 * 60 * 60_000).toISOString() : null,
             updatedAt: now,
           });
+          await refreshStoragePoolDestination(fs, storageId).catch(() => undefined);
           await alert(code, message, degraded);
           await fs.patchDoc(taskPath, {
             phase: "done",
@@ -77,6 +78,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
             lastErrorCode: "STORAGE_DESTINATION_MISCONFIGURED",
             degradedUntil: null, updatedAt: now,
           });
+          await refreshStoragePoolDestination(fs, storageId).catch(() => undefined);
           await alert("STORAGE_DESTINATION_MISCONFIGURED", "The storage location needs its connection settings checked.", false);
           await fs.patchDoc(taskPath, { phase: "done", healthStatus: "misconfigured", updatedAt: now });
           return Response.json({ done: true, healthStatus: "misconfigured", error: "The storage location needs its connection settings checked." });
@@ -90,6 +92,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
               healthStatus: "healthy", healthCheckedAt: now, lastErrorCode: null,
               degradedUntil: null, updatedAt: now,
             });
+            await refreshStoragePoolDestination(fs, storageId).catch(() => undefined);
             await fs.patchDoc(taskPath, {
               phase: "listing", listingCursor: null, usageBytes: 0, objectCount: 0,
               healthStatus: "healthy", leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()),
@@ -120,16 +123,15 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
             });
             return Response.json({ done: false, processedObjectCount: page.objects.length });
           }
+          await updateStorageUsageAndPool(fs, storageId, totals.usageBytes, now);
           await fs.patchDoc("storageDestinations/" + storageId, {
-            usageBytes: totals.usageBytes,
-            usageSource: "provider_listing",
-            usageCheckedAt: now,
             healthStatus: "healthy",
             healthCheckedAt: now,
             lastErrorCode: null,
             degradedUntil: null,
             updatedAt: now,
           });
+          await refreshStoragePoolDestination(fs, storageId).catch(() => undefined);
           await fs.patchDoc(taskPath, {
             phase: "done", listingCursor: null,
             usageBytes: totals.usageBytes, objectCount: totals.objectCount,
