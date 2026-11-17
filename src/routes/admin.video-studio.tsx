@@ -5,6 +5,14 @@ import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 
 type Channel = { id: string; title: string; status: string; published: boolean };
 type UploadState = { name: string; progress: number; status: string; detail: string };
+type VideoJob = {
+  assetId: string; status: string; stage: string | null; progress: number;
+  attempts: number; workerId: string | null; lastHeartbeatAt: string | null;
+  lastErrorCode: string | null; profile: string; outputResolutions: number[];
+  outputBytes: number | null; modalEstimatedCostUsd: number | null;
+  queuePosition: number | null; createdAt: string | null; updatedAt: string | null;
+};
+type SpendSnapshot = { month: string; estimatedCostUsd: number; outputBytes: number; monthlyLimitUsd: number; override: boolean; pauseNewJobs: boolean };
 
 export const Route = createFileRoute("/admin/video-studio")({
   component: VideoStudio,
@@ -23,6 +31,8 @@ function VideoStudio() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [jobs, setJobs] = useState<VideoJob[]>([]);
+  const [spend, setSpend] = useState<SpendSnapshot | null>(null);
 
   async function loadChannels(idToken: string) {
     const response = await fetch("/api/public/v1/admin/channels", { headers: await getWebAuthHeaders(idToken), cache: "no-store" });
@@ -50,6 +60,47 @@ function VideoStudio() {
     })();
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+    let etag = "";
+    const refreshJobs = async () => {
+      try {
+        const response = await fetch("/api/public/v1/admin/video-jobs", {
+          headers: { ...(await getWebAuthHeaders(token)), ...(etag ? { "If-None-Match": etag } : {}) },
+          cache: "no-store",
+        });
+        if (response.status === 304 || !active) return;
+        if (!response.ok) return;
+        etag = response.headers.get("ETag") ?? etag;
+        const data = await response.json() as { jobs?: VideoJob[] };
+        if (active) setJobs(data.jobs ?? []);
+      } catch {
+        // Keep the last known job state during a temporary network interruption.
+      }
+    };
+    const refreshSpend = async () => {
+      try {
+        const response = await fetch("/api/public/v1/admin/config/modal-spend", {
+          headers: await getWebAuthHeaders(token),
+          cache: "no-store",
+        });
+        if (response.ok && active) setSpend(await response.json() as SpendSnapshot);
+      } catch {
+        // Cost telemetry is supplementary; do not hide job status when it is unavailable.
+      }
+    };
+    void refreshJobs();
+    void refreshSpend();
+    const jobTimer = window.setInterval(() => void refreshJobs(), 5_000);
+    const spendTimer = window.setInterval(() => void refreshSpend(), 60_000);
+    return () => {
+      active = false;
+      window.clearInterval(jobTimer);
+      window.clearInterval(spendTimer);
+    };
+  }, [token]);
 
   async function startUpload() {
     if (!token || !file || !channelId || busy) return;
@@ -115,6 +166,44 @@ function VideoStudio() {
           <div className="rounded-2xl border border-cyan-300/20 bg-[#07143d] p-5"><UploadCloud className="text-cyan-200" /><p className="mt-3 font-bold">1 · Secure upload</p><p className="mt-1 text-xs leading-5 text-blue-100/55">Private source storage, a short-lived upload authorization and server-side file verification.</p></div>
           <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5"><Clock3 className="text-cyan-200" /><p className="mt-3 font-bold">2 · Video processing</p><p className="mt-1 text-xs leading-5 text-blue-100/55">The video processing service is ready in the project, but its always-on host has not been deployed. Uploads remain on hold until processing is running and verified.</p></div>
           <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5"><ShieldCheck className="text-cyan-200" /><p className="mt-3 font-bold">3 · Rights & publishing</p><p className="mt-1 text-xs leading-5 text-blue-100/55">Independent rights review, final video checks and the existing publishing safeguards remain required.</p></div>
+        </div>
+        <div className="mt-8 grid gap-4 lg:grid-cols-[1fr_2fr]">
+          <section className="rounded-2xl border border-cyan-300/20 bg-[#07143d] p-5">
+            <h2 className="font-black">Monthly processing usage</h2>
+            {spend ? <>
+              <p className="mt-3 text-2xl font-black">${spend.estimatedCostUsd.toFixed(4)}</p>
+              <p className="mt-1 text-xs text-blue-100/55">Estimated compute cost for {spend.month} against a ${spend.monthlyLimitUsd.toFixed(2)} limit.</p>
+              <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-cyan-300" style={{ width: Math.min(100, spend.estimatedCostUsd / spend.monthlyLimitUsd * 100) + "%" }} />
+              </div>
+              <p className="mt-2 text-xs text-blue-100/55">{(spend.outputBytes / (1024 ** 3)).toFixed(2)} GiB of output transferred</p>
+              {spend.pauseNewJobs ? <p className="mt-2 text-xs font-bold text-amber-200">New processing is paused at the monthly limit.</p> : null}
+              {spend.override ? <p className="mt-2 text-xs font-bold text-amber-200">The monthly limit override is active.</p> : null}
+            </> : <p className="mt-3 text-xs text-blue-100/55">Monthly usage is not available for this account.</p>}
+          </section>
+          <section className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-black">Processing queue</h2>
+              <span className="text-xs text-blue-100/50">Refreshes every 5 seconds</span>
+            </div>
+            {jobs.length === 0 ? <p className="mt-4 text-sm text-blue-100/55">No video processing jobs have been recorded yet.</p> : (
+              <div className="mt-4 grid gap-3">
+                {jobs.map(job => <article key={job.assetId} className="rounded-xl border border-white/10 bg-[#030b2a] p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-sm font-bold">{job.status.replaceAll("_", " ")}</span>
+                    <span className="text-xs text-blue-100/55">{job.profile} · {job.attempts} attempts</span>
+                  </div>
+                  {job.queuePosition ? <p className="mt-1 text-xs text-blue-100/55">Queue position: {job.queuePosition}</p> : null}
+                  {job.stage ? <p className="mt-1 text-xs text-blue-100/55">{job.stage} · {Math.round(job.progress)}%</p> : null}
+                  {job.outputResolutions.length ? <p className="mt-1 text-xs text-blue-100/55">Output: {job.outputResolutions.map(height => height + "p").join(", ")}</p> : null}
+                  {job.workerId ? <p className="mt-1 text-xs text-blue-100/55">Worker: {job.workerId}</p> : null}
+                  {job.lastHeartbeatAt ? <p className="mt-1 text-xs text-blue-100/55">Last update: {new Date(job.lastHeartbeatAt).toLocaleString()}</p> : null}
+                  {job.modalEstimatedCostUsd !== null ? <p className="mt-1 text-xs text-blue-100/55">Estimated compute: ${job.modalEstimatedCostUsd.toFixed(4)}</p> : null}
+                  {job.lastErrorCode ? <p className="mt-1 text-xs text-amber-200">Needs attention: {job.lastErrorCode.replaceAll("_", " ").toLowerCase()}</p> : null}
+                </article>)}
+              </div>
+            )}
+          </section>
         </div>
         <div className="mt-8 rounded-3xl border border-white/10 bg-[#07143d] p-5 sm:p-7">
           <h2 className="text-xl font-black">Upload a movie source</h2>
