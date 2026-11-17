@@ -18,10 +18,11 @@ export function storageLedgerShard(key: string, shardCount = STORAGE_LEDGER_SHAR
 
 export function calculateEgressLevel(usedBytes: number, budgetBytes: number, allowPaidEgress = false): EgressLevel {
   if (!Number.isSafeInteger(usedBytes) || usedBytes < 0 || !Number.isSafeInteger(budgetBytes) || budgetBytes < 0) throw new RangeError("Invalid egress ledger values.");
-  if (budgetBytes === 0) return allowPaidEgress ? "paid" : "blocked";
+  // Paid egress is deliberately unavailable, even if a legacy caller passes true.
+  void allowPaidEgress;
+  if (budgetBytes === 0) return "blocked";
   const ratio = usedBytes / budgetBytes;
-  if (ratio >= 1) return allowPaidEgress ? "paid" : "blocked";
-  if (ratio >= 0.95) return allowPaidEgress ? "paid" : "blocked";
+  if (ratio >= 1 || ratio >= 0.95) return "blocked";
   if (ratio >= 0.85) return "throttle";
   if (ratio >= 0.70) return "warn";
   return "normal";
