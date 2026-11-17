@@ -18,13 +18,13 @@ The project must treat an exhausted or unknown allowance as unavailable and stop
 
 ## 2. Video-processing account spending limit
 
-1. Sign in to the existing video-processing account.
-2. Open **Settings** and locate the spending or usage limit.
-3. Have the billing owner confirm the account plan and included monthly compute allowance. The application-side monthly estimate limit defaults to **$25**. Keep the guard enabled; confirm any provider-side budget limit with the billing owner.
-4. Keep deployment manual through the repository's existing manual deployment workflow.
-5. Confirm the current usage and limit in the provider console.
+1. The adult billing owner signs in to the existing Modal workspace.
+2. Review the workspace plan, included compute credit, included network egress and actual usage.
+3. Keep the application spend guard enabled. Its monthly estimated compute limit defaults to **$25** and can be changed only from the Zillionaire dashboard with an audited reason.
+4. Set any provider-level workspace budget or alert supported by the current plan. The application guard is an extra control, not a replacement for provider billing limits.
+5. Keep the existing Modal deployment manual until the adult billing owner has reviewed the estimate and approved the deployment.
 
-Do not run load tests or raise concurrency to test the limit. The application must track estimated usage and pause new work before the configured monthly budget threshold.
+Do not run load tests or raise concurrency to test the limit. The application tracks estimated compute and output bytes and pauses new work at the configured monthly threshold.
 
 ## 3. Firestore expiry policy
 
