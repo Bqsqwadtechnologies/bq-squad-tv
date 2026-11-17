@@ -64,3 +64,19 @@ File 00 standing documentation is present on `main`. File 01 remains **partially
 ## Next file
 
 File 02 — Video engine hardening on the existing Modal pipeline. Preserve the current worker, queue, storage adapters, reservations, routing, egress controls and HLS format; improve only in place.
+
+
+## Follow-up verification and corrections (2026-11-17)
+
+The following additional direct-to-main commits were made after the initial report:
+
+- `706d36086cabe83a303d3e07b060028d8b2269c1` — refreshed the audit against the current source and corrected the status of already-completed and still-incomplete items.
+- `f96c320d129211f0b476b34f59b3e0efc2e470f0` — Android home profile action now displays the signed-in member's initial (or P) in a 48 dp ringed button; header row minimum height is 56 dp. Existing safe-drawing inset remains in place.
+- `7909b40201927f41c516223168d63772d30f3a81` — removed a duplicate `href` attribute from the website Search action.
+- `0beca54c6e8f05c26f67d15193ee56a467ba9d61` — wallet summary formats minor units using integer/BigInt arithmetic instead of floating-point division.
+- `cb86f6c734850c440b7b1e0adf81a4c020018cee` — replaced “Firebase user ID” with “member ID” on the producer team page and added crawler exclusion metadata.
+- `7923234e0144596bc360adab17bc54e782094f17` — added crawler exclusion metadata to the admin advertising settings page.
+- `1b01b5145314b91c60943f6de427be9b0cacb80e` — changed the producer workspace title to a generic title and added crawler exclusion metadata.
+- `e94244969ba4c9be36904c9421616680dbcbd83e` — updated the accessibility review with the profile avatar and header changes.
+
+These are source edits only. No scanner, build, type-check, lint, unit test, browser screenshot or Android emulator test was run. The hidden-console random-slug requirement remains deliberately unimplemented as a security mechanism; noindex and robots rules do not protect data. Producer and Downloads functionality remain preserved. File 01 is still partial, not complete.
