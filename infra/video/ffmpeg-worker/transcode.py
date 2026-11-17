@@ -201,6 +201,58 @@ def verify_hls_output(output_dir: Path) -> dict[str, int]:
             raise RuntimeError("An HLS rendition contains no media segments.")
     return {"renditionCount": len(variant_paths), "segmentCount": segment_count, "segmentBytes": total_segment_bytes}
 
+def generate_artwork(source: Path, output_dir: Path, duration: float, timeout_seconds: int) -> list[Path]:
+    """Create one poster, five seek thumbnails and a contact-sheet sprite."""
+    if not math.isfinite(duration) or duration <= 0:
+        raise ValueError("The source duration is invalid for artwork generation.")
+
+    outputs: list[Path] = []
+    samples = (
+        ("poster.jpg", 0.05),
+        ("thumbnail_01.jpg", 0.15),
+        ("thumbnail_02.jpg", 0.32),
+        ("thumbnail_03.jpg", 0.50),
+        ("thumbnail_04.jpg", 0.68),
+        ("thumbnail_05.jpg", 0.85),
+    )
+    for filename, fraction in samples:
+        timestamp = min(max(0.0, duration - 0.1), duration * fraction)
+        target = output_dir / filename
+        command = [
+            "ffmpeg", "-hide_banner", "-nostdin", "-y",
+            "-ss", f"{timestamp:.3f}", "-i", str(source),
+            "-map", "0:v:0", "-frames:v", "1",
+            "-vf", "scale='min(640,iw)':-2",
+            "-q:v", "3", "-threads", "1", str(target),
+        ]
+        run_checked(command, min(timeout_seconds, 600))
+        if not target.is_file() or target.stat().st_size < 1 or target.stat().st_size > 10 * 1024 * 1024:
+            raise RuntimeError("MEDIA_ARTWORK_INVALID")
+        outputs.append(target)
+
+    sprite = output_dir / "sprite.jpg"
+    inputs = [output_dir / f"thumbnail_{index:02d}.jpg" for index in range(1, 6)]
+    filters = [
+        f"[{index}:v]scale=320:180:force_original_aspect_ratio=decrease,"
+        f"pad=320:180:(ow-iw)/2:(oh-ih)/2,setsar=1[v{index}]"
+        for index in range(5)
+    ]
+    layout = "|".join(f"{index * 320}_0" for index in range(5))
+    filters.append("".join(f"[v{index}]" for index in range(5)) +
+                   f"xstack=inputs=5:layout={layout}:fill=black[out]")
+    sprite_command = [
+        "ffmpeg", "-hide_banner", "-nostdin", "-y",
+        *[argument for path in inputs for argument in ("-i", str(path))],
+        "-filter_complex", ";".join(filters), "-map", "[out]",
+        "-frames:v", "1", "-q:v", "4", "-threads", "1", str(sprite),
+    ]
+    run_checked(sprite_command, min(timeout_seconds, 600))
+    if not sprite.is_file() or sprite.stat().st_size < 1 or sprite.stat().st_size > 20 * 1024 * 1024:
+        raise RuntimeError("MEDIA_SPRITE_INVALID")
+    outputs.append(sprite)
+    return outputs
+
+
 def transcode(
     source: Path,
     output_dir: Path,
@@ -254,6 +306,7 @@ def transcode(
                 if durations and max(durations) <= 20:
                     write_master_playlist(output_dir, [native_variant])
                     verify_hls_output(output_dir)
+                    generate_artwork(source, output_dir, duration, processing_timeout)
                     return [native_variant]
             except (OSError, RuntimeError, ValueError):
                 pass
@@ -283,6 +336,7 @@ def transcode(
             run_checked(command, processing_timeout)
         write_master_playlist(output_dir, variants)
         verify_hls_output(output_dir)
+        generate_artwork(source, output_dir, duration, processing_timeout)
     except Exception:
         shutil.rmtree(output_dir, ignore_errors=True)
         raise
