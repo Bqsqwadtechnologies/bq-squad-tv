@@ -251,12 +251,17 @@ fun SettingsScreen(
         ListItem(
             headlineContent = { Text("Privacy notice") },
             supportingContent = { Text("Review the current publication status") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/privacy") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/legal/privacy-policy") },
+        )
+        ListItem(
+            headlineContent = { Text("Cookie notice") },
+            supportingContent = { Text("How we use necessary cookies and similar settings") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/legal/privacy-policy") },
         )
         ListItem(
             headlineContent = { Text("Terms of service") },
             supportingContent = { Text("Review the current publication status") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/terms") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/legal/terms") },
         )
     }
 }
