@@ -61,7 +61,7 @@ fun HomeScreen(
             error = null
             runCatching { repo.home() }
                 .onSuccess { catalog = it }
-                .onFailure { error = it.localizedMessage ?: "Could not load catalogue." }
+                .onFailure { error = com.bqsqwad.tv.ui.ErrorMessages.TRY_AGAIN }
             loading = false
         }
     }
@@ -197,7 +197,7 @@ fun HomeScreen(
             error != null ->
                 Column(Modifier.padding(20.dp)) {
                     Text("Catalogue unavailable", style = MaterialTheme.typography.titleLarge)
-                    Text(error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(com.bqsqwad.tv.ui.ErrorMessages.TRY_AGAIN, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     TextButton(onClick = { refresh() }) { Text("Retry") }
                 }
             catalog != null -> {
