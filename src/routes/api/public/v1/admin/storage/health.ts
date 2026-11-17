@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/health")({
         reason = body.reason;
         fs = await Firestore.create();
         const access = await requireAdminModule(fs, user, "system");
-        if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "Only the protected platform owner can test storage destinations.");
+        if (!access.isZillionaireOwner) throw new ApiError(403, "OWNER_ONLY", "Only the Zillionaire owner can test storage destinations.");
         const raw = await fs.getDoc("storageDestinations/" + destinationId);
         if (!raw) throw new ApiError(404, "STORAGE_DESTINATION_NOT_FOUND", "The storage destination could not be found.");
         const metadata = validateStorageDestinationMetadata({ ...raw, destinationId });
