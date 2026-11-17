@@ -140,6 +140,17 @@ def download_source(
     raise RuntimeError("SOURCE_DOWNLOAD_INCOMPLETE")
 
 
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as source:
+        while True:
+            chunk = source.read(1024 * 1024)
+            if not chunk:
+                break
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def content_type_for(path: Path) -> str:
     return {
         ".m3u8": "application/vnd.apple.mpegurl",
@@ -244,6 +255,10 @@ def process_job(job: dict) -> None:
             ensure_lease()
             download_source(job["sourceDownloadUrl"], source, int(job["sourceSizeBytes"]), lease_lost)
             ensure_lease()
+            source_sha256 = sha256_file(source)
+            expected_hash = job.get("sourceSha256")
+            if expected_hash and not hmac.compare_digest(str(expected_hash).lower(), source_sha256):
+                raise RuntimeError("SOURCE_HASH_MISMATCH")
             update_stage("encode", 0)
             command = [
                 "nice", "-n", "10", "python", "/app/transcode.py", "--input", str(source),
@@ -319,6 +334,7 @@ def process_job(job: dict) -> None:
             elapsed_seconds = max(0, int(time.monotonic() - started_at))
             signed_request("POST", f"/api/public/v1/worker/jobs/{asset_id}/complete", {
                 "claimToken": job["claimToken"],
+                "sourceSha256": source_sha256,
                 "files": manifest,
                 "computeUsage": {
                     "cores": float(job.get("modalCores", 2)),
