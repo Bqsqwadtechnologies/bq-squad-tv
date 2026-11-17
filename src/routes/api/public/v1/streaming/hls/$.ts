@@ -7,8 +7,6 @@ import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
 import { getUserProfile, requireAdultForContent } from "@/lib/server/api";
 import { loadStreamStorageConfiguration, createStorageDownloadTarget } from "@/lib/server/storage/transfers";
 import { resolveAssetStreamBinding } from "@/lib/server/storage/asset-binding";
-import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
-import { recordStorageEgress } from "@/lib/server/storage/egress";
 
 function sessionId(value: string | null): string {
   if (!value || !/^[A-Za-z0-9_-]{1,100}$/.test(value)) {
@@ -171,17 +169,8 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
               (typeof asset["streamDestinationId"] === "string" && storageConfig.metadata.healthStatus !== "healthy")) {
             throw new ApiError(503, "STREAM_DESTINATION_UNAVAILABLE", "The assigned streaming destination is not available.");
           }
-          const storageAdapter = createStorageProviderAdapter(storageConfig);
-          const objectInfo = await storageAdapter.headObject(resourcePath);
-          if (!objectInfo) throw new ApiError(404, "STREAM_RESOURCE_NOT_FOUND", "The requested media resource is unavailable.");
-          if (!Number.isSafeInteger(objectInfo.sizeBytes) || objectInfo.sizeBytes < 1) {
-            throw new ApiError(503, "STREAM_OBJECT_SIZE_UNKNOWN", "The media object size could not be verified for delivery.");
-          }
-          let egressLevel: Awaited<ReturnType<typeof recordStorageEgress>> | null = null;
-          if (typeof asset["streamDestinationId"] === "string") {
-            const highResolution = /(?:^|\/)v(?:720|1080)\//i.test(resourcePath);
-            egressLevel = await recordStorageEgress(fs, asset["streamDestinationId"], objectInfo.sizeBytes, highResolution);
-          }
+          // The grant and heartbeat endpoints account for expected delivery.
+          // Never read or update egress counters on the media-segment path.
           const signed = await createStorageDownloadTarget(storageConfig, resourcePath, 60);
           const upstreamHeaders = new Headers();
           const range = request.headers.get("range");
@@ -198,7 +187,7 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
 
           if (isPlaylist(resourcePath)) {
             let playlist = await upstream.text();
-            if (egressLevel === "throttle" && /(?:^|\/)master\.m3u8$/i.test(resourcePath)) {
+            if (session["streamQualityCap"] === 480 && /(?:^|\/)master\.m3u8$/i.test(resourcePath)) {
               playlist = capMasterPlaylistAt480p(playlist);
             }
             const rewritten = await rewritePlaylistForSession(playlist, resourcePath, sid, uid);
