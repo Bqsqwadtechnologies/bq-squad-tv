@@ -94,7 +94,7 @@ export function resolveAssetStorageBinding(
           (typeof asset["hlsManifestKey"] === "string" && asset["hlsManifestKey"].includes("/")
             ? asset["hlsManifestKey"].slice(0, asset["hlsManifestKey"].lastIndexOf("/")) : null));
   const objectPrefix = typeof rawPrefix === "string" && rawPrefix.length <= 1024 &&
-    !rawPrefix.startsWith("/") && !rawPrefix.includes("\\\\") &&
+    !rawPrefix.startsWith("/") && !rawPrefix.includes("\\") &&
     rawPrefix.split("/").every(part => part && part !== "." && part !== "..")
     ? rawPrefix.replace(/\\/$/, "")
     : null;
