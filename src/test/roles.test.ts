@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { requirePlatformRole, resolvePlatformAccess, isProtectedSuperAdmin } from "@/lib/server/roles";
+import {
+  requireAdminModule,
+  resolvePlatformAccess,
+  isProtectedZillionaire,
+} from "@/lib/server/roles";
 import type { Firestore } from "@/lib/server/firebase-admin";
 
 function fakeFirestore(user: Record<string, unknown> | null, producer: Record<string, unknown> | null) {
@@ -8,7 +12,7 @@ function fakeFirestore(user: Record<string, unknown> | null, producer: Record<st
   } as unknown as Firestore;
 }
 
-describe("platform role resolution", () => {
+describe("Zillionaire identity and delegated module permissions", () => {
   it("always grants the viewer baseline but does not activate unpaid producers", async () => {
     const fs = fakeFirestore({ roleTags: ["producer"] }, { planStatus: "PENDING" });
     const access = await resolvePlatformAccess(fs, "u1", "viewer@example.com");
@@ -22,7 +26,6 @@ describe("platform role resolution", () => {
     expect(access.roles).toContain("producer");
   });
 
-
   it("does not activate producer permissions until identity and legal verification is approved", async () => {
     const fs = fakeFirestore(
       { roleTags: ["producer"] },
@@ -33,106 +36,76 @@ describe("platform role resolution", () => {
     expect(access.roles).toEqual(["viewer"]);
   });
 
-  it("recognizes only the verified exact configured super-admin email case-insensitively", async () => {
+  it("recognizes only the verified exact configured Zillionaire owner email", async () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
     const fs = fakeFirestore(null, null);
     const access = await resolvePlatformAccess(fs, "u1", "OWNER@example.com", {}, true);
     expect(access.isSuperAdmin).toBe(true);
     expect(access.adminModules).toContain("pricing");
-    expect(isProtectedSuperAdmin("Owner@Example.com")).toBe(true);
+    expect(isProtectedZillionaire("Owner@Example.com")).toBe(true);
     vi.unstubAllEnvs();
   });
 
-  it("does not grant super-admin status until the configured email is verified", async () => {
+  it("does not grant Zillionaire control access until the configured email is verified", async () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
     const fs = fakeFirestore(null, null);
-    const access = await resolvePlatformAccess(fs, "u1", "owner@example.com", {}, false);
-    expect(access.isSuperAdmin).toBe(false);
-    expect(access.roles).toEqual(["viewer"]);
+    await expect(requireAdminModule(fs, {
+      uid: "owner-1", email: "owner@example.com", emailVerified: false,
+    }, "content")).rejects.toMatchObject({ status: 403 });
     vi.unstubAllEnvs();
   });
 
   it("accepts the server-recorded six-digit OTP proof when it matches the current email", async () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
-    const fs = fakeFirestore({
-      email: "OWNER@example.com",
-      appEmailVerified: true,
-    }, null);
-    const access = await requirePlatformRole(fs, {
-      uid: "owner-1",
-      email: "owner@example.com",
-      emailVerified: false,
-    }, "admin");
+    const fs = fakeFirestore({ email: "OWNER@example.com", appEmailVerified: true }, null);
+    const access = await requireAdminModule(fs, {
+      uid: "owner-1", email: "owner@example.com", emailVerified: false,
+    }, "content");
     expect(access.isSuperAdmin).toBe(true);
     expect(access.emailVerified).toBe(true);
     vi.unstubAllEnvs();
   });
 
-  it("does not accept an OTP verification record after the account email changes", async () => {
+  it("does not accept OTP verification after the account email changes", async () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
-    const fs = fakeFirestore({
-      email: "old@example.com",
-      appEmailVerified: true,
-    }, null);
-    await expect(requirePlatformRole(fs, {
-      uid: "owner-1",
-      email: "owner@example.com",
-      emailVerified: false,
-    }, "admin")).rejects.toMatchObject({ status: 403, code: "EMAIL_VERIFICATION_REQUIRED" });
+    const fs = fakeFirestore({ email: "old@example.com", appEmailVerified: true }, null);
+    await expect(requireAdminModule(fs, {
+      uid: "owner-1", email: "owner@example.com", emailVerified: false,
+    }, "content")).rejects.toMatchObject({ status: 403 });
     vi.unstubAllEnvs();
   });
 
-  it("requires verified email even when an administrator role is already assigned", async () => {
+  it("grants only explicitly delegated modules and ignores role tags or custom claims", async () => {
+    const fs = fakeFirestore({ roleTags: ["admin"], adminModules: ["pricing"] }, null);
+    await expect(requireAdminModule(fs, {
+      uid: "delegated-1", email: "delegated@example.com", emailVerified: true,
+      customClaims: { admin: true, adminModules: ["security", "payments"] },
+    }, "pricing")).resolves.toBeTruthy();
+    await expect(requireAdminModule(fs, {
+      uid: "delegated-1", email: "delegated@example.com", emailVerified: true,
+      customClaims: { admin: true, adminModules: ["security", "payments"] },
+    }, "security")).rejects.toMatchObject({ status: 403 });
+    const access = await resolvePlatformAccess(fs, "delegated-1", "delegated@example.com", {
+      admin: true, adminModules: ["security"],
+    }, true);
+    expect(access.roles).toEqual(["viewer"]);
+    expect(access.adminModules).toEqual(["pricing"]);
+  });
+
+  it("does not grant any control section from an old generic role tag", async () => {
     const fs = fakeFirestore({ roleTags: ["admin"] }, null);
-    await expect(
-      requirePlatformRole(fs, {
-        uid: "admin-1",
-        email: "admin@example.com",
-        emailVerified: false,
-        customClaims: { admin: true },
-      }, "admin"),
-    ).rejects.toMatchObject({ status: 403, code: "EMAIL_VERIFICATION_REQUIRED" });
+    await expect(requireAdminModule(fs, {
+      uid: "old-role", email: "old@example.com", emailVerified: true,
+      customClaims: { admin: true },
+    }, "overview")).rejects.toMatchObject({ status: 403 });
   });
 
-
-  it("does not preserve delegated module access from stale Firebase custom claims", async () => {
-    const fs = fakeFirestore({ roleTags: ["admin"] }, null);
-    const access = await resolvePlatformAccess(
-      fs,
-      "delegated-admin",
-      "delegated@example.com",
-      { admin: true, adminModules: ["pricing", "channels"] },
-      true,
-    );
-    expect(access.roles).toContain("admin");
-    expect(access.adminModules).toEqual([]);
-  });
-
-  it("supports the legacy ADMIN_EMAIL secret only when the new secret is absent", async () => {
-    vi.stubEnv("ADMIN_EMAIL", "legacy-owner@example.com");
-    const fs = fakeFirestore(null, null);
-    const access = await resolvePlatformAccess(fs, "u1", "legacy-owner@example.com", {}, true);
-    expect(access.isSuperAdmin).toBe(true);
-    vi.unstubAllEnvs();
-  });
-
-  it("prefers ZILLIONAIRE_EMAIL over the legacy ADMIN_EMAIL secret", async () => {
-    vi.stubEnv("ADMIN_EMAIL", "legacy-owner@example.com");
-    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
-    const fs = fakeFirestore(null, null);
-    const owner = await resolvePlatformAccess(fs, "u1", "owner@example.com", {}, true);
-    const legacy = await resolvePlatformAccess(fs, "u2", "legacy-owner@example.com", {}, true);
-    expect(owner.isSuperAdmin).toBe(true);
-    expect(legacy.isSuperAdmin).toBe(false);
-    vi.unstubAllEnvs();
-  });
-
-  it("does not grant super-admin status to aliases or partial email matches", async () => {
+  it("does not protect aliases or partial email matches as the Zillionaire owner", async () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
     const fs = fakeFirestore(null, null);
     const access = await resolvePlatformAccess(fs, "u1", "owner+alias@example.com", {}, true);
     expect(access.isSuperAdmin).toBe(false);
-    expect(isProtectedSuperAdmin("other@example.com")).toBe(false);
+    expect(isProtectedZillionaire("other@example.com")).toBe(false);
     vi.unstubAllEnvs();
   });
 });
