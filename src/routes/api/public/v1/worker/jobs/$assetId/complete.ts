@@ -144,6 +144,8 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       await fs.patchDoc("contentAssets/" + assetId, {
         status: "processed_pending_review", transcodeJobStatus: "completed", streamDestinationId: destinationId,
         ...(body.sourceSha256 ? { sourceSha256: body.sourceSha256.toLowerCase() } : {}),
+        hlsEncryptionEnabled: flags.hlsEncryption,
+        ...(encryptedHlsKey ? { encryptedHlsKey } : {}),
         streamObjectPrefix: prefix, storagePath: masterKey, hlsManifestKey: masterKey,
         actualHlsBytes: totalBytes, hlsVerifiedAt: now,
         outputResolutions: body.outputResolutions ?? [],
@@ -157,7 +159,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       const seconds = usage?.seconds ?? 0;
       const estimatedCostUsd = estimateModalComputeCost(cores, memoryGiB, seconds);
       const month = now.slice(0, 7);
-      const attempt = typeof job["attempts"] === "number" ? job["attempts"] : 1;
+      const attempt = typeof job["attemptSequence"] === "number" ? job["attemptSequence"] : 1;
       const usageId = month + "-" + assetId + "-a" + attempt;
       await fs.setDoc("modalUsage/" + usageId, {
         month, assetId, attempt, cores, memoryGiB, seconds,
