@@ -5,6 +5,7 @@ import { errorBody, parseBody } from "@/lib/server/api";
 import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 import { releaseStorageReservation } from "@/lib/server/storage/reservations";
 import { videoWorkerRetry } from "@/lib/server/video-worker-policy";
+import { wakeModalVideoWorker } from "@/lib/server/modal-wake";
 
 const schema = z.object({
   claimToken: z.string().regex(/^[a-f0-9]{32}$/),
@@ -28,6 +29,9 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/fail")
       const retry = videoWorkerRetry(attempts);
       const terminal = retry.terminal;
       const reservationId = typeof job["outputReservationId"] === "string" ? job["outputReservationId"] : "";
+      const abandonedPrefix = typeof job["outputPrefix"] === "string" ? job["outputPrefix"] : "";
+      const destinationId = typeof job["outputDestinationId"] === "string" ? job["outputDestinationId"] : "";
+      const attemptSequence = typeof job["attemptSequence"] === "number" ? job["attemptSequence"] : attempts;
       if (reservationId) await releaseStorageReservation(fs, reservationId);
       const now = new Date().toISOString();
       await fs.patchDoc(path, {
@@ -36,13 +40,29 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/fail")
         nextAttemptAt: retry.nextAttemptAt,
         claimToken: null, leaseExpiresAt: null,
         outputDestinationId: null, outputPrefix: null, outputReservationId: null, outputReservedBytes: null,
-        outputReservedBytes: null, lastErrorCode: body.errorCode,
+        lastErrorCode: body.errorCode,
         lastFailedAt: now, updatedAt: now,
       });
+      if (abandonedPrefix && destinationId) {
+        const cleanupId = "cleanup_" + assetId + "_a" + attemptSequence;
+        try {
+          await fs.setDoc("videoMaintenanceJobs/" + cleanupId, {
+            taskType: "delete_attempt_prefix",
+            payload: { assetId, prefix: abandonedPrefix, destinationId },
+            status: "queued",
+            attempts: 0,
+            createdAt: now,
+            updatedAt: now,
+          }, { mustNotExist: true });
+        } catch {
+          // An existing cleanup task is already responsible for this attempt folder.
+        }
+      }
       if (terminal) await fs.patchDoc("contentAssets/" + assetId, {
         status: "transcode_failed", transcodeJobStatus: "failed",
         transcodeErrorCode: body.errorCode, updatedAt: now,
       });
+      await wakeModalVideoWorker();
       return Response.json({ assetId, status: terminal ? "failed" : "queued", attempts });
     } catch (error) { return errorBody(error); }
   } } },
