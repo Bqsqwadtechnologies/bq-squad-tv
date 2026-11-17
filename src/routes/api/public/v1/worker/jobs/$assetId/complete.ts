@@ -56,6 +56,8 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       const prefix = typeof job["outputPrefix"] === "string" ? job["outputPrefix"] : "";
       const reservationId = typeof job["outputReservationId"] === "string" ? job["outputReservationId"] : "";
       if (!destinationId || !prefix || !reservationId) throw new ApiError(409, "WORKER_OUTPUT_NOT_RESERVED", "The HLS output destination was not reserved.");
+      const requestOrigin = new URL(request.url).origin;
+      let hlsKeyUriSeen = false;
       const keys = new Set<string>();
       let totalBytes = 0;
       for (const file of body.files) {
