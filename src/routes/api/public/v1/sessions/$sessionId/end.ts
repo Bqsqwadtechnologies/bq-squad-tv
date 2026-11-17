@@ -6,7 +6,7 @@ import { releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egre
 import {
   incrementalSessionCharge,
   maxAffordableSeconds,
-  producerShareMinor,
+  splitRevenueMinor,
   requireSessionOwned,
   safeAddMinor,
   toSessionSnapshot,
@@ -120,9 +120,11 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                 currentDocument: { exists: false },
               });
             }
-            const platformShare = charge.chargeMinor - (producerPath && producer
-              ? producerShareMinor(charge.chargeMinor, Math.min(10_000, Math.max(0, integer(session["producerShareBps"]))))
-              : 0);
+            const shareBps = producerPath && producer
+              ? Math.min(10_000, Math.max(0, integer(session["producerShareBps"])))
+              : 0;
+            const revenueSplit = splitRevenueMinor(charge.chargeMinor, shareBps);
+            const platformShare = revenueSplit.platformMinor;
             if (platformShare > 0) {
               writes.push({
                 update: {
@@ -141,8 +143,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
               });
             }
             if (producerPath && producer && charge.chargeMinor > 0) {
-              const shareBps = Math.min(10_000, Math.max(0, integer(session["producerShareBps"])));
-              const producerShare = producerShareMinor(charge.chargeMinor, shareBps);
+              const producerShare = revenueSplit.producerMinor;
               if (producerShare > 0) {
                 const currentBalances = producer["earningsBalanceByCurrency"] && typeof producer["earningsBalanceByCurrency"] === "object"
                   ? producer["earningsBalanceByCurrency"] as Record<string, unknown> : {};
