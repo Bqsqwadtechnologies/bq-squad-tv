@@ -13,6 +13,8 @@ type Summary = {
   channels: Array<{ id: string; title: string; status: string }>;
 };
 
+type LegalPage = { slug: string; title: string; version: number; accepted: boolean; body: string };
+
 type Earnings = {
   statement: Array<{ id: string; kind: string; amountMinor: number; currency: string; createdAt: string | null }>;
   payouts: Array<{ id: string; amountMinor: number; currency: string; status: string; createdAt: string | null }>;
@@ -41,9 +43,21 @@ function ProducerConsole() {
   const [earnings, setEarnings] = useState<Earnings | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [legalPages, setLegalPages] = useState<LegalPage[]>([]);
+  const [legalConsentChecked, setLegalConsentChecked] = useState(false);
+  const [legalBusy, setLegalBusy] = useState(false);
 
   async function load(idToken: string) {
     const headers = await getWebAuthHeaders(idToken);
+    const legalResponse = await fetch("/api/public/v1/legal/status?audience=producer", { headers, cache: "no-store" });
+    const legalResult = await legalResponse.json() as { pages?: LegalPage[]; acceptanceRequired?: boolean; error?: string };
+    if (!legalResponse.ok || !legalResult.pages) throw new Error(legalResult.error ?? "Producer terms could not be checked.");
+    if (legalResult.acceptanceRequired) {
+      setLegalPages(legalResult.pages);
+      setLegalConsentChecked(false);
+      return;
+    }
+    setLegalPages([]);
     const [summaryResponse, earningsResponse] = await Promise.all([
       fetch("/api/public/v1/producer/mobile-summary", { headers, cache: "no-store" }),
       fetch("/api/public/v1/producer/earnings", { headers, cache: "no-store" }),
@@ -71,6 +85,26 @@ function ProducerConsole() {
     })();
     return () => { active = false; };
   }, []);
+
+  async function acceptProducerTerms() {
+    if (!legalConsentChecked || !token || !legalPages.length || legalBusy) return;
+    setLegalBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/public/v1/legal/acceptance", {
+        method: "POST",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ audience: "producer", acceptedSlugs: legalPages.map(page => page.slug) }),
+      });
+      const result = await response.json() as { accepted?: boolean; error?: string };
+      if (!response.ok || !result.accepted) throw new Error(result.error ?? "Producer terms could not be accepted.");
+      await load(token);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Producer terms could not be accepted.");
+    } finally {
+      setLegalBusy(false);
+    }
+  }
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -127,7 +161,26 @@ function ProducerConsole() {
           </form>
         ) : null}
 
-        {token && !summary && !error ? <div className="mt-8 flex items-center gap-3 text-sm text-blue-100/60"><LoaderCircle className="animate-spin" /> Loading your workspace…</div> : null}
+        {token && legalPages.length ? (
+          <section className="mt-8 rounded-3xl border border-cyan-300/20 bg-[#07143d] p-5 sm:p-7">
+            <h2 className="text-2xl font-black">Review producer terms</h2>
+            <p className="mt-2 text-sm leading-6 text-blue-100/65">Review the current Terms, Privacy Policy, Producer Terms and Producer Content Policy before opening your workspace.</p>
+            <div className="mt-5 grid gap-3">
+              {legalPages.map(page => (
+                <details key={page.slug} className="rounded-xl border border-white/10 bg-[#030b2a] p-4">
+                  <summary className="cursor-pointer font-bold">{page.title} · version {page.version}</summary>
+                  <pre className="mt-4 max-h-80 overflow-auto whitespace-pre-wrap text-xs leading-6 text-blue-100/70">{page.body}</pre>
+                </details>
+              ))}
+            </div>
+            <label className="mt-5 flex items-start gap-3 text-sm text-blue-100/75">
+              <input type="checkbox" checked={legalConsentChecked} onChange={event => setLegalConsentChecked(event.target.checked)} className="mt-1 size-4 accent-cyan-300" />
+              <span>I have reviewed and accept all current producer documents.</span>
+            </label>
+            <button type="button" onClick={() => void acceptProducerTerms()} disabled={!legalConsentChecked || legalBusy} className="mt-5 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-extrabold text-[#031039] disabled:opacity-50">{legalBusy ? "Saving acceptance…" : "Accept and open Producer Console"}</button>
+          </section>
+        ) : null}
+        {token && !summary && !error && !legalPages.length ? <div className="mt-8 flex items-center gap-3 text-sm text-blue-100/60"><LoaderCircle className="animate-spin" /> Loading your workspace…</div> : null}
         {token && error ? <div role="alert" className="mt-8 rounded-2xl border border-rose-300/20 bg-rose-300/5 p-4 text-sm text-rose-200">{error}</div> : null}
 
         {summary ? <>
