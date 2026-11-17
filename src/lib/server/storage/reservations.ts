@@ -62,8 +62,8 @@ export async function reserveStorageDestination(
 ): Promise<StorageReservation> {
   if (!Number.isSafeInteger(input.incomingBytes) || input.incomingBytes < 1 ||
       (input.assetId !== undefined && !/^[A-Za-z0-9_-]{1,100}$/.test(input.assetId)) ||
-      (input.excludeDestinationIds !== undefined && (input.excludeDestinationIds.length > 8 || input.excludeDestinationIds.some(id => !/^[a-z0-9][a-z0-9_-]{1,79}$/.test(id)))) ||
-      (input.excludeAccountGroups !== undefined && (input.excludeAccountGroups.length > 8 || input.excludeAccountGroups.some(id => typeof id !== "string" || id.length < 2 || id.length > 100)))) {
+      (input.excludeDestinationIds !== undefined && (input.excludeDestinationIds.length > 16 || input.excludeDestinationIds.some(id => !/^[a-z0-9][a-z0-9_-]{1,79}$/.test(id)))) ||
+      (input.excludeAccountGroups !== undefined && (input.excludeAccountGroups.length > 16 || input.excludeAccountGroups.some(id => typeof id !== "string" || id.length < 2 || id.length > 100)))) {
     throw new ApiError(400, "STORAGE_RESERVATION_INVALID", "The storage reservation details are invalid.");
   }
   const reservationId = input.reservationId ?? crypto.randomUUID().replace(/-/g, "");
