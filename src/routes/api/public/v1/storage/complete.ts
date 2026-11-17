@@ -7,6 +7,7 @@ import { assertMediaMatchesExtension } from "@/lib/server/storage/security";
 import { writeAuditLog } from "@/lib/server/audit";
 import { loadSourceStorageConfiguration, inspectStorageObject } from "@/lib/server/storage/transfers";
 import { commitStorageReservation } from "@/lib/server/storage/reservations";
+import { wakeModalVideoWorker } from "@/lib/server/modal-wake";
 
 const bodySchema = z.object({
   assetId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),
@@ -99,6 +100,7 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             reason: "Source upload verified before transcoding",
             metadata: { channelId, mediaKind, sizeBytes: actualSize, sourceDestinationId },
           });
+          await wakeModalVideoWorker();
           return Response.json({ assetId, status: "uploaded_pending_transcode", sourceVerified: true, transcodeJobId: assetId, transcodeJobStatus: "queued", processingWorker: "waiting_for_worker" });
         } catch (error) {
           return errorBody(error);
