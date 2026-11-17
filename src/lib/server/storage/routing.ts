@@ -47,7 +47,7 @@ export function pickDestination(
       if (candidate.egressHeadroomBytes === null ||
         !Number.isSafeInteger(candidate.egressHeadroomBytes)) return false;
       const breaker = candidate.egressCircuitBreakerBytes ?? 0;
-      if (candidate.egressHeadroomBytes <= breaker) return false;
+      if (candidate.egressHeadroomBytes < breaker) return false;
     }
     return true;
   });
