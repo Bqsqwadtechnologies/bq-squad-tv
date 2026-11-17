@@ -117,7 +117,7 @@ export async function reserveStorageDestination(
       const destinationPath = "storageDestinations/" + selected.id;
       const reservationPath = "storageReservations/" + reservationId;
       const shardPath = "storagePool/" + selected.shardDocId;
-      const egressPath = "storageAccountEgress/" + storageAccountEgressId(selected.groupId);
+      const egressPath = "storageEgressState/" + storageAccountEgressId(selected.groupId);
       const readPaths = [
         cursorPath, destinationPath, groupPath, reservationPath, shardPath,
         ...(input.purpose === "hls_streaming" ? [egressPath] : []),
@@ -172,7 +172,7 @@ export async function reserveStorageDestination(
               throw new ApiError(409, "STORAGE_EGRESS_BUDGET_UNKNOWN", "The free data-transfer allowance must be checked before streaming.");
             }
             const monthKey = new Date().toISOString().slice(0, 7);
-            const used = egress?.["monthKey"] === monthKey ? safeBytes(egress["monthBytes"]) : 0;
+            const used = egress?.["monthKey"] === monthKey ? safeBytes(egress["monthExpectedBytes"]) : 0;
             if (calculateEgressLevel(used, budget, false) === "blocked") {
               throw new ApiError(409, "STORAGE_EGRESS_LIMIT_REACHED", "This storage account has reached its safe monthly delivery limit.");
             }
