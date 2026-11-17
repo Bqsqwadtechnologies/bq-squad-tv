@@ -1,4 +1,5 @@
 package com.bqsqwad.tv.ui.screens
+import com.bqsqwad.tv.ui.ErrorMessages
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,7 +24,7 @@ import com.bqsqwad.tv.data.catalog.*
     LaunchedEffect(channelId) {
         runCatching { repo.channel(channelId) }.onSuccess { detail = it }.onFailure {
             error =
-                it.localizedMessage ?: "Channel unavailable."
+                ErrorMessages.TRY_AGAIN
         }
     }
     Column(Modifier.fillMaxSize().padding(18.dp)) {
