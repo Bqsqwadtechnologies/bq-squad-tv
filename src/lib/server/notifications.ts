@@ -43,6 +43,12 @@ export async function sendPushNotificationToUser(
             message: {
               token: device.token,
               notification: { title: notification.title, body: notification.body },
+              android: {
+                notification: {
+                  icon: "ic_stat_bq_sqwad_tv",
+                  image: "https://tv.bqsqwad.com/brand/bq-sqwad-tv-logo.png",
+                },
+              },
               data: {
                 notificationId: notification.notificationId,
                 deepLink: notification.deepLink ?? "",
