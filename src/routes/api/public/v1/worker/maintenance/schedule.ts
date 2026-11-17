@@ -78,7 +78,43 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/schedule
           if (retryWrites.length) await fs.commit(retryWrites);
         }
       }
-      return Response.json({ scheduled: true, scheduleKey, queuedCount: pending.length });
+      const orphanDestinations = destinations.filter(row =>
+        row["purpose"] === "hls_streaming" &&
+        row.__id !== "legacy_lovable_streaming" &&
+        row["enabled"] === true &&
+        row["mode"] === "active",
+      );
+      const orphanWrites: FirestoreWrite[] = orphanDestinations.map(row => {
+        const taskId = "storage-orphan-" + scheduleKey + "-" + row.__id;
+        return {
+          update: {
+            name: fs.docName("videoMaintenanceJobs/" + taskId),
+            fields: encodeFields({
+              taskType: "storage_orphan_scan",
+              destinationId: row.__id,
+              scheduleKey,
+              payload: { destinationId: row.__id, prefix: "hls", cursor: null, pendingKeys: [], pendingIndex: 0 },
+              status: "queued",
+              attempts: 0,
+              reason: "Weekly scan for unreferenced streaming files",
+              createdAt: now,
+              updatedAt: now,
+            }),
+          },
+          currentDocument: { exists: false },
+        };
+      });
+      let orphanQueuedCount = 0;
+      if (orphanWrites.length) {
+        try {
+          await fs.commit(orphanWrites);
+          orphanQueuedCount = orphanWrites.length;
+        } catch (error) {
+          if (!(error instanceof ApiError) || error.status !== 409) throw error;
+          // Deterministic weekly task IDs make repeated scheduling idempotent.
+        }
+      }
+      return Response.json({ scheduled: true, scheduleKey, queuedCount: pending.length, orphanScanQueuedCount: orphanQueuedCount });
     } catch (error) { return errorBody(error); }
   } } },
 });
