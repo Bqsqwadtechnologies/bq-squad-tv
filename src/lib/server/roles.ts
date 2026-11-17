@@ -1,6 +1,6 @@
 import { ApiError, type Firestore } from "./firebase-admin";
 
-export type PlatformRole = "viewer" | "producer" | "admin";
+export type PlatformRole = "viewer" | "producer";
 export type AdminModule =
   | "overview" | "users" | "roles" | "producers" | "channels" | "content"
   | "pricing" | "wallets" | "payments" | "payouts" | "ads" | "notifications"
@@ -56,9 +56,8 @@ export async function resolvePlatformAccess(
   if (producerPlanActive && producerVerified && (storedRoles.includes("producer") || claimedRoles.includes("producer") || customClaims["producer"] === true)) {
     roles.push("producer");
   }
-  if (isSuperAdmin || storedRoles.includes("admin") || claimedRoles.includes("admin") || customClaims["admin"] === true) {
-    roles.push("admin");
-  }
+  // The Zillionaire identity is the only top-level control identity.
+  // Delegated access is expressed as individual module permissions, not an administrator role.
   // Delegated module permissions live in Firestore so the protected owner can
   // revoke them immediately; stale Firebase custom claims must not preserve access.
   const configuredScopes = stringArray(user?.["adminModules"])
@@ -98,8 +97,14 @@ export async function requireAdminModule(
   user: { uid: string; email: string | null; emailVerified?: boolean; customClaims?: Record<string, unknown> },
   module: AdminModule,
 ): Promise<PlatformAccess> {
-  const access = await requirePlatformRole(fs, user, "admin");
-  if (!access.adminModules.includes(module)) {
+  const access = await resolvePlatformAccess(
+    fs,
+    user.uid,
+    user.email,
+    user.customClaims,
+    user.emailVerified === true,
+  );
+  if (!access.isSuperAdmin && !access.adminModules.includes(module)) {
     throw new ApiError(403, "ADMIN_SCOPE_REQUIRED", "This account does not have permission to access this section.");
   }
   return access;
