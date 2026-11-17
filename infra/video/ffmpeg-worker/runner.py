@@ -380,17 +380,31 @@ def process_maintenance_task(task: dict) -> None:
     if not task_id or not claim_token:
         raise RuntimeError("MAINTENANCE_TASK_INVALID")
     deleted = 0
+    processed_objects = 0
+    usage_bytes = None
+    health_status = None
     for _ in range(1000):
         response = signed_request("POST", "/api/public/v1/worker/maintenance/run", {
             "taskId": task_id,
             "claimToken": claim_token,
         })
         deleted += int(response.get("deletedCount", 0))
+        if "processedObjectCount" in response:
+            processed_objects = int(response.get("processedObjectCount", 0))
+        if "usageBytes" in response:
+            usage_bytes = int(response["usageBytes"])
+        if "healthStatus" in response:
+            health_status = str(response["healthStatus"])
         if response.get("done") is True:
+            result = {"deletedObjectCount": deleted, "processedObjectCount": processed_objects}
+            if usage_bytes is not None:
+                result["usageBytes"] = usage_bytes
+            if health_status is not None:
+                result["healthStatus"] = health_status
             signed_request("POST", "/api/public/v1/worker/maintenance/complete", {
                 "taskId": task_id,
                 "claimToken": claim_token,
-                "result": {"deletedObjectCount": deleted},
+                "result": result,
             })
             return
     raise RuntimeError("MAINTENANCE_TASK_LIMIT")
