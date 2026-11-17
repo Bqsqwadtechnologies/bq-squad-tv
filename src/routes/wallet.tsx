@@ -215,7 +215,7 @@ function WalletPage() {
         {message && <p role="status" className="mt-5 rounded-xl border border-emerald-300/15 bg-emerald-300/5 p-4 text-sm text-emerald-100">{message}</p>}
         {error && <p role="alert" className="mt-5 rounded-xl border border-rose-300/15 bg-rose-300/5 p-4 text-sm text-rose-100">{error}</p>}
 
-        <section className="mt-8 rounded-3xl border border-white/10 bg-[#07143d] p-6 sm:p-8">
+        <section id="transactions" className="mt-8 rounded-3xl border border-white/10 bg-[#07143d] p-6 sm:p-8">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xl font-bold">Recent transactions</h2>
             <span className="text-xs text-blue-100/45">Newest first · up to 25 entries</span>
