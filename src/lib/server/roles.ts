@@ -85,7 +85,7 @@ export async function requirePlatformRole(
     user.emailVerified === true,
   );
   if (role === "admin" && !access.emailVerified) {
-    throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email address before accessing administrator tools.");
+    throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email address before accessing protected control tools.");
   }
   if (!access.roles.includes(role)) {
     throw new ApiError(403, "FORBIDDEN", "This account does not have the required platform role.");
@@ -100,14 +100,14 @@ export async function requireAdminModule(
 ): Promise<PlatformAccess> {
   const access = await requirePlatformRole(fs, user, "admin");
   if (!access.adminModules.includes(module)) {
-    throw new ApiError(403, "ADMIN_SCOPE_REQUIRED", "Your administrator account cannot access this module.");
+    throw new ApiError(403, "ADMIN_SCOPE_REQUIRED", "This account does not have permission to access this section.");
   }
   return access;
 }
 
 export function isProtectedSuperAdmin(
   targetEmail: string | null,
-  configuredAdminEmail = process.env["ZILLIONAIRE_EMAIL"] ?? process.env["ADMIN_EMAIL"],
+  configuredAdminEmail = process.env["ZILLIONAIRE_EMAIL"],
 ): boolean {
   return Boolean(
     configuredAdminEmail?.trim() &&
