@@ -71,7 +71,9 @@ export function estimatePlaybackProgressBytes(bitrateBps: number, seconds: numbe
       !Number.isSafeInteger(seconds) || seconds < 0 || seconds > 86_400) {
     throw new ApiError(400, "EGRESS_PROGRESS_INVALID", "The playback progress estimate is invalid.");
   }
-  return Math.ceil(bitrateBps * seconds / 8 * 1.1);
+  const bytes = (BigInt(bitrateBps) * BigInt(seconds) * 11n + 79n) / 80n;
+  if (bytes > BigInt(Number.MAX_SAFE_INTEGER)) throw new ApiError(400, "EGRESS_PROGRESS_INVALID", "The playback progress estimate is too large.");
+  return Number(bytes);
 }
 
 export async function reserveExpectedStorageEgress(
