@@ -4,6 +4,7 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { writeAuditLog } from "@/lib/server/audit";
+import { recordRiskSignal } from "@/lib/server/risk-engine";
 
 const schema = z.object({
   token: z.string().min(40).max(4096),
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/api/public/v1/devices/push-token")({
           reason: "A push-enabled device registered to the signed-in account",
           metadata: { platform: body.platform },
         });
+        await recordRiskSignal(fs, user.uid, "device_change");
       }
       return Response.json({ registered: true });
     } catch (error) { return errorBody(error); }
