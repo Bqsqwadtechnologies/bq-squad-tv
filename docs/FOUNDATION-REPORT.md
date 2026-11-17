@@ -150,3 +150,33 @@ The GitHub remote checkout attempt failed because the environment could not reso
 - Batch 4: contact delivery and page/status foundations committed. Legal text approval, status-flow integration and full accessibility verification remain.
 
 Producer Android screens, API client, repository, server routes and navigation remain preserved. Existing Downloads UI/navigation also remains untouched. File 01 is still not complete until the remaining work is implemented and all required checks run successfully.
+
+
+## Final four-batch checkpoint — 2026-11-17
+
+### Additional source corrections after the initial batch reports
+
+- Website owner wording was cleaned in the storage locations, video studio, advertising settings, pricing, monthly reports and data-structure pages. The owner-only Zillionaire title is now limited to the owner dashboard itself.
+- The admin module card now uses a plain-language setup status instead of exposing an API label, and its storage visibility filter matches the current “Storage locations” title.
+- The monthly reports page now uses exact minor-unit arithmetic for currency display and is excluded from search indexing.
+- Android catalogue, channel, search, wallet, profile, sign-in, producer and player failures now use the central safe-message mapping instead of displaying raw exception text. Existing producer functionality remains intact.
+- Android home header is fixed above the scrolling home content, still padded by the top safe-drawing inset.
+- The contact form now sends to the support mailbox through the existing email delivery integration. The endpoint validates input and applies per-email rate limiting.
+
+### Still blocked or incomplete
+
+- **Actual scanner hit list:** still not generated. Scanner execution requires a full checkout and Bun runtime. The scanner was expanded and known wording findings were manually corrected, but this is not a substitute for its actual output.
+- **Full website/Android wording cleanup:** known reported pages were corrected, but the entire source tree has not been scanned and confirmed clean.
+- **Small-screen/notch verification:** Android and website layouts have source-level corrections and a manual checklist, but no screenshots or emulator/browser run was possible.
+- **Complete shared-component adoption:** reusable foundations exist, but all screens have not been migrated; Learn More is not yet connected to the editable pages system.
+- **Complete theme coverage:** persistence and account synchronization exist, but older screens still contain fixed colors. A different account preference is reconciled after sign-in, not before the first unauthenticated HTML paint.
+- **Legal documents:** routes exist but remain publication-pending. Approved legal text and jurisdiction-specific review are required before publication.
+- **Status-page integration:** route screens exist but are not wired to every corresponding maintenance, offline, waiting-room, age and territory decision.
+- **Accessibility:** focus outlines, reduced motion, safe error messages, scalable Compose text and a subtitles control exist; full screen-reader, keyboard, 200% zoom, contrast and device testing remain outstanding.
+- **Automated checks:** scanner, secret-name checker, website build, TypeScript, lint, unit tests and Android Gradle tests remain not run. No GitHub status checks were reported for the latest commit at the time of this report.
+
+### Producer preservation
+
+The Android Producer screen, API client, repository, navigation and website/server producer features were not deleted. The Downloads placeholder also remains untouched. This preserves the explicit instruction to keep producer code.
+
+**File 01 remains incomplete and must not be marked complete.** The main blockers are actual scanner execution, full-tree cleanup confirmation, legal approval, full theme/component integration, status-flow integration and automated/device verification.
