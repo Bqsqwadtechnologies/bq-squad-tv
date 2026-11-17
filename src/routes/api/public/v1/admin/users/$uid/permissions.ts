@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
-import { isProtectedSuperAdmin, resolvePlatformAccess, type AdminModule } from "@/lib/server/roles";
+import { isProtectedZillionaire, resolvePlatformAccess, type AdminModule } from "@/lib/server/roles";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { writeAuditLog } from "@/lib/server/audit";
 
@@ -60,9 +60,8 @@ export const Route = createFileRoute("/api/public/v1/admin/users/$uid/permission
             const currentRoles = Array.isArray(current["roleTags"])
               ? (current["roleTags"] as unknown[]).filter((role): role is string => typeof role === "string")
               : [];
-            const roleTags = modules.length > 0
-              ? [...new Set([...currentRoles, "admin"])]
-              : currentRoles.filter(role => role !== "admin");
+            // Module permissions are not an administrator role. Keep role tags free of control-centre labels.
+            const roleTags = currentRoles.filter(role => role !== "admin");
             return {
               result: undefined,
               writes: [{
