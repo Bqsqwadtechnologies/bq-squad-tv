@@ -6,6 +6,7 @@ import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 import { videoWorkerLeaseExpiry } from "@/lib/server/video-worker-policy";
+import { accumulateStorageUsage, isStorageQuotaOrRateLimit, storageFailureCode, storageFailureMessage } from "@/lib/server/storage/maintenance";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
@@ -25,6 +26,126 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           Date.parse(task["leaseExpiresAt"]) <= Date.now()) {
         throw new ApiError(409, "MAINTENANCE_LEASE_INVALID", "The maintenance task lease is no longer valid.");
       }
+      if (task["taskType"] === "storage_health_usage") {
+        const payload = task["payload"] as Record<string, unknown> | undefined;
+        const storageId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
+        if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(storageId)) {
+          throw new ApiError(400, "STORAGE_MAINTENANCE_TARGET_INVALID", "The storage maintenance target is invalid.");
+        }
+        const raw = await fs.getDoc("storageDestinations/" + storageId);
+        if (!raw) throw new ApiError(404, "STORAGE_DESTINATION_NOT_FOUND", "The storage location could not be found.");
+        const metadata = validateStorageDestinationMetadata({ ...raw, destinationId: storageId });
+        const config = resolveStorageDestinationConfiguration(metadata);
+        const now = new Date().toISOString();
+        const alert = async (code: string, message: string, degraded: boolean) => {
+          const alertId = crypto.randomUUID().replace(/-/g, "");
+          await fs.setDoc("storageAlerts/" + alertId, {
+            destinationId: storageId,
+            severity: degraded ? "warning" : "error",
+            reasonCode: code,
+            message,
+            createdAt: now,
+            expiresAt: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+            acknowledged: false,
+          }).catch(() => undefined);
+        };
+        const failDestination = async (error: unknown) => {
+          const code = storageFailureCode(error);
+          const degraded = isStorageQuotaOrRateLimit(code);
+          const message = storageFailureMessage(code);
+          await fs.patchDoc("storageDestinations/" + storageId, {
+            healthStatus: degraded ? "degraded" : "unreachable",
+            healthCheckedAt: now,
+            lastErrorCode: code,
+            degradedUntil: degraded ? new Date(Date.now() + 24 * 60 * 60_000).toISOString() : null,
+            updatedAt: now,
+          });
+          await alert(code, message, degraded);
+          await fs.patchDoc(taskPath, {
+            phase: "done",
+            healthStatus: degraded ? "degraded" : "unreachable",
+            lastErrorCode: code,
+            updatedAt: now,
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()),
+          });
+          return Response.json({ done: true, healthStatus: degraded ? "degraded" : "unreachable", error: message });
+        };
+
+        if (config.configurationStatus !== "configured") {
+          await fs.patchDoc("storageDestinations/" + storageId, {
+            healthStatus: "misconfigured", healthCheckedAt: now,
+            lastErrorCode: "STORAGE_DESTINATION_MISCONFIGURED",
+            degradedUntil: null, updatedAt: now,
+          });
+          await alert("STORAGE_DESTINATION_MISCONFIGURED", "The storage location needs its connection settings checked.", false);
+          await fs.patchDoc(taskPath, { phase: "done", healthStatus: "misconfigured", updatedAt: now });
+          return Response.json({ done: true, healthStatus: "misconfigured", error: "The storage location needs its connection settings checked." });
+        }
+
+        const adapter = createStorageProviderAdapter(config);
+        if (task["phase"] !== "listing") {
+          try {
+            await adapter.healthCheck();
+            await fs.patchDoc("storageDestinations/" + storageId, {
+              healthStatus: "healthy", healthCheckedAt: now, lastErrorCode: null,
+              degradedUntil: null, updatedAt: now,
+            });
+            await fs.patchDoc(taskPath, {
+              phase: "listing", listingCursor: null, usageBytes: 0, objectCount: 0,
+              healthStatus: "healthy", leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()),
+              updatedAt: now,
+            });
+            return Response.json({ done: false, phase: "listing", processedObjectCount: 0 });
+          } catch (error) {
+            return await failDestination(error);
+          }
+        }
+
+        const cursor = typeof task["listingCursor"] === "string" ? task["listingCursor"] : null;
+        try {
+          const page = await adapter.listObjects("", cursor);
+          if (page.nextCursor && page.nextCursor === cursor) {
+            throw new ApiError(409, "STORAGE_LISTING_CURSOR_STALLED", "The storage listing did not advance.");
+          }
+          const totals = accumulateStorageUsage(
+            typeof task["usageBytes"] === "number" ? task["usageBytes"] : 0,
+            typeof task["objectCount"] === "number" ? task["objectCount"] : 0,
+            page.objects,
+          );
+          if (page.nextCursor) {
+            await fs.patchDoc(taskPath, {
+              listingCursor: page.nextCursor,
+              usageBytes: totals.usageBytes,
+              objectCount: totals.objectCount,
+              leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()),
+              updatedAt: now,
+            });
+            return Response.json({ done: false, processedObjectCount: page.objects.length });
+          }
+          await fs.patchDoc("storageDestinations/" + storageId, {
+            usageBytes: totals.usageBytes,
+            usageSource: "provider_listing",
+            usageCheckedAt: now,
+            healthStatus: "healthy",
+            healthCheckedAt: now,
+            lastErrorCode: null,
+            degradedUntil: null,
+            updatedAt: now,
+          });
+          await fs.patchDoc(taskPath, {
+            phase: "done", listingCursor: null,
+            usageBytes: totals.usageBytes, objectCount: totals.objectCount,
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+          });
+          return Response.json({
+            done: true, usageBytes: totals.usageBytes,
+            processedObjectCount: totals.objectCount, healthStatus: "healthy",
+          });
+        } catch (error) {
+          return await failDestination(error);
+        }
+      }
+
       if (task["taskType"] !== "delete_attempt_prefix") {
         throw new ApiError(400, "MAINTENANCE_TASK_UNSUPPORTED", "This maintenance task type is not supported by this worker version.");
       }
