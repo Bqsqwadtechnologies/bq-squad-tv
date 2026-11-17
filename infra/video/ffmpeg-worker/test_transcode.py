@@ -2,9 +2,10 @@ import hashlib
 import hmac
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
-from transcode import build_variant_ladder, verify_hls_output
+from transcode import build_variant_ladder, generate_artwork, verify_hls_output
 from runner import canonical_message
 
 
@@ -34,6 +35,34 @@ class WorkerSignatureVectorTests(unittest.TestCase):
             "97912dd55a4cb7b448da4c8bb30d9873ca76e6af398c861cd50a9eb1b4597cf6",
             hmac.new(secret, message, hashlib.sha256).hexdigest(),
         )
+
+
+class ArtworkGenerationTests(unittest.TestCase):
+    def test_creates_poster_five_thumbnails_and_sprite_sheet(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source.mp4"
+            source.write_bytes(b"source")
+
+            def fake_ffmpeg(command, timeout_seconds=10_800):
+                Path(command[-1]).write_bytes(b"image")
+
+            with unittest.mock.patch("transcode.run_checked", side_effect=fake_ffmpeg) as run:
+                outputs = generate_artwork(source, root, 120.0, 1800)
+
+            self.assertEqual(
+                ["poster.jpg", "thumbnail_01.jpg", "thumbnail_02.jpg",
+                 "thumbnail_03.jpg", "thumbnail_04.jpg", "thumbnail_05.jpg", "sprite.jpg"],
+                [path.name for path in outputs],
+            )
+            self.assertEqual(7, run.call_count)
+            self.assertTrue(all(path.is_file() and path.stat().st_size > 0 for path in outputs))
+            self.assertIn("xstack=inputs=5", run.call_args.args[0][run.call_args.args[0].index("-filter_complex") + 1])
+
+    def test_rejects_invalid_duration(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaises(ValueError):
+                generate_artwork(Path(temporary) / "source.mp4", Path(temporary), 0, 600)
 
 
 class VariantLadderTests(unittest.TestCase):
