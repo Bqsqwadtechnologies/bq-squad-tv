@@ -111,18 +111,26 @@ export async function rebuildStoragePoolIndex(
       ? 0
       : Math.max(0, capBytes - usageBytes - reservedBytes);
     const budgets = items.map(item => item.metadata.freeEgressBudgetBytes ?? null);
-    const paidChoices = items.map(item => item.metadata.paidEgressEnabled === true);
     const budgetValue = budgets[0] ?? null;
+    const dailyBudgets = items.map(item => item.metadata.dailyEgressCapBytes ?? item.metadata.freeEgressBudgetBytes ?? null);
+    const dailyBudgetValue = dailyBudgets[0] ?? null;
+    const paidChoices = items.map(item => item.metadata.paidEgressEnabled === true);
     const paidConsistent = paidChoices.every(value => value === false);
     const budgetConsistent = budgets.every(value => value === budgetValue);
+    const dailyBudgetConsistent = dailyBudgets.every(value => value === dailyBudgetValue);
     const ledger = await fs.getDoc("storageAccountEgress/" + storageAccountEgressId(groupId));
     const egressState = await fs.getDoc("storageEgressState/" + storageAccountEgressId(groupId));
     const egressUsed = egressState?.["monthKey"] === monthKey
       ? safeBytes(egressState["monthExpectedBytes"])
       : ledger?.["monthKey"] === monthKey ? safeBytes(ledger["monthBytes"]) : 0;
-    const egressHeadroomBytes = budgetConsistent && paidConsistent &&
-      typeof budgetValue === "number" && Number.isSafeInteger(budgetValue) && budgetValue >= 0
-      ? Math.max(0, budgetValue - egressUsed)
+    const dayKey = now.slice(0, 10);
+    const dailyUsed = egressState?.["dayKey"] === dayKey
+      ? safeBytes(egressState["dayExpectedBytes"])
+      : ledger?.["dayKey"] === dayKey ? safeBytes(ledger["dayBytes"]) : 0;
+    const egressHeadroomBytes = budgetConsistent && dailyBudgetConsistent && paidConsistent &&
+      typeof budgetValue === "number" && Number.isSafeInteger(budgetValue) && budgetValue >= 0 &&
+      typeof dailyBudgetValue === "number" && Number.isSafeInteger(dailyBudgetValue) && dailyBudgetValue >= 0
+      ? Math.min(Math.max(0, budgetValue - egressUsed), Math.max(0, dailyBudgetValue - dailyUsed))
       : null;
     const summary = { usageBytes, knownUsageBytes, unknownUsageCount, reservedBytes, capBytes, freeBytes, egressHeadroomBytes, destinationCount: items.length };
     groupSummaries.set(groupId, summary);
