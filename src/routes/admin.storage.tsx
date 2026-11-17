@@ -78,6 +78,14 @@ function AdminStoragePage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [destinationSearch, setDestinationSearch] = useState("");
+  const [visibleDestinationCount, setVisibleDestinationCount] = useState(40);
+  const filteredDestinations = destinations.filter(item => {
+    const query = destinationSearch.trim().toLowerCase();
+    return !query || [item.destinationId, item.accountAlias, item.bucketName, item.accountGroup, item.purpose, item.healthStatus]
+      .some(value => String(value ?? "").toLowerCase().includes(query));
+  });
+  const visibleDestinations = filteredDestinations.slice(0, visibleDestinationCount);
 
   async function loadDestinations(idToken: string) {
     const response = await fetch("/api/public/v1/admin/storage/destinations", {
@@ -298,8 +306,10 @@ function AdminStoragePage() {
             <div className="mt-8 grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]">
               <div className="grid content-start gap-3">
                 <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-bold">Registered locations</h2><div className="flex gap-3"><button onClick={() => void seedLegacyBuckets()} disabled={busy} className="text-xs font-bold text-cyan-200">Add existing locations</button><button onClick={() => void loadDestinations(token)} disabled={busy} className="text-xs font-bold text-cyan-200">Refresh</button></div></div>
-                {destinations.length === 0 ? <p className="rounded-2xl border border-white/10 bg-[#07143d] p-5 text-sm text-blue-100/55">No storage locations are registered yet.</p> : destinations.map(item => (
-                  <article key={item.destinationId} className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
+                <label className="grid gap-2 text-xs text-blue-100/60">Find a location<input type="search" value={destinationSearch} onChange={event => { setDestinationSearch(event.target.value); setVisibleDestinationCount(40); }} placeholder="Search name, reference, group or purpose" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+                <p className="text-xs text-blue-100/45">Showing {visibleDestinations.length} of {filteredDestinations.length} matching locations. Additional entries load as needed.</p>
+                {destinations.length === 0 ? <p className="rounded-2xl border border-white/10 bg-[#07143d] p-5 text-sm text-blue-100/55">No storage locations are registered yet.</p> : visibleDestinations.length === 0 ? <p className="rounded-2xl border border-white/10 bg-[#07143d] p-5 text-sm text-blue-100/55">No locations match this search.</p> : visibleDestinations.map(item => (
+                  <article key={item.destinationId} style={{ contentVisibility: "auto", containIntrinsicSize: "260px" }} className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div><h3 className="font-bold">{item.accountAlias}</h3><p className="mt-1 text-xs text-blue-100/55">{item.providerType === "lovable_storage" ? "Managed storage" : "Other storage service"}</p></div>
                       <span className={"rounded-full px-3 py-1 text-[10px] font-bold uppercase " + (item.configurationStatus === "configured" ? "bg-emerald-300/10 text-emerald-200" : "bg-amber-300/10 text-amber-200")}>{item.configurationStatus}</span>
@@ -314,6 +324,7 @@ function AdminStoragePage() {
                     <button onClick={() => editDestination(item)} className="mt-4 rounded-lg border border-cyan-300/25 px-3 py-2 text-xs font-bold text-cyan-200">Edit location details</button>
                   </article>
                 ))}
+                {visibleDestinations.length < filteredDestinations.length ? <button type="button" onClick={() => setVisibleDestinationCount(value => Math.min(value + 40, filteredDestinations.length))} disabled={busy} className="rounded-xl border border-cyan-300/25 px-4 py-3 text-xs font-bold text-cyan-200">Load next 40 locations</button> : null}
               </div>
               <form onSubmit={save} className="grid content-start gap-4 rounded-3xl border border-white/10 bg-[#07143d] p-5">
                 <div className="flex items-center gap-2"><Database className="text-cyan-200" size={20} /><h2 className="text-xl font-bold">Register location</h2></div>
