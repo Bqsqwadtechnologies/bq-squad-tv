@@ -104,3 +104,49 @@ These are source edits only. No scanner, build, type-check, lint, unit test, bro
 - No Android build, website build, type-check, lint, unit test, emulator or screenshot test was run. No compile or test success is claimed.
 
 Batch 3 is partially implemented; it is not a verified completion.
+
+
+## Four-batch continuation — Batch 4 progress (2026-11-17)
+
+### Committed implementation
+
+- Added a server-side contact endpoint with input validation, per-email rate limiting and support-mail delivery through the existing email service to `tv@bqsqwad.com`. The contact page now submits directly to this endpoint.
+- Added About, Contact, Privacy, Terms and Producer Terms website routes.
+- Added maintenance, offline, high-demand, country-unavailable and age-restriction website status routes; the root route already supplies the 404 view.
+- Added Android Compose status screens for maintenance, offline, high demand, country unavailability and age restriction.
+- Added date of birth to website account registration and connected it to the existing profile-completion endpoint. Added Terms and Privacy links to the sign-up view.
+- Added homepage and Android Settings links to the new About/Contact/legal routes.
+- Added global keyboard focus-visible outlines and reduced-motion CSS rules.
+- Added a fixed Android home header outside the scrolling content, preserving top safe-drawing/cutout padding and 48 dp action targets.
+
+### Batch 4 limitations
+
+- Privacy, Terms and Producer Terms are deliberately publication-pending notices with noindex metadata. They are page shells, not approved legal policies. The company must supply/review the actual policy text before public publication.
+- The new status pages are not yet wired to every maintenance, rate-limit, territory, age or offline decision path. The route screens exist; integration into all relevant app/API flows remains.
+- The contact endpoint uses the existing email delivery configuration. Delivery was not live-tested from this environment.
+- The 404 view exists in the root route; a separate `/404` route was not added.
+- Android status screens are reusable composables but have not yet been added to every navigation/error flow.
+- Accessibility work is source-level only. TalkBack/VoiceOver/NVDA, 200% browser zoom, full keyboard traversal, contrast measurements, player captions behavior and reduced-motion device tests remain unverified.
+- The Android header was structurally changed to remain fixed while content scrolls, but no small-screen or notch emulator/screenshot verification was possible.
+
+## Full-suite execution status
+
+All requested commands remain **not run** in this execution environment:
+- `bun run scan:public-text`
+- `bun run check:secret-names`
+- `bun run build`
+- `bun x tsc --noEmit`
+- `bun run lint`
+- `bun run test`
+- Android unit tests / Gradle verification
+
+The GitHub remote checkout attempt failed because the environment could not resolve `github.com`; no local Bun, Gradle, Android SDK, emulator or browser runtime is available. GitHub file operations were used for source review and direct commits only. No passing build/test result is claimed.
+
+## Overall state after the four-batch split
+
+- Batch 1: scanner coverage improved and baseline status documented, but the actual scanner output/hit list and wording cleanup are still blocked by the missing runtime.
+- Batch 2: source-level console authorization review completed for the 28 admin and 11 producer API route files; schema-inspector owner email mismatch fixed. Live security tests remain unrun.
+- Batch 3: account/device theme persistence, initial theme application, shared component foundations and currency updates committed. Full screen-wide theme adoption and Learn More page-system integration remain.
+- Batch 4: contact delivery and page/status foundations committed. Legal text approval, status-flow integration and full accessibility verification remain.
+
+Producer Android screens, API client, repository, server routes and navigation remain preserved. Existing Downloads UI/navigation also remains untouched. File 01 is still not complete until the remaining work is implemented and all required checks run successfully.
