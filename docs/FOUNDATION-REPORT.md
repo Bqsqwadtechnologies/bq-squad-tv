@@ -14,10 +14,10 @@ Branch: `main`
 - **Batch 05 — Hidden consoles:** partially implemented. Added `noindex, nofollow, noarchive` metadata to the dashboard, Video Studio, data-structure, storage and pricing screens; updated `public/robots.txt` to disallow `/admin`, `/producer` and `/api/`. These crawler directives are not access control. Random secret-path generation/rotation was deliberately not added: obscurity is not a substitute for the existing authenticated, server-authorized dashboard and could create brittle navigation. Identical unauthorized 404 handling and a complete per-request permission audit remain outstanding; server API handlers must continue enforcing authorization independently. Route-level chunk splitting remains subject to build output verification.
 - **Batch 06 — Android header:** added safe top inset handling and accessible vector search/notification/profile controls in `HomeScreen.kt`; replaced the bottom profile glyph with a vector icon. No emulator or notch screenshot test was run.
 - **Batch 07 — Website header:** enabled `viewport-fit=cover`; made the logo responsive; prioritised account and wallet controls; collapsed search/notifications under 381 px. Added `docs/QA-HEADER.md` with manual checks for 320, 360, 390, 430 and 768 px.
-- **Batch 08 — Themes:** added semantic light palette tokens to `src/styles.css` and a light Android Material theme. Theme persistence, account sync and first-paint flash prevention are not implemented.
+- **Batch 08 — Themes:** added semantic light palette tokens to `src/styles.css` and a light Android Material theme. Device theme persistence and account synchronization were added in the later continuation. Android waits for the account preference before showing the signed-in app; the website applies its local theme before paint and reconciles the account preference after session restoration.
 - **Batch 09 — Shared components:** added website primitives in `src/components/shared.tsx` (card, avatar, empty/error state, skeleton, list row, price chip, rating and segmented control). Android counterparts, bottom sheet, confirm dialog, toast and Learn more integration remain outstanding.
 - **Batch 10 — Currency:** wallet summary now returns `currencyCode`, `symbol`, `minorUnitDigits` and `formattedBalance`; added Android BigDecimal minor-unit formatter and unit tests for NGN, USD, GBP, GHS, KES, ZAR, JPY and KWD. Follow-up: web wallet formatting now reconstructs currency display from integer minor units rather than dividing through floating-point arithmetic. Android formatter integration throughout all wallet displays remains outstanding.
-- **Batch 11 — Producer/download scope:** producer code is intentionally preserved. The latest owner instruction explicitly says not to remove producer code, so no producer screens, repositories, routes, navigation or related functionality are to be deleted as part of File 01. This supersedes the earlier File 00 Batch 11 removal request. Downloads are also left untouched.
+- **Batch 11 — Producer/download scope:** producer code is intentionally preserved. The latest owner instruction explicitly says not to remove producer code, so no producer screens, repositories, routes, navigation or related functionality are to be deleted as part of File 01. This supersedes the earlier File 00 Batch 11 removal request. The Android Downloads placeholder and navigation destination were removed to preserve the online-only viewing model; no offline download capability is shipped.
 - **Batch 12 — Flags and client config:** expanded server defaults and owner update validation for live TV, provider console, HLS encryption, For You and reminders. Follow-up: added owner-only feature controls to the Zillionaire dashboard. Saves use the existing protected endpoint, require a reason, retain server-side owner authorization and write the existing audit record. Sensitive provider-console and encryption flags remain omitted from the public flag response. Android/client exposure and end-to-end verification remain outstanding.
 - **Batch 13 — Page set:** added functional authenticated channel search (`/search`) backed by the existing adult-filtered catalogue endpoint, channel detail and programme schedule (`/channels/$channelId`) backed by the existing protected channel endpoint, and a help centre (`/help`) with account/wallet guidance and the public support address. Homepage search controls and footer links now lead to these pages. Existing account and wallet routes are retained. Further owner/producer operational modules remain incomplete; no placeholder-only modules were invented.
 - **Batch 14 — Accessibility:** added `docs/ACCESSIBILITY.md` recording changes and unverified checks. A full accessibility audit has not been performed.
@@ -44,7 +44,7 @@ No tests are reported as passed.
 - Website and Android jargon cleanup is partial.
 - Light/dark preference persistence and cross-account sync are not implemented.
 - Full shared component set and the complete owner/producer operational page set are not implemented. Search, channel details and help are now present.
-- Producer code is preserved by explicit owner instruction; the earlier removal request is superseded. Download functionality is also preserved in this pass.
+- Producer code is preserved by explicit owner instruction; the earlier removal request is superseded. Offline downloads are not part of the online-only product model; the Android placeholder destination has been removed.
 - Expanded flag controls are wired into the owner dashboard, but owner login/save flow and audit records still require owner verification.
 - Currency output is not fully integrated throughout both clients.
 - Full accessibility, browser and device verification remains outstanding.
@@ -79,7 +79,7 @@ The following additional direct-to-main commits were made after the initial repo
 - `1b01b5145314b91c60943f6de427be9b0cacb80e` — changed the producer workspace title to a generic title and added crawler exclusion metadata.
 - `e94244969ba4c9be36904c9421616680dbcbd83e` — updated the accessibility review with the profile avatar and header changes.
 
-These are source edits only. No scanner, build, type-check, lint, unit test, browser screenshot or Android emulator test was run. The hidden-console random-slug requirement remains deliberately unimplemented as a security mechanism; noindex and robots rules do not protect data. Producer and Downloads functionality remain preserved. File 01 is still partial, not complete.
+These are source edits only. No scanner, build, type-check, lint, unit test, browser screenshot or Android emulator test was run. The hidden-console random-slug requirement remains deliberately unimplemented as a security mechanism; noindex and robots rules do not protect data. Producer functionality remains preserved. Offline downloads are not implemented. File 01 is still partial, not complete.
 
 
 ## Four-batch continuation — Batch 3 progress (2026-11-17)
@@ -149,14 +149,14 @@ A local working tree could not be established in this execution environment; no 
 - Batch 3: account/device theme persistence, initial theme application, shared component foundations and currency updates committed. Full screen-wide theme adoption and Learn More page-system integration remain.
 - Batch 4: contact delivery and page/status foundations committed. Legal text approval, status-flow integration and full accessibility verification remain.
 
-Producer Android screens, API client, repository, server routes and navigation remain preserved. Existing Downloads UI/navigation also remains untouched. File 01 is still not complete until the remaining work is implemented and all required checks run successfully.
+Producer Android screens, API client, repository, server routes and navigation remain preserved. The Android Downloads placeholder and tab have been removed; viewing remains online-only. File 01 is still not complete until the remaining work is implemented and all required checks run successfully.
 
 
 ## Final four-batch checkpoint — 2026-11-17
 
 ### Additional source corrections after the initial batch reports
 
-- Website owner wording was cleaned in the storage locations, video studio, advertising settings, pricing, monthly reports and data-structure pages. The owner-only Zillionaire title is now limited to the owner dashboard itself.
+- Website owner wording was cleaned in the storage locations, video studio, advertising settings, pricing, monthly reports and data-structure pages. The signed-in owner interface consistently uses the Zillionaire Dashboard name; no person is labelled Admin or Super Admin. The required owner identity setting is `ZILLIONAIRE_EMAIL`; no `ADMIN_EMAIL` setting is documented.
 - The admin module card now uses a plain-language setup status instead of exposing an API label, and its storage visibility filter matches the current “Storage locations” title.
 - The monthly reports page now uses exact minor-unit arithmetic for currency display and is excluded from search indexing.
 - Android catalogue, channel, search, wallet, profile, sign-in, producer and player failures now use the central safe-message mapping instead of displaying raw exception text. Existing producer functionality remains intact.
@@ -177,6 +177,39 @@ Producer Android screens, API client, repository, server routes and navigation r
 
 ### Producer preservation
 
-The Android Producer screen, API client, repository, navigation and website/server producer features were not deleted. The Downloads placeholder also remains untouched. This preserves the explicit instruction to keep producer code.
+The Android Producer screen, API client, repository, navigation and website/server producer features were not deleted. The Android Downloads placeholder and navigation entry have been removed to keep the service online-only. This preserves the explicit instruction to keep producer code.
 
 **File 01 remains incomplete and must not be marked complete.** The main blockers are actual scanner execution, full-tree cleanup confirmation, legal approval, full theme/component integration, status-flow integration and automated/device verification.
+
+## Latest UI and stability continuation — 2026-11-17
+
+### Badge 1 — Build blockers and dashboard identity
+- Repaired the invalid storage form state setter in `src/routes/admin.storage.tsx`.
+- Changed producer platform-upload authorization to use explicit content/channel module permissions instead of requesting an unsupported generic platform role. Updated the related permission test to assert the new safe error code and module-based access.
+- Updated the public flags test to include the current public flags: `liveTv`, `forYou` and `reminders`.
+- Reworded protected control pages to use **Zillionaire Dashboard** rather than Administrator/Admin labels. The owner identity remains `ZILLIONAIRE_EMAIL`; `ADMIN_EMAIL` is not part of the required secret list or owner checklist.
+- Tightened the scanner exception so the word Zillionaire is allowed only inside protected dashboard route files.
+
+### Badge 2 — Website discovery and status pages
+- Added authenticated Movies and Series browse pages with poster grids, category filters, account-aware loading and empty/error states. These pages currently show featured published assets returned by the existing home catalogue endpoint; a complete unfeatured movie/series catalogue endpoint is still needed for full catalog coverage.
+- Connected homepage Movies and Series quick-access links to the new pages and corrected featured-title links to use existing channel routes.
+- Added country-unavailable and waiting-room status routes; the age-restriction page and reusable status-page component already existed.
+- The homepage profile control now shows the signed-in member's initial, retains the generic person icon when signed out, and the bottom navigation has five destinations. The logo width has an intermediate compact breakpoint to avoid crowding at 400–430 px.
+- Existing country-aware public configuration supplies the signed-out currency symbol; signed-in wallet summary continues to override it with the established wallet currency.
+
+### Badge 3 — Android navigation and visual polish
+- Android bottom navigation now uses five accessible Material vector icons: Home, Live TV, Library, Settings and Profile. The Downloads placeholder destination and Wi-Fi-only-download setting were removed; viewing remains online-only.
+- Android account theme synchronization now gates the signed-in app surface until the saved account preference has been loaded, avoiding a visible theme switch after the home screen appears. The device preference still supplies the initial app theme.
+- Fixed the home content container so the entire home feed scrolls beneath the top-inset-aware header. The header retains a 56 dp minimum row and 48 dp search, notifications and profile controls.
+- Replaced quick-access text glyphs with Material vector icons and changed the Library catalogue to a two-column poster grid with horizontally scrollable category filters.
+- The Android account view now shows a ringed member avatar and Viewer badge. Sign-in and registration surfaces now link to Terms and Privacy.
+- Producer screens, API client, repository, routes and navigation remain intact.
+
+### Badge 4 — Current verification and remaining limits
+- The contact page submits through the existing validated, rate-limited contact API, which uses the configured email delivery service to send to `tv@bqsqwad.com`. Delivery has not been live-tested.
+- Privacy, Terms and Producer Terms remain publication-pending legal shells; approved company/legal text is still required.
+- Movies and Series pages are limited to featured content until a full catalogue endpoint is added.
+- No Android emulator or browser screenshot was available, so small-screen/notch appearance is not visually verified.
+- The public-text scanner, secret-name checker, website build, TypeScript check, lint, Vitest suite, Android Gradle unit tests and emulator tests remain **not run**. The repository workflows are configured for manual dispatch; no workflow dispatch action was available in this execution environment. No test or build pass is claimed.
+
+**This continuation is source-committed but not build-verified. File 01 and the UI work remain incomplete pending the full catalogue API, complete component/theme adoption, legal approval, scanner output, and automated/device verification.**
