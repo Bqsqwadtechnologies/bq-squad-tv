@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   Bell, ChevronRight, CirclePlay, Clapperboard,
   Film, Grid2X2, Home, Search, Settings, ShieldCheck, Signal,
-  Sparkles, Tv2, Smile, Play,
+  Sparkles, Tv2, Smile, Play, MoreHorizontal, UserRound,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -35,6 +35,7 @@ function HomePage() {
   const [activeNav, setActiveNav] = useState("Home");
   const [activeQuick, setActiveQuick] = useState("Live TV");
   const [notice, setNotice] = useState("");
+  const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
   const [featuredContent, setFeaturedContent] = useState<FeaturedItem[]>([]);
   const [channels, setChannels] = useState<ChannelItem[]>([]);
   const [catalogState, setCatalogState] = useState<"loading" | "ready" | "signed_out" | "error">("loading");
@@ -91,9 +92,9 @@ function HomePage() {
         <div className="absolute right-[-16rem] top-[30rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-[130px]" />
       </div>
 
-      <header className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between gap-5 px-4 py-5 sm:px-7 lg:px-10">
+      <header className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between gap-2 px-3 pb-4 pt-[calc(1.25rem+env(safe-area-inset-top))] sm:gap-5 sm:px-7 lg:px-10">
         <a href="#home" className="shrink-0" aria-label="BQ SQWAD TV home">
-          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-auto w-[168px] object-contain sm:w-[205px]" />
+          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-auto w-[120px] object-contain min-[400px]:w-[168px] sm:w-[205px]" />
         </a>
         <nav className="hidden items-center gap-8 text-sm font-semibold text-white/65 lg:flex">
           {nav.slice(0, 3).map(item => (
@@ -104,11 +105,18 @@ function HomePage() {
           ))}
           <a href="#family" className="transition hover:text-white">Kids & Family</a>
         </nav>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <a href="#library" aria-label="Search" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50 hover:text-cyan-200"><Search size={19} /></a>
-          <button onClick={() => setNotice("Notifications will appear here when your account is connected.")} aria-label="Notifications" className="relative grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50"><Bell size={18} /><span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-cyan-300" /></button>
-          <a href="/wallet" aria-label="Wallet" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-xs font-bold text-cyan-100 transition hover:border-cyan-300/50">{walletCurrencySymbol}</a>
-          <a href="/account" aria-label="Sign in or view account" className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-cyan-200/25 bg-[#08163e]"><img src="/brand/bq-sqwad-tv-logo.png" alt="" className="h-full w-full object-contain p-1" /></a>
+        <div className="relative flex shrink-0 items-center gap-1.5 sm:gap-3">
+          <a href="/account" aria-label="Sign in or view account" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-cyan-200/50 bg-[#08163e] text-cyan-100 ring-2 ring-cyan-300/15">
+            <UserRound size={21} aria-hidden="true" />
+          </a>
+          <a href="/wallet" aria-label="Wallet" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-xs font-bold text-cyan-100 transition hover:border-cyan-300/50">{walletCurrencySymbol}</a>
+          <a href="#library" aria-label="Search" className="hidden h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50 hover:text-cyan-200 min-[381px]:grid"><Search size={19} /></a>
+          <button onClick={() => setNotice("Notifications will appear here when your account is connected.")} aria-label="Notifications" className="relative hidden h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50 min-[381px]:grid"><Bell size={18} /><span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-cyan-300" /></button>
+          <button onClick={() => setHeaderMenuOpen(value => !value)} aria-label="More options" aria-expanded={headerMenuOpen} className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 min-[381px]:hidden"><MoreHorizontal size={20} /></button>
+          {headerMenuOpen ? <div className="absolute right-0 top-12 z-50 grid min-w-40 gap-1 rounded-xl border border-white/10 bg-[#07143d] p-2 shadow-xl min-[381px]:hidden">
+            <a href="#library" onClick={() => setHeaderMenuOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"><Search size={16} /> Search</a>
+            <button onClick={() => { setHeaderMenuOpen(false); setNotice("Notifications will appear here when your account is connected."); }} className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm"><Bell size={16} /> Notifications</button>
+          </div> : null}
         </div>
       </header>
 
