@@ -101,7 +101,7 @@ function ProducerConsole() {
     <main className="min-h-screen bg-[#030b2a] text-white">
       <header className="border-b border-cyan-300/15 bg-[#050f35]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5">
-          <a href="/"><img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="w-40" /></a>
+          <a href="/"><img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="w-40" /></a>
           <div className="flex items-center gap-3">
             <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-cyan-200">Producer Console</span>
             {token ? <button onClick={signOut} className="rounded-lg border border-white/10 p-2 text-blue-100/70" aria-label="Sign out"><LogOut size={17} /></button> : null}
