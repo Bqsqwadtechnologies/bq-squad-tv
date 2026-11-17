@@ -218,6 +218,9 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid) || !/^[A-Za-z0-9_-]{1,100}$/.test(sessionId)) {
             throw new ApiError(409, "WALLET_HOLD_RECORD_INVALID", "An expired viewing hold could not be verified.");
           }
+          if (holdRow.__id !== sessionId) {
+            throw new ApiError(409, "WALLET_HOLD_RECORD_INVALID", "A viewing hold does not match its session identifier.");
+          }
           const holdPath = "walletHolds/" + holdRow.__id;
           const walletPath = "wallets/" + uid;
           const sessionPath = "sessions/" + sessionId;
@@ -227,13 +230,23 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
             const hold = docs[1];
             const session = docs[2];
             const activeSessions = docs[3] ?? {};
-            if (!hold || hold["status"] !== "active" ||
-                typeof hold["expiresAt"] !== "string" || Date.parse(hold["expiresAt"]) > Date.now()) {
+            if (!hold || hold["status"] !== "active" || typeof hold["expiresAt"] !== "string") {
               return { result: false, writes: [] };
+            }
+            const expiresAt = Date.parse(hold["expiresAt"]);
+            if (!Number.isFinite(expiresAt)) {
+              throw new ApiError(409, "WALLET_HOLD_EXPIRY_INVALID", "A viewing hold has an invalid expiry and needs owner review.");
+            }
+            if (expiresAt > Date.now()) return { result: false, writes: [] };
+            if (session && session["uid"] !== uid) {
+              throw new ApiError(409, "WALLET_HOLD_SESSION_MISMATCH", "A viewing hold does not match its account.");
             }
             const amountMinor = typeof hold["amountMinor"] === "number" &&
               Number.isSafeInteger(hold["amountMinor"]) && hold["amountMinor"] >= 0
-              ? hold["amountMinor"] : 0;
+              ? hold["amountMinor"] : null;
+            if (amountMinor === null) {
+              throw new ApiError(409, "WALLET_HOLD_AMOUNT_INVALID", "A viewing hold amount needs owner review before release.");
+            }
             const heldBalance = typeof wallet["heldBalanceMinor"] === "number" &&
               Number.isSafeInteger(wallet["heldBalanceMinor"]) && wallet["heldBalanceMinor"] >= 0
               ? wallet["heldBalanceMinor"] : 0;
@@ -293,6 +306,9 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         const last = page[page.length - 1];
         const nextCursorValue = typeof last?.["expiresAt"] === "string" ? last["expiresAt"] : null;
         const nextCursorId = last?.__id ?? null;
+        if (page.length === 50 && (!nextCursorValue || !nextCursorId)) {
+          throw new ApiError(409, "WALLET_HOLD_CURSOR_UNAVAILABLE", "The expiry sweep paused because a viewing hold has no stable cursor.");
+        }
         const done = page.length < 50;
         await fs.patchDoc(taskPath, {
           payload: {
