@@ -349,7 +349,7 @@ function AccountPage() {
           {signedIn ? (
             <>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Account active</p>
-              <h1 className="mt-3 text-2xl font-black">Welcome to BQ SQWAD TV</h1>
+              <h1 className="mt-3 text-2xl font-black">Welcome back</h1>
               <p className="mt-3 break-all text-sm text-blue-100/70">{accountEmail}</p>
               <p className="mt-5 text-sm leading-6 text-blue-100/70">
                 Your account is signed in. Your wallet uses the currency assigned to your account country.
