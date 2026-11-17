@@ -313,7 +313,10 @@ function VideoStudio() {
                   {job.stage ? <p className="mt-1 text-xs text-blue-100/55">{job.stage} · {Math.round(job.progress)}%</p> : null}
                   {job.outputResolutions.length ? <p className="mt-1 text-xs text-blue-100/55">Output: {job.outputResolutions.map(height => height + "p").join(", ")}</p> : null}
                   {job.workerId ? <p className="mt-1 text-xs text-blue-100/55">Worker: {job.workerId}</p> : null}
-                  {job.lastHeartbeatAt ? <p className="mt-1 text-xs text-blue-100/55">Last update: {new Date(job.lastHeartbeatAt).toLocaleString()}</p> : null}
+                  {job.lastHeartbeatAt ? <p className="mt-1 text-xs text-blue-100/55">Last heartbeat: {(() => {
+                    const age = Math.max(0, Math.floor((Date.now() - Date.parse(job.lastHeartbeatAt!)) / 1000));
+                    return age < 60 ? age + " seconds ago" : age < 3600 ? Math.floor(age / 60) + " minutes ago" : Math.floor(age / 3600) + " hours ago";
+                  })()}</p> : null}
                   {job.modalEstimatedCostUsd !== null ? <p className="mt-1 text-xs text-blue-100/55">Estimated compute: ${job.modalEstimatedCostUsd.toFixed(4)}</p> : null}
                   {job.lastErrorCode ? <p className="mt-1 text-xs text-amber-200">Needs attention: {({
                     SOURCE_DOWNLOAD_FAILED: "The source video could not be downloaded. Retry the upload.",
@@ -327,7 +330,7 @@ function VideoStudio() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     {job.assetStatus === "processed_pending_review" ? <button type="button" onClick={() => void runJobAction(job, "approve")} disabled={savingJob === job.assetId || reviewReason.trim().length < 3} className="min-h-10 rounded-lg bg-cyan-300 px-3 text-xs font-bold text-[#03102d] disabled:opacity-40">Approve</button> : null}
                     {job.assetStatus === "ready" && job.contentStatus !== "published" ? <button type="button" onClick={() => void runJobAction(job, "publish")} disabled={savingJob === job.assetId || reviewReason.trim().length < 3} className="min-h-10 rounded-lg bg-blue-500 px-3 text-xs font-bold text-white disabled:opacity-40">Publish</button> : null}
-                    {["failed", "cancelled"].includes(job.status) ? <button type="button" onClick={() => void runJobAction(job, "retry")} disabled={savingJob === job.assetId || reviewReason.trim().length < 3} className="min-h-10 rounded-lg border border-white/20 px-3 text-xs font-bold text-white disabled:opacity-40">Retry</button> : null}
+                    {job.status === "failed" ? <button type="button" onClick={() => void runJobAction(job, "retry")} disabled={savingJob === job.assetId || reviewReason.trim().length < 3} className="min-h-10 rounded-lg border border-white/20 px-3 text-xs font-bold text-white disabled:opacity-40">Retry</button> : null}
                     {["queued", "processing"].includes(job.status) ? <button type="button" onClick={() => void runJobAction(job, "cancel")} disabled={savingJob === job.assetId || reviewReason.trim().length < 3} className="min-h-10 rounded-lg border border-amber-200/30 px-3 text-xs font-bold text-amber-100 disabled:opacity-40">Cancel</button> : null}
                   </div>
                 </article>)}
