@@ -115,13 +115,6 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
             ) {
                 Text("Continue with Google")
             }
-        } else {
-            Text(
-                text = "Google sign-in will appear here once the Google Web Client ID is configured.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth(),
-            )
         }
         Spacer(modifier = Modifier.height(12.dp))
         Button(
