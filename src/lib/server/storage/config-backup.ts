@@ -78,9 +78,9 @@ export async function decryptStorageConfigurationBackup(
       throw new Error("invalid envelope");
     }
     const plain = await crypto.subtle.decrypt(
-      { name: "AES-GCM", iv: base64ToBytes(envelope.iv) },
+      { name: "AES-GCM", iv: base64ToBytes(envelope["iv"] as string).slice().buffer as ArrayBuffer },
       await backupKey(secret),
-      base64ToBytes(envelope.ciphertext),
+      base64ToBytes(envelope["ciphertext"] as string).slice().buffer as ArrayBuffer,
     );
     const data = JSON.parse(decoder.decode(plain)) as StorageConfigurationBackup;
     assertNoBackupSecrets(data);
