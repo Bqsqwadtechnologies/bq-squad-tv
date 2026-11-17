@@ -26,7 +26,9 @@ export const Route = createFileRoute("/api/public/v1/admin/content-assets/$asset
       if (!asset) throw new ApiError(404, "ASSET_NOT_FOUND", "The video could not be found.");
       const review = validateContentApprovalRequirements(asset);
       const { posterKey, ageRating, territoryCount } = review;
-      const destinationId = typeof asset["streamDestinationId"] === "string" ? asset["streamDestinationId"] : "";
+      const destinationId = typeof asset["posterDestinationId"] === "string"
+        ? asset["posterDestinationId"]
+        : typeof asset["streamDestinationId"] === "string" ? asset["streamDestinationId"] : "";
       if (!posterKey || !isSafeStoragePath(posterKey) || !destinationId) {
         throw new ApiError(409, "CONTENT_POSTER_REQUIRED", "A verified poster image is required before approval.");
       }
