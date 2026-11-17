@@ -68,7 +68,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                   },
                   {
                     update: { name: fs.docName(holdPath), fields: encodeFields({ amountMinor: 0, status: "released", expiresAt: null, updatedAt: nowIso }) },
-                    updateMask: { fieldPaths: ["amountMinor", "status", "updatedAt"] },
+                    updateMask: { fieldPaths: ["amountMinor", "status", "expiresAt", "updatedAt"] },
                     ...(docs[3] ? {} : { currentDocument: { exists: false } }),
                   },
                 ],
@@ -125,7 +125,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                   name: fs.docName(holdPath),
                   fields: encodeFields({ amountMinor: 0, status: "released", expiresAt: null, updatedAt: nowIso }),
                 },
-                updateMask: { fieldPaths: ["amountMinor", "status", "updatedAt"] },
+                updateMask: { fieldPaths: ["amountMinor", "status", "expiresAt", "updatedAt"] },
                 ...(docs[3] ? {} : { currentDocument: { exists: false } }),
               },
               {
