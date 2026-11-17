@@ -174,7 +174,7 @@ export async function reserveStorageDestination(
             throw new ApiError(409, "STORAGE_ACCOUNT_CAPACITY_CHANGED", "The shared storage account has insufficient remaining capacity.");
           }
           if (input.purpose === "hls_streaming") {
-            if (metadata.paidEgressEnabled === true) {
+            if ((metadata as { paidEgressEnabled?: boolean }).paidEgressEnabled === true) {
               throw new ApiError(409, "STORAGE_PAID_EGRESS_DISABLED", "Paid data transfer is disabled for this service.");
             }
             const budget = metadata.freeEgressBudgetBytes;
