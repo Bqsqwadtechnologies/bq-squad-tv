@@ -21,6 +21,20 @@ export type StorageReservation = {
 function safeBytes(value: unknown): number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : 0;
 }
+async function alertStorageCapacityUnavailable(fs: Firestore, purpose: StoragePurpose, incomingBytes: number): Promise<void> {
+  const id = crypto.randomUUID().replace(/-/g, "");
+  await fs.setDoc("storageAlerts/" + id, {
+    severity: "error",
+    reasonCode: "STORAGE_CAPACITY_UNAVAILABLE",
+    purpose,
+    requestedBytes: incomingBytes,
+    message: "No verified storage location currently has enough safe free space. New uploads are paused until capacity is checked.",
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+    acknowledged: false,
+  }).catch(() => undefined);
+}
+
 function storageRoutingPath(purpose: StoragePurpose): string {
   return "storageRouting/" + purpose;
 }
@@ -206,7 +220,8 @@ export async function reserveStorageDestination(
       await rebuildStoragePoolIndex(fs, [input.purpose]);
       continue;
     }
-    throw new ApiError(507, "STORAGE_CAPACITY_UNAVAILABLE", "No verified storage location currently has enough available capacity.");
+    await alertStorageCapacityUnavailable(fs, input.purpose, input.incomingBytes);
+    throw new ApiError(507, "STORAGE_CAPACITY_UNAVAILABLE", "No verified storage location currently has enough safe free space. New uploads are paused until capacity is checked.");
   }
   throw new ApiError(409, "STORAGE_ROUTING_CONFLICT", "Storage capacity changed repeatedly; retry the upload.");
 }
