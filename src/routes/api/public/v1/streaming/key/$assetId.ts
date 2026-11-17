@@ -103,7 +103,9 @@ export const Route = createFileRoute("/api/public/v1/streaming/key/$assetId")({
       const encodedKey = await decryptHlsContentKey(envelope, assetId, wrappingKey.keyBase64Url);
       const keyBytes = decodeBase64Url(encodedKey);
       if (keyBytes.length !== 16) throw new ApiError(500, "STREAM_KEY_INVALID", "The protected content key is invalid.");
-      return new Response(keyBytes, {
+      const keyBody = new ArrayBuffer(keyBytes.byteLength);
+      new Uint8Array(keyBody).set(keyBytes);
+      return new Response(keyBody, {
         status: 200,
         headers: {
           "content-type": "application/octet-stream",
