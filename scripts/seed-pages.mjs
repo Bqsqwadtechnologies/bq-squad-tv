@@ -15,7 +15,7 @@ if (pages.some(page => typeof page.body !== "string" || !page.body.startsWith("#
 }
 console.log("Validated draft pages:", pages.map(page => page.slug).join(", "));
 console.log("Unfilled placeholders:", placeholders.join(", "));
-const baseUrl = process.env.BQ_SQWAD_TV_BASE_URL?.replace(/\\/$/, "");
+const baseUrl = process.env.BQ_SQWAD_TV_BASE_URL?.replace(/\/$/, "");
 const token = process.env.BQ_SQWAD_TV_OWNER_TOKEN;
 if (!baseUrl || !token) {
   console.log("No remote write performed. Use the signed-in owner dashboard's Load default pages action, or set BQ_SQWAD_TV_BASE_URL and BQ_SQWAD_TV_OWNER_TOKEN in a secure local environment.");
