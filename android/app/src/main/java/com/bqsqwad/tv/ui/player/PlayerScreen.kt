@@ -1,4 +1,5 @@
 package com.bqsqwad.tv.ui.player
+import com.bqsqwad.tv.ui.ErrorMessages
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
@@ -89,7 +90,7 @@ fun PlayerScreen(
                 error = null
             }.onFailure {
                 error =
-                    it.localizedMessage ?: "Could not start a secure viewing session."
+                    ErrorMessages.TRY_AGAIN
             }
     }
     DisposableEffect(session?.sessionId) {
