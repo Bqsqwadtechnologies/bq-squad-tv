@@ -13,6 +13,7 @@ import { commitStorageReservation } from "@/lib/server/storage/reservations";
 import { addVerifiedAssetStreamReplica, bindAssetStreamStorage } from "@/lib/server/storage/asset-binding";
 import { isExpiredTemporaryObject } from "@/lib/server/storage/cleanup";
 import { nextHealthRecoveryState } from "@/lib/server/storage/failover";
+import { confirmOrphanDeletion } from "@/lib/server/storage/cleanup";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
@@ -423,6 +424,140 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         await rebuildStoragePoolIndex(fs, ["hls_streaming"]);
         await fs.patchDoc(taskPath, { phase: "done", completedAt: now, updatedAt: now });
         return Response.json({ done: true, deletedCount: typeof task["deletedObjectCount"] === "number" ? task["deletedObjectCount"] : 0 });
+      }
+
+      if (task["taskType"] === "storage_orphan_scan") {
+        const payload = task["payload"] as Record<string, unknown> | undefined;
+        const destinationId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
+        if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId) || destinationId === "legacy_lovable_streaming") {
+          throw new ApiError(400, "ORPHAN_SCAN_DESTINATION_INVALID", "This location cannot be scanned for automatic cleanup.");
+        }
+        const raw = await fs.getDoc("storageDestinations/" + destinationId);
+        if (!raw) throw new ApiError(404, "ORPHAN_SCAN_DESTINATION_MISSING", "The streaming location could not be found.");
+        const metadata = validateStorageDestinationMetadata({ ...raw, destinationId });
+        if (metadata.purpose !== "hls_streaming" || metadata.mode === "retired") {
+          throw new ApiError(409, "ORPHAN_SCAN_DESTINATION_UNSAFE", "Only registered streaming locations can be scanned.");
+        }
+        const config = resolveStorageDestinationConfiguration(metadata);
+        if (config.configurationStatus !== "configured") throw new ApiError(503, "ORPHAN_SCAN_DESTINATION_MISCONFIGURED", "The streaming location needs its connection settings checked.");
+        const adapter = createStorageProviderAdapter(config);
+        const cursor = typeof payload?.["cursor"] === "string" ? payload["cursor"] : null;
+        const pendingKeys = Array.isArray(payload?.["pendingKeys"])
+          ? payload["pendingKeys"].filter((key): key is string => typeof key === "string") : [];
+        const pendingIndex = typeof payload?.["pendingIndex"] === "number" ? payload["pendingIndex"] : 0;
+        const listingNextCursor = typeof payload?.["listingNextCursor"] === "string" ? payload["listingNextCursor"] : null;
+        if (pendingIndex < pendingKeys.length) {
+          const batch = pendingKeys.slice(pendingIndex, pendingIndex + 40);
+          for (const key of batch) {
+            const match = key.match(/^hls\/([A-Za-z0-9_-]{1,100})\/a[1-9][0-9]*\/.+$/);
+            if (!match?.[1]) continue;
+            const assetId = match[1];
+            const asset = await fs.getDoc("contentAssets/" + assetId);
+            let referenced = false;
+            if (asset) {
+              const replicas = Array.isArray(asset["streamReplicaIds"])
+                ? asset["streamReplicaIds"].filter((id): id is string => typeof id === "string") : [];
+              if (replicas.includes(destinationId)) referenced = true;
+              if (asset["streamDestinationId"] === destinationId) {
+                const currentPrefix = [asset["objectPrefix"], asset["streamObjectPrefix"]]
+                  .find(value => typeof value === "string" && value.startsWith("hls/" + assetId + "/"));
+                const manifest = typeof asset["hlsManifestKey"] === "string" ? asset["hlsManifestKey"] : "";
+                if ((typeof currentPrefix === "string" && key.startsWith(currentPrefix + "/")) ||
+                    (manifest && key.startsWith(manifest.slice(0, manifest.lastIndexOf("/") + 1)))) referenced = true;
+              }
+            }
+            if (referenced) continue;
+            const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(destinationId + ":" + key)));
+            const candidateId = Array.from(digest, value => value.toString(16).padStart(2, "0")).join("");
+            const candidatePath = "storageOrphanCandidates/" + candidateId;
+            const candidate = await fs.getDoc(candidatePath);
+            const observedAt = new Date().toISOString();
+            if (!candidate) {
+              await fs.setDoc(candidatePath, { destinationId, key, firstSeenAt: observedAt, status: "reviewing", createdAt: observedAt, updatedAt: observedAt }, { mustNotExist: true }).catch(() => undefined);
+            } else if (candidate["status"] === "reviewing" && typeof candidate["firstSeenAt"] === "string" &&
+                !candidate["confirmingRunAt"] && Date.now() - Date.parse(candidate["firstSeenAt"]) >= 24 * 60 * 60_000) {
+              await fs.patchDoc(candidatePath, { confirmingRunAt: observedAt, updatedAt: observedAt });
+            } else if (candidate["status"] === "reviewing" &&
+                confirmOrphanDeletion({
+                  key,
+                  firstSeenAt: String(candidate["firstSeenAt"] ?? ""),
+                  confirmingRunAt: typeof candidate["confirmingRunAt"] === "string" ? candidate["confirmingRunAt"] : null,
+                })) {
+              const deleteTaskId = "orphan-delete-" + candidateId;
+              await fs.setDoc("videoMaintenanceJobs/" + deleteTaskId, {
+                taskType: "storage_orphan_delete",
+                payload: { candidateId, destinationId, key },
+                status: "queued", attempts: 0,
+                reason: "Delete a file confirmed unreferenced by two scans at least 24 hours apart",
+                createdAt: observedAt, updatedAt: observedAt,
+              }, { mustNotExist: true }).catch(() => undefined);
+            }
+          }
+          const nextIndex = pendingIndex + batch.length;
+          await fs.patchDoc(taskPath, {
+            payload: { ...payload, pendingIndex: nextIndex },
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+          });
+          return Response.json({ done: false, scannedCount: batch.length });
+        }
+        if (pendingKeys.length > 0 && listingNextCursor) {
+          await fs.patchDoc(taskPath, {
+            payload: { ...payload, cursor: listingNextCursor, pendingKeys: [], pendingIndex: 0, listingNextCursor: null },
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+          });
+          return Response.json({ done: false, scannedCount: 0 });
+        }
+        const page = await adapter.listObjects("hls", cursor);
+        if (page.objects.length > 0 || page.nextCursor) {
+          await fs.patchDoc(taskPath, {
+            payload: { ...payload, pendingKeys: page.objects.map(item => item.key), pendingIndex: 0, listingNextCursor: page.nextCursor },
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+          });
+          return Response.json({ done: false, scannedCount: 0 });
+        }
+        await fs.patchDoc(taskPath, { phase: "done", completedAt: now, updatedAt: now });
+        return Response.json({ done: true, scannedCount: 0 });
+      }
+
+      if (task["taskType"] === "storage_orphan_delete") {
+        const payload = task["payload"] as Record<string, unknown> | undefined;
+        const candidateId = typeof payload?.["candidateId"] === "string" ? payload["candidateId"] : "";
+        const destinationId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
+        const key = typeof payload?.["key"] === "string" ? payload["key"] : "";
+        if (!/^[a-f0-9]{64}$/.test(candidateId) || !/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId) ||
+            destinationId === "legacy_lovable_streaming" || !/^hls\/[A-Za-z0-9_-]{1,100}\/a[1-9][0-9]*\/.+$/.test(key)) {
+          throw new ApiError(400, "ORPHAN_DELETE_INVALID", "The confirmed cleanup request is invalid.");
+        }
+        const candidatePath = "storageOrphanCandidates/" + candidateId;
+        const candidate = await fs.getDoc(candidatePath);
+        if (!candidate || candidate["status"] !== "reviewing" || candidate["destinationId"] !== destinationId ||
+            candidate["key"] !== key || !confirmOrphanDeletion({
+              key, firstSeenAt: String(candidate["firstSeenAt"] ?? ""),
+              confirmingRunAt: typeof candidate["confirmingRunAt"] === "string" ? candidate["confirmingRunAt"] : null,
+            })) {
+          throw new ApiError(409, "ORPHAN_DELETE_NOT_CONFIRMED", "The file has not passed both required checks and the waiting period.");
+        }
+        const assetId = key.split("/")[1] ?? "";
+        const asset = await fs.getDoc("contentAssets/" + assetId);
+        const replicas = Array.isArray(asset?.["streamReplicaIds"])
+          ? asset["streamReplicaIds"].filter((id): id is string => typeof id === "string") : [];
+        const prefix = typeof asset?.["objectPrefix"] === "string" ? asset["objectPrefix"] :
+          typeof asset?.["streamObjectPrefix"] === "string" ? asset["streamObjectPrefix"] : "";
+        if (asset && (replicas.includes(destinationId) ||
+            (asset["streamDestinationId"] === destinationId && prefix && key.startsWith(prefix + "/")))) {
+          await fs.patchDoc(candidatePath, { status: "cleared", clearedAt: now, updatedAt: now });
+          return Response.json({ done: true, deleted: false, reason: "The file is now referenced." });
+        }
+        const raw = await fs.getDoc("storageDestinations/" + destinationId);
+        if (!raw) throw new ApiError(404, "ORPHAN_DELETE_DESTINATION_MISSING", "The storage location could not be found.");
+        const metadata = validateStorageDestinationMetadata({ ...raw, destinationId });
+        if (metadata.purpose !== "hls_streaming") throw new ApiError(409, "ORPHAN_DELETE_PURPOSE_INVALID", "Only streaming files can be cleaned automatically.");
+        const config = resolveStorageDestinationConfiguration(metadata);
+        if (config.configurationStatus !== "configured") throw new ApiError(503, "ORPHAN_DELETE_DESTINATION_MISCONFIGURED", "The storage location needs its connection settings checked.");
+        await createStorageProviderAdapter(config).deleteObject(key);
+        await fs.patchDoc(candidatePath, { status: "deleted", deletedAt: now, updatedAt: now });
+        await rebuildStoragePoolIndex(fs, ["hls_streaming"]);
+        return Response.json({ done: true, deleted: true });
       }
 
       if (task["taskType"] !== "delete_attempt_prefix") {
