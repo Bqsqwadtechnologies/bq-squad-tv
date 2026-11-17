@@ -140,7 +140,7 @@ All requested commands remain **not run** in this execution environment:
 - `bun run test`
 - Android unit tests / Gradle verification
 
-The GitHub remote checkout attempt failed because the environment could not resolve `github.com`; no local Bun, Gradle, Android SDK, emulator or browser runtime is available. GitHub file operations were used for source review and direct commits only. No passing build/test result is claimed.
+A local working tree could not be established in this execution environment; no local Bun, Gradle, Android SDK, emulator or browser runtime is available. GitHub file operations were used for source review and direct commits only. No passing build/test result is claimed.
 
 ## Overall state after the four-batch split
 
