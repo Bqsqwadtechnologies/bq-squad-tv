@@ -235,3 +235,11 @@ The Android Producer screen, API client, repository, navigation and website/serv
 - The new website currency formatter tests and Android history/notifications screens have **not** been executed. No website build, type-check, lint, Vitest, Android Gradle or emulator result is claimed.
 - The brand PNG is the existing uploaded source and is referenced directly; a separate 64×64 padded PNG favicon was not generated. The official mark remains the linked site icon after removing the old ICO.
 - Full screenshot verification at 320, 360, 390, 430 and 768 px, plus Android small-screen/notch emulator verification, remains outstanding.
+
+
+## Final identity and navigation notes — 2026-11-17
+
+- Renamed the internal owner-authority boolean from `isSuperAdmin` to `isZillionaireOwner` in the access resolver, dashboard overview, protected feature-flag route, producer upload guard and role tests. No person or account is labelled Admin or Super Admin in the product UI.
+- The website header bell now opens the real authenticated Notifications page on desktop and mobile instead of displaying a placeholder notice.
+- The website Watch History and Notifications routes and the native Android screens are connected to the existing ledger and notification endpoints. The account hub links to these pages.
+- The obsolete default favicon ICO has been removed. The root document links the existing official uploaded PNG. A separately resized 64×64 padded PNG could not be produced with the available text-only repository editing operation.
