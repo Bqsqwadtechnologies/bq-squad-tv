@@ -8,7 +8,7 @@ export type AdminModule =
 
 export type PlatformAccess = {
   roles: PlatformRole[];
-  isSuperAdmin: boolean;
+  isZillionaireOwner: boolean;
   adminModules: AdminModule[];
   producerPlanActive: boolean;
   emailVerified: boolean;
@@ -45,7 +45,7 @@ export async function resolvePlatformAccess(
   );
   const effectiveEmailVerified = emailVerified || appEmailVerified;
   const configuredZillionaireEmail = process.env["ZILLIONAIRE_EMAIL"]?.trim().toLowerCase();
-  const isSuperAdmin = Boolean(
+  const isZillionaireOwner = Boolean(
     effectiveEmailVerified && configuredZillionaireEmail && email?.trim().toLowerCase() === configuredZillionaireEmail,
   );
   const storedRoles = stringArray(user?.["roleTags"]);
@@ -64,8 +64,8 @@ export async function resolvePlatformAccess(
     .filter((scope): scope is AdminModule => ADMIN_MODULES.includes(scope as AdminModule));
   return {
     roles,
-    isSuperAdmin,
-    adminModules: isSuperAdmin ? ADMIN_MODULES : [...new Set(configuredScopes)],
+    isZillionaireOwner,
+    adminModules: isZillionaireOwner ? ADMIN_MODULES : [...new Set(configuredScopes)],
     producerPlanActive,
     emailVerified: effectiveEmailVerified,
   };
@@ -101,7 +101,7 @@ export async function requireAdminModule(
     user.customClaims,
     user.emailVerified === true,
   );
-  if (!access.isSuperAdmin && !access.adminModules.includes(module)) {
+  if (!access.isZillionaireOwner && !access.adminModules.includes(module)) {
     throw new ApiError(403, "ADMIN_SCOPE_REQUIRED", "This account does not have permission to access this section.");
   }
   return access;
