@@ -20,7 +20,8 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/fail")
       if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId)) throw new ApiError(400, "WORKER_JOB_INVALID", "The processing job identifier is invalid.");
       const path = "videoTranscodeJobs/" + assetId;
       const job = await fs.getDoc(path);
-      if (!job || job["status"] !== "processing" || job["claimToken"] !== body.claimToken) {
+      if (!job || job["status"] !== "processing" || job["claimToken"] !== body.claimToken ||
+          typeof job["leaseExpiresAt"] !== "string" || Date.parse(job["leaseExpiresAt"]) <= Date.now()) {
         throw new ApiError(409, "WORKER_LEASE_INVALID", "The processing job lease is no longer valid.");
       }
       const attempts = typeof job["attempts"] === "number" ? job["attempts"] : 1;
