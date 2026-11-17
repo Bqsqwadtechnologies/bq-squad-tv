@@ -29,11 +29,38 @@ function groupCapacityPath(groupId: string): string {
 }
 export { groupCapacityPath };
 
-function groupCap(items: Array<{ softCapBytes: number; accountCapBytes?: number | null }>): number | null {
+export function calculateStorageGroupCap(items: Array<{ softCapBytes: number; accountCapBytes?: number | null }>): number | null {
   if (items.length === 1) return items[0]?.accountCapBytes ?? items[0]?.softCapBytes ?? null;
   const caps = items.map(item => item.accountCapBytes).filter((value): value is number =>
     typeof value === "number" && Number.isSafeInteger(value) && value > 0);
   return caps.length === items.length && new Set(caps).size === 1 ? caps[0] ?? null : null;
+}
+
+export type CompactStoragePoolEntry = Omit<StoragePoolEntry, "shardDocId">;
+
+export function shardStoragePoolEntries(
+  purpose: StoragePurpose,
+  entries: CompactStoragePoolEntry[],
+): Array<{ docId: string; shardNumber: number; entries: CompactStoragePoolEntry[] }> {
+  const sorted = [...entries].sort((left, right) => left.priority - right.priority || left.id.localeCompare(right.id));
+  if (sorted.length === 0) return [{ docId: purpose + "__000", shardNumber: 0, entries: [] }];
+  const shards: Array<{ docId: string; shardNumber: number; entries: CompactStoragePoolEntry[] }> = [];
+  for (let offset = 0; offset < sorted.length; offset += 200) {
+    const shardNumber = Math.floor(offset / 200);
+    shards.push({
+      docId: purpose + "__" + String(shardNumber).padStart(3, "0"),
+      shardNumber,
+      entries: sorted.slice(offset, offset + 200).map(item => ({
+        id: item.id,
+        priority: item.priority,
+        freeBytes: item.freeBytes,
+        groupId: item.groupId,
+        egressHeadroomBytes: item.egressHeadroomBytes,
+        state: item.state,
+      })),
+    });
+  }
+  return shards;
 }
 
 export async function rebuildStoragePoolIndex(
@@ -61,7 +88,8 @@ export async function rebuildStoragePoolIndex(
     egressHeadroomBytes: number | null;
     destinationCount: number;
   }>();
-  const writes: FirestoreWrite[] = [];
+  const capacityWrites: FirestoreWrite[] = [];
+  const poolWrites: FirestoreWrite[] = [];
   const now = new Date().toISOString();
   const monthKey = now.slice(0, 7);
 
@@ -74,7 +102,7 @@ export async function rebuildStoragePoolIndex(
     const unknownUsageCount = items.length - knownItems.length;
     const usageBytes = unknownUsageCount === 0 ? knownUsageBytes : null;
     const reservedBytes = items.reduce((sum, item) => sum + item.reservedBytes, 0);
-    const capBytes = groupCap(items.map(item => ({
+    const capBytes = calculateStorageGroupCap(items.map(item => ({
       softCapBytes: item.metadata.softCapBytes,
       accountCapBytes: item.metadata.accountCapBytes,
     })));
@@ -94,7 +122,7 @@ export async function rebuildStoragePoolIndex(
       : null;
     const summary = { usageBytes, knownUsageBytes, unknownUsageCount, reservedBytes, capBytes, freeBytes, egressHeadroomBytes, destinationCount: items.length };
     groupSummaries.set(groupId, summary);
-    writes.push({
+    capacityWrites.push({
       update: {
         name: fs.docName(groupCapacityPath(groupId)),
         fields: encodeFields({ accountGroup: groupId, ...summary, updatedAt: now }),
@@ -139,19 +167,16 @@ export async function rebuildStoragePoolIndex(
       .sort((left, right) => left.priority - right.priority || left.id.localeCompare(right.id));
 
     eligibleCount += eligible.length;
-    for (let offset = 0; offset < eligible.length; offset += 200) {
-      const shard = eligible.slice(offset, offset + 200);
-      const shardNumber = Math.floor(offset / 200);
-      const docId = purpose + "__" + String(shardNumber).padStart(3, "0");
-      desiredPoolIds.add(docId);
+    for (const shard of shardStoragePoolEntries(purpose, eligible)) {
+      desiredPoolIds.add(shard.docId);
       shardCount++;
-      writes.push({
+      poolWrites.push({
         update: {
-          name: fs.docName("storagePool/" + docId),
+          name: fs.docName("storagePool/" + shard.docId),
           fields: encodeFields({
             purpose,
-            shardNumber,
-            entries: shard,
+            shardNumber: shard.shardNumber,
+            entries: shard.entries,
             updatedAt: now,
           }),
         },
@@ -160,12 +185,17 @@ export async function rebuildStoragePoolIndex(
   }
 
   for (const doc of currentPoolDocs) {
-    if (!desiredPoolIds.has(doc.__id)) writes.push({ delete: fs.docName("storagePool/" + doc.__id) });
+    if (!desiredPoolIds.has(doc.__id)) poolWrites.push({ delete: fs.docName("storagePool/" + doc.__id) });
   }
-  if (writes.length > 500) {
-    throw new ApiError(413, "STORAGE_POOL_REBUILD_LIMIT", "The storage pool is too large for one safe index rebuild.");
+  // Capacity summaries are committed before routing shards. A partially
+  // rebuilt index can therefore only under-allocate; reservation transactions
+  // still confirm each selected destination and shared account summary.
+  for (let offset = 0; offset < capacityWrites.length; offset += 500) {
+    await fs.commit(capacityWrites.slice(offset, offset + 500));
   }
-  if (writes.length) await fs.commit(writes);
+  for (let offset = 0; offset < poolWrites.length; offset += 500) {
+    await fs.commit(poolWrites.slice(offset, offset + 500));
+  }
   return { destinationCount: parsed.length, eligibleCount, shardCount, groupCount: groups.size };
 }
 
