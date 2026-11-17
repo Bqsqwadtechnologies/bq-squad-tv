@@ -10,6 +10,7 @@ import { resolveAssetStreamBinding } from "@/lib/server/storage/asset-binding";
 import { getPlatformFlags } from "@/lib/server/flags";
 import { signHlsObjectsDirectly } from "@/lib/server/storage/direct-signing";
 import { rewritePlaylistWithSignedObjects } from "@/lib/server/streaming/direct-playlist";
+import { getSharedSignedObjects, sharedPlaylistWindow } from "@/lib/server/streaming/shared-playlist-cache";
 
 function sessionId(value: string | null): string {
   if (!value || !/^[A-Za-z0-9_-]{1,100}$/.test(value)) {
@@ -200,11 +201,21 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
                 rewritten = (await rewritePlaylistWithSignedObjects({
                   playlist,
                   playlistPath: resourcePath,
-                  signObjects: objectPaths => signHlsObjectsDirectly({
-                    configuration: storageConfig,
-                    objectPaths,
-                    expiresInSeconds: 21_600,
-                  }),
+                  signObjects: objectPaths => {
+                    const window = sharedPlaylistWindow();
+                    const assetVersion = typeof asset["version"] === "string" || typeof asset["version"] === "number"
+                      ? String(asset["version"]) : String(asset["updatedAt"] ?? "v1");
+                    const cacheKey = [assetId, assetVersion, storageConfig.metadata.destinationId, resourcePath, window.windowStartMs].join(":");
+                    return getSharedSignedObjects({
+                      key: cacheKey,
+                      expiresAtMs: Date.now() + 21_600_000,
+                      create: () => signHlsObjectsDirectly({
+                        configuration: storageConfig,
+                        objectPaths,
+                        expiresInSeconds: 21_600,
+                      }),
+                    });
+                  },
                   playlistUrl: async childPath => {
                     const issuedAt = Math.floor(Date.now() / 1000);
                     const childToken = await signPlaybackToken({
