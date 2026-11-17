@@ -259,10 +259,10 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
               acknowledged: false,
             }).catch(() => undefined);
           });
-          if (response.active === false) {
+          if (response["active"] === false) {
             await releaseExpectedStorageEgress(fs, sessionId).catch(() => undefined);
           }
-          const leaseTokenNext = response.active === true
+          const leaseTokenNext = response["active"] === true
             ? await signSessionLeaseToken({
                 sid: sessionId,
                 seq: clientSequence,
