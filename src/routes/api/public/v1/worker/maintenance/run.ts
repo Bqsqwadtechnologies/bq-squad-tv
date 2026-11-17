@@ -757,7 +757,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         const destinationId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
         const key = typeof payload?.["key"] === "string" ? payload["key"] : "";
         if (!/^[a-f0-9]{64}$/.test(candidateId) || !/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId) ||
-            destinationId === "legacy_lovable_streaming" || !/^hls\/[A-Za-z0-9_-]{1,100}\/a[1-9][0-9]*\/.+$/.test(key)) {
+            ["legacy_lovable_source", "legacy_lovable_streaming", "lovable-source-legacy", "lovable-stream-legacy"].includes(destinationId) || !/^hls\/[A-Za-z0-9_-]{1,100}\/a[1-9][0-9]*\/.+$/.test(key)) {
           throw new ApiError(400, "ORPHAN_DELETE_INVALID", "The confirmed cleanup request is invalid.");
         }
         const candidatePath = "storageOrphanCandidates/" + candidateId;
