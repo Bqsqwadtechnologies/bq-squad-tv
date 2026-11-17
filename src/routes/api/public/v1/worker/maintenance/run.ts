@@ -200,7 +200,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         const pageSize = typeof payload?.["pageSize"] === "number" ? payload["pageSize"] : 500;
         const result = await verifyAuditChain(fs, pageSize);
         if (!result.valid) {
-          const alertPath = "auditChainAlerts/" + taskId;
+          const alertPath = "auditChainAlerts/" + body.taskId;
           const alert = {
             status: "open", reasonCode: result.reason ?? "audit_chain_invalid",
             checkedEntries: result.checked, brokenEntryId: result.brokenEntryId,
