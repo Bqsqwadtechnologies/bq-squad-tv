@@ -16,6 +16,7 @@ import { encryptStorageConfigurationBackup, type StorageConfigurationBackup } fr
 import { reserveStorageDestination, releaseStorageReservation, commitStorageReservation } from "@/lib/server/storage/reservations";
 import { fetchPaystackVerification } from "@/lib/server/paystack";
 import { classifyPaymentReconciliation, paymentReviewKey } from "@/lib/server/payment-reconciliation";
+import { verifyAuditChain } from "@/lib/server/audit";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
@@ -194,6 +195,31 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         throw new ApiError(409, "MAINTENANCE_LEASE_INVALID", "The maintenance task lease is no longer valid.");
       }
       const now = new Date().toISOString();
+      if (task["taskType"] === "audit_chain_verify") {
+        const payload = task["payload"] as Record<string, unknown> | undefined;
+        const pageSize = typeof payload?.["pageSize"] === "number" ? payload["pageSize"] : 500;
+        const result = await verifyAuditChain(fs, pageSize);
+        if (!result.valid) {
+          const alertPath = "auditChainAlerts/" + taskId;
+          const alert = {
+            status: "open", reasonCode: result.reason ?? "audit_chain_invalid",
+            checkedEntries: result.checked, brokenEntryId: result.brokenEntryId,
+            message: "The audit history did not pass its integrity check. Review the security records before taking further action.",
+            createdAt: now, updatedAt: now,
+          };
+          const existing = await fs.getDoc(alertPath);
+          if (existing) await fs.patchDoc(alertPath, alert);
+          else await fs.setDoc(alertPath, alert, { mustNotExist: true }).catch(async error => {
+            if (!(error instanceof ApiError) || error.status !== 409) throw error;
+            await fs.patchDoc(alertPath, alert);
+          });
+        }
+        await fs.patchDoc(taskPath, {
+          phase: "done", result, completedAt: now, updatedAt: now,
+        });
+        return Response.json({ done: true, ...result });
+      }
+
       if (task["taskType"] === "payment_reconciliation") {
         const payload = task["payload"] as Record<string, unknown> | undefined;
         const since = typeof payload?.["since"] === "string" ? payload["since"] : "";
