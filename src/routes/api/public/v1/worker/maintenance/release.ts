@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { ApiError, Firestore } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody } from "@/lib/server/api";
 import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 
@@ -16,28 +16,40 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/release"
       const fs = await Firestore.create();
       const workerId = await requireVideoWorker(request, fs);
       const body = await parseBody(request, schema);
-      const path = "videoMaintenanceJobs/" + body.taskId;
-      const task = await fs.getDoc(path);
-      if (!task || task["status"] !== "processing" || task["workerId"] !== workerId ||
-          task["claimToken"] !== body.claimToken || typeof task["leaseExpiresAt"] !== "string" ||
-          Date.parse(task["leaseExpiresAt"]) <= Date.now()) {
-        throw new ApiError(409, "MAINTENANCE_LEASE_INVALID", "The maintenance task lease is no longer valid.");
-      }
-      const now = new Date().toISOString();
-      const notBefore = body.notBefore ?? new Date(Date.now() + 30_000).toISOString();
-      if (!Number.isFinite(Date.parse(notBefore)) || Date.parse(notBefore) < Date.now() - 5_000 ||
-          Date.parse(notBefore) > Date.now() + 7 * 86_400_000) {
+      const taskPath = "videoMaintenanceJobs/" + body.taskId;
+      const nowDate = new Date();
+      const now = nowDate.toISOString();
+      const notBefore = body.notBefore ?? new Date(nowDate.getTime() + 30_000).toISOString();
+      if (!Number.isFinite(Date.parse(notBefore)) || Date.parse(notBefore) < nowDate.getTime() - 5_000 ||
+          Date.parse(notBefore) > nowDate.getTime() + 7 * 86_400_000) {
         throw new ApiError(400, "MAINTENANCE_RETRY_TIME_INVALID", "The next maintenance attempt time is invalid.");
       }
-      await fs.patchDoc(path, {
-        status: "queued",
-        workerId: null,
-        claimToken: null,
-        leaseExpiresAt: null,
-        notBefore,
-        updatedAt: now,
+      const released = await fs.transact([taskPath], docs => {
+        const task = docs[0];
+        if (!task) throw new ApiError(404, "MAINTENANCE_TASK_NOT_FOUND", "The maintenance task could not be found.");
+        if (task["status"] === "queued" && task["workerId"] == null && task["claimToken"] == null) {
+          return { result: "already_queued", writes: [] };
+        }
+        if (task["status"] !== "processing" || task["workerId"] !== workerId ||
+            task["claimToken"] !== body.claimToken || typeof task["leaseExpiresAt"] !== "string" ||
+            Date.parse(task["leaseExpiresAt"]) <= nowDate.getTime()) {
+          throw new ApiError(409, "MAINTENANCE_LEASE_INVALID", "The maintenance task lease is no longer valid.");
+        }
+        return {
+          result: "queued",
+          writes: [{
+            update: {
+              name: fs.docName(taskPath),
+              fields: encodeFields({
+                status: "queued", workerId: null, claimToken: null,
+                leaseExpiresAt: null, notBefore, updatedAt: now,
+              }),
+            },
+            updateMask: { fieldPaths: ["status", "workerId", "claimToken", "leaseExpiresAt", "notBefore", "updatedAt"] },
+          }],
+        };
       });
-      return Response.json({ taskId: body.taskId, status: "queued", notBefore });
+      return Response.json({ taskId: body.taskId, status: "queued", notBefore, idempotent: released === "already_queued" });
     } catch (error) { return errorBody(error); }
   } } },
 });
