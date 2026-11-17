@@ -166,3 +166,82 @@ export async function bindAssetStreamStorage(
   if (!result) throw new ApiError(409, "ASSET_STORAGE_BINDING_FAILED", "The storage assignment could not be saved.");
   return result;
 }
+
+
+export async function addVerifiedAssetStreamReplica(
+  fs: Firestore,
+  input: { assetId: string; destinationId: string; objectPrefix: string; reservationId: string; sizeBytes: number; objectCount: number },
+): Promise<void> {
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(input.assetId) ||
+      !/^[a-z0-9][a-z0-9_-]{1,79}$/.test(input.destinationId) ||
+      !/^[A-Za-z0-9_-]{8,100}$/.test(input.reservationId) ||
+      !Number.isSafeInteger(input.sizeBytes) || input.sizeBytes < 1 ||
+      !Number.isSafeInteger(input.objectCount) || input.objectCount < 1) {
+    throw new ApiError(400, "STORAGE_REPLICA_BINDING_INVALID", "The verified copy details are invalid.");
+  }
+  const assetPath = "contentAssets/" + input.assetId;
+  const reservationPath = "storageReservations/" + input.reservationId;
+  const replicaPath = "storageReplicaRecords/" + input.assetId + "_" + input.destinationId;
+  await fs.transact([assetPath, reservationPath, replicaPath], docs => {
+    const asset = docs[0];
+    const reservation = docs[1];
+    const replica = docs[2];
+    if (!asset || !reservation ||
+        reservation["status"] !== "committed" ||
+        reservation["destinationId"] !== input.destinationId ||
+        reservation["assetId"] !== input.assetId) {
+      throw new ApiError(409, "STORAGE_REPLICA_RESERVATION_INVALID", "The copied storage reservation could not be confirmed.");
+    }
+    if (replica?.["status"] === "verified") return { result: undefined, writes: [] };
+    const current = Array.isArray(asset["streamReplicaIds"])
+      ? asset["streamReplicaIds"].filter((value): value is string => typeof value === "string")
+      : [];
+    if (asset["streamDestinationId"] === input.destinationId) {
+      throw new ApiError(409, "STORAGE_REPLICA_IS_PRIMARY", "The primary storage location cannot also be a replica.");
+    }
+    const replicas = [...new Set([...current, input.destinationId])].slice(0, 8);
+    if (!replicas.includes(input.destinationId)) {
+      throw new ApiError(409, "STORAGE_REPLICA_LIMIT_REACHED", "This film already has the maximum number of copies.");
+    }
+    const now = new Date().toISOString();
+    const fields = {
+      streamReplicaIds: replicas,
+      updatedAt: now,
+    };
+    return {
+      result: undefined,
+      writes: [
+        {
+          update: {
+            name: fs.docName(assetPath),
+            fields: encodeFields(fields),
+          },
+          updateMask: { fieldPaths: ["streamReplicaIds", "updatedAt"] },
+        },
+        {
+          update: {
+            name: fs.docName(reservationPath),
+            fields: encodeFields({ bindingStatus: "replica_verified", replicaVerifiedAt: now }),
+          },
+          updateMask: { fieldPaths: ["bindingStatus", "replicaVerifiedAt"] },
+        },
+        {
+          update: {
+            name: fs.docName(replicaPath),
+            fields: encodeFields({
+              assetId: input.assetId,
+              destinationId: input.destinationId,
+              objectPrefix: input.objectPrefix,
+              sizeBytes: input.sizeBytes,
+              objectCount: input.objectCount,
+              status: "verified",
+              verifiedAt: now,
+              createdAt: now,
+            }),
+          },
+          currentDocument: { exists: false },
+        },
+      ],
+    };
+  });
+}
