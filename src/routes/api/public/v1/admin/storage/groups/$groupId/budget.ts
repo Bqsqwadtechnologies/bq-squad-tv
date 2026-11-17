@@ -81,18 +81,19 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/groups/$group
         }
         const monthKey = now.slice(0, 7);
         const dayKey = now.slice(0, 10);
-        const monthExpected = egressState?.["monthKey"] === monthKey ? Number(egressState["monthExpectedBytes"] ?? 0) : 0;
-        const monthReserved = egressState?.["monthKey"] === monthKey ? Number(egressState["monthReservedBytes"] ?? 0) : 0;
-        const monthConsumed = egressState?.["monthKey"] === monthKey ? Number(egressState["monthConsumedBytes"] ?? 0) : 0;
-        const dayExpected = egressState?.["dayKey"] === dayKey ? Number(egressState["dayExpectedBytes"] ?? 0) : 0;
-        const dayReserved = egressState?.["dayKey"] === dayKey ? Number(egressState["dayReservedBytes"] ?? 0) : 0;
-        const dayConsumed = egressState?.["dayKey"] === dayKey ? Number(egressState["dayConsumedBytes"] ?? 0) : 0;
+        const counter = (value: unknown): number =>
+          typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : 0;
+        const monthExpected = egressState?.["monthKey"] === monthKey ? counter(egressState["monthExpectedBytes"]) : 0;
+        const monthReserved = egressState?.["monthKey"] === monthKey ? counter(egressState["monthReservedBytes"]) : 0;
+        const monthConsumed = egressState?.["monthKey"] === monthKey ? counter(egressState["monthConsumedBytes"]) : 0;
+        const dayExpected = egressState?.["dayKey"] === dayKey ? counter(egressState["dayExpectedBytes"]) : 0;
+        const dayReserved = egressState?.["dayKey"] === dayKey ? counter(egressState["dayReservedBytes"]) : 0;
+        const dayConsumed = egressState?.["dayKey"] === dayKey ? counter(egressState["dayConsumedBytes"]) : 0;
         const effectiveDailyBudget = dailyBudgetBytes ?? body.monthlyBudgetBytes;
         const monthLevel = calculateEgressLevel(monthExpected, body.monthlyBudgetBytes, false);
         const dayLevel = calculateEgressLevel(dayExpected, effectiveDailyBudget, false);
         const rank: Record<string, number> = { normal: 0, warn: 1, throttle: 2, blocked: 3 };
         const level = rank[monthLevel] >= rank[dayLevel] ? monthLevel : dayLevel;
-        const previousLevel = typeof egressState?.["level"] === "string" ? egressState["level"] : "normal";
         const writes = [
           {
             update: {
