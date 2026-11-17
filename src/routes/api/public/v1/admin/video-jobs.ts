@@ -32,9 +32,17 @@ export const Route = createFileRoute("/api/public/v1/admin/video-jobs")({
       }));
       const queued = rows.filter(row => row.status === "queued");
       const queuePositions = new Map(queued.map((row, index) => [row.assetId, index + 1]));
-      return Response.json({
-        jobs: rows.map(row => ({ ...row, queuePosition: queuePositions.get(row.assetId) ?? null })),
-      }, { headers: { "cache-control": "private, no-store", "x-robots-tag": "noindex, nofollow, noarchive" } });
+      const payload = { jobs: rows.map(row => ({ ...row, queuePosition: queuePositions.get(row.assetId) ?? null })) };
+      const bytes = new TextEncoder().encode(JSON.stringify(payload));
+      const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+      const etag = '"' + Array.from(digest, value => value.toString(16).padStart(2, "0")).join("") + '"';
+      const headers = {
+        "cache-control": "private, no-store",
+        "x-robots-tag": "noindex, nofollow, noarchive",
+        "etag": etag,
+      };
+      if (request.headers.get("if-none-match") === etag) return new Response(null, { status: 304, headers });
+      return Response.json(payload, { headers });
     } catch (error) { return errorBody(error); }
   } } },
 });
