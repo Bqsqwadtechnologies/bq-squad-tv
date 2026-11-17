@@ -19,7 +19,7 @@ The old derived `STREAMING_HMAC_SECRET` worker key is retained only as a migrati
 The existing Modal app has one resource configuration block:
 - Poll/wake: 0.25 CPU, 512 MiB, 90-second timeout, one container.
 - Standard processing: 2 CPU, 4 GiB, 3-hour timeout, up to two containers.
-- Copy/maintenance sizing is defined separately and remains conservative.
+- Maintenance and wake resources are included in the same configuration block. A lighter copy-mode resource profile is defined, but the current job dispatcher does not yet route jobs to it automatically.
 
 The queue poll fallback runs every five minutes and exits when there is no work. When a verified source upload creates a queue job, the API calls the secured Modal `wake` endpoint using `MODAL_WAKE_URL` and `MODAL_WAKE_SECRET`. If either setting is absent or the wake call fails, the scheduled fallback remains responsible for discovering queued work.
 
@@ -68,7 +68,7 @@ The estimate uses Modal's published Function rates, currently:
 
 The Starter plan currently lists $30/month of included compute and 1 TiB/month included network egress. Included amounts and pricing can change; check the live [Modal pricing page](https://modal.com/pricing) and the actual workspace plan before enabling production processing. The application records per-job CPU, memory, elapsed seconds, estimated compute cost and output bytes. The output-byte total is an egress metric; it is not a billing statement. Modal's own workspace budget and billing report remain authoritative.
 
-The estimate records processing time from the worker process and may not include every billable startup/teardown second or any plan/region adjustment. Use the Modal account's actual billing report for reconciliation.
+The estimate records completed worker jobs only; in-flight jobs can finish after the limit is reached. It may also omit some billable startup/teardown time or plan/region adjustments. Keep concurrency low and use the Modal account's actual billing report and any available workspace budget as the authoritative controls.
 
 ## HLS AES-128 protection
 
