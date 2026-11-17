@@ -11,6 +11,14 @@ Record browser/version, viewport, device, commit SHA, date and each result. Use 
 - [ ] No horizontal page scrolling, clipped text or controls hidden behind safe areas.
 - [ ] Browser back/forward and direct deep links behave consistently.
 
+## Legal acceptance
+- [ ] New account creation requires the Terms and Privacy Policy checkbox and both pages to be published.
+- [ ] Profile completion rejects requests without current legal acceptance.
+- [ ] A `requiresReacceptance` version change prompts the next sign-in and blocks the account flow until accepted.
+- [ ] Producer Console displays all four required documents and withholds workspace data until acceptance.
+- [ ] Loading default pages creates draft version 1 only for missing slugs; existing edits remain unchanged.
+- [ ] Publishing lists every missing placeholder and rejects raw HTML or unsafe links.
+
 ## Home, catalogue and search
 - [ ] Featured content, category tiles and catalogue rows load with loading, empty and error states.
 - [ ] Every priced title shows the correct server-provided per-minute amount and currency.
