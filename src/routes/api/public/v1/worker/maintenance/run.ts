@@ -77,7 +77,7 @@ async function processReplicaCopyTask(fs: Firestore, taskPath: string, task: Rec
         payload: { ...payload, verifyCursor: page.nextCursor, verifiedBytes, verifiedObjectCount },
         leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
       });
-      return Response.json({ done: false, phase: "verify", processedObjectCount: page.objects.length });
+      return Response.json({ done: false, phase: "verify", processedObjectCount: page.processedObjectCount });
     }
     if (verifiedBytes !== copiedBytes || verifiedObjectCount !== copiedObjectCount || copiedBytes < 1 || copiedObjectCount < 1) {
       throw new ApiError(409, "STORAGE_REPLICA_LISTING_MISMATCH", "The copied film files did not match the verified source totals.");
@@ -257,7 +257,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
               leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()),
               updatedAt: now,
             });
-            return Response.json({ done: false, processedObjectCount: page.objects.length });
+            return Response.json({ done: false, processedObjectCount: page.processedObjectCount });
           }
           await updateStorageUsageAndPool(fs, storageId, totals.usageBytes, now);
           await fs.patchDoc("storageDestinations/" + storageId, {
