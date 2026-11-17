@@ -33,16 +33,10 @@ export async function assertLegalAcceptance(fs: Firestore, uid: string, audience
     const exact = await fs.getDoc("legalAcceptances/" + uid + "_" + page.slug + "_v" + page.version);
     let accepted = exact;
     if (!accepted && !page.requiresReacceptance) {
-      const previous = await fs.query("legalAcceptances", {
-        filters: [
-          { field: "uid", op: "EQUAL", value: uid },
-          { field: "slug", op: "EQUAL", value: page.slug },
-        ],
-        orderByField: "version",
-        descending: true,
-        limit: 1,
-      });
-      accepted = previous[0] ?? null;
+      for (let version = page.version - 1; version >= 1; version -= 1) {
+        accepted = await fs.getDoc("legalAcceptances/" + uid + "_" + page.slug + "_v" + version);
+        if (accepted) break;
+      }
     }
     if (!accepted || accepted["uid"] !== uid || accepted["slug"] !== page.slug ||
       !Number.isSafeInteger(accepted["version"]) ||
