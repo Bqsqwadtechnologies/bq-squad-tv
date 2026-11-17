@@ -21,6 +21,7 @@ const schema = z.object({
     forYou: z.boolean(),
     reminders: z.boolean(),
     modalSpendGuard: z.boolean(),
+    deliveryProxyFallback: z.boolean().optional(),
   }).strict(),
   reason: z.string().trim().min(3).max(1000),
 }).strict();
