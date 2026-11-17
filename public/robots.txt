@@ -1,14 +1,29 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /producer
+
 User-agent: Googlebot
 Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /producer
 
 User-agent: Bingbot
 Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /producer
 
 User-agent: Twitterbot
 Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /producer
 
 User-agent: facebookexternalhit
 Allow: /
-
-User-agent: *
-Allow: /
+Disallow: /admin
+Disallow: /api/
+Disallow: /producer
