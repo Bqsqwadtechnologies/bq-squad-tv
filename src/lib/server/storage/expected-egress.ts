@@ -200,31 +200,56 @@ export async function recordExpectedStorageEgressProgress(
   const gp = groupPath(groupId), dp = destPath(destinationId);
   const gc = groupCounterPath(groupId, month, day, shard), dc = destCounterPath(destinationId, month, day, shard);
   const ep = eventPath(sessionId, sequence);
-  await fs.transact([reservationPath(sessionId), gp, dp, gc, dc, ep], docs => {
+  const progressResult = await fs.transact([reservationPath(sessionId), gp, dp, gc, dc, ep], docs => {
     const [current, group, destination, groupShard, destShard, priorEvent] = docs;
     if (priorEvent || !current || current["status"] !== "reserved") return { result: undefined, writes: [] };
     const remaining = Math.max(0, safe(current["reservedBytes"]) - safe(current["consumedBytes"]));
     const consumed = Math.min(bytes, remaining);
+    const extra = bytes - consumed;
     const now = new Date().toISOString();
-    const progress = (raw: Record<string, unknown> | null) => ({
-      monthConsumedBytes: raw?.["monthKey"] === month ? safe(raw["monthConsumedBytes"]) + consumed : safe(raw?.["monthConsumedBytes"]),
-      dayConsumedBytes: raw?.["dayKey"] === day ? safe(raw["dayConsumedBytes"]) + consumed : safe(raw?.["dayConsumedBytes"]),
-      monthReservedBytes: raw?.["monthKey"] === month ? Math.max(0, safe(raw["monthReservedBytes"]) - consumed) : safe(raw?.["monthReservedBytes"]),
-      dayReservedBytes: raw?.["dayKey"] === day ? Math.max(0, safe(raw["dayReservedBytes"]) - consumed) : safe(raw?.["dayReservedBytes"]),
-      updatedAt: now,
-    });
+    const progress = (raw: Record<string, unknown> | null) => {
+      const sameMonth = raw?.["monthKey"] === month;
+      const sameDay = raw?.["dayKey"] === day;
+      return {
+        monthExpectedBytes: sameMonth ? safe(raw["monthExpectedBytes"]) + extra : safe(raw?.["monthExpectedBytes"]),
+        dayExpectedBytes: sameDay ? safe(raw["dayExpectedBytes"]) + extra : safe(raw?.["dayExpectedBytes"]),
+        monthConsumedBytes: sameMonth ? safe(raw["monthConsumedBytes"]) + bytes : safe(raw?.["monthConsumedBytes"]),
+        dayConsumedBytes: sameDay ? safe(raw["dayConsumedBytes"]) + bytes : safe(raw?.["dayConsumedBytes"]),
+        monthReservedBytes: sameMonth ? Math.max(0, safe(raw["monthReservedBytes"]) - consumed) : safe(raw?.["monthReservedBytes"]),
+        dayReservedBytes: sameDay ? Math.max(0, safe(raw["dayReservedBytes"]) - consumed) : safe(raw?.["dayReservedBytes"]),
+        updatedAt: now,
+      };
+    };
+    const groupMonth = group?.["monthKey"] === month ? safe(group["monthExpectedBytes"]) + extra : safe(group?.["monthExpectedBytes"]);
+    const groupDay = group?.["dayKey"] === day ? safe(group["dayExpectedBytes"]) + extra : safe(group?.["dayExpectedBytes"]);
+    const budget = safe(group?.["budgetBytes"]);
+    const dailyBudget = safe(group?.["dailyBudgetBytes"]);
+    const priorLevel = typeof group?.["level"] === "string" ? group["level"] as EgressLevel : "normal";
+    const nextLevel = severe(
+      group?.["monthKey"] === month ? calculateEgressLevel(groupMonth, budget, false) : "normal",
+      group?.["dayKey"] === day ? calculateEgressLevel(groupDay, dailyBudget, false) : "normal",
+    );
     return {
-      result: undefined,
+      result: { priorLevel, nextLevel, groupMonth, groupDay, budget, dailyBudget },
       writes: [
         write(fs, reservationPath(sessionId), { consumedBytes: safe(current["consumedBytes"]) + consumed, updatedAt: now }, true),
-        ...(group ? [write(fs, gp, progress(group), true)] : []),
+        ...(group ? [write(fs, gp, { ...progress(group), level: nextLevel }, true)] : []),
         ...(destination ? [write(fs, dp, progress(destination), true)] : []),
         ...(groupShard ? [write(fs, gc, progress(groupShard), true)] : []),
         ...(destShard ? [write(fs, dc, progress(destShard), true)] : []),
-        write(fs, ep, { sessionId, sequence, expectedBytes: consumed, createdAt: now }, false),
+        write(fs, ep, { sessionId, sequence, expectedBytes: bytes, reservedConsumedBytes: consumed, additionalExpectedBytes: extra, createdAt: now }, false),
       ],
     };
   });
+  if (progressResult && typeof progressResult === "object") {
+    const result = progressResult as { priorLevel?: EgressLevel; nextLevel?: EgressLevel; groupMonth?: number; groupDay?: number; budget?: number; dailyBudget?: number };
+    if (result.priorLevel && result.nextLevel && rank(result.nextLevel) > rank(result.priorLevel)) {
+      await alertOwner(fs, groupId, result.nextLevel, {
+        monthExpectedBytes: result.groupMonth ?? 0, monthBudgetBytes: result.budget ?? 0,
+        dayExpectedBytes: result.groupDay ?? 0, dayBudgetBytes: result.dailyBudget ?? 0,
+      });
+    }
+  }
 }
 
 export async function releaseExpectedStorageEgress(fs: Firestore, sessionId: string): Promise<void> {
