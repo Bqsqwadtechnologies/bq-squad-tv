@@ -83,9 +83,6 @@ export async function requirePlatformRole(
     user.customClaims,
     user.emailVerified === true,
   );
-  if (role === "admin" && !access.emailVerified) {
-    throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email address before accessing protected control tools.");
-  }
   if (!access.roles.includes(role)) {
     throw new ApiError(403, "FORBIDDEN", "This account does not have the required platform role.");
   }
@@ -110,7 +107,7 @@ export async function requireAdminModule(
   return access;
 }
 
-export function isProtectedSuperAdmin(
+export function isProtectedZillionaire(
   targetEmail: string | null,
   configuredAdminEmail = process.env["ZILLIONAIRE_EMAIL"],
 ): boolean {
