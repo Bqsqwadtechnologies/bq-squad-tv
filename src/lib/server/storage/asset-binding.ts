@@ -29,9 +29,9 @@ export function resolveAssetStreamBinding(
   const storedPrefix = typeof asset["objectPrefix"] === "string"
     ? asset["objectPrefix"]
     : typeof asset["streamObjectPrefix"] === "string" ? asset["streamObjectPrefix"] : "";
-  const objectPrefix = new RegExp("^hls/" + assetId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "/a[1-9][0-9]*$").test(storedPrefix)
-    ? storedPrefix
-    : "hls/" + assetId;
+  const prefixBase = "hls/" + assetId + "/";
+  const attemptSegment = storedPrefix.startsWith(prefixBase) ? storedPrefix.slice(prefixBase.length) : "";
+  const objectPrefix = /^a[1-9][0-9]*$/.test(attemptSegment) ? storedPrefix : "hls/" + assetId;
   return { streamDestinationId, streamReplicaIds, objectPrefix };
 }
 
@@ -50,18 +50,21 @@ export function resolveAssetMediaBinding(
 }
 
 export function classifyAssetMediaOutput(relativePath: string): "poster" | "thumbnail" | "sprite" | null {
-  if (/^poster\\.(?:jpg|jpeg|png|webp)$/i.test(relativePath)) return "poster";
-  if (/^thumbnail(?:_[A-Za-z0-9_-]+)?\\.(?:jpg|jpeg|png|webp)$/i.test(relativePath)) return "thumbnail";
-  if (/^sprite(?:_[A-Za-z0-9_-]+)?\\.(?:jpg|jpeg|png|webp)$/i.test(relativePath)) return "sprite";
+  const filename = relativePath.split("/").pop() ?? "";
+  if (/^poster\.(?:jpg|jpeg|png|webp)$/i.test(filename)) return "poster";
+  if (/^thumbnail(?:_[A-Za-z0-9_-]+)?\.(?:jpg|jpeg|png|webp)$/i.test(filename)) return "thumbnail";
+  if (/^sprite(?:_[A-Za-z0-9_-]+)?\.(?:jpg|jpeg|png|webp)$/i.test(filename)) return "sprite";
   return null;
 }
 
 export function isAllowedHlsOutputPath(relativePath: string): boolean {
-  return /^(?:[A-Za-z0-9_-]+\\/)*(?:master|index)\\.m3u8$/i.test(relativePath) ||
-    /^(?:[A-Za-z0-9_-]+\\/)*segment_[0-9]{5}\\.(?:ts|m4s)$/i.test(relativePath) ||
-    /^(?:[A-Za-z0-9_-]+\\/)*init\\.mp4$/i.test(relativePath) ||
-    /^(?:[A-Za-z0-9_-]+\\/)*subtitle_[A-Za-z0-9_-]+\\.vtt$/i.test(relativePath) ||
-    /^(?:[A-Za-z0-9_-]+\\/)*audio_[A-Za-z0-9_-]+\\.aac$/i.test(relativePath) ||
+  if (!relativePath || relativePath.startsWith("/") || relativePath.includes("\\") ||
+      relativePath.split("/").some(part => !part || part === "." || part === "..")) return false;
+  return /^(?:[A-Za-z0-9_-]+\/)*(?:master|index)\.m3u8$/i.test(relativePath) ||
+    /^(?:[A-Za-z0-9_-]+\/)*segment_[0-9]{5}\.(?:ts|m4s)$/i.test(relativePath) ||
+    /^(?:[A-Za-z0-9_-]+\/)*init\.mp4$/i.test(relativePath) ||
+    /^(?:[A-Za-z0-9_-]+\/)*subtitle_[A-Za-z0-9_-]+\.vtt$/i.test(relativePath) ||
+    /^(?:[A-Za-z0-9_-]+\/)*audio_[A-Za-z0-9_-]+\.aac$/i.test(relativePath) ||
     classifyAssetMediaOutput(relativePath) !== null;
 }
 
@@ -86,7 +89,8 @@ export async function bindAssetStreamStorage(
 ): Promise<AssetStreamBinding> {
   if (!ASSET_ID.test(input.assetId) || !STORAGE_ID.test(input.destinationId) ||
       !/^[A-Za-z0-9_-]{8,100}$/.test(input.reservationId) ||
-      !new RegExp("^hls/" + input.assetId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "/a[1-9][0-9]*$").test(input.objectPrefix)) {
+      !input.objectPrefix.startsWith("hls/" + input.assetId + "/") ||
+      !/^a[1-9][0-9]*$/.test(input.objectPrefix.slice(("hls/" + input.assetId + "/").length))) {
     throw new ApiError(400, "ASSET_STORAGE_BINDING_INVALID", "The storage assignment is invalid.");
   }
   const assetPath = "contentAssets/" + input.assetId;
