@@ -84,17 +84,8 @@ fun HomeScreen(
                 Image(
                     painter = painterResource(com.bqsqwad.tv.R.drawable.bq_sqwad_tv_mark),
                     contentDescription = "BQ SQWAD TV logo",
-                    modifier = Modifier.size(42.dp),
+                    modifier = Modifier.size(54.dp),
                 )
-                Spacer(Modifier.width(9.dp))
-                Column {
-                    Text("BQ SQWAD TV", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
-                    Text(
-                        "WATCH  •  STREAM  •  ENJOY",
-                        color = MaterialTheme.colorScheme.primary,
-                        style = MaterialTheme.typography.labelSmall,
-                    )
-                }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onSearch) {
