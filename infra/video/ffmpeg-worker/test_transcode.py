@@ -6,7 +6,7 @@ import unittest.mock
 from pathlib import Path
 
 from transcode import build_variant_ladder, generate_artwork, verify_hls_output
-from runner import canonical_message
+from runner import canonical_message, process_maintenance_task
 
 
 class WorkerAuthenticationTests(unittest.TestCase):
@@ -17,6 +17,34 @@ class WorkerAuthenticationTests(unittest.TestCase):
             message.decode(),
         )
         self.assertNotIn(b"\\n", message)
+
+
+class MaintenanceYieldTests(unittest.TestCase):
+    def test_yield_releases_parent_task_so_queued_child_can_run(self):
+        calls = []
+
+        def fake_request(method, path, payload=None):
+            calls.append((method, path, payload))
+            if path.endswith("/run"):
+                return {
+                    "done": False,
+                    "yield": True,
+                    "retryAt": "2026-11-17T18:00:00.000Z",
+                }
+            return {"status": "queued"}
+
+        task = {
+            "taskId": "drain-task-01",
+            "claimToken": "a" * 32,
+            "taskType": "storage_destination_drain",
+        }
+        with unittest.mock.patch("runner.signed_request", side_effect=fake_request):
+            process_maintenance_task(task)
+
+        self.assertEqual(2, len(calls))
+        self.assertTrue(calls[1][1].endswith("/maintenance/release"))
+        self.assertEqual("drain-task-01", calls[1][2]["taskId"])
+        self.assertEqual("2026-11-17T18:00:00.000Z", calls[1][2]["notBefore"])
 
 
 class WorkerSignatureVectorTests(unittest.TestCase):
