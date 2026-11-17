@@ -5,6 +5,7 @@ import { requireAppCheck } from "@/lib/server/firebase-app-check";
 import { errorBody, parseBody } from "@/lib/server/api";
 import { verifyFirebaseIdToken } from "@/lib/server/firebase-auth";
 import { refreshFirebaseWebSession, rotateWebRefreshSession, requireSameOrigin, webRefreshCookie } from "@/lib/server/web-session";
+import { recordRiskSignal } from "@/lib/server/risk-engine";
 
 const schema = z.object({
   idToken: z.string().min(100).max(8192),
@@ -23,7 +24,9 @@ export const Route = createFileRoute("/api/public/v1/auth/web/session")({
         if (session.uid !== initialUser.uid) {
           throw new ApiError(401, "WEB_SESSION_MISMATCH", "The sign-in session did not match this account.");
         }
-        await rotateWebRefreshSession(await Firestore.create(), body.refreshToken, session.refreshToken, session.uid);
+        const fs = await Firestore.create();
+        await rotateWebRefreshSession(fs, body.refreshToken, session.refreshToken, session.uid);
+        await recordRiskSignal(fs, session.uid, "signin");
         return Response.json(
           { idToken: session.idToken, expiresInSeconds: session.expiresInSeconds },
           {
