@@ -9,7 +9,7 @@ function firestore(documents: Record<string, Record<string, unknown> | null>) {
 }
 
 describe("authorized channel uploads", () => {
-  it("allows a delegated ZILLIONAIRE content operator to upload to a platform channel", async () => {
+  it("allows a delegated content operator with platform content permission to upload to a platform channel", async () => {
     const fs = firestore({
       "channels/platform-channel": { ownerUid: "platform" },
       "users/operator": { roleTags: [], adminModules: ["content"] },
