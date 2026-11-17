@@ -61,14 +61,14 @@ function isTarget(file) {
 
 function visibleCandidates(content, relative) {
   if (relative.startsWith("android/")) {
-    if (/\\/res\\/values(?:-[^/]+)?\\/.*\\.xml$/i.test(relative)) return content;
+    if (/\/res\/values(?:-[^/]+)?\/.*\.xml$/i.test(relative)) return content;
     const matches = [];
-    for (const match of content.matchAll(/\\bText\\s*\\(\\s*["']([^"']+)["']/g)) matches.push(match[1]);
-    for (const match of content.matchAll(/contentDescription\\s*=\\s*["']([^"']+)["']/g)) matches.push(match[1]);
-    return matches.join("\\n");
+    for (const match of content.matchAll(/\bText\s*\(\s*["']([^"']+)["']/g)) matches.push(match[1]);
+    for (const match of content.matchAll(/contentDescription\s*=\s*["']([^"']+)["']/g)) matches.push(match[1]);
+    return matches.join("\n");
   }
-  if (/\\.(md|txt)$/i.test(relative) || /(^|\\/)(emails?|email-templates?|legal|content\\/legal|seed)(\\/|$)/i.test(relative)) return content;
-  if (/\\.xml$/i.test(relative)) return content;
+  if (/\.(md|txt)$/i.test(relative) || /(^|\/)(emails?|email-templates?|legal|content\/legal|seed)(\/|$)/i.test(relative)) return content;
+  if (/\.xml$/i.test(relative)) return content;
   const source = ts.createSourceFile(relative, content, ts.ScriptTarget.Latest, true, relative.endsWith(".tsx") || relative.endsWith(".jsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
   const matches = [];
   const visibleAttributes = new Set(["title", "aria-label", "aria-description", "placeholder", "alt", "label", "description", "subject"]);
@@ -88,7 +88,7 @@ function visibleCandidates(content, relative) {
     ts.forEachChild(node, visit);
   }
   visit(source);
-  return matches.join("\\n");
+  return matches.join("\n");
 }
 
 const findings = [];
