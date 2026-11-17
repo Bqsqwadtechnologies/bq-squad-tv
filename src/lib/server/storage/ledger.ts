@@ -96,7 +96,7 @@ export function resolveAssetStorageBinding(
   const objectPrefix = typeof rawPrefix === "string" && rawPrefix.length <= 1024 &&
     !rawPrefix.startsWith("/") && !rawPrefix.includes("\\") &&
     rawPrefix.split("/").every(part => part && part !== "." && part !== "..")
-    ? rawPrefix.replace(/\\/$/, "")
+    ? rawPrefix.replace(/\/$/, "")
     : null;
   return { primaryDestinationId, replicaIds, objectPrefix };
 }
