@@ -252,7 +252,7 @@ function VideoStudio() {
       <header className="border-b border-cyan-300/15 bg-[#050f35]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
           <a href="/admin/" className="text-sm font-bold text-cyan-200">← Dashboard</a>
-          <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-cyan-200">Video Studio</span>
+          <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.18em] text-cyan-200">Zillionaire Dashboard · Video Studio</span>
         </div>
       </header>
       <section className="mx-auto max-w-6xl px-5 py-10">
