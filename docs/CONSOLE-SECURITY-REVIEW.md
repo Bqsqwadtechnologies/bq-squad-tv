@@ -12,7 +12,7 @@ Reviewed the complete current Git tree for the `src/routes/api/public/v1/admin/`
 
 ### Admin API routes
 
-All 28 admin route files were inspected. Each handler performs authenticated user verification and then checks the relevant server-side admin module scope, or performs an explicit super-admin check for permission delegation. The reviewed paths are:
+All 28 admin route files were inspected. Each handler performs authenticated user verification and then checks the relevant server-side admin module scope, or performs an explicit Zillionaire owner check for permission delegation. The reviewed paths are:
 
 - `admin/ads/campaigns.ts`
 - `admin/ads/campaigns/$campaignId.ts`
