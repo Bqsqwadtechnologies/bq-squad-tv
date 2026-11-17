@@ -6,7 +6,7 @@ import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 type Channel = { id: string; title: string; status: string; published: boolean };
 type UploadState = { name: string; progress: number; status: string; detail: string };
 type VideoJob = {
-  assetId: string; status: string; stage: string | null; progress: number;
+  assetId: string; status: string; assetStatus: string | null; contentStatus: string | null; stage: string | null; progress: number;
   attempts: number; workerId: string | null; lastHeartbeatAt: string | null;
   lastErrorCode: string | null; profile: string; outputResolutions: number[];
   outputBytes: number | null; modalEstimatedCostUsd: number | null;
@@ -39,6 +39,8 @@ function VideoStudio() {
   const [spendOverride, setSpendOverride] = useState(false);
   const [settingsReason, setSettingsReason] = useState("");
   const [workerReason, setWorkerReason] = useState("");
+  const [reviewReason, setReviewReason] = useState("");
+  const [savingJob, setSavingJob] = useState("");
   const [savingSpend, setSavingSpend] = useState(false);
   const [savingWorker, setSavingWorker] = useState("");
 
@@ -151,6 +153,28 @@ function VideoStudio() {
       setError(caught instanceof Error ? caught.message : "Could not save the processing spend settings.");
     } finally {
       setSavingSpend(false);
+    }
+  }
+
+  async function runJobAction(job: VideoJob, action: "retry" | "cancel" | "approve" | "publish") {
+    if (!token || reviewReason.trim().length < 3 || savingJob) return;
+    setSavingJob(job.assetId);
+    try {
+      const endpoint = action === "retry" ? "reprocess" : action;
+      const response = await fetch("/api/public/v1/admin/content-assets/" + encodeURIComponent(job.assetId) + "/" + endpoint, {
+        method: "POST",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ reason: reviewReason.trim() }),
+      });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "The video action could not be completed.");
+      setReviewReason("");
+      const refresh = await fetch("/api/public/v1/admin/video-jobs", { headers: await getWebAuthHeaders(token), cache: "no-store" });
+      if (refresh.ok) setJobs((await refresh.json() as { jobs?: VideoJob[] }).jobs ?? []);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The video action could not be completed.");
+    } finally {
+      setSavingJob("");
     }
   }
 
@@ -291,11 +315,33 @@ function VideoStudio() {
                   {job.workerId ? <p className="mt-1 text-xs text-blue-100/55">Worker: {job.workerId}</p> : null}
                   {job.lastHeartbeatAt ? <p className="mt-1 text-xs text-blue-100/55">Last update: {new Date(job.lastHeartbeatAt).toLocaleString()}</p> : null}
                   {job.modalEstimatedCostUsd !== null ? <p className="mt-1 text-xs text-blue-100/55">Estimated compute: ${job.modalEstimatedCostUsd.toFixed(4)}</p> : null}
-                  {job.lastErrorCode ? <p className="mt-1 text-xs text-amber-200">Needs attention: {job.lastErrorCode.replaceAll("_", " ").toLowerCase()}</p> : null}
+                  {job.lastErrorCode ? <p className="mt-1 text-xs text-amber-200">Needs attention: {({
+                    SOURCE_DOWNLOAD_FAILED: "The source video could not be downloaded. Retry the upload.",
+                    SOURCE_HASH_MISMATCH: "The source file changed. Review the upload before retrying.",
+                    MEDIA_PROCESSING_FAILED: "The video could not be processed. You can retry it.",
+                    WORKER_LEASE_LOST: "Processing was interrupted and will be recovered.",
+                    WORKER_DISK_SPACE_LOW: "The processing worker needs more temporary space.",
+                    HLS_OBJECT_VERIFICATION_FAILED: "Some output files did not pass verification.",
+                  } as Record<string, string>)[job.lastErrorCode] ?? "The video needs attention. Review its processing details."}</p> : null}
+                  {job.assetStatus === "processed_pending_review" ? <p className="mt-1 text-xs text-cyan-200">Owner review is required before this video can be used.</p> : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {job.assetStatus === "processed_pending_review" ? <button type="button" onClick={() => void runJobAction(job, "approve")} disabled={savingJob === job.assetId || reviewReason.trim().length < 3} className="min-h-10 rounded-lg bg-cyan-300 px-3 text-xs font-bold text-[#03102d] disabled:opacity-40">Approve</button> : null}
+                    {job.assetStatus === "ready" && job.contentStatus !== "published" ? <button type="button" onClick={() => void runJobAction(job, "publish")} disabled={savingJob === job.assetId || reviewReason.trim().length < 3} className="min-h-10 rounded-lg bg-blue-500 px-3 text-xs font-bold text-white disabled:opacity-40">Publish</button> : null}
+                    {["failed", "cancelled"].includes(job.status) ? <button type="button" onClick={() => void runJobAction(job, "retry")} disabled={savingJob === job.assetId || reviewReason.trim().length < 3} className="min-h-10 rounded-lg border border-white/20 px-3 text-xs font-bold text-white disabled:opacity-40">Retry</button> : null}
+                    {["queued", "processing"].includes(job.status) ? <button type="button" onClick={() => void runJobAction(job, "cancel")} disabled={savingJob === job.assetId || reviewReason.trim().length < 3} className="min-h-10 rounded-lg border border-amber-200/30 px-3 text-xs font-bold text-amber-100 disabled:opacity-40">Cancel</button> : null}
+                  </div>
                 </article>)}
               </div>
             )}
           </section>
+        </div>
+        <div className="mt-4 rounded-2xl border border-white/10 bg-[#07143d] p-4">
+          <label className="grid gap-2 text-xs text-blue-100/65">
+            Reason for retry, cancellation, approval or publishing
+            <input value={reviewReason} onChange={event => setReviewReason(event.target.value)}
+              placeholder="Enter a reason (at least 3 characters)"
+              className="rounded-lg border border-white/15 bg-[#030b2a] px-3 py-2 text-sm text-white" />
+          </label>
         </div>
         <section className="mt-4 rounded-2xl border border-white/10 bg-[#07143d] p-5">
           <h2 className="font-black">Processing workers</h2>
