@@ -31,6 +31,17 @@ describe("storage destination selection", () => {
     expect(picks.slice(11)).toEqual(pool.map(item => item.id));
   });
 
+  it("round-robins across 400 candidates and wraps without rescanning the pool", () => {
+    const pool = Array.from({ length: 400 }, (_, index) =>
+      candidate("lov-" + String(index + 1).padStart(3, "0")));
+    const first = pickDestination(pool, 1, "source_media", 0);
+    expect(first?.id).toBe("lov-001");
+    expect(first?.nextCursor).toBe(1);
+    const wrapped = pickDestination(pool, 1, "source_media", 399);
+    expect(wrapped?.id).toBe("lov-400");
+    expect(wrapped?.nextCursor).toBe(0);
+  });
+
   it("skips full, draining, retired, unhealthy and unconfigured destinations", () => {
     const pool = [
       candidate("01", { usageBytes: 100 }),
