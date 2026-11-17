@@ -159,11 +159,14 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       await commitStorageReservation(fs, reservationId, totalBytes);
       const now = new Date().toISOString();
       await fs.patchDoc("contentAssets/" + assetId, {
-        status: "processed_pending_review", transcodeJobStatus: "completed", streamDestinationId: destinationId,
+        status: "processed_pending_review", transcodeJobStatus: "completed",
+        streamDestinationId: destinationId, streamReplicaIds: [],
+        objectPrefix: prefix, streamObjectPrefix: prefix,
+        posterDestinationId: null, thumbnailDestinationId: null,
         ...(body.sourceSha256 ? { sourceSha256: body.sourceSha256.toLowerCase() } : {}),
         hlsEncryptionEnabled: flags.hlsEncryption,
         ...(encryptedHlsKey ? { encryptedHlsKey } : {}),
-        streamObjectPrefix: prefix, storagePath: masterKey, hlsManifestKey: masterKey,
+        storagePath: masterKey, hlsManifestKey: masterKey,
         actualHlsBytes: totalBytes, hlsVerifiedAt: now,
         outputResolutions: body.outputResolutions ?? [],
         masterPlaylistValid: true, allSegmentsVerified: true,
