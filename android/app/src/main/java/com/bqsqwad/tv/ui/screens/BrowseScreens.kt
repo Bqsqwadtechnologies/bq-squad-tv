@@ -9,10 +9,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.items as listItems
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -64,7 +64,7 @@ fun LiveTvScreen(onChannel: (String) -> Unit) {
             else ->
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     val channels = (catalog?.liveNow.orEmpty() + catalog?.channels.orEmpty()).distinctBy { it.id }
-                    items(channels, key = { it.id }) { channel ->
+                    listItems(channels, key = { it.id }) { channel ->
                         ChannelListCard(channel = channel, onClick = { onChannel(channel.id) })
                     }
                 }
@@ -136,7 +136,7 @@ fun LibraryScreen(onChannel: (String) -> Unit = {}) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    items(visibleChannels.size, key = { index -> visibleChannels[index].id }) { index ->
+                    gridItems(visibleChannels.size, key = { index -> visibleChannels[index].id }) { index ->
                         val channel = visibleChannels[index]
                         Card(
                             modifier = Modifier.fillMaxWidth().clickable { onChannel(channel.id) },
