@@ -124,7 +124,15 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             const dailyRemaining = typeof dailyLimit === "number" && Number.isSafeInteger(dailyLimit)
               ? Math.max(0, dailyLimit - spentToday)
               : Number.MAX_SAFE_INTEGER;
-            const affordableSeconds = maxAffordableSeconds(previousBilledSeconds, billableSeconds, rate, Math.min(balance, dailyRemaining));
+            const monthlySpent = integer(monthlyUsage["spentMinor"]);
+            const monthlyBudget = integer(wallet["monthlyBudgetMinor"]);
+            const monthlyRemaining = monthlyBudget > 0
+              ? Math.max(0, monthlyBudget - monthlySpent)
+              : Number.MAX_SAFE_INTEGER;
+            const affordableSeconds = maxAffordableSeconds(
+              previousBilledSeconds, billableSeconds, rate,
+              Math.min(balance, dailyRemaining, monthlyRemaining),
+            );
             const charge = incrementalSessionCharge(previousBilledSeconds, affordableSeconds, rate);
             const missedTwoHeartbeats = elapsed > 45;
             const exhausted = rate > 0 && (
@@ -188,7 +196,6 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
               });
             }
             if (charge.chargeMinor > 0) {
-              const monthlySpent = integer(monthlyUsage["spentMinor"]);
               const nextMonthlySpent = safeAddMinor(monthlySpent, charge.chargeMinor);
               writes.push({
                 update: {
@@ -198,7 +205,6 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
                 updateMask: { fieldPaths: ["uid", "month", "spentMinor", "currency", "updatedAt"] },
                 ...(monthlyUsage ? {} : { currentDocument: { exists: false } }),
               });
-              const monthlyBudget = integer(wallet["monthlyBudgetMinor"]);
               if (monthlyBudget > 0 && monthlySpent < monthlyBudget && nextMonthlySpent >= monthlyBudget && !monthlyBudgetAlert) {
                 const notificationId = crypto.randomUUID();
                 writes.push(
