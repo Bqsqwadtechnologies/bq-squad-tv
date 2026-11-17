@@ -656,7 +656,8 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
       if (task["taskType"] === "storage_orphan_scan") {
         const payload = task["payload"] as Record<string, unknown> | undefined;
         const destinationId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
-        if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId) || destinationId === "legacy_lovable_streaming") {
+        if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId) ||
+            ["legacy_lovable_source", "legacy_lovable_streaming", "lovable-source-legacy", "lovable-stream-legacy"].includes(destinationId)) {
           throw new ApiError(400, "ORPHAN_SCAN_DESTINATION_INVALID", "This location cannot be scanned for automatic cleanup.");
         }
         const raw = await fs.getDoc("storageDestinations/" + destinationId);
