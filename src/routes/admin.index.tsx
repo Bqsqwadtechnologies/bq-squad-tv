@@ -52,7 +52,7 @@ const moduleCards: Array<{
   { id: "overview", title: "Monthly operations reports", description: "Review monthly ledger, payout, advertising and producer-review activity.", href: "/admin/reports", icon: Gauge },
   { id: "system", title: "Data structure", description: "Review the platform data structure without viewing private record contents.", href: "/admin/firebase-schema", icon: Settings2 },
   { id: "system", title: "Storage locations", description: "Review available storage locations, their status and where new files are placed.", href: "/admin/storage", icon: Database },
-  { id: "channels", title: "Channel operations", description: "Server APIs are present; the dedicated management screen is being completed.", icon: Tv2 },
+  { id: "channels", title: "Channel operations", description: "The tools are in place; the management screen is still being completed.", icon: Tv2 },
   { id: "content", title: "Content & rights", description: "Rights evidence, review state, publishing and featured-content controls.", href: "/admin/video-studio", icon: Film },
   { id: "users", title: "Viewer accounts", description: "Account status and access administration.", icon: Users },
   { id: "producers", title: "Producer verification", description: "Review producer verification and channel ownership.", icon: BadgeCheck },
@@ -307,13 +307,13 @@ function ZillionaireDashboard() {
                 <p className="text-xs text-blue-100/45">Only modules granted by the server are shown.</p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {moduleCards.filter(item => allowedModules.has(item.id) && (item.title !== "Storage destinations" || access.owner)).map(item => {
+                {moduleCards.filter(item => allowedModules.has(item.id) && (item.title !== "Storage locations" || access.owner)).map(item => {
                   const Icon = item.icon;
                   return (
                     <article key={item.title} className="rounded-2xl border border-white/10 bg-[#07143d] p-5 transition hover:border-cyan-300/30">
                       <div className="flex items-start justify-between gap-3">
                         <span className="grid h-10 w-10 place-items-center rounded-xl bg-cyan-300/10 text-cyan-200"><Icon size={20} /></span>
-                        {item.href ? <a href={item.href} aria-label={"Open " + item.title} className="text-cyan-200 hover:text-white"><ArrowUpRight size={19} /></a> : <span className="text-[10px] font-bold uppercase tracking-wider text-blue-100/35">API scope</span>}
+                        {item.href ? <a href={item.href} aria-label={"Open " + item.title} className="text-cyan-200 hover:text-white"><ArrowUpRight size={19} /></a> : <span className="text-[10px] font-bold uppercase tracking-wider text-blue-100/35">Setup pending</span>}
                       </div>
                       <h3 className="mt-4 font-bold">{item.title}</h3>
                       <p className="mt-2 text-xs leading-5 text-blue-100/55">{item.description}</p>
