@@ -207,10 +207,10 @@ export async function recordExpectedStorageEgressProgress(
     const consumed = Math.min(bytes, remaining);
     const now = new Date().toISOString();
     const progress = (raw: Record<string, unknown> | null) => ({
-      monthConsumedBytes: safe(raw?.["monthKey"] === month ? raw["monthConsumedBytes"] : 0) + consumed,
-      dayConsumedBytes: safe(raw?.["dayKey"] === day ? raw["dayConsumedBytes"] : 0) + consumed,
-      monthReservedBytes: Math.max(0, safe(raw?.["monthKey"] === month ? raw["monthReservedBytes"] : 0) - consumed),
-      dayReservedBytes: Math.max(0, safe(raw?.["dayKey"] === day ? raw["dayReservedBytes"] : 0) - consumed),
+      monthConsumedBytes: raw?.["monthKey"] === month ? safe(raw["monthConsumedBytes"]) + consumed : safe(raw?.["monthConsumedBytes"]),
+      dayConsumedBytes: raw?.["dayKey"] === day ? safe(raw["dayConsumedBytes"]) + consumed : safe(raw?.["dayConsumedBytes"]),
+      monthReservedBytes: raw?.["monthKey"] === month ? Math.max(0, safe(raw["monthReservedBytes"]) - consumed) : safe(raw?.["monthReservedBytes"]),
+      dayReservedBytes: raw?.["dayKey"] === day ? Math.max(0, safe(raw["dayReservedBytes"]) - consumed) : safe(raw?.["dayReservedBytes"]),
       updatedAt: now,
     });
     return {
@@ -243,10 +243,10 @@ export async function releaseExpectedStorageEgress(fs: Firestore, sessionId: str
     const remaining = Math.max(0, safe(current["reservedBytes"]) - safe(current["consumedBytes"]));
     const now = new Date().toISOString();
     const release = (raw: Record<string, unknown> | null) => ({
-      monthExpectedBytes: Math.max(0, safe(raw?.["monthKey"] === month ? raw["monthExpectedBytes"] : 0) - remaining),
-      dayExpectedBytes: Math.max(0, safe(raw?.["dayKey"] === day ? raw["dayExpectedBytes"] : 0) - remaining),
-      monthReservedBytes: Math.max(0, safe(raw?.["monthKey"] === month ? raw["monthReservedBytes"] : 0) - remaining),
-      dayReservedBytes: Math.max(0, safe(raw?.["dayKey"] === day ? raw["dayReservedBytes"] : 0) - remaining),
+      monthExpectedBytes: raw?.["monthKey"] === month ? Math.max(0, safe(raw["monthExpectedBytes"]) - remaining) : safe(raw?.["monthExpectedBytes"]),
+      dayExpectedBytes: raw?.["dayKey"] === day ? Math.max(0, safe(raw["dayExpectedBytes"]) - remaining) : safe(raw?.["dayExpectedBytes"]),
+      monthReservedBytes: raw?.["monthKey"] === month ? Math.max(0, safe(raw["monthReservedBytes"]) - remaining) : safe(raw?.["monthReservedBytes"]),
+      dayReservedBytes: raw?.["dayKey"] === day ? Math.max(0, safe(raw["dayReservedBytes"]) - remaining) : safe(raw?.["dayReservedBytes"]),
       updatedAt: now,
     });
     return {
