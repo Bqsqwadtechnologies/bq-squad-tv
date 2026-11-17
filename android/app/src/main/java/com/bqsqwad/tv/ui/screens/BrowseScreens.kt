@@ -1,4 +1,5 @@
 package com.bqsqwad.tv.ui.screens
+import com.bqsqwad.tv.ui.ErrorMessages
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,7 +36,7 @@ fun LiveTvScreen(onChannel: (String) -> Unit) {
     LaunchedEffect(Unit) {
         runCatching { repository.home() }
             .onSuccess { catalog = it }
-            .onFailure { error = it.localizedMessage ?: "Live channels are unavailable." }
+            .onFailure { error = ErrorMessages.TRY_AGAIN }
         loading = false
     }
 
@@ -79,7 +80,7 @@ fun LibraryScreen(onChannel: (String) -> Unit = {}) {
                 val combinedChannels = response.channels + response.trending + response.replays
                 channels = combinedChannels.distinctBy { it.id }
             }.onFailure {
-                error = it.localizedMessage ?: "The catalogue is unavailable."
+                error = ErrorMessages.TRY_AGAIN
             }
         loading = false
     }
