@@ -458,6 +458,14 @@ function AccountPage() {
                 <img src="/brand/bq-sqwad-tv-logo.png" alt="" className="h-8 w-auto max-w-[120px] object-contain" />
                 <span>Continue</span>
               </button>
+              <nav aria-label="Account shortcuts" className="mt-6 grid grid-cols-2 gap-3">
+                <a href="/wallet" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">My Wallet</a>
+                <a href="/wallet#transactions" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">My Purchases</a>
+                <a href="/history" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">Watch History</a>
+                <a href="/notifications" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">Notifications</a>
+                <a href="/help" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">Help &amp; Support</a>
+                <a href="/about" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">About BQ SQWAD TV</a>
+              </nav>
               <details className="mt-5 rounded-xl border border-white/10 p-3">
                 <summary className="cursor-pointer text-sm font-semibold text-blue-100/70">Account security</summary>
                               <button
