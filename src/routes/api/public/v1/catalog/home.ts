@@ -42,6 +42,9 @@ export const Route = createFileRoute("/api/public/v1/catalog/home")({
                 channelTitle: typeof channel?.["title"] === "string" ? channel["title"] : "Channel",
                 title: typeof asset["title"] === "string" ? asset["title"] : "Untitled",
                 category: typeof asset["category"] === "string" ? asset["category"] : "Movie",
+                genre: typeof asset["genre"] === "string"
+                  ? asset["genre"]
+                  : Array.isArray(asset["genres"]) ? asset["genres"].filter((value): value is string => typeof value === "string").join(", ") : "",
                 posterUrl: typeof asset["posterUrl"] === "string" ? asset["posterUrl"] : null,
                 averageStars: typeof asset["averageStars"] === "number" ? asset["averageStars"] : 0,
                 ratingCount: typeof asset["ratingCount"] === "number" ? asset["ratingCount"] : 0,
