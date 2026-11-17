@@ -248,7 +248,10 @@ function ContentDetailsPage() {
             </section>
 
             {playbackUrl ? <section className="mt-7 rounded-3xl border border-cyan-300/20 bg-[#07143d] p-4 sm:p-6">
-              <video ref={videoRef} src={playbackUrl} controls playsInline className="aspect-video w-full rounded-2xl bg-black" onPlay={() => { playbackStateRef.current = "playing"; }} onPause={() => { playbackStateRef.current = "paused"; }} onWaiting={() => { playbackStateRef.current = "buffering"; }} onEnded={() => { playbackStateRef.current = "ended"; void endPlayback(); }} onError={() => setError("This browser could not play the stream. Try a browser with native HLS support.")} />
+              <div className="relative overflow-hidden rounded-2xl bg-black">
+                <video ref={videoRef} src={playbackUrl} controls playsInline className="aspect-video w-full bg-black" onPlay={() => { playbackStateRef.current = "playing"; }} onPause={() => { playbackStateRef.current = "paused"; }} onWaiting={() => { playbackStateRef.current = "buffering"; }} onEnded={() => { playbackStateRef.current = "ended"; void endPlayback(); }} onError={() => setError("This browser could not play the stream. Try a supported browser.")} />
+                <img src="/brand/bq-sqwad-tv-logo.png" alt="" aria-hidden="true" className="pointer-events-none absolute right-4 top-4 w-20 opacity-40" />
+              </div>
               <p className="mt-3 text-xs text-blue-100/45">Playback metering uses server heartbeats. Keep this page open while watching.</p>
             </section> : null}
 
