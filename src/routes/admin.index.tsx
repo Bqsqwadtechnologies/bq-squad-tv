@@ -239,7 +239,7 @@ function ZillionaireDashboard() {
               <div className="rounded-2xl border border-cyan-300/20 bg-gradient-to-br from-[#0b286f] to-[#07143d] p-5">
                 <Gauge className="text-cyan-200" size={22} />
                 <p className="mt-4 text-sm font-bold">Server authorization</p>
-                <p className="mt-1 text-xs leading-5 text-blue-100/55">Verified for this session; each API independently rechecks access.</p>
+                <p className="mt-1 text-xs leading-5 text-blue-100/55">Verified for this session; every request independently checks access.</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
                 <LockKeyhole className="text-cyan-200" size={22} />
