@@ -51,7 +51,7 @@ The Zillionaire dashboard is the only top-level control centre. Configure only `
 ## 5. Existing storage-account credentials
 
 - Lovable destinations may use the existing per-prefix pair `<PREFIX>_URL` and `<PREFIX>_SERVICE_ROLE_KEY`, or bundles named `STORAGE_LOV_BUNDLE_01` through `STORAGE_LOV_BUNDLE_NN`.
-- Each Lovable bundle is a JSON secret with at most 25 bucket entries. Use either an `items` array containing `destinationId`, `bucket`, `url` and `serviceRoleKey`, or a shared-project object containing `url`, `serviceRoleKey` and a `buckets` array. Never include the JSON value in Git, chat or logs.
+- An `items` array may contain at most 25 destination entries per secret. For a shared project, use one object containing `url`, `serviceRoleKey` and a `buckets` array (up to 500 bucket names); each bucket receives a stable destination ID derived from its name. Never include the JSON value in Git, chat or logs.
 - Keep the existing Backblaze per-prefix names: `<PREFIX>_KEY_ID`, `<PREFIX>_APP_KEY`, `<PREFIX>_BUCKET_ID` and `<PREFIX>_ENDPOINT`. The discovery process reads the bucket name from the provider using the stored credentials; it does not return the credentials.
 - Use the protected Storage locations screen to discover and register destinations. Discovery and registration require a recent sign-in confirmation.
 - Do not create a new storage account or paid service to work around a missing credential. Keep credentials server-side and never expose them to browser or Android clients.
