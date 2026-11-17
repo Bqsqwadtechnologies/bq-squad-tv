@@ -17,9 +17,21 @@ export const Route = createFileRoute("/api/public/v1/wallet/summary")({
         const user = await requireUser(request);
         const fs = await Firestore.create();
         const wallet = await getWallet(fs, user.uid);
+        const digits = minorUnitDigits(wallet.currency);
+        const formattedBalance = new Intl.NumberFormat("en", {
+          style: "currency",
+          currency: wallet.currency,
+          minimumFractionDigits: digits,
+          maximumFractionDigits: digits,
+        }).format(wallet.balanceMinor / (10 ** digits));
         return Response.json({
-          balanceMinor: wallet.balanceMinor, currency: wallet.currency,
-          currencySymbol: symbolFor(wallet.currency), minorUnitDigits: minorUnitDigits(wallet.currency),
+          balanceMinor: wallet.balanceMinor,
+          currency: wallet.currency,
+          currencyCode: wallet.currency,
+          currencySymbol: symbolFor(wallet.currency),
+          symbol: symbolFor(wallet.currency),
+          minorUnitDigits: digits,
+          formattedBalance,
           dailySpendLimitMinor: wallet.dailySpendLimitMinor, spentTodayMinor: wallet.spentTodayMinor,
         }, { headers: { "cache-control": "private, no-store" } });
       } catch (error) { return errorBody(error); }
