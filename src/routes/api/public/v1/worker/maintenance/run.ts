@@ -10,7 +10,7 @@ import { checkStorageProviderHealth, isStorageQuotaOrRateLimit, readStorageUsage
 import { refreshStoragePoolDestination, updateStorageUsageAndPool } from "@/lib/server/storage/pool-index";
 import { copyReplicaObject, replicaCopyPhase } from "@/lib/server/storage/replication";
 import { commitStorageReservation } from "@/lib/server/storage/reservations";
-import { addVerifiedAssetStreamReplica } from "@/lib/server/storage/asset-binding";
+import { addVerifiedAssetStreamReplica, bindAssetStreamStorage } from "@/lib/server/storage/asset-binding";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
@@ -89,6 +89,15 @@ async function processReplicaCopyTask(fs: Firestore, taskPath: string, task: Rec
       assetId, destinationId: targetId, objectPrefix: targetPrefix,
       reservationId, sizeBytes: copiedBytes, objectCount: copiedObjectCount,
     });
+    const switchPrimary = payload?.["switchPrimary"] === true;
+    if (switchPrimary) {
+      await bindAssetStreamStorage(fs, {
+        assetId,
+        destinationId: targetId,
+        objectPrefix: targetPrefix,
+        reservationId,
+      });
+    }
     const reservedBytes = typeof payload?.["streamBytes"] === "number" ? payload["streamBytes"] : copiedBytes;
     const unused = Math.max(0, reservedBytes - copiedBytes);
     if (unused > 0) {
@@ -282,7 +291,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         }
       }
 
-      if (task["taskType"] === "storage_replica_copy") {
+      if (task["taskType"] === "storage_replica_copy" || task["taskType"] === "storage_rebalance") {
         return await processReplicaCopyTask(fs, taskPath, task);
       }
 
