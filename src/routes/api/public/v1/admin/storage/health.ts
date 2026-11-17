@@ -6,6 +6,7 @@ import { requireAdminModule } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
 import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata } from "@/lib/server/storage/registry";
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
+import { isStorageQuotaOrRateLimit, storageFailureCode, storageFailureMessage } from "@/lib/server/storage/maintenance";
 
 const bodySchema = z.object({
   destinationId: z.string().regex(/^[a-z0-9][a-z0-9_-]{1,79}$/),
@@ -54,19 +55,32 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/health")({
             metadata: { providerType: metadata.providerType, bucketName: metadata.bucketName },
           });
           return Response.json({ destinationId, healthStatus: "healthy", healthCheckedAt: now });
-        } catch {
+        } catch (error) {
           const now = new Date().toISOString();
+          const code = storageFailureCode(error);
+          const degraded = isStorageQuotaOrRateLimit(code);
+          const healthStatus = degraded ? "degraded" : "unreachable";
+          const message = storageFailureMessage(code);
           await fs.patchDoc("storageDestinations/" + destinationId, {
-            healthStatus: "unreachable",
+            healthStatus,
             healthCheckedAt: now,
-            lastErrorCode: "STORAGE_PROVIDER_HEALTH_CHECK_FAILED",
+            lastErrorCode: code,
+            degradedUntil: degraded ? new Date(Date.now() + 24 * 60 * 60_000).toISOString() : null,
           });
+          if (degraded) {
+            const alertId = crypto.randomUUID().replace(/-/g, "");
+            await fs.setDoc("storageAlerts/" + alertId, {
+              destinationId, severity: "warning", reasonCode: code, message,
+              createdAt: now, expiresAt: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+              acknowledged: false,
+            }).catch(() => undefined);
+          }
           await writeAuditLog(fs, {
             actorUid, action: "storage.destination_health_check_failed",
             targetType: "storageDestination", targetId: destinationId, reason,
-            metadata: { providerType: metadata.providerType, errorCode: "STORAGE_PROVIDER_HEALTH_CHECK_FAILED" },
+            metadata: { providerType: metadata.providerType, errorCode: code, healthStatus },
           });
-          return Response.json({ destinationId, healthStatus: "unreachable", healthCheckedAt: now, error: "The provider health check failed. Review provider permissions and endpoint configuration." }, { status: 502 });
+          return Response.json({ destinationId, healthStatus, healthCheckedAt: now, error: message }, { status: degraded ? 429 : 502 });
         }
       } catch (error) {
         return errorBody(error);
