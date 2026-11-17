@@ -1,7 +1,8 @@
 name: Website and API CI
 "on":
-  # Automatic push and pull-request runs are intentionally disabled per owner request.
-  # Keep manual dispatch available for explicit verification.
+  # Owner explicitly requested a real verification run for delivery work.
+  push:
+    branches: [main]
   workflow_dispatch: {}
 permissions:
   contents: read
