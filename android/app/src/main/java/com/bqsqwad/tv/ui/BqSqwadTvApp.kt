@@ -3,6 +3,9 @@ package com.bqsqwad.tv.ui
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -31,6 +34,7 @@ import com.bqsqwad.tv.data.auth.AuthRepository
 import com.bqsqwad.tv.ui.player.PlayerScreen
 import com.bqsqwad.tv.ui.screens.*
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.delay
 
 private data class MainTab(
     val route: String,
@@ -56,6 +60,11 @@ fun BqSqwadTvApp(
     val auth = remember { AuthRepository() }
     val scope = rememberCoroutineScope()
     val signedInUid = FirebaseAuth.getInstance().currentUser?.uid
+    var launchComplete by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(700)
+        launchComplete = true
+    }
     var themeSyncComplete by remember(signedInUid) { mutableStateOf(signedInUid == null) }
     LaunchedEffect(signedInUid) {
         if (signedInUid != null) {
@@ -72,18 +81,29 @@ fun BqSqwadTvApp(
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = mainTabs.any { it.route == currentRoute }
 
-    if (!themeSyncComplete) {
+    if (!launchComplete || !themeSyncComplete) {
         Surface(Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                androidx.compose.foundation.layout.Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     androidx.compose.foundation.Image(
                         painter = painterResource(com.bqsqwad.tv.R.drawable.bq_sqwad_tv_mark),
-                        contentDescription = "BQ SQWAD TV",
-                        modifier = Modifier.size(104.dp),
+                        contentDescription = "BQ SQWAD TV logo",
+                        modifier = Modifier.size(148.dp),
                     )
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        "WATCH • STREAM • ENJOY",
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.primary,
+                        style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
+                    )
+                    Spacer(Modifier.height(14.dp))
                     CircularProgressIndicator()
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Entertainment Without Limits",
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                    )
                 }
             }
         }
