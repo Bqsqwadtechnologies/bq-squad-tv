@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { discoverStorageDestinations } from "./discovery";
 
 describe("storage discovery", () => {
@@ -26,6 +26,35 @@ describe("storage discovery", () => {
     expect(result.destinations.every(item => item.paidEgressEnabled === false)).toBe(true);
     expect(JSON.stringify(result)).not.toContain("private-one");
     expect(JSON.stringify(result)).not.toContain("project-a.supabase.co");
+  });
+
+  it("discovers a numbered Backblaze account without returning credentials", async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        apiUrl: "https://api001.backblazeb2.com",
+        authorizationToken: "provider-session-token",
+        accountId: "account-id",
+      }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        buckets: [{ bucketId: "bucket-id-01", bucketName: "bq-streams-01" }],
+      }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    try {
+      const result = await discoverStorageDestinations({
+        STORAGE_B2_01_KEY_ID: "private-key-id",
+        STORAGE_B2_01_APP_KEY: "private-app-key",
+        STORAGE_B2_01_BUCKET_ID: "bucket-id-01",
+        STORAGE_B2_01_ENDPOINT: "https://s3.us-west-004.backblazeb2.com",
+      });
+      expect(result.counts.backblaze).toBe(1);
+      expect(result.destinations[0]?.bucketName).toBe("bq-streams-01");
+      expect(result.destinations[0]?.region).toBe("us-west-004");
+      expect(JSON.stringify(result)).not.toContain("private-app-key");
+      expect(JSON.stringify(result)).not.toContain("provider-session-token");
+    } finally {
+      vi.stubGlobal("fetch", originalFetch);
+    }
   });
 
   it("returns only destinations not already registered and reports the skipped count", async () => {
