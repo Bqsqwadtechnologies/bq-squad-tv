@@ -149,3 +149,15 @@ Keep these values in the hosting provider's server-side environment settings onl
 The owner-only secret health endpoint reports names and presence only; it never returns values. It is a diagnostic, not proof that a credential is valid or that the corresponding provider account is ready. Keep paid egress disabled and preserve both legacy storage locations.
 
 The current security-header policy enforces transport, MIME, framing, referrer and browser-permission headers. Its CSP is in report-only mode while the website's script/style/asset requirements are audited; do not treat CSP enforcement as complete until a nonce/hash policy is verified against production rendering.
+
+
+## 8. Legal page drafts — required before public launch
+
+- The five default documents are drafts only: Privacy Policy, Terms and Conditions, Producer Terms, Producer Content Policy and Licensed Channel Provider Terms.
+- A qualified lawyer must review the documents in every country where BQ SQWAD TV will operate before any page is published. The owner must edit the documents whenever an actual product practice, payment flow, data use, retention period, provider contract or legal requirement changes.
+- In the Zillionaire dashboard, load the default pages, complete every legal placeholder in Settings, review each draft, and publish only after the legal review. Publishing requires a recent owner sign-in, blocks any remaining placeholder, records a version and audit reason, and sets whether viewers must accept the new version again.
+- Confirm the minimum account age, data-retention periods, dispute window, wallet refund and closure rules, liability period, governing law, jurisdiction, postal address if required, producer revenue basis, revenue-change notice and minimum payout. These values must reflect actual operations and legal advice; do not guess.
+- The provider terms must match each signed provider contract, including the revenue model, permitted deductions, territories, platforms, licence dates, settlement currency and dispute process.
+- No new credential or secret is required for these legal drafts. Do not put identity evidence, payment details or provider credentials into legal page text.
+- The seed script can validate the draft list locally. Remote seeding requires an authenticated owner session; never place an owner token in source control.
+- Provider invitation acceptance and a complete provider console flow remain dependent on the provider-console implementation. Producer acceptance is enforced at producer verification; paid viewing is blocked until public terms and privacy acceptance are recorded.
