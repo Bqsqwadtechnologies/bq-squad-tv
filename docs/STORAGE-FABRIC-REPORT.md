@@ -33,6 +33,11 @@ Execution method: direct GitHub main-branch edits. No local checkout, browser, T
 - The existing Modal maintenance queue is reused; no second worker or queue was introduced.
 - No production bucket was created, modified or deleted by this source-only work.
 
+## Latest follow-up
+
+- `0c453f87d18f90066cae1152935a49ef7127b4a0` — consolidated duplicate imports in the maintenance worker (the same reservation function and cleanup helpers had been imported more than once). This is a source-level correction only; no compiler or test runner was available to verify it.
+- Destination-wide draining remains unimplemented. The source-retention and orphan tasks still need cursor-based coverage beyond the current bounded query sizes. The owner screen still needs true windowed virtualization and complete explanations.
+
 ## Verification
 
 - GitHub commits were created directly on `main`; latest File 03 source commit before this report update: `2ca92f7d79ff5ae413a749594c9a4d1e20661d5c`.
