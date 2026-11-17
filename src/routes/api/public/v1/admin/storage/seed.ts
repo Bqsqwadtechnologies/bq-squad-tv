@@ -23,7 +23,7 @@ const metadataSchema = z.object({
   dailyEgressCapBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).nullable(),
   priority: z.number().int().min(0).max(10000),
   enabled: z.boolean(),
-  paidEgressEnabled: z.boolean().default(false),
+  paidEgressEnabled: z.literal(false).default(false),
   freeEgressBudgetBytes: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).nullable().default(null),
 });
 const bodySchema = z.object({
