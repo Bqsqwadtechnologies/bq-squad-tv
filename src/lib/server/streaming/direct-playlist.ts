@@ -18,6 +18,7 @@ export async function rewritePlaylistWithSignedObjects(input: {
   playlistPath: string;
   signObjects: (objectPaths: string[]) => Promise<Map<string, string>>;
   keyUrl?: (assetId: string) => Promise<string>;
+  playlistUrl?: (playlistPath: string) => Promise<string>;
 }): Promise<SignedPlaylistResult> {
   const { playlist, playlistPath } = input;
   if (playlist.length > 2_000_000 || !playlist.replace(/^\\uFEFF/, "").trimStart().startsWith("#EXTM3U")) {
@@ -26,6 +27,7 @@ export async function rewritePlaylistWithSignedObjects(input: {
 
   const objectPaths = new Set<string>();
   const keyAssets = new Set<string>();
+  const playlistPaths = new Set<string>();
   const resolve = (reference: string): string | null => {
     const keyMatch = reference.match(/\\/api\\/public\\/v1\\/streaming\\/key\\/([A-Za-z0-9_-]{1,100})(?:$|[?#])/);
     if (keyMatch?.[1]) {
@@ -62,7 +64,7 @@ export async function rewritePlaylistWithSignedObjects(input: {
       throw new ApiError(503, "HLS_SIGNED_OBJECT_UNAVAILABLE", "Some media files could not be authorised for direct playback.");
     }
   }
-  const keyUrls = new Map<string, string>();
+  const playlistUrls = new Map<string, string>();\n  for (const path of playlistPaths) {\n    if (!input.playlistUrl) throw new ApiError(503, "HLS_PLAYLIST_ROUTE_UNAVAILABLE", "A media playlist route is not available.");\n    playlistUrls.set(path, await input.playlistUrl(path));\n  }\n  const keyUrls = new Map<string, string>();
   for (const assetId of keyAssets) {
     if (!input.keyUrl) throw new ApiError(503, "HLS_KEY_ROUTE_UNAVAILABLE", "Encrypted playback is not available for this stream.");
     keyUrls.set(assetId, await input.keyUrl(assetId));
@@ -78,14 +80,14 @@ export async function rewritePlaylistWithSignedObjects(input: {
         const uri = match[2] ?? "";
         if (!uri || uri.startsWith("data:")) continue;
         const keyMatch = uri.match(/\\/api\\/public\\/v1\\/streaming\\/key\\/([A-Za-z0-9_-]{1,100})(?:$|[?#])/);
-        const url = keyMatch?.[1] ? keyUrls.get(keyMatch[1]) : signed.get(resolveHlsReference(playlistPath, uri));
+        const resolved = keyMatch?.[1] ? null : resolveHlsReference(playlistPath, uri);\n        const url = keyMatch?.[1] ? keyUrls.get(keyMatch[1]) : resolved && playlistUrls.get(resolved) || (resolved ? signed.get(resolved) : undefined);
         if (!url) throw new ApiError(503, "HLS_SIGNED_OBJECT_UNAVAILABLE", "A media reference could not be authorised.");
         rewritten = rewritten.replace(match[0], match[1] + url + match[3]);
       }
       return rewritten;
     }
     const path = resolveHlsReference(playlistPath, trimmed);
-    const url = signed.get(path);
+    const url = playlistUrls.get(path) ?? signed.get(path);
     if (!url) throw new ApiError(503, "HLS_SIGNED_OBJECT_UNAVAILABLE", "A media reference could not be authorised.");
     return url;
   }));
