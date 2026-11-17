@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Film, LoaderCircle, Search, Star } from "lucide-react";
+import { ArrowLeft, Film, LoaderCircle, Star } from "lucide-react";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 
 type FeaturedContent = {
