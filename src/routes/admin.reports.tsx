@@ -116,7 +116,7 @@ function MonthlyReportsPage() {
       <header className="border-b border-cyan-300/15 bg-[#050f35]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
           <a href="/admin/" className="flex items-center gap-3"><img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="w-40" /></a>
-          <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-cyan-200"><ShieldCheck size={15}/> Owner reports</span>
+          <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-cyan-200"><ShieldCheck size={15}/> Zillionaire Dashboard · Reports</span>
         </div>
       </header>
       <section className="mx-auto max-w-6xl px-5 py-10">
@@ -124,7 +124,7 @@ function MonthlyReportsPage() {
         <h1 className="mt-3 text-3xl font-black sm:text-4xl">Platform activity report</h1>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-blue-100/60">A read-only summary of wallet transactions, payout requests, advertising activity and producer reviews.</p>
         {!token ? <form onSubmit={login} className="mt-8 grid max-w-md gap-4 rounded-3xl border border-white/10 bg-[#07143d] p-6">
-          <h2 className="text-lg font-bold">Owner sign in</h2>
+          <h2 className="text-lg font-bold">Zillionaire Dashboard sign-in</h2>
           <label className="grid gap-2 text-sm text-blue-100/70">Email<input type="email" required autoComplete="username" value={email} onChange={event=>setEmail(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white"/></label>
           <label className="grid gap-2 text-sm text-blue-100/70">Password<input type="password" required autoComplete="current-password" value={password} onChange={event=>setPassword(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white"/></label>
           {error ? <p role="alert" className="text-sm text-rose-200">{error}</p> : null}
