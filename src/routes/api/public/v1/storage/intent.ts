@@ -24,6 +24,7 @@ const bodySchema = z.object({
   filename: z.string().min(1).max(180),
   sizeBytes: z.number().int().positive().max(MAX_SOURCE_BYTES),
   mimeType: z.string().min(1).max(100),
+  transcodeProfile: z.enum(["economy", "standard", "high"]).default("standard"),
 });
 
 function safeFilename(value: string): string {
@@ -88,6 +89,7 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
               storageReservationBytes: reservation.reservedBytes,
               status: "uploading",
               deliveryMode: "bq_hosted",
+              transcodeProfile: body.transcodeProfile,
               createdAt: now.toISOString(),
               uploadExpiresAt: expiresAt,
               uploadTokenLifetimeSeconds: target.expiresInSeconds,
