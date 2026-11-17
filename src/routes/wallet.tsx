@@ -32,16 +32,30 @@ type Topup = {
 };
 
 function formatMoney(amountMinor: number, currency = "USD") {
-  const digits = new Intl.NumberFormat("en", {
-    style: "currency",
-    currency,
-  }).resolvedOptions().maximumFractionDigits ?? 2;
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(amountMinor / (10 ** digits));
+  if (!Number.isSafeInteger(amountMinor)) return "—";
+  try {
+    const locale = undefined;
+    const digits = new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions().maximumFractionDigits;
+    const scale = 10n ** BigInt(digits);
+    const minor = BigInt(amountMinor);
+    const whole = minor / scale;
+    const fraction = (minor < 0n ? -minor : minor) % scale;
+    const wholeFormatter = new Intl.NumberFormat(locale, {
+      style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0,
+    });
+    const parts = wholeFormatter.formatToParts(whole);
+    if (digits === 0) return parts.map(part => part.value).join("");
+    const decimal = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+      .formatToParts(1.1).find(part => part.type === "decimal")?.value ?? ".";
+    const fractionText = new Intl.NumberFormat(locale, { useGrouping: false, maximumFractionDigits: 0 })
+      .format(Number(fraction.toString().padStart(digits, "0")));
+    let lastNumeric = -1;
+    parts.forEach((part, index) => { if (part.type === "integer" || part.type === "group") lastNumeric = index; });
+    parts.splice(lastNumeric + 1, 0, { type: "decimal", value: decimal }, { type: "fraction", value: fractionText });
+    return parts.map(part => part.value).join("");
+  } catch {
+    return currency + " " + amountMinor;
+  }
 }
 
 export const Route = createFileRoute("/wallet")({
