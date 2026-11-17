@@ -65,6 +65,8 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
               sourceObjectKey,
               sourceFilename: filename,
               sourceSizeBytes: actualSize,
+              transcodeProfile: asset["transcodeProfile"] === "economy" || asset["transcodeProfile"] === "high"
+                ? asset["transcodeProfile"] : "standard",
               outputDestinationId: null,
               outputPrefix: null,
               status: "queued",
