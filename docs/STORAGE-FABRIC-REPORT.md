@@ -60,3 +60,26 @@ Execution method: direct GitHub main-branch edits. No local checkout, browser, T
 ## Next file
 
 File 04 must not begin until the remaining File 03 integrations are completed and the full CI/test suite passes. In particular, do not rely on the newly added helper primitives as if the corresponding worker and playback integrations already exist.
+
+## Five-batch completion pass (17 November 2026)
+
+This pass reorganizes the remaining File 03 work into five delivery batches before File 04 is allowed to begin.
+
+| Pass batch | Commit(s) | Result |
+|---|---|---|
+| 01 — Larger-pool source pagination | `06f3dd5ac76bd625fd75abbe71c8010944d210e7` | Source-retention worker now pages the matching asset collection using a stable update-time/document cursor and processes bounded slices. Missing cursor data pauses the task instead of guessing. |
+| 02 — Legacy deletion guard | `f4a365eef01b2cf04227c286ed7419c06b8e0d66`, `fe554d3046e36c89adfadd8a3dde8a471b6aa914`, `e3465cce5e819a901723fa7dddcbdad6090271b6` | Both legacy IDs and their historical aliases are excluded at orphan scan scheduling, scan execution and orphan deletion execution. |
+| 03 — Historical reservation reconciliation | `e50cf497def7b9677b2ce519b08386d7b4866158` | After a verified old-copy deletion, the worker can release a unique historical committed reservation when the old reservation ID was not saved. Ambiguous matches remain untouched. |
+| 04 — Storage-screen explanations | `cc2cffe2a969b3d7cc3d381e84ebc8e2ceb8f44f` | Drain and retirement states now explain that existing files remain in place, and that verified replacement plus the waiting period is required before cleanup. |
+| 05 — Destination-wide drain and full verification | Not complete | Destination-wide drain orchestration is still not implemented. Full CI is still not run. The existing backend workflow is deliberately manual-dispatch only, and this GitHub connection does not provide a workflow-dispatch action. No local Bun/TypeScript/Vitest/browser runtime is available. |
+
+### Current hard blockers before File 03 can be called complete
+
+1. Destination-wide draining must enumerate every asset on a draining destination, move each asset only to a healthy verified replacement, preserve the old copy through the seven-day grace period, reconcile reservations, and leave the destination in drain mode if any asset cannot be safely moved.
+2. Source-retention pagination has been added, but its Firestore cursor path and behavior still require tests against records with equal timestamps, missing timestamps, concurrent updates, and more than 500 assets.
+3. The owner list still uses progressive 40-row rendering and `content-visibility`; it is not yet a measured, fully windowed virtual list.
+4. No File 03 test suite, typecheck, website build, Android build, browser QA or current-SHA CI has been run. The latest CI workflow is manual-only; changing that trigger is not assumed without explicit owner approval.
+
+### File 04 gate
+
+**File 04 has not been started.** The seven-batch File 04 pass remains blocked until destination-wide draining and current-SHA verification are complete. The legacy locations remain protected, and paid egress remains disabled. `CONFIG_BACKUP_KEY` remains an owner-side setup requirement; no key value was requested or committed.
