@@ -16,15 +16,13 @@ export const Route = createFileRoute("/api/public/v1/admin/users/$uid/risk")({
         await requireAdminModule(fs, actor, "security");
         const since = new Date(Date.now() - 24 * 60 * 60_000).toISOString();
         const rows = await fs.query("riskCounters", {
-          filters: [
-            { field: "uid", op: "EQUAL", value: params.uid },
-            { field: "windowStart", op: "GREATER_THAN", value: since },
-          ],
+          filters: [{ field: "uid", op: "EQUAL", value: params.uid }],
           limit: 1600,
         });
         const counts: Partial<Record<RiskSignalType, number>> = {};
         for (const type of RISK_SIGNAL_TYPES) counts[type] = 0;
         for (const row of rows) {
+          if (typeof row["windowStart"] !== "string" || row["windowStart"] <= since) continue;
           const values = row["counts"] && typeof row["counts"] === "object"
             ? row["counts"] as Record<string, unknown> : {};
           for (const type of RISK_SIGNAL_TYPES) {
