@@ -37,3 +37,35 @@ describe("storage maintenance accounting", () => {
     expect(storageFailureMessage(code)).not.toContain("raw secret key");
   });
 });
+
+
+describe("fake provider maintenance adapter", () => {
+  it("reconciles a multi-page bucket listing and sums every object once", async () => {
+    const pages = [
+      { objects: [{ key: "a.mp4", sizeBytes: 100 }, { key: "b.mp4", sizeBytes: 200 }], nextCursor: "page-2" },
+      { objects: [{ key: "c.m3u8", sizeBytes: 50 }], nextCursor: "page-3" },
+      { objects: [{ key: "d.ts", sizeBytes: 150 }], nextCursor: null },
+    ];
+    const calls: Array<string | null> = [];
+    const adapter = {
+      async listObjects(_prefix: string, cursor: string | null) {
+        calls.push(cursor);
+        const index = cursor === null ? 0 : cursor === "page-2" ? 1 : 2;
+        return pages[index]!;
+      },
+    };
+    const { reconcileStorageUsage } = await import("./maintenance");
+    await expect(reconcileStorageUsage(adapter)).resolves.toEqual({ usageBytes: 500, objectCount: 4 });
+    expect(calls).toEqual([null, "page-2", "page-3"]);
+  });
+
+  it("rejects a repeated provider cursor instead of looping forever", async () => {
+    const adapter = {
+      async listObjects() {
+        return { objects: [{ key: "a.ts", sizeBytes: 1 }], nextCursor: "same" };
+      },
+    };
+    const { reconcileStorageUsage } = await import("./maintenance");
+    await expect(reconcileStorageUsage(adapter)).rejects.toMatchObject({ code: "STORAGE_LISTING_CURSOR_STALLED" });
+  });
+});
