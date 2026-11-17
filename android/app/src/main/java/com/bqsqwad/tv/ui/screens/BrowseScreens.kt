@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -148,6 +149,7 @@ fun SettingsScreen(
     themeMode: String = "system",
     onThemeModeChange: (String) -> Unit = {},
 ) {
+    val uriHandler = LocalUriHandler.current
     var notifications by remember { mutableStateOf(true) }
     var wifiOnly by remember { mutableStateOf(false) }
     var quality by remember { mutableStateOf("Auto") }
@@ -204,10 +206,17 @@ fun SettingsScreen(
         ListItem(
             headlineContent = { Text("About BQ SQWAD TV") },
             supportingContent = { Text("Bq Sqwad Technologies") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/about") },
         )
         ListItem(
-            headlineContent = { Text("Privacy and terms") },
-            supportingContent = { Text("Review platform policies") },
+            headlineContent = { Text("Privacy notice") },
+            supportingContent = { Text("Review the current publication status") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/privacy") },
+        )
+        ListItem(
+            headlineContent = { Text("Terms of service") },
+            supportingContent = { Text("Review the current publication status") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/terms") },
         )
     }
 }
