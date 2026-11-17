@@ -1,5 +1,6 @@
 package com.bqsqwad.tv.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -205,15 +207,11 @@ fun AccountScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(18.dp))
-        Box(
-            Modifier.size(88.dp).background(
-                Brush.linearGradient(listOf(Color(0xFF00D8F5), Color(0xFF175BFF))),
-                RoundedCornerShape(28.dp),
-            ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text("BQ", color = Color(0xFF031039), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
-        }
+        Image(
+            painter = painterResource(com.bqsqwad.tv.R.drawable.bq_sqwad_tv_mark),
+            contentDescription = "BQ SQWAD TV logo",
+            modifier = Modifier.size(104.dp),
+        )
         Spacer(Modifier.height(12.dp))
         Text(user?.displayName ?: "Viewer", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Text(user?.email ?: "Signed in", color = MaterialTheme.colorScheme.onSurfaceVariant)
