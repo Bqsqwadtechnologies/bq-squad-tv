@@ -65,7 +65,7 @@ const DESTINATION_ID = /^[a-z0-9][a-z0-9_-]{1,79}$/;
 const SECRET_PREFIX = /^[A-Z][A-Z0-9_]{1,47}$/;
 const BUCKET_NAME = /^[a-z0-9][a-z0-9._-]{1,62}$/;
 
-const LOVABLE_BUNDLE_PREFIX = /^STORAGE_LOV_BUNDLE_\\d{2,}$/;
+const LOVABLE_BUNDLE_PREFIX = /^STORAGE_LOV_BUNDLE_\d{2,}$/;
 
 function requiredSecretNames(destination: StorageDestinationMetadata): string[] {
   const prefix = destination.secretPrefix;
@@ -105,7 +105,7 @@ function resolveLovableBundle(
       return { url: item["url"], serviceRoleKey: item["serviceRoleKey"] };
     }
     const buckets = parsed["buckets"];
-    if (!Array.isArray(buckets) || buckets.length < 1 || buckets.length > 25 ||
+    if (!Array.isArray(buckets) || buckets.length < 1 || buckets.length > 500 ||
         buckets.some(bucket => typeof bucket !== "string") ||
         new Set(buckets).size !== buckets.length || !buckets.includes(metadata.bucketName) ||
         !validLovableUrl(parsed["url"]) || typeof parsed["serviceRoleKey"] !== "string" ||
