@@ -24,14 +24,15 @@ export async function copyReplicaObject(
   source: StorageProviderAdapter,
   target: StorageProviderAdapter,
   key: string,
+  targetKey = key,
 ): Promise<StorageObjectInfo> {
   const original = await source.getObject(key);
   if (!Number.isSafeInteger(original.info.sizeBytes) || original.info.sizeBytes < 1 ||
       original.body.byteLength !== original.info.sizeBytes) {
     throw new ApiError(409, "STORAGE_REPLICA_SOURCE_INVALID", "A source file could not be verified for copying.");
   }
-  await target.putObject(key, original.body, original.info.contentType ?? "application/octet-stream");
-  const copied = await target.headObject(key);
+  await target.putObject(targetKey, original.body, original.info.contentType ?? "application/octet-stream");
+  const copied = await target.headObject(targetKey);
   if (!copied || copied.sizeBytes !== original.info.sizeBytes) {
     throw new ApiError(409, "STORAGE_REPLICA_COPY_UNVERIFIED", "A copied file did not pass its size check.");
   }
