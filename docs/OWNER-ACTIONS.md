@@ -56,13 +56,12 @@ The Zillionaire dashboard is the only top-level control centre. Configure only `
 - Use the protected Storage locations screen to discover and register destinations. Discovery and registration require a recent sign-in confirmation.
 - Do not create a new storage account or paid service to work around a missing credential. Keep credentials server-side and never expose them to browser or Android clients.
 
-## 6. Encrypted storage configuration backup (pending route integration)
+## 6. Encrypted storage configuration backup (not active)
 
-- Create a high-entropy `CONFIG_BACKUP_KEY` in the hosting provider's server-side secret manager only after the encrypted backup and restore routes are integrated and reviewed.
-- Keep the value private; never share it in chat or commit it.
-- Select and verify a dedicated backup destination with known capacity and health before enabling scheduled backups.
-- Confirm the restore procedure against a non-production copy before relying on it.
-- The current source contains AES-GCM backup encryption/decryption primitives, but the weekly export, destination upload, eight-copy retention and owner restore route are not yet connected. Do not treat backups as active.
+- Do not add `CONFIG_BACKUP_KEY` yet.
+- The source currently contains AES-GCM encryption/decryption safeguards only. Weekly export, backup-destination upload, eight-copy retention and owner restore are not integrated.
+- Do not treat backups as active or rely on this code for disaster recovery.
+- After the export and restore workflow is implemented, an adult account owner must select and verify a dedicated backup destination and test restore against a non-production copy before enabling scheduled backups.
 
 ## 7. Owner review checklist
 
