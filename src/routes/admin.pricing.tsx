@@ -157,44 +157,44 @@ function AdminPricingPage() {
           </form>
         ) : (
           <form onSubmit={save} className="mt-9 grid gap-6 rounded-3xl border border-white/10 bg-[#07143d] p-6">
-            <div className="flex items-center justify-between"><h2 className="text-xl font-bold">Pricing configuration</h2><span className="text-xs text-cyan-200">{version === null ? "Not configured" : `Version ${version}`}</span></div>
+            <div className="flex items-center justify-between"><h2 className="text-xl font-bold">Viewing and wallet prices</h2><span className="text-xs text-cyan-200">{version === null ? "Not configured" : `Version ${version}`}</span></div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <label className="grid gap-2 text-sm text-blue-100/70">Legacy NGN default rate per minute (kobo)<input type="number" min="1" step="1" required value={rate} onChange={event => setRate(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
-              <label className="grid gap-2 text-sm text-blue-100/70">Legacy NGN minimum session balance (kobo)<input type="number" min="0" step="1" required value={minimum} onChange={event => setMinimum(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
-              <label className="grid gap-2 text-sm text-blue-100/70">Producer share (basis points)<input type="number" min="0" max="10000" step="1" required value={share} onChange={event => setShare(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
-              <label className="grid gap-2 text-sm text-blue-100/70">Concurrent playback sessions<input type="number" min="1" max="5" step="1" required value={sessionLimit} onChange={event => setSessionLimit(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /><span className="text-xs text-blue-100/45">1–5 devices/sessions per account; default 2.</span></label>
+              <label className="grid gap-2 text-sm text-blue-100/70">Default NGN viewing rate per minute (kobo)<input type="number" min="1" step="1" required value={rate} onChange={event => setRate(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
+              <label className="grid gap-2 text-sm text-blue-100/70">Minimum NGN viewing balance (kobo)<input type="number" min="0" step="1" required value={minimum} onChange={event => setMinimum(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
+              <label className="grid gap-2 text-sm text-blue-100/70">Producer share (0–10,000 = 0%–100%)<input type="number" min="0" max="10000" step="1" required value={share} onChange={event => setShare(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
+              <label className="grid gap-2 text-sm text-blue-100/70">Devices watching at once<input type="number" min="1" max="5" step="1" required value={sessionLimit} onChange={event => setSessionLimit(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /><span className="text-xs text-blue-100/45">1–5 devices at once per account; default 2.</span></label>
             </div>
-            <label className="grid gap-2 text-sm text-blue-100/70">Legacy NGN wallet packages — JSON object
+            <label className="grid gap-2 text-sm text-blue-100/70">Previous NGN wallet packages
               <textarea rows={7} required value={topups} onChange={event => setTopups(event.target.value)} placeholder='{"package_id":{"amountMinor":50000,"creditMinor":50000}}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <label className="grid gap-2 text-sm text-blue-100/70">Wallet packages by currency — JSON object
+            <label className="grid gap-2 text-sm text-blue-100/70">Wallet packages by currency
               <textarea rows={9} required value={topupsByCurrency} onChange={event => setTopupsByCurrency(event.target.value)} placeholder='{"USD":{"starter":{"amountMinor":499,"creditMinor":499}},"NGN":{"starter":{"amountMinor":50000,"creditMinor":50000}}}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <label className="grid gap-2 text-sm text-blue-100/70">Default per-minute rates by currency — JSON object
+            <label className="grid gap-2 text-sm text-blue-100/70">Default viewing rates by currency
               <textarea rows={4} required value={ratesByCurrency} onChange={event => setRatesByCurrency(event.target.value)} placeholder='{"USD":25,"NGN":200}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <label className="grid gap-2 text-sm text-blue-100/70">Minimum viewing balance by currency — JSON object
+            <label className="grid gap-2 text-sm text-blue-100/70">Minimum viewing balance by currency
               <textarea rows={4} required value={minimumsByCurrency} onChange={event => setMinimumsByCurrency(event.target.value)} placeholder='{"USD":100,"NGN":100}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <label className="grid gap-2 text-sm text-blue-100/70">Owner price overrides by channel ID and currency — JSON object
+            <label className="grid gap-2 text-sm text-blue-100/70">Custom prices for a channel by currency
               <textarea rows={6} required value={channelRates} onChange={event => setChannelRates(event.target.value)} placeholder='{"123456":{"NGN":200,"USD":25}}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <label className="grid gap-2 text-sm text-blue-100/70">Owner price overrides by movie asset ID and currency — JSON object
+            <label className="grid gap-2 text-sm text-blue-100/70">Custom prices for a movie by currency
               <textarea rows={6} required value={assetRates} onChange={event => setAssetRates(event.target.value)} placeholder='{"asset_id":{"NGN":300,"USD":35}}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <label className="grid gap-2 text-sm text-blue-100/70">Producer revenue share overrides by channel ID — basis points
+            <label className="grid gap-2 text-sm text-blue-100/70">Producer revenue share by channel
               <textarea rows={4} required value={channelShares} onChange={event => setChannelShares(event.target.value)} placeholder='{"123456":7000}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <label className="grid gap-2 text-sm text-blue-100/70">Daily viewer spending limits by currency — minor units
+            <label className="grid gap-2 text-sm text-blue-100/70">Daily viewer spending limits by currency
               <textarea rows={4} required value={dailyLimits} onChange={event => setDailyLimits(event.target.value)} placeholder='{"NGN":50000,"USD":500}' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <label className="grid gap-2 text-sm text-blue-100/70">Google Play products — JSON array
+            <label className="grid gap-2 text-sm text-blue-100/70">App store credit products
               <textarea rows={7} required value={products} onChange={event => setProducts(event.target.value)} placeholder='[{"productId":"your_product_id","title":"Title","description":"Description","credits":1,"creditMinorByCurrency":{"USD":499,"NGN":50000},"active":true}]' className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 font-mono text-xs text-white" />
             </label>
-            <p className="text-xs leading-5 text-blue-100/45">Enter amounts in each currency's minor units. Paystack's XOF API amount is configured as whole XOF multiplied by 100. For Google Play, configure creditMinorByCurrency for every wallet currency you want to support; Play displays the localized store price. Use exact product IDs from Play Console. Channel and asset IDs accept exact numeric or internal channel/asset identifiers; asset rules override channel rules. Saving creates a new audited pricing version.</p>
+            <p className="text-xs leading-5 text-blue-100/45">Enter amounts in each currency's smallest unit, such as kobo for NGN. XOF amounts are sent in the whole-unit format expected by the payment service. For app-store products, set a credit amount for every currency you support; the store displays local prices. Use the exact product references from the store dashboard. Movie-specific prices take priority over channel prices. Every save creates a dated, reviewed price record.</p>
             {error ? <p role="alert" className="text-sm text-rose-300">{error}</p> : null}
             {message ? <p role="status" className="text-sm text-cyan-200">{message}</p> : null}
-            <button disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-5 py-3 font-extrabold text-[#031039] disabled:opacity-60">{busy ? <LoaderCircle className="animate-spin" size={17} /> : null} Save pricing version</button>
+            <button disabled={busy} className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-5 py-3 font-extrabold text-[#031039] disabled:opacity-60">{busy ? <LoaderCircle className="animate-spin" size={17} /> : null} Save price settings</button>
           </form>
         )}
       </section>
