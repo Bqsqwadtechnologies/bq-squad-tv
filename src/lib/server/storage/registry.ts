@@ -65,11 +65,55 @@ const DESTINATION_ID = /^[a-z0-9][a-z0-9_-]{1,79}$/;
 const SECRET_PREFIX = /^[A-Z][A-Z0-9_]{1,47}$/;
 const BUCKET_NAME = /^[a-z0-9][a-z0-9._-]{1,62}$/;
 
+const LOVABLE_BUNDLE_PREFIX = /^STORAGE_LOV_BUNDLE_\\d{2,}$/;
+
 function requiredSecretNames(destination: StorageDestinationMetadata): string[] {
   const prefix = destination.secretPrefix;
+  if (destination.providerType === "lovable_storage" && LOVABLE_BUNDLE_PREFIX.test(prefix)) return [prefix];
   return destination.providerType === "lovable_storage"
     ? [`${prefix}_URL`, `${prefix}_SERVICE_ROLE_KEY`]
     : [`${prefix}_KEY_ID`, `${prefix}_APP_KEY`, `${prefix}_BUCKET_ID`, `${prefix}_ENDPOINT`];
+}
+
+function validLovableUrl(value: unknown): value is string {
+  if (typeof value !== "string" || value.length > 2048) return false;
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "https:" && !parsed.username && !parsed.password && !parsed.search && !parsed.hash;
+  } catch {
+    return false;
+  }
+}
+
+function resolveLovableBundle(
+  raw: string,
+  metadata: StorageDestinationMetadata,
+): { url: string; serviceRoleKey: string } | null {
+  if (raw.length > 256_000) return null;
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (Array.isArray(parsed["items"])) {
+      const items = parsed["items"];
+      if (items.length < 1 || items.length > 25) return null;
+      const matches = items.filter((item): item is Record<string, unknown> =>
+        Boolean(item && typeof item === "object" && !Array.isArray(item) &&
+          item["destinationId"] === metadata.destinationId && item["bucket"] === metadata.bucketName));
+      if (matches.length !== 1) return null;
+      const item = matches[0]!;
+      if (!validLovableUrl(item["url"]) || typeof item["serviceRoleKey"] !== "string" ||
+          item["serviceRoleKey"].trim().length < 1) return null;
+      return { url: item["url"], serviceRoleKey: item["serviceRoleKey"] };
+    }
+    const buckets = parsed["buckets"];
+    if (!Array.isArray(buckets) || buckets.length < 1 || buckets.length > 25 ||
+        buckets.some(bucket => typeof bucket !== "string") ||
+        new Set(buckets).size !== buckets.length || !buckets.includes(metadata.bucketName) ||
+        !validLovableUrl(parsed["url"]) || typeof parsed["serviceRoleKey"] !== "string" ||
+        parsed["serviceRoleKey"].trim().length < 1) return null;
+    return { url: parsed["url"], serviceRoleKey: parsed["serviceRoleKey"] };
+  } catch {
+    return null;
+  }
 }
 
 export function validateStorageDestinationMetadata(value: unknown): StorageDestinationMetadata {
@@ -184,18 +228,17 @@ export function resolveStorageDestinationConfiguration(
   }
 
   if (metadata.providerType === "lovable_storage") {
-    const url = env[`${metadata.secretPrefix}_URL`] ?? "";
-    const serviceRoleKey = env[`${metadata.secretPrefix}_SERVICE_ROLE_KEY`] ?? "";
-    try {
-      const parsed = new URL(url);
-      if (parsed.protocol !== "https:" || parsed.username || parsed.password || !serviceRoleKey) {
-        throw new Error("invalid");
-      }
-    } catch {
+    const isBundle = LOVABLE_BUNDLE_PREFIX.test(metadata.secretPrefix);
+    const bundle = isBundle ? resolveLovableBundle(env[metadata.secretPrefix] ?? "", metadata) : null;
+    const url = isBundle ? bundle?.url ?? "" : env[`${metadata.secretPrefix}_URL`] ?? "";
+    const serviceRoleKey = isBundle ? bundle?.serviceRoleKey ?? "" : env[`${metadata.secretPrefix}_SERVICE_ROLE_KEY`] ?? "";
+    if (!validLovableUrl(url) || !serviceRoleKey.trim()) {
       return {
         metadata,
         configurationStatus: "misconfigured",
-        missingSecretNames: ["VALID_HTTPS_STORAGE_URL_AND_SERVICE_ROLE_KEY"],
+        missingSecretNames: isBundle
+          ? [metadata.secretPrefix]
+          : ["VALID_HTTPS_STORAGE_URL_AND_SERVICE_ROLE_KEY"],
       };
     }
     return {
