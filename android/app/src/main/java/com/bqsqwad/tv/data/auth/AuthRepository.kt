@@ -49,6 +49,21 @@ class AuthRepository(
         return "Bearer " + (token ?: error("Could not obtain a Firebase authentication token."))
     }
 
+    suspend fun loadThemePreference(): String? {
+        return runCatching {
+            profileApi.getPreferences(currentBearerToken()).themeMode
+                .takeIf { it == "system" || it == "light" || it == "dark" }
+        }.getOrNull()
+    }
+
+    suspend fun saveThemePreference(themeMode: String): Boolean {
+        require(themeMode == "system" || themeMode == "light" || themeMode == "dark")
+        return profileApi.saveThemePreference(
+            currentBearerToken(),
+            ThemePreferenceRequest(themeMode),
+        ).saved
+    }
+
     private suspend fun registerPushTokenIfAvailable() {
         try {
             withTimeout(8_000) {
