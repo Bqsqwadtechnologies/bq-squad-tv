@@ -18,11 +18,11 @@ Execution method: direct GitHub main-branch edits. No local checkout, browser, T
 | 07 Asset binding | Partially implemented | Stream assets and committed reservations are linked; poster/thumbnail destination metadata is persisted. Complete universal read-helper adoption and transactional migration of every media record still need verification. |
 | 08 Egress governor | Implemented in source; unverified | Expected delivery is reserved at playback grant and extended on heartbeats; monthly/daily limits and hard-off paid egress guards are present. Real provider allowance calibration and alert transitions require owner/runtime verification. |
 | 09 Hot replicas | Partially implemented | Owner-triggered replica queue, copy ordering, listing verification and replica records exist. Automatic popularity promotion from watch time and end-to-end viewer distribution are not complete. |
-| 10 Rebalancing and tiering | Safety primitives only | Crash-safe phase guards and cold-asset ordering helpers/tests added. A full maintenance worker that performs copy → switch → delete, drains destinations and updates reservations/ledger is not integrated. |
-| 11 Read failover | Safety primitives only | Replica selection and three-clean-check recovery helpers/tests added. Session/player/poster read paths are not yet wired to use the helper end-to-end. |
-| 12 Cleanup and lifecycle | Safety primitives only | Two-observation orphan confirmation, 24-hour temp expiry and source retention guards/tests added. Scheduled deletion tasks, audit counts and owner pin UI are not integrated. |
+| 10 Rebalancing and tiering | Partially integrated; deletion disabled | The existing maintenance worker now accepts owner-queued rebalance tasks, verifies a complete copy, commits its reservation and switches the asset binding transactionally. The old copy is retained; automated deletion, destination drain orchestration and full reservation/ledger reconciliation remain incomplete. |
+| 11 Read failover | Partially integrated | HLS storage configuration now checks the primary and its registered replicas and selects a configured healthy location, with legacy unknown-health fallback limited to the established legacy ID. Poster/thumbnail read paths and automated health recovery transitions remain incomplete. |
+| 12 Cleanup and lifecycle | Partially integrated | The existing attempt-prefix cleanup worker now enforces a 24-hour minimum age. Two-observation orphan confirmation and source-retention guards remain helper-only; scheduled orphan scans, audit counts and owner pin UI are not integrated. |
 | 13 Owner storage screens | Partially implemented | Existing screen includes destination management, pool/group information, health/usage and maintenance actions. Full virtualisation and all requested learn-more explanations were not verified. |
-| 14 Encrypted configuration backups | Partially implemented | AES-GCM encryption/decryption core and secret-exclusion tests added. Weekly export, backup-destination upload, last-eight retention and owner restore route are not integrated. |
+| 14 Encrypted configuration backups | Safety core only | AES-GCM encryption/decryption now rejects credential-like fields recursively before encryption and after decryption, with bounded payload size. Weekly export, backup-destination upload, last-eight retention and owner restore route are not integrated. |
 | 15 Tests, docs, report | Committed | Storage audit, registry guidance, owner actions and this report updated. Test suites were not run locally. |
 
 ## Important safeguards
@@ -35,8 +35,10 @@ Execution method: direct GitHub main-branch edits. No local checkout, browser, T
 
 ## Verification
 
-- GitHub commits were created directly on `main`.
+- GitHub commits were created directly on `main`; latest File 03 commit at report time: `c66430424deb5e7dfc7c1b5505888894327cfc0f`.
+- New File 03 commits did not have a matching `backend-ci.yml` run visible in GitHub Actions at verification time. The most recent successful backend CI runs were still on older SHAs.
 - Vitest, typecheck, website build, Android build, browser viewport checks and production provider checks: **not run**. No local runtime was available.
+- The usage-page worker count contract was corrected in `maintenance.ts` and `worker/maintenance/run.ts`; this is source-reviewed only, not runtime-verified.
 - The most recent GitHub Actions runs visible during this session were for older commit SHAs and do not verify the latest File 03 commits.
 - No claim is made that all 15 batches are production-complete. Batches 07, 09–14 have the explicit integration gaps listed above.
 
