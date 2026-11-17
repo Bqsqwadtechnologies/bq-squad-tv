@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { releaseSessionLease, renewSessionLease } from "@/lib/server/session-limits";
+import { estimatePlaybackProgressBytes, recordExpectedStorageEgressProgress, releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
 import {
   elapsedSeconds,
   incrementalSessionCharge,
@@ -50,6 +51,15 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           const producerUid = typeof initialSession["producerUid"] === "string" ? initialSession["producerUid"] as string : null;
           const producerPath = producerUid ? "producers/" + producerUid : null;
           const readPaths = [sessionPath, walletPath, receiptPath, activeSessionsPath, ...(producerPath ? [producerPath] : [])];
+
+          const elapsedForEgress = elapsedSeconds(initialSession["lastHeartbeatAt"], now);
+          const playbackSecondsForEgress = reportedPlaybackSeconds(
+            initialSession["lastPlaybackState"], playbackState as ReportedPlaybackState,
+            initialSession["lastPlaybackPositionMs"], playbackPositionMs, elapsedForEgress,
+          );
+          const rawBitrate = integer(initialSession["streamBitrateBps"], 1_500_000);
+          const egressBitrate = rawBitrate >= 64_000 && rawBitrate <= 25_000_000 ? rawBitrate : 1_500_000;
+          const expectedEgressBytes = estimatePlaybackProgressBytes(egressBitrate, playbackSecondsForEgress);
 
           const response = await fs.transact(readPaths, (docs) => {
             const session = requireSessionOwned(docs[0] ?? null, sessionId, user.uid);
@@ -227,6 +237,18 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             });
             return { result: snapshot, writes };
           });
+          await recordExpectedStorageEgressProgress(fs, sessionId, clientSequence, expectedEgressBytes).catch(async () => {
+            const alertId = crypto.randomUUID().replace(/-/g, "");
+            await fs.setDoc("storageAlerts/" + alertId, {
+              severity: "warning", reasonCode: "STORAGE_EGRESS_PROGRESS_DELAYED",
+              message: "A playback delivery estimate could not be updated. The session remains active while the account is checked.",
+              createdAt: nowIso, expiresAt: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+              acknowledged: false,
+            }).catch(() => undefined);
+          });
+          if (response.active === false) {
+            await releaseExpectedStorageEgress(fs, sessionId).catch(() => undefined);
+          }
           return Response.json(response);
         } catch (error) {
           return errorBody(error);
