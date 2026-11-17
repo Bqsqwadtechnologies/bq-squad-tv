@@ -27,9 +27,29 @@ export function calculateEgressLevel(usedBytes: number, budgetBytes: number, all
   return "normal";
 }
 
-export function calculateB2MonthlyFreeEgressBudget(averageStoredBytes: number, safetyFactor = 0.8): number {
-  if (!Number.isSafeInteger(averageStoredBytes) || averageStoredBytes < 0 || !Number.isFinite(safetyFactor) || safetyFactor <= 0 || safetyFactor > 1) throw new RangeError("Invalid B2 egress budget inputs.");
-  return Math.floor(averageStoredBytes * 3 * safetyFactor);
+export const B2_OLDER_DAILY_FREE_EGRESS_BYTES = 1_000_000_000;
+export const B2_FREE_EGRESS_SAFETY_FACTOR = 0.8;
+
+export function calculateB2MonthlyFreeEgressBudget(
+  averageStoredBytes: number,
+  safetyFactor = B2_FREE_EGRESS_SAFETY_FACTOR,
+): number {
+  if (!Number.isSafeInteger(averageStoredBytes) || averageStoredBytes < 0 ||
+      !Number.isFinite(safetyFactor) || safetyFactor <= 0 || safetyFactor > 1) {
+    throw new RangeError("Invalid B2 egress budget inputs.");
+  }
+  const threeTimesStored = averageStoredBytes * 3;
+  const olderDailyLimitMonthly = B2_OLDER_DAILY_FREE_EGRESS_BYTES * 30;
+  return Math.floor(Math.min(threeTimesStored, olderDailyLimitMonthly) * safetyFactor);
+}
+
+export function calculateB2DailyFreeEgressBudget(
+  safetyFactor = B2_FREE_EGRESS_SAFETY_FACTOR,
+): number {
+  if (!Number.isFinite(safetyFactor) || safetyFactor <= 0 || safetyFactor > 1) {
+    throw new RangeError("Invalid B2 daily egress budget inputs.");
+  }
+  return Math.floor(B2_OLDER_DAILY_FREE_EGRESS_BYTES * safetyFactor);
 }
 
 export function assertStorageObjectKey(key: string): string {
