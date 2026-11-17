@@ -6,6 +6,10 @@ import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
 
+data class LegalAcceptanceRequest(val audience: String = "public", val acceptedSlugs: List<String>)
+
+data class LegalAcceptanceResponse(val accepted: Boolean)
+
 data class CompleteProfileRequest(
     val dateOfBirth: String,
     val parentalPin: String?,
@@ -56,7 +60,7 @@ data class ThemePreferenceSaveResponse(
     val themeMode: String,
 )
 
-interface ProfileApi {
+interface ProfileApi {\n    @POST("v1/legal/acceptance")\n    suspend fun acceptLegalPages(\n        @Header("Authorization") bearerToken: String,\n        @Body request: LegalAcceptanceRequest,\n    ): LegalAcceptanceResponse\n
     @GET("v1/notifications")
     suspend fun notifications(
         @Header("Authorization") bearerToken: String,
