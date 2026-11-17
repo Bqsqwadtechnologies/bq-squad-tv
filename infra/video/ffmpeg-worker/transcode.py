@@ -18,8 +18,16 @@ from pathlib import Path
 
 MAX_SOURCE_BYTES = 5 * 1024 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".mp4", ".mov", ".mkv", ".webm"}
-TARGET_HEIGHTS = (360, 480, 720, 1080)
-VIDEO_BITRATES = {360: 900_000, 480: 1_400_000, 720: 2_800_000, 1080: 5_000_000}
+PROFILE_HEIGHTS = {
+    "economy": (360, 480, 720),
+    "standard": (360, 480, 720, 1080),
+    "high": (360, 480, 720, 1080),
+}
+PROFILE_BITRATES = {
+    "economy": {360: 600_000, 480: 1_000_000, 720: 1_800_000},
+    "standard": {360: 900_000, 480: 1_400_000, 720: 2_800_000, 1080: 5_000_000},
+    "high": {360: 1_100_000, 480: 1_800_000, 720: 3_500_000, 1080: 7_000_000},
+}
 AUDIO_BITRATE = 128_000
 SEGMENT_SECONDS = 4
 
@@ -35,13 +43,15 @@ class Variant:
         return math.ceil((self.video_bitrate + AUDIO_BITRATE) * 1.10)
 
 
-def build_variant_ladder(source_width: int, source_height: int) -> list[Variant]:
+def build_variant_ladder(source_width: int, source_height: int, profile: str = "standard") -> list[Variant]:
     """Build unique, even-dimension renditions without upscaling the source."""
     if source_width < 2 or source_height < 2:
         raise ValueError("The source video dimensions are invalid.")
 
+    if profile not in PROFILE_HEIGHTS:
+        raise ValueError("The selected processing profile is not supported.")
     heights: list[int] = []
-    for target in TARGET_HEIGHTS:
+    for target in PROFILE_HEIGHTS[profile]:
         height = min(target, source_height)
         height -= height % 2
         if height >= 2 and height not in heights:
@@ -57,7 +67,7 @@ def build_variant_ladder(source_width: int, source_height: int) -> list[Variant]
     for height in heights:
         width = max(2, int(source_width * height / source_height))
         width -= width % 2
-        variants.append(Variant(width, height, VIDEO_BITRATES.get(height, 500_000)))
+        variants.append(Variant(width, height, PROFILE_BITRATES[profile].get(height, 500_000)))
     return variants
 
 
@@ -88,7 +98,7 @@ def verify_source_magic(source: Path) -> None:
         raise RuntimeError("SOURCE_SIGNATURE_INVALID")
 
 
-def probe_source(source: Path) -> tuple[int, int, float]:
+def probe_source(source: Path) -> tuple[int, int, float, str, str]:
     command = [
         "ffprobe", "-v", "error", "-protocol_whitelist", "file,pipe",
         "-probesize", "10000000", "-analyzeduration", "10000000",
@@ -113,6 +123,8 @@ def probe_source(source: Path) -> tuple[int, int, float]:
         duration = float(payload.get("format", {}).get("duration", 0))
         container = str(payload.get("format", {}).get("format_name", ""))
         video_codec = str(video.get("codec_name", ""))
+        audio_stream = next((item for item in streams if item.get("codec_type") == "audio"), {})
+        audio_codec = str(audio_stream.get("codec_name", ""))
     except (ValueError, TypeError, KeyError, StopIteration, json.JSONDecodeError):
         raise RuntimeError("SOURCE_MEDIA_UNSUPPORTED") from None
     allowed_containers = {"mov", "mp4", "m4a", "3gp", "3g2", "mj2", "matroska", "webm"}
@@ -127,7 +139,7 @@ def probe_source(source: Path) -> tuple[int, int, float]:
         raise RuntimeError("SOURCE_RESOLUTION_UNSUPPORTED")
     if duration <= 0 or duration > 6 * 60 * 60:
         raise RuntimeError("SOURCE_DURATION_UNSUPPORTED")
-    return width, height, duration
+    return width, height, duration, video_codec, audio_codec
 
 
 def write_master_playlist(output_dir: Path, variants: list[Variant]) -> None:
@@ -189,7 +201,7 @@ def verify_hls_output(output_dir: Path) -> dict[str, int]:
             raise RuntimeError("An HLS rendition contains no media segments.")
     return {"renditionCount": len(variant_paths), "segmentCount": segment_count, "segmentBytes": total_segment_bytes}
 
-def transcode(source: Path, output_dir: Path, threads: int) -> list[Variant]:
+def transcode(source: Path, output_dir: Path, threads: int, profile: str = "standard", mode: str = "auto") -> list[Variant]:
     source = source.expanduser().resolve(strict=True)
     if not source.is_file() or source.suffix.lower() not in ALLOWED_EXTENSIONS:
         raise ValueError("Use a regular MP4, MOV, MKV or WebM source file.")
@@ -204,10 +216,42 @@ def transcode(source: Path, output_dir: Path, threads: int) -> list[Variant]:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     verify_source_magic(source)
-    width, height, duration = probe_source(source)
+    width, height, duration, video_codec, audio_codec = probe_source(source)
     processing_timeout = max(1800, int(duration * 6))
-    variants = build_variant_ladder(width, height)
+    variants = build_variant_ladder(width, height, profile)
     try:
+        if mode not in {"auto", "copy", "encode"}:
+            raise ValueError("The processing mode is not supported.")
+        if mode != "encode" and video_codec == "h264" and audio_codec == "aac" and height <= 1080:
+            native_height = max(2, height - (height % 2))
+            native_width = max(2, width - (width % 2))
+            native_variant = Variant(native_width, native_height, PROFILE_BITRATES[profile].get(native_height, 500_000))
+            native_dir = output_dir / f"v{native_height}"
+            native_dir.mkdir(parents=True, exist_ok=True)
+            copy_command = [
+                "ffmpeg", "-hide_banner", "-nostdin", "-y", "-protocol_whitelist", "file,pipe",
+                "-i", str(source), "-map", "0:v:0", "-map", "0:a:0", "-sn", "-dn",
+                "-c", "copy", "-f", "hls", "-hls_time", str(SEGMENT_SECONDS),
+                "-hls_playlist_type", "vod", "-hls_flags", "independent_segments",
+                "-hls_segment_filename", str(native_dir / "segment_%05d.ts"),
+                str(native_dir / "index.m3u8"),
+            ]
+            try:
+                run_checked(copy_command, processing_timeout)
+                durations = [
+                    float(line.split(":", 1)[1].split(",", 1)[0])
+                    for line in (native_dir / "index.m3u8").read_text(encoding="utf-8").splitlines()
+                    if line.startswith("#EXTINF:")
+                ]
+                if durations and max(durations) <= 20:
+                    write_master_playlist(output_dir, [native_variant])
+                    verify_hls_output(output_dir)
+                    return [native_variant]
+            except (OSError, RuntimeError, ValueError):
+                pass
+            shutil.rmtree(native_dir, ignore_errors=True)
+            (output_dir / "master.m3u8").unlink(missing_ok=True)
+
         for variant in variants:
             variant_dir = output_dir / f"v{variant.height}"
             variant_dir.mkdir(parents=True, exist_ok=True)
@@ -241,9 +285,11 @@ def main() -> int:
     parser.add_argument("--input", required=True, type=Path, help="Local source video file.")
     parser.add_argument("--output", required=True, type=Path, help="Empty output directory for HLS files.")
     parser.add_argument("--threads", type=int, default=2, choices=range(1, 9), help="FFmpeg CPU thread limit (1-8).")
+    parser.add_argument("--profile", choices=("economy", "standard", "high"), default="standard")
+    parser.add_argument("--mode", choices=("auto", "copy", "encode"), default="auto")
     args = parser.parse_args()
     try:
-        variants = transcode(args.input, args.output, args.threads)
+        variants = transcode(args.input, args.output, args.threads, args.profile, args.mode)
     except (OSError, ValueError, RuntimeError) as error:
         print(str(error), file=sys.stderr)
         return 1
