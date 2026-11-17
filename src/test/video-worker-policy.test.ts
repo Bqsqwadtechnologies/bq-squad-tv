@@ -16,8 +16,8 @@ describe("video worker lease and retry policy", () => {
 
   it("schedules exponential retry delays and then reaches a terminal state", () => {
     const now = Date.UTC(2026, 0, 1);
-    expect([1, 2, 3, 4].map(attempt => videoWorkerRetry(attempt, now).delayMinutes))
-      .toEqual([1, 2, 4, 8]);
+    expect([1, 2, 3, 4, 5].map(attempt => videoWorkerRetry(attempt, now).delayMinutes))
+      .toEqual([1, 2, 4, 8, 16]);
     expect(videoWorkerRetry(MAX_VIDEO_WORKER_ATTEMPTS, now).terminal).toBe(true);
   });
 
