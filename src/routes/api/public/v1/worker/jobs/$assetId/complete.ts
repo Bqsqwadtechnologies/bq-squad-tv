@@ -11,9 +11,9 @@ import {
   bindAssetStreamStorage,
   classifyAssetMediaOutput,
   createAssetMediaRecordId,
-  isAllowedHlsOutputPath,
 } from "@/lib/server/storage/asset-binding";
 import { assertStorageObjectKey } from "@/lib/server/storage/ledger";
+import { isAllowedHlsOutputPath } from "@/lib/server/storage/security";
 import { listAllStorageObjects } from "@/lib/server/storage/listing";
 import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
 import { sendPushNotificationToUser } from "@/lib/server/notifications";
