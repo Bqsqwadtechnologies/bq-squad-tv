@@ -1,24 +1,32 @@
 """Modal deployment for the existing BQ SQWAD TV FFmpeg queue worker.
 
-This is a compute adapter only. Firestore remains the queue authority and the
-existing authenticated worker API remains responsible for claims, leases,
-storage targets, HLS validation, and publication.
+Firestore remains the queue authority. This file only wakes and executes the
+existing signed worker routes; it does not add a queue or a second worker.
 """
 from __future__ import annotations
 
+import hmac
+import os
 from pathlib import Path
 
 import modal
+from fastapi import HTTPException, Request
 
 HERE = Path(__file__).resolve().parent
 APP_NAME = "bq-sqwad-tv-video-worker"
 SECRET_NAME = "bq-sqwad-tv-worker"
 
-# Modal requires add_local_* operations to be the final image-building steps.
-# Keep workdir before them so the image builder can package local source files.
+# Keep all compute sizing in one place so resource changes are reviewable.
+MODAL_RESOURCE_CONFIG = {
+    "poll": {"cpu": 0.25, "memory": 512, "timeout": 90, "max_containers": 1},
+    "standard": {"cpu": 2, "memory": 4096, "timeout": 10_800, "max_containers": 2},
+    "copy": {"cpu": 0.5, "memory": 1024, "timeout": 3600, "max_containers": 1},
+}
+
 image = (
     modal.Image.debian_slim(python_version="3.12")
     .apt_install("ffmpeg")
+    .pip_install("fastapi")
     .workdir("/app")
     .add_local_file(str(HERE / "runner.py"), remote_path="/app/runner.py")
     .add_local_file(str(HERE / "transcode.py"), remote_path="/app/transcode.py")
@@ -31,19 +39,14 @@ worker_secret = modal.Secret.from_name(SECRET_NAME)
 @app.function(
     image=image,
     secrets=[worker_secret],
-    schedule=modal.Period(seconds=30),
-    cpu=0.25,
-    memory=512,
-    timeout=90,
-    max_containers=1,
+    schedule=modal.Period(seconds=300),
+    **MODAL_RESOURCE_CONFIG["poll"],
 )
 def poll_firestore_queue() -> None:
-    """Claim at most one job; the API atomically leases each claimed job."""
+    """Slow fallback poll; each invocation exits when no job is available."""
     import runner
 
-    response = runner.signed_request(
-        "POST", "/api/public/v1/worker/jobs/claim", {}
-    )
+    response = runner.signed_request("POST", "/api/public/v1/worker/jobs/claim", {})
     job = response.get("job")
     if job:
         transcode_claimed_job.spawn(job)
@@ -52,13 +55,10 @@ def poll_firestore_queue() -> None:
 @app.function(
     image=image,
     secrets=[worker_secret],
-    cpu=2,
-    memory=4096,
-    timeout=10_800,
-    max_containers=2,
+    **MODAL_RESOURCE_CONFIG["standard"],
 )
 def transcode_claimed_job(job: dict) -> None:
-    """Run one existing worker job with bounded initial test capacity."""
+    """Execute one job from the existing Firestore queue."""
     import runner
 
     asset_id = str(job.get("assetId", "unknown"))
@@ -75,6 +75,18 @@ def transcode_claimed_job(job: dict) -> None:
                 },
             )
         except Exception:
-            # The API lease/recovery mechanism remains the final safety net.
+            # Lease recovery remains the final safety net.
             pass
         raise
+
+
+@app.function(image=image, secrets=[worker_secret], timeout=30)
+@modal.fastapi_endpoint(method="POST")
+def wake(request: Request) -> dict:
+    """Secured, short-lived wake hook called when a source upload is queued."""
+    expected = os.environ.get("MODAL_WAKE_SECRET", "")
+    supplied = request.headers.get("authorization", "")
+    if not expected or len(expected) < 32 or not hmac.compare_digest(supplied, "Bearer " + expected):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    poll_firestore_queue.spawn()
+    return {"accepted": True}
