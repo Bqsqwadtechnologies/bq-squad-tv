@@ -75,8 +75,14 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
               createdAt: now,
               updatedAt: now,
             }, { mustNotExist: true });
-          } else if (existingJob["assetId"] !== assetId || existingJob["ownerUid"] !== user.uid) {
-            throw new ApiError(409, "TRANSCODE_JOB_CONFLICT", "A conflicting processing job already exists for this asset.");
+          } else {
+            if (existingJob["assetId"] !== assetId || existingJob["ownerUid"] !== user.uid ||
+                existingJob["sourceObjectKey"] !== sourceObjectKey || existingJob["sourceSizeBytes"] !== actualSize) {
+              throw new ApiError(409, "TRANSCODE_JOB_CONFLICT", "A conflicting processing job already exists for this asset.");
+            }
+            if (existingJob["status"] !== "queued") {
+              throw new ApiError(409, "TRANSCODE_JOB_ALREADY_EXISTS", "This asset already has a processing history. Use the explicit reprocess action to create a new attempt.");
+            }
           }
           const reservationId = typeof asset["storageReservationId"] === "string" ? asset["storageReservationId"] : null;
           if (reservationId) await commitStorageReservation(fs, reservationId, actualSize);
