@@ -149,6 +149,41 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/schedule
           if (!(error instanceof ApiError) || error.status !== 409) throw error;
         }
       }
+      const drainingDestinations = destinations.filter(row =>
+        row["purpose"] === "hls_streaming" &&
+        !["legacy_lovable_source", "legacy_lovable_streaming", "lovable-source-legacy", "lovable-stream-legacy"].includes(row.__id) &&
+        row["enabled"] === true &&
+        row["mode"] === "drain",
+      );
+      const drainWrites: FirestoreWrite[] = drainingDestinations.map(row => {
+        const taskId = "storage-drain-" + scheduleKey + "-" + row.__id;
+        return {
+          update: {
+            name: fs.docName("videoMaintenanceJobs/" + taskId),
+            fields: encodeFields({
+              taskType: "storage_destination_drain",
+              destinationId: row.__id,
+              scheduleKey,
+              payload: { destinationId: row.__id, cursorValue: null, cursorId: null },
+              status: "queued",
+              attempts: 0,
+              reason: "Move every film from a draining storage location to verified healthy storage",
+              createdAt: now,
+              updatedAt: now,
+            }),
+          },
+          currentDocument: { exists: false },
+        };
+      });
+      let drainQueuedCount = 0;
+      if (drainWrites.length) {
+        try {
+          await fs.commit(drainWrites);
+          drainQueuedCount = drainWrites.length;
+        } catch (error) {
+          if (!(error instanceof ApiError) || error.status !== 409) throw error;
+        }
+      }
       const backupDestinations = process.env["CONFIG_BACKUP_KEY"] && process.env["CONFIG_BACKUP_KEY"].length >= 32
         ? destinations.filter(row => row["purpose"] === "backup" && row["enabled"] === true && row["mode"] === "active" && row["healthStatus"] === "healthy")
         : [];
@@ -187,6 +222,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/schedule
         queuedCount: pending.length,
         orphanScanQueuedCount: orphanQueuedCount,
         sourceRetentionQueuedCount,
+        drainQueuedCount,
         backupQueuedCount,
         backupDisabledReason: backupQueuedCount === 0
           ? (!process.env["CONFIG_BACKUP_KEY"] ? "private_backup_setting_missing" : backupDestinations.length === 0 ? "no_healthy_backup_location" : "already_scheduled")
