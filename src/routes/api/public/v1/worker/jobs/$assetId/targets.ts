@@ -6,6 +6,7 @@ import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 import { isVideoWorkerLeaseActive } from "@/lib/server/video-worker-policy";
 import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
 import { createStorageUploadTarget } from "@/lib/server/storage/transfers";
+import { isAllowedHlsOutputPath } from "@/lib/server/storage/security";
 
 const fileSchema = z.object({
   relativePath: z.string().min(1).max(220),
