@@ -29,6 +29,8 @@ export const Route = createFileRoute("/api/public/v1/streaming/key/$assetId")({
         throw new ApiError(403, "STREAM_SESSION_REVOKED", "This playback session is no longer active.");
       }
       const uid = session["uid"] as string;
+      const now = Date.now();
+      await verifyPlaybackToken(token, { sid, uid, path: "stream-key/" + assetId });
       await enforceRateLimit(fs, "stream-key:" + sid, { limit: 6, windowMs: 60_000 }, now);
       await fs.transact(["sessions/" + sid], docs => {
         const current = docs[0];
@@ -52,8 +54,7 @@ export const Route = createFileRoute("/api/public/v1/streaming/key/$assetId")({
           }],
         };
       });
-      await verifyPlaybackToken(token, { sid, uid, path: "stream-key/" + assetId });
-      const now = Date.now();
+
       const lastHeartbeat = typeof session["lastHeartbeatAt"] === "string" ? Date.parse(session["lastHeartbeatAt"]) : 0;
       if (!Number.isFinite(lastHeartbeat) || now - lastHeartbeat > 45_000 || lastHeartbeat > now + 60_000) {
         await fs.patchDoc("sessions/" + sid, { active: false, status: "ended", endedAt: new Date(now).toISOString(), endReason: "HEARTBEAT_TIMEOUT" });
