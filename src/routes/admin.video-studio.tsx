@@ -8,7 +8,7 @@ type UploadState = { name: string; progress: number; status: string; detail: str
 
 export const Route = createFileRoute("/admin/video-studio")({
   component: VideoStudio,
-  head: () => ({ meta: [{ title: "Video Studio | BQ SQWAD TV" }, { name: "description", content: "Private source-video uploads for BQ SQWAD TV." }] }),
+  head: () => ({ meta: [{ title: "Video Studio | BQ SQWAD TV" }, { name: "description", content: "Private source-video uploads for BQ SQWAD TV." }, { name: "robots", content: "noindex, nofollow, noarchive" }] }),
 });
 
 const MAX_BYTES = 5_000_000_000;
