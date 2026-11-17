@@ -24,6 +24,13 @@ data class LegalStatusResponse(
     val acceptanceRequired: Boolean,
 )
 
+data class PublicLegalPageResponse(
+    val slug: String,
+    val title: String,
+    val body: String,
+    val version: Int,
+)
+
 data class CompleteProfileRequest(
     val dateOfBirth: String,
     val parentalPin: String?,
@@ -75,6 +82,9 @@ data class ThemePreferenceSaveResponse(
 )
 
 interface ProfileApi {
+    @GET("v1/pages/{slug}")
+    suspend fun publicLegalPage(@Path("slug") slug: String): PublicLegalPageResponse
+
     @GET("v1/legal/status")
     suspend fun legalStatus(
         @Header("Authorization") bearerToken: String,
