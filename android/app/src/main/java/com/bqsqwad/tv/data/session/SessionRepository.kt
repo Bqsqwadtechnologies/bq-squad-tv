@@ -56,7 +56,9 @@ class SessionRepository {
                 .awaitResult()
                 .token()
         val session = api.start(auth, StartSessionRequest(channelId, integrity, nonce, UUID.randomUUID().toString(), "android"))
-        session.leaseToken?.let { leaseTokens[session.sessionId] = it }
+        leaseTokens[session.sessionId] = requireNotNull(session.leaseToken) {
+            "The playback service did not return a secure session lease."
+        }
         return session
     }
 
@@ -66,10 +68,13 @@ class SessionRepository {
         playbackState: String,
         playbackPositionMs: Long,
     ) : SessionSnapshot {
+        val leaseToken = requireNotNull(leaseTokens[sessionId]) {
+            "The secure playback lease expired. Restart playback to continue."
+        }
         val response = api.heartbeat(
             bearer(),
             sessionId,
-            HeartbeatRequest(sequence, playbackState, playbackPositionMs, leaseTokens[sessionId]),
+            HeartbeatRequest(sequence, playbackState, playbackPositionMs, leaseToken),
         )
         response.leaseToken?.let { leaseTokens[sessionId] = it }
         if (!response.active) leaseTokens.remove(sessionId)
