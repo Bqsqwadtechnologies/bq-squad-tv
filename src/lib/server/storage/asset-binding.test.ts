@@ -98,6 +98,7 @@ describe("asset storage bindings", () => {
       }],
       ["storageReservations/reserve-asset-005", {
         destinationId: "b2-001",
+        assetId: "asset-5",
         purpose: "hls_streaming",
         status: "committed",
         actualBytes: 100,
