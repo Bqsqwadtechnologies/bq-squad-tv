@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { webcrypto } from "node:crypto";
 import type { Firestore } from "@/lib/server/firebase-admin";
 import { createWorkerSignatureMessage, requireVideoWorker } from "@/lib/server/video-worker-auth";
