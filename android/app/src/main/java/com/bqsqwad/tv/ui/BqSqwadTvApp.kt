@@ -2,6 +2,19 @@ package com.bqsqwad.tv.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LiveTv
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -21,17 +34,16 @@ import com.google.firebase.auth.FirebaseAuth
 private data class MainTab(
     val route: String,
     val label: String,
-    val symbol: String,
+    val icon: ImageVector,
 )
 
 private val mainTabs =
     listOf(
-        MainTab("home", "Home", "⌂"),
-        MainTab("live", "Live TV", "▣"),
-        MainTab("library", "Library", "▦"),
-        MainTab("downloads", "Downloads", "↓"),
-        MainTab("settings", "Settings", "⚙"),
-        MainTab("account", "Profile", "●"),
+        MainTab("home", "Home", Icons.Default.Home),
+        MainTab("live", "Live TV", Icons.Default.LiveTv),
+        MainTab("library", "Library", Icons.Default.VideoLibrary),
+        MainTab("settings", "Settings", Icons.Default.Settings),
+        MainTab("account", "Profile", Icons.Default.Person),
     )
 
 @Composable
@@ -43,10 +55,13 @@ fun BqSqwadTvApp(
     val auth = remember { AuthRepository() }
     val scope = rememberCoroutineScope()
     val signedInUid = FirebaseAuth.getInstance().currentUser?.uid
+    var themeSyncComplete by remember(signedInUid) { mutableStateOf(signedInUid == null) }
     LaunchedEffect(signedInUid) {
         if (signedInUid != null) {
+            themeSyncComplete = false
             auth.loadThemePreference()?.let(onThemeModeChange)
         }
+        themeSyncComplete = true
     }
     val initialDestination =
         remember {
@@ -55,6 +70,24 @@ fun BqSqwadTvApp(
     val backStackEntry by nav.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = mainTabs.any { it.route == currentRoute }
+
+    if (!themeSyncComplete) {
+        Surface(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                androidx.compose.foundation.layout.Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    androidx.compose.foundation.Image(
+                        painter = painterResource(com.bqsqwad.tv.R.drawable.bq_sqwad_tv_mark),
+                        contentDescription = "BQ SQWAD TV",
+                        modifier = Modifier.size(104.dp),
+                    )
+                    CircularProgressIndicator()
+                }
+            }
+        }
+        return
+    }
 
     Surface(Modifier.fillMaxSize()) {
         Scaffold(
@@ -71,7 +104,7 @@ fun BqSqwadTvApp(
                                         restoreState = true
                                     }
                                 },
-                                icon = { if (tab.route == "account") Icon(Icons.Default.Person, contentDescription = "Profile") else Text(tab.symbol) },
+                                icon = { Icon(tab.icon, contentDescription = tab.label) },
                                 label = { Text(tab.label) },
                             )
                         }
@@ -113,7 +146,6 @@ fun BqSqwadTvApp(
                 composable("library") {
                     LibraryScreen(onChannel = { nav.navigate("channel/$it") })
                 }
-                composable("downloads") { DownloadsScreen() }
                 composable("settings") {
                     SettingsScreen(
                         onWallet = { nav.navigate("wallet") },
