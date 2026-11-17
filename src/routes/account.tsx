@@ -97,6 +97,7 @@ function GoogleSignInButton({
 function AccountPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [code, setCode] = useState("");
   const [googleClientId, setGoogleClientId] = useState("");
   const [createAccount, setCreateAccount] = useState(false);
@@ -258,6 +259,23 @@ function AccountPage() {
       const result = createAccount
         ? await createAccountWithEmailPassword(email, password)
         : await signInWithEmailPassword(email, password);
+      if (createAccount) {
+        if (!dateOfBirth) throw new Error("Enter your date of birth to finish creating your account.");
+        const idToken = await getActiveWebIdToken();
+        if (!idToken) throw new Error("Your account was created, but its profile could not be completed. Sign in again to continue.");
+        const region = new Intl.Locale(navigator.language).region;
+        const profileResponse = await fetch("/api/public/v1/profile/complete", {
+          method: "POST",
+          headers: { ...(await getWebAuthHeaders(idToken)), "content-type": "application/json" },
+          body: JSON.stringify({
+            dateOfBirth,
+            parentalPin: null,
+            ...(region && /^[A-Z]{2}$/.test(region) ? { countryCode: region } : {}),
+          }),
+        });
+        const profileResult = await profileResponse.json() as { error?: string };
+        if (!profileResponse.ok) throw new Error(profileResult.error ?? "Your account profile could not be completed.");
+      }
       await continueWithEmailAccount(result.email);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not complete sign-in.");
@@ -506,6 +524,19 @@ function AccountPage() {
                 Sign in to continue to your BQ SQWAD TV experience.
               </p>
               <form onSubmit={handleAuthentication} className="mt-6 space-y-4">
+                {createAccount ? (
+                  <label className="block text-sm font-semibold text-blue-50">
+                    Date of birth
+                    <input
+                      type="date"
+                      value={dateOfBirth}
+                      onChange={event => setDateOfBirth(event.target.value)}
+                      max={new Date().toISOString().slice(0, 10)}
+                      required
+                      className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300"
+                    />
+                  </label>
+                ) : null}
                 <label className="block text-sm font-semibold text-blue-50">
                   Email address
                   <input
@@ -534,12 +565,19 @@ function AccountPage() {
                 ) : null}
                 <button
                   type="submit"
-                  disabled={busy || !email.includes("@") || password.length < 6}
+                  disabled={busy || !email.includes("@") || password.length < 6 || (createAccount && !dateOfBirth)}
                   className="w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 font-extrabold text-[#031039] disabled:opacity-50"
                 >
                   {busy ? "Please wait…" : createAccount ? "Create account" : "Sign in"}
                 </button>
               </form>
+              {createAccount ? (
+                <p className="mt-3 text-xs leading-5 text-blue-100/60">
+                  By creating an account, you acknowledge the
+                  {" "}<a href="/terms" className="underline underline-offset-4">Terms of service</a>
+                  {" "}and <a href="/privacy" className="underline underline-offset-4">Privacy notice</a>.
+                </p>
+              ) : null}
 
               <div className="mt-4 flex items-center justify-between gap-3 text-sm">
                 <button
