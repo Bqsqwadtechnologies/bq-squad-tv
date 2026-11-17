@@ -38,7 +38,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/seed")({
         const body = await parseBody(request, bodySchema);
         const fs = await Firestore.create();
         const access = await requireAdminModule(fs, user, "system");
-        if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "Only the protected platform owner can seed storage metadata.");
+        if (!access.isZillionaireOwner) throw new ApiError(403, "OWNER_ONLY", "Only the Zillionaire owner can seed storage metadata.");
         const ids = body.destinations.map(item => item.destinationId);
         if (new Set(ids).size !== ids.length) throw new ApiError(400, "DUPLICATE_DESTINATION", "Destination IDs must be unique in a seed request.");
         const existingRows = await fs.query("storageDestinations", { limit: 500 });
