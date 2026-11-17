@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
-import { errorBody, getUserProfile, assertContentAgeEligibility } from "@/lib/server/api";
+import { errorBody, getUserProfile } from "@/lib/server/api";
+import { assertContentAgeEligibility } from "@/lib/server/content-rating";
 import { assertContentPlaybackRights } from "@/lib/server/content-rights";
 import { verifyPlaybackToken } from "@/lib/server/storage/security";
 import { decryptHlsContentKey, getStreamingSourceKey, type EncryptedStreamingSource } from "@/lib/server/streaming/source-encryption";
@@ -56,7 +57,7 @@ export const Route = createFileRoute("/api/public/v1/streaming/key/$assetId")({
         fs.getDoc("contentAssets/" + assetId),
         getUserProfile(fs, uid),
       ]);
-      if (!channel || channel["published"] !== true || !asset || asset["status"] !== "ready" ||
+      if (!channel || channel["published"] !== true || !asset || asset["channelId"] !== channelId || asset["status"] !== "ready" ||
           asset["hlsEncryptionEnabled"] !== true || !asset["encryptedHlsKey"]) {
         throw new ApiError(403, "STREAM_KEY_UNAVAILABLE", "The protected content key is not available.");
       }
