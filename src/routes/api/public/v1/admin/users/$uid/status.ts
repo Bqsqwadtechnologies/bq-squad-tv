@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
-import { isProtectedSuperAdmin, requireAdminModule } from "@/lib/server/roles";
+import { isProtectedZillionaire, requireAdminModule } from "@/lib/server/roles";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 
 const schema = z.object({
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/public/v1/admin/users/$uid/status")({
           if (!target) throw new ApiError(404, "USER_NOT_FOUND", "The target user profile does not exist.");
           if (existingAudit) throw new ApiError(409, "AUDIT_ID_CONFLICT", "Could not record the account status change.");
           const targetEmail = typeof target["email"] === "string" ? target["email"] as string : null;
-          if (isProtectedSuperAdmin(targetEmail)) {
+          if (isProtectedZillionaire(targetEmail)) {
             throw new ApiError(403, "OWNER_ACCOUNT_PROTECTED", "The protected ZILLIONAIRE owner account cannot be suspended or modified.");
           }
           if (target["accountStatus"] === "DELETED" || target["accountStatus"] === "DELETION_PENDING") {
