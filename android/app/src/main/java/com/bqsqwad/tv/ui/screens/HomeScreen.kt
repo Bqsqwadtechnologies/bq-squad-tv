@@ -84,9 +84,7 @@ fun HomeScreen(
     Column(
         Modifier
             .fillMaxSize()
-            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
-            .verticalScroll(rememberScrollState())
-            .padding(top = 4.dp, bottom = 20.dp),
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top)),
     ) {
         Row(
             Modifier
@@ -134,7 +132,14 @@ fun HomeScreen(
             }
         }
 
-        Spacer(Modifier.height(18.dp))
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(top = 4.dp, bottom = 20.dp),
+        ) {
+            Spacer(Modifier.height(18.dp))
+        }
 
         Card(
             Modifier
@@ -256,6 +261,7 @@ fun HomeScreen(
         ) {
             OutlinedButton(onClick = onWallet, modifier = Modifier.weight(1f)) { Text("My wallet") }
             OutlinedButton(onClick = onProducer, modifier = Modifier.weight(1f)) { Text("Producer studio") }
+            }
         }
     }
 }
