@@ -157,7 +157,14 @@ function AccountPage() {
       }
       setSignedIn(account.emailVerified);
       setVerificationPending(!account.emailVerified);
-      if (!account.emailVerified) {
+      if (account.emailVerified) {
+        try {
+          const needsAcceptance = await loadLegalStatus();
+          if (needsAcceptance) setMessage("Please review and accept the updated service terms before continuing.");
+        } catch (error) {
+          setMessage(error instanceof Error ? error.message : "The current legal pages could not be checked.");
+        }
+      } else {
         setMessage("Verify your email with the six-digit code sent to your inbox.");
       }
     })();
@@ -372,7 +379,8 @@ function AccountPage() {
       if (result.alreadyVerified) {
         setSignedIn(true);
         setVerificationPending(false);
-        setMessage("Your email is already verified. You're signed in.");
+        const needsAcceptance = await loadLegalStatus();
+        setMessage(needsAcceptance ? "Please review and accept the updated service terms before continuing." : "Your email is already verified. You're signed in.");
       } else {
         setMessage(result.sent ? "A new six-digit code has been sent." : "A new code could not be sent yet.");
       }
