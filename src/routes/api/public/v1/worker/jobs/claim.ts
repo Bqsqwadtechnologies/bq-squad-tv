@@ -6,6 +6,7 @@ import { reserveStorageDestination, releaseStorageReservation } from "@/lib/serv
 import { estimateReservedBytes } from "@/lib/server/storage/routing";
 import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata } from "@/lib/server/storage/registry";
 import { loadSourceStorageConfiguration, createStorageDownloadTarget } from "@/lib/server/storage/transfers";
+import { videoWorkerLeaseExpiry, videoWorkerRetryIsDue } from "@/lib/server/video-worker-policy";
 
 export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
   server: { handlers: { POST: async ({ request }) => {
@@ -15,13 +16,17 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
       const queued = await fs.query("videoTranscodeJobs", { filters: [{ field: "status", op: "EQUAL", value: "queued" }], orderByField: "createdAt", limit: 10 });
       const processing = await fs.query("videoTranscodeJobs", { filters: [{ field: "status", op: "EQUAL", value: "processing" }], limit: 500 });
       const now = new Date();
-      const candidates = [...queued, ...processing.filter(row => typeof row["leaseExpiresAt"] !== "string" || !Number.isFinite(Date.parse(row["leaseExpiresAt"])) || Date.parse(row["leaseExpiresAt"]) <= now.getTime())];
+      const candidates = [
+        ...queued.filter(row => videoWorkerRetryIsDue(row["nextAttemptAt"], now.getTime())),
+        ...processing.filter(row => typeof row["leaseExpiresAt"] !== "string" || !Number.isFinite(Date.parse(row["leaseExpiresAt"])) || Date.parse(row["leaseExpiresAt"]) <= now.getTime()),
+      ];
       for (const row of candidates) {
         const assetId = row.__id;
         if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId)) continue;
         const jobPath = "videoTranscodeJobs/" + assetId;
         const claimToken = crypto.randomUUID().replace(/-/g, "");
-        const leaseExpiresAt = new Date(now.getTime() + 2 * 60 * 60_000).toISOString();
+        const leaseMinutes = Number(process.env["VIDEO_WORKER_LEASE_MINUTES"] ?? "10");
+        const leaseExpiresAt = videoWorkerLeaseExpiry(now.getTime(), leaseMinutes);
         const claimed = await fs.transact([jobPath], docs => {
           const job = docs[0];
           if (!job || !["queued", "processing"].includes(String(job["status"]))) return { result: false, writes: [] };
@@ -59,10 +64,11 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           const metadata = validateStorageDestinationMetadata({ ...rawDestination, destinationId: outputReservation.destinationId });
           const outputConfig = resolveStorageDestinationConfiguration(metadata);
           if (outputConfig.configurationStatus !== "configured") throw new ApiError(503, "HLS_DESTINATION_MISCONFIGURED", "The HLS destination is not configured.");
-          const outputPrefix = "hls/" + assetId;
+          const attemptNumber = typeof job["attempts"] === "number" ? job["attempts"] : 1;
+          const outputPrefix = "hls/" + assetId + "/a" + attemptNumber;
           await fs.patchDoc(jobPath, {
             outputDestinationId: outputReservation.destinationId, outputPrefix,
-            outputReservationId, outputReservedBytes: reservedBytes,
+            outputReservationId, outputReservedBytes: reservedBytes, attemptNumber,
             sourceDownloadExpiresAt: new Date(Date.now() + 3600_000).toISOString(),
             updatedAt: new Date().toISOString(),
           });
