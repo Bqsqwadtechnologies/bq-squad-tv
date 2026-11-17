@@ -1,4 +1,5 @@
 package com.bqsqwad.tv.ui.screens
+import com.bqsqwad.tv.ui.ErrorMessages
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.*
@@ -17,7 +18,7 @@ import java.util.Locale
     var data by remember { mutableStateOf<ProducerSummary?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
-        runCatching { repo.summary() }.onSuccess { data = it }.onFailure { error = it.localizedMessage ?: "Producer summary unavailable." }
+        runCatching { repo.summary() }.onSuccess { data = it }.onFailure { error = ErrorMessages.TRY_AGAIN }
     }
     Column(Modifier.fillMaxSize().padding(20.dp)) {
         TextButton(onClick = onBack) { Text("← Back") }
