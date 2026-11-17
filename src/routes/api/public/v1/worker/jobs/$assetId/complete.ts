@@ -103,7 +103,20 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
           if (trimmed.startsWith("#EXT-X-STREAM-INF:")) { expectReference = true; continue; }
           const references: string[] = [];
           if (trimmed.startsWith("#")) {
-            for (const match of trimmed.matchAll(/URI\s*=\s*"([^"]+)"/gi)) if (match[1] && !match[1].startsWith("data:")) references.push(match[1]);
+            const uriValues = [...trimmed.matchAll(/URI\s*=\s*"([^"]+)"/gi)].map(match => match[1]).filter((value): value is string => Boolean(value));
+            if (trimmed.startsWith("#EXT-X-KEY:")) {
+              if (!/METHOD=AES-128(?:,|$)/.test(trimmed) || uriValues.length !== 1) {
+                throw new ApiError(415, "HLS_KEY_METHOD_UNSUPPORTED", "The HLS playlist uses an unsupported content protection method.");
+              }
+              const keyUrl = new URL(uriValues[0]!, request.url);
+              if (keyUrl.origin !== requestOrigin || keyUrl.pathname !== "/api/public/v1/streaming/key/" + assetId ||
+                  keyUrl.search || keyUrl.hash) {
+                throw new ApiError(400, "HLS_KEY_URI_INVALID", "The HLS content key reference is invalid.");
+              }
+              hlsKeyUriSeen = true;
+              continue;
+            }
+            for (const uri of uriValues) if (!uri.startsWith("data:")) references.push(uri);
           } else references.push(trimmed);
           for (const reference of references) {
             const resolved = resolveHlsReference(playlistKey, reference);
@@ -122,6 +135,9 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
         throw new ApiError(409, "HLS_UNREFERENCED_OBJECT", "The output contains files that are not referenced by its playlists.");
       }
       const flags = await getPlatformFlags(fs);
+      if (flags.hlsEncryption !== hlsKeyUriSeen) {
+        throw new ApiError(409, "HLS_ENCRYPTION_STATE_MISMATCH", "The HLS playlist protection does not match the current processing settings.");
+      }
       let encryptedHlsKey: Awaited<ReturnType<typeof encryptHlsContentKey>> | null = null;
       if (flags.hlsEncryption) {
         if (!body.hlsEncryptionKey) {
