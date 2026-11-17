@@ -64,14 +64,23 @@ The current adapters support private object write/read/head/delete and owner-tri
 
 Current large-source upload is a single signed PUT. Multipart/resumable upload is not implemented. The 5 GB intent limit is not a promise that every browser, provider or hosting path can reliably upload a 5 GB file.
 
-## Remaining production gates
+## Implemented File 03 capabilities and remaining gates
 
-- Provider-driven usage discovery and scheduled reconciliation.
-- Live health checks and verified quota/account grouping for every configured destination.
-- Multipart/resumable large uploads and interruption/retry tests.
-- Calibrated HLS reservation profiles; the current 2.5x source-size plus 10% estimate remains a heuristic.
-- Persistent worker host deployment and Firestore TTL configuration.
-- Source/temp cleanup, reversible retention grace, failed-output cleanup, backups and restore tests.
-- End-to-end licensed test upload, processing, HLS playback, metering and payment tests.
+- Credential bundles, discovery by secret name, and bulk registration are implemented. Secret values are never returned by discovery.
+- The compact pool index and transactional reservations support large pools; pool shards contain at most 200 entries.
+- Modal maintenance tasks support provider health checks and paginated usage listing. They are queued through the existing video maintenance worker.
+- Asset bindings preserve the legacy source and streaming locations. Verified replica-copy tasks copy media first, playlists next and the master playlist last, then compare the complete listing before binding.
+- Owner endpoints and the Storage Destinations screen expose registration, health, usage, drain/retire and replica controls.
+- Expected delivery is reserved at playback grant and extended during session heartbeats. The segment path does not read account-wide counters. Paid delivery is forced off.
 
-Do not enable production movie uploads until these gates are complete. See [production readiness](production-readiness.md) and [worker operations](video-worker-operations.md).
+Production gates still requiring implementation or verification:
+- Automated promotion by watch time and complete hot-replica lifecycle tests.
+- A complete crash-safe rebalance/drain worker with copy-switch-delete checkpoints.
+- Three-clean-check recovery and playback failover across healthy replicas, including posters and thumbnails.
+- Full lifecycle cleanup with two-pass orphan confirmation and retention pinning.
+- Encrypted weekly configuration backup, retention of eight copies, and tested restore.
+- Complete virtualised owner screen verification at 300+ destinations.
+- End-to-end tests and CI results for all new code, including concurrent reservations and maintenance failure recovery.
+- Owner-side verification of all live secrets, account groups, free allowances and provider health.
+
+Do not enable production movie uploads until these gates are implemented and verified. See [production readiness](production-readiness.md) and [worker operations](video-worker-operations.md).
