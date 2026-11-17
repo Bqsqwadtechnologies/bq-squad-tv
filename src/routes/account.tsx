@@ -285,7 +285,8 @@ function AccountPage() {
     if (sent.alreadyVerified) {
       setSignedIn(true);
       setVerificationPending(false);
-      setMessage("You're signed in to BQ SQWAD TV.");
+      const needsAcceptance = await loadLegalStatus();
+      setMessage(needsAcceptance ? "Please review and accept the updated service terms before continuing." : "You're signed in to BQ SQWAD TV.");
     } else {
       setVerificationPending(true);
       setMessage(sent.sent
@@ -299,15 +300,18 @@ function AccountPage() {
     setBusy(true);
     setMessage("");
     try {
-      const result = createAccount
-        ? await createAccountWithEmailPassword(email, password)
-        : await signInWithEmailPassword(email, password);
       if (createAccount) {
         if (!legalConsentAccepted) throw new Error("Read and accept the Terms and Privacy Policy before creating your account.");
+        if (!dateOfBirth) throw new Error("Enter your date of birth to finish creating your account.");
         for (const slug of ["terms", "privacy-policy"]) {
           const legalResponse = await fetch("/api/public/v1/pages/" + slug, { cache: "no-store" });
           if (!legalResponse.ok) throw new Error("Account creation is temporarily unavailable until our Terms and Privacy Policy are published.");
         }
+      }
+      const result = createAccount
+        ? await createAccountWithEmailPassword(email, password)
+        : await signInWithEmailPassword(email, password);
+      if (createAccount) {
         if (!dateOfBirth) throw new Error("Enter your date of birth to finish creating your account.");
         const idToken = await getActiveWebIdToken();
         if (!idToken) throw new Error("Your account was created, but its profile could not be completed. Sign in again to continue.");
