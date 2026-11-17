@@ -18,12 +18,12 @@ Execution method: direct GitHub main-branch edits. No local checkout, browser, T
 | 07 Asset binding | Partially implemented | Stream assets and committed reservations are linked; poster/thumbnail destination metadata is persisted. Complete universal read-helper adoption and transactional migration of every media record still need verification. |
 | 08 Egress governor | Implemented in source; unverified | Expected delivery is reserved at playback grant and extended on heartbeats; monthly/daily limits and hard-off paid egress guards are present. Real provider allowance calibration and alert transitions require owner/runtime verification. |
 | 09 Hot replicas | Partially implemented | Owner-triggered replica queue, copy ordering, listing verification and replica records exist. Automatic popularity promotion from watch time and end-to-end viewer distribution are not complete. |
-| 10 Rebalancing and tiering | Partially integrated; deletion disabled | The existing maintenance worker now accepts owner-queued rebalance tasks, verifies a complete copy, commits its reservation and switches the asset binding transactionally. The old copy is retained; automated deletion, destination drain orchestration and full reservation/ledger reconciliation remain incomplete. |
-| 11 Read failover | Partially integrated | HLS storage configuration now checks the primary and its registered replicas and selects a configured healthy location, with legacy unknown-health fallback limited to the established legacy ID. Poster/thumbnail read paths and automated health recovery transitions remain incomplete. |
-| 12 Cleanup and lifecycle | Partially integrated | The existing attempt-prefix cleanup worker now enforces a 24-hour minimum age. Two-observation orphan confirmation and source-retention guards remain helper-only; scheduled orphan scans, audit counts and owner pin UI are not integrated. |
-| 13 Owner storage screens | Partially implemented | Existing screen includes destination management, pool/group information, health/usage and maintenance actions. Full virtualisation and all requested learn-more explanations were not verified. |
-| 14 Encrypted configuration backups | Safety core only | AES-GCM encryption/decryption now rejects credential-like fields recursively before encryption and after decryption, with bounded payload size. Weekly export, backup-destination upload, last-eight retention and owner restore route are not integrated. |
-| 15 Tests, docs, report | Committed | Storage audit, registry guidance, owner actions and this report updated. Test suites were not run locally. |
+| 10 Rebalancing and tiering | Partially integrated | Verified primary moves now queue old-copy cleanup after a seven-day grace period. Cleanup rechecks the new primary, verified replica record and current asset references, deletes in bounded pages, releases the exact prior committed reservation when its ID is known, and rebuilds the pool index. Destination-wide drain orchestration and legacy historical reservation reconciliation remain incomplete. |
+| 11 Read failover | Integrated in source; runtime unverified | HLS playback and content poster/thumbnail signing use the shared asset-media storage resolver, which selects a healthy primary or registered replica. Worker and owner-triggered health checks require three consecutive clean checks before a degraded/unreachable location is restored. End-to-end provider failover tests have not run. |
+| 12 Cleanup and lifecycle | Partially integrated | Weekly maintenance scheduling now queues bounded non-legacy HLS orphan scans. Unknown asset paths require two observations at least 24 hours apart plus a further 24-hour wait, then are rechecked before deletion. Weekly source retention checks apply the seven-day published-source rule and respect owner keep pins; a step-up-protected owner pin API/UI is added. Audit summaries, >500-asset pagination and runtime verification remain outstanding. |
+| 13 Owner storage screens | Partially implemented | The location list now supports search, progressive 40-row rendering and browser content-visibility for large pools. This reduces initial rendering but is not a measured, fully windowed virtual list; remaining explanations and viewport/performance checks are outstanding. |
+| 14 Encrypted configuration backups | Partially integrated; owner setup required | The existing maintenance scheduler can queue weekly encrypted exports to an active healthy backup destination when CONFIG_BACKUP_KEY is configured. The worker verifies uploads and retains the newest eight encrypted files. A step-up-protected preview/apply restore route restores existing non-legacy destination metadata, preserves current connection references and marks restored locations unverified. Playback bindings and delivery ledgers are deliberately not overwritten. Scheduler invocation, backup destination setup and non-production restore tests remain unverified. |
+| 15 Tests, docs, report | Not verified | Documentation is updated, but Vitest, typecheck, website build, browser checks and current-SHA CI have not been run. The backend CI workflow is manual-dispatch only; no run for the current File 03 commits was visible. |
 
 ## Important safeguards
 
@@ -35,20 +35,22 @@ Execution method: direct GitHub main-branch edits. No local checkout, browser, T
 
 ## Verification
 
-- GitHub commits were created directly on `main`; latest File 03 commit at report time: `c66430424deb5e7dfc7c1b5505888894327cfc0f`.
-- New File 03 commits did not have a matching `backend-ci.yml` run visible in GitHub Actions at verification time. The most recent successful backend CI runs were still on older SHAs.
+- GitHub commits were created directly on `main`; latest File 03 source commit before this report update: `2ca92f7d79ff5ae413a749594c9a4d1e20661d5c`.
+- No matching `backend-ci.yml` run for the latest File 03 commits was visible in GitHub Actions. The workflow remains manual-dispatch only, and the available GitHub connection did not expose a workflow-dispatch action.
 - Vitest, typecheck, website build, Android build, browser viewport checks and production provider checks: **not run**. No local runtime was available.
-- The usage-page worker count contract was corrected in `maintenance.ts` and `worker/maintenance/run.ts`; this is source-reviewed only, not runtime-verified.
+- The maintenance listing-count contract was corrected. The replica verification response also uses the provider listing's actual object count; source-reviewed only, not runtime-verified.
+- The worker now records each newly bound primary stream reservation ID so later verified old-copy cleanup can release that exact reservation. Older assets without this field retain conservative accounting until separately reconciled.
+- The orphan and source-retention scans currently process up to 500 asset records per scheduled task. Larger collections need cursor-based pagination before claiming complete coverage.
 - The most recent GitHub Actions runs visible during this session were for older commit SHAs and do not verify the latest File 03 commits.
-- No claim is made that all 15 batches are production-complete. Batches 07, 09–14 have the explicit integration gaps listed above.
+- No claim is made that all 15 batches are production-complete. Batches 07, 09–15 retain the integration, coverage or verification gaps listed above.
 
 ## Owner actions
 
 1. Confirm the real number of destinations, credential bundle coverage and shared account groups using the protected discovery screen.
 2. Verify all ten Backblaze account caps and the current free download allowance with the account owner.
 3. Run health and usage reconciliation in controlled chunks and review alerts before enabling any destination for uploads or playback.
-4. Add `CONFIG_BACKUP_KEY` only after the backup export and restore routes are integrated and reviewed.
-5. Keep production uploads and automatic rebalancing disabled until the incomplete integration and test gates above are closed.
+4. An adult account owner may configure `CONFIG_BACKUP_KEY` only after registering a dedicated backup destination and reviewing the scoped restore behaviour; test with a non-production backup before relying on it.
+5. Keep production uploads and automatic destination draining disabled until the remaining drain orchestration, large-pool pagination and test gates above are closed.
 
 ## Next file
 
