@@ -25,3 +25,36 @@ Date: 2026-11-17
 ## Required QA
 
 Complete the checks above on real browsers and Android emulator/device before describing accessibility as verified. The current code changes have not been tested with assistive technology or contrast tooling.
+
+
+## Batch 4 additions (2026-11-17)
+
+- Added visible global `:focus-visible` outlines for links, buttons, form fields, summaries and explicitly focusable elements.
+- Added a `prefers-reduced-motion: reduce` override to minimize animation and transition durations and disable smooth scrolling.
+- Added reusable status-page layouts for maintenance, offline, high demand, country unavailability and age restriction.
+- Added Android Compose status screens with clear messages and 48 dp minimum primary actions.
+- Added About and Contact pages. The contact form opens the user's email application addressed to `tv@bqsqwad.com`; it does **not** submit directly to a server or guarantee delivery.
+- Added Privacy, Terms and Producer Terms route shells. They are intentionally marked **Publication pending** and set to noindex; they are not approved legal policies and must not be treated as final terms.
+- Added date of birth to website registration and connected it to the existing profile-completion endpoint. Added Terms and Privacy links to the registration flow.
+- Added homepage links to About, Contact, Privacy and Terms; Android Settings links to About, Privacy and Terms.
+
+## Accessibility verification status
+
+Source changes made:
+- Keyboard focus indicator: implemented globally in CSS.
+- Reduced-motion preference: implemented globally in CSS.
+- Android Compose text uses scalable `sp` typography in the inspected screens; no fixed-pixel text sizing was introduced by the new status screens.
+- New Android status actions and settings controls use Material controls with minimum 48 dp touch sizing.
+- New website form controls use labels and visible focus styling; contact fields have native input types and required constraints.
+
+Not verified:
+- Screen-reader pass on TalkBack, VoiceOver or NVDA.
+- Keyboard-only traversal of every route and modal.
+- Browser zoom at 200 percent across every page.
+- Contrast measurements for every legacy screen, chart, player control and dialog.
+- Captions toggle behavior in the player.
+- Motion behavior in an actual reduced-motion browser/device setting.
+- Small-screen and notch screenshots for Android.
+- Website 320/360/390/430/768 px screenshots.
+
+No accessibility conformance claim is made. Automated and manual checks remain required.
