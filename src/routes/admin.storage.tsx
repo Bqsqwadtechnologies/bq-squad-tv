@@ -34,6 +34,9 @@ type Destination = {
   egressMonthBytes?: number | null;
   egressLevel?: string | null;
   freeEgressBudgetBytes?: number | null;
+  egressBudgetSource?: string | null;
+  egressBudgetCheckedAt?: string | null;
+  egressBudgetSourceUrl?: string | null;
   egressAccountMonthBytes?: number | null;
 };
 
@@ -305,6 +308,7 @@ function AdminStoragePage() {
                     <p className="mt-1 text-xs text-blue-100/45">Capacity limit {(item.softCapBytes / 1_000_000_000).toFixed(2)} GB · priority {item.priority} · {item.enabled ? "enabled" : "disabled"}</p>
                     <p className="mt-1 text-xs text-blue-100/55">Connection status: {item.healthStatus ?? "unknown"}{item.healthCheckedAt ? " · " + new Date(item.healthCheckedAt).toLocaleString() : ""} · Usage report: {item.usageBytes == null ? "unknown" : (item.usageBytes / 1_000_000_000).toFixed(2) + " GB"}{item.usageSource ? " (" + item.usageSource + ")" : ""}</p>
                     <p className="mt-1 text-xs text-blue-100/45">Shared capacity: {item.accountCapBytes == null ? "not configured" : (item.accountCapBytes / 1_000_000_000).toFixed(2) + " GB"} · Data transferred: {item.egressAccountMonthBytes == null ? "unknown" : (item.egressAccountMonthBytes / 1_000_000_000).toFixed(2) + " GB"} / {item.freeEgressBudgetBytes == null ? "budget unknown" : (item.freeEgressBudgetBytes / 1_000_000_000).toFixed(2) + " GB"} · {item.egressLevel ?? "unknown"}</p>
+                    {item.providerType === "backblaze_b2" ? <p className="mt-2 text-xs leading-5 text-blue-100/45">Allowance source: <a className="text-cyan-200 underline" href="https://www.backblaze.com/cloud-storage/pricing" target="_blank" rel="noreferrer">pricing page</a> and <a className="text-cyan-200 underline" href="https://help.backblaze.com/hc/en-us/articles/217931138-How-to-use-B2-data-caps-alerts" target="_blank" rel="noreferrer">help article</a> · Checked: {item.egressBudgetCheckedAt ? new Date(item.egressBudgetCheckedAt).toLocaleDateString() : "not checked yet"}.</p> : null}
                     <div className="mt-3 flex flex-wrap gap-2"><button onClick={() => void checkHealth(item)} disabled={busy} className="rounded-lg border border-cyan-300/25 px-3 py-2 text-xs font-bold text-cyan-200">Check connection</button><button onClick={() => void recordUsage(item)} disabled={busy} className="rounded-lg border border-white/15 px-3 py-2 text-xs font-bold text-blue-100">Add usage report</button></div>
                     {item.missingSecretNames.length > 0 ? <p className="mt-2 break-all text-xs text-amber-200">Connection details need attention.</p> : null}
                     <button onClick={() => editDestination(item)} className="mt-4 rounded-lg border border-cyan-300/25 px-3 py-2 text-xs font-bold text-cyan-200">Edit location details</button>
