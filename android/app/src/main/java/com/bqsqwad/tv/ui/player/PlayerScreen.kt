@@ -26,6 +26,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionParameters
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.TrackSelectionDialogBuilder
 import androidx.mediarouter.app.MediaRouteButton
@@ -72,7 +73,7 @@ fun PlayerScreen(
     var localElapsed by remember { mutableLongStateOf(0L) }
     var showTopUp by remember { mutableStateOf(false) }
     var retryCount by remember(channelId) { mutableIntStateOf(0) }
-    val player = remember { ExoPlayer.Builder(context).build().apply { playWhenReady = true } }
+    val player = remember {\n      val loadControl = DefaultLoadControl.Builder()\n          .setBufferDurationsMs(15_000, 50_000, 1_000, 3_000)\n          .build()\n      ExoPlayer.Builder(context).setLoadControl(loadControl).build().apply { playWhenReady = true }\n  }
     LaunchedEffect(session?.playbackUrl) {
         val url = session?.playbackUrl ?: return@LaunchedEffect
         val resumeAt = player.currentPosition.coerceAtLeast(0L)
