@@ -498,7 +498,9 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         }
         const page = await fs.query("contentAssets", {
           filters: [{ field: "streamDestinationId", op: "EQUAL", value: destinationId }],
-          orderByField: "updatedAt",
+          // The asset leaves this query after its primary destination changes;
+          // an immutable creation cursor also protects against concurrent edits.
+          orderByField: "createdAt",
           ...(cursorValue && cursorId ? { startAfter: { fieldValue: cursorValue, documentId: "contentAssets/" + cursorId } } : {}),
           limit: 1,
         });
@@ -589,7 +591,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           });
           budgetCharged = true;
           const next = page[0]!;
-          const nextCursorValue = typeof next["updatedAt"] === "string" ? next["updatedAt"] : "";
+          const nextCursorValue = typeof next["createdAt"] === "string" ? next["createdAt"] : "";
           if (!nextCursorValue) throw new ApiError(409, "STORAGE_DRAIN_CURSOR_UNAVAILABLE", "The film record is missing its update date; the drain was paused safely.");
           const copyTaskId = "drain-copy-" + crypto.randomUUID().replace(/-/g, "").slice(0, 24);
           await fs.setDoc("videoMaintenanceJobs/" + copyTaskId, {
