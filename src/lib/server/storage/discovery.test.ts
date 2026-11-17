@@ -62,7 +62,7 @@ describe("storage discovery", () => {
       STORAGE_LOV_BUNDLE_01: "{not-json",
       STORAGE_LOV_BUNDLE_02: JSON.stringify({
         url: "https://project-b.supabase.co", serviceRoleKey: "private-three",
-        buckets: Array.from({ length: 26 }, (_, i) => "bucket-" + i),
+        buckets: Array.from({ length: 501 }, (_, i) => "bucket-" + i),
       }),
     });
     expect(result.destinations).toEqual([]);
