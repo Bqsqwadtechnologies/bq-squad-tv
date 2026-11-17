@@ -8,7 +8,7 @@ type UploadState = { name: string; progress: number; status: string; detail: str
 
 export const Route = createFileRoute("/admin/video-studio")({
   component: VideoStudio,
-  head: () => ({ meta: [{ title: "Video Studio | ZILLIONAIRE" }, { name: "description", content: "Private source-video uploads for BQ SQWAD TV." }] }),
+  head: () => ({ meta: [{ title: "Video Studio | BQ SQWAD TV" }, { name: "description", content: "Private source-video uploads for BQ SQWAD TV." }] }),
 });
 
 const MAX_BYTES = 5_000_000_000;
@@ -36,7 +36,7 @@ function VideoStudio() {
     void (async () => {
       try {
         const restored = await restoreWebSession();
-        if (!restored) throw new Error("Sign in to ZILLIONAIRE before opening Video Studio.");
+        if (!restored) throw new Error("Sign in to continue to Video Studio.");
         if (active) {
           setToken(restored);
           await loadChannels(restored);
