@@ -2,7 +2,7 @@ export function formatMinorCurrency(amountMinor: number, currency = "USD"): stri
   if (!Number.isSafeInteger(amountMinor)) return "—";
   try {
     const locale = undefined;
-    const digits = new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions().maximumFractionDigits;
+    const digits = new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
     const scale = 10n ** BigInt(digits);
     const minor = BigInt(amountMinor);
     const whole = minor / scale;
@@ -14,8 +14,8 @@ export function formatMinorCurrency(amountMinor: number, currency = "USD"): stri
     if (minor < 0n && whole === 0n) {
       const zero = new Intl.NumberFormat(locale, { useGrouping: false, maximumFractionDigits: 0 }).format(0);
       for (let index = parts.length - 1; index >= 0; index--) {
-        if (parts[index].type === "group") parts.splice(index, 1);
-        else if (parts[index].type === "integer") parts[index] = { ...parts[index], value: zero };
+        if (parts[index]?.type === "group") parts.splice(index, 1);
+        else if (parts[index]?.type === "integer") parts[index] = { ...parts[index]!, value: zero };
       }
     }
     if (digits === 0) return parts.map(part => part.value).join("");
