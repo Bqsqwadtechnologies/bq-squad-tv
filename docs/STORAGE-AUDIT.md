@@ -14,8 +14,8 @@ Audit method: read-only inspection of the current Git tree and server source. No
 | Owner-reported Backblaze accounts | 10 accounts, one bucket each; not independently verified from provider consoles. |
 | Legacy buckets | `bq-sqwad-source-media` and `bq-sqwad-streaming-media` are hard-coded legacy fallbacks and must remain readable. Never delete, rename or migrate them. |
 | Secret values resolved | **Not inspected.** Source code cannot establish whether hosting secrets exist or whether their values are valid. Never copy values into this report. |
-| Current health states | New/seeded metadata defaults to `unknown`; the existing health route performs an owner-triggered check. No scheduled all-destination sweep exists in the inspected baseline. |
-| Usage knowledge | Manual snapshots and upload ledger updates exist. Unknown usage is correctly ineligible for automatic capacity routing. No scheduled provider listing reconciliation exists in the inspected baseline. |
+| Current health states | New/seeded metadata defaults to `unknown`; the existing health route performs an owner-triggered check. The current tree now includes owner-queued Modal health and usage tasks. A live sweep has not been run against provider accounts. |
+| Usage knowledge | Manual snapshots and upload ledger updates exist. Unknown usage is correctly ineligible for automatic capacity routing. Paginated listing reconciliation is now implemented in the existing Modal maintenance worker. No live provider reconciliation has been run. |
 
 ## Confirmed source findings
 
@@ -23,10 +23,10 @@ Audit method: read-only inspection of the current Git tree and server source. No
 2. Lovable credentials currently require `<PREFIX>_URL` and `<PREFIX>_SERVICE_ROLE_KEY`.
 3. Backblaze credentials currently require `<PREFIX>_KEY_ID`, `<PREFIX>_APP_KEY`, `<PREFIX>_BUCKET_ID` and `<PREFIX>_ENDPOINT`. Both numbered B2 prefix patterns have tests.
 4. `src/lib/server/storage/routing.ts` excludes unknown usage, unhealthy, disabled, draining, full and unconfigured destinations; it enforces account-group capacity and requires known HLS egress headroom.
-5. `src/lib/server/storage/reservations.ts` currently queries up to 500 destination documents for each reservation and calculates account usage by scanning the group. This is too expensive for a 300+ bucket pool.
-6. `src/routes/api/public/v1/admin/storage/seed.ts` currently accepts at most 18 destinations and writes each destination in its own transaction.
+5. `src/lib/server/storage/pool-index.ts` now maintains compact pool shards and reservations use those shards before transactional confirmation. Live read counts and contention under 300+ real destinations have not been measured.
+6. Bulk registration and chunked writes are now present; live discovery and registration counts remain unverified.
 7. `src/lib/server/storage/providers.ts` already contains Backblaze S3-compatible and Lovable adapters with paginated listing. B2 listing is object-based; no provider-level bucket-usage endpoint is used.
-8. `src/lib/server/storage/egress.ts` currently reads the destination group and writes a single account ledger during the grant operation. It needs sharded counters and must not add reads to the media-segment path.
+8. Expected-delivery reservations are now made at playback grant and extended on heartbeats. The legacy per-segment recorder is retired. Sharded expected-delivery accounting is implemented, but production usage accuracy and transition alerts need runtime verification.
 9. `src/lib/server/storage/transfers.ts` keeps the two legacy Lovable buckets as fallbacks for assets without destination IDs.
 10. File 02 already added a Modal-driven maintenance queue and worker maintenance endpoints. Its current task runner only handles abandoned HLS attempt-folder deletion; storage health and usage sweep task types still need to be added.
 
