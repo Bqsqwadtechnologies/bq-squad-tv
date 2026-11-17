@@ -11,7 +11,8 @@ import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSafeStoragePath, signPlaybackToken } from "@/lib/server/storage/security";
 import { acquireSessionLease } from "@/lib/server/session-limits";
 import { loadStreamStorageConfiguration } from "@/lib/server/storage/transfers";
-import { estimatePlaybackProgressBytes, reserveExpectedStorageEgress, releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
+import { estimateExpectedPlaybackBytes, reserveExpectedStorageEgress, releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
+import { LEGACY_STREAM_DESTINATION_ID, resolveAssetStreamBinding } from "@/lib/server/storage/asset-binding";
 import {
   assertWebRefreshSessionActive,
   readWebRefreshCookie,
@@ -229,14 +230,27 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             throw new ApiError(503, "REVENUE_SPLIT_INVALID", "The channel revenue split is not configured correctly.");
           }
 
-          const streamConfiguration = await loadStreamStorageConfiguration(fs, asset);
-          if (streamConfiguration.configurationStatus !== "configured") {
+          const streamConfiguration = await loadStreamStorageConfiguration(fs, asset, assetId);
+          const assetBinding = resolveAssetStreamBinding(asset, assetId);
+          if (streamConfiguration.configurationStatus !== "configured" ||
+              !streamConfiguration.metadata.enabled || streamConfiguration.metadata.mode !== "active" ||
+              streamConfiguration.metadata.paidEgressEnabled === true ||
+              (streamConfiguration.metadata.destinationId !== LEGACY_STREAM_DESTINATION_ID &&
+                streamConfiguration.metadata.healthStatus !== "healthy")) {
             throw new ApiError(503, "STREAM_DESTINATION_UNAVAILABLE", "The streaming location is not ready for playback.");
+          }
+          if (!storagePath.startsWith(assetBinding.objectPrefix + "/")) {
+            throw new ApiError(503, "STREAM_MANIFEST_NOT_CONFIGURED", "The channel's streaming manifest does not match its assigned storage location.");
           }
           const storedBitrate = integer(asset["streamBitrateBps"]) ?? integer(asset["averageBitrateBps"]);
           const streamBitrateBps = storedBitrate !== null && storedBitrate >= 64_000 && storedBitrate <= 25_000_000
             ? storedBitrate : 1_500_000;
-          const initialEgressBytes = estimatePlaybackProgressBytes(streamBitrateBps, 120);
+          // Reserve the whole expected asset before granting playback so a
+          // viewer is not cut off when a free allowance is reached mid-film.
+          const initialEgressBytes = estimateExpectedPlaybackBytes({
+            ...asset,
+            streamBitrateBps,
+          });
 
           const now = new Date();
           const nowIso = now.toISOString();
