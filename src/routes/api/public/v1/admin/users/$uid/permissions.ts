@@ -36,7 +36,7 @@ export const Route = createFileRoute("/api/public/v1/admin/users/$uid/permission
           const actorAccess = await resolvePlatformAccess(
             fs, actor.uid, actor.email, actor.customClaims, actor.emailVerified === true,
           );
-          if (!actorAccess.isSuperAdmin) {
+          if (!actorAccess.isZillionaireOwner) {
             throw new ApiError(403, "OWNER_AUTHORITY_REQUIRED", "Only the protected ZILLIONAIRE owner can delegate platform-control permissions.");
           }
           if (uid === actor.uid) {
@@ -48,7 +48,7 @@ export const Route = createFileRoute("/api/public/v1/admin/users/$uid/permission
           const target = await fs.getDoc(targetPath);
           if (!target) throw new ApiError(404, "USER_NOT_FOUND", "The target user profile does not exist.");
           const targetEmail = typeof target["email"] === "string" ? target["email"] as string : null;
-          if (isProtectedSuperAdmin(targetEmail)) {
+          if (isProtectedZillionaire(targetEmail)) {
             throw new ApiError(403, "OWNER_ACCOUNT_PROTECTED", "The protected platform-owner account cannot be modified through delegated permissions.");
           }
 
