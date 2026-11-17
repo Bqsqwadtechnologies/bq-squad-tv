@@ -28,10 +28,10 @@ export const Route = createFileRoute("/api/public/v1/admin/pages/publish")({
       const existing = await fs.getDoc(path);
       if (!existing || typeof existing["body"] !== "string") throw new ApiError(404, "PAGE_NOT_FOUND", "The draft page could not be found.");
       const markdown = existing["body"] as string;
-      const placeholders = [...new Set([...markdown.matchAll(/\\{\\{([a-z0-9_]+)\\}\\}/g)].map(match => match[1]))];
+      const placeholders = [...new Set([...markdown.matchAll(/\{\{([a-z0-9_]+)\}\}/g)].map(match => match[1]))];
       if (placeholders.length) throw new ApiError(409, "PAGE_PLACEHOLDERS_UNFILLED", "Complete these page settings before publishing: " + placeholders.join(", "));
-      if (/<\\/?[a-z][^>]*>/i.test(markdown)) throw new ApiError(400, "PAGE_MARKDOWN_UNSAFE", "Remove raw HTML from the page. Use supported Markdown only.");
-      if (/\\]\(\\s*(?!https:\\/\\/|mailto:)[^)]+\\)/i.test(markdown)) throw new ApiError(400, "PAGE_LINK_UNSAFE", "Only secure web and email links are allowed.");
+      if (/<\/?[a-z][^>]*>/i.test(markdown)) throw new ApiError(400, "PAGE_MARKDOWN_UNSAFE", "Remove raw HTML from the page. Use supported Markdown only.");
+      if (/\]\(\s*(?!https:\/\/|mailto:)[^)]+\)/i.test(markdown)) throw new ApiError(400, "PAGE_LINK_UNSAFE", "Only secure web and email links are allowed.");
       const nextVersion = (Number.isSafeInteger(existing["version"]) ? Number(existing["version"]) : 0) + 1;
       const now = new Date().toISOString();
       const history = Array.isArray(existing["versions"]) ? existing["versions"] as unknown[] : [];
