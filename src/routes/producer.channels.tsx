@@ -117,7 +117,7 @@ function ProducerChannelsPage() {
       <header className="border-b border-cyan-300/15 bg-[#050f35]">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
           <a href="/" className="flex items-center gap-3">
-            <img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="w-44" />
+            <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="w-44" />
             <span className="hidden border-l border-white/15 pl-3 text-xs text-blue-100/60 sm:block">Producer studio</span>
           </a>
           {token ? <button onClick={signOut} className="inline-flex items-center gap-2 text-sm text-blue-100/70 hover:text-white"><LogOut size={16} /> Sign out</button> : null}
