@@ -27,3 +27,9 @@ export function videoWorkerRetryIsDue(nextAttemptAt: unknown, now = Date.now()):
   const timestamp = Date.parse(nextAttemptAt);
   return !Number.isFinite(timestamp) || timestamp <= now;
 }
+
+export function isVideoWorkerLeaseActive(leaseExpiresAt: unknown, now = Date.now()): boolean {
+  if (typeof leaseExpiresAt !== "string") return false;
+  const expiry = Date.parse(leaseExpiresAt);
+  return Number.isFinite(expiry) && expiry > now;
+}
