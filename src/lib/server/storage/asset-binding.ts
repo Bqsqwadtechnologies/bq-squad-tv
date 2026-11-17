@@ -143,8 +143,8 @@ export async function bindAssetStreamStorage(
               streamBucket: metadata.bucketName,
               updatedAt: now,
             }),
-            updateMask: { fieldPaths: ["streamDestinationId", "streamReplicaIds", "objectPrefix", "streamObjectPrefix", "streamBucket", "updatedAt"] },
           },
+          updateMask: { fieldPaths: ["streamDestinationId", "streamReplicaIds", "objectPrefix", "streamObjectPrefix", "streamBucket", "updatedAt"] },
         },
         {
           update: {
@@ -155,8 +155,8 @@ export async function bindAssetStreamStorage(
               boundAt: now,
               previousDestinationId: hadPreviousPackage ? previous.streamDestinationId : null,
             }),
-            updateMask: { fieldPaths: ["assetId", "bindingStatus", "boundAt", "previousDestinationId"] },
           },
+          updateMask: { fieldPaths: ["assetId", "bindingStatus", "boundAt", "previousDestinationId"] },
         },
       ],
     };
