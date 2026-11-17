@@ -28,7 +28,7 @@ export type StorageDestinationMetadata = {
   mode: "active" | "drain" | "retired";
   replicaOf: string | null;
   usageBytes?: number | null;
-  usageSource?: "ledger" | "provider" | "manual" | null;
+  usageSource?: "ledger" | "provider" | "provider_listing" | "manual" | null;
   usageCheckedAt?: string | null;
   egressMonthBytes?: number;
   egressAccountMonthBytes?: number;
@@ -163,7 +163,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
       typeof priority !== "number" || !Number.isInteger(priority) || priority < 0 || priority > 10000 ||
       typeof enabled !== "boolean" ||
       (usageBytes !== null && (typeof usageBytes !== "number" || !Number.isSafeInteger(usageBytes) || usageBytes < 0)) ||
-      (usageSource !== null && usageSource !== "ledger" && usageSource !== "provider" && usageSource !== "manual") ||
+      (usageSource !== null && usageSource !== "ledger" && usageSource !== "provider" && usageSource !== "provider_listing" && usageSource !== "manual") ||
       !["healthy", "degraded", "misconfigured", "unreachable", "unknown"].includes(String(healthStatus)) ||
       typeof egressMonthBytes !== "number" || !Number.isSafeInteger(egressMonthBytes) || egressMonthBytes < 0 ||
       (egressAccountMonthBytes !== undefined && (typeof egressAccountMonthBytes !== "number" || !Number.isSafeInteger(egressAccountMonthBytes) || egressAccountMonthBytes < 0)) ||
@@ -192,7 +192,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
     mode: mode as "active" | "drain" | "retired",
     replicaOf: replicaOf as string | null,
     usageBytes: usageBytes as number | null,
-    usageSource: usageSource as "ledger" | "provider" | "manual" | null,
+    usageSource: usageSource as "ledger" | "provider" | "provider_listing" | "manual" | null,
     usageCheckedAt: typeof input["usageCheckedAt"] === "string" ? input["usageCheckedAt"] : null,
     egressMonthBytes,
     ...(typeof egressAccountMonthBytes === "number" ? { egressAccountMonthBytes } : {}),
