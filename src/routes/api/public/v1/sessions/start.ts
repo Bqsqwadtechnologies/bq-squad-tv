@@ -230,7 +230,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             throw new ApiError(503, "REVENUE_SPLIT_INVALID", "The channel revenue split is not configured correctly.");
           }
 
-          const streamConfiguration = await loadStreamStorageConfiguration(fs, asset, assetId);
+          const sessionId = crypto.randomUUID().replace(/-/g, "");
+          const streamConfiguration = await loadStreamStorageConfiguration(fs, asset, assetId, sessionId);
           const assetBinding = resolveAssetStreamBinding(asset, assetId);
           if (streamConfiguration.configurationStatus !== "configured" ||
               !streamConfiguration.metadata.enabled || streamConfiguration.metadata.mode !== "active" ||
@@ -254,7 +255,6 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
 
           const now = new Date();
           const nowIso = now.toISOString();
-          const sessionId = crypto.randomUUID().replace(/-/g, "");
           const playbackUrl = await makePlaybackUrl(request.url, sessionId, user.uid, storagePath);
           const egressGrant = await reserveExpectedStorageEgress(
             fs, streamConfiguration.metadata, sessionId, initialEgressBytes,
