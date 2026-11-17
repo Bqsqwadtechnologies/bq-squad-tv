@@ -40,7 +40,7 @@ function AdminAdsPage() {
       setEmail(result.email);
       setPassword("");
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Administrator sign-in failed.");
+      setError(caught instanceof Error ? caught.message : "Zillionaire Dashboard sign-in failed.");
       setPassword("");
     } finally {
       setBusy(false);
@@ -91,7 +91,7 @@ function AdminAdsPage() {
 
         {!token ? (
           <form onSubmit={login} className="mt-9 grid max-w-md gap-4 rounded-3xl border border-white/10 bg-[#07143d] p-6">
-            <h2 className="text-xl font-bold">Administrator sign in</h2>
+            <h2 className="text-xl font-bold">Zillionaire Dashboard sign-in</h2>
             <label className="grid gap-2 text-sm text-blue-100/70">Email
               <input type="email" required autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300" />
             </label>
