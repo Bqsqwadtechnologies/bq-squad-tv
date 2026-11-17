@@ -20,6 +20,7 @@ const schema = z.object({
     memoryGiB: z.number().finite().min(0.125).max(512),
     seconds: z.number().int().min(0).max(10_800),
   }).optional(),
+  outputResolutions: z.array(z.number().int().min(1).max(4320)).max(8).optional(),
 });
 
 export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/complete")({
@@ -120,6 +121,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
         status: "processed_pending_review", transcodeJobStatus: "completed", streamDestinationId: destinationId,
         streamObjectPrefix: prefix, storagePath: masterKey, hlsManifestKey: masterKey,
         actualHlsBytes: totalBytes, hlsVerifiedAt: now,
+        outputResolutions: body.outputResolutions ?? [],
         masterPlaylistValid: true, allSegmentsVerified: true,
         expectedObjectCount: body.files.length, uploadedObjectCount: listedObjects.length,
         ownerReviewRequired: true, ownerReviewRequiredAt: now, updatedAt: now,
@@ -138,7 +140,8 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       });
       await fs.patchDoc(jobPath, {
         status: "completed", workerStatus: "completed", outputBytes: totalBytes,
-        outputFileCount: body.files.length, completedAt: now, updatedAt: now,
+        outputFileCount: body.files.length, outputResolutions: body.outputResolutions ?? [],
+        completedAt: now, updatedAt: now,
         modalCores: cores, modalMemoryGiB: memoryGiB, modalSeconds: seconds,
         modalEstimatedCostUsd: estimatedCostUsd, modalUsageMonth: month,
         claimToken: null, leaseExpiresAt: null,
