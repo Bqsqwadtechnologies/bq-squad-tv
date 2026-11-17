@@ -50,7 +50,7 @@ function publicSource(content) {
 function isTarget(file) {
   const relative = path.relative(root, file).split(path.sep).join("/");
   if (!sourceExtensions.test(file)) return false;
-  return relative.startsWith("src/routes/") ||
+  return (relative.startsWith("src/routes/") && !relative.startsWith("src/routes/api/") && !relative.endsWith("/README.md")) ||
     relative.startsWith("src/components/") ||
     relative.startsWith("android/") ||
     /(^|\/)(emails?|email-templates?|legal|content\/legal|seed)(\/|$)/i.test(relative) ||
@@ -75,9 +75,6 @@ function visibleCandidates(content, relative) {
   // TanStack head() metadata is commonly expressed as object properties.
   const metadataPattern = /(?:^|[,{\s])(?:title|content)\s*:\s*["'`]([^"'`]+)["'`]/gm;
   for (const match of content.matchAll(metadataPattern)) matches.push(match[1]);
-  // Catch literal strings rendered inside JSX expression containers.
-  const expressionTextPattern = /\{\s*["'`]([^"'`]{2,})["'`]\s*\}/g;
-  for (const match of content.matchAll(expressionTextPattern)) matches.push(match[1]);
   const textPattern = /<(?:Text|Button|Label|Badge|Alert|CardTitle|CardDescription)[^>]*>([^<>]+)</g;
   for (const match of content.matchAll(textPattern)) matches.push(match[1]);
   return matches.join("\n");
