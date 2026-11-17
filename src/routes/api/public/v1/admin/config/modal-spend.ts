@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/v1/admin/config/modal-spend")(
         const user = await requireUser(request);
         const fs = await Firestore.create();
         const access = await requireAdminModule(fs, user, "system");
-        if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "This setting is only available in the Zillionaire dashboard.");
+        if (!access.isZillionaireOwner) throw new ApiError(403, "OWNER_ONLY", "This setting is only available in the Zillionaire dashboard.");
         return Response.json(await getModalSpendSnapshot(fs), { headers: { "cache-control": "no-store" } });
       } catch (error) { return errorBody(error); }
     },
@@ -29,7 +29,7 @@ export const Route = createFileRoute("/api/public/v1/admin/config/modal-spend")(
         const body = await parseBody(request, schema);
         const fs = await Firestore.create();
         const access = await requireAdminModule(fs, user, "system");
-        if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "This setting is only available in the Zillionaire dashboard.");
+        if (!access.isZillionaireOwner) throw new ApiError(403, "OWNER_ONLY", "This setting is only available in the Zillionaire dashboard.");
         const before = await fs.getDoc("config/modalSpend");
         const now = new Date().toISOString();
         await fs.patchDoc("config/modalSpend", {
