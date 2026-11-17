@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/public/v1/admin/config/flags")({
         const user = await requireUser(request);
         const fs = await Firestore.create();
         const access = await requireAdminModule(fs, user, "system");
-        if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "This action is not available for this account.");
+        if (!access.isZillionaireOwner) throw new ApiError(403, "OWNER_ONLY", "This action is not available for this account.");
         return Response.json({ flags: normalizePlatformFlags(await fs.getDoc("config/flags")) }, {
           headers: { "cache-control": "no-store" },
         });
@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/public/v1/admin/config/flags")({
         const body = await parseBody(request, schema);
         const fs = await Firestore.create();
         const access = await requireAdminModule(fs, user, "system");
-        if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "This action is not available for this account.");
+        if (!access.isZillionaireOwner) throw new ApiError(403, "OWNER_ONLY", "This action is not available for this account.");
         const before = await fs.getDoc("config/flags");
         const next = { ...DEFAULT_FLAGS, ...body.flags };
         const version = await fs.transact(["config/flags"], docs => {
