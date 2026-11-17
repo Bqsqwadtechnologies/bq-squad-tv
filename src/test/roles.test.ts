@@ -92,6 +92,16 @@ describe("Zillionaire identity and delegated module permissions", () => {
     expect(access.adminModules).toEqual(["pricing"]);
   });
 
+  it("never allows a producer account to approve content without a delegated content permission", async () => {
+    const fs = fakeFirestore(
+      { roleTags: ["producer"], adminModules: [] },
+      { planStatus: "ACTIVE", verificationStatus: "APPROVED" },
+    );
+    await expect(requireAdminModule(fs, {
+      uid: "producer-1", email: "producer@example.com", emailVerified: true,
+    }, "content")).rejects.toMatchObject({ status: 403 });
+  });
+
   it("does not grant any control section from an old generic role tag", async () => {
     const fs = fakeFirestore({ roleTags: ["admin"] }, null);
     await expect(requireAdminModule(fs, {
