@@ -29,7 +29,7 @@ async function hmac(key: Uint8Array, value: string): Promise<Uint8Array> {
   const cryptoKey = await crypto.subtle.importKey(
     "raw", key.slice().buffer as ArrayBuffer, { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
   );
-  return new Uint8Array(await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(value).buffer as ArrayBuffer);
+  return new Uint8Array(await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(value).buffer as ArrayBuffer));
 }
 async function signingKey(secret: string, date: string, region: string): Promise<Uint8Array> {
   const dateKey = await hmac(encoder.encode("AWS4" + secret), date);
