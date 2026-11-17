@@ -5,6 +5,8 @@ Branch: `main`
 
 ## Coded
 
+- **Brand direction correction:** the website now defaults to the white/light surface with blue/cyan accents; Android defaults to its blue/white light theme. Removed the misleading `Gold` color symbol from the Android theme palette and aligned chart accents to blue/cyan. Explicit dark styling remains available. The shared palette decision is recorded in `docs/DECISIONS.md`.
+
 - **Batch 01 — Audit record:** `docs/AUDIT.md` records source-verified findings and explicitly marks tests unavailable.
 - **Batch 02 — Scanner and secret-name checker:** expanded `scripts/scan-public-text.mjs`; added `scripts/check-secret-names.mjs`; documented required setting names in `docs/OWNER-ACTIONS.md`; added `docs/PUBLIC-TEXT-SCAN-BASELINE.md`. The baseline records that no hit list was generated because the scanner could not be run in this environment.
 - **Batch 03 — Website wording:** changed the data-structure page and owner dashboard cards to plain wording. This is a partial purge; storage, Video Studio, ads and producer pages still require review.
@@ -54,6 +56,10 @@ No tests are reported as passed.
 - Add the Firestore TTL policy for `videoWorkerNonces.expiresAt`.
 - Verify the required server-side setting names listed in `docs/OWNER-ACTIONS.md`; add only missing names in the hosting console.
 - Complete responsive header checks in `docs/QA-HEADER.md`.
+
+## Current completion status
+
+File 00 standing documentation is present on `main`. File 01 is **not complete**: batches 05, 11 and 13 remain unimplemented, and several other batches are partial or unverified as listed above. This report intentionally does not mark File 01 complete or authorize File 02 until those gaps are resolved and the required checks are run.
 
 ## Next file
 
