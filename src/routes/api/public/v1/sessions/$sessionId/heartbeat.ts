@@ -190,7 +190,9 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
                   name: fs.docName(holdPath),
                   fields: encodeFields({
                     uid: user.uid, sessionId, amountMinor: nextHold.holdMinor, currency,
-                    status: nextHold.holdMinor > 0 ? "active" : "released", updatedAt: nowIso,
+                    status: nextHold.holdMinor > 0 ? "active" : "released",
+                    expiresAt: nextHold.holdMinor > 0 ? new Date(now.getTime() + 120_000).toISOString() : null,
+                    updatedAt: nowIso,
                   }),
                 },
                 ...(docs[7] ? {} : { currentDocument: { exists: false } }),
