@@ -1,4 +1,5 @@
 import { ApiError } from "../firebase-admin";
+import type { StorageProviderAdapter } from "./providers";
 
 export type StorageListingObject = { key: string; sizeBytes: number };
 
@@ -82,4 +83,24 @@ export async function reconcileStorageUsage(
     cursor = page.nextCursor;
   }
   throw new ApiError(413, "STORAGE_RECONCILE_PAGE_LIMIT", "The storage location needs more than one safe reconciliation pass.");
+}
+
+export async function checkStorageProviderHealth(
+  adapter: Pick<StorageProviderAdapter, "healthCheck">,
+): Promise<{ healthy: true }> {
+  return adapter.healthCheck();
+}
+
+export async function readStorageUsagePage(
+  adapter: Pick<StorageProviderAdapter, "listObjects">,
+  cursor: string | null,
+  currentBytes: number,
+  currentObjectCount: number,
+): Promise<{ usageBytes: number; objectCount: number; nextCursor: string | null }> {
+  const page = await adapter.listObjects("", cursor);
+  if (page.nextCursor && page.nextCursor === cursor) {
+    throw new ApiError(409, "STORAGE_LISTING_CURSOR_STALLED", "The storage listing did not advance.");
+  }
+  const totals = accumulateStorageUsage(currentBytes, currentObjectCount, page.objects);
+  return { ...totals, nextCursor: page.nextCursor };
 }
