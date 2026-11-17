@@ -2,6 +2,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 import {
   decryptStreamingSourceUrl,
   encryptStreamingSourceUrl,
+  decryptHlsContentKey,
+  encryptHlsContentKey,
 } from "@/lib/server/streaming/source-encryption";
 
 const key = "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8"; //gitleaks:allow fixed non-production AES test fixture
@@ -42,6 +44,15 @@ describe("streaming source URL encryption", () => {
   it("rejects non-HTTPS URLs and embedded credentials", async () => {
     await expect(encryptStreamingSourceUrl("http://media.example.test/a.m3u8", "asset_123", "v1", key)).rejects.toThrow();
     await expect(encryptStreamingSourceUrl("https://user:pass@media.example.test/a.m3u8", "asset_123", "v1", key)).rejects.toThrow();
+  });
+
+  it("encrypts each 128-bit HLS content key at rest and decrypts it only for its asset", async () => {
+    const rawContentKey = "AAECAwQFBgcICQoLDA0ODw";
+    const envelope = await encryptHlsContentKey(rawContentKey, "asset_123", "v1", key);
+    expect(envelope.algorithm).toBe("A256GCM");
+    expect(envelope.ciphertext).not.toContain(rawContentKey);
+    await expect(decryptHlsContentKey(envelope, "asset_123", key)).resolves.toBe(rawContentKey);
+    await expect(decryptHlsContentKey(envelope, "asset_other", key)).rejects.toThrow();
   });
 
   it("rejects a key that is not exactly 256 bits", async () => {
