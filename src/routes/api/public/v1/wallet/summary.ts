@@ -21,8 +21,10 @@ function formatMinorCurrency(amountMinor: number, currency: string, digits: numb
   if (amount < 0n && whole === 0n) {
     const zero = new Intl.NumberFormat("en", { useGrouping: false, maximumFractionDigits: 0 }).format(0);
     for (let index = parts.length - 1; index >= 0; index--) {
-      if (parts[index].type === "group") parts.splice(index, 1);
-      else if (parts[index].type === "integer") parts[index] = { ...parts[index], value: zero };
+      const part = parts[index];
+      if (!part) continue;
+      if (part.type === "group") parts.splice(index, 1);
+      else if (part.type === "integer") parts[index] = { type: "integer", value: zero };
     }
   }
   if (digits === 0) return parts.map(part => part.value).join("");
