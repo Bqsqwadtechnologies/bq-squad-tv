@@ -18,7 +18,7 @@ Branch: `main`
 **The baseline scan has not been executed. No actual hit list is available yet.**
 
 Attempts to run the repository locally were blocked:
-- The GitHub remote checkout attempt failed because this execution environment could not resolve `github.com`.
+- A local working tree could not be established in this execution environment; only remote GitHub file operations were available.
 - This environment has no checked-out repository or Bun runtime.
 - The GitHub connection available here supports reading and committing repository files, but does not provide a shell or a workflow-dispatch action.
 
