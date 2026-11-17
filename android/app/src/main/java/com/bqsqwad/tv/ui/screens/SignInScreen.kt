@@ -116,7 +116,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
         ) {
             Spacer(modifier = Modifier.height(10.dp))
             OutlinedButton(
-                enabled = !busy && !verificationPending,
+                enabled = !busy && !verificationPending && (!createAccount || legalConsentChecked),
                 onClick = {
                     scope.launch {
                         busy = true
