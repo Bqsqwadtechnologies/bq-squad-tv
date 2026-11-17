@@ -109,6 +109,17 @@ function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="light">
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try {
+              const saved = localStorage.getItem("bq-sqwad-theme");
+              const mode = saved === "dark" ? "dark" : "light";
+              document.documentElement.classList.toggle("dark", mode === "dark");
+              document.documentElement.classList.toggle("light", mode === "light");
+            } catch {}
+            `,
+          }}
+        />
         <HeadContent />
       </head>
       <body>
