@@ -108,7 +108,7 @@ function HomePage() {
           <a href="#library" aria-label="Search" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50 hover:text-cyan-200"><Search size={19} /></a>
           <button onClick={() => setNotice("Notifications will appear here when your account is connected.")} aria-label="Notifications" className="relative grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50"><Bell size={18} /><span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-cyan-300" /></button>
           <a href="/wallet" aria-label="Wallet" className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-xs font-bold text-cyan-100 transition hover:border-cyan-300/50">{walletCurrencySymbol}</a>
-          <a href="/account" aria-label="Sign in or view account" className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-600 text-sm font-black text-[#031039]">BQ</a>
+          <a href="/account" aria-label="Sign in or view account" className="grid h-10 w-10 place-items-center overflow-hidden rounded-full border border-cyan-200/25 bg-[#08163e]"><img src="/brand/bq-sqwad-tv-logo.svg" alt="" className="h-full w-full object-contain p-1" /></a>
         </div>
       </header>
 
@@ -213,7 +213,7 @@ function HomePage() {
         {notice && <div role="status" className="fixed bottom-24 left-1/2 z-50 w-[min(92vw,440px)] -translate-x-1/2 rounded-2xl border border-cyan-200/30 bg-[#061a4d] px-5 py-4 text-sm text-white shadow-2xl shadow-black/50 md:bottom-6"><div className="flex items-start justify-between gap-4"><p>{notice}</p><button onClick={() => setNotice("")} className="text-cyan-200">Close</button></div></div>}
 
         <footer id="settings" className="mt-12 border-t border-white/10 py-7 text-center text-xs text-white/35">
-          <span className="font-extrabold tracking-[0.18em] text-white/65">BQ SQWAD TV</span>
+          <img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="mx-auto h-auto w-40 object-contain" />
           <p className="mt-2">© {new Date().getFullYear()} Bq Sqwad Technologies. All rights reserved.</p>
           <p className="mt-1">Content availability depends on distribution rights and your region.</p>
         </footer>
