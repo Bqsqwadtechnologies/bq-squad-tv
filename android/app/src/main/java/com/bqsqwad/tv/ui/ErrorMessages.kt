@@ -11,4 +11,9 @@ object ErrorMessages {
     const val NOT_ENOUGH_BALANCE = "Your balance is not enough for this action."
     const val TRY_AGAIN = "We could not load this. Try again."
     const val NOT_AVAILABLE = "This is not available right now."
+    const val SIGN_IN_FAILED = "We could not sign you in. Check your details and try again."
+    const val VERIFICATION_FAILED = "We could not verify your email. Check the code and try again."
+    const val PASSWORD_RESET_FAILED = "We could not request a password reset. Check your email and try again."
+    const val PROFILE_FAILED = "Your profile could not be updated. Try again."
+    const val WALLET_UNAVAILABLE = "Your wallet is not available right now. Try again."
 }
