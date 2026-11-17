@@ -100,6 +100,7 @@ Only enable a feature after its required server-side setting is present and veri
 3. Set `MODAL_WAKE_SECRET` in the API and the existing Modal secret. Set `MODAL_WAKE_URL` to the deployed wake endpoint.
 4. Rotate a worker by adding its replacement credential, deploying the new worker, verifying successful claims, then disabling the old worker ID in the Zillionaire dashboard.
 5. Keep the legacy shared worker key only during the migration window. Remove `STREAMING_HMAC_SECRET` worker fallback after all worker IDs use individual credentials; the same secret may still be required by playback signing until that separate use is migrated.
+6. Deploy the updated existing Modal worker before enabling production playback. Its five-minute poll now schedules expiry sweeps for abandoned viewing-wallet holds; verify that `wallet_hold_reconcile` tasks complete and release expired holds. If the worker is not running, a two-minute hold can remain reserved until maintenance resumes.
 6. Keep the monthly spend guard on. Confirm provider account limits with the billing owner before any production processing.
 
 ## 10. Legal policy publication
