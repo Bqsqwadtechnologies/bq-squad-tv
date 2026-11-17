@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.view.TextureView
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
@@ -130,7 +132,7 @@ fun PlayerScreen(
                     session = session?.copy(playbackUrl = refreshed.playbackUrl)
                 }.onFailure {
                     player.pause()
-                    error = "Secure playback authorization could not be renewed. Playback has been paused."
+                    error = ErrorMessages.TRY_AGAIN
                 }
         }
     }
@@ -159,7 +161,7 @@ fun PlayerScreen(
             }
             if (updated == null) {
                 player.pause()
-                error = "Connection lost. Playback paused until billing status can be confirmed."
+                error = ErrorMessages.TRY_AGAIN
             } else {
                 session = updated
                 error = null
@@ -249,7 +251,7 @@ fun PlayerScreen(
                     onExit()
                 }
             }) { Text("← Exit player") }
-            ;Text("SECURE PLAYBACK", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
+            ;Text("NOW PLAYING", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
         }
         Box(
             Modifier
@@ -291,7 +293,7 @@ fun PlayerScreen(
                 Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
                     if (error == null) CircularProgressIndicator()
                     Text(
-                        error ?: "Verifying account, age policy and stream rights…",
+                        error ?: "Getting this video ready…",
                         Modifier.padding(top = 12.dp),
                     )
                     if (error != null) {
@@ -319,19 +321,14 @@ fun PlayerScreen(
                         },
                     update = { player.setVideoTextureView(it) },
                 )
-                Text(
-                    "SQWAD • " + (
-                        FirebaseAuth
-                            .getInstance()
-                            .currentUser
-                            ?.uid
-                            ?.take(8) ?: "viewer"
-                    ),
-                    Modifier.align(androidx.compose.ui.Alignment.TopEnd).padding(12.dp).graphicsLayer {
-                        alpha =
-                            0.32f
-                    },
-                    color = MaterialTheme.colorScheme.onSurface,
+                Image(
+                    painter = painterResource(com.bqsqwad.tv.R.drawable.bq_sqwad_tv_mark),
+                    contentDescription = "BQ SQWAD TV watermark",
+                    modifier = Modifier
+                        .align(androidx.compose.ui.Alignment.TopEnd)
+                        .padding(12.dp)
+                        .size(width = 76.dp, height = 42.dp)
+                        .graphicsLayer { alpha = 0.42f },
                 )
             }
         }
