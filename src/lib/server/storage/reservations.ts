@@ -247,32 +247,37 @@ export async function releaseStorageReservation(fs: Firestore, reservationId: st
     const reservationPath = "storageReservations/" + reservationId;
     const shardPath = "storagePool/" + shardDocId;
     try {
-      await fs.transact([reservationPath, destinationPath, groupPath, shardPath], docs => {
+      const poolUpdated = await fs.transact([reservationPath, destinationPath, groupPath, shardPath], docs => {
         const current = docs[0];
         const currentDestination = docs[1];
         const group = docs[2];
         const shard = docs[3];
-        if (!current || current["status"] !== "reserved") return { result: undefined, writes: [] };
-        if (!currentDestination || !group || !shard) throw new ApiError(409, "STORAGE_POOL_CHANGED", "The storage reservation needs a fresh pool index.");
+        if (!current || current["status"] !== "reserved") return { result: false, writes: [] };
+        if (!currentDestination || !group) throw new ApiError(409, "STORAGE_POOL_CHANGED", "The storage account summary changed; retry release.");
         const currentReserved = safeBytes(currentDestination["reservedBytes"]);
         const groupReserved = safeBytes(group["reservedBytes"]);
-        if (currentReserved < bytes || groupReserved < bytes) throw new ApiError(409, "STORAGE_RESERVATION_CORRUPT", "The storage reservation counters are inconsistent.");
-        const nextEntries = adjustPoolShardEntries(shard["entries"], destinationId, bytes);
-        const capBytes = safeBytes(group["capBytes"]);
-        const usageBytes = safeBytes(group["usageBytes"]);
+        const capValue = group["capBytes"];
+        const usageValue = group["usageBytes"];
+        if (currentReserved < bytes || groupReserved < bytes ||
+            typeof capValue !== "number" || !Number.isSafeInteger(capValue) ||
+            typeof usageValue !== "number" || !Number.isSafeInteger(usageValue)) {
+          throw new ApiError(409, "STORAGE_RESERVATION_CORRUPT", "The storage reservation counters are inconsistent.");
+        }
+        const hasPoolEntry = Boolean(shard && Array.isArray(shard["entries"]) &&
+          (shard["entries"] as Array<Record<string, unknown>>).some(entry => entry?.["id"] === destinationId));
+        const nextEntries = hasPoolEntry ? adjustPoolShardEntries(shard!["entries"], destinationId, bytes) : null;
         const nextGroupReserved = groupReserved - bytes;
-        const nextGroupFree = Math.max(0, capBytes - usageBytes - nextGroupReserved);
+        const nextGroupFree = Math.max(0, capValue - usageValue - nextGroupReserved);
         const now = new Date().toISOString();
-        return {
-          result: undefined,
-          writes: [
-            { update: { name: fs.docName(destinationPath), fields: encodeFields({ reservedBytes: currentReserved - bytes, updatedAt: now }) }, updateMask: { fieldPaths: ["reservedBytes", "updatedAt"] } },
-            { update: { name: fs.docName(groupPath), fields: encodeFields({ reservedBytes: nextGroupReserved, freeBytes: nextGroupFree, updatedAt: now }) }, updateMask: { fieldPaths: ["reservedBytes", "freeBytes", "updatedAt"] } },
-            { update: { name: fs.docName(shardPath), fields: encodeFields({ entries: nextEntries, updatedAt: now }) }, updateMask: { fieldPaths: ["entries", "updatedAt"] } },
-            { update: { name: fs.docName(reservationPath), fields: encodeFields({ status: "released", releasedAt: now }) }, updateMask: { fieldPaths: ["status", "releasedAt"] } },
-          ],
-        };
+        const writes = [
+          { update: { name: fs.docName(destinationPath), fields: encodeFields({ reservedBytes: currentReserved - bytes, updatedAt: now }), updateMask: { fieldPaths: ["reservedBytes", "updatedAt"] } },
+          { update: { name: fs.docName(groupPath), fields: encodeFields({ reservedBytes: nextGroupReserved, freeBytes: nextGroupFree, updatedAt: now }), updateMask: { fieldPaths: ["reservedBytes", "freeBytes", "updatedAt"] } },
+          ...(nextEntries ? [{ update: { name: fs.docName(shardPath), fields: encodeFields({ entries: nextEntries, updatedAt: now }), updateMask: { fieldPaths: ["entries", "updatedAt"] } }] : []),
+          { update: { name: fs.docName(reservationPath), fields: encodeFields({ status: "released", releasedAt: now }), updateMask: { fieldPaths: ["status", "releasedAt"] } },
+        ];
+        return { result: nextEntries !== null, writes };
       });
+      if (!poolUpdated) await rebuildStoragePoolIndex(fs, [purpose]);
       return;
     } catch (error) {
       if (error instanceof ApiError && error.status === 409 && attempt < 2) continue;
@@ -304,16 +309,16 @@ export async function commitStorageReservation(fs: Firestore, reservationId: str
     const destinationPath = "storageDestinations/" + destinationId;
     const shardPath = "storagePool/" + shardDocId;
     try {
-      await fs.transact([reservationPath, destinationPath, groupPath, shardPath], docs => {
+      const poolUpdated = await fs.transact([reservationPath, destinationPath, groupPath, shardPath], docs => {
         const current = docs[0];
         const currentDestination = docs[1];
         const group = docs[2];
         const shard = docs[3];
         if (!current || current["status"] !== "reserved") {
-          if (current?.["status"] === "committed") return { result: undefined, writes: [] };
+          if (current?.["status"] === "committed") return { result: true, writes: [] };
           throw new ApiError(409, "STORAGE_RESERVATION_NOT_ACTIVE", "The storage reservation is no longer active.");
         }
-        if (!currentDestination || !group || !shard) throw new ApiError(409, "STORAGE_POOL_CHANGED", "The storage reservation needs a fresh pool index.");
+        if (!currentDestination || !group) throw new ApiError(409, "STORAGE_POOL_CHANGED", "The storage account summary changed; retry completion.");
         const currentReserved = safeBytes(currentDestination["reservedBytes"]);
         const currentUsage = safeBytes(currentDestination["usageBytes"]);
         const groupReserved = safeBytes(group["reservedBytes"]);
@@ -325,31 +330,32 @@ export async function commitStorageReservation(fs: Firestore, reservationId: str
             currentUsage + actualBytes > Number.MAX_SAFE_INTEGER) {
           throw new ApiError(409, "STORAGE_RESERVATION_CORRUPT", "The storage reservation counters are inconsistent.");
         }
+        const hasPoolEntry = Boolean(shard && Array.isArray(shard["entries"]) &&
+          (shard["entries"] as Array<Record<string, unknown>>).some(entry => entry?.["id"] === destinationId));
+        const nextEntries = hasPoolEntry ? adjustPoolShardEntries(shard!["entries"], destinationId, reservedBytes - actualBytes) : null;
         const nextUsage = currentUsage + actualBytes;
         const nextReserved = currentReserved - reservedBytes;
         const nextGroupUsage = groupUsage + actualBytes;
         const nextGroupReserved = groupReserved - reservedBytes;
         const nextGroupFree = Math.max(0, groupCap - nextGroupUsage - nextGroupReserved);
-        const nextEntries = adjustPoolShardEntries(shard["entries"], destinationId, reservedBytes - actualBytes);
         const now = new Date().toISOString();
-        return {
-          result: undefined,
-          writes: [
-            { update: { name: fs.docName(destinationPath), fields: encodeFields({
-              reservedBytes: nextReserved, usageBytes: nextUsage, usageSource: "ledger",
-              usageCheckedAt: now, updatedAt: now,
-            }) }, updateMask: { fieldPaths: ["reservedBytes", "usageBytes", "usageSource", "usageCheckedAt", "updatedAt"] } },
-            { update: { name: fs.docName(groupPath), fields: encodeFields({
-              usageBytes: nextGroupUsage, knownUsageBytes: nextGroupUsage,
-              reservedBytes: nextGroupReserved, freeBytes: nextGroupFree, updatedAt: now,
-            }) }, updateMask: { fieldPaths: ["usageBytes", "knownUsageBytes", "reservedBytes", "freeBytes", "updatedAt"] } },
-            { update: { name: fs.docName(shardPath), fields: encodeFields({ entries: nextEntries, updatedAt: now }) }, updateMask: { fieldPaths: ["entries", "updatedAt"] } },
-            { update: { name: fs.docName(reservationPath), fields: encodeFields({
-              status: "committed", actualBytes, committedAt: now,
-            }) }, updateMask: { fieldPaths: ["status", "actualBytes", "committedAt"] } },
-          ],
-        };
+        const writes = [
+          { update: { name: fs.docName(destinationPath), fields: encodeFields({
+            reservedBytes: nextReserved, usageBytes: nextUsage, usageSource: "ledger",
+            usageCheckedAt: now, updatedAt: now,
+          }), updateMask: { fieldPaths: ["reservedBytes", "usageBytes", "usageSource", "usageCheckedAt", "updatedAt"] } },
+          { update: { name: fs.docName(groupPath), fields: encodeFields({
+            usageBytes: nextGroupUsage, knownUsageBytes: nextGroupUsage,
+            reservedBytes: nextGroupReserved, freeBytes: nextGroupFree, updatedAt: now,
+          }), updateMask: { fieldPaths: ["usageBytes", "knownUsageBytes", "reservedBytes", "freeBytes", "updatedAt"] } },
+          ...(nextEntries ? [{ update: { name: fs.docName(shardPath), fields: encodeFields({ entries: nextEntries, updatedAt: now }), updateMask: { fieldPaths: ["entries", "updatedAt"] } }] : []),
+          { update: { name: fs.docName(reservationPath), fields: encodeFields({
+            status: "committed", actualBytes, committedAt: now,
+          }), updateMask: { fieldPaths: ["status", "actualBytes", "committedAt"] } },
+        ];
+        return { result: nextEntries !== null, writes };
       });
+      if (!poolUpdated) await rebuildStoragePoolIndex(fs, [purpose]);
       return;
     } catch (error) {
       if (error instanceof ApiError && error.status === 409 && attempt < 2) continue;
