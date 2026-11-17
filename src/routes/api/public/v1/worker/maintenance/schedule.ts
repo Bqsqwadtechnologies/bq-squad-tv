@@ -230,9 +230,23 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/schedule
       } catch (error) {
         if (!(error instanceof ApiError) || error.status !== 409) throw error;
       }
+      const auditTaskId = "audit-chain-verify-" + scheduleKey;
+      let auditVerificationQueued = false;
+      try {
+        await fs.setDoc("videoMaintenanceJobs/" + auditTaskId, {
+          taskType: "audit_chain_verify", payload: { pageSize: 500 },
+          scheduleKey, status: "queued", attempts: 0,
+          reason: "Verify the tamper-evident audit history",
+          createdAt: now, updatedAt: now,
+        }, { mustNotExist: true });
+        auditVerificationQueued = true;
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 409) throw error;
+      }
       return Response.json({
         scheduled: true,
         paymentReconciliationQueued,
+        auditVerificationQueued,
         scheduleKey,
         queuedCount: pending.length,
         orphanScanQueuedCount: orphanQueuedCount,
