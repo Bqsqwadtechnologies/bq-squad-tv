@@ -33,7 +33,6 @@ import com.bqsqwad.tv.data.session.SessionRepository
 import com.bqsqwad.tv.data.session.SessionSnapshot
 import com.bqsqwad.tv.domain.billing.DisplayMeter
 import com.google.android.gms.cast.framework.CastButtonFactory
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
