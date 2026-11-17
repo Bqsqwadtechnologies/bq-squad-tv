@@ -86,3 +86,30 @@ describe("storage capacity and egress math", () => {
     expect(calculateEgressState(95, 100)).toBe("blocked");
   });
 });
+
+
+describe("large-pool round robin", () => {
+  it("rotates through 400 eligible destinations before wrapping", () => {
+    const pool = Array.from({ length: 400 }, (_, index) =>
+      candidate("lov-" + String(index + 1).padStart(3, "0")));
+    let cursor = 0;
+    const picks: string[] = [];
+    for (let index = 0; index < 800; index++) {
+      const selected = pickDestination(pool, 1, "source_media", cursor);
+      expect(selected).toBeTruthy();
+      picks.push(selected!.id);
+      cursor = selected!.nextCursor;
+    }
+    expect(picks.slice(0, 400)).toEqual(pool.map(item => item.id));
+    expect(picks.slice(400)).toEqual(pool.map(item => item.id));
+  });
+
+  it("skips a full shared group and continues to the next priority group", () => {
+    const pool = [
+      candidate("lov-001", { priority: 1, accountGroup: "lovable:project-a", accountGroupUsedBytes: 100, accountGroupCapBytes: 100 }),
+      candidate("lov-002", { priority: 1, accountGroup: "lovable:project-a", accountGroupUsedBytes: 100, accountGroupCapBytes: 100 }),
+      candidate("b2-001", { priority: 2, accountGroup: "b2:account-01" }),
+    ];
+    expect(pickDestination(pool, 1, "source_media", 0)?.id).toBe("b2-001");
+  });
+});
