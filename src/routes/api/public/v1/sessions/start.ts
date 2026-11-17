@@ -10,6 +10,8 @@ import { getPricingConfig, requireMinorUnitAmount } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSafeStoragePath, signPlaybackToken } from "@/lib/server/storage/security";
 import { acquireSessionLease } from "@/lib/server/session-limits";
+import { loadStreamStorageConfiguration } from "@/lib/server/storage/transfers";
+import { estimatePlaybackProgressBytes, reserveExpectedStorageEgress, releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
 import {
   assertWebRefreshSessionActive,
   readWebRefreshCookie,
@@ -227,10 +229,22 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             throw new ApiError(503, "REVENUE_SPLIT_INVALID", "The channel revenue split is not configured correctly.");
           }
 
+          const streamConfiguration = await loadStreamStorageConfiguration(fs, asset, assetId);
+          if (streamConfiguration.configurationStatus !== "configured") {
+            throw new ApiError(503, "STREAM_DESTINATION_UNAVAILABLE", "The streaming location is not ready for playback.");
+          }
+          const storedBitrate = integer(asset["streamBitrateBps"]) ?? integer(asset["averageBitrateBps"]);
+          const streamBitrateBps = storedBitrate !== null && storedBitrate >= 64_000 && storedBitrate <= 25_000_000
+            ? storedBitrate : 1_500_000;
+          const initialEgressBytes = estimatePlaybackProgressBytes(streamBitrateBps, 120);
+
           const now = new Date();
           const nowIso = now.toISOString();
           const sessionId = crypto.randomUUID().replace(/-/g, "");
           const playbackUrl = await makePlaybackUrl(request.url, sessionId, user.uid, storagePath);
+          const egressGrant = await reserveExpectedStorageEgress(
+            fs, streamConfiguration.metadata, sessionId, initialEgressBytes,
+          );
           const activeSessionsPath = "activeSessions/" + user.uid;
           const configuredSessionLimit = integer(pricing["maxConcurrentSessions"]);
           const maxConcurrentSessions = configuredSessionLimit !== null && configuredSessionLimit >= 1 && configuredSessionLimit <= 5
@@ -240,44 +254,54 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             uid: user.uid, channelId: body.channelId, contentAssetId: assetId,
             producerUid: producerUid || null, producerShareBps: shareBps, deliveryMode: "bq_hosted",
             storagePath, playbackUrl, clientPlatform: body.clientPlatform, viewerCountry,
+            streamDestinationId: streamConfiguration.metadata.destinationId,
+            streamBitrateBps, streamQualityCap: egressGrant.qualityCap,
+            storageEgressReservationId: sessionId,
+            storageEgressGroupId: streamConfiguration.metadata.accountGroup,
+            initialExpectedEgressBytes: initialEgressBytes,
             ratePerMinuteMinor, currency, paidPlayback, dailySpendLimitMinor, status: "active", active: true,
             startedAt: nowIso, lastHeartbeatAt: nowIso, lastClientSequence: 0,
             lastPlaybackState: "idle", lastPlaybackPositionMs: 0, billedSeconds: 0,
             sessionTotalMinor: 0, walletBalanceMinor: balanceMinor,
             pricingVersion: pricing.version, licenseValidUntil: rights?.["validUntil"] ?? null,
           };
-          await fs.transact([idempotencyPath, activeSessionsPath], docs => {
-            if (docs[0]) throw new ApiError(409, "IDEMPOTENCY_KEY_ALREADY_USED", "This session request has already been used.");
-            const activeSessionDoc = docs[1] ?? {};
-            const nowMs = now.getTime();
-            const liveSessions = acquireSessionLease(
-              activeSessionDoc["sessions"],
-              sessionId,
-              nowMs,
-              maxConcurrentSessions,
-            );
-            if (!liveSessions) {
-              throw new ApiError(
-                409,
-                "CONCURRENT_SESSION_LIMIT",
-                "Your account is already using the maximum number of concurrent playback sessions.",
+          try {
+            await fs.transact([idempotencyPath, activeSessionsPath], docs => {
+              if (docs[0]) throw new ApiError(409, "IDEMPOTENCY_KEY_ALREADY_USED", "This session request has already been used.");
+              const activeSessionDoc = docs[1] ?? {};
+              const nowMs = now.getTime();
+              const liveSessions = acquireSessionLease(
+                activeSessionDoc["sessions"],
+                sessionId,
+                nowMs,
+                maxConcurrentSessions,
               );
-            }
-            return {
-              result: undefined,
-              writes: [
-                { update: { name: fs.docName("sessions/" + sessionId), fields: encodeFields(sessionFields) }, currentDocument: { exists: false } },
-                { update: { name: fs.docName(idempotencyPath), fields: encodeFields({ uid: user.uid, sessionId, createdAt: nowIso }) }, currentDocument: { exists: false } },
-                {
-                  update: {
-                    name: fs.docName(activeSessionsPath),
-                    fields: encodeFields({ sessions: liveSessions, updatedAt: nowIso }),
+              if (!liveSessions) {
+                throw new ApiError(
+                  409,
+                  "CONCURRENT_SESSION_LIMIT",
+                  "Your account is already using the maximum number of concurrent playback sessions.",
+                );
+              }
+              return {
+                result: undefined,
+                writes: [
+                  { update: { name: fs.docName("sessions/" + sessionId), fields: encodeFields(sessionFields) }, currentDocument: { exists: false } },
+                  { update: { name: fs.docName(idempotencyPath), fields: encodeFields({ uid: user.uid, sessionId, createdAt: nowIso }) }, currentDocument: { exists: false } },
+                  {
+                    update: {
+                      name: fs.docName(activeSessionsPath),
+                      fields: encodeFields({ sessions: liveSessions, updatedAt: nowIso }),
+                    },
+                    updateMask: { fieldPaths: ["sessions", "updatedAt"] },
                   },
-                  updateMask: { fieldPaths: ["sessions", "updatedAt"] },
-                },
-              ],
-            };
-          });
+                ],
+              };
+            });
+          } catch (error) {
+            await releaseExpectedStorageEgress(fs, sessionId).catch(() => undefined);
+            throw error;
+          }
 
           return Response.json({
             sessionId, playbackUrl, ratePerMinuteMinor, walletBalanceMinor: balanceMinor,
