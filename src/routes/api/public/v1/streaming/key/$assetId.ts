@@ -5,6 +5,7 @@ import { assertContentAgeEligibility } from "@/lib/server/content-rating";
 import { assertContentPlaybackRights } from "@/lib/server/content-rights";
 import { verifyPlaybackToken } from "@/lib/server/storage/security";
 import { decryptHlsContentKey, getStreamingSourceKey, type EncryptedStreamingSource } from "@/lib/server/streaming/source-encryption";
+import { enforceRateLimit } from "@/lib/server/rate-limit";
 
 function decodeBase64Url(value: string): Uint8Array {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
@@ -28,6 +29,29 @@ export const Route = createFileRoute("/api/public/v1/streaming/key/$assetId")({
         throw new ApiError(403, "STREAM_SESSION_REVOKED", "This playback session is no longer active.");
       }
       const uid = session["uid"] as string;
+      await enforceRateLimit(fs, "stream-key:" + sid, { limit: 6, windowMs: 60_000 }, now);
+      await fs.transact(["sessions/" + sid], docs => {
+        const current = docs[0];
+        if (!current || current["active"] !== true || current["uid"] !== uid || current["contentAssetId"] !== assetId) {
+          throw new ApiError(403, "STREAM_SESSION_REVOKED", "This playback session is no longer active.");
+        }
+        const startedAt = typeof current["keyFetchWindowStartedAt"] === "number" ? current["keyFetchWindowStartedAt"] : now;
+        const count = typeof current["keyFetchCount"] === "number" ? current["keyFetchCount"] : 0;
+        const activeWindow = now - startedAt < 600_000 && now >= startedAt;
+        const nextStartedAt = activeWindow ? startedAt : now;
+        const nextCount = (activeWindow ? count : 0) + 1;
+        if (nextCount > 10) throw new ApiError(429, "STREAM_KEY_FETCH_LIMIT", "The protected key request limit has been reached for this session.");
+        return {
+          result: undefined,
+          writes: [{
+            update: {
+              name: fs.docName("sessions/" + sid),
+              fields: { keyFetchWindowStartedAt: { integerValue: String(nextStartedAt) }, keyFetchCount: { integerValue: String(nextCount) } },
+            },
+            updateMask: { fieldPaths: ["keyFetchWindowStartedAt", "keyFetchCount"] },
+          }],
+        };
+      });
       await verifyPlaybackToken(token, { sid, uid, path: "stream-key/" + assetId });
       const now = Date.now();
       const lastHeartbeat = typeof session["lastHeartbeatAt"] === "string" ? Date.parse(session["lastHeartbeatAt"]) : 0;
