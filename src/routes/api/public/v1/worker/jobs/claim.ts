@@ -58,7 +58,10 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           }
           const sourceConfig = await loadSourceStorageConfiguration(fs, asset);
           const sourceTarget = await createStorageDownloadTarget(sourceConfig, job["sourceObjectKey"], 3600);
-          const reservedBytes = estimateReservedBytes(job["sourceSizeBytes"], 2.5);
+          const profile = job["transcodeProfile"] === "economy" || job["transcodeProfile"] === "high"
+            ? job["transcodeProfile"] : "standard";
+          const reservationFactor = profile === "economy" ? 2.0 : profile === "high" ? 3.5 : 2.5;
+          const reservedBytes = estimateReservedBytes(job["sourceSizeBytes"], reservationFactor);
           const outputReservationId = "hls-" + assetId.slice(0, 50) + "-" + claimToken;
           newReservationId = outputReservationId;
           const outputReservation = await reserveStorageDestination(fs, {
@@ -79,7 +82,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
             updatedAt: new Date().toISOString(),
           });
           return Response.json({ job: {
-            assetId, claimToken, leaseExpiresAt, workerId, sourceDownloadUrl: sourceTarget.signedUrl,
+            assetId, claimToken, leaseExpiresAt, workerId, profile, sourceDownloadUrl: sourceTarget.signedUrl,
             sourceFilename: job["sourceFilename"], sourceSizeBytes: job["sourceSizeBytes"],
             outputDestinationId: outputReservation.destinationId, outputPrefix, outputReservedBytes: reservedBytes,
           } });
