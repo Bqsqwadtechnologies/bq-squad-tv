@@ -1,6 +1,7 @@
 package com.bqsqwad.tv.ui.screens
 
 import android.content.Context
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +24,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -54,8 +57,13 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                 .padding(28.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        Text("BQ SQWAD TV", style = MaterialTheme.typography.headlineLarge)
-        Text("Your world. One signal.", color = MaterialTheme.colorScheme.primary)
+        Image(
+            painter = painterResource(com.bqsqwad.tv.R.drawable.bq_sqwad_tv_mark),
+            contentDescription = "BQ SQWAD TV logo",
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .size(112.dp),
+        )
         Spacer(modifier = Modifier.height(28.dp))
         Text(
             text = if (createAccount) "Create your account" else "Welcome back",
@@ -82,6 +90,38 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             enabled = !verificationPending,
         )
+        if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank() &&
+            !BuildConfig.GOOGLE_WEB_CLIENT_ID.startsWith("REPLACE")
+        ) {
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedButton(
+                enabled = !busy && !verificationPending,
+                onClick = {
+                    scope.launch {
+                        busy = true
+                        message = null
+                        try {
+                            googleSignIn(context, repository)
+                            onAuthenticated()
+                        } catch (error: Exception) {
+                            message = error.localizedMessage ?: "Google sign-in failed."
+                        } finally {
+                            busy = false
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Continue with Google")
+            }
+        } else {
+            Text(
+                text = "Google sign-in will appear here once the Google Web Client ID is configured.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
         Spacer(modifier = Modifier.height(12.dp))
         Button(
             enabled = !busy && email.contains("@") && password.length >= 6 && !verificationPending,
@@ -212,33 +252,6 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
             }
         }
 
-        OutlinedButton(
-            enabled = !busy && !BuildConfig.GOOGLE_WEB_CLIENT_ID.startsWith("REPLACE"),
-            onClick = {
-                scope.launch {
-                    busy = true
-                    message = null
-                    try {
-                        googleSignIn(context, repository)
-                        onAuthenticated()
-                    } catch (error: Exception) {
-                        message = error.localizedMessage ?: "Google sign-in failed."
-                    } finally {
-                        busy = false
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text("Continue with Google")
-        }
-        if (BuildConfig.GOOGLE_WEB_CLIENT_ID.startsWith("REPLACE")) {
-            Text(
-                text = "Google sign-in needs GOOGLE_WEB_CLIENT_ID from Firebase Authentication settings.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
         message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
     }
 }
