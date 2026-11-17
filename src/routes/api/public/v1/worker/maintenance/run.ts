@@ -7,7 +7,7 @@ import { validateStorageDestinationMetadata, resolveStorageDestinationConfigurat
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 import { videoWorkerLeaseExpiry } from "@/lib/server/video-worker-policy";
 import { checkStorageProviderHealth, isStorageQuotaOrRateLimit, readStorageUsagePage, storageFailureCode, storageFailureMessage } from "@/lib/server/storage/maintenance";
-import { refreshStoragePoolDestination, updateStorageUsageAndPool } from "@/lib/server/storage/pool-index";
+import { refreshStoragePoolDestination, updateStorageUsageAndPool, rebuildStoragePoolIndex } from "@/lib/server/storage/pool-index";
 import { copyReplicaObject, replicaCopyPhase } from "@/lib/server/storage/replication";
 import { commitStorageReservation } from "@/lib/server/storage/reservations";
 import { addVerifiedAssetStreamReplica, bindAssetStreamStorage } from "@/lib/server/storage/asset-binding";
@@ -99,6 +99,19 @@ async function processReplicaCopyTask(fs: Firestore, taskPath: string, task: Rec
         objectPrefix: targetPrefix,
         reservationId,
       });
+      // The two legacy Lovable locations are immutable: never queue deletion
+      // against them, even after a successful move.
+      if (sourceId !== "legacy_lovable_streaming") {
+        const cleanupId = "rebalance-clean-" + crypto.randomUUID().replace(/-/g, "").slice(0, 24);
+        const notBefore = new Date(Date.now() + 7 * 86_400_000).toISOString();
+        await fs.setDoc("videoMaintenanceJobs/" + cleanupId, {
+          taskType: "storage_rebalance_cleanup",
+          payload: { assetId, destinationId: sourceId, prefix: sourcePrefix, targetDestinationId: targetId },
+          status: "queued", attempts: 0, notBefore,
+          reason: "Remove an old streaming copy after a seven-day verified grace period",
+          createdAt: now, updatedAt: now,
+        }, { mustNotExist: true });
+      }
     }
     const reservedBytes = typeof payload?.["streamBytes"] === "number" ? payload["streamBytes"] : copiedBytes;
     const unused = Math.max(0, reservedBytes - copiedBytes);
@@ -312,6 +325,77 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
 
       if (task["taskType"] === "storage_replica_copy" || task["taskType"] === "storage_rebalance") {
         return await processReplicaCopyTask(fs, taskPath, task);
+      }
+
+      if (task["taskType"] === "storage_rebalance_cleanup") {
+        const payload = task["payload"] as Record<string, unknown> | undefined;
+        const assetId = typeof payload?.["assetId"] === "string" ? payload["assetId"] : "";
+        const destinationId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
+        const targetDestinationId = typeof payload?.["targetDestinationId"] === "string" ? payload["targetDestinationId"] : "";
+        const prefix = typeof payload?.["prefix"] === "string" ? payload["prefix"] : "";
+        if (destinationId === "legacy_lovable_streaming" ||
+            !/^[A-Za-z0-9_-]{1,100}$/.test(assetId) ||
+            !/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId) ||
+            !/^[a-z0-9][a-z0-9_-]{1,79}$/.test(targetDestinationId) ||
+            !/^hls\/[A-Za-z0-9_-]{1,100}\/a[1-9][0-9]*$/.test(prefix) ||
+            !prefix.startsWith("hls/" + assetId + "/")) {
+          throw new ApiError(400, "REBALANCE_CLEANUP_INVALID", "The old-copy cleanup request is invalid.");
+        }
+        const notBefore = typeof task["notBefore"] === "string" ? Date.parse(task["notBefore"]) : Number.NaN;
+        if (!Number.isFinite(notBefore) || Date.now() < notBefore) {
+          throw new ApiError(409, "REBALANCE_GRACE_PERIOD", "The old copy is retained until its safety period has passed.");
+        }
+        const [asset, replicaRecord, raw] = await Promise.all([
+          fs.getDoc("contentAssets/" + assetId),
+          fs.getDoc("storageReplicaRecords/" + assetId + "_" + destinationId),
+          fs.getDoc("storageDestinations/" + destinationId),
+        ]);
+        const replicas = Array.isArray(asset?.["streamReplicaIds"])
+          ? asset["streamReplicaIds"].filter((id): id is string => typeof id === "string") : [];
+        if (!asset || asset["streamDestinationId"] === destinationId ||
+            asset["streamDestinationId"] !== targetDestinationId ||
+            !replicas.includes(destinationId) || replicaRecord?.["status"] !== "verified" || !raw) {
+          throw new ApiError(409, "REBALANCE_OLD_COPY_STILL_REFERENCED", "The old copy is still referenced or its replacement is not verified; deletion was stopped.");
+        }
+        const metadata = validateStorageDestinationMetadata({ ...raw, destinationId });
+        if (metadata.purpose !== "hls_streaming" || metadata.mode === "retired") {
+          throw new ApiError(409, "REBALANCE_DESTINATION_UNSAFE", "The old storage location is not eligible for automatic cleanup.");
+        }
+        const config = resolveStorageDestinationConfiguration(metadata);
+        if (config.configurationStatus !== "configured") throw new ApiError(503, "REBALANCE_DESTINATION_MISCONFIGURED", "The old storage location could not be checked.");
+        const adapter = createStorageProviderAdapter(config);
+        const cursor = typeof payload?.["deleteCursor"] === "string" ? payload["deleteCursor"] : null;
+        const page = await adapter.listObjects(prefix, cursor);
+        const batch = page.objects.slice(0, 40);
+        await Promise.all(batch.map(item => adapter.deleteObject(item.key)));
+        if (page.nextCursor) {
+          await fs.patchDoc(taskPath, {
+            payload: { ...payload, deleteCursor: page.nextCursor },
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+          });
+          return Response.json({ done: false, deletedCount: batch.length });
+        }
+        await fs.transact(["contentAssets/" + assetId, "storageReplicaRecords/" + assetId + "_" + destinationId], docs => {
+          const currentAsset = docs[0];
+          const currentReplica = docs[1];
+          if (!currentAsset || currentAsset["streamDestinationId"] === destinationId ||
+              currentAsset["streamDestinationId"] !== targetDestinationId ||
+              currentReplica?.["status"] !== "verified") {
+            throw new ApiError(409, "REBALANCE_REFERENCE_CHANGED", "The content assignment changed during cleanup; the old copy was retained.");
+          }
+          const currentReplicas = Array.isArray(currentAsset["streamReplicaIds"])
+            ? currentAsset["streamReplicaIds"].filter((id): id is string => typeof id === "string") : [];
+          return {
+            result: undefined,
+            writes: [
+              { update: { name: fs.docName("contentAssets/" + assetId), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ streamReplicaIds: currentReplicas.filter(id => id !== destinationId), updatedAt: now }) }, updateMask: { fieldPaths: ["streamReplicaIds", "updatedAt"] } },
+              { update: { name: fs.docName("storageReplicaRecords/" + assetId + "_" + destinationId), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ status: "deleted", deletedAt: now }) }, updateMask: { fieldPaths: ["status", "deletedAt"] } },
+            ],
+          };
+        });
+        await rebuildStoragePoolIndex(fs, ["hls_streaming"]);
+        await fs.patchDoc(taskPath, { status: "completed", phase: "done", deletedObjectCount: (typeof task["deletedObjectCount"] === "number" ? task["deletedObjectCount"] : 0) + batch.length, completedAt: now, updatedAt: now });
+        return Response.json({ done: true, deletedCount: batch.length });
       }
 
       if (task["taskType"] !== "delete_attempt_prefix") {
