@@ -22,6 +22,7 @@ type Destination = {
   enabled: boolean;
   accountGroup: string;
   mode: "active" | "drain" | "retired";
+  deliveryMode: "direct_signed" | "api_proxy";
   replicaOf: string | null;
   configurationStatus: "configured" | "misconfigured" | "disabled";
   missingSecretNames: string[];
@@ -62,6 +63,7 @@ function AdminStoragePage() {
   const [accountAlias, setAccountAlias] = useState("");
   const [accountGroup, setAccountGroup] = useState("primary-storage-account");
   const [mode, setMode] = useState<Destination["mode"]>("active");
+  const [deliveryMode, setDeliveryMode] = useState<Destination["deliveryMode"]>("direct_signed");
   const [replicaOf, setReplicaOf] = useState("");
   const [secretPrefix, setSecretPrefix] = useState("LOVABLE_STORAGE_01");
   const [bucketName, setBucketName] = useState("bq-sqwad-source-media");
@@ -277,6 +279,7 @@ function AdminStoragePage() {
     setAccountAlias(item.accountAlias);
     setAccountGroup(item.accountGroup);
     setMode(item.mode);
+    setDeliveryMode(item.deliveryMode ?? "direct_signed");
     setReplicaOf(item.replicaOf ?? "");
     setSecretPrefix(item.secretPrefix);
     setBucketName(item.bucketName);
@@ -302,7 +305,7 @@ function AdminStoragePage() {
         throw new Error("Enter positive storage capacity limits in decimal GB.");
       }
       const payload = {
-        destinationId, providerType, accountAlias, accountGroup, mode, replicaOf: replicaOf.trim() || null, secretPrefix, bucketName, region, purpose,
+        destinationId, providerType, accountAlias, accountGroup, mode, deliveryMode, replicaOf: replicaOf.trim() || null, secretPrefix, bucketName, region, purpose,
         softCapBytes: Math.floor(cap * 1_000_000_000),
         accountCapBytes: accountCap === null ? null : Math.floor(accountCap * 1_000_000_000),
         priority: Number(priority), enabled,
@@ -416,6 +419,7 @@ function AdminStoragePage() {
                 <label className="grid gap-2 text-xs text-blue-100/70">Display name<input required minLength={2} value={accountAlias} onChange={event => setAccountAlias(event.target.value)} placeholder="Primary storage location" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 
                 <label className="grid gap-2 text-xs text-blue-100/70">Availability<select value={mode} onChange={event => setMode(event.target.value as Destination["mode"])} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white"><option value="active">Available for new files</option><option value="drain">Keep existing files, stop new assignments</option><option value="retired">Unavailable</option></select></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Playback delivery<select value={deliveryMode} onChange={event => setDeliveryMode(event.target.value as Destination["deliveryMode"])} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white"><option value="direct_signed">Direct signed storage links</option><option value="api_proxy">Website delivery fallback</option></select><span className="text-[11px] leading-5 text-blue-100/45">Direct links send video bytes from the storage location to the player. Use the website fallback only when the storage provider cannot support direct browser delivery.</span></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Copy of location reference (optional)<input value={replicaOf} onChange={event => setReplicaOf(event.target.value)} placeholder="existing-destination-id" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 
                 <label className="grid gap-2 text-xs text-blue-100/70">Storage location name<input required value={bucketName} onChange={event => setBucketName(event.target.value)} placeholder="Main video storage" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
