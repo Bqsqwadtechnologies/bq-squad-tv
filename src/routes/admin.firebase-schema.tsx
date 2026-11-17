@@ -19,10 +19,10 @@ export const Route = createFileRoute("/admin/firebase-schema")({
   component: FirebaseSchemaPage,
   head: () => ({
     meta: [
-      { title: "Firebase schema inspection | BQ SQWAD TV" },
-      { name: "description", content: "Restricted administrator view of Firebase collection names and field types." },
-      { property: "og:title", content: "Firebase schema inspection | BQ SQWAD TV" },
-      { property: "og:description", content: "Restricted administrator view of Firebase collection names and field types." },
+      { title: "Data structure | BQ SQWAD TV" },
+      { name: "description", content: "Private administrator view of platform data structure." },
+      { property: "og:title", content: "Data structure | BQ SQWAD TV" },
+      { property: "og:description", content: "Private administrator view of platform data structure." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -55,8 +55,8 @@ function FirebaseSchemaPage() {
       const signInData = await signInResponse.json() as { idToken?: string; error?: { message?: string } };
       if (!signInResponse.ok || !signInData.idToken) {
         throw new Error(signInData.error?.message === "OPERATION_NOT_ALLOWED"
-          ? "Email and password sign-in is not enabled for this Firebase project."
-          : "Sign-in failed. Check the administrator email and password.");
+          ? "Email and password sign-in is not enabled for this Platform."
+          : "Sign-in failed. Check your sign-in details and try again.");
       }
 
       const response = await fetch("/api/public/firebase-schema-inspect", {
@@ -64,11 +64,11 @@ function FirebaseSchemaPage() {
       });
       const result = await response.json() as SchemaReport & { error?: string };
       if (!response.ok) {
-        throw new Error(result.error ?? "The schema could not be read. Check the Firebase database and service permissions.");
+        throw new Error(result.error ?? "We could not load this information. Try again.");
       }
       setReport(result);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The schema could not be read.");
+      setError(caught instanceof Error ? caught.message : "We could not load this information. Try again.");
     } finally {
       setPassword("");
       setBusy(false);
@@ -91,7 +91,7 @@ function FirebaseSchemaPage() {
           </span>
           <div>
             <p className="text-sm font-bold">BQ SQWAD TV</p>
-            <p className="text-xs text-muted-foreground">Firebase schema inspection</p>
+            <p className="text-xs text-muted-foreground">Data structure</p>
           </div>
         </div>
       </header>
@@ -101,9 +101,9 @@ function FirebaseSchemaPage() {
           <p className="flex items-center gap-2 text-sm font-semibold text-primary">
             <ShieldCheck size={17} /> Administrator access
           </p>
-          <h1 className="mt-4 text-3xl font-bold">Firestore structure</h1>
+          <h1 className="mt-4 text-3xl font-bold">Data structure</h1>
           <p className="mt-3 leading-7 text-muted-foreground">
-            Sign in with the configured administrator account to inspect collection names and field types. Document contents are not displayed.
+            Sign in with an authorised administrator account to view the platform's data structure. Private record contents are not displayed.
           </p>
         </div>
 
@@ -120,7 +120,7 @@ function FirebaseSchemaPage() {
             {error ? <p role="alert" className="text-sm text-destructive">{error}</p> : null}
             <Button type="submit" disabled={busy} className="w-fit">
               {busy ? <LoaderCircle className="animate-spin" /> : <ShieldCheck />}
-              {busy ? "Checking access…" : "Inspect database"}
+              {busy ? "Checking access…" : "View data structure"}
             </Button>
           </form>
         ) : (
@@ -137,14 +137,14 @@ function FirebaseSchemaPage() {
               <Button variant="outline" onClick={clearReport}><LogOut /> Sign out</Button>
             </div>
             {report.collections.length === 0 ? (
-              <p className="py-10 text-muted-foreground">No top-level collections were found.</p>
+              <p className="py-10 text-muted-foreground">No data groups were found.</p>
             ) : (
               <div className="mt-6 divide-y divide-border">
                 {report.collections.map((collection) => (
                   <article key={collection.name} className="py-5">
                     <h2 className="font-semibold">{collection.name}</h2>
                     {Object.keys(collection.fields).length === 0 ? (
-                      <p className="mt-2 text-sm text-muted-foreground">No sampled fields</p>
+                      <p className="mt-2 text-sm text-muted-foreground">No fields to display</p>
                     ) : (
                       <dl className="mt-3 grid gap-x-8 gap-y-2 sm:grid-cols-2">
                         {Object.entries(collection.fields).map(([field, type]) => (
