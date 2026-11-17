@@ -34,6 +34,17 @@ export async function fetchPaystackVerification(reference: string): Promise<Reco
   return payload.data;
 }
 
+
+/** Stable, non-sensitive Firestore key for Paystack webhook event replay protection. */
+export async function paystackEventDocumentId(eventId: string | number): Promise<string> {
+  const value = String(eventId);
+  if (!/^[A-Za-z0-9_-]{1,120}$/.test(value)) {
+    throw new ApiError(400, "PAYSTACK_EVENT_ID_INVALID", "The payment notification identifier is invalid.");
+  }
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("paystack:" + value));
+  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+}
+
 export async function creditPaystackPayment(
   fs: Firestore,
   input: { reference: string; uid: string; amountMinor: number; creditMinor: number; email: string | null; currency?: string },
