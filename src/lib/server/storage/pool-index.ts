@@ -1,5 +1,5 @@
 import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "../firebase-admin";
-import { calculateB2DailyFreeEgressBudget, calculateB2MonthlyFreeEgressBudget, storageAccountEgressId } from "./ledger";
+import { calculateB2DailyFreeEgressBudget, calculateB2MonthlyFreeEgressBudget, calculateEgressLevel, storageAccountEgressId } from "./ledger";
 import {
   resolveStorageDestinationConfiguration,
   validateStorageDestinationMetadata,
@@ -307,6 +307,9 @@ export async function updateStorageUsageAndPool(
     }
     const groupId = raw["accountGroup"];
     const groupPath = groupCapacityPath(groupId);
+    const isBackblaze = raw["providerType"] === "backblaze_b2";
+    const nextB2MonthlyBudget = isBackblaze ? calculateB2MonthlyFreeEgressBudget(newUsageBytes) : null;
+    const nextB2DailyBudget = isBackblaze ? calculateB2DailyFreeEgressBudget() : null;
     const groupBefore = await fs.getDoc(groupPath);
     if (!groupBefore ||
         !Number.isSafeInteger(groupBefore["knownUsageBytes"]) ||
@@ -340,10 +343,9 @@ export async function updateStorageUsageAndPool(
       const nextFreeBytes = nextUsageBytes === null || capBytes === null
         ? 0 : Math.max(0, capBytes - nextUsageBytes - reservedBytes);
       const now = checkedAt;
-      const isBackblaze = destination["providerType"] === "backblaze_b2";
       const budgetFields = isBackblaze ? {
-        freeEgressBudgetBytes: calculateB2MonthlyFreeEgressBudget(newUsageBytes),
-        dailyEgressCapBytes: calculateB2DailyFreeEgressBudget(),
+        freeEgressBudgetBytes: nextB2MonthlyBudget,
+        dailyEgressCapBytes: nextB2DailyBudget,
         egressBudgetSource: "Backblaze published 3× monthly allowance and older 1 GB/day cap; lower reading with 20% safety margin",
         egressBudgetCheckedAt: now,
         egressBudgetSourceUrl: "https://www.backblaze.com/cloud-storage/pricing; https://help.backblaze.com/hc/en-us/articles/217931138-How-to-use-B2-data-caps-alerts",
@@ -374,6 +376,39 @@ export async function updateStorageUsageAndPool(
         ],
       };
     });
+    if (result.isBackblaze && nextB2MonthlyBudget !== null && nextB2DailyBudget !== null) {
+      const egressStatePath = "storageEgressState/" + storageAccountEgressId(groupId);
+      const egressState = await fs.getDoc(egressStatePath);
+      if (egressState) {
+        const monthKey = checkedAt.slice(0, 7);
+        const dayKey = checkedAt.slice(0, 10);
+        const monthUsed = egressState["monthKey"] === monthKey ? safeBytes(egressState["monthExpectedBytes"]) : 0;
+        const dayUsed = egressState["dayKey"] === dayKey ? safeBytes(egressState["dayExpectedBytes"]) : 0;
+        const monthLevel = calculateEgressLevel(monthUsed, nextB2MonthlyBudget, false);
+        const dayLevel = calculateEgressLevel(dayUsed, nextB2DailyBudget, false);
+        const rank: Record<string, number> = { normal: 0, warn: 1, throttle: 2, blocked: 3 };
+        const level = rank[monthLevel] >= rank[dayLevel] ? monthLevel : dayLevel;
+        await fs.patchDoc(egressStatePath, {
+          budgetBytes: nextB2MonthlyBudget,
+          dailyBudgetBytes: nextB2DailyBudget,
+          level,
+          updatedAt: checkedAt,
+        });
+        if ((rank[level] ?? 0) > (rank[String(egressState["level"])] ?? 0)) {
+          const alertId = "egress-budget-" + storageAccountEgressId(groupId) + "-" + dayKey;
+          await fs.setDoc("storageAlerts/" + alertId, {
+            scope: "account_group",
+            accountGroup: groupId,
+            severity: level === "blocked" ? "critical" : level === "throttle" ? "warning" : "info",
+            reasonCode: "EGRESS_ALLOWANCE_RECALCULATED",
+            message: "The free delivery allowance changed after storage was reconciled. New playback may be limited.",
+            level,
+            createdAt: checkedAt,
+            acknowledged: false,
+          }, { mustNotExist: true }).catch(() => undefined);
+        }
+      }
+    }
     if (result.becameFullyKnown || result.isBackblaze) {
       await rebuildStoragePoolIndex(fs);
       return;
