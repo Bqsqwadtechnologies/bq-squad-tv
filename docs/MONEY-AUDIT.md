@@ -15,8 +15,9 @@ Source reviewed: `money.ts`, `ledger.ts`, `pricing.ts`, `currency.ts`, wallet su
 
 - The session must retain its currency and the selected price snapshot; later catalogue changes must not change an active session's price.
 - A debit must be represented by an idempotent ledger entry in the same transaction as the wallet update.
-- The wallet balance must never become negative. The current session path checks the available balance and configured daily limit transactionally; the planned ten-minute wallet hold and block-based settlement are not yet integrated.
-- The current daily limit checks settled spending. Outstanding-hold accounting must be added together with the ten-minute hold before block settlement is enabled.
+- The wallet balance must never become negative. Session start now reserves up to ten minutes of viewing cost from unheld balance in the same transaction as the session lease. Heartbeats protect other sessions' holds, settle cumulative per-second debits, and replenish only from unreserved balance while respecting remaining daily and monthly budgets.
+- Holds are recorded per session and aggregated in `wallets/{uid}.heldBalanceMinor`. Ending playback releases the hold transactionally. Active holds expire after two minutes without a heartbeat; the five-minute Modal maintenance poll queues a leased expiry sweep that releases the hold, closes the stale session and releases its expected-egress reservation.
+- Block-based settlement remains unimplemented; the current settlement checkpoints are the existing signed heartbeat intervals. The new hold and expiry paths still require current-SHA CI and concurrency/integration verification.
 - Producer allocation uses the session's snapshotted basis points and integer division rounded down. The platform receives every remaining minor unit, so producer plus platform shares equal the viewer debit exactly. Heartbeat and final-session settlement now share the same `splitRevenueMinor` calculation.
 
 ## Payment verification
@@ -34,8 +35,8 @@ Source reviewed: `money.ts`, `ledger.ts`, `pricing.ts`, `currency.ts`, wallet su
 
 ## Verification boundary
 
-The existing money, wallet-ledger, Paystack, Google Play account-binding and session-metering tests cover selected arithmetic and payment invariants. The session-metering suite now also checks exact producer/platform reconciliation across NGN, USD, JPY and KWD with varied integer amounts. CI results are recorded against exact commits; a source commit alone is not evidence that a test passed.
+The existing money, wallet-ledger, Paystack, Google Play account-binding and session-metering tests cover selected arithmetic and payment invariants. The session-metering suite checks exact producer/platform reconciliation across NGN, USD, JPY and KWD with varied integer amounts. New `session-holds.test.ts` cases cover initial reservation, concurrent-session protection, replenishment and release; they have not yet run against the current source revision. CI results are recorded against exact commits; a source commit alone is not evidence that a test passed.
 
 ## Remaining integration scope
 
-This audit does not claim that the full File 05 feature set is complete. The remaining batches cover currency changes, wallet display parity, block settlement integration, provider reconciliation, viewer budgets, adult access, device registration, risk scoring, scalable rate limits, secure headers/CSRF/App Check, privacy export/deletion, encrypted payout data, and full regression verification.
+This audit does not claim that the full File 05 feature set is complete. The remaining batches cover currency-change edge cases, wallet display parity, block settlement integration, provider reconciliation (Google Play currently requires manual review because private purchase tokens are not retained), viewer budgets, adult access, device registration, risk scoring, scalable rate limits, secure headers/CSRF/App Check, privacy export/deletion, encrypted payout data, and full regression verification.
