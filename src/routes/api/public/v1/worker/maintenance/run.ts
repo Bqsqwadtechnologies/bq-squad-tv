@@ -485,7 +485,10 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
             if (["failed", "blocked", "dead"].includes(String(pendingCopy["status"]))) {
               throw new ApiError(409, "STORAGE_DRAIN_COPY_FAILED", "A film could not be moved safely; the drain remains paused.");
             }
-            return Response.json({ done: false, waitingForVerifiedCopy: true, copyTaskId: pendingCopyTaskId });
+            return Response.json({
+              done: false, waitingForVerifiedCopy: true, copyTaskId: pendingCopyTaskId,
+              yield: true, retryAt: new Date(Date.now() + 30_000).toISOString(),
+            });
           }
           await fs.patchDoc(taskPath, {
             payload: { destinationId, cursorValue, cursorId },
@@ -507,7 +510,35 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           });
           if (remaining.length > 0) {
             await fs.patchDoc(taskPath, { payload: { destinationId, cursorValue: null, cursorId: null }, leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: drainNow });
-            return Response.json({ done: false, resetCursor: true });
+            return Response.json({
+              done: false, resetCursor: true, yield: true,
+              retryAt: new Date(Date.now() + 30_000).toISOString(),
+            });
+          }
+          const remainingReplicas = await fs.query("contentAssets", {
+            filters: [{ field: "streamReplicaIds", op: "ARRAY_CONTAINS", value: destinationId }],
+            limit: 1,
+          });
+          if (remainingReplicas.length > 0) {
+            const cleanupTasks = await fs.query("videoMaintenanceJobs", {
+              filters: [{ field: "taskType", op: "EQUAL", value: "storage_rebalance_cleanup" }],
+              limit: 500,
+            });
+            const matchingCleanup = cleanupTasks.filter(row => {
+              const cleanupPayload = row["payload"] as Record<string, unknown> | undefined;
+              return cleanupPayload?.["destinationId"] === destinationId &&
+                row["status"] !== "completed" && row["phase"] !== "done";
+            });
+            const scheduledTimes = matchingCleanup
+              .map(row => typeof row["notBefore"] === "string" ? Date.parse(row["notBefore"]) : NaN)
+              .filter(value => Number.isFinite(value) && value > Date.now())
+              .sort((left, right) => left - right);
+            const retryAt = scheduledTimes.length > 0
+              ? new Date(scheduledTimes[0]!).toISOString()
+              : new Date(Date.now() + 60 * 60_000).toISOString();
+            return Response.json({
+              done: false, waitingForOldCopyCleanup: true, yield: true, retryAt,
+            });
           }
           await fs.patchDoc("storageDestinations/" + destinationId, {
             mode: "retired", enabled: false, drainCompletedAt: drainNow, updatedAt: drainNow,
@@ -578,7 +609,10 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
             queuedAssetCount: (typeof task["queuedAssetCount"] === "number" ? task["queuedAssetCount"] : 0) + 1,
             leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: drainNow,
           });
-          return Response.json({ done: false, queuedCopy: true, assetId, copyTaskId });
+          return Response.json({
+            done: false, queuedCopy: true, assetId, copyTaskId, yield: true,
+            retryAt: new Date(Date.now() + 30_000).toISOString(),
+          });
         } catch (error) {
           await releaseStorageReservation(fs, reservationId).catch(() => undefined);
           if (budgetCharged) {
