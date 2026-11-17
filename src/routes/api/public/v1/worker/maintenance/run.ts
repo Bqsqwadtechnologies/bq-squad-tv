@@ -13,7 +13,7 @@ import { commitStorageReservation } from "@/lib/server/storage/reservations";
 import { addVerifiedAssetStreamReplica, bindAssetStreamStorage } from "@/lib/server/storage/asset-binding";
 import { isExpiredTemporaryObject } from "@/lib/server/storage/cleanup";
 import { nextHealthRecoveryState } from "@/lib/server/storage/failover";
-import { confirmOrphanDeletion } from "@/lib/server/storage/cleanup";
+import { confirmOrphanDeletion, sourceCanBeDeleted } from "@/lib/server/storage/cleanup";
 import { encryptStorageConfigurationBackup, type StorageConfigurationBackup } from "@/lib/server/storage/config-backup";
 import { reserveStorageDestination, releaseStorageReservation, commitStorageReservation } from "@/lib/server/storage/reservations";
 
@@ -542,6 +542,68 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           if (!reservationCommitted) await releaseStorageReservation(fs, reservationId).catch(() => undefined);
           throw error;
         }
+      }
+
+      if (task["taskType"] === "storage_source_retention") {
+        const payload = task["payload"] as Record<string, unknown> | undefined;
+        const destinationId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
+        if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId) ||
+            ["legacy_lovable_source", "legacy_lovable_streaming", "lovable-source-legacy", "lovable-stream-legacy"].includes(destinationId)) {
+          throw new ApiError(400, "SOURCE_RETENTION_DESTINATION_INVALID", "This location is protected from automatic source cleanup.");
+        }
+        const raw = await fs.getDoc("storageDestinations/" + destinationId);
+        if (!raw) throw new ApiError(404, "SOURCE_RETENTION_DESTINATION_MISSING", "The original-file location could not be found.");
+        const metadata = validateStorageDestinationMetadata({ ...raw, destinationId });
+        if (metadata.purpose !== "source_media" || metadata.mode === "retired") {
+          throw new ApiError(409, "SOURCE_RETENTION_DESTINATION_UNSAFE", "Only registered original-file locations can be checked.");
+        }
+        const config = resolveStorageDestinationConfiguration(metadata);
+        if (config.configurationStatus !== "configured") throw new ApiError(503, "SOURCE_RETENTION_DESTINATION_MISCONFIGURED", "The original-file location needs its connection settings checked.");
+        const adapter = createStorageProviderAdapter(config);
+        const assets = await fs.query("contentAssets", {
+          filters: [{ field: "sourceDestinationId", op: "EQUAL", value: destinationId }],
+          limit: 500,
+        });
+        const processed = new Set(Array.isArray(payload?.["processedAssetIds"])
+          ? payload["processedAssetIds"].filter((id): id is string => typeof id === "string") : []);
+        const batch = assets.filter(asset => !processed.has(asset.__id)).slice(0, 20);
+        let deletedCount = 0;
+        for (const asset of batch) {
+          const publishedAt = typeof asset["publishedAt"] === "string" ? asset["publishedAt"] : null;
+          const sourceObjectKey = typeof asset["sourceObjectKey"] === "string" ? asset["sourceObjectKey"] : "";
+          const ownerUid = typeof asset["ownerUid"] === "string" ? asset["ownerUid"] : "";
+          const channelId = typeof asset["channelId"] === "string" ? asset["channelId"] : "";
+          const expectedPrefix = "producers/" + ownerUid + "/" + channelId + "/" + asset.__id + "/";
+          const eligible = asset["status"] === "ready" && asset["contentStatus"] === "published" &&
+            sourceObjectKey.startsWith(expectedPrefix) && sourceCanBeDeleted({
+              publishedAt,
+              pinned: asset["sourcePinned"] === true,
+              graceDays: 7,
+            });
+          if (eligible) {
+            const { assertStorageObjectKey } = await import("@/lib/server/storage/ledger");
+            await adapter.deleteObject(assertStorageObjectKey(sourceObjectKey));
+            await fs.patchDoc("contentAssets/" + asset.__id, {
+              sourceRetentionStatus: "deleted_after_grace_period",
+              sourceFileDeletedAt: now,
+              sourceFileDeletedByPolicy: true,
+              updatedAt: now,
+            });
+            deletedCount++;
+          }
+          processed.add(asset.__id);
+        }
+        const remaining = assets.some(asset => !processed.has(asset.__id));
+        if (remaining) {
+          await fs.patchDoc(taskPath, {
+            payload: { ...payload, processedAssetIds: [...processed] },
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+          });
+          return Response.json({ done: false, inspectedCount: batch.length, deletedCount });
+        }
+        await rebuildStoragePoolIndex(fs, ["source_media"]);
+        await fs.patchDoc(taskPath, { phase: "done", completedAt: now, inspectedCount: processed.size, deletedCount, updatedAt: now });
+        return Response.json({ done: true, inspectedCount: processed.size, deletedCount });
       }
 
       if (task["taskType"] === "storage_orphan_scan") {
