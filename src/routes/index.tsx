@@ -3,7 +3,7 @@ import { getWebAccount, getWebAuthHeaders, restoreWebSession } from "@/lib/fireb
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Bell, ChevronRight, CirclePlay, Clapperboard,
-  Film, Grid2X2, Home, Search, Settings, ShieldCheck, Signal,
+  Film, Grid2X2, Home, Search, ShieldCheck, Signal,
   Sparkles, Tv2, Smile, Play, MoreHorizontal, UserRound, Wallet,
 } from "lucide-react";
 
@@ -95,8 +95,8 @@ function HomePage() {
     { label: "Home", icon: Home, href: "#home" },
     { label: "Live TV", icon: Tv2, href: "#live-channels" },
     { label: "Library", icon: Grid2X2, href: "#library" },
-    { label: "Settings", icon: Settings, href: "#settings" },
-    { label: "Profile", icon: UserRound, href: "/account" },
+    { label: "Search", icon: Search, href: "/search" },
+    { label: "Account", icon: UserRound, href: "/account" },
   ];
 
   return (
