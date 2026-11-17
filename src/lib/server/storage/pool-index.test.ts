@@ -33,8 +33,8 @@ function destination(id: string, usageBytes: number | null = 0) {
   };
 }
 
-function fakeFirestore(rows: Array<Record<string, unknown>>) {
-  const documents = new Map<string, Record<string, unknown>>();
+function fakeFirestore(rows: Array<Record<string, unknown>>, seed: Record<string, Record<string, unknown>> = {}) {
+  const documents = new Map<string, Record<string, unknown>>(Object.entries(seed));
   const writes: unknown[] = [];
   const fs = {
     async query(collection: string) {
@@ -44,6 +44,7 @@ function fakeFirestore(rows: Array<Record<string, unknown>>) {
         .map(([path, value]) => ({ ...value, __id: path.split("/").pop()! }));
     },
     async getDoc(path: string) { return documents.get(path) ?? null; },
+    async setDoc(path: string, value: Record<string, unknown>) { documents.set(path, value); },
     docName(path: string) { return "projects/test/databases/(default)/documents/" + path; },
     async commit(batch: Array<Record<string, unknown>>) {
       writes.push(...batch);
@@ -79,6 +80,25 @@ describe("compact storage pool index", () => {
     expect((first?.["entries"] as unknown[]).length).toBe(200);
     expect((second?.["entries"] as unknown[]).length).toBe(200);
     expect(await getStoragePoolEntries(fs, "source_media")).toHaveLength(400);
+  });
+
+  it("uses the lower remaining daily headroom when building HLS routing entries", async () => {
+    const hlsDestination = {
+      ...destination("b2-hls", 10),
+      purpose: "hls_streaming",
+      freeEgressBudgetBytes: 1_000,
+      dailyEgressCapBytes: 100,
+    };
+    const { fs, documents } = fakeFirestore([hlsDestination], {
+      "storageEgressState/b2%3Ashared-account": {
+        monthKey: "2026-11", monthExpectedBytes: 200,
+        dayKey: new Date().toISOString().slice(0, 10), dayExpectedBytes: 95,
+      },
+    });
+    const result = await rebuildStoragePoolIndex(fs, ["hls_streaming"]);
+    expect(result.eligibleCount).toBe(1);
+    const entry = (documents.get("storagePool/hls_streaming__000")?.["entries"] as Array<Record<string, unknown>>)[0];
+    expect(entry?.["egressHeadroomBytes"]).toBe(5);
   });
 
   it("excludes unknown usage from the compact pool", async () => {
