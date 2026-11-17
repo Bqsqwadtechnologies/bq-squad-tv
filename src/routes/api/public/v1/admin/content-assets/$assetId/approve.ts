@@ -7,6 +7,7 @@ import { validateStorageDestinationMetadata, resolveStorageDestinationConfigurat
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 import { validateContentApprovalRequirements } from "@/lib/server/content-review";
 import { writeAuditLog } from "@/lib/server/audit";
+import { isSafeStoragePath } from "@/lib/server/storage/security";
 
 const schema = z.object({ reason: z.string().trim().min(3).max(1000) }).strict();
 
