@@ -49,6 +49,10 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           const walletPath = "wallets/" + user.uid;
           const receiptPath = sessionPath + "/heartbeats/" + clientSequence;
           const activeSessionsPath = "activeSessions/" + user.uid;
+          const budgetMonth = nowIso.slice(0, 7);
+          const monthlyUsagePath = "walletMonthlyUsage/" + user.uid + "_" + budgetMonth;
+          const monthlyBudgetAlertPath = "walletBudgetAlerts/" + user.uid + "_" + budgetMonth;
+          const lowBalanceAlertPath = "walletLowBalanceAlerts/" + user.uid + "_" + budgetMonth;
           const initialSession = requireSessionOwned(await fs.getDoc(sessionPath), sessionId, user.uid);
           if (leaseToken) {
             const lease = await verifySessionLeaseToken(leaseToken, sessionId);
@@ -63,7 +67,11 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           }
           const producerUid = typeof initialSession["producerUid"] === "string" ? initialSession["producerUid"] as string : null;
           const producerPath = producerUid ? "producers/" + producerUid : null;
-          const readPaths = [sessionPath, walletPath, receiptPath, activeSessionsPath, ...(producerPath ? [producerPath] : [])];
+          const readPaths = [
+            sessionPath, walletPath, receiptPath, activeSessionsPath,
+            monthlyUsagePath, monthlyBudgetAlertPath, lowBalanceAlertPath,
+            ...(producerPath ? [producerPath] : []),
+          ];
 
           const elapsedForEgress = elapsedSeconds(initialSession["lastHeartbeatAt"], now);
           const playbackSecondsForEgress = reportedPlaybackSeconds(
@@ -79,7 +87,10 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             const wallet = docs[1] ?? {};
             const existingReceipt = docs[2];
             const activeSessionDoc = docs[3] ?? {};
-            const producer = producerPath ? docs[4] : null;
+            const monthlyUsage = docs[4] ?? {};
+            const monthlyBudgetAlert = docs[5];
+            const lowBalanceAlert = docs[6];
+            const producer = producerPath ? docs[7] : null;
             if (existingReceipt && typeof existingReceipt["response"] === "object" && existingReceipt["response"] !== null) {
               return { result: existingReceipt["response"] as Record<string, unknown>, writes: [] };
             }
@@ -175,6 +186,65 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
                 },
                 currentDocument: { exists: false },
               });
+            }
+            if (charge.chargeMinor > 0) {
+              const monthlySpent = integer(monthlyUsage["spentMinor"]);
+              const nextMonthlySpent = safeAddMinor(monthlySpent, charge.chargeMinor);
+              writes.push({
+                update: {
+                  name: fs.docName(monthlyUsagePath),
+                  fields: encodeFields({ uid: user.uid, month: budgetMonth, spentMinor: nextMonthlySpent, currency, updatedAt: nowIso }),
+                },
+                updateMask: { fieldPaths: ["uid", "month", "spentMinor", "currency", "updatedAt"] },
+              });
+              const monthlyBudget = integer(wallet["monthlyBudgetMinor"]);
+              if (monthlyBudget > 0 && monthlySpent < monthlyBudget && nextMonthlySpent >= monthlyBudget && !monthlyBudgetAlert) {
+                const notificationId = crypto.randomUUID();
+                writes.push(
+                  {
+                    update: {
+                      name: fs.docName(monthlyBudgetAlertPath),
+                      fields: encodeFields({ uid: user.uid, month: budgetMonth, crossedAt: nowIso, budgetMinor: monthlyBudget, currency }),
+                    },
+                    currentDocument: { exists: false },
+                  },
+                  {
+                    update: {
+                      name: fs.docName("users/" + user.uid + "/notifications/" + notificationId),
+                      fields: encodeFields({
+                        title: "Monthly viewing budget reached",
+                        body: "Your viewing charges have reached the monthly budget you set. You can review your wallet controls at any time.",
+                        category: "wallet_budget", read: false, createdAt: nowIso,
+                      }),
+                    },
+                    currentDocument: { exists: false },
+                  },
+                );
+              }
+              const lowBalanceThreshold = integer(wallet["lowBalanceAlertMinor"]);
+              if (lowBalanceThreshold > 0 && balance > lowBalanceThreshold && newBalance <= lowBalanceThreshold && !lowBalanceAlert) {
+                const notificationId = crypto.randomUUID();
+                writes.push(
+                  {
+                    update: {
+                      name: fs.docName(lowBalanceAlertPath),
+                      fields: encodeFields({ uid: user.uid, month: budgetMonth, crossedAt: nowIso, thresholdMinor: lowBalanceThreshold, currency }),
+                    },
+                    currentDocument: { exists: false },
+                  },
+                  {
+                    update: {
+                      name: fs.docName("users/" + user.uid + "/notifications/" + notificationId),
+                      fields: encodeFields({
+                        title: "Wallet balance is low",
+                        body: "Your wallet balance has reached the low-balance alert level you selected.",
+                        category: "wallet_low_balance", read: false, createdAt: nowIso,
+                      }),
+                    },
+                    currentDocument: { exists: false },
+                  },
+                );
+              }
             }
             const platformShare = charge.chargeMinor - (producerPath && producer
               ? producerShareMinor(charge.chargeMinor, Math.min(10_000, Math.max(0, integer(session["producerShareBps"]))))
