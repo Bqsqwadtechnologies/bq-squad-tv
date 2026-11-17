@@ -347,6 +347,22 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         if (sourceMetadata.purpose !== "hls_streaming" || sourceMetadata.mode !== "drain") {
           throw new ApiError(409, "STORAGE_DRAIN_MODE_REQUIRED", "Only a streaming location already in drain mode can be moved.");
         }
+        const pendingCopyTaskId = typeof payload?.["queuedCopyTaskId"] === "string" ? payload["queuedCopyTaskId"] : "";
+        if (pendingCopyTaskId) {
+          const pendingCopy = await fs.getDoc("videoMaintenanceJobs/" + pendingCopyTaskId);
+          if (!pendingCopy) throw new ApiError(409, "STORAGE_DRAIN_COPY_MISSING", "The film move task could not be found; the drain remains paused.");
+          if (pendingCopy["status"] !== "done" && pendingCopy["phase"] !== "done") {
+            if (pendingCopy["status"] === "failed" || pendingCopy["status"] === "blocked") {
+              throw new ApiError(409, "STORAGE_DRAIN_COPY_FAILED", "A film could not be moved safely; the drain remains paused.");
+            }
+            return Response.json({ done: false, waitingForVerifiedCopy: true, copyTaskId: pendingCopyTaskId });
+          }
+          await fs.patchDoc(taskPath, {
+            payload: { destinationId, cursorValue, cursorId },
+            completedCopyCount: (typeof task["completedCopyCount"] === "number" ? task["completedCopyCount"] : 0) + 1,
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+          });
+        }
         const page = await fs.query("contentAssets", {
           filters: [{ field: "streamDestinationId", op: "EQUAL", value: destinationId }],
           orderByField: "updatedAt",
