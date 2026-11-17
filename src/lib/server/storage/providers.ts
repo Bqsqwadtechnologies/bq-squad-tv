@@ -9,6 +9,7 @@ export type StorageProviderAdapter = {
   putObject(key: string, body: ArrayBuffer | Uint8Array, contentType: string): Promise<void>;
   getObject(key: string): Promise<{ body: ArrayBuffer; info: StorageObjectInfo }>;
   headObject(key: string): Promise<StorageObjectInfo | null>;
+  listObjects(prefix: string, cursor: string | null): Promise<{ objects: Array<{ key: string; sizeBytes: number }>; nextCursor: string | null }>;
   deleteObject(key: string): Promise<void>;
 };
 
@@ -56,6 +57,7 @@ async function b2Request(
   key: string,
   body?: Uint8Array,
   contentType = "application/octet-stream",
+  query: Record<string, string> = {},
 ): Promise<Response> {
   const metadata = config.metadata;
   const credentials = config.credentials;
@@ -63,6 +65,12 @@ async function b2Request(
   const endpoint = safeEndpoint(credentials.endpoint);
   const path = "/" + awsEncodePath(metadata.bucketName) + "/" + awsEncodePath(assertStorageObjectKey(key));
   const url = new URL(endpoint.origin + path);
+  const canonicalQuery = Object.entries(query)
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([name, value]) => encodeURIComponent(name).replace(/[!'()*]/g, char => "%" + char.charCodeAt(0).toString(16).toUpperCase()) + "=" +
+      encodeURIComponent(value).replace(/[!'()*]/g, char => "%" + char.charCodeAt(0).toString(16).toUpperCase()))
+    .join("&");
+  url.search = canonicalQuery;
   const payloadHash = await sha256(body ?? new Uint8Array());
   const now = new Date();
   const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, "");
@@ -70,7 +78,7 @@ async function b2Request(
   const scope = date + "/" + metadata.region + "/s3/aws4_request";
   const canonicalHeaders = "host:" + url.host + "\n" + "x-amz-content-sha256:" + payloadHash + "\n" + "x-amz-date:" + amzDate + "\n";
   const signedHeaders = "host;x-amz-content-sha256;x-amz-date";
-  const canonicalRequest = [method, url.pathname, "", canonicalHeaders, signedHeaders, payloadHash].join("\n");
+  const canonicalRequest = [method, url.pathname, canonicalQuery, canonicalHeaders, signedHeaders, payloadHash].join("\n");
   const stringToSign = ["AWS4-HMAC-SHA256", amzDate, scope, await sha256(canonicalRequest)].join("\n");
   const dateKey = await hmac("AWS4" + credentials.applicationKey, date);
   const regionKey = await hmac(dateKey, metadata.region);
@@ -123,6 +131,25 @@ function createB2Adapter(config: StorageDestinationConfiguration): StorageProvid
       if (!response.ok) throw safeProviderError();
       return { sizeBytes: Number(response.headers.get("content-length") ?? 0), etag: response.headers.get("etag"), contentType: response.headers.get("content-type") };
     },
+    async listObjects(prefix, cursor) {
+      const query: Record<string, string> = { "list-type": "2", prefix: assertStorageObjectKey(prefix).replace(/\/$/, "") + "/" };
+      if (cursor) query["continuation-token"] = cursor;
+      const response = await b2Request(config, "GET", "", undefined, "application/octet-stream", query);
+      if (!response.ok) throw safeProviderError();
+      const xml = await response.text();
+      const decodeXml = (value: string) => value.replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+      const objects: Array<{ key: string; sizeBytes: number }> = [];
+      for (const match of xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)) {
+        const block = match[1] ?? "";
+        const key = block.match(/<Key>([\s\S]*?)<\/Key>/)?.[1];
+        const size = Number(block.match(/<Size>(\d+)<\/Size>/)?.[1] ?? "NaN");
+        if (!key || !Number.isSafeInteger(size) || size < 0) throw safeProviderError();
+        objects.push({ key: decodeXml(key), sizeBytes: size });
+      }
+      const truncated = /<IsTruncated>true<\/IsTruncated>/i.test(xml);
+      const next = xml.match(/<NextContinuationToken>([\s\S]*?)<\/NextContinuationToken>/)?.[1];
+      return { objects, nextCursor: truncated && next ? decodeXml(next) : null };
+    },
     async deleteObject(key) {
       const response = await b2Request(config, "DELETE", key);
       if (!response.ok && response.status !== 404) throw safeProviderError();
@@ -171,6 +198,35 @@ function createLovableAdapter(config: StorageDestinationConfiguration): StorageP
       if (!item) return null;
       const size = item.metadata && typeof item.metadata === "object" && "size" in item.metadata ? Number(item.metadata.size) : 0;
       return { sizeBytes: Number.isSafeInteger(size) && size >= 0 ? size : 0, etag: item.id ?? null, contentType: typeof item.metadata?.["mimetype"] === "string" ? item.metadata["mimetype"] : null };
+    },
+    async listObjects(prefix, cursor) {
+      const safePrefix = assertStorageObjectKey(prefix).replace(/\/$/, "");
+      const state = cursor ? (() => {
+        try {
+          const decoded = JSON.parse(atob(cursor)) as { folders?: Array<{ path: string; offset: number }> };
+          if (!Array.isArray(decoded.folders)) throw new Error("invalid");
+          return decoded.folders.filter(item => typeof item.path === "string" && Number.isSafeInteger(item.offset) && item.offset >= 0);
+        } catch { throw new ApiError(400, "STORAGE_CURSOR_INVALID", "The storage listing cursor is invalid."); }
+      })() : [{ path: safePrefix, offset: 0 }];
+      const objects: Array<{ key: string; sizeBytes: number }> = [];
+      while (state.length && objects.length < 1000) {
+        const current = state.shift();
+        if (!current) break;
+        const { data, error } = await bucket.list(current.path, { limit: 1000, offset: current.offset, sortBy: { column: "name", order: "asc" } });
+        if (error) throw safeProviderError();
+        for (const item of data) {
+          const key = current.path + "/" + item.name;
+          if (item.id === null) state.push({ path: key, offset: 0 });
+          else {
+            const size = item.metadata && typeof item.metadata === "object" && "size" in item.metadata ? Number(item.metadata.size) : NaN;
+            if (!Number.isSafeInteger(size) || size < 0) throw safeProviderError();
+            objects.push({ key, sizeBytes: size });
+          }
+        }
+        if (data.length === 1000) state.unshift({ path: current.path, offset: current.offset + 1000 });
+      }
+      const nextCursor = state.length ? btoa(JSON.stringify({ folders: state })) : null;
+      return { objects, nextCursor };
     },
     async deleteObject(key) {
       const { error } = await bucket.remove([assertStorageObjectKey(key)]);
