@@ -4,6 +4,7 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAdminModule } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
+import { refreshStoragePoolDestination } from "@/lib/server/storage/pool-index";
 import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata } from "@/lib/server/storage/registry";
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 import { isStorageQuotaOrRateLimit, storageFailureCode, storageFailureMessage } from "@/lib/server/storage/maintenance";
@@ -39,6 +40,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/health")({
             healthCheckedAt: new Date().toISOString(),
             lastErrorCode: "STORAGE_DESTINATION_MISCONFIGURED",
           });
+          await refreshStoragePoolDestination(fs, destinationId).catch(() => undefined);
           throw new ApiError(503, "STORAGE_DESTINATION_MISCONFIGURED", "Required server credentials or endpoint configuration are missing or invalid.");
         }
         try {
@@ -49,6 +51,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/health")({
             healthCheckedAt: now,
             lastErrorCode: null,
           });
+          await refreshStoragePoolDestination(fs, destinationId).catch(() => undefined);
           await writeAuditLog(fs, {
             actorUid, action: "storage.destination_health_check_passed",
             targetType: "storageDestination", targetId: destinationId, reason,
@@ -67,6 +70,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/health")({
             lastErrorCode: code,
             degradedUntil: degraded ? new Date(Date.now() + 24 * 60 * 60_000).toISOString() : null,
           });
+          await refreshStoragePoolDestination(fs, destinationId).catch(() => undefined);
           if (degraded) {
             const alertId = crypto.randomUUID().replace(/-/g, "");
             await fs.setDoc("storageAlerts/" + alertId, {
