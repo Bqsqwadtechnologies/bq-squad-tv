@@ -60,7 +60,13 @@ data class ThemePreferenceSaveResponse(
     val themeMode: String,
 )
 
-interface ProfileApi {\n    @POST("v1/legal/acceptance")\n    suspend fun acceptLegalPages(\n        @Header("Authorization") bearerToken: String,\n        @Body request: LegalAcceptanceRequest,\n    ): LegalAcceptanceResponse\n
+interface ProfileApi {
+    @POST("v1/legal/acceptance")
+    suspend fun acceptLegalPages(
+        @Header("Authorization") bearerToken: String,
+        @Body request: LegalAcceptanceRequest,
+    ): LegalAcceptanceResponse
+
     @GET("v1/notifications")
     suspend fun notifications(
         @Header("Authorization") bearerToken: String,
