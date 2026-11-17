@@ -291,6 +291,21 @@ function AccountPage() {
     }
   }
 
+  async function handleContinue() {
+    setBusy(true);
+    setMessage("");
+    try {
+      const token = await restoreWebSession();
+      if (!token) throw new Error("Your account session could not be restored. Please sign in again.");
+      const account = await getWebAccount();
+      if (!account) throw new Error("Your account is not connected yet. Please sign in again.");
+      window.location.assign("/");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not open your account.");
+      setBusy(false);
+    }
+  }
+
   async function handleRevokeAllSessions() {
     setBusy(true);
     setMessage("");
@@ -327,8 +342,8 @@ function AccountPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#030b2a] px-4 py-12 text-white">
       <div className="w-full max-w-md">
-        <a href="/" className="mb-8 block text-center text-2xl font-black tracking-[0.14em] text-cyan-200">
-          BQ SQWAD TV
+        <a href="/" className="mb-8 flex justify-center" aria-label="BQ SQWAD TV home">
+          <img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="h-auto w-56 object-contain" />
         </a>
         <section className="rounded-3xl border border-cyan-200/15 bg-[#08163e] p-6 shadow-2xl shadow-blue-950/50 sm:p-8">
           {signedIn ? (
@@ -361,30 +376,35 @@ function AccountPage() {
                 </select>
                 <span className="mt-1 block text-xs text-blue-100/55">Wallet currency: {walletCurrency}. It cannot be changed after your wallet is established.</span>
               </label>
-              <a
-                href="/"
-                aria-disabled={!countryReady || busy}
-                onClick={event => { if (!countryReady || busy) event.preventDefault(); }}
-                className={`mt-6 block w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 text-center text-sm font-extrabold text-[#031039] transition hover:brightness-110 ${countryReady && !busy ? "" : "pointer-events-none opacity-50"}`}
-              >
-                Continue to BQ SQWAD TV
-              </a>
               <button
                 type="button"
-                disabled={busy}
-                onClick={() => void handleRevokeAllSessions()}
-                className="mt-3 w-full rounded-xl border border-cyan-300/25 px-4 py-3 text-sm font-bold text-cyan-100 hover:bg-cyan-300/5 disabled:opacity-50"
+                disabled={!countryReady || busy}
+                onClick={() => void handleContinue()}
+                aria-label="Continue to BQ SQWAD TV"
+                className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 text-sm font-extrabold text-[#031039] transition hover:brightness-110 disabled:pointer-events-none disabled:opacity-50"
               >
-                {busy ? "Please wait…" : "Sign out on all devices"}
+                <img src="/brand/bq-sqwad-tv-logo.svg" alt="" className="h-8 w-auto max-w-[120px] object-contain" />
+                <span>Continue</span>
               </button>
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void handleSignOut()}
-                className="mt-7 w-full rounded-xl border border-white/15 px-4 py-3 text-sm font-bold hover:bg-white/5 disabled:opacity-50"
-              >
-                {busy ? "Please wait…" : "Sign out"}
-              </button>
+              <details className="mt-5 rounded-xl border border-white/10 p-3">
+                <summary className="cursor-pointer text-sm font-semibold text-blue-100/70">Account security</summary>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => void handleRevokeAllSessions()}
+                                className="mt-3 w-full rounded-xl border border-cyan-300/25 px-4 py-3 text-sm font-bold text-cyan-100 hover:bg-cyan-300/5 disabled:opacity-50"
+                              >
+                                {busy ? "Please wait…" : "Sign out on all devices"}
+                              </button>
+                              <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => void handleSignOut()}
+                                className="mt-7 w-full rounded-xl border border-white/15 px-4 py-3 text-sm font-bold hover:bg-white/5 disabled:opacity-50"
+                              >
+                                {busy ? "Please wait…" : "Sign out"}
+                              </button>
+              </details>
             </>
           ) : verificationPending ? (
             <>
@@ -455,6 +475,13 @@ function AccountPage() {
                     className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 outline-none focus:border-cyan-300"
                   />
                 </label>
+                {googleClientId ? (
+                  <GoogleSignInButton clientId={googleClientId} onCredential={handleGoogleCredential} />
+                ) : (
+                  <p className="text-center text-xs text-blue-100/55">
+                    Google sign-in will appear here when the Google Web Client ID is configured.
+                  </p>
+                )}
                 <button
                   type="submit"
                   disabled={busy || !email.includes("@") || password.length < 6}
@@ -463,13 +490,7 @@ function AccountPage() {
                   {busy ? "Please wait…" : createAccount ? "Create account" : "Sign in"}
                 </button>
               </form>
-              {googleClientId ? (
-                <GoogleSignInButton clientId={googleClientId} onCredential={handleGoogleCredential} />
-              ) : (
-                <p className="mt-4 text-center text-xs text-blue-100/45">
-                  Google sign-in will appear when the Web Client ID is configured.
-                </p>
-              )}
+
               <div className="mt-4 flex items-center justify-between gap-3 text-sm">
                 <button
                   type="button"
@@ -498,9 +519,6 @@ function AccountPage() {
             </p>
           )}
         </section>
-        <p className="mt-6 text-center text-xs text-blue-100/45">
-          Secure sign-in powered by Firebase Authentication.
-        </p>
       </div>
     </main>
   );
