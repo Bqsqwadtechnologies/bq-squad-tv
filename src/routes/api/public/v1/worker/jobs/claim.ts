@@ -41,8 +41,9 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
             claimToken: { stringValue: claimToken }, leaseExpiresAt: { stringValue: leaseExpiresAt },
             workerId: { stringValue: workerId },
             attempts: { integerValue: String((typeof job["attempts"] === "number" ? job["attempts"] : 0) + 1) },
+            attemptSequence: { integerValue: String((typeof job["attemptSequence"] === "number" ? job["attemptSequence"] : 0) + 1) },
             startedAt: { stringValue: now.toISOString() }, updatedAt: { stringValue: now.toISOString() },
-          } }, updateMask: { fieldPaths: ["status", "workerStatus", "claimToken", "leaseExpiresAt", "attempts", "startedAt", "updatedAt", "workerId"] } }] };
+          } }, updateMask: { fieldPaths: ["status", "workerStatus", "claimToken", "leaseExpiresAt", "attempts", "attemptSequence", "startedAt", "updatedAt", "workerId"] } }] };
         });
         if (!claimed) continue;
         let newReservationId = "";
@@ -73,7 +74,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           const metadata = validateStorageDestinationMetadata({ ...rawDestination, destinationId: outputReservation.destinationId });
           const outputConfig = resolveStorageDestinationConfiguration(metadata);
           if (outputConfig.configurationStatus !== "configured") throw new ApiError(503, "HLS_DESTINATION_MISCONFIGURED", "The HLS destination is not configured.");
-          const attemptNumber = typeof job["attempts"] === "number" ? job["attempts"] : 1;
+          const attemptNumber = typeof job["attemptSequence"] === "number" ? job["attemptSequence"] : 1;
           const outputPrefix = "hls/" + assetId + "/a" + attemptNumber;
           await fs.patchDoc(jobPath, {
             outputDestinationId: outputReservation.destinationId, outputPrefix,
@@ -82,7 +83,9 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
             updatedAt: new Date().toISOString(),
           });
           return Response.json({ job: {
-            assetId, claimToken, leaseExpiresAt, workerId, profile, sourceDownloadUrl: sourceTarget.signedUrl,
+            assetId, claimToken, leaseExpiresAt, workerId, profile, attemptNumber,
+            sourceSha256: typeof job["sourceSha256"] === "string" ? job["sourceSha256"] : null,
+            sourceDownloadUrl: sourceTarget.signedUrl,
             sourceFilename: job["sourceFilename"], sourceSizeBytes: job["sourceSizeBytes"],
             outputDestinationId: outputReservation.destinationId, outputPrefix, outputReservedBytes: reservedBytes,
           } });
