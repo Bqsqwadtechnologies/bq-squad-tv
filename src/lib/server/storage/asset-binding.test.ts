@@ -13,12 +13,12 @@ afterEach(() => vi.unstubAllEnvs());
 describe("asset storage bindings", () => {
   it("keeps legacy assets on the original streaming location", () => {
     expect(resolveAssetStreamBinding({ streamObjectPrefix: "hls/asset-1/a2" }, "asset-1")).toEqual({
-      streamDestinationId: "lovable-stream-legacy",
+      streamDestinationId: "legacy_lovable_streaming",
       streamReplicaIds: [],
       objectPrefix: "hls/asset-1/a2",
     });
     expect(resolveAssetStreamBinding({}, "asset-2")).toEqual({
-      streamDestinationId: "lovable-stream-legacy",
+      streamDestinationId: "legacy_lovable_streaming",
       streamReplicaIds: [],
       objectPrefix: "hls/asset-2",
     });
@@ -132,11 +132,11 @@ describe("asset storage bindings", () => {
     });
     expect(binding).toEqual({
       streamDestinationId: "b2-001",
-      streamReplicaIds: ["lovable-stream-legacy"],
+      streamReplicaIds: ["legacy_lovable_streaming"],
       objectPrefix: "hls/asset-5/a2",
     });
     expect(docs.get("contentAssets/asset-5")?.["streamDestinationId"]).toBe("b2-001");
-    expect(docs.get("contentAssets/asset-5")?.["streamReplicaIds"]).toEqual(["lovable-stream-legacy"]);
+    expect(docs.get("contentAssets/asset-5")?.["streamReplicaIds"]).toEqual(["legacy_lovable_streaming"]);
     expect(docs.get("storageReservations/reserve-asset-005")?.["bindingStatus"]).toBe("bound");
   });
 });
