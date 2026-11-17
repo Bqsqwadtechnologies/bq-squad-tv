@@ -136,6 +136,7 @@ export async function rebuildStoragePoolIndex(
 
   let eligibleCount = 0;
   let shardCount = 0;
+  let replicaPoolFreeBytes = 0;
   const currentPoolDocs = await fs.query("storagePool", { limit: 500 });
   const desiredPoolIds = new Set<string>();
 
@@ -172,6 +173,9 @@ export async function rebuildStoragePoolIndex(
       .sort((left, right) => left.priority - right.priority || left.id.localeCompare(right.id));
 
     eligibleCount += eligible.length;
+    if (purpose === "hls_streaming") {
+      replicaPoolFreeBytes = eligible.reduce((sum, item) => sum + item.freeBytes, 0);
+    }
     for (const shard of shardStoragePoolEntries(purpose, eligible)) {
       desiredPoolIds.add(shard.docId);
       shardCount++;
@@ -201,6 +205,16 @@ export async function rebuildStoragePoolIndex(
   for (let offset = 0; offset < poolWrites.length; offset += 500) {
     await fs.commit(poolWrites.slice(offset, offset + 500));
   }
+  const replicaBudget = await fs.getDoc("storageReplicaBudget/global");
+  const replicaUsedBytes = safeBytes(replicaBudget?.["usedBytes"]);
+  const replicaBasePoolBytes = replicaPoolFreeBytes + replicaUsedBytes;
+  await fs.setDoc("storageReplicaBudget/global", {
+    freePoolBytes: replicaPoolFreeBytes,
+    usedBytes: replicaUsedBytes,
+    basePoolBytes: replicaBasePoolBytes,
+    budgetBytes: Math.floor(replicaBasePoolBytes * 0.2),
+    updatedAt: now,
+  });
   return { destinationCount: parsed.length, eligibleCount, shardCount, groupCount: groups.size };
 }
 
