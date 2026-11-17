@@ -44,7 +44,7 @@ export async function resolvePlatformAccess(
     email && user["email"].trim().toLowerCase() === email.trim().toLowerCase(),
   );
   const effectiveEmailVerified = emailVerified || appEmailVerified;
-  const configuredAdmin = (process.env["ZILLIONAIRE_EMAIL"] ?? process.env["ADMIN_EMAIL"])?.trim().toLowerCase();
+  const configuredAdmin = process.env["ZILLIONAIRE_EMAIL"]?.trim().toLowerCase();
   const isSuperAdmin = Boolean(
     effectiveEmailVerified && configuredAdmin && email?.trim().toLowerCase() === configuredAdmin,
   );
