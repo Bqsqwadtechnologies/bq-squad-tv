@@ -1,0 +1,34 @@
+import { ApiError, type Firestore } from "./firebase-admin";
+
+export type LegalAudience = "public" | "producer" | "provider";
+
+const REQUIRED_BY_AUDIENCE: Record<LegalAudience, string[]> = {
+  public: ["terms", "privacy-policy"],
+  producer: ["terms", "privacy-policy", "producer-terms", "producer-policy"],
+  provider: ["terms", "privacy-policy", "provider-terms"],
+};
+
+export async function getRequiredLegalPages(fs: Firestore, audience: LegalAudience) {
+  const slugs = REQUIRED_BY_AUDIENCE[audience];
+  const pages = await Promise.all(slugs.map(slug => fs.getDoc("sitePages/" + slug)));
+  return pages.map((page, index) => {
+    const slug = slugs[index]!;
+    if (!page || page["status"] !== "published" || !Number.isSafeInteger(page["version"])) {
+      throw new ApiError(503, "LEGAL_PAGES_NOT_READY", "The required legal pages are not published yet. Please try again later.");
+    }
+    if (typeof page["body"] !== "string" || /\\{\\{[a-z0-9_]+\\}\\}/.test(page["body"] as string)) {
+      throw new ApiError(503, "LEGAL_PAGE_INCOMPLETE", "A required legal page is incomplete and cannot be accepted.");
+    }
+    return { slug, version: page["version"] as number, title: String(page["title"] ?? slug), requiresReacceptance: page["requiresReacceptance"] === true };
+  });
+}
+
+export async function assertLegalAcceptance(fs: Firestore, uid: string, audience: LegalAudience = "public"): Promise<void> {
+  const pages = await getRequiredLegalPages(fs, audience);
+  for (const page of pages) {
+    const accepted = await fs.getDoc("legalAcceptances/" + uid + "_" + page.slug + "_v" + page.version);
+    if (!accepted || accepted["uid"] !== uid || accepted["slug"] !== page.slug || accepted["version"] !== page.version) {
+      throw new ApiError(403, "LEGAL_ACCEPTANCE_REQUIRED", "Please review and accept the latest service terms and privacy notice before continuing.");
+    }
+  }
+}
