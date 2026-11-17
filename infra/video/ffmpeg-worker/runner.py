@@ -155,9 +155,11 @@ def content_type_for(path: Path) -> str:
     }.get(path.suffix.lower(), "application/octet-stream")
 
 
-def iter_file_chunks(file_path: Path):
+def iter_file_chunks(file_path: Path, lease_lost: threading.Event):
     with file_path.open("rb") as source:
         while True:
+            if lease_lost.is_set():
+                raise RuntimeError("WORKER_LEASE_LOST")
             chunk = source.read(1024 * 1024)
             if not chunk:
                 break
@@ -172,7 +174,7 @@ def upload_file(job: dict, file_path: Path, root: Path, target: dict, lease_lost
         raise RuntimeError("OUTPUT_FILE_SIZE_INVALID")
     request = urllib.request.Request(
         target["signedUrl"],
-        data=iter_file_chunks(file_path),
+        data=iter_file_chunks(file_path, lease_lost),
         method="PUT",
         headers={
             "content-type": content_type_for(file_path),
@@ -247,10 +249,20 @@ def process_job(job: dict) -> None:
                 "nice", "-n", "10", "python", "/app/transcode.py", "--input", str(source),
                 "--output", str(output), "--threads", str(max(1, min(8, int(os.environ.get("FFMPEG_THREADS", "2"))))),
             ]
-            completed = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+            process = subprocess.Popen(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            while process.poll() is None:
+                if lease_lost.wait(1):
+                    process.terminate()
+                    try:
+                        process.wait(timeout=10)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait(timeout=5)
+                    raise RuntimeError("WORKER_LEASE_LOST")
+            stdout, stderr = process.communicate()
             ensure_lease()
-            if completed.returncode != 0:
-                raise RuntimeError("Media processing failed.")
+            if process.returncode != 0:
+                raise RuntimeError("MEDIA_PROCESSING_FAILED")
             files = sorted(
                 (path for path in output.rglob("*") if path.is_file()),
                 key=lambda path: (
