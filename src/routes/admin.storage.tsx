@@ -34,7 +34,6 @@ type Destination = {
   egressMonthBytes?: number | null;
   egressLevel?: string | null;
   freeEgressBudgetBytes?: number | null;
-  paidEgressEnabled?: boolean;
   egressAccountMonthBytes?: number | null;
 };
 
@@ -69,7 +68,6 @@ function AdminStoragePage() {
   const [accountCapGb, setAccountCapGb] = useState("");
   const [dailyEgressGb, setDailyEgressGb] = useState("");
   const [monthlyEgressGb, setMonthlyEgressGb] = useState("");
-  const [paidEgressEnabled, setPaidEgressEnabled] = useState(false);
   const [priority, setPriority] = useState("100");
   const [enabled, setEnabled] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -170,7 +168,6 @@ function AdminStoragePage() {
     setAccountCapGb(item.accountCapBytes == null ? "" : String(item.accountCapBytes / 1_000_000_000));
     setDailyEgressGb(item.dailyEgressCapBytes === null ? "" : String(item.dailyEgressCapBytes / 1_000_000_000));
     setMonthlyEgressGb(item.freeEgressBudgetBytes == null ? "" : String(item.freeEgressBudgetBytes / 1_000_000_000));
-    setPaidEgressEnabled(item.paidEgressEnabled === true);
     setPriority(String(item.priority));
     setEnabled(item.enabled);
     setMessage("Editing " + item.destinationId + ". Save to update its non-secret metadata.");
@@ -196,7 +193,6 @@ function AdminStoragePage() {
         accountCapBytes: accountCap === null ? null : Math.floor(accountCap * 1_000_000_000),
         dailyEgressCapBytes: egress === null ? null : Math.floor(egress * 1_000_000_000),
         freeEgressBudgetBytes: monthlyEgress === null ? null : Math.floor(monthlyEgress * 1_000_000_000),
-        paidEgressEnabled,
         priority: Number(priority), enabled,
       };
       const response = await fetch("/api/public/v1/admin/storage/destinations", {
@@ -275,7 +271,6 @@ function AdminStoragePage() {
                 <label className="grid gap-2 text-xs text-blue-100/70">Location capacity limit (GB)<input required type="number" min="0.01" step="0.01" value={softCapGb} onChange={event => setSoftCapGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Shared account capacity limit (GB, optional; use the same value for all locations in one account)<input type="number" min="0.01" step="0.01" value={accountCapGb} onChange={event => setAccountCapGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Monthly data transfer allowance (GB; shared by all locations in the account)<input type="number" min="0" step="0.01" value={monthlyEgressGb} onChange={event => setMonthlyEgressGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
-                <label className="flex items-center gap-3 text-xs text-blue-100/70"><input type="checkbox" checked={paidEgressEnabled} onChange={event => setPaidEgressEnabled(event.target.checked)} /> Allow paid data transfer for this entire account</label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Daily data transfer limit (GB, optional)<input type="number" min="0.01" step="0.01" value={dailyEgressGb} onChange={event => setDailyEgressGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Priority (lower is preferred)<input required type="number" min="0" max="10000" value={priority} onChange={event => setPriority(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="flex items-center gap-3 text-xs text-blue-100/70"><input type="checkbox" checked={enabled} onChange={event => setEnabled(event.target.checked)} /> Enable this location</label>
