@@ -10,10 +10,16 @@ import { assertStorageObjectKey } from "@/lib/server/storage/ledger";
 import { listAllStorageObjects } from "@/lib/server/storage/listing";
 import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
 import { sendPushNotificationToUser } from "@/lib/server/notifications";
+import { estimateModalComputeCost } from "@/lib/server/modal-spend";
 
 const schema = z.object({
   claimToken: z.string().regex(/^[a-f0-9]{32}$/),
   files: z.array(z.object({ key: z.string().min(1).max(1024), sizeBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) })).min(2).max(20000),
+  computeUsage: z.object({
+    cores: z.number().finite().min(0.125).max(64),
+    memoryGiB: z.number().finite().min(0.125).max(512),
+    seconds: z.number().int().min(0).max(10_800),
+  }).optional(),
 });
 
 export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/complete")({
@@ -118,9 +124,23 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
         expectedObjectCount: body.files.length, uploadedObjectCount: listedObjects.length,
         ownerReviewRequired: true, ownerReviewRequiredAt: now, updatedAt: now,
       });
+      const usage = body.computeUsage;
+      const cores = usage?.cores ?? 0;
+      const memoryGiB = usage?.memoryGiB ?? 0;
+      const seconds = usage?.seconds ?? 0;
+      const estimatedCostUsd = estimateModalComputeCost(cores, memoryGiB, seconds);
+      const month = now.slice(0, 7);
+      const attempt = typeof job["attempts"] === "number" ? job["attempts"] : 1;
+      const usageId = month + "-" + assetId + "-a" + attempt;
+      await fs.setDoc("modalUsage/" + usageId, {
+        month, assetId, attempt, cores, memoryGiB, seconds,
+        outputBytes: totalBytes, estimatedCostUsd, recordedAt: now,
+      });
       await fs.patchDoc(jobPath, {
         status: "completed", workerStatus: "completed", outputBytes: totalBytes,
         outputFileCount: body.files.length, completedAt: now, updatedAt: now,
+        modalCores: cores, modalMemoryGiB: memoryGiB, modalSeconds: seconds,
+        modalEstimatedCostUsd: estimatedCostUsd, modalUsageMonth: month,
         claimToken: null, leaseExpiresAt: null,
       });
       try {
