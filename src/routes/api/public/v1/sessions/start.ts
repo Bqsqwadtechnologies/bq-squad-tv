@@ -268,6 +268,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
 
           const now = new Date();
           const nowIso = now.toISOString();
+          const budgetMonth = nowIso.slice(0, 7);
+          const monthlyUsagePath = "walletMonthlyUsage/" + user.uid + "_" + budgetMonth;
           const playbackUrl = await makePlaybackUrl(request.url, sessionId, user.uid, storagePath);
           const egressGrant = await reserveExpectedStorageEgress(
             fs, streamConfiguration.metadata, sessionId, initialEgressBytes,
@@ -297,10 +299,11 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           };
           let committedBalanceMinor = balanceMinor;
           try {
-            await fs.transact([idempotencyPath, activeSessionsPath, walletPath, holdPath], docs => {
+            await fs.transact([idempotencyPath, activeSessionsPath, walletPath, holdPath, monthlyUsagePath], docs => {
               if (docs[0]) throw new ApiError(409, "IDEMPOTENCY_KEY_ALREADY_USED", "This session request has already been used.");
               const activeSessionDoc = docs[1] ?? {};
               const currentWallet = docs[2] ?? {};
+              const monthlyUsage = docs[4] ?? {};
               const currentBalance = currentWallet["balanceMinor"] === undefined
                 ? 0 : requireMinorUnitAmount(currentWallet["balanceMinor"], "wallet balance");
               const heldBalance = integer(currentWallet["heldBalanceMinor"]) ?? 0;
@@ -310,8 +313,15 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
                 ? currentWallet["dailySpendLimitMinor"] : dailySpendLimitMinor;
               const dailyRemaining = typeof dailyLimit === "number" && Number.isSafeInteger(dailyLimit)
                 ? Math.max(0, dailyLimit - spentToday) : Number.MAX_SAFE_INTEGER;
+              const monthlyBudget = integer(currentWallet["monthlyBudgetMinor"]) ?? 0;
+              const monthlySpent = integer(monthlyUsage["spentMinor"]) ?? 0;
+              const monthlyRemaining = monthlyBudget > 0
+                ? Math.max(0, monthlyBudget - monthlySpent) : Number.MAX_SAFE_INTEGER;
+              if (paidPlayback && monthlyRemaining <= 0) {
+                throw new ApiError(402, "MONTHLY_BUDGET_REACHED", "Your monthly viewing budget has been reached.");
+              }
               const targetHoldMinor = ratePerMinuteMinor > 0
-                ? Math.min(Number.MAX_SAFE_INTEGER, ratePerMinuteMinor * 10, dailyRemaining)
+                ? Math.min(Number.MAX_SAFE_INTEGER, ratePerMinuteMinor * 10, dailyRemaining, monthlyRemaining)
                 : 0;
               const hold = initialSessionHold(currentBalance, heldBalance, targetHoldMinor);
               if (paidPlayback && hold.holdMinor < 1) {
