@@ -80,3 +80,27 @@ The following additional direct-to-main commits were made after the initial repo
 - `e94244969ba4c9be36904c9421616680dbcbd83e` — updated the accessibility review with the profile avatar and header changes.
 
 These are source edits only. No scanner, build, type-check, lint, unit test, browser screenshot or Android emulator test was run. The hidden-console random-slug requirement remains deliberately unimplemented as a security mechanism; noindex and robots rules do not protect data. Producer and Downloads functionality remain preserved. File 01 is still partial, not complete.
+
+
+## Four-batch continuation — Batch 3 progress (2026-11-17)
+
+### Committed implementation
+
+- Added authenticated `GET/PUT /api/public/v1/profile/preferences` for the account appearance setting.
+- Android stores its selected appearance locally before the first Compose frame, supports System/Light/Dark in Settings, and attempts to synchronize the choice to the signed-in account.
+- Website applies the saved device palette from an early head script, exposes a White/Dark navy appearance selector on the account page, and synchronizes it through the same authenticated preferences route when signed in.
+- Android wallet display now uses the shared exact minor-unit `CurrencyFormatter`; tests were added for negative subunits and large amounts.
+- Website home wallet control no longer displays a fixed dollar symbol while country currency is loading; it shows a wallet icon until the public country/currency configuration arrives, then uses USD only as the fallback.
+- Added reusable Compose components for top bar, avatar, icon button, card, list row, empty/error states, skeleton, price chip, rating, segmented control, bottom sheet, confirmation dialog, toast host and a content-driven Learn More sheet.
+- Added website shared top bar, icon button, bottom sheet, confirmation dialog, toast helper and Learn More sheet primitives; existing card/avatar/list/error/skeleton/price/rating/segmented components remain available.
+
+### Batch 3 limitations
+
+- The new shared components are foundations and have not yet been migrated into every screen.
+- The Learn More sheet accepts supplied content; it is not yet connected to the future editable pages system.
+- Theme choice is persisted locally and synchronized to the account, but first paint uses the device preference. A different account preference is reconciled after sign-in/session restoration; no server-rendered Firebase session cookie exists to guarantee account theme before the first unauthenticated HTML paint.
+- Some older website screens still use fixed light/dark utility colors rather than semantic tokens, so full visual theme coverage and WCAG contrast verification remain outstanding.
+- Country-based currency detection uses trusted request country headers when available and the browser language region as fallback; if neither is present, the configured fallback is USD.
+- No Android build, website build, type-check, lint, unit test, emulator or screenshot test was run. No compile or test success is claimed.
+
+Batch 3 is partially implemented; it is not a verified completion.
