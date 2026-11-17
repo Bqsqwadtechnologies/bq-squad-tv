@@ -125,11 +125,11 @@ function HomePage() {
           </a>
           <a href="/wallet" aria-label="Wallet" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-blue-100 bg-blue-50 text-xs font-bold text-blue-700 transition hover:border-cyan-300/50">{walletCurrencySymbol || <Wallet size={18} aria-hidden="true" />}</a>
           <a aria-label="Search" href="/search" className="hidden h-10 w-10 place-items-center rounded-full border border-blue-100 bg-white text-blue-700 transition hover:border-cyan-300/50 hover:text-cyan-200 min-[381px]:grid"><Search size={19} /></a>
-          <button onClick={() => setNotice("Notifications will appear here when your account is connected.")} aria-label="Notifications" className="relative hidden h-10 w-10 place-items-center rounded-full border border-blue-100 bg-white text-blue-700 transition hover:border-cyan-300/50 min-[381px]:grid"><Bell size={18} /><span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-cyan-300" /></button>
+          <button onClick={() => { window.location.href = "/notifications"; }} aria-label="Notifications" className="relative hidden h-10 w-10 place-items-center rounded-full border border-blue-100 bg-white text-blue-700 transition hover:border-cyan-300/50 min-[381px]:grid"><Bell size={18} /><span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-cyan-300" /></button>
           <button onClick={() => setHeaderMenuOpen(value => !value)} aria-label="More options" aria-expanded={headerMenuOpen} className="grid h-10 w-10 place-items-center rounded-full border border-blue-100 bg-white text-blue-700 min-[381px]:hidden"><MoreHorizontal size={20} /></button>
           {headerMenuOpen ? <div className="absolute right-0 top-12 z-50 grid min-w-40 gap-1 rounded-xl border border-blue-100 bg-white p-2 text-slate-800 shadow-xl min-[381px]:hidden">
             <a href="/search" onClick={() => setHeaderMenuOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"><Search size={16} /> Search</a>
-            <button onClick={() => { setHeaderMenuOpen(false); setNotice("Notifications will appear here when your account is connected."); }} className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm"><Bell size={16} /> Notifications</button>
+            <a href="/notifications" onClick={() => setHeaderMenuOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"><Bell size={16} /> Notifications</a>
           </div> : null}
         </div>
       </header>
