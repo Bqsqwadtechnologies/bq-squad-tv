@@ -73,7 +73,12 @@ fun PlayerScreen(
     var localElapsed by remember { mutableLongStateOf(0L) }
     var showTopUp by remember { mutableStateOf(false) }
     var retryCount by remember(channelId) { mutableIntStateOf(0) }
-    val player = remember {\n      val loadControl = DefaultLoadControl.Builder()\n          .setBufferDurationsMs(15_000, 50_000, 1_000, 3_000)\n          .build()\n      ExoPlayer.Builder(context).setLoadControl(loadControl).build().apply { playWhenReady = true }\n  }
+    val player = remember {
+      val loadControl = DefaultLoadControl.Builder()
+          .setBufferDurationsMs(15_000, 50_000, 1_000, 3_000)
+          .build()
+      ExoPlayer.Builder(context).setLoadControl(loadControl).build().apply { playWhenReady = true }
+  }
     LaunchedEffect(session?.playbackUrl) {
         val url = session?.playbackUrl ?: return@LaunchedEffect
         val resumeAt = player.currentPosition.coerceAtLeast(0L)
