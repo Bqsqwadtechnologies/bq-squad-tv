@@ -9,6 +9,7 @@ export const Route = createFileRoute("/admin/ads")({
     meta: [
       { title: "Ad provider settings | BQ SQWAD TV" },
       { name: "description", content: "Configure separate Android and website advertising providers." },
+      { name: "robots", content: "noindex, nofollow, noarchive" },
     ],
   }),
 });
