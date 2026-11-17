@@ -4,6 +4,8 @@ import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { decodeLedgerCursor, encodeLedgerCursor } from "@/lib/server/ledger";
 import { getWallet } from "@/lib/server/api";
+import { minorUnitDigits } from "@/lib/server/currency";
+import { currencySymbol, formatMinorCurrency } from "@/lib/server/currency-format";
 
 const limitSchema = z.coerce.number().int().min(1).max(100).default(25);
 
@@ -34,12 +36,19 @@ export const Route = createFileRoute("/api/public/v1/wallet/ledger")({
             createdAt: typeof row["createdAt"] === "string" ? row["createdAt"] : "",
             kind: typeof row["kind"] === "string" ? row["kind"] : "adjustment",
             currency: typeof row["currency"] === "string" ? row["currency"] : wallet.currency,
+            currencyCode: typeof row["currency"] === "string" ? row["currency"] : wallet.currency,
+            minorUnitDigits: minorUnitDigits(typeof row["currency"] === "string" ? row["currency"] : wallet.currency),
+            symbol: currencySymbol(typeof row["currency"] === "string" ? row["currency"] : wallet.currency),
+            formattedAmount: formatMinorCurrency(
+              typeof row["amountMinor"] === "number" && Number.isSafeInteger(row["amountMinor"]) ? row["amountMinor"] : 0,
+              typeof row["currency"] === "string" ? row["currency"] : wallet.currency,
+            ),
           }));
           const last = page.at(-1);
           const nextCursor = hasMore && last && typeof last["createdAt"] === "string"
             ? encodeLedgerCursor({ createdAt: last["createdAt"], id: last.__id })
             : null;
-          return Response.json({ items, nextCursor, currency: wallet.currency }, { headers: { "cache-control": "no-store" } });
+          return Response.json({ items, nextCursor, currency: wallet.currency, currencyCode: wallet.currency, minorUnitDigits: minorUnitDigits(wallet.currency), symbol: currencySymbol(wallet.currency) }, { headers: { "cache-control": "no-store" } });
         } catch (error) {
           return errorBody(error);
         }
