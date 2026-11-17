@@ -50,11 +50,12 @@ function publicSource(content) {
 function isTarget(file) {
   const relative = path.relative(root, file).split(path.sep).join("/");
   if (!sourceExtensions.test(file)) return false;
-  return (relative.startsWith("src/routes/") && !relative.startsWith("src/routes/api/") && !relative.endsWith("/README.md")) ||
+  if (relative.startsWith("src/routes/api/") || relative.startsWith("src/lib/") || relative.endsWith("/README.md")) return false;
+  return relative.startsWith("src/routes/") ||
     relative.startsWith("src/components/") ||
     relative.startsWith("android/") ||
-    /(^|\/)(emails?|email-templates?|legal|content\/legal|seed)(\/|$)/i.test(relative) ||
-    /(email|legal|policy|terms|template|seed)/i.test(path.basename(file));
+    /^(emails?|email-templates?|legal|content\/legal|seed)\//i.test(relative) ||
+    /^src\/(email-templates?|content\/legal|legal|seed)\//i.test(relative);
 }
 
 function visibleCandidates(content, relative) {
