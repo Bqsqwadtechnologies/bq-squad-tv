@@ -5,7 +5,7 @@ import { errorBody, getWallet, parseBody, requireUser } from "@/lib/server/api";
 import { getPricingConfig } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getPaystackTopup } from "@/lib/server/paystack";
-import { recordRiskSignal } from "@/lib/server/risk-engine";
+import { assertRiskStepUp, recordRiskSignal } from "@/lib/server/risk-engine";
 
 const schema = z.object({ packageId: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/) });
 
@@ -45,6 +45,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
       const { packageId } = await parseBody(request, schema);
       const fs = await Firestore.create();
       await enforceRateLimit(fs, "paystack-init:" + user.uid, { limit: 5, windowMs: 60_000 });
+      await assertRiskStepUp(fs, user.uid, user.authTime);
       const wallet = await getWallet(fs, user.uid);
       const currency = wallet.currency;
       const pricing = await getPricingConfig(fs);
