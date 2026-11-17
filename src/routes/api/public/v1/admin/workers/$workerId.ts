@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/v1/admin/workers/$workerId")({
       if (!/^[A-Za-z0-9_-]{1,64}$/.test(workerId)) throw new ApiError(400, "WORKER_ID_INVALID", "The worker identifier is invalid.");
       const fs = await Firestore.create();
       const access = await requireAdminModule(fs, user, "security");
-      if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "This setting is only available in the Zillionaire dashboard.");
+      if (!access.isZillionaireOwner) throw new ApiError(403, "OWNER_ONLY", "This setting is only available in the Zillionaire dashboard.");
       const configured = process.env["VIDEO_WORKER_KEYS_JSON"] ?? "";
       if (configured) {
         let keys: Record<string, unknown>;
