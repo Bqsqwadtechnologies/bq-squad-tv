@@ -61,7 +61,7 @@ fun BqSqwadTvApp() {
                                         restoreState = true
                                     }
                                 },
-                                icon = { Text(tab.symbol) },
+                                icon = { if (tab.route == "account") Icon(Icons.Default.Person, contentDescription = "Profile") else Text(tab.symbol) },
                                 label = { Text(tab.label) },
                             )
                         }
