@@ -147,7 +147,6 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
   const egressDayBytes = input["egressDayBytes"] ?? 0;
   const freeEgressBudgetBytes = input["freeEgressBudgetBytes"] ??
     (providerType === "lovable_storage" && typeof softCapBytes === "number" ? softCapBytes * 2 : 0);
-  const paidEgressEnabled = false;
   const egressBudgetSource = input["egressBudgetSource"] ?? null;
   const egressBudgetCheckedAt = input["egressBudgetCheckedAt"] ?? null;
   const egressBudgetSourceUrl = input["egressBudgetSourceUrl"] ?? null;
