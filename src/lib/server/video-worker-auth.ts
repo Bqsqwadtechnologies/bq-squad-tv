@@ -50,7 +50,7 @@ export async function createWorkerSignatureMessage(
   pathname: string,
   body: string,
 ): Promise<string> {
-  return [timestamp, nonce, method.toUpperCase(), pathname, await sha256(body)].join("\\n");
+  return [timestamp, nonce, method.toUpperCase(), pathname, await sha256(body)].join("\n");
 }
 
 /** Worker requests are bound to method, path, timestamp, nonce and exact body bytes. */
@@ -75,7 +75,7 @@ export async function requireVideoWorker(request: Request, fs: Firestore): Promi
   const body = await request.clone().text();
   if (body.length > 8 * 1024 * 1024) throw new ApiError(413, "WORKER_REQUEST_TOO_LARGE", "The worker request is too large.");
   const url = new URL(request.url);
-  const message = [timestamp, nonce, request.method.toUpperCase(), url.pathname, await sha256(body)].join("\n");
+  const message = await createWorkerSignatureMessage(timestamp, nonce, request.method, url.pathname, body);
   const valid = await crypto.subtle.verify("HMAC", await workerKey(workerId), toBuffer(fromHex(signature)), toBuffer(encoder.encode(message)));
   if (!valid) throw new ApiError(401, "WORKER_AUTH_INVALID", "The worker authorization is invalid.");
   await fs.transact(["videoWorkerNonces/" + workerId + "_" + nonce], docs => {
