@@ -110,16 +110,19 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       await commitStorageReservation(fs, reservationId, totalBytes);
       const now = new Date().toISOString();
       await fs.patchDoc("contentAssets/" + assetId, {
-        status: "ready", transcodeJobStatus: "completed", streamDestinationId: destinationId,
+        status: "processed_pending_review", transcodeJobStatus: "completed", streamDestinationId: destinationId,
         streamObjectPrefix: prefix, storagePath: masterKey, hlsManifestKey: masterKey,
-        actualHlsBytes: totalBytes, hlsVerifiedAt: now, updatedAt: now,
+        actualHlsBytes: totalBytes, hlsVerifiedAt: now,
+        masterPlaylistValid: true, allSegmentsVerified: true,
+        expectedObjectCount: body.files.length, uploadedObjectCount: listedObjects.length,
+        ownerReviewRequired: true, ownerReviewRequiredAt: now, updatedAt: now,
       });
       await fs.patchDoc(jobPath, {
         status: "completed", workerStatus: "completed", outputBytes: totalBytes,
         outputFileCount: body.files.length, completedAt: now, updatedAt: now,
         claimToken: null, leaseExpiresAt: null,
       });
-      return Response.json({ assetId, status: "ready", destinationId, manifestKey: masterKey, outputBytes: totalBytes, outputFileCount: body.files.length });
+      return Response.json({ assetId, status: "processed_pending_review", destinationId, manifestKey: masterKey, outputBytes: totalBytes, outputFileCount: body.files.length });
     } catch (error) { return errorBody(error); }
   } } },
 });
