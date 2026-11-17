@@ -124,6 +124,10 @@ export type WalletState = {
   dailySpendLimitMinor: number | null;
   spentTodayMinor: number;
   spentDate: string | null;
+  monthlyBudgetMinor?: number | null;
+  lowBalanceAlertMinor?: number | null;
+  pendingDailySpendLimitMinor?: number | null;
+  pendingDailySpendLimitEffectiveAt?: string | null;
 };
 
 export async function getWallet(fs: Firestore, uid: string): Promise<WalletState> {
@@ -141,5 +145,9 @@ export async function getWallet(fs: Firestore, uid: string): Promise<WalletState
       ? (doc["spentTodayMinor"] as number)
       : 0,
     spentDate,
+    monthlyBudgetMinor: typeof doc?.["monthlyBudgetMinor"] === "number" ? doc["monthlyBudgetMinor"] as number : null,
+    lowBalanceAlertMinor: typeof doc?.["lowBalanceAlertMinor"] === "number" ? doc["lowBalanceAlertMinor"] as number : null,
+    pendingDailySpendLimitMinor: typeof doc?.["pendingDailySpendLimitMinor"] === "number" ? doc["pendingDailySpendLimitMinor"] as number : null,
+    pendingDailySpendLimitEffectiveAt: typeof doc?.["pendingDailySpendLimitEffectiveAt"] === "string" ? doc["pendingDailySpendLimitEffectiveAt"] as string : null,
   };
 }
