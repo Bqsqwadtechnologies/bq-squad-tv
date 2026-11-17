@@ -426,23 +426,44 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           };
         });
         const previousReservationId = typeof payload?.["previousReservationId"] === "string" ? payload["previousReservationId"] : "";
+        let previousReservation: Record<string, unknown> | null = null;
+        let reconciledReservationId = "";
         if (/^[A-Za-z0-9_-]{8,100}$/.test(previousReservationId)) {
-          const previousReservation = await fs.getDoc("storageReservations/" + previousReservationId);
-          if (previousReservation?.["status"] === "committed" &&
-              previousReservation["destinationId"] === destinationId &&
-              previousReservation["assetId"] === assetId &&
-              previousReservation["purpose"] === "hls_streaming" &&
-              typeof previousReservation["actualBytes"] === "number" &&
-              Number.isSafeInteger(previousReservation["actualBytes"]) &&
-              previousReservation["actualBytes"] > 0) {
-            await fs.patchDoc("storageReservations/" + previousReservationId, {
-              status: "released_after_delete",
-              deletedBytes: previousReservation["actualBytes"],
-              actualBytes: 0,
-              deletedAt: now,
-              updatedAt: now,
-            });
+          previousReservation = await fs.getDoc("storageReservations/" + previousReservationId);
+          reconciledReservationId = previousReservationId;
+        } else {
+          // Older moves did not persist the reservation ID on the asset. Reconcile
+          // only when the historical lookup is unambiguous; never guess between
+          // multiple committed reservations for the same asset and location.
+          const historical = await fs.query("storageReservations", {
+            filters: [
+              { field: "assetId", op: "EQUAL", value: assetId },
+              { field: "destinationId", op: "EQUAL", value: destinationId },
+              { field: "purpose", op: "EQUAL", value: "hls_streaming" },
+              { field: "status", op: "EQUAL", value: "committed" },
+            ],
+            limit: 2,
+          });
+          if (historical.length === 1) {
+            previousReservation = historical[0]!;
+            reconciledReservationId = historical[0]!.__id;
           }
+        }
+        if (previousReservation && reconciledReservationId &&
+            previousReservation["status"] === "committed" &&
+            previousReservation["destinationId"] === destinationId &&
+            previousReservation["assetId"] === assetId &&
+            previousReservation["purpose"] === "hls_streaming" &&
+            typeof previousReservation["actualBytes"] === "number" &&
+            Number.isSafeInteger(previousReservation["actualBytes"]) &&
+            previousReservation["actualBytes"] > 0) {
+          await fs.patchDoc("storageReservations/" + reconciledReservationId, {
+            status: "released_after_delete",
+            deletedBytes: previousReservation["actualBytes"],
+            actualBytes: 0,
+            deletedAt: now,
+            updatedAt: now,
+          });
         }
         await rebuildStoragePoolIndex(fs, ["hls_streaming"]);
         await fs.patchDoc(taskPath, { phase: "done", completedAt: now, updatedAt: now });
