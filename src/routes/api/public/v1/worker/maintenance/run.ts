@@ -14,6 +14,8 @@ import { nextHealthRecoveryState } from "@/lib/server/storage/failover";
 import { confirmOrphanDeletion, isExpiredTemporaryObject, sourceCanBeDeleted } from "@/lib/server/storage/cleanup";
 import { encryptStorageConfigurationBackup, type StorageConfigurationBackup } from "@/lib/server/storage/config-backup";
 import { reserveStorageDestination, releaseStorageReservation, commitStorageReservation } from "@/lib/server/storage/reservations";
+import { fetchPaystackVerification } from "@/lib/server/paystack";
+import { classifyPaymentReconciliation, paymentReviewKey } from "@/lib/server/payment-reconciliation";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
@@ -192,6 +194,105 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         throw new ApiError(409, "MAINTENANCE_LEASE_INVALID", "The maintenance task lease is no longer valid.");
       }
       const now = new Date().toISOString();
+      if (task["taskType"] === "payment_reconciliation") {
+        const payload = task["payload"] as Record<string, unknown> | undefined;
+        const since = typeof payload?.["since"] === "string" ? payload["since"] : "";
+        const cursorValue = typeof payload?.["cursorValue"] === "string" ? payload["cursorValue"] : null;
+        const cursorId = typeof payload?.["cursorId"] === "string" ? payload["cursorId"] : null;
+        if (!since || !Number.isFinite(Date.parse(since))) {
+          throw new ApiError(400, "PAYMENT_RECONCILIATION_WINDOW_INVALID", "The payment review window is invalid.");
+        }
+        const page = await fs.query("payments", {
+          filters: [{ field: "createdAt", op: "GREATER_THAN", value: since }],
+          orderByField: "createdAt",
+          limit: 20,
+          ...(cursorValue && cursorId ? { startAfter: { fieldValue: cursorValue, documentId: cursorId } } : {}),
+        });
+        let reviewedCount = typeof task["reviewedCount"] === "number" ? task["reviewedCount"] as number : 0;
+        let flaggedCount = typeof task["flaggedCount"] === "number" ? task["flaggedCount"] as number : 0;
+        for (const payment of page) {
+          const provider = payment["provider"];
+          const reference = typeof payment["reference"] === "string" ? payment["reference"] : "";
+          if (!reference || (provider !== "paystack" && provider !== "google_play")) continue;
+          if (provider === "google_play") {
+            // Purchase tokens are deliberately not retained. Do not invent a provider check:
+            // queue a human review using the non-secret order/reference metadata.
+            const reviewId = await paymentReviewKey("google_play", reference);
+            const reviewPath = "paymentReviewQueue/" + reviewId;
+            const review = {
+              provider: "google_play", reference,
+              paymentId: payment.__id,
+              uid: typeof payment["uid"] === "string" ? payment["uid"] : null,
+              reasonCode: "PLAY_ORDER_REVIEW_REQUIRED",
+              reason: "Confirm this purchase in the provider console; the private purchase token is not retained.",
+              status: "open", updatedAt: now,
+            };
+            const existing = await fs.getDoc(reviewPath);
+            if (existing) await fs.patchDoc(reviewPath, review);
+            else await fs.setDoc(reviewPath, { ...review, createdAt: now }, { mustNotExist: true }).catch(async error => {
+              if (!(error instanceof ApiError) || error.status !== 409) throw error;
+              await fs.patchDoc(reviewPath, review);
+            });
+            flaggedCount++;
+            reviewedCount++;
+            continue;
+          }
+          const verified = await fetchPaystackVerification(reference);
+          const localStatus = typeof payment["status"] === "string" ? payment["status"] : "unknown";
+          const providerStatus = verified["status"] === "success" ? "credited" :
+            typeof verified["status"] === "string" ? verified["status"] : "unknown";
+          const finding = classifyPaymentReconciliation(
+            {
+              reference,
+              amountMinor: typeof payment["amountMinor"] === "number" ? payment["amountMinor"] : -1,
+              currency: typeof payment["currency"] === "string" ? payment["currency"] : "NGN",
+              status: localStatus,
+            },
+            {
+              reference,
+              amountMinor: typeof verified["amount"] === "number" ? verified["amount"] : -1,
+              currency: typeof verified["currency"] === "string" ? verified["currency"] : "NGN",
+              status: providerStatus,
+            },
+          );
+          if (finding !== "matched") {
+            const reviewId = await paymentReviewKey("paystack", reference);
+            const reviewPath = "paymentReviewQueue/" + reviewId;
+            const review = {
+              provider: "paystack", reference, paymentId: payment.__id,
+              uid: typeof payment["uid"] === "string" ? payment["uid"] : null,
+              reasonCode: finding.toUpperCase(),
+              reason: "Provider and platform payment records differ. Review before making a correction.",
+              localStatus, providerStatus, localAmountMinor: payment["amountMinor"] ?? null,
+              providerAmountMinor: verified["amount"] ?? null,
+              localCurrency: payment["currency"] ?? "NGN", providerCurrency: verified["currency"] ?? null,
+              status: "open", updatedAt: now,
+            };
+            const existing = await fs.getDoc(reviewPath);
+            if (existing) await fs.patchDoc(reviewPath, review);
+            else await fs.setDoc(reviewPath, { ...review, createdAt: now }, { mustNotExist: true }).catch(async error => {
+              if (!(error instanceof ApiError) || error.status !== 409) throw error;
+              await fs.patchDoc(reviewPath, review);
+            });
+            flaggedCount++;
+          }
+          reviewedCount++;
+        }
+        const last = page[page.length - 1];
+        const nextCursorValue = typeof last?.["createdAt"] === "string" ? last["createdAt"] : null;
+        if (page.length === 20 && last && !nextCursorValue) {
+          throw new ApiError(409, "PAYMENT_RECONCILIATION_CURSOR_UNAVAILABLE", "The payment review paused because a record has no creation date.");
+        }
+        const done = page.length < 20;
+        await fs.patchDoc(taskPath, {
+          payload: { ...payload, cursorValue: done ? null : nextCursorValue, cursorId: done ? null : last?.__id ?? null },
+          reviewedCount, flaggedCount, phase: done ? "done" : "reconciling",
+          ...(done ? { completedAt: now } : {}),
+          updatedAt: now,
+        });
+        return Response.json({ done, reviewedCount, flaggedCount, processedCount: page.length });
+      }
+
       if (task["taskType"] === "storage_health_usage") {
         const payload = task["payload"] as Record<string, unknown> | undefined;
         const storageId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
