@@ -21,11 +21,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.LiveTv
+import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.ChildCare
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -134,12 +139,12 @@ fun HomeScreen(
 
         Column(
             Modifier
-                .fillMaxSize()
+                .weight(1f)
+                .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(top = 4.dp, bottom = 20.dp),
         ) {
             Spacer(Modifier.height(18.dp))
-        }
 
         Card(
             Modifier
@@ -211,10 +216,10 @@ fun HomeScreen(
             Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            QuickAccessCard("Live TV", "▣", onLive)
-            QuickAccessCard("Movies", "◉", onLibrary)
-            QuickAccessCard("Series", "▤", onLibrary)
-            QuickAccessCard("Kids", "☺", onLibrary)
+            QuickAccessCard("Live TV", Icons.Default.LiveTv, onLive)
+            QuickAccessCard("Movies", Icons.Default.Movie, onLibrary)
+            QuickAccessCard("Series", Icons.Default.VideoLibrary, onLibrary)
+            QuickAccessCard("Kids", Icons.Default.ChildCare, onLibrary)
         }
 
         when {
@@ -261,7 +266,7 @@ fun HomeScreen(
         ) {
             OutlinedButton(onClick = onWallet, modifier = Modifier.weight(1f)) { Text("My wallet") }
             OutlinedButton(onClick = onProducer, modifier = Modifier.weight(1f)) { Text("Producer studio") }
-            }
+        }
         }
     }
 }
@@ -269,22 +274,22 @@ fun HomeScreen(
 @Composable
 private fun QuickAccessCard(
     title: String,
-    symbol: String,
+    icon: ImageVector,
     onClick: () -> Unit,
 ) {
     Card(
         Modifier.width(88.dp).height(100.dp).clickable(onClick = onClick),
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFF0A246B)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
     ) {
         Column(
             Modifier.fillMaxSize().padding(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Text(symbol, color = Color(0xFF9BEFFF), style = MaterialTheme.typography.headlineMedium)
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
             Spacer(Modifier.height(5.dp))
-            Text(title, color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+            Text(title, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
         }
     }
 }
