@@ -76,17 +76,17 @@ describe("Zillionaire identity and delegated module permissions", () => {
   });
 
   it("grants only explicitly delegated modules and ignores role tags or custom claims", async () => {
-    const fs = fakeFirestore({ roleTags: ["admin"], adminModules: ["pricing"] }, null);
+    const fs = fakeFirestore({ roleTags: ["legacy-control"], adminModules: ["pricing"] }, null);
     await expect(requireAdminModule(fs, {
       uid: "delegated-1", email: "delegated@example.com", emailVerified: true,
-      customClaims: { admin: true, adminModules: ["security", "payments"] },
+      customClaims: { legacyControl: true, adminModules: ["security", "payments"] },
     }, "pricing")).resolves.toBeTruthy();
     await expect(requireAdminModule(fs, {
       uid: "delegated-1", email: "delegated@example.com", emailVerified: true,
-      customClaims: { admin: true, adminModules: ["security", "payments"] },
+      customClaims: { legacyControl: true, adminModules: ["security", "payments"] },
     }, "security")).rejects.toMatchObject({ status: 403 });
     const access = await resolvePlatformAccess(fs, "delegated-1", "delegated@example.com", {
-      admin: true, adminModules: ["security"],
+      legacyControl: true, adminModules: ["security"],
     }, true);
     expect(access.roles).toEqual(["viewer"]);
     expect(access.adminModules).toEqual(["pricing"]);
@@ -102,11 +102,11 @@ describe("Zillionaire identity and delegated module permissions", () => {
     }, "content")).rejects.toMatchObject({ status: 403 });
   });
 
-  it("does not grant any control section from an old generic role tag", async () => {
-    const fs = fakeFirestore({ roleTags: ["admin"] }, null);
+  it("does not grant any control section from an legacy role metadata", async () => {
+    const fs = fakeFirestore({ roleTags: ["legacy-control"] }, null);
     await expect(requireAdminModule(fs, {
       uid: "old-role", email: "old@example.com", emailVerified: true,
-      customClaims: { admin: true },
+      customClaims: { legacyControl: true },
     }, "overview")).rejects.toMatchObject({ status: 403 });
   });
 
