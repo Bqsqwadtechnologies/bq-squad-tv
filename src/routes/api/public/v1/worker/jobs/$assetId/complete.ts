@@ -63,7 +63,9 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       for (const file of body.files) {
         const key = assertStorageObjectKey(file.key);
         const relativePath = key.startsWith(prefix + "/") ? key.slice(prefix.length + 1) : "";
-        if (!relativePath || !isAllowedHlsOutputPath(relativePath) || keys.has(key)) {
+        if (!relativePath ||
+            (!isAllowedHlsOutputPath(relativePath) && classifyAssetMediaOutput(relativePath) === null) ||
+            keys.has(key)) {
           throw new ApiError(400, "WORKER_OUTPUT_INVALID", "The output file list contains an invalid object key.");
         }
         keys.add(key);
