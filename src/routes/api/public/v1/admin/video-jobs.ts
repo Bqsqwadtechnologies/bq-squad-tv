@@ -14,8 +14,12 @@ export const Route = createFileRoute("/api/public/v1/admin/video-jobs")({
         descending: true,
         limit: 50,
       });
-      const rows = jobs.map(job => ({
+      const rows = await Promise.all(jobs.map(async job => {
+        const asset = await fs.getDoc("contentAssets/" + job.__id);
+        return {
         assetId: job.__id,
+        assetStatus: asset?.["status"] ?? null,
+        contentStatus: asset?.["contentStatus"] ?? null,
         status: job["status"] ?? "unknown",
         stage: job["stage"] ?? null,
         progress: typeof job["progress"] === "number" ? job["progress"] : 0,
@@ -29,6 +33,7 @@ export const Route = createFileRoute("/api/public/v1/admin/video-jobs")({
         modalEstimatedCostUsd: job["modalEstimatedCostUsd"] ?? null,
         createdAt: job["createdAt"] ?? null,
         updatedAt: job["updatedAt"] ?? null,
+      };
       }));
       const queued = rows.filter(row => row.status === "queued");
       const queuePositions = new Map(queued.map((row, index) => [row.assetId, index + 1]));
