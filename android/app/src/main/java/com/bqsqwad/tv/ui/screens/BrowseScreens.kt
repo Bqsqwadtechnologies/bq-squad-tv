@@ -4,9 +4,13 @@ import com.bqsqwad.tv.ui.ErrorMessages
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
@@ -23,6 +28,7 @@ import coil.compose.AsyncImage
 import com.bqsqwad.tv.data.catalog.CatalogHomeResponse
 import com.bqsqwad.tv.data.catalog.CatalogRepository
 import com.bqsqwad.tv.data.catalog.ChannelSummary
+import com.bqsqwad.tv.ui.components.SqwadAvatar
 import com.google.firebase.auth.FirebaseAuth
 
 @Composable
@@ -96,7 +102,7 @@ fun LibraryScreen(onChannel: (String) -> Unit = {}) {
         Text("Library", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
         Text("Browse published channels and available programmes.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(16.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             categories.forEach { category ->
                 FilterChip(
                     selected = selected == category,
@@ -121,9 +127,42 @@ fun LibraryScreen(onChannel: (String) -> Unit = {}) {
                     message = "Published channels appear here after their distribution rights are verified.",
                 )
             else ->
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(visibleChannels, key = { it.id }) { channel ->
-                        ChannelListCard(channel = channel, onClick = { onChannel(channel.id) })
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier.weight(1f).fillMaxWidth(),
+                    contentPadding = PaddingValues(bottom = 20.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    items(visibleChannels.size, key = { index -> visibleChannels[index].id }) { index ->
+                        val channel = visibleChannels[index]
+                        Card(
+                            modifier = Modifier.fillMaxWidth().clickable { onChannel(channel.id) },
+                            shape = RoundedCornerShape(18.dp),
+                        ) {
+                            Column {
+                                if (!channel.posterUrl.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model = channel.posterUrl,
+                                        contentDescription = channel.title,
+                                        modifier = Modifier.fillMaxWidth().aspectRatio(3f / 4f),
+                                        contentScale = ContentScale.Crop,
+                                    )
+                                } else {
+                                    Box(
+                                        Modifier.fillMaxWidth().aspectRatio(3f / 4f)
+                                            .background(Brush.linearGradient(listOf(Color(0xFF1459B8), Color(0xFF07143D)))),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text("BQ SQWAD TV", color = Color.White, fontWeight = FontWeight.Black)
+                                    }
+                                }
+                                Column(Modifier.padding(10.dp)) {
+                                    Text(channel.title, maxLines = 2, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                    Text(channel.category, maxLines = 1, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
                     }
                 }
         }
@@ -223,10 +262,15 @@ fun AccountScreen(
         Image(
             painter = painterResource(com.bqsqwad.tv.R.drawable.bq_sqwad_tv_mark),
             contentDescription = "BQ SQWAD TV logo",
-            modifier = Modifier.size(104.dp),
+            modifier = Modifier.size(64.dp),
         )
+        Spacer(Modifier.height(10.dp))
+        SqwadAvatar(name = user?.displayName ?: user?.email, modifier = Modifier.size(92.dp))
         Spacer(Modifier.height(12.dp))
         Text(user?.displayName ?: "Viewer", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)) {
+            Text("Viewer", modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+        }
         Text(user?.email ?: "Signed in", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(20.dp))
         ProfileAction("My profile", "Account details", onSettings)
