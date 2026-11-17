@@ -15,19 +15,29 @@ function ContactPage() {
   const [subject, setSubject] = useState("General enquiry");
   const [message, setMessage] = useState("");
   const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const body = [
-      "Name: " + name.trim(),
-      "Reply email: " + email.trim(),
-      "",
-      message.trim(),
-    ].join("\n");
-    const mailto = "mailto:tv@bqsqwad.com?subject=" + encodeURIComponent(subject.trim())
-      + "&body=" + encodeURIComponent(body);
-    window.location.assign(mailto);
-    setNotice("Your email app should open with this message addressed to tv@bqsqwad.com. If it does not open, email us directly at tv@bqsqwad.com.");
+    setBusy(true);
+    setNotice("");
+    try {
+      const response = await fetch("/api/public/v1/contact", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name, email, subject, message }),
+      });
+      const result = await response.json() as { sent?: boolean; error?: string };
+      if (!response.ok || result.sent !== true) {
+        throw new Error(result.error ?? "Your message could not be sent. Please try again.");
+      }
+      setNotice("Your message has been sent to our support team.");
+      setMessage("");
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Your message could not be sent. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -56,13 +66,12 @@ function ContactPage() {
             <textarea value={message} onChange={event => setMessage(event.target.value)} required minLength={10} maxLength={5000} rows={6}
               className="rounded-xl border border-input bg-background px-3 py-3 text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring" />
           </label>
-          <button type="submit" className="min-h-11 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring">
-            Open email to send
+          <button type="submit" disabled={busy} className="min-h-11 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-60">
+            {busy ? "Sending…" : "Send message"}
           </button>
         </form>
-        <p role="status" className="mt-4 text-sm text-muted-foreground">{notice}</p>
-        <p className="mt-5 text-sm text-muted-foreground">This form opens your device’s email app. It does not send a message directly from this website.</p>
-        <a className="mt-2 inline-block font-semibold text-primary underline underline-offset-4" href="mailto:tv@bqsqwad.com">tv@bqsqwad.com</a>
+        <p role="status" aria-live="polite" className="mt-4 text-sm text-muted-foreground">{notice}</p>
+        <p className="mt-5 text-sm text-muted-foreground">Messages are sent to our support mailbox. You can also email us directly at <a className="font-semibold text-primary underline underline-offset-4" href="mailto:tv@bqsqwad.com">tv@bqsqwad.com</a>.</p>
       </section>
     </main>
   );
