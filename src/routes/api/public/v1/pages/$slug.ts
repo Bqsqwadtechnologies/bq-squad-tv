@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/public/v1/pages/$slug")({
       if (!/^[a-z0-9-]{1,80}$/.test(slug)) throw new ApiError(404, "PAGE_NOT_FOUND", "This page is not available.");
       const fs = await Firestore.create();
       const page = await fs.getDoc("sitePages/" + slug);
-      if (!page || page["status"] !== "published" || typeof page["body"] !== "string") {
+      if (!page || page["status"] !== "published" || page["audience"] !== "public" || typeof page["body"] !== "string") {
         throw new ApiError(404, "PAGE_NOT_FOUND", "This page is not available.");
       }
       if (page["body"].match(/\\{\\{[a-z0-9_]+\\}\\}/)) throw new ApiError(503, "PAGE_REVIEW_REQUIRED", "This page is being reviewed and is not available yet.");
