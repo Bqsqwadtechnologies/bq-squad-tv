@@ -2,6 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, getUserProfile, requireUser } from "@/lib/server/api";
 import { assertContentAgeEligibility } from "@/lib/server/content-rating";
+import { resolveAssetMediaBinding } from "@/lib/server/storage/asset-binding";
+import { createStorageDownloadTarget, loadStreamStorageConfiguration } from "@/lib/server/storage/transfers";
 
 export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
   server: {
@@ -52,6 +54,28 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
             : typeof asset["ratePerMinuteMinor"] === "number" ? asset["ratePerMinuteMinor"] as number
             : typeof channel["ratePerMinuteMinor"] === "number" ? channel["ratePerMinuteMinor"] as number : 0;
 
+          let posterUrl = typeof asset["posterUrl"] === "string" ? asset["posterUrl"] : null;
+          const signMedia = async (mediaId: string): Promise<string | null> => {
+            const media = await fs.getDoc("contentAssetMedia/" + mediaId);
+            if (!media || media["assetId"] !== assetId) return null;
+            const binding = resolveAssetMediaBinding(media, assetId);
+            if (!binding.objectKey) return null;
+            const storage = await loadStreamStorageConfiguration(fs, media, assetId);
+            if (storage.configurationStatus !== "configured" || !storage.metadata.enabled ||
+                storage.metadata.mode !== "active" || storage.metadata.healthStatus !== "healthy") return null;
+            const signed = await createStorageDownloadTarget(storage, binding.objectKey, 300);
+            return signed.signedUrl;
+          };
+          if (rightsCurrent && typeof asset["posterMediaId"] === "string") {
+            posterUrl = await signMedia(asset["posterMediaId"]).catch(() => posterUrl);
+          }
+          const thumbnailIds = Array.isArray(asset["thumbnailMediaIds"])
+            ? asset["thumbnailMediaIds"].filter((value): value is string => typeof value === "string").slice(0, 8)
+            : [];
+          const thumbnailUrls = rightsCurrent
+            ? (await Promise.all(thumbnailIds.map(id => signMedia(id).catch(() => null)))).filter((value): value is string => value !== null)
+            : [];
+
           return Response.json({
             content: {
               id: assetId,
@@ -59,7 +83,8 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
               title: typeof asset["title"] === "string" ? asset["title"] : "Untitled",
               description: typeof asset["description"] === "string" ? asset["description"] : "",
               category: typeof asset["category"] === "string" ? asset["category"] : "Movie",
-              posterUrl: typeof asset["posterUrl"] === "string" ? asset["posterUrl"] : null,
+              posterUrl,
+              thumbnailUrls,
               averageStars: typeof asset["averageStars"] === "number" ? asset["averageStars"] : 0,
               ratingCount: typeof asset["ratingCount"] === "number" ? asset["ratingCount"] : 0,
               contentRating: typeof asset["contentRating"] === "string" ? asset["contentRating"] : typeof channel["contentRating"] === "string" ? channel["contentRating"] : "NR",
