@@ -152,7 +152,7 @@ export async function discoverStorageDestinations(
           });
         }
       } else if (Array.isArray(parsed["buckets"]) && parsed["buckets"].length > 0 &&
-          parsed["buckets"].length <= 25 && parsed["buckets"].every(value => typeof value === "string") &&
+          parsed["buckets"].length <= 500 && parsed["buckets"].every(value => typeof value === "string") &&
           new Set(parsed["buckets"]).size === parsed["buckets"].length &&
           validHttpsUrl(parsed["url"]) && typeof parsed["serviceRoleKey"] === "string" &&
           parsed["serviceRoleKey"].trim()) {
