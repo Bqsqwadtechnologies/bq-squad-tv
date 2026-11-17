@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody } from "@/lib/server/api";
-import { videoWorkerLeaseExpiry } from "@/lib/server/video-worker-policy";
+import { videoWorkerLeaseExpiry, isVideoWorkerLeaseActive } from "@/lib/server/video-worker-policy";
 import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 
 const schema = z.object({
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/heartb
       await fs.transact([path], docs => {
         const job = docs[0];
         if (!job || job["status"] !== "processing" || job["claimToken"] !== body.claimToken || job["workerId"] !== workerId ||
-            typeof job["leaseExpiresAt"] !== "string" || Date.parse(job["leaseExpiresAt"]) <= Date.now()) {
+            !isVideoWorkerLeaseActive(job["leaseExpiresAt"])) {
           throw new ApiError(409, "WORKER_LEASE_INVALID", "The processing job lease is no longer valid.");
         }
         return { result: undefined, writes: [{ update: { name: fs.docName(path), fields: {
