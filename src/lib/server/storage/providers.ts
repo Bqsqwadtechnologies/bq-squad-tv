@@ -63,7 +63,7 @@ async function b2Request(
   const credentials = config.credentials;
   if (config.configurationStatus !== "configured" || !credentials?.keyId || !credentials.applicationKey || !credentials.endpoint) throw new ApiError(503, "STORAGE_DESTINATION_MISCONFIGURED", "The storage destination is not configured.");
   const endpoint = safeEndpoint(credentials.endpoint);
-  const path = "/" + awsEncodePath(metadata.bucketName) + "/" + awsEncodePath(assertStorageObjectKey(key));
+  const path = "/" + awsEncodePath(metadata.bucketName) + "/" + (key ? awsEncodePath(assertStorageObjectKey(key)) : "");
   const url = new URL(endpoint.origin + path);
   const canonicalQuery = Object.entries(query)
     .sort(([left], [right]) => left.localeCompare(right))
