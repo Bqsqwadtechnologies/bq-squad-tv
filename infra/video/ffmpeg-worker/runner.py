@@ -325,6 +325,10 @@ def process_job(job: dict) -> None:
                     "memoryGiB": float(job.get("modalMemoryGiB", 4)),
                     "seconds": elapsed_seconds,
                 },
+                "outputResolutions": sorted(
+                    int(path.name[1:]) for path in output.iterdir()
+                    if path.is_dir() and path.name.startswith("v") and path.name[1:].isdigit()
+                ),
             })
         finally:
             lease_lost.set()
