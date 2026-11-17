@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertStorageObjectKey, calculateB2MonthlyFreeEgressBudget, calculateEgressLevel, resolveAssetStorageBinding, resolveDestinationId, storageAccountEgressId, storageLedgerShard } from "./ledger";
+import { assertStorageObjectKey, calculateB2MonthlyFreeEgressBudget, calculateB2DailyFreeEgressBudget, calculateEgressLevel, resolveAssetStorageBinding, resolveDestinationId, storageAccountEgressId, storageLedgerShard } from "./ledger";
 
 describe("storage ledger helpers", () => {
   it("maps deterministic keys into twenty shards", () => {
@@ -67,5 +67,14 @@ describe("asset storage binding", () => {
     });
     expect(resolveAssetStorageBinding({ sourcePath: "uploads/asset-2/source.mp4" }, "source", legacy).objectPrefix)
       .toBe("uploads/asset-2/source.mp4");
+  });
+});
+
+
+describe("conservative Backblaze free delivery budget", () => {
+  it("uses the lower of three times monthly storage and the older 1 GB/day reading", () => {
+    expect(calculateB2MonthlyFreeEgressBudget(1_000_000_000)).toBe(2_400_000_000);
+    expect(calculateB2MonthlyFreeEgressBudget(20_000_000_000)).toBe(24_000_000_000);
+    expect(calculateB2DailyFreeEgressBudget()).toBe(800_000_000);
   });
 });
