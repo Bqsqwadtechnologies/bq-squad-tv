@@ -1,6 +1,6 @@
 import { ApiError, Firestore, encodeFields } from "../firebase-admin";
 import { calculateEgressLevel, storageAccountEgressId } from "./ledger";
-import { validateStorageDestinationMetadata, type StoragePurpose } from "./registry";
+import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata, type StoragePurpose } from "./registry";
 import { pickDestination, type StorageCandidate } from "./routing";
 import {
   adjustPoolShardEntries,
@@ -26,12 +26,12 @@ function storageRoutingPath(purpose: StoragePurpose): string {
 }
 
 async function findPoolEntries(fs: Firestore, purpose: StoragePurpose): Promise<StoragePoolEntry[]> {
-  let entries = await getStoragePoolEntries(fs, purpose);
-  if (entries.length === 0) {
-    await rebuildStoragePoolIndex(fs, [purpose]);
-    entries = await getStoragePoolEntries(fs, purpose);
-  }
-  return entries;
+  const shards = await fs.query("storagePool", {
+    filters: [{ field: "purpose", op: "EQUAL", value: purpose }],
+    limit: 500,
+  });
+  if (shards.length === 0) await rebuildStoragePoolIndex(fs, [purpose]);
+  return getStoragePoolEntries(fs, purpose);
 }
 
 /**
@@ -123,8 +123,17 @@ export async function reserveStorageDestination(
           if (!destination || !group || !shard) throw new ApiError(409, "STORAGE_POOL_CHANGED", "The selected storage location changed; retry selection.");
           const metadata = validateStorageDestinationMetadata({ ...destination, destinationId: selected.id });
           if (metadata.accountGroup !== selected.groupId || metadata.purpose !== input.purpose ||
-              !metadata.enabled || metadata.mode !== "active" || metadata.healthStatus !== "healthy") {
+              !metadata.enabled || metadata.mode !== "active" || metadata.healthStatus !== "healthy" ||
+              metadata.paidEgressEnabled === true) {
             throw new ApiError(409, "STORAGE_DESTINATION_CHANGED", "The selected storage location is no longer eligible.");
+          }
+          const degradedUntil = typeof destination["degradedUntil"] === "string"
+            ? Date.parse(destination["degradedUntil"]) : 0;
+          if (Number.isFinite(degradedUntil) && degradedUntil > Date.now()) {
+            throw new ApiError(409, "STORAGE_DESTINATION_DEGRADED", "The selected storage location is temporarily unavailable.");
+          }
+          if (resolveStorageDestinationConfiguration(metadata).configurationStatus !== "configured") {
+            throw new ApiError(409, "STORAGE_DESTINATION_MISCONFIGURED", "The selected storage location needs its connection settings checked.");
           }
           if (typeof metadata.usageBytes !== "number" || !Number.isSafeInteger(metadata.usageBytes)) {
             throw new ApiError(409, "STORAGE_USAGE_UNKNOWN", "Storage usage must be reconciled before automatic assignment.");
