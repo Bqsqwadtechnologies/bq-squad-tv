@@ -284,7 +284,9 @@ export async function updateStorageUsageAndPool(
     const oldUsage = typeof raw["usageBytes"] === "number" && Number.isSafeInteger(raw["usageBytes"]) && raw["usageBytes"] >= 0
       ? raw["usageBytes"] : null;
     const groupBefore = await fs.getDoc(groupPath);
-    if (!groupBefore) {
+    if (!groupBefore ||
+        !Number.isSafeInteger(groupBefore["knownUsageBytes"]) ||
+        !Number.isSafeInteger(groupBefore["unknownUsageCount"])) {
       await rebuildStoragePoolIndex(fs);
       continue;
     }
