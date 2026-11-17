@@ -216,8 +216,23 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/schedule
           if (!(error instanceof ApiError) || error.status !== 409) throw error;
         }
       }
+      const paymentTaskId = "payment-reconcile-" + scheduleKey;
+      let paymentReconciliationQueued = false;
+      try {
+        await fs.setDoc("videoMaintenanceJobs/" + paymentTaskId, {
+          taskType: "payment_reconciliation",
+          payload: { since: new Date(Date.now() - 30 * 86_400_000).toISOString(), cursorValue: null, cursorId: null },
+          scheduleKey, status: "queued", attempts: 0,
+          reason: "Compare recent provider payment records and flag differences for review",
+          createdAt: now, updatedAt: now,
+        }, { mustNotExist: true });
+        paymentReconciliationQueued = true;
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 409) throw error;
+      }
       return Response.json({
         scheduled: true,
+        paymentReconciliationQueued,
         scheduleKey,
         queuedCount: pending.length,
         orphanScanQueuedCount: orphanQueuedCount,
