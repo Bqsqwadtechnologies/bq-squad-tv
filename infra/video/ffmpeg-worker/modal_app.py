@@ -103,6 +103,19 @@ def transcode_claimed_job(job: dict) -> None:
 @app.function(
     image=image,
     secrets=[worker_secret],
+    schedule=modal.Period(seconds=86400),
+    **MODAL_RESOURCE_CONFIG["maintenance"],
+)
+def rebuild_storage_pool_index() -> None:
+    """Refresh compact destination shards and shared capacity summaries nightly."""
+    import runner
+
+    runner.signed_request("POST", "/api/public/v1/worker/maintenance/rebuild-pool", {})
+
+
+@app.function(
+    image=image,
+    secrets=[worker_secret],
     schedule=modal.Period(seconds=604800),
     **MODAL_RESOURCE_CONFIG["maintenance"],
 )
