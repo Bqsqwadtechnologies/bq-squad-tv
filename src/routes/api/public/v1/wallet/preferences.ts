@@ -41,7 +41,7 @@ export const Route = createFileRoute("/api/public/v1/wallet/preferences")({
         if (body.lowBalanceAlertMinor !== undefined) patch["lowBalanceAlertMinor"] = body.lowBalanceAlertMinor;
         if (body.dailySpendLimitMinor !== undefined) {
           const change = requestDailyLimitChange({
-            currentLimitMinor: wallet.dailySpendLimitMinor,
+            currentLimitMinor: wallet.dailySpendLimitMinor ?? 0,
             requestedLimitMinor: body.dailySpendLimitMinor,
           });
           patch["dailySpendLimitMinor"] = change.dailyLimitMinor;
