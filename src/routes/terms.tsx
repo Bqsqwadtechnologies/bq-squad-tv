@@ -1,6 +1,5 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { PolicyPublicationNotice } from "@/components/status-pages";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 export const Route = createFileRoute("/terms")({
-  component: () => <PolicyPublicationNotice title="Terms of service" description="This page is reserved for the approved BQ SQWAD TV terms, including accounts, viewing charges, wallet use, payments, content availability, acceptable use and support." />,
-  head: () => ({ meta: [{ title: "Terms of service | BQ SQWAD TV" }, { name: "robots", content: "noindex, nofollow, noarchive" }] }),
+  beforeLoad: () => { throw redirect({ to: "/legal/terms" }); },
+  head: () => ({ meta: [{ title: "Terms | BQ SQWAD TV" }, { name: "robots", content: "index, follow" }] }),
 });
