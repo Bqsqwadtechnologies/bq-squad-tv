@@ -40,7 +40,7 @@ describe("Zillionaire identity and delegated module permissions", () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
     const fs = fakeFirestore(null, null);
     const access = await resolvePlatformAccess(fs, "u1", "OWNER@example.com", {}, true);
-    expect(access.isSuperAdmin).toBe(true);
+    expect(access.isZillionaireOwner).toBe(true);
     expect(access.adminModules).toContain("pricing");
     expect(isProtectedZillionaire("Owner@Example.com")).toBe(true);
     vi.unstubAllEnvs();
@@ -61,7 +61,7 @@ describe("Zillionaire identity and delegated module permissions", () => {
     const access = await requireAdminModule(fs, {
       uid: "owner-1", email: "owner@example.com", emailVerified: false,
     }, "content");
-    expect(access.isSuperAdmin).toBe(true);
+    expect(access.isZillionaireOwner).toBe(true);
     expect(access.emailVerified).toBe(true);
     vi.unstubAllEnvs();
   });
@@ -114,7 +114,7 @@ describe("Zillionaire identity and delegated module permissions", () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
     const fs = fakeFirestore(null, null);
     const access = await resolvePlatformAccess(fs, "u1", "owner+alias@example.com", {}, true);
-    expect(access.isSuperAdmin).toBe(false);
+    expect(access.isZillionaireOwner).toBe(false);
     expect(isProtectedZillionaire("other@example.com")).toBe(false);
     vi.unstubAllEnvs();
   });
