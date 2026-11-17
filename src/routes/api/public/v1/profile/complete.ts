@@ -6,6 +6,7 @@ import { hashParentalPin } from "@/lib/server/parental-pin";
 import { currencyForCountry, normalizeCountryCode } from "@/lib/server/currency";
 import { writeAuditLog } from "@/lib/server/audit";
 import { liveSessionLeases } from "@/lib/server/session-limits";
+import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
 
 const bodySchema = z.object({
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "dateOfBirth must be YYYY-MM-DD"),
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           const body = await parseBody(request, bodySchema);
           const adultEligible = ageInYears(body.dateOfBirth) >= 18;
           const fs = await Firestore.create();
+          await assertLegalAcceptance(fs, user.uid, "public");
           const existingProfile = await fs.getDoc("users/" + user.uid);
           const existingWallet = await fs.getDoc("wallets/" + user.uid);
           const requestedCountry = body.countryCode ? normalizeCountryCode(body.countryCode) : null;
