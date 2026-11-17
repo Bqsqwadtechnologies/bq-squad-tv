@@ -10,6 +10,7 @@ import {
 } from "@/lib/server/storage/registry";
 import { writeAuditLog } from "@/lib/server/audit";
 import { rebuildStoragePoolIndex } from "@/lib/server/storage/pool-index";
+import { storageAccountEgressId } from "@/lib/server/storage/ledger";
 
 const schema = z.object({
   destinationId: z.string().regex(/^[a-z0-9][a-z0-9_-]{1,79}$/),
@@ -57,7 +58,32 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/destinations"
         const fs = await Firestore.create();
         const access = await requireAdminModule(fs, user, "system");
         if (!access.isZillionaireOwner) throw new ApiError(403, "OWNER_ONLY", "Only the Zillionaire owner can manage storage destinations.");
-        const metadata = validateStorageDestinationMetadata(body);
+        const preliminary = validateStorageDestinationMetadata(body);
+        const groupRows = await fs.query("storageDestinations", {
+          filters: [{ field: "accountGroup", op: "EQUAL", value: preliminary.accountGroup }],
+          limit: 500,
+        });
+        const groupBudgets = groupRows.map(row => row["freeEgressBudgetBytes"] ?? null);
+        const groupDailyBudgets = groupRows.map(row => row["dailyEgressCapBytes"] ?? null);
+        if (new Set(groupBudgets.map(value => String(value))).size > 1 ||
+            new Set(groupDailyBudgets.map(value => String(value))).size > 1) {
+          throw new ApiError(409, "EGRESS_ACCOUNT_CONFIGURATION_MISMATCH", "Repair the shared account allowance before adding or editing a location.");
+        }
+        const policy = await fs.getDoc("storageAccountPolicies/" + storageAccountEgressId(preliminary.accountGroup));
+        const existingMonthly = typeof policy?.["monthlyBudgetBytes"] === "number"
+          ? policy["monthlyBudgetBytes"] : groupBudgets[0] ?? null;
+        const existingDaily = typeof policy?.["dailyBudgetBytes"] === "number"
+          ? policy["dailyBudgetBytes"] : groupDailyBudgets[0] ?? null;
+        const defaultMonthly = preliminary.providerType === "lovable_storage"
+          ? (preliminary.accountCapBytes ?? preliminary.softCapBytes) * 2
+          : null;
+        const metadata = validateStorageDestinationMetadata({
+          ...body,
+          accountGroup: preliminary.accountGroup,
+          freeEgressBudgetBytes: existingMonthly ?? defaultMonthly,
+          dailyEgressCapBytes: existingDaily,
+          paidEgressEnabled: false,
+        });
         const configuration = resolveStorageDestinationConfiguration(metadata);
         const now = new Date().toISOString();
         await fs.transact(["storageDestinations/" + metadata.destinationId], docs => {
