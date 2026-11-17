@@ -6,6 +6,7 @@ import { isSafeStoragePath, redactSensitiveText, signPlaybackToken, verifyPlayba
 import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
 import { getUserProfile, requireAdultForContent } from "@/lib/server/api";
 import { loadStreamStorageConfiguration, createStorageDownloadTarget } from "@/lib/server/storage/transfers";
+import { resolveAssetStreamBinding } from "@/lib/server/storage/asset-binding";
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 import { recordStorageEgress } from "@/lib/server/storage/egress";
 
@@ -165,6 +166,10 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
             paidPlayback: session["paidPlayback"] !== false,
           });
 
+          const assetBinding = resolveAssetStreamBinding(asset, assetId);
+          if (!resourcePath.startsWith(assetBinding.objectPrefix + "/")) {
+            throw new ApiError(403, "STREAM_RESOURCE_OUTSIDE_ASSET", "This resource is outside the authorized media asset.");
+          }
           const storageConfig = await loadStreamStorageConfiguration(fs, asset, assetId);
           if (storageConfig.configurationStatus !== "configured" || !storageConfig.metadata.enabled || storageConfig.metadata.mode === "retired" ||
               (typeof asset["streamDestinationId"] === "string" && storageConfig.metadata.healthStatus !== "healthy")) {
