@@ -9,6 +9,7 @@ type FeaturedContent = {
   channelTitle: string;
   title: string;
   category: string;
+  genre?: string;
   posterUrl: string | null;
   averageStars: number;
   ratingCount: number;
@@ -60,7 +61,7 @@ function SeriesPage() {
 
   const visibleItems = useMemo(() => selected === "All"
     ? items
-    : items.filter(item => item.category.toLowerCase().includes(selected.toLowerCase())),
+    : items.filter(item => (item.genre ?? "").toLowerCase().includes(selected.toLowerCase())),
     [items, selected]);
 
   return (
@@ -76,7 +77,7 @@ function SeriesPage() {
             <span className="text-xs font-bold uppercase tracking-[0.18em]">BQ SQWAD TV library</span>
           </div>
           <h1 className="mt-5 text-3xl font-black sm:text-4xl">Series</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Browse published series that are available to your account and region.</p>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Browse featured published series. Playback is checked against the viewing rights for your account and region before it starts.</p>
           <div className="mt-6 flex gap-2 overflow-x-auto pb-2" aria-label="Series categories">
             {["All","Drama","Thriller","Comedy"].map(category => (
               <button key={category} type="button" onClick={() => setSelected(category)} aria-pressed={selected === category}
@@ -90,7 +91,7 @@ function SeriesPage() {
           {busy ? <p className="mt-8 flex items-center justify-center gap-2 text-sm text-slate-500"><LoaderCircle size={18} className="animate-spin" /> Loading titles…</p> : null}
           {error ? <p role="alert" className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">{error}</p> : null}
           {signedIn === false ? <p className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-slate-700">Sign in to browse published titles. <a href="/account" className="font-bold text-blue-700 underline">Sign in or create an account</a>.</p> : null}
-          {!busy && !error && signedIn && visibleItems.length === 0 ? <p className="mt-8 rounded-2xl border border-dashed border-blue-200 bg-slate-50 p-8 text-center text-sm text-slate-500">No published series are available in this category yet.</p> : null}
+          {!busy && !error && signedIn && visibleItems.length === 0 ? <p className="mt-8 rounded-2xl border border-dashed border-blue-200 bg-slate-50 p-8 text-center text-sm text-slate-500">No featured series are available in this category yet.</p> : null}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
             {visibleItems.map(item => (
               <a key={item.id} href={"/channels/" + encodeURIComponent(item.channelId)} className="group overflow-hidden rounded-2xl border border-blue-100 bg-white transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg">
@@ -99,7 +100,7 @@ function SeriesPage() {
                 </div>
                 <div className="p-3">
                   <p className="line-clamp-2 text-sm font-extrabold text-slate-900">{item.title}</p>
-                  <p className="mt-1 truncate text-[11px] text-slate-500">{item.channelTitle} · {item.category}</p>
+                  <p className="mt-1 truncate text-[11px] text-slate-500">{item.channelTitle} · {item.genre || item.category}</p>
                   {item.ratingCount > 0 ? <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-amber-600"><Star size={12} fill="currentColor" /> {item.averageStars.toFixed(1)} ({item.ratingCount})</p> : null}
                 </div>
               </a>
