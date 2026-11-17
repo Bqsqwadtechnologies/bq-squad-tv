@@ -5,7 +5,7 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAdminModule } from "@/lib/server/roles";
 import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
-import { isSafeStoragePath } from "@/lib/server/storage/security";
+import { validateContentApprovalRequirements } from "@/lib/server/content-review";
 import { writeAuditLog } from "@/lib/server/audit";
 
 const schema = z.object({ reason: z.string().trim().min(3).max(1000) }).strict();
@@ -23,31 +23,9 @@ export const Route = createFileRoute("/api/public/v1/admin/content-assets/$asset
       const fs = await Firestore.create();
       await requireAdminModule(fs, user, "content");
       const asset = await fs.getDoc("contentAssets/" + assetId);
-      if (!asset || asset["status"] !== "processed_pending_review") {
-        throw new ApiError(409, "ASSET_NOT_AWAITING_REVIEW", "This video is not waiting for review.");
-      }
-      const license = asset["license"] as Record<string, unknown> | undefined;
-      if (license?.["status"] !== "verified" || license["verificationStatus"] !== "verified") {
-        throw new ApiError(403, "CONTENT_RIGHTS_NOT_VERIFIED", "Verified distribution rights are required.");
-      }
-      const rawAssetTerritories = asset["territoryCodes"] ?? asset["territories"];
-      const assetTerritories = Array.isArray(rawAssetTerritories)
-        ? rawAssetTerritories.filter((value): value is string => typeof value === "string").map(value => value.trim().toUpperCase())
-        : [];
-      const rightsTerritories = Array.isArray(license["territoryCodes"])
-        ? license["territoryCodes"].filter((value): value is string => typeof value === "string").map(value => value.trim().toUpperCase())
-        : [];
-      if (!assetTerritories.length || !rightsTerritories.length ||
-          assetTerritories.some(territory => !rightsTerritories.includes(territory))) {
-        throw new ApiError(409, "CONTENT_TERRITORY_INVALID", "The video's viewing countries do not match the verified rights.");
-      }
-      const ageRating = typeof asset["ageRating"] === "string" ? asset["ageRating"].trim().toUpperCase() : "";
-      if (!["TV-Y", "TV-Y7", "TV-G", "TV-PG", "TV-14", "TV-MA", "G", "PG", "PG-13", "12", "12A", "15", "16", "18", "R", "NC-17"].includes(ageRating)) {
-        throw new ApiError(409, "CONTENT_AGE_RATING_REQUIRED", "Choose a valid age rating before approval.");
-      }
-      const posterKey = typeof asset["posterObjectKey"] === "string"
-        ? asset["posterObjectKey"]
-        : typeof asset["posterPath"] === "string" ? asset["posterPath"] : "";
+      if (!asset) throw new ApiError(404, "ASSET_NOT_FOUND", "The video could not be found.");
+      const review = validateContentApprovalRequirements(asset);
+      const { posterKey, ageRating, territoryCount } = review;
       const destinationId = typeof asset["streamDestinationId"] === "string" ? asset["streamDestinationId"] : "";
       if (!posterKey || !isSafeStoragePath(posterKey) || !destinationId) {
         throw new ApiError(409, "CONTENT_POSTER_REQUIRED", "A verified poster image is required before approval.");
@@ -61,12 +39,6 @@ export const Route = createFileRoute("/api/public/v1/admin/content-assets/$asset
       const poster = await adapter.headObject(posterKey);
       if (!poster || poster.sizeBytes <= 0 || !poster.contentType?.startsWith("image/")) {
         throw new ApiError(409, "CONTENT_POSTER_INVALID", "The poster image could not be verified.");
-      }
-      const expected = typeof asset["expectedObjectCount"] === "number" ? asset["expectedObjectCount"] : 0;
-      const uploaded = typeof asset["uploadedObjectCount"] === "number" ? asset["uploadedObjectCount"] : 0;
-      if (asset["masterPlaylistValid"] !== true || asset["allSegmentsVerified"] !== true ||
-          expected < 2 || uploaded !== expected || asset["hlsVerifiedAt"] == null) {
-        throw new ApiError(409, "CONTENT_PROCESSING_CHECKS_FAILED", "The processed video has not passed every file and playlist check.");
       }
       const now = new Date().toISOString();
       await fs.patchDoc("contentAssets/" + assetId, {
@@ -83,7 +55,7 @@ export const Route = createFileRoute("/api/public/v1/admin/content-assets/$asset
         targetType: "contentAsset",
         targetId: assetId,
         reason: body.reason,
-        metadata: { destinationId, ageRating, territoryCount: assetTerritories.length, uploadedObjectCount: uploaded },
+        metadata: { destinationId, ageRating, territoryCount, uploadedObjectCount: asset["uploadedObjectCount"] },
       });
       return Response.json({ assetId, status: "ready", published: false });
     } catch (error) { return errorBody(error); }
