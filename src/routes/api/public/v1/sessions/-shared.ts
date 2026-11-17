@@ -105,6 +105,19 @@ export function producerShareMinor(chargeMinor: number, shareBps: number): numbe
   return Number((BigInt(chargeMinor) * BigInt(shareBps)) / 10_000n);
 }
 
+/**
+ * Split one settled debit in integer minor units. The producer share is rounded
+ * down; every remaining minor unit belongs to the platform, so the split
+ * always reconciles exactly to the viewer debit.
+ */
+export function splitRevenueMinor(chargeMinor: number, shareBps: number): {
+  producerMinor: number;
+  platformMinor: number;
+} {
+  const producerMinor = producerShareMinor(chargeMinor, shareBps);
+  return { producerMinor, platformMinor: chargeMinor - producerMinor };
+}
+
 export function safeAddMinor(left: number, right: number): number {
   if (!Number.isSafeInteger(left) || left < 0 || !Number.isSafeInteger(right) || right < 0 ||
       !Number.isSafeInteger(left + right)) {
