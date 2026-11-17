@@ -29,7 +29,7 @@ function formatMoney(amountMinor: number, currency: string) {
   if (amountMinor < 0 && whole === 0n) {
     const zero = new Intl.NumberFormat(locale, { useGrouping: false, maximumFractionDigits: 0 }).format(0);
     const integer = parts.findIndex(part => part.type === "integer");
-    if (integer >= 0) parts[integer] = { ...parts[integer], value: zero };
+    if (integer >= 0) parts[integer] = { type: "integer", value: zero };
   }
   if (digits === 0) return parts.map(part => part.value).join("");
   const decimal = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
