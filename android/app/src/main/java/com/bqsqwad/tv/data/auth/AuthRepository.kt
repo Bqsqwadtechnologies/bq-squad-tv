@@ -139,6 +139,13 @@ class AuthRepository(
         registerPushTokenIfAvailable()
     }
 
+    suspend fun acceptLegalPages(): Boolean {
+        return profileApi.acceptLegalPages(
+            currentBearerToken(),
+            LegalAcceptanceRequest(acceptedSlugs = listOf("terms", "privacy-policy")),
+        ).accepted
+    }
+
     suspend fun completeProfile(
         dateOfBirth: String,
         parentalPin: String?,
