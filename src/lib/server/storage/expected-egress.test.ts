@@ -8,6 +8,7 @@ import {
   reserveExpectedStorageEgress,
 } from "./expected-egress";
 import type { StorageDestinationMetadata } from "./registry";
+import { calculateB2DailyFreeEgressBudget, calculateB2MonthlyFreeEgressBudget } from "./ledger";
 
 function fakeFirestore() {
   const docs = new Map<string, Record<string, unknown>>();
@@ -44,6 +45,13 @@ const metadata = {
   freeEgressBudgetBytes: 100, dailyEgressCapBytes: 100,
   paidEgressEnabled: false,
 } as StorageDestinationMetadata;
+
+describe("provider free allowance calculations", () => {
+  it("uses the lower published B2 readings with an additional safety margin", () => {
+    expect(calculateB2MonthlyFreeEgressBudget(10_000_000_000)).toBe(24_000_000_000);
+    expect(calculateB2DailyFreeEgressBudget()).toBe(800_000_000);
+  });
+});
 
 describe("expected playback egress", () => {
   it("estimates a bounded first playback window and a conservative asset fallback", () => {
