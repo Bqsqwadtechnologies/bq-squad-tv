@@ -2,7 +2,6 @@ package com.bqsqwad.tv.data.notifications
 
 import com.bqsqwad.tv.BuildConfig
 import com.bqsqwad.tv.data.auth.AppNotification
-import com.bqsqwad.tv.data.auth.NotificationReadResponse
 import com.bqsqwad.tv.data.auth.ProfileApi
 import com.bqsqwad.tv.data.security.FirebaseAppCheckInterceptor
 import com.google.firebase.auth.FirebaseAuth
