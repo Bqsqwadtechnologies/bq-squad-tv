@@ -177,9 +177,9 @@ fun SettingsScreen(
     onProfile: () -> Unit,
     themeMode: String = "system",
     onThemeModeChange: (String) -> Unit = {},
+    onNotifications: () -> Unit = {},
 ) {
     val uriHandler = LocalUriHandler.current
-    var notifications by remember { mutableStateOf(true) }
     var quality by remember { mutableStateOf("Auto") }
     Column(Modifier.fillMaxSize().padding(18.dp)) {
         Text("Settings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
@@ -200,7 +200,11 @@ fun SettingsScreen(
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Spacer(Modifier.height(14.dp))
-        SettingsSwitchRow("Notifications", "Programme and account updates", notifications) { notifications = it }
+        ListItem(
+            headlineContent = { Text("Notifications") },
+            supportingContent = { Text("View recent account and programme updates") },
+            modifier = Modifier.clickable(onClick = onNotifications),
+        )
         ListItem(
             headlineContent = { Text("Playback quality") },
             supportingContent = { Text(quality) },
@@ -229,6 +233,16 @@ fun SettingsScreen(
             headlineContent = { Text("Account security") },
             supportingContent = { Text("Profile and sign-in settings") },
             modifier = Modifier.clickable(onClick = onProfile),
+        )
+        ListItem(
+            headlineContent = { Text("Help & support") },
+            supportingContent = { Text("Get help with your account") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/help") },
+        )
+        ListItem(
+            headlineContent = { Text("Contact us") },
+            supportingContent = { Text("Send a message to the support team") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/contact") },
         )
         ListItem(
             headlineContent = { Text("About BQ SQWAD TV") },
