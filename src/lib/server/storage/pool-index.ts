@@ -97,7 +97,8 @@ export async function rebuildStoragePoolIndex(
     const knownItems = items.filter(item =>
       typeof item.metadata.usageBytes === "number" &&
       Number.isSafeInteger(item.metadata.usageBytes) &&
-      item.metadata.usageBytes >= 0);
+      item.metadata.usageBytes >= 0 &&
+      (item.metadata.usageSource === "provider_listing" || item.metadata.usageSource === "ledger"));
     const knownUsageBytes = knownItems.reduce((sum, item) => sum + safeBytes(item.metadata.usageBytes), 0);
     const unknownUsageCount = items.length - knownItems.length;
     const usageBytes = unknownUsageCount === 0 ? knownUsageBytes : null;
