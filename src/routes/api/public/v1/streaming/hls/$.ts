@@ -7,6 +7,8 @@ import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
 import { getUserProfile, requireAdultForContent } from "@/lib/server/api";
 import { loadStreamStorageConfiguration, createStorageDownloadTarget } from "@/lib/server/storage/transfers";
 import { resolveAssetStreamBinding } from "@/lib/server/storage/asset-binding";
+import { signHlsObjectsDirectly } from "@/lib/server/storage/direct-signing";
+import { rewritePlaylistWithSignedObjects } from "@/lib/server/streaming/direct-playlist";
 
 function sessionId(value: string | null): string {
   if (!value || !/^[A-Za-z0-9_-]{1,100}$/.test(value)) {
@@ -190,7 +192,34 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
             if (session["streamQualityCap"] === 480 && /(?:^|\/)master\.m3u8$/i.test(resourcePath)) {
               playlist = capMasterPlaylistAt480p(playlist);
             }
-            const rewritten = await rewritePlaylistForSession(playlist, resourcePath, sid, uid);
+            const rewritten = storageConfig.metadata.deliveryMode === "direct_signed"
+              ? (await rewritePlaylistWithSignedObjects({
+                  playlist,
+                  playlistPath: resourcePath,
+                  signObjects: objectPaths => signHlsObjectsDirectly({
+                    configuration: storageConfig,
+                    objectPaths,
+                    expiresInSeconds: 21_600,
+                  }),
+                  playlistUrl: async childPath => {
+                    const issuedAt = Math.floor(Date.now() / 1000);
+                    const childToken = await signPlaybackToken({
+                      sid, uid, path: childPath, iat: issuedAt, exp: issuedAt + 900,
+                    });
+                    return "/api/public/v1/streaming/hls/" + childPath.split("/").map(encodeURIComponent).join("/") +
+                      "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(childToken);
+                  },
+                  keyUrl: async keyAssetId => {
+                    const keyPath = "stream-key/" + keyAssetId;
+                    const issuedAt = Math.floor(Date.now() / 1000);
+                    const keyToken = await signPlaybackToken({
+                      sid, uid, path: keyPath, iat: issuedAt, exp: issuedAt + 900,
+                    });
+                    return "/api/public/v1/streaming/key/" + encodeURIComponent(keyAssetId) +
+                      "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(keyToken);
+                  },
+                })).playlist
+              : await rewritePlaylistForSession(playlist, resourcePath, sid, uid);
             return new Response(rewritten, {
               status: 200,
               headers: {
