@@ -2,8 +2,8 @@ import { ApiError, Firestore, encodeFields } from "../firebase-admin";
 import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata } from "./registry";
 import { resolveAssetStorageBinding } from "./ledger";
 
-export const LEGACY_SOURCE_DESTINATION_ID = "lovable-source-legacy";
-export const LEGACY_STREAM_DESTINATION_ID = "lovable-stream-legacy";
+export const LEGACY_SOURCE_DESTINATION_ID = "legacy_lovable_source";
+export const LEGACY_STREAM_DESTINATION_ID = "legacy_lovable_streaming";
 
 export type AssetStreamBinding = {
   streamDestinationId: string;
