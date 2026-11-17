@@ -15,6 +15,11 @@ const schema = z.object({
     commentsOpen: z.boolean(),
     newStreamGrants: z.boolean(),
     adultChannels: z.boolean(),
+    liveTv: z.boolean(),
+    providerConsole: z.boolean(),
+    hlsEncryption: z.boolean(),
+    forYou: z.boolean(),
+    reminders: z.boolean(),
   }).strict(),
   reason: z.string().trim().min(3).max(1000),
 }).strict();
