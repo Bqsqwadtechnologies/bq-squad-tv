@@ -193,7 +193,7 @@ The Android Producer screen, API client, repository, navigation and website/serv
 ### Badge 2 — Website discovery and status pages
 - Added authenticated Movies and Series browse pages with poster grids, category filters, account-aware loading and empty/error states. These pages currently show featured published assets returned by the existing home catalogue endpoint; a complete unfeatured movie/series catalogue endpoint is still needed for full catalog coverage.
 - Connected homepage Movies and Series quick-access links to the new pages and corrected featured-title links to use existing channel routes.
-- Added country-unavailable and waiting-room status routes; the age-restriction page and reusable status-page component already existed.
+- Confirmed and reused the existing `/not-available` and `/high-demand` status routes; duplicate aliases were removed. The age-restriction page and reusable status-page component already existed.
 - The homepage profile control now shows the signed-in member's initial, retains the generic person icon when signed out, and the bottom navigation has five destinations. The logo width has an intermediate compact breakpoint to avoid crowding at 400–430 px.
 - Existing country-aware public configuration supplies the signed-out currency symbol; signed-in wallet summary continues to override it with the established wallet currency.
 
@@ -213,3 +213,25 @@ The Android Producer screen, API client, repository, navigation and website/serv
 - The public-text scanner, secret-name checker, website build, TypeScript check, lint, Vitest suite, Android Gradle unit tests and emulator tests remain **not run**. The repository workflows are configured for manual dispatch; no workflow dispatch action was available in this execution environment. No test or build pass is claimed.
 
 **This continuation is source-committed but not build-verified. File 01 and the UI work remain incomplete pending the full catalogue API, complete component/theme adoption, legal approval, scanner output, and automated/device verification.**
+
+## Final design and account-hub continuation — 2026-11-17
+
+- Fixed website logo references in protected dashboard and producer pages that pointed to a non-existent SVG; all now use the uploaded `public/brand/bq-sqwad-tv-logo.png`. Android already uses the same uploaded PNG as its drawable. Removed the obsolete `public/favicon.ico`; the root document continues to reference the official PNG mark as the site icon. A separate 64×64 favicon file was not generated in this text-only GitHub editing environment.
+- Added the official brand mark as an unobtrusive watermark in the Android and web players. Removed the previous Android player overlay that exposed part of a viewer identifier.
+- Added a branded Android launch screen with the official logo, tagline, progress indicator and footer slogan. The signed-in app continues to wait for the account theme preference before rendering its main navigation.
+- Added native Android Watch History and Notifications screens backed by the existing wallet-ledger and notification endpoints. Added profile shortcuts for wallet, purchases, history, notifications, producer studio, help and about; producer functionality remains intact.
+- Added website Notifications and Watch History pages using the existing authenticated APIs. The signed-in account hub now links to wallet/purchases, watch history, notifications, help and about.
+- Centralized website minor-unit formatting in `src/lib/format-money.ts`, using BigInt and locale-aware formatting. Wallet, content viewing rates and watch history use the same exact formatter. Added currency tests for NGN, USD, GBP, GHS, KES, ZAR, JPY and KWD, including negative subunit amounts.
+- Added optional genre metadata to the existing featured catalogue response; Movies and Series filters now use that field. These pages still show featured published items only, not the full unfeatured catalogue.
+- Removed outdated Supabase placeholders from `.env.example`. The only configured top-level owner identity remains `ZILLIONAIRE_EMAIL`; no `ADMIN_EMAIL` is required or listed. No person is labelled Admin or Super Admin in the product interface.
+- Simplified storage-location form labels and hid internal connection-prefix/account identifiers from the visible form while preserving the existing registry payload and provider wiring.
+- Added noindex metadata to the producer channel listing page. Crawler rules and noindex remain discovery hygiene only; API permissions are the security boundary.
+
+### Verification status
+
+- The reported storage setter syntax issue is corrected.
+- The producer upload helper now checks the explicit content/channel module grants rather than requesting an unsupported platform role; the related test expectations were updated.
+- The public flags test now includes the three public flags added earlier (`liveTv`, `forYou`, `reminders`).
+- The new website currency formatter tests and Android history/notifications screens have **not** been executed. No website build, type-check, lint, Vitest, Android Gradle or emulator result is claimed.
+- The brand PNG is the existing uploaded source and is referenced directly; a separate 64×64 padded PNG favicon was not generated. The official mark remains the linked site icon after removing the old ICO.
+- Full screenshot verification at 320, 360, 390, 430 and 768 px, plus Android small-screen/notch emulator verification, remains outstanding.
