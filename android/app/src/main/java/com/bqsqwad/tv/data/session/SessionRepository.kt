@@ -15,7 +15,8 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
-class SessionRepository {\n    private val leaseTokens = ConcurrentHashMap<String, String>()
+class SessionRepository {
+    private val leaseTokens = ConcurrentHashMap<String, String>()
     private val api: SessionApi by lazy {
         require(
             !BuildConfig.API_BASE_URL.contains(".invalid"),
@@ -54,7 +55,9 @@ class SessionRepository {\n    private val leaseTokens = ConcurrentHashMap<Strin
                 .requestIntegrityToken(IntegrityTokenRequest.builder().setNonce(nonce).build())
                 .awaitResult()
                 .token()
-        val session = api.start(auth, StartSessionRequest(channelId, integrity, nonce, UUID.randomUUID().toString(), "android"))\n        session.leaseToken?.let { leaseTokens[session.sessionId] = it }\n        return session
+        val session = api.start(auth, StartSessionRequest(channelId, integrity, nonce, UUID.randomUUID().toString(), "android"))
+        session.leaseToken?.let { leaseTokens[session.sessionId] = it }
+        return session
     }
 
     suspend fun heartbeat(
@@ -62,9 +65,20 @@ class SessionRepository {\n    private val leaseTokens = ConcurrentHashMap<Strin
         sequence: Long,
         playbackState: String,
         playbackPositionMs: Long,
-    ) : SessionSnapshot {\n        val response = api.heartbeat(\n            bearer(),\n            sessionId,\n            HeartbeatRequest(sequence, playbackState, playbackPositionMs, leaseTokens[sessionId]),\n        )\n        response.leaseToken?.let { leaseTokens[sessionId] = it }\n        if (!response.active) leaseTokens.remove(sessionId)\n        return response\n    }
+    ) : SessionSnapshot {
+        val response = api.heartbeat(
+            bearer(),
+            sessionId,
+            HeartbeatRequest(sequence, playbackState, playbackPositionMs, leaseTokens[sessionId]),
+        )
+        response.leaseToken?.let { leaseTokens[sessionId] = it }
+        if (!response.active) leaseTokens.remove(sessionId)
+        return response
+    }
 
     suspend fun refresh(sessionId: String) = api.refresh(bearer(), sessionId)
 
-    suspend fun end(sessionId: String) {\n        try { api.end(bearer(), sessionId) } finally { leaseTokens.remove(sessionId) }\n    }
+    suspend fun end(sessionId: String) {
+        try { api.end(bearer(), sessionId) } finally { leaseTokens.remove(sessionId) }
+    }
 }
