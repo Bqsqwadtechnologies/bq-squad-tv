@@ -9,11 +9,9 @@ import { videoWorkerLeaseExpiry } from "@/lib/server/video-worker-policy";
 import { checkStorageProviderHealth, isStorageQuotaOrRateLimit, readStorageUsagePage, storageFailureCode, storageFailureMessage } from "@/lib/server/storage/maintenance";
 import { refreshStoragePoolDestination, updateStorageUsageAndPool, rebuildStoragePoolIndex } from "@/lib/server/storage/pool-index";
 import { copyReplicaObject, replicaCopyPhase } from "@/lib/server/storage/replication";
-import { commitStorageReservation } from "@/lib/server/storage/reservations";
 import { addVerifiedAssetStreamReplica, bindAssetStreamStorage } from "@/lib/server/storage/asset-binding";
-import { isExpiredTemporaryObject } from "@/lib/server/storage/cleanup";
 import { nextHealthRecoveryState } from "@/lib/server/storage/failover";
-import { confirmOrphanDeletion, sourceCanBeDeleted } from "@/lib/server/storage/cleanup";
+import { confirmOrphanDeletion, isExpiredTemporaryObject, sourceCanBeDeleted } from "@/lib/server/storage/cleanup";
 import { encryptStorageConfigurationBackup, type StorageConfigurationBackup } from "@/lib/server/storage/config-backup";
 import { reserveStorageDestination, releaseStorageReservation, commitStorageReservation } from "@/lib/server/storage/reservations";
 
