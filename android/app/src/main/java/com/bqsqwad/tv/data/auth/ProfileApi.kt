@@ -41,6 +41,19 @@ data class PushTokenResponse(
     val registered: Boolean,
 )
 
+data class ThemePreferenceResponse(
+    val themeMode: String = "system",
+)
+
+data class ThemePreferenceRequest(
+    val themeMode: String,
+)
+
+data class ThemePreferenceSaveResponse(
+    val saved: Boolean,
+    val themeMode: String,
+)
+
 interface ProfileApi {
     @POST("v1/profile/complete")
     suspend fun completeProfile(
@@ -64,4 +77,15 @@ interface ProfileApi {
         @Header("Authorization") bearerToken: String,
         @Body request: PushTokenRequest,
     ): PushTokenResponse
+
+    @retrofit2.http.GET("v1/profile/preferences")
+    suspend fun getPreferences(
+        @Header("Authorization") bearerToken: String,
+    ): ThemePreferenceResponse
+
+    @retrofit2.http.PUT("v1/profile/preferences")
+    suspend fun saveThemePreference(
+        @Header("Authorization") bearerToken: String,
+        @Body request: ThemePreferenceRequest,
+    ): ThemePreferenceSaveResponse
 }
