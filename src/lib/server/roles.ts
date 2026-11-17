@@ -44,9 +44,9 @@ export async function resolvePlatformAccess(
     email && user["email"].trim().toLowerCase() === email.trim().toLowerCase(),
   );
   const effectiveEmailVerified = emailVerified || appEmailVerified;
-  const configuredAdmin = process.env["ZILLIONAIRE_EMAIL"]?.trim().toLowerCase();
+  const configuredZillionaireEmail = process.env["ZILLIONAIRE_EMAIL"]?.trim().toLowerCase();
   const isSuperAdmin = Boolean(
-    effectiveEmailVerified && configuredAdmin && email?.trim().toLowerCase() === configuredAdmin,
+    effectiveEmailVerified && configuredZillionaireEmail && email?.trim().toLowerCase() === configuredZillionaireEmail,
   );
   const storedRoles = stringArray(user?.["roleTags"]);
   const claimedRoles = stringArray(customClaims["roleTags"]);
@@ -109,10 +109,10 @@ export async function requireAdminModule(
 
 export function isProtectedZillionaire(
   targetEmail: string | null,
-  configuredAdminEmail = process.env["ZILLIONAIRE_EMAIL"],
+  configuredZillionaireEmail = process.env["ZILLIONAIRE_EMAIL"],
 ): boolean {
   return Boolean(
-    configuredAdminEmail?.trim() &&
-    targetEmail?.trim().toLowerCase() === configuredAdminEmail.trim().toLowerCase(),
+    configuredZillionaireEmail?.trim() &&
+    targetEmail?.trim().toLowerCase() === configuredZillionaireEmail.trim().toLowerCase(),
   );
 }
