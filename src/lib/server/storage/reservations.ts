@@ -55,10 +55,11 @@ async function findPoolEntries(fs: Firestore, purpose: StoragePurpose): Promise<
  */
 export async function reserveStorageDestination(
   fs: Firestore,
-  input: { purpose: StoragePurpose; incomingBytes: number; reservationId?: string; ttlMs?: number },
+  input: { purpose: StoragePurpose; incomingBytes: number; reservationId?: string; ttlMs?: number; assetId?: string },
 ): Promise<StorageReservation> {
-  if (!Number.isSafeInteger(input.incomingBytes) || input.incomingBytes < 1) {
-    throw new ApiError(400, "STORAGE_RESERVATION_INVALID", "The storage reservation size is invalid.");
+  if (!Number.isSafeInteger(input.incomingBytes) || input.incomingBytes < 1 ||
+      (input.assetId !== undefined && !/^[A-Za-z0-9_-]{1,100}$/.test(input.assetId))) {
+    throw new ApiError(400, "STORAGE_RESERVATION_INVALID", "The storage reservation details are invalid.");
   }
   const reservationId = input.reservationId ?? crypto.randomUUID().replace(/-/g, "");
   if (!/^[A-Za-z0-9_-]{8,100}$/.test(reservationId)) throw new ApiError(400, "STORAGE_RESERVATION_INVALID", "The storage reservation ID is invalid.");
@@ -196,6 +197,7 @@ export async function reserveStorageDestination(
               { update: { name: fs.docName(cursorPath), fields: encodeFields({ cursor: pick.nextCursor, updatedAt: now }) }, updateMask: { fieldPaths: ["cursor", "updatedAt"] } },
               { update: { name: fs.docName(reservationPath), fields: encodeFields({
                 reservationId, destinationId: selected.id, purpose: input.purpose,
+                ...(input.assetId ? { assetId: input.assetId } : {}),
                 groupId: selected.groupId, shardDocId: selected.shardDocId,
                 reservedBytes: input.incomingBytes, status: "reserved",
                 createdAt: now, expiresAt,
