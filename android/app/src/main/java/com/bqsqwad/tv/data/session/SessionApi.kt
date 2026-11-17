@@ -29,7 +29,7 @@ data class HeartbeatRequest(
     val clientSequence: Long,
     val playbackState: String,
     val playbackPositionMs: Long,
-    val leaseToken: String? = null,
+    val leaseToken: String,
 )
 
 data class PlaybackRefreshResponse(
