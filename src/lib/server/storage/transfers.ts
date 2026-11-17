@@ -211,7 +211,7 @@ export async function loadStreamStorageConfiguration(
     paidEgressEnabled: false,
     priority: 0,
     enabled: true,
-    accountGroup: "lovable-legacy-streaming",
+    accountGroup: "lovable-default-workspace",
     mode: "active",
     replicaOf: null,
   });
