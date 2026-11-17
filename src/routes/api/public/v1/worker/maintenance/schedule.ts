@@ -80,7 +80,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/schedule
       }
       const orphanDestinations = destinations.filter(row =>
         row["purpose"] === "hls_streaming" &&
-        row.__id !== "legacy_lovable_streaming" &&
+        !["legacy_lovable_source", "legacy_lovable_streaming", "lovable-source-legacy", "lovable-stream-legacy"].includes(row.__id) &&
         row["enabled"] === true &&
         row["mode"] === "active",
       );
