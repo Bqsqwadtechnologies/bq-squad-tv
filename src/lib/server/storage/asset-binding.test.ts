@@ -44,6 +44,7 @@ describe("asset storage bindings", () => {
     expect(isAllowedHlsOutputPath("rendition/segment_00001.m4s")).toBe(true);
     expect(isAllowedHlsOutputPath("../../private.json")).toBe(false);
     expect(isAllowedHlsOutputPath("poster.exe")).toBe(false);
+    expect(isAllowedHlsOutputPath("a".repeat(221) + ".jpg")).toBe(false);
   });
 
   it("resolves poster records through the same primary and replica binding", () => {
