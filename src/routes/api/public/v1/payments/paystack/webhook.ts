@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Firestore } from "@/lib/server/firebase-admin";
+import { Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody } from "@/lib/server/api";
 import { creditPaystackPayment, fetchPaystackVerification, verifyPaystackSignature } from "@/lib/server/paystack";
 
@@ -8,12 +8,19 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/webhook")
     try {
       const rawBody = await request.text();
       await verifyPaystackSignature(rawBody, request.headers.get("x-paystack-signature"));
-      const event = JSON.parse(rawBody) as { event?: string; data?: { reference?: string } };
+      const event = JSON.parse(rawBody) as { id?: number | string; event?: string; data?: { reference?: string } };
       if (event.event !== "charge.success" || !event.data?.reference) {
         return Response.json({ received: true });
       }
+      if ((typeof event.id !== "number" && typeof event.id !== "string") || String(event.id).length < 1 || String(event.id).length > 120) {
+        throw new Error("Paystack event identifier is missing.");
+      }
       const reference = event.data.reference;
       const fs = await Firestore.create();
+      const eventDigest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("paystack:" + String(event.id)));
+      const eventId = Array.from(new Uint8Array(eventDigest), byte => byte.toString(16).padStart(2, "0")).join("");
+      const eventPath = "paymentWebhookEvents/" + eventId;
+      if (await fs.getDoc(eventPath)) return Response.json({ received: true, duplicate: true });
       const payment = await fs.getDoc("payments/paystack_" + reference);
       if (!payment || payment["provider"] !== "paystack" || typeof payment["uid"] !== "string") {
         return Response.json({ received: true });
