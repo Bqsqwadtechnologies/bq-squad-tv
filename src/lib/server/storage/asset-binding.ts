@@ -1,5 +1,6 @@
 import { ApiError, Firestore, encodeFields } from "../firebase-admin";
 import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata } from "./registry";
+import { resolveAssetStorageBinding } from "./ledger";
 
 export const LEGACY_SOURCE_DESTINATION_ID = "lovable-source-legacy";
 export const LEGACY_STREAM_DESTINATION_ID = "lovable-stream-legacy";
@@ -18,23 +19,20 @@ export function resolveAssetStreamBinding(
   assetId: string,
 ): AssetStreamBinding {
   if (!ASSET_ID.test(assetId)) throw new ApiError(400, "ASSET_ID_INVALID", "The content identifier is invalid.");
-  const streamDestinationId = typeof asset["streamDestinationId"] === "string" &&
-    STORAGE_ID.test(asset["streamDestinationId"])
-    ? asset["streamDestinationId"]
-    : LEGACY_STREAM_DESTINATION_ID;
-  const streamReplicaIds = Array.isArray(asset["streamReplicaIds"])
-    ? [...new Set(asset["streamReplicaIds"].filter((value): value is string =>
-        typeof value === "string" && STORAGE_ID.test(value) && value !== streamDestinationId))].slice(0, 8)
-    : [];
-  const storedPrefix = typeof asset["objectPrefix"] === "string"
-    ? asset["objectPrefix"]
-    : typeof asset["streamObjectPrefix"] === "string" ? asset["streamObjectPrefix"]
-      : typeof asset["hlsManifestKey"] === "string" && asset["hlsManifestKey"].includes("/")
-        ? asset["hlsManifestKey"].slice(0, asset["hlsManifestKey"].lastIndexOf("/")) : "";
+  const binding = resolveAssetStorageBinding(asset, "stream", {
+    source: LEGACY_SOURCE_DESTINATION_ID,
+    stream: LEGACY_STREAM_DESTINATION_ID,
+    poster: LEGACY_STREAM_DESTINATION_ID,
+  });
   const prefixBase = "hls/" + assetId + "/";
+  const storedPrefix = binding.objectPrefix ?? "";
   const attemptSegment = storedPrefix.startsWith(prefixBase) ? storedPrefix.slice(prefixBase.length) : "";
   const objectPrefix = /^a[1-9][0-9]*$/.test(attemptSegment) ? storedPrefix : "hls/" + assetId;
-  return { streamDestinationId, streamReplicaIds, objectPrefix };
+  return {
+    streamDestinationId: binding.primaryDestinationId,
+    streamReplicaIds: binding.replicaIds.slice(0, 8),
+    objectPrefix,
+  };
 }
 
 export function resolveAssetMediaBinding(
