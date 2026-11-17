@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 import { Star, UserRound, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
 import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
