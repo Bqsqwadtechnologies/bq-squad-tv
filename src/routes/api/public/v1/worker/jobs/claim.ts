@@ -110,7 +110,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           newReservationId = outputReservationId;
           const outputReservation = await reserveStorageDestination(fs, {
             purpose: "hls_streaming", incomingBytes: reservedBytes,
-            reservationId: outputReservationId, ttlMs: 24 * 60 * 60_000,
+            reservationId: outputReservationId, ttlMs: 24 * 60 * 60_000, assetId,
           });
           const rawDestination = await fs.getDoc("storageDestinations/" + outputReservation.destinationId);
           if (!rawDestination) throw new ApiError(503, "HLS_DESTINATION_MISSING", "The HLS storage destination is unavailable.");
