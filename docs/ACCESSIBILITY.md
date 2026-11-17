@@ -72,3 +72,12 @@ No accessibility conformance claim is made. Automated and manual checks remain r
 - Android Library uses a two-column poster grid. The account screen displays a ringed avatar and Viewer badge.
 - Sign-in and registration now expose Terms and Privacy links.
 - These are source-level changes only. No small-screen browser screenshot, notch emulator, TalkBack, keyboard, 200% zoom or contrast verification was run.
+
+
+## Account, history and notifications screens
+
+- Website and Android account hubs now expose clear links to wallet/purchases, watch history, notifications, help and about.
+- Android Watch History and Notifications use native list rows with visible loading, empty and error states. Unread notifications expose a separate “Mark as read” action.
+- Both players show the BQ SQWAD TV brand mark as a watermark; the Android player no longer displays a fragment of a viewer identifier.
+- The site icon points to the official uploaded PNG brand mark. The obsolete ICO was removed.
+- The new screens have not been checked with TalkBack, browser screen readers, keyboard-only navigation, 200% zoom or automated accessibility tooling.
