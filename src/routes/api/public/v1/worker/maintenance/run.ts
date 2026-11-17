@@ -896,7 +896,9 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         if (pageIds.length === 0) {
           const page = await fs.query("contentAssets", {
             filters: [{ field: "sourceDestinationId", op: "EQUAL", value: destinationId }],
-            orderByField: "updatedAt",
+            // createdAt is immutable; updatedAt changes when a source is deleted
+            // and would move already-processed records across the cursor.
+            orderByField: "createdAt",
             ...(cursorValue && cursorId ? { startAfter: { fieldValue: cursorValue, documentId: "contentAssets/" + cursorId } } : {}),
             limit: pageSize,
           });
@@ -913,7 +915,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           }
           pageIds = page.map(asset => asset.__id);
           const last = page[page.length - 1]!;
-          pageLastValue = typeof last["updatedAt"] === "string" ? last["updatedAt"] : null;
+          pageLastValue = typeof last["createdAt"] === "string" ? last["createdAt"] : null;
           pageLastId = last.__id;
           if (!pageLastValue) {
             throw new ApiError(409, "SOURCE_RETENTION_CURSOR_UNAVAILABLE", "A source record is missing its update date; automatic cleanup paused for a safe owner review.");
