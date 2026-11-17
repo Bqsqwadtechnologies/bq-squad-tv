@@ -4,7 +4,7 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody } from "@/lib/server/api";
 import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 import { releaseStorageReservation } from "@/lib/server/storage/reservations";
-import { videoWorkerRetry } from "@/lib/server/video-worker-policy";
+import { videoWorkerRetry, isVideoWorkerLeaseActive } from "@/lib/server/video-worker-policy";
 import { wakeModalVideoWorker } from "@/lib/server/modal-wake";
 
 const schema = z.object({
@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/fail")
       const path = "videoTranscodeJobs/" + assetId;
       const job = await fs.getDoc(path);
       if (!job || job["status"] !== "processing" || job["claimToken"] !== body.claimToken || job["workerId"] !== workerId ||
-          typeof job["leaseExpiresAt"] !== "string" || Date.parse(job["leaseExpiresAt"]) <= Date.now()) {
+          !isVideoWorkerLeaseActive(job["leaseExpiresAt"])) {
         throw new ApiError(409, "WORKER_LEASE_INVALID", "The processing job lease is no longer valid.");
       }
       const attempts = typeof job["attempts"] === "number" ? job["attempts"] : 1;
