@@ -13,7 +13,7 @@ const forbiddenTerms = [
   "Cloudflare", "GitHub", "TanStack", "Vite",
 ];
 
-const sourceExtensions = /\.(tsx?|jsx?|html?|xml|json|md|txt)$/i;
+const sourceExtensions = /\.(tsx?|jsx?|html?|xml|json|md|txt|kt|mjml|mustache|liquid)$/i;
 const ignoredDirectories = new Set(["node_modules", ".git", "build", "dist", ".gradle"]);
 
 async function walk(directory) {
@@ -71,8 +71,14 @@ function visibleCandidates(content, relative) {
   if (/\.(md|txt)$/i.test(relative) || /(^|\/)(emails?|email-templates?|legal|content\/legal|seed)(\/|$)/i.test(relative)) return content;
   const matches = [];
   for (const match of content.matchAll(/>([^<>]+)</g)) matches.push(match[1]);
-  const attrPattern = /(?:title|content|aria-label|aria-description|placeholder|alt|label|description|subject|text)\s*=\s*["']([^"']+)["']/g;
+  const attrPattern = /(?:title|content|aria-label|aria-description|placeholder|alt|label|description|subject|text)\s*=\s*["'\`]([^"'\`]+)["'\`]/g;
   for (const match of content.matchAll(attrPattern)) matches.push(match[1]);
+  // TanStack head() metadata is commonly expressed as object properties.
+  const metadataPattern = /(?:^|[,{\\s])(?:title|content)\\s*:\\s*["'\`]([^"'\`]+)["'\`]/gm;
+  for (const match of content.matchAll(metadataPattern)) matches.push(match[1]);
+  // Catch literal strings rendered inside JSX expression containers.
+  const expressionTextPattern = /\\{\\s*["'\`]([^"'\`]{2,})["'\`]\\s*\\}/g;
+  for (const match of content.matchAll(expressionTextPattern)) matches.push(match[1]);
   const textPattern = /<(?:Text|Button|Label|Badge|Alert|CardTitle|CardDescription)[^>]*>([^<>]+)</g;
   for (const match of content.matchAll(textPattern)) matches.push(match[1]);
   return matches.join("\n");
