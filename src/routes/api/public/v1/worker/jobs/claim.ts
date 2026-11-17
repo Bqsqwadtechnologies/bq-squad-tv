@@ -47,6 +47,19 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           } }, updateMask: { fieldPaths: ["status", "workerStatus", "claimToken", "leaseExpiresAt", "attempts", "attemptSequence", "startedAt", "updatedAt", "workerId"] } }] };
         });
         if (!claimed) continue;
+        if (row["status"] === "processing" && typeof row["outputPrefix"] === "string" &&
+            typeof row["outputDestinationId"] === "string" && typeof row["attemptSequence"] === "number") {
+          const cleanupId = "cleanup_" + assetId + "_a" + row["attemptSequence"];
+          try {
+            await fs.setDoc("videoMaintenanceJobs/" + cleanupId, {
+              taskType: "delete_attempt_prefix",
+              payload: { assetId, prefix: row["outputPrefix"], destinationId: row["outputDestinationId"] },
+              status: "queued", attempts: 0, createdAt: now.toISOString(), updatedAt: now.toISOString(),
+            }, { mustNotExist: true });
+          } catch {
+            // An earlier recovery already scheduled cleanup for this attempt.
+          }
+        }
         let newReservationId = "";
         try {
           const job = await fs.getDoc(jobPath);
