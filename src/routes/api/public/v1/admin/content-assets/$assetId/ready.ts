@@ -5,6 +5,8 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAdminModule } from "@/lib/server/roles";
 import { isSafeStoragePath } from "@/lib/server/storage/security";
 import { writeAuditLog } from "@/lib/server/audit";
+import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
+import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 
 const schema = z.object({ storagePath: z.string().min(1).max(1024), reason: z.string().trim().min(3).max(1000) });
 
@@ -25,7 +27,9 @@ export const Route = createFileRoute("/api/public/v1/admin/content-assets/$asset
         throw new ApiError(403, "CONTENT_RIGHTS_NOT_VERIFIED", "Verified distribution rights are required before processing can be completed.");
       }
       const channelId = typeof asset["channelId"] === "string" ? asset["channelId"] : "";
-      if (!isSafeStoragePath(body.storagePath) || !body.storagePath.startsWith("streaming/" + params.assetId + "/") || !body.storagePath.toLowerCase().endsWith(".m3u8")) {
+      const destinationId = typeof asset["streamDestinationId"] === "string" ? asset["streamDestinationId"] : "";
+      if (!isSafeStoragePath(body.storagePath) ||
+          !new RegExp("^hls/" + params.assetId.replace(/[.*+?^\u0024{}()|[\]\\\\]/g, "\\      if (!isSafeStoragePath(body.storagePath) || !body.storagePath.startsWith("streaming/" + params.assetId + "/") || !body.storagePath.toLowerCase().endsWith(".m3u8")) {
         throw new ApiError(400, "STREAM_MANIFEST_PATH_INVALID", "The HLS manifest must be inside this asset's private streaming folder.");
       }
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -41,12 +45,33 @@ export const Route = createFileRoute("/api/public/v1/admin/content-assets/$asset
       await fs.patchDoc("contentAssets/" + params.assetId, {
         storagePath: body.storagePath, status: "ready", contentStatus: "draft",
         deliveryMode: "bq_hosted", readyAt: now, readyBy: user.uid, updatedAt: now,
+      });") + "/a[1-9][0-9]*/master\\.m3u8$").test(body.storagePath) ||
+          !destinationId) {
+        throw new ApiError(400, "STREAM_MANIFEST_PATH_INVALID", "The HLS master playlist must be inside this asset's assigned output folder.");
+      }
+      const rawDestination = await fs.getDoc("storageDestinations/" + destinationId);
+      if (!rawDestination) throw new ApiError(503, "HLS_DESTINATION_MISSING", "The assigned storage location is unavailable.");
+      const destination = validateStorageDestinationMetadata({ ...rawDestination, destinationId });
+      const config = resolveStorageDestinationConfiguration(destination);
+      if (config.configurationStatus !== "configured") throw new ApiError(503, "HLS_DESTINATION_MISCONFIGURED", "The assigned storage location is not configured.");
+      const adapter = createStorageProviderAdapter(config);
+      const downloaded = await adapter.getObject(body.storagePath);
+      if (downloaded.info.sizeBytes > 2_000_000) throw new ApiError(413, "STREAM_MANIFEST_TOO_LARGE", "The HLS master playlist exceeds the inspection limit.");
+      const manifest = new TextDecoder().decode(downloaded.body);
+      if (!manifest.replace(/^\uFEFF/, "").trimStart().startsWith("#EXTM3U")) {
+        throw new ApiError(415, "STREAM_MANIFEST_INVALID", "The uploaded HLS master playlist is invalid.");
+      }
+      const now = new Date().toISOString();
+      await fs.patchDoc("contentAssets/" + params.assetId, {
+        storagePath: body.storagePath, status: "processed_pending_review", contentStatus: "draft",
+        deliveryMode: "bq_hosted", masterPlaylistValid: true,
+        ownerReviewRequired: true, ownerReviewRequiredAt: now, updatedAt: now,
       });
       await writeAuditLog(fs, {
-        actorUid: user.uid, action: "content.asset_ready", targetType: "contentAsset", targetId: params.assetId,
+        actorUid: user.uid, action: "content.asset_submitted_for_review", targetType: "contentAsset", targetId: params.assetId,
         reason: body.reason, metadata: { channelId, deliveryMode: "bq_hosted" },
       });
-      return Response.json({ assetId: params.assetId, status: "ready", deliveryMode: "bq_hosted" });
+      return Response.json({ assetId: params.assetId, status: "processed_pending_review", deliveryMode: "bq_hosted" });
     } catch (error) { return errorBody(error); }
   } } },
 });
