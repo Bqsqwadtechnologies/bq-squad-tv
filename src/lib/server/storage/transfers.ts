@@ -182,6 +182,7 @@ export async function loadStreamStorageConfiguration(
   asset: Record<string, unknown>,
   assetId?: string,
   sessionId?: string,
+  excludeDestinationIds: string[] = [],
 ): Promise<StorageDestinationConfiguration> {
   const resolvedAssetId = assetId ??
     (typeof asset["assetId"] === "string" ? asset["assetId"] : typeof asset["id"] === "string" ? asset["id"] : "");
@@ -245,7 +246,8 @@ export async function loadStreamStorageConfiguration(
     };
   };
 
-  const ids = [...new Set([binding.streamDestinationId, ...binding.streamReplicaIds])].slice(0, 9);
+  const excluded = new Set(excludeDestinationIds);
+  const ids = [...new Set([binding.streamDestinationId, ...binding.streamReplicaIds])].filter(id => !excluded.has(id)).slice(0, 9);
   const candidates = (await Promise.all(ids.map(loadCandidate))).filter(
     (item): item is NonNullable<typeof item> => item !== null &&
       item.configuration.configurationStatus === "configured",
