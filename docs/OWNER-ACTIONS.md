@@ -14,7 +14,7 @@ For each of the ten existing storage accounts:
 6. Turn on email alerts.
 7. Save the settings and confirm the displayed caps.
 
-The project must treat an exhausted or unknown allowance as unavailable and stop issuing new viewing grants from that destination. Do not assume a cap setting guarantees that no charge can ever occur; confirm the provider's current cap behaviour and monitor alerts. The stated counter reset time and propagation delay must be verified in the account console before relying on them.
+The application uses an internal daily delivery ceiling of **800 MB per account** (the older 1 GB/day reading with a 20% safety margin). Its monthly ceiling is the lower of three times measured stored data or 30 GB, also with a 20% safety margin. These are application limits, not a claim that provider caps are configured. Treat an exhausted or unknown allowance as unavailable and stop issuing new viewing grants. Do not assume a provider cap guarantees that no charge can ever occur; the adult billing owner must confirm current cap behaviour, reset time and propagation delay in the account console and monitor alerts. The source and check date are shown beside each allowance in the owner screen.
 
 ## 2. Video-processing account spending limit
 
@@ -62,7 +62,7 @@ The Zillionaire dashboard is the only top-level control centre. Configure only `
 - Review the video-processing spend limit and current usage.
 - Confirm the Firestore TTL policy for `videoWorkerNonces.expiresAt`.
 - Add only the exact missing secret names documented by the relevant batch.
-- Keep paid delivery, paid egress and optional fee-bearing integrations disabled unless the owner explicitly approves a separate change.
+- Paid egress is permanently disabled in application policy; there is no setting to turn it on. The application must refuse new grants before the safe free allowance is exhausted.
 
 ## 7. Required secret names referenced by this project
 
@@ -103,3 +103,14 @@ Before publishing the legal pages as final policies:
 5. Only then replace the publication-pending page notices and remove their noindex metadata.
 
 The current website routes are placeholders that explicitly say publication is pending. They are not legal agreements and must not be represented as approved policies.
+
+
+## 10. Storage Fabric — File 03
+
+- For each Backblaze account, verify the provider's daily caps and email alerts. The application independently uses an 800 MB/day safe ceiling and a monthly ceiling based on the lower published reading; the application limit does not replace provider caps.
+- Review the allowance source and last-checked date shown for each account group. Backblaze's current pricing describes free egress up to three times average monthly storage; the older help guidance describes 1 GB/day. The application uses the lower monthly interpretation and a 20% safety margin.
+- Lovable project groups start with a conservative 9 GB monthly delivery budget (twice the 4.5 GB soft cap for one 5 GB bucket), shared across every bucket in that project. The daily budget defaults to one-thirtieth of the monthly budget.
+- Set a verified shared storage cap for each project group before increasing it above the conservative default. Never treat each bucket in one project as an independent quota unless the provider confirms that arrangement.
+- Keep the two legacy storage locations intact. They remain read-only fallbacks for older assets and must never be deleted, renamed or migrated as part of pool registration.
+- Keep paid egress disabled. Do not add paid egress secrets, controls or automatic fallback to paid transfer.
+- The application owner and adult billing owner should review account allowances and alerts before enabling production storage or playback.
