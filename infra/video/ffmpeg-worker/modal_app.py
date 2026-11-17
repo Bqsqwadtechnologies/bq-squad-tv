@@ -52,7 +52,8 @@ def poll_firestore_queue() -> None:
     job = response.get("job")
     if job:
         transcode_claimed_job.spawn(job)
-        return
+    # Maintenance uses the same existing queue and worker identity. Do not
+    # starve cleanup, reconciliation or storage operations while films queue.
     maintenance = runner.signed_request("POST", "/api/public/v1/worker/maintenance/claim", {})
     task = maintenance.get("task")
     if task:
