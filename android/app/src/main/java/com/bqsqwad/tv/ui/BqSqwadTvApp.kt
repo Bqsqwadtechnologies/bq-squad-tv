@@ -15,7 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -48,7 +48,7 @@ private val mainTabs =
         MainTab("home", "Home", Icons.Default.Home),
         MainTab("live", "Live TV", Icons.Default.LiveTv),
         MainTab("library", "Library", Icons.Default.VideoLibrary),
-        MainTab("settings", "Settings", Icons.Default.Settings),
+        MainTab("search", "Search", Icons.Default.Search),
         MainTab("account", "Profile", Icons.Default.Person),
     )
 
