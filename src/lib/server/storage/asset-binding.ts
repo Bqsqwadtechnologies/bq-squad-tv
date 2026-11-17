@@ -140,13 +140,14 @@ export async function bindAssetStreamStorage(
             fields: encodeFields({
               streamDestinationId: input.destinationId,
               streamReplicaIds: replicas,
+              streamReservationId: input.reservationId,
               objectPrefix: input.objectPrefix,
               streamObjectPrefix: input.objectPrefix,
               streamBucket: metadata.bucketName,
               updatedAt: now,
             }),
           },
-          updateMask: { fieldPaths: ["streamDestinationId", "streamReplicaIds", "objectPrefix", "streamObjectPrefix", "streamBucket", "updatedAt"] },
+          updateMask: { fieldPaths: ["streamDestinationId", "streamReplicaIds", "streamReservationId", "objectPrefix", "streamObjectPrefix", "streamBucket", "updatedAt"] },
         },
         {
           update: {
