@@ -17,7 +17,7 @@ export async function getRequiredLegalPages(fs: Firestore, audience: LegalAudien
   const pages = await Promise.all(slugs.map(slug => fs.getDoc("sitePages/" + slug)));
   return pages.map((page, index) => {
     const slug = slugs[index]!;
-    if (!page || page["status"] !== "published" || !Number.isSafeInteger(page["version"])) {
+    if (!page || page["status"] !== "published" || page["audience"] !== (slug === "terms" || slug === "privacy-policy" ? "public" : audience === "producer" ? "producer" : "provider") || !Number.isSafeInteger(page["version"])) {
       throw new ApiError(503, "LEGAL_PAGES_NOT_READY", "The required legal pages are not published yet. Please try again later.");
     }
     if (typeof page["body"] !== "string" || /\{\{[a-z0-9_]+\}\}/.test(page["body"] as string)) {
