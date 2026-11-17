@@ -37,6 +37,15 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           const job = docs[0];
           if (!job || !["queued", "processing"].includes(String(job["status"]))) return { result: false, writes: [] };
           if (job["status"] === "processing" && typeof job["leaseExpiresAt"] === "string" && Date.parse(job["leaseExpiresAt"]) > now.getTime()) return { result: false, writes: [] };
+          const currentAttempts = typeof job["attempts"] === "number" ? job["attempts"] : 0;
+          if (job["status"] === "processing" && currentAttempts >= 6) {
+            return { result: "dead", writes: [{ update: { name: fs.docName(jobPath), fields: {
+              status: { stringValue: "failed" }, workerStatus: { stringValue: "failed" },
+              lastErrorCode: { stringValue: "WORKER_LEASE_EXPIRED" },
+              claimToken: { nullValue: null }, leaseExpiresAt: { nullValue: null },
+              updatedAt: { stringValue: now.toISOString() },
+            } }, updateMask: { fieldPaths: ["status", "workerStatus", "lastErrorCode", "claimToken", "leaseExpiresAt", "updatedAt"] } }] };
+          }
           return { result: true, writes: [{ update: { name: fs.docName(jobPath), fields: {
             status: { stringValue: "processing" }, workerStatus: { stringValue: "processing" },
             claimToken: { stringValue: claimToken }, leaseExpiresAt: { stringValue: leaseExpiresAt },
@@ -46,6 +55,26 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
             startedAt: { stringValue: now.toISOString() }, updatedAt: { stringValue: now.toISOString() },
           } }, updateMask: { fieldPaths: ["status", "workerStatus", "claimToken", "leaseExpiresAt", "attempts", "attemptSequence", "startedAt", "updatedAt", "workerId"] } }] };
         });
+        if (claimed === "dead") {
+          await fs.patchDoc("contentAssets/" + assetId, {
+            status: "transcode_failed", transcodeJobStatus: "failed",
+            transcodeErrorCode: "WORKER_LEASE_EXPIRED", updatedAt: now.toISOString(),
+          }).catch(() => undefined);
+          if (typeof row["outputPrefix"] === "string" && typeof row["outputDestinationId"] === "string" &&
+              typeof row["attemptSequence"] === "number") {
+            const cleanupId = "cleanup_" + assetId + "_a" + row["attemptSequence"];
+            try {
+              await fs.setDoc("videoMaintenanceJobs/" + cleanupId, {
+                taskType: "delete_attempt_prefix",
+                payload: { assetId, prefix: row["outputPrefix"], destinationId: row["outputDestinationId"] },
+                status: "queued", attempts: 0, createdAt: now.toISOString(), updatedAt: now.toISOString(),
+              }, { mustNotExist: true });
+            } catch {
+              // Existing cleanup task is already responsible for the abandoned attempt.
+            }
+          }
+          continue;
+        }
         if (!claimed) continue;
         if (row["status"] === "processing" && typeof row["outputPrefix"] === "string" &&
             typeof row["outputDestinationId"] === "string" && typeof row["attemptSequence"] === "number") {
