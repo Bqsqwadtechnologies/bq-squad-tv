@@ -10,11 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.bqsqwad.tv.data.wallet.*
+import com.bqsqwad.tv.data.currency.CurrencyFormatter
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
-import java.text.NumberFormat
-import java.util.Currency
-import java.util.Locale
 
 @Composable
 fun WalletScreen(onBack: () -> Unit) {
@@ -122,15 +119,4 @@ fun WalletScreen(onBack: () -> Unit) {
 private fun money(
     minor: Long,
     currency: String,
-): String {
-    val isoCurrency =
-        runCatching { Currency.getInstance(currency) }
-            .getOrElse { Currency.getInstance("USD") }
-    val digits = isoCurrency.defaultFractionDigits.coerceAtLeast(0)
-    val amount = BigDecimal.valueOf(minor, digits)
-    val formatter = NumberFormat.getCurrencyInstance(Locale.getDefault())
-    formatter.currency = isoCurrency
-    formatter.minimumFractionDigits = digits
-    formatter.maximumFractionDigits = digits
-    return formatter.format(amount)
-}
+): String = CurrencyFormatter.formatMinorUnits(minor, currency)
