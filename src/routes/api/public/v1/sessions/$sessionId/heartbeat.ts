@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
+import { signSessionLeaseToken, verifySessionLeaseToken } from "@/lib/server/session-lease-token";
 import { releaseSessionLease, renewSessionLease } from "@/lib/server/session-limits";
 import { estimatePlaybackProgressBytes, recordExpectedStorageEgressProgress, releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
 import {
@@ -20,6 +21,7 @@ const bodySchema = z.object({
   clientSequence: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   playbackState: z.enum(["playing", "paused", "buffering", "idle", "ended"]),
   playbackPositionMs: z.number().int().nonnegative().max(31_536_000_000),
+  leaseToken: z.string().max(2048).optional(),
 });
 
 function integer(value: unknown, fallback = 0): number {
@@ -39,7 +41,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           let rawBody: unknown;
           try { rawBody = await request.json(); }
           catch { throw new ApiError(400, "INVALID_REQUEST", "Request body must be valid JSON."); }
-          const { clientSequence, playbackState, playbackPositionMs } = bodySchema.parse(rawBody);
+          const { clientSequence, playbackState, playbackPositionMs, leaseToken } = bodySchema.parse(rawBody);
           const fs = await Firestore.create();
           const now = new Date();
           const nowIso = now.toISOString();
@@ -48,6 +50,15 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           const receiptPath = sessionPath + "/heartbeats/" + clientSequence;
           const activeSessionsPath = "activeSessions/" + user.uid;
           const initialSession = requireSessionOwned(await fs.getDoc(sessionPath), sessionId, user.uid);
+          if (leaseToken) {
+            const lease = await verifySessionLeaseToken(leaseToken, sessionId);
+            if (lease.seq !== integer(initialSession["lastClientSequence"]) ||
+                lease.billedSeconds !== integer(initialSession["billedSeconds"]) ||
+                lease.positionMs !== integer(initialSession["lastPlaybackPositionMs"]) ||
+                clientSequence !== lease.seq + 1) {
+              throw new ApiError(409, "HEARTBEAT_LEASE_STALE", "The playback lease is out of date. Refresh the playback session.");
+            }
+          }
           const producerUid = typeof initialSession["producerUid"] === "string" ? initialSession["producerUid"] as string : null;
           const producerPath = producerUid ? "producers/" + producerUid : null;
           const readPaths = [sessionPath, walletPath, receiptPath, activeSessionsPath, ...(producerPath ? [producerPath] : [])];
@@ -249,7 +260,16 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           if (response.active === false) {
             await releaseExpectedStorageEgress(fs, sessionId).catch(() => undefined);
           }
-          return Response.json(response);
+          const leaseTokenNext = response.active === true
+            ? await signSessionLeaseToken({
+                sid: sessionId,
+                seq: clientSequence,
+                positionMs: playbackPositionMs,
+                billedSeconds: integer(response["billedSeconds"]),
+                leaseExp: Math.floor(Date.now() / 1000) + 45,
+              })
+            : null;
+          return Response.json({ ...response, ...(leaseTokenNext ? { leaseToken: leaseTokenNext } : {}) });
         } catch (error) {
           return errorBody(error);
         }
