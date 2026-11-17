@@ -169,3 +169,19 @@ describe("Lovable credential bundles", () => {
     expect(config.missingSecretNames).toEqual(["STORAGE_LOV_BUNDLE_01"]);
   });
 });
+
+
+describe("provider listing usage state", () => {
+  it("accepts provider_listing as the authoritative reconciliation source", () => {
+    const metadata = validateStorageDestinationMetadata({
+      destinationId: "lov-usage-01", providerType: "lovable_storage",
+      accountAlias: "Lovable usage", secretPrefix: "STORAGE_LOV_BUNDLE_01",
+      bucketName: "bucket-usage", region: "africa-south1", purpose: "source_media",
+      softCapBytes: 4_500_000_000, accountCapBytes: 4_500_000_000,
+      dailyEgressCapBytes: null, priority: 10, enabled: true,
+      accountGroup: "lovable:project-a", mode: "active", replicaOf: null,
+      usageBytes: 1234, usageSource: "provider_listing", usageCheckedAt: "2026-11-17T00:00:00.000Z",
+    });
+    expect(metadata.usageSource).toBe("provider_listing");
+  });
+});
