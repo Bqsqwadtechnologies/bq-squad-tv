@@ -285,10 +285,10 @@ export async function releaseStorageReservation(fs: Firestore, reservationId: st
         const nextGroupFree = Math.max(0, capValue - usageValue - nextGroupReserved);
         const now = new Date().toISOString();
         const writes = [
-          { update: { name: fs.docName(destinationPath), fields: encodeFields({ reservedBytes: currentReserved - bytes, updatedAt: now }), updateMask: { fieldPaths: ["reservedBytes", "updatedAt"] } },
-          { update: { name: fs.docName(groupPath), fields: encodeFields({ reservedBytes: nextGroupReserved, freeBytes: nextGroupFree, updatedAt: now }), updateMask: { fieldPaths: ["reservedBytes", "freeBytes", "updatedAt"] } },
-          ...(nextEntries ? [{ update: { name: fs.docName(shardPath), fields: encodeFields({ entries: nextEntries, updatedAt: now }), updateMask: { fieldPaths: ["entries", "updatedAt"] } }] : []),
-          { update: { name: fs.docName(reservationPath), fields: encodeFields({ status: "released", releasedAt: now }), updateMask: { fieldPaths: ["status", "releasedAt"] } },
+          { update: { name: fs.docName(destinationPath), fields: encodeFields({ reservedBytes: currentReserved - bytes, updatedAt: now }) }, updateMask: { fieldPaths: ["reservedBytes", "updatedAt"] } },
+          { update: { name: fs.docName(groupPath), fields: encodeFields({ reservedBytes: nextGroupReserved, freeBytes: nextGroupFree, updatedAt: now }) }, updateMask: { fieldPaths: ["reservedBytes", "freeBytes", "updatedAt"] } },
+          ...(nextEntries ? [{ update: { name: fs.docName(shardPath), fields: encodeFields({ entries: nextEntries, updatedAt: now }) }, updateMask: { fieldPaths: ["entries", "updatedAt"] } }] : []),
+          { update: { name: fs.docName(reservationPath), fields: encodeFields({ status: "released", releasedAt: now }) }, updateMask: { fieldPaths: ["status", "releasedAt"] } },
         ];
         return { result: nextEntries !== null, writes };
       });
@@ -358,15 +358,15 @@ export async function commitStorageReservation(fs: Firestore, reservationId: str
           { update: { name: fs.docName(destinationPath), fields: encodeFields({
             reservedBytes: nextReserved, usageBytes: nextUsage, usageSource: "ledger",
             usageCheckedAt: now, updatedAt: now,
-          }), updateMask: { fieldPaths: ["reservedBytes", "usageBytes", "usageSource", "usageCheckedAt", "updatedAt"] } },
+          }) }, updateMask: { fieldPaths: ["reservedBytes", "usageBytes", "usageSource", "usageCheckedAt", "updatedAt"] } },
           { update: { name: fs.docName(groupPath), fields: encodeFields({
             usageBytes: nextGroupUsage, knownUsageBytes: nextGroupUsage,
             reservedBytes: nextGroupReserved, freeBytes: nextGroupFree, updatedAt: now,
-          }), updateMask: { fieldPaths: ["usageBytes", "knownUsageBytes", "reservedBytes", "freeBytes", "updatedAt"] } },
-          ...(nextEntries ? [{ update: { name: fs.docName(shardPath), fields: encodeFields({ entries: nextEntries, updatedAt: now }), updateMask: { fieldPaths: ["entries", "updatedAt"] } }] : []),
+          }) }, updateMask: { fieldPaths: ["usageBytes", "knownUsageBytes", "reservedBytes", "freeBytes", "updatedAt"] } },
+          ...(nextEntries ? [{ update: { name: fs.docName(shardPath), fields: encodeFields({ entries: nextEntries, updatedAt: now }) }, updateMask: { fieldPaths: ["entries", "updatedAt"] } }] : []),
           { update: { name: fs.docName(reservationPath), fields: encodeFields({
             status: "committed", actualBytes, committedAt: now,
-          }), updateMask: { fieldPaths: ["status", "actualBytes", "committedAt"] } },
+          }) }, updateMask: { fieldPaths: ["status", "actualBytes", "committedAt"] } },
         ];
         return { result: nextEntries !== null, writes };
       });
