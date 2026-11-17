@@ -99,7 +99,7 @@ Configure these values only in the appropriate secret manager or dashboard:
 - `VIDEO_WORKER_LEASE_MINUTES`: optional bounded lease duration.
 - `STREAMING_URL_ENCRYPTION_KEYS_JSON` and `STREAMING_URL_ACTIVE_KEY_VERSION`: only when encrypted HLS is enabled.
 
-Keep the Zillionaire dashboard as the only top-level control centre. Do not add or reintroduce `ADMIN_EMAIL`. Do not send secret values through chat or commit them to the repository.
+Keep the Zillionaire dashboard as the only top-level control centre. Do not create a second top-level identity. Do not send secret values through chat or commit them to the repository.
 
 ## Verification status
 
