@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, decodeFields, Firestore } from "../firebase-admin";
 import { reserveStorageDestination } from "./reservations";
 import { groupCapacityPath } from "./pool-index";
@@ -75,6 +75,14 @@ function makeFakeFirestore() {
   };
   return { fs: fs as unknown as Firestore, docs };
 }
+
+beforeEach(() => {
+  vi.stubEnv("STORAGE_B2_01_KEY_ID", "key-id");
+  vi.stubEnv("STORAGE_B2_01_APP_KEY", "app-key");
+  vi.stubEnv("STORAGE_B2_01_BUCKET_ID", "bucket-id");
+  vi.stubEnv("STORAGE_B2_01_ENDPOINT", "https://s3.us-west-004.backblazeb2.com");
+});
+afterEach(() => vi.unstubAllEnvs());
 
 describe("compact-pool reservations", () => {
   it("reserves capacity and updates the destination, group and index atomically", async () => {
