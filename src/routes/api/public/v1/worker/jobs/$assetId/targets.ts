@@ -46,7 +46,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/target
   server: { handlers: { POST: async ({ request, params }) => {
     try {
       const fs = await Firestore.create();
-      await requireVideoWorker(request, fs);
+      const workerId = await requireVideoWorker(request, fs);
       const body = await parseBody(request, schema);
       const assetId = params.assetId;
       if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId)) {
@@ -60,7 +60,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/target
         unique.add(file.relativePath);
       }
       const job = await fs.getDoc("videoTranscodeJobs/" + assetId);
-      if (!job || job["status"] !== "processing" || job["claimToken"] !== body.claimToken ||
+      if (!job || job["status"] !== "processing" || job["claimToken"] !== body.claimToken || job["workerId"] !== workerId ||
           typeof job["leaseExpiresAt"] !== "string" || Date.parse(job["leaseExpiresAt"]) <= Date.now()) {
         throw new ApiError(409, "WORKER_LEASE_INVALID", "The processing job lease is no longer valid.");
       }
