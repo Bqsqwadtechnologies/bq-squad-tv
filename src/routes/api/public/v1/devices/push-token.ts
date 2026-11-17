@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { writeAuditLog } from "@/lib/server/audit";
 
 const schema = z.object({
   token: z.string().min(40).max(4096),
@@ -20,10 +21,27 @@ export const Route = createFileRoute("/api/public/v1/devices/push-token")({
       const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(body.token));
       const tokenId = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
       const now = new Date().toISOString();
-      await fs.setDoc("users/" + user.uid + "/devices/" + tokenId, {
+      const devicePath = "users/" + user.uid + "/devices/" + tokenId;
+      const existing = await fs.getDoc(devicePath);
+      await fs.setDoc(devicePath, {
         token: body.token, platform: body.platform,
-        deviceName: body.deviceName ?? null, status: "ACTIVE", updatedAt: now,
+        deviceName: body.deviceName ?? null, status: "ACTIVE",
+        registeredAt: typeof existing?.["registeredAt"] === "string" ? existing["registeredAt"] : now,
+        updatedAt: now, revokedAt: null,
       });
+      if (!existing || existing["status"] === "REVOKED") {
+        const notificationId = crypto.randomUUID();
+        await fs.setDoc("users/" + user.uid + "/notifications/" + notificationId, {
+          title: "A device was registered",
+          body: "A device has been added to your BQ SQWAD TV account. Review your registered devices if you do not recognise it.",
+          category: "device_registered", read: false, createdAt: now,
+        });
+        await writeAuditLog(fs, {
+          actorUid: user.uid, action: "device.registered", targetType: "device", targetId: tokenId,
+          reason: "A push-enabled device registered to the signed-in account",
+          metadata: { platform: body.platform },
+        });
+      }
       return Response.json({ registered: true });
     } catch (error) { return errorBody(error); }
   } } },
