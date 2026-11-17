@@ -143,3 +143,56 @@ export function getStreamingSourceKey(keyVersion?: string): { keyVersion: string
   }
   return { keyVersion: version, keyBase64Url: key };
 }
+
+
+/** Encrypt a per-asset 16-byte HLS AES-128 key using the existing versioned server key ring. */
+export async function encryptHlsContentKey(
+  contentKeyBase64Url: string,
+  contentAssetId: string,
+  keyVersion: string,
+  wrappingKeyBase64Url: string,
+): Promise<EncryptedStreamingSource> {
+  const contentKey = decodeBase64Url(contentKeyBase64Url);
+  if (contentKey.length !== 16) {
+    throw new ApiError(400, "HLS_CONTENT_KEY_INVALID", "The HLS content key must contain 16 bytes.");
+  }
+  const key = await importAesKey(wrappingKeyBase64Url);
+  const nonce = crypto.getRandomValues(new Uint8Array(12));
+  const aad = encoder.encode(`bq-sqwad-tv:hls-content-key:${contentAssetId}:${keyVersion}`);
+  const ciphertext = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv: toArrayBuffer(nonce), additionalData: toArrayBuffer(aad), tagLength: 128 },
+    key,
+    toArrayBuffer(contentKey),
+  );
+  return {
+    algorithm: "A256GCM",
+    keyVersion,
+    nonce: encodeBase64Url(nonce),
+    ciphertext: encodeBase64Url(new Uint8Array(ciphertext)),
+  };
+}
+
+/** Decrypt only inside the server-side session-authorized HLS key route. */
+export async function decryptHlsContentKey(
+  envelope: EncryptedStreamingSource,
+  contentAssetId: string,
+  wrappingKeyBase64Url: string,
+): Promise<string> {
+  if (envelope.algorithm !== "A256GCM") {
+    throw new ApiError(400, "STREAM_SOURCE_FORMAT_INVALID", "The encrypted content key format is not supported.");
+  }
+  const key = await importAesKey(wrappingKeyBase64Url);
+  try {
+    const aad = encoder.encode(`bq-sqwad-tv:hls-content-key:${contentAssetId}:${envelope.keyVersion}`);
+    const plaintext = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv: toArrayBuffer(decodeBase64Url(envelope.nonce)), additionalData: toArrayBuffer(aad), tagLength: 128 },
+      key,
+      toArrayBuffer(decodeBase64Url(envelope.ciphertext)),
+    );
+    const bytes = new Uint8Array(plaintext);
+    if (bytes.length !== 16) throw new Error("invalid key length");
+    return encodeBase64Url(bytes);
+  } catch {
+    throw new ApiError(500, "HLS_CONTENT_KEY_DECRYPT_FAILED", "The protected content key could not be decrypted.");
+  }
+}
