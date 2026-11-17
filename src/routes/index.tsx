@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import {
   Bell, ChevronRight, CirclePlay, Clapperboard,
   Film, Grid2X2, Home, Search, Settings, ShieldCheck, Signal,
-  Sparkles, Tv2, Smile, Play, MoreHorizontal, UserRound,
+  Sparkles, Tv2, Smile, Play, MoreHorizontal, UserRound, Wallet,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -39,16 +39,26 @@ function HomePage() {
   const [featuredContent, setFeaturedContent] = useState<FeaturedItem[]>([]);
   const [channels, setChannels] = useState<ChannelItem[]>([]);
   const [catalogState, setCatalogState] = useState<"loading" | "ready" | "signed_out" | "error">("loading");
-  const [walletCurrencySymbol, setWalletCurrencySymbol] = useState("$");
+  const [walletCurrencySymbol, setWalletCurrencySymbol] = useState("");
 
   useEffect(() => {
     let active = true;
     void (async () => {
       try {
-        const publicConfigResponse = await fetch("/api/public/v1/config/client", { cache: "no-store" });
-        if (publicConfigResponse.ok) {
-          const publicConfig = await publicConfigResponse.json() as { currencySymbol?: string };
-          if (active && typeof publicConfig.currencySymbol === "string") setWalletCurrencySymbol(publicConfig.currencySymbol);
+        try {
+          const publicConfigResponse = await fetch("/api/public/v1/config/client", { cache: "no-store" });
+          if (publicConfigResponse.ok) {
+            const publicConfig = await publicConfigResponse.json() as { currencySymbol?: string };
+            if (active && typeof publicConfig.currencySymbol === "string" && publicConfig.currencySymbol) {
+              setWalletCurrencySymbol(publicConfig.currencySymbol);
+            } else if (active) {
+              setWalletCurrencySymbol("$");
+            }
+          } else if (active) {
+            setWalletCurrencySymbol("$");
+          }
+        } catch {
+          if (active) setWalletCurrencySymbol("$");
         }
         const token = await restoreWebSession();
         if (!active) return;
@@ -109,7 +119,7 @@ function HomePage() {
           <a href="/account" aria-label="Sign in or view account" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-cyan-200/50 bg-white text-blue-700 ring-2 ring-cyan-300/15">
             <UserRound size={21} aria-hidden="true" />
           </a>
-          <a href="/wallet" aria-label="Wallet" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-blue-100 bg-blue-50 text-xs font-bold text-blue-700 transition hover:border-cyan-300/50">{walletCurrencySymbol}</a>
+          <a href="/wallet" aria-label="Wallet" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-blue-100 bg-blue-50 text-xs font-bold text-blue-700 transition hover:border-cyan-300/50">{walletCurrencySymbol || <Wallet size={18} aria-hidden="true" />}</a>
           <a aria-label="Search" href="/search" className="hidden h-10 w-10 place-items-center rounded-full border border-blue-100 bg-white text-blue-700 transition hover:border-cyan-300/50 hover:text-cyan-200 min-[381px]:grid"><Search size={19} /></a>
           <button onClick={() => setNotice("Notifications will appear here when your account is connected.")} aria-label="Notifications" className="relative hidden h-10 w-10 place-items-center rounded-full border border-blue-100 bg-white text-blue-700 transition hover:border-cyan-300/50 min-[381px]:grid"><Bell size={18} /><span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-cyan-300" /></button>
           <button onClick={() => setHeaderMenuOpen(value => !value)} aria-label="More options" aria-expanded={headerMenuOpen} className="grid h-10 w-10 place-items-center rounded-full border border-blue-100 bg-white text-blue-700 min-[381px]:hidden"><MoreHorizontal size={20} /></button>
