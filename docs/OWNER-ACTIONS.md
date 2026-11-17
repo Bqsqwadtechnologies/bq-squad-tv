@@ -35,6 +35,7 @@ In the existing project console:
 3. Create a policy for collection group `videoWorkerNonces` using timestamp field `expiresAt`.
 4. Add TTL policies for any additional short-lived collections only when a later batch documents their exact collection and expiry field.
 5. Confirm the policy is enabled. TTL deletion is asynchronous; application security must not depend on immediate deletion.
+6. Deploy the current `firestore.indexes.json` with the adult project owner before enabling the updated storage pagination and wallet-hold expiry worker. This includes the `contentAssets` cursor indexes and the `walletHolds` status/expiry index.
 
 ## 4. Hosting secrets
 
