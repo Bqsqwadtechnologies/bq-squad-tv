@@ -6,7 +6,7 @@ import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 import { isVideoWorkerLeaseActive } from "@/lib/server/video-worker-policy";
 import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
 import { createStorageUploadTarget } from "@/lib/server/storage/transfers";
-import { isAllowedHlsOutputPath } from "@/lib/server/storage/security";
+import { classifyAssetMediaOutput, isAllowedHlsOutputPath } from "@/lib/server/storage/asset-binding";
 
 const fileSchema = z.object({
   relativePath: z.string().min(1).max(220),
@@ -35,7 +35,10 @@ function allowedOutput(relativePath: string, contentType: string): boolean {
     webp: "image/webp",
     aac: "audio/aac",
   };
-  return Boolean(extension && expected[extension] === contentType && isAllowedHlsOutputPath(relativePath));
+  return Boolean(
+    extension && expected[extension] === contentType &&
+    (isAllowedHlsOutputPath(relativePath) || classifyAssetMediaOutput(relativePath) !== null),
+  );
 }
 
 export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/targets")({
