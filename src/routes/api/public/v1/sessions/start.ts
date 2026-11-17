@@ -316,7 +316,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
               if (paidPlayback && hold.holdMinor < 1) {
                 throw new ApiError(402, "INSUFFICIENT_AVAILABLE_BALANCE", "Your available wallet balance is already reserved by another viewing session.");
               }
-              if (currentWallet["currency"] !== currency) {
+              if (typeof currentWallet["currency"] === "string" && currentWallet["currency"] !== currency) {
                 throw new ApiError(409, "WALLET_CURRENCY_MISMATCH", "The wallet currency changed while playback was starting.");
               }
               const nowMs = now.getTime();
@@ -351,13 +351,13 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
                     },
                     updateMask: { fieldPaths: ["sessions", "updatedAt"] },
                   },
-                  {
+                  ...(docs[2] ? [{
                     update: {
                       name: fs.docName(walletPath),
-                      fields: encodeFields({ heldBalanceMinor: hold.heldBalanceMinor, updatedAt: nowIso }),
+                      fields: encodeFields({ heldBalanceMinor: hold.heldBalanceMinor, currency, updatedAt: nowIso }),
                     },
-                    updateMask: { fieldPaths: ["heldBalanceMinor", "updatedAt"] },
-                  },
+                    updateMask: { fieldPaths: ["heldBalanceMinor", "currency", "updatedAt"] },
+                  }] : []),
                   {
                     update: {
                       name: fs.docName(holdPath),
