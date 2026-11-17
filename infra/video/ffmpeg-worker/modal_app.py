@@ -62,6 +62,8 @@ def transcode_claimed_job(job: dict) -> None:
     import runner
 
     asset_id = str(job.get("assetId", "unknown"))
+    job["modalCores"] = float(MODAL_RESOURCE_CONFIG["standard"]["cpu"])
+    job["modalMemoryGiB"] = float(MODAL_RESOURCE_CONFIG["standard"]["memory"]) / 1024
     try:
         runner.process_job(job)
     except Exception:
