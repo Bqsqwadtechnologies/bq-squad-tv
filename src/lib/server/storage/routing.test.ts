@@ -124,3 +124,28 @@ describe("large-pool round robin", () => {
     expect(pickDestination(pool, 1, "source_media", 0)?.id).toBe("b2-001");
   });
 });
+
+
+describe("priority-group package rotation", () => {
+  it("keeps the cursor within the available priority group", () => {
+    const pool = [
+      candidate("01", { priority: 1 }),
+      candidate("02", { priority: 1 }),
+      candidate("03", { priority: 2 }),
+    ];
+    const first = pickDestination(pool, 1, "source_media", 0)!;
+    const second = pickDestination(pool, 1, "source_media", first.nextCursor)!;
+    expect([first.id, second.id]).toEqual(["01", "02"]);
+    expect(first.nextCursor).toBe(1);
+    expect(second.nextCursor).toBe(0);
+  });
+
+  it("uses the next priority only when every destination in the earlier group is full", () => {
+    const pool = [
+      candidate("01", { priority: 1, usageBytes: 100 }),
+      candidate("02", { priority: 1, mode: "drain" }),
+      candidate("03", { priority: 2 }),
+    ];
+    expect(pickDestination(pool, 1, "source_media", 0)?.id).toBe("03");
+  });
+});
