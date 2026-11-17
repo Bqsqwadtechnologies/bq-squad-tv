@@ -68,7 +68,7 @@ fun ProfileSetupScreen(
                 }.onFailure { message = it.localizedMessage ?: "Profile verification failed." }
                 busy = false
             }
-        }, modifier = Modifier.fillMaxWidth()) { Text(if (busy) "Verifying…" else "Continue") }
+        }, modifier = Modifier.fillMaxWidth()) { Text(if (busy) "Verifying…" else "Continue to BQ SQWAD TV") }
         message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Text(
             "Adult content is never enabled by this screen. The server must confirm eligibility for every protected catalog and playback request.",
