@@ -20,6 +20,7 @@ const schema = z.object({
     hlsEncryption: z.boolean(),
     forYou: z.boolean(),
     reminders: z.boolean(),
+    modalSpendGuard: z.boolean(),
   }).strict(),
   reason: z.string().trim().min(3).max(1000),
 }).strict();
