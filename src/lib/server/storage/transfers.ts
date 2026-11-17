@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { ApiError } from "../firebase-admin";
+import { LEGACY_SOURCE_DESTINATION_ID, LEGACY_STREAM_DESTINATION_ID, resolveAssetStreamBinding } from "./asset-binding";
 import { assertStorageObjectKey, resolveAssetStorageBinding } from "./ledger";
 import type { StorageDestinationConfiguration } from "./registry";
 
@@ -127,7 +128,7 @@ export async function loadSourceStorageConfiguration(
   const { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } = await import("./registry");
   const bucketName = typeof asset["sourceBucket"] === "string" ? asset["sourceBucket"] : "bq-sqwad-source-media";
   const legacy = validateStorageDestinationMetadata({
-    destinationId: "lovable-source-legacy",
+    destinationId: LEGACY_SOURCE_DESTINATION_ID,
     providerType: "lovable_storage",
     accountAlias: "Legacy Lovable source storage",
     secretPrefix: "SUPABASE",
@@ -173,21 +174,25 @@ export async function createStorageDownloadTarget(
 export async function loadStreamStorageConfiguration(
   fs: import("../firebase-admin").Firestore,
   asset: Record<string, unknown>,
+  assetId?: string,
 ): Promise<StorageDestinationConfiguration> {
-  const binding = resolveAssetStorageBinding(asset, "stream", {
-    source: "lovable-source-legacy", stream: "lovable-stream-legacy",
-  });
-  const destinationId = binding.primaryDestinationId;
-  if (destinationId !== "lovable-stream-legacy") {
-    const raw = await fs.getDoc("storageDestinations/" + destinationId);
+  const resolvedAssetId = assetId ??
+    (typeof asset["assetId"] === "string" ? asset["assetId"] : typeof asset["id"] === "string" ? asset["id"] : "");
+  if (!resolvedAssetId) throw new ApiError(400, "ASSET_ID_INVALID", "The content identifier is missing.");
+  const binding = resolveAssetStreamBinding(asset, resolvedAssetId);
+  if (binding.streamDestinationId !== LEGACY_STREAM_DESTINATION_ID) {
+    const raw = await fs.getDoc("storageDestinations/" + binding.streamDestinationId);
     if (!raw) throw new ApiError(503, "STREAM_DESTINATION_MISSING", "The streaming storage destination is unavailable.");
     const { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } = await import("./registry");
-    return resolveStorageDestinationConfiguration(validateStorageDestinationMetadata({ ...raw, destinationId }));
+    return resolveStorageDestinationConfiguration(validateStorageDestinationMetadata({
+      ...raw,
+      destinationId: binding.streamDestinationId,
+    }));
   }
   const { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } = await import("./registry");
   const bucketName = typeof asset["streamBucket"] === "string" ? asset["streamBucket"] : "bq-sqwad-streaming-media";
   const legacy = validateStorageDestinationMetadata({
-    destinationId: "lovable-stream-legacy",
+    destinationId: LEGACY_STREAM_DESTINATION_ID,
     providerType: "lovable_storage",
     accountAlias: "Legacy Lovable streaming storage",
     secretPrefix: "SUPABASE",
