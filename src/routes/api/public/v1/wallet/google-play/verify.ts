@@ -6,6 +6,7 @@ import { getPricingConfig } from "@/lib/server/pricing";
 import { consumeGooglePlayProduct } from "@/lib/server/google-play";
 import { creditGooglePlayPurchase, getGooglePlayProducts, googlePlayAccountId, verifyGooglePlayProduct } from "@/lib/server/google-play";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { recordRiskSignal } from "@/lib/server/risk-engine";
 
 const schema = z.object({
   productId: z.string().min(1).max(150),
@@ -29,12 +30,18 @@ export const Route = createFileRoute("/api/public/v1/wallet/google-play/verify")
       const config = await getPricingConfig(fs);
       const product = getGooglePlayProducts(config, currency).find(item => item.productId === body.productId);
       if (!product) throw new ApiError(400, "PLAY_PRODUCT_UNAVAILABLE", "This Google Play product is not configured.");
-      const verified = await verifyGooglePlayProduct({
-        packageName,
-        productId: body.productId,
-        purchaseToken: body.purchaseToken,
-        obfuscatedAccountId: await googlePlayAccountId(user.uid),
-      });
+      let verified: Record<string, unknown>;
+      try {
+        verified = await verifyGooglePlayProduct({
+          packageName,
+          productId: body.productId,
+          purchaseToken: body.purchaseToken,
+          obfuscatedAccountId: await googlePlayAccountId(user.uid),
+        });
+      } catch (error) {
+        await recordRiskSignal(fs, user.uid, "failed_payment");
+        throw error;
+      }
       const verifiedOrderId = typeof verified["orderId"] === "string" ? verified["orderId"] : null;
       if (body.orderId && verifiedOrderId && body.orderId !== verifiedOrderId) {
         throw new ApiError(402, "PLAY_ORDER_MISMATCH", "The Google Play order does not match the submitted purchase.");
