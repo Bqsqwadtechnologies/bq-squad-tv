@@ -27,7 +27,7 @@ export type StorageDestinationMetadata = {
   enabled: boolean;
   accountGroup: string;
   mode: "active" | "drain" | "retired";
-  deliveryMode: DeliveryMode;
+  deliveryMode?: DeliveryMode;
   replicaOf: string | null;
   usageBytes?: number | null;
   usageSource?: "ledger" | "provider" | "provider_listing" | "manual" | null;
