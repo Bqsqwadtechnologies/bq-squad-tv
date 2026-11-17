@@ -387,6 +387,18 @@ function AccountPage() {
         <a href="/" className="mb-8 flex justify-center" aria-label="BQ SQWAD TV home">
           <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-auto w-56 object-contain" />
         </a>
+        <label className="mb-4 block text-sm font-semibold text-blue-50">
+          Appearance
+          <select
+            value={themeMode}
+            onChange={event => void saveThemePreference(event.target.value as "light" | "dark")}
+            className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-3 py-3 text-white"
+            aria-label="Choose appearance"
+          >
+            <option value="light">White theme</option>
+            <option value="dark">Dark navy theme</option>
+          </select>
+        </label>
         <section className="rounded-3xl border border-cyan-200/15 bg-[#08163e] p-6 shadow-2xl shadow-blue-950/50 sm:p-8">
           {signedIn ? (
             <>
@@ -396,18 +408,6 @@ function AccountPage() {
               <p className="mt-5 text-sm leading-6 text-blue-100/70">
                 Your account is signed in. Your wallet uses the currency assigned to your account country.
               </p>
-              <label className="mt-5 block text-sm font-semibold text-blue-50">
-                Appearance
-                <select
-                  value={themeMode}
-                  onChange={event => void saveThemePreference(event.target.value as "light" | "dark")}
-                  className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-3 py-3 text-white"
-                  aria-label="Choose appearance"
-                >
-                  <option value="light">White theme</option>
-                  <option value="dark">Dark navy theme</option>
-                </select>
-              </label>
               <label className="mt-5 block text-sm font-semibold text-blue-50">
                 Account country
                 <select
