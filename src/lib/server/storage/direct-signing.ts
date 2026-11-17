@@ -25,7 +25,7 @@ export async function signHlsObjectsDirectly(input: {
         configuration: input.configuration,
         objectKey,
         expiresInSeconds: input.expiresInSeconds,
-        now: input.now,
+        ...(input.now ? { now: input.now } : {}),
       }),
     ] as const));
     return new Map(signed);
