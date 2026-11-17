@@ -179,34 +179,42 @@ def iter_file_chunks(file_path: Path, lease_lost: threading.Event):
 
 
 def upload_file(job: dict, file_path: Path, root: Path, target: dict, lease_lost: threading.Event) -> dict:
-    if lease_lost.is_set():
-        raise RuntimeError("WORKER_LEASE_LOST")
     file_size = file_path.stat().st_size
     if file_size <= 0 or file_size > 2 * 1024 * 1024 * 1024:
         raise RuntimeError("OUTPUT_FILE_SIZE_INVALID")
-    request = urllib.request.Request(
-        target["signedUrl"],
-        data=iter_file_chunks(file_path, lease_lost),
-        method="PUT",
-        headers={
-            "content-type": content_type_for(file_path),
-            "Content-Length": str(file_size),
-            "Cache-Control": "public, max-age=31536000, immutable",
-            "x-upsert": "false",
-        },
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=300) as response:
-            if response.status not in (200, 201, 204):
-                raise RuntimeError("Private storage rejected an HLS object.")
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError):
-        raise RuntimeError("An HLS object could not be uploaded.") from None
-    if lease_lost.is_set():
-        raise RuntimeError("The processing lease was lost.")
-    result = {"key": target["objectKey"], "sizeBytes": file_path.stat().st_size}
-    if file_path.suffix.lower() in {".ts", ".m4s"}:
-        file_path.unlink(missing_ok=True)
-    return result
+    for attempt in range(5):
+        if lease_lost.is_set():
+            raise RuntimeError("WORKER_LEASE_LOST")
+        request = urllib.request.Request(
+            target["signedUrl"],
+            data=iter_file_chunks(file_path, lease_lost),
+            method="PUT",
+            headers={
+                "content-type": content_type_for(file_path),
+                "Content-Length": str(file_size),
+                "Cache-Control": "public, max-age=31536000, immutable",
+                "x-upsert": "false",
+            },
+        )
+        try:
+            with urllib.request.urlopen(request, timeout=300) as response:
+                if response.status not in (200, 201, 204):
+                    raise RuntimeError("STORAGE_UPLOAD_REJECTED")
+            if lease_lost.is_set():
+                raise RuntimeError("WORKER_LEASE_LOST")
+            result = {"key": target["objectKey"], "sizeBytes": file_size}
+            if file_path.suffix.lower() in {".ts", ".m4s"}:
+                file_path.unlink(missing_ok=True)
+            return result
+        except RuntimeError:
+            raise
+        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ConnectionError):
+            if lease_lost.is_set():
+                raise RuntimeError("WORKER_LEASE_LOST") from None
+            if attempt == 4:
+                raise RuntimeError("STORAGE_UPLOAD_FAILED") from None
+            time.sleep(2 ** attempt)
+    raise RuntimeError("STORAGE_UPLOAD_FAILED")
 
 
 def process_job(job: dict) -> None:
