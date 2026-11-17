@@ -27,8 +27,9 @@ function money(value: number, currency: string) {
 export const Route = createFileRoute("/producer/")({
   component: ProducerConsole,
   head: () => ({ meta: [
-    { title: "Producer Console | BQ SQWAD TV" },
-    { name: "description", content: "Manage producer channels, team access and earnings." },
+    { title: "Workspace | BQ SQWAD TV" },
+    { name: "description", content: "Manage channels, team access and earnings." },
+    { name: "robots", content: "noindex, nofollow, noarchive" },
   ] }),
 });
 
