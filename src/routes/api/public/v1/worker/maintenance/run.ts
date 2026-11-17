@@ -272,16 +272,17 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
               });
             }
             if (session) {
+              const sessionFields = {
+                active: false, walletHoldMinor: 0,
+                ...(session["active"] === true ? { endedAt: now, endReason: "HEARTBEAT_TIMEOUT" } : {}),
+                updatedAt: now,
+              };
               writes.push({
                 update: {
                   name: fs.docName(sessionPath),
-                  fields: encodeFields({
-                    active: false, walletHoldMinor: 0,
-                    ...(session["active"] === true ? { endedAt: now, endReason: "HEARTBEAT_TIMEOUT" } : {}),
-                    updatedAt: now,
-                  }),
+                  fields: encodeFields(sessionFields),
                 },
-                updateMask: { fieldPaths: ["active", "walletHoldMinor", "endedAt", "endReason", "updatedAt"] },
+                updateMask: { fieldPaths: Object.keys(sessionFields) },
               });
             }
             if (docs[3]) {
