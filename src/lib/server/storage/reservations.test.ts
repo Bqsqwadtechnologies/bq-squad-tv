@@ -84,8 +84,18 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 
+afterEach(() => vi.unstubAllEnvs());
+
+function stubB2Secrets() {
+  vi.stubEnv("STORAGE_B2_01_KEY_ID", "test-key-id");
+  vi.stubEnv("STORAGE_B2_01_APP_KEY", "test-app-key");
+  vi.stubEnv("STORAGE_B2_01_BUCKET_ID", "test-bucket-id");
+  vi.stubEnv("STORAGE_B2_01_ENDPOINT", "https://s3.us-west-004.backblazeb2.com");
+}
+
 describe("compact-pool reservations", () => {
   it("reserves capacity and updates the destination, group and index atomically", async () => {
+    stubB2Secrets();
     const { fs, docs } = makeFakeFirestore();
     const result = await reserveStorageDestination(fs, {
       purpose: "source_media", incomingBytes: 70, reservationId: "reserve-0001",
@@ -98,6 +108,7 @@ describe("compact-pool reservations", () => {
   });
 
   it("does not overbook when two reservations race for the same shared account", async () => {
+    stubB2Secrets();
     const { fs, docs } = makeFakeFirestore();
     const results = await Promise.allSettled([
       reserveStorageDestination(fs, { purpose: "source_media", incomingBytes: 60, reservationId: "reserve-race-01" }),
