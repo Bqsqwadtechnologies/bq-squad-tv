@@ -170,11 +170,46 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       if (totalBytes > reservedBytes) throw new ApiError(409, "HLS_OUTPUT_EXCEEDS_RESERVATION", "The HLS output exceeded its reserved storage capacity.");
       await commitStorageReservation(fs, reservationId, totalBytes);
       const now = new Date().toISOString();
+      const binding = await bindAssetStreamStorage(fs, {
+        assetId,
+        destinationId,
+        objectPrefix: prefix,
+        reservationId,
+      });
+      const mediaFiles = body.files
+        .map(file => ({ file, mediaType: classifyAssetMediaOutput(file.key.slice(prefix.length + 1)) }))
+        .filter((item): item is { file: typeof body.files[number]; mediaType: "poster" | "thumbnail" | "sprite" } => item.mediaType !== null);
+      const posterFiles = mediaFiles.filter(item => item.mediaType === "poster");
+      if (posterFiles.length > 1) throw new ApiError(409, "HLS_POSTER_DUPLICATE", "The output contains more than one poster image.");
+      const posterMediaIds: string[] = [];
+      const thumbnailMediaIds: string[] = [];
+      for (const item of mediaFiles) {
+        const mediaId = await createAssetMediaRecordId(assetId, item.file.key);
+        const extension = item.file.key.split(".").pop()?.toLowerCase();
+        const contentType = extension === "jpg" || extension === "jpeg" ? "image/jpeg"
+          : extension === "png" ? "image/png" : "image/webp";
+        await fs.setDoc("contentAssetMedia/" + mediaId, {
+          mediaId,
+          assetId,
+          mediaType: item.mediaType,
+          streamDestinationId: binding.streamDestinationId,
+          streamReplicaIds: [],
+          objectPrefix: binding.objectPrefix,
+          objectKey: item.file.key,
+          streamBucket: metadata.bucketName,
+          contentType,
+          sizeBytes: item.file.sizeBytes,
+          createdAt: now,
+        });
+        if (item.mediaType === "poster") posterMediaIds.push(mediaId);
+        else thumbnailMediaIds.push(mediaId);
+      }
       await fs.patchDoc("contentAssets/" + assetId, {
         status: "processed_pending_review", transcodeJobStatus: "completed",
-        streamDestinationId: destinationId, streamReplicaIds: [],
-        objectPrefix: prefix, streamObjectPrefix: prefix,
-        posterDestinationId: null, thumbnailDestinationId: null,
+        streamDestinationId: binding.streamDestinationId, streamReplicaIds: binding.streamReplicaIds,
+        objectPrefix: binding.objectPrefix, streamObjectPrefix: binding.objectPrefix,
+        ...(posterMediaIds[0] ? { posterMediaId: posterMediaIds[0] } : {}),
+        ...(thumbnailMediaIds.length ? { thumbnailMediaIds } : {}),
         ...(body.sourceSha256 ? { sourceSha256: body.sourceSha256.toLowerCase() } : {}),
         hlsEncryptionEnabled: flags.hlsEncryption,
         ...(encryptedHlsKey ? { encryptedHlsKey } : {}),
