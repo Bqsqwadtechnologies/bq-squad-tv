@@ -1,11 +1,5 @@
 # Official Android logo asset
 
-Upload the approved transparent PNG logo here as:
+The approved BQ SQWAD TV logo is `bq_sqwad_tv_mark.png` in this folder. It is the same PNG as `public/brand/bq-sqwad-tv-logo.png` and is used throughout the native app, sign-in/sign-up, profile, launcher foreground and notification large icon. Keep the source artwork unchanged and preserve its aspect ratio.
 
-`bq_sqwad_tv_mark.png`
-
-Keep the same aspect ratio as the approved source artwork. Android UI should reference it with:
-
-`painterResource(R.drawable.bq_sqwad_tv_mark)`
-
-Do not remove the existing vector resource until the replacement PNG is present and an Android build confirms the new asset works.
+Android's notification status-bar small icon must remain a monochrome silhouette for system compatibility; the full approved PNG is shown as the notification's large icon.
