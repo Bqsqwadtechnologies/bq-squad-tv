@@ -335,6 +335,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
       if (task["taskType"] === "storage_destination_drain") {
         const payload = task["payload"] as Record<string, unknown> | undefined;
         const destinationId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
+        const drainNow = new Date().toISOString();
         const cursorValue = typeof payload?.["cursorValue"] === "string" ? payload["cursorValue"] : null;
         const cursorId = typeof payload?.["cursorId"] === "string" ? payload["cursorId"] : null;
         if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId) ||
@@ -360,7 +361,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           await fs.patchDoc(taskPath, {
             payload: { destinationId, cursorValue, cursorId },
             completedCopyCount: (typeof task["completedCopyCount"] === "number" ? task["completedCopyCount"] : 0) + 1,
-            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.drainNow()), updatedAt: drainNow,
           });
         }
         const page = await fs.query("contentAssets", {
@@ -376,14 +377,14 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
             limit: 1,
           });
           if (remaining.length > 0) {
-            await fs.patchDoc(taskPath, { payload: { destinationId, cursorValue: null, cursorId: null }, leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now });
+            await fs.patchDoc(taskPath, { payload: { destinationId, cursorValue: null, cursorId: null }, leaseExpiresAt: videoWorkerLeaseExpiry(Date.drainNow()), updatedAt: drainNow });
             return Response.json({ done: false, resetCursor: true });
           }
           await fs.patchDoc("storageDestinations/" + destinationId, {
-            mode: "retired", enabled: false, drainCompletedAt: now, updatedAt: now,
+            mode: "retired", enabled: false, drainCompletedAt: drainNow, updatedAt: drainNow,
           });
           await rebuildStoragePoolIndex(fs, ["hls_streaming"]);
-          await fs.patchDoc(taskPath, { phase: "done", completedAt: now, updatedAt: now });
+          await fs.patchDoc(taskPath, { phase: "done", completedAt: drainNow, updatedAt: drainNow });
           return Response.json({ done: true, retired: true });
         }
         const asset = page[0]!;
@@ -422,7 +423,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
               throw new ApiError(507, "STORAGE_DRAIN_REPLICA_BUDGET", "There is not enough reserved spare space to move this film.");
             }
             return { result: undefined, writes: [{
-              update: { name: fs.docName(budgetPath), fields: encodeFields({ usedBytes: usedBytes + streamBytes, updatedAt: now }) },
+              update: { name: fs.docName(budgetPath), fields: encodeFields({ usedBytes: usedBytes + streamBytes, updatedAt: drainNow }) },
               updateMask: { fieldPaths: ["usedBytes", "updatedAt"] },
             }] };
           });
@@ -441,12 +442,12 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
               verifiedBytes: 0, verifiedObjectCount: 0,
             },
             status: "queued", attempts: 0, reason: "Move a film from a draining storage location",
-            createdAt: now, updatedAt: now,
+            createdAt: drainNow, updatedAt: drainNow,
           }, { mustNotExist: true });
           await fs.patchDoc(taskPath, {
             payload: { destinationId, cursorValue: nextCursorValue, cursorId: assetId, queuedAssetId: assetId, queuedCopyTaskId: copyTaskId },
             queuedAssetCount: (typeof task["queuedAssetCount"] === "number" ? task["queuedAssetCount"] : 0) + 1,
-            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.drainNow()), updatedAt: drainNow,
           });
           return Response.json({ done: false, queuedCopy: true, assetId, copyTaskId });
         } catch (error) {
@@ -457,7 +458,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
               if (!current) return { result: undefined, writes: [] };
               const used = typeof current["usedBytes"] === "number" ? current["usedBytes"] : 0;
               return { result: undefined, writes: [{
-                update: { name: fs.docName(budgetPath), fields: encodeFields({ usedBytes: Math.max(0, used - streamBytes), updatedAt: now }) },
+                update: { name: fs.docName(budgetPath), fields: encodeFields({ usedBytes: Math.max(0, used - streamBytes), updatedAt: drainNow }) },
                 updateMask: { fieldPaths: ["usedBytes", "updatedAt"] },
               }] };
             }).catch(() => undefined);
