@@ -6,6 +6,7 @@ import hashlib
 import hmac
 import json
 import mimetypes
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import os
 import secrets
 import shutil
@@ -82,28 +83,56 @@ def download_source(url: str, destination: Path, expected_size: int) -> None:
         raise RuntimeError("Source download was incomplete.")
 
 
-def upload_file(job: dict, file_path: Path, root: Path) -> dict:
-    relative = file_path.relative_to(root).as_posix()
-    object_key = job["outputPrefix"] + "/" + relative
-    content_type = "application/vnd.apple.mpegurl" if file_path.suffix == ".m3u8" else "video/mp2t"
-    target = signed_request("POST", f"/api/public/v1/worker/jobs/{job['assetId']}/target", {
-        "claimToken": job["claimToken"],
-        "objectKey": object_key,
-        "contentType": content_type,
-    })
+def content_type_for(path: Path) -> str:
+    return {
+        ".m3u8": "application/vnd.apple.mpegurl",
+        ".ts": "video/mp2t",
+        ".m4s": "video/iso.segment",
+        ".mp4": "video/mp4",
+        ".vtt": "text/vtt",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".png": "image/png",
+        ".webp": "image/webp",
+        ".aac": "audio/aac",
+    }.get(path.suffix.lower(), "application/octet-stream")
+
+
+def iter_file_chunks(file_path: Path):
+    with file_path.open("rb") as source:
+        while True:
+            chunk = source.read(1024 * 1024)
+            if not chunk:
+                break
+            yield chunk
+
+
+def upload_file(job: dict, file_path: Path, root: Path, target: dict, lease_lost: threading.Event) -> dict:
+    if lease_lost.is_set():
+        raise RuntimeError("The processing lease was lost.")
     request = urllib.request.Request(
         target["signedUrl"],
-        data=file_path.read_bytes(),
+        data=iter_file_chunks(file_path),
         method="PUT",
-        headers={"content-type": content_type, "x-upsert": "false"},
+        headers={
+            "content-type": content_type_for(file_path),
+            "Content-Length": str(file_path.stat().st_size),
+            "Cache-Control": "public, max-age=31536000, immutable",
+            "x-upsert": "false",
+        },
     )
     try:
-        with urllib.request.urlopen(request, timeout=180) as response:
+        with urllib.request.urlopen(request, timeout=300) as response:
             if response.status not in (200, 201, 204):
                 raise RuntimeError("Private storage rejected an HLS object.")
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError):
         raise RuntimeError("An HLS object could not be uploaded.") from None
-    return {"key": object_key, "sizeBytes": file_path.stat().st_size}
+    if lease_lost.is_set():
+        raise RuntimeError("The processing lease was lost.")
+    result = {"key": target["objectKey"], "sizeBytes": file_path.stat().st_size}
+    if file_path.suffix.lower() in {".ts", ".m4s"}:
+        file_path.unlink(missing_ok=True)
+    return result
 
 
 def process_job(job: dict) -> None:
@@ -115,35 +144,106 @@ def process_job(job: dict) -> None:
         root = Path(temporary)
         source = root / ("source" + extension)
         output = root / "hls"
-        download_source(job["sourceDownloadUrl"], source, int(job["sourceSizeBytes"]))
-        command = [
-            "python", "/app/transcode.py", "--input", str(source),
-            "--output", str(output), "--threads", str(max(1, min(8, int(os.environ.get("FFMPEG_THREADS", "2"))))),
-        ]
-        stop_heartbeat = threading.Event()
+        lease_lost = threading.Event()
+        stage = {"name": "download", "progress": 0.0}
+        stage_lock = threading.Lock()
+
+        def update_stage(name: str, progress: float) -> None:
+            with stage_lock:
+                stage["name"] = name
+                stage["progress"] = max(0.0, min(100.0, progress))
+
+        def ensure_lease() -> None:
+            if lease_lost.is_set():
+                raise RuntimeError("The processing lease was lost.")
+
         def renew_lease() -> None:
-            while not stop_heartbeat.wait(90):
+            while not lease_lost.wait(30):
                 try:
-                    signed_request("POST", f"/api/public/v1/worker/jobs/{asset_id}/heartbeat", {"claimToken": job["claimToken"]})
+                    with stage_lock:
+                        payload = {
+                            "claimToken": job["claimToken"],
+                            "stage": stage["name"],
+                            "progress": stage["progress"],
+                        }
+                    signed_request("POST", f"/api/public/v1/worker/jobs/{asset_id}/heartbeat", payload)
                 except Exception:
-                    # Completion will be rejected if the lease cannot be renewed.
+                    lease_lost.set()
                     return
+
         heartbeat = threading.Thread(target=renew_lease, daemon=True)
         heartbeat.start()
         try:
+            ensure_lease()
+            download_source(job["sourceDownloadUrl"], source, int(job["sourceSizeBytes"]))
+            ensure_lease()
+            update_stage("encode", 0)
+            command = [
+                "python", "/app/transcode.py", "--input", str(source),
+                "--output", str(output), "--threads", str(max(1, min(8, int(os.environ.get("FFMPEG_THREADS", "2"))))),
+            ]
             completed = subprocess.run(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+            ensure_lease()
+            if completed.returncode != 0:
+                raise RuntimeError("Media processing failed.")
+            files = sorted(
+                (path for path in output.rglob("*") if path.is_file()),
+                key=lambda path: (
+                    2 if path.name == "master.m3u8" else
+                    1 if path.suffix.lower() == ".m3u8" else 0,
+                    path.as_posix(),
+                ),
+            )
+            if not files or not (output / "master.m3u8").is_file():
+                raise RuntimeError("The transcoder did not produce a valid HLS master playlist.")
+
+            update_stage("upload", 0)
+            manifest = []
+            uploaded_count = 0
+            for offset in range(0, len(files), 50):
+                ensure_lease()
+                batch = files[offset:offset + 50]
+                target_response = signed_request(
+                    "POST",
+                    f"/api/public/v1/worker/jobs/{asset_id}/targets",
+                    {
+                        "claimToken": job["claimToken"],
+                        "files": [
+                            {
+                                "relativePath": path.relative_to(output).as_posix(),
+                                "contentType": content_type_for(path),
+                            }
+                            for path in batch
+                        ],
+                    },
+                )
+                targets = target_response.get("targets", [])
+                if len(targets) != len(batch):
+                    raise RuntimeError("The storage service returned an incomplete upload target batch.")
+                target_by_path = {target["relativePath"]: target for target in targets}
+                with ThreadPoolExecutor(max_workers=6) as pool:
+                    futures = [
+                        pool.submit(
+                            upload_file, job, path, output,
+                            target_by_path[path.relative_to(output).as_posix()],
+                            lease_lost,
+                        )
+                        for path in batch
+                    ]
+                    for future in as_completed(futures):
+                        ensure_lease()
+                        manifest.append(future.result())
+                        uploaded_count += 1
+                        update_stage("upload", uploaded_count * 100 / len(files))
+
+            ensure_lease()
+            update_stage("verify", 100)
+            signed_request("POST", f"/api/public/v1/worker/jobs/{asset_id}/complete", {
+                "claimToken": job["claimToken"], "files": manifest,
+            })
         finally:
-            stop_heartbeat.set()
+            lease_lost.set()
             heartbeat.join(timeout=2)
-        if completed.returncode != 0:
-            raise RuntimeError("FFmpeg processing failed.")
-        files = sorted(path for path in output.rglob("*") if path.is_file())
-        if not files or not (output / "master.m3u8").is_file():
-            raise RuntimeError("The transcoder did not produce a valid HLS master playlist.")
-        manifest = [upload_file(job, file_path, output) for file_path in files]
-        signed_request("POST", f"/api/public/v1/worker/jobs/{asset_id}/complete", {
-            "claimToken": job["claimToken"], "files": manifest,
-        })
 
 
 def run_forever() -> None:
