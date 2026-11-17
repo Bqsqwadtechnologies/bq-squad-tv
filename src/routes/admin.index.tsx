@@ -88,6 +88,9 @@ function ZillionaireDashboard() {
   const [flagsBusy, setFlagsBusy] = useState(false);
   const [flagsMessage, setFlagsMessage] = useState("");
   const [flagsError, setFlagsError] = useState("");
+  const [legalSeedBusy, setLegalSeedBusy] = useState(false);
+  const [legalSeedMessage, setLegalSeedMessage] = useState("");
+  const [legalSeedError, setLegalSeedError] = useState("");
 
   async function loadAccess(idToken: string) {
     const response = await fetch("/api/public/v1/admin/overview", {
@@ -128,6 +131,22 @@ function ZillionaireDashboard() {
     })();
     return () => { active = false; };
   }, []);
+
+  async function loadDefaultLegalPages() {
+    setLegalSeedBusy(true); setLegalSeedMessage(""); setLegalSeedError("");
+    try {
+      const token = await restoreWebSession();
+      if (!token) throw new Error("Sign in again to continue.");
+      const response = await fetch("/api/public/v1/admin/pages/seed", {
+        method: "POST", headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ reason: "Load the original legal draft pages for owner review." }),
+      });
+      const result = await response.json() as { created?: string[]; skipped?: string[]; error?: string; message?: string };
+      if (!response.ok) throw new Error(result.error ?? "Could not load the draft pages.");
+      setLegalSeedMessage("Created: " + (result.created?.join(", ") || "none") + ". Left unchanged: " + (result.skipped?.join(", ") || "none") + ". " + (result.message ?? ""));
+    } catch (caught) { setLegalSeedError(caught instanceof Error ? caught.message : "Could not load the draft pages."); }
+    finally { setLegalSeedBusy(false); }
+  }
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -257,6 +276,37 @@ function ZillionaireDashboard() {
                 <p className="mt-1 text-xs leading-5 text-blue-100/55">Provider setup remains separate from owner controls and requires approved rights and provider credentials.</p>
               </div>
             </div>
+
+            {access.owner ? (
+              <section className="mt-10 rounded-3xl border border-cyan-300/20 bg-[#07143d] p-5 sm:p-7" aria-labelledby="legal-pages-heading">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">Owner settings</p>
+                <h2 id="legal-pages-heading" className="mt-1 text-2xl font-black">Legal pages and placeholders</h2>
+                <p className="mt-2 max-w-3xl text-xs leading-5 text-blue-100/60">Load the original documents as drafts only. Existing pages are never replaced. Publishing remains blocked until every placeholder is completed and the wording has been reviewed by a qualified lawyer in each country where we operate.</p>
+                <button type="button" onClick={() => void loadDefaultLegalPages()} disabled={legalSeedBusy} className="mt-5 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-extrabold text-[#031039] disabled:opacity-50">{legalSeedBusy ? "Loading draft pages…" : "Load default pages"}</button>
+                {legalSeedMessage ? <p role="status" className="mt-3 text-sm text-cyan-200">{legalSeedMessage}</p> : null}
+                {legalSeedError ? <p role="alert" className="mt-3 text-sm text-rose-200">{legalSeedError}</p> : null}
+                <h3 className="mt-7 text-sm font-bold">Placeholder list</h3>
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full min-w-[520px] text-left text-xs">
+                    <thead><tr className="border-b border-white/10 text-cyan-200"><th className="py-2 pr-4">Placeholder</th><th className="py-2">What we need to fill in</th></tr></thead>
+                    <tbody className="text-blue-100/70">
+                      {[
+                        ["{{effective_date}}, {{last_updated}}", "Effective and update dates"],
+                        ["{{minimum_age}}", "Minimum account age after legal review"],
+                        ["{{viewing_history_retention}}, {{evidence_retention}}, {{security_log_retention}}", "Retention periods"],
+                        ["{{dispute_window_days}}", "Charge dispute period in days"],
+                        ["{{wallet_refund_rule}}, {{closure_balance_rule}}", "Wallet refund and account-closure balance rules"],
+                        ["{{liability_period_months}}", "Liability period in months"],
+                        ["{{governing_law}}, {{jurisdiction}}", "Governing law and courts"],
+                        ["{{postal_address_if_required}}", "Postal address if legally required"],
+                        ["{{revenue_basis}}, {{revenue_change_notice_days}}, {{minimum_payout}}", "Producer revenue basis, notice period and minimum payout"],
+                      ].map(([placeholder, explanation]) => <tr key={placeholder} className="border-b border-white/5"><td className="py-3 pr-4 font-mono">{placeholder}</td><td className="py-3">{explanation}</td></tr>)}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="mt-4 text-xs leading-5 text-blue-100/55">Provider terms also need contract-specific revenue model and deductible-cost rules. Do not publish until all legal and operational details are accurate.</p>
+              </section>
+            ) : null}
 
             {access.owner ? (
               <section className="mt-10 rounded-3xl border border-cyan-300/20 bg-[#07143d] p-5 sm:p-7" aria-labelledby="platform-controls-heading">
