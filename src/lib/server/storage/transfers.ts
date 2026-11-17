@@ -3,6 +3,7 @@ import { ApiError } from "../firebase-admin";
 import { LEGACY_SOURCE_DESTINATION_ID, LEGACY_STREAM_DESTINATION_ID, resolveAssetStreamBinding } from "./asset-binding";
 import { assertStorageObjectKey, resolveAssetStorageBinding } from "./ledger";
 import type { StorageDestinationConfiguration } from "./registry";
+import { chooseReplicaForSession } from "./replica-assignment";
 
 const encoder = new TextEncoder();
 function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
@@ -180,6 +181,7 @@ export async function loadStreamStorageConfiguration(
   fs: import("../firebase-admin").Firestore,
   asset: Record<string, unknown>,
   assetId?: string,
+  sessionId?: string,
 ): Promise<StorageDestinationConfiguration> {
   const resolvedAssetId = assetId ??
     (typeof asset["assetId"] === "string" ? asset["assetId"] : typeof asset["id"] === "string" ? asset["id"] : "");
@@ -248,28 +250,57 @@ export async function loadStreamStorageConfiguration(
     (item): item is NonNullable<typeof item> => item !== null &&
       item.configuration.configurationStatus === "configured",
   );
-  const selected = requirePlaybackLocation(choosePlaybackLocation(
-    candidates.map(item => ({
+  let selectedDestinationId: string;
+  const weightedCandidates = candidates.map(item => {
+    const metadata = item.configuration.metadata;
+    const budget = typeof metadata.freeEgressBudgetBytes === "number"
+      ? metadata.freeEgressBudgetBytes
+      : typeof metadata.accountCapBytes === "number" ? metadata.accountCapBytes * 2 : null;
+    const used = typeof metadata.egressAccountMonthBytes === "number"
+      ? metadata.egressAccountMonthBytes : metadata.egressMonthBytes ?? 0;
+    return {
       destinationId: item.destinationId,
-      healthStatus: item.healthStatus,
-      mode: item.mode,
-      enabled: item.enabled,
-      degradedUntil: item.degradedUntil,
-    })).find(item => item.destinationId === binding.streamDestinationId) ?? {
-      destinationId: binding.streamDestinationId,
-      healthStatus: "unreachable",
-      mode: "retired",
-      enabled: false,
-    },
-    candidates.filter(item => item.destinationId !== binding.streamDestinationId).map(item => ({
-      destinationId: item.destinationId,
-      healthStatus: item.healthStatus,
-      mode: item.mode,
-      enabled: item.enabled,
-      degradedUntil: item.degradedUntil,
-    })),
-  ));
-  const configuration = candidates.find(item => item.destinationId === selected.destinationId)?.configuration;
+      healthStatus: item.healthStatus === "healthy" ? "healthy" as const :
+        item.healthStatus === "degraded" ? "degraded" as const :
+          item.healthStatus === "unreachable" ? "unreachable" as const :
+            item.healthStatus === "misconfigured" ? "misconfigured" as const : "unknown" as const,
+      egressLevel: metadata.egressLevel === "normal" || metadata.egressLevel === "warn" ||
+        metadata.egressLevel === "throttle" || metadata.egressLevel === "blocked" || metadata.egressLevel === "paid"
+        ? metadata.egressLevel : "unknown" as const,
+      remainingEgressBytes: budget === null ? 0 : Math.max(0, budget - used),
+      enabled: item.enabled && item.mode === "active",
+    };
+  });
+  const weightedAssignment = sessionId
+    ? chooseReplicaForSession({ sessionId, assetId: resolvedAssetId, candidates: weightedCandidates })
+    : null;
+  if (weightedAssignment) {
+    selectedDestinationId = weightedAssignment.destinationId;
+  } else {
+    const selected = requirePlaybackLocation(choosePlaybackLocation(
+      candidates.map(item => ({
+        destinationId: item.destinationId,
+        healthStatus: item.healthStatus,
+        mode: item.mode,
+        enabled: item.enabled,
+        degradedUntil: item.degradedUntil,
+      })).find(item => item.destinationId === binding.streamDestinationId) ?? {
+        destinationId: binding.streamDestinationId,
+        healthStatus: "unreachable",
+        mode: "retired",
+        enabled: false,
+      },
+      candidates.filter(item => item.destinationId !== binding.streamDestinationId).map(item => ({
+        destinationId: item.destinationId,
+        healthStatus: item.healthStatus,
+        mode: item.mode,
+        enabled: item.enabled,
+        degradedUntil: item.degradedUntil,
+      })),
+    ));
+    selectedDestinationId = selected.destinationId;
+  }
+  const configuration = candidates.find(item => item.destinationId === selectedDestinationId)?.configuration;
   if (!configuration || configuration.configurationStatus !== "configured") {
     throw new ApiError(503, "STREAM_REPLICAS_UNAVAILABLE", "This title is temporarily unavailable while its streaming locations are checked.");
   }
