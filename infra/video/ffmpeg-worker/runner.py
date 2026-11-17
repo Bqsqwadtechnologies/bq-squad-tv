@@ -248,6 +248,7 @@ def process_job(job: dict) -> None:
             command = [
                 "nice", "-n", "10", "python", "/app/transcode.py", "--input", str(source),
                 "--output", str(output), "--threads", str(max(1, min(8, int(os.environ.get("FFMPEG_THREADS", "2"))))),
+                "--profile", str(job.get("profile", "standard")), "--mode", "auto",
             ]
             process = subprocess.Popen(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             while process.poll() is None:
