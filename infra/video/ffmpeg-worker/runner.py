@@ -366,6 +366,28 @@ def process_job(job: dict) -> None:
             heartbeat.join(timeout=2)
 
 
+def process_maintenance_task(task: dict) -> None:
+    task_id = str(task.get("taskId", ""))
+    claim_token = str(task.get("claimToken", ""))
+    if not task_id or not claim_token:
+        raise RuntimeError("MAINTENANCE_TASK_INVALID")
+    deleted = 0
+    for _ in range(1000):
+        response = signed_request("POST", "/api/public/v1/worker/maintenance/run", {
+            "taskId": task_id,
+            "claimToken": claim_token,
+        })
+        deleted += int(response.get("deletedCount", 0))
+        if response.get("done") is True:
+            signed_request("POST", "/api/public/v1/worker/maintenance/complete", {
+                "taskId": task_id,
+                "claimToken": claim_token,
+                "result": {"deletedObjectCount": deleted},
+            })
+            return
+    raise RuntimeError("MAINTENANCE_TASK_LIMIT")
+
+
 def run_forever() -> None:
     if not API_BASE.startswith("https://"):
         raise SystemExit("Set BQ_TV_API_BASE_URL before starting the worker.")
