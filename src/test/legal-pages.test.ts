@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import pages from "../../content/legal/default-pages.json";
+import { defaultPages as pages } from "../lib/legal/default-pages";
 import { findUnfilledLegalPlaceholders } from "../lib/server/legal-acceptance";
 
 describe("default legal page drafts", () => {
