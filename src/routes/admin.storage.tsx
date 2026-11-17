@@ -80,6 +80,9 @@ function AdminStoragePage() {
   const [message, setMessage] = useState("");
   const [destinationSearch, setDestinationSearch] = useState("");
   const [visibleDestinationCount, setVisibleDestinationCount] = useState(40);
+  const [retentionAssetId, setRetentionAssetId] = useState("");
+  const [retentionPinned, setRetentionPinned] = useState(true);
+  const [retentionReason, setRetentionReason] = useState("");
   const filteredDestinations = destinations.filter(item => {
     const query = destinationSearch.trim().toLowerCase();
     return !query || [item.destinationId, item.accountAlias, item.bucketName, item.accountGroup, item.purpose, item.healthStatus]
@@ -120,6 +123,25 @@ function AdminStoragePage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function saveRetentionPin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!token || busy) return;
+    setBusy(true); setError(""); setMessage("Saving original-file retention setting…");
+    try {
+      const response = await fetch("/api/public/v1/admin/storage/pins", {
+        method: "POST",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ assetId: retentionAssetId.trim(), pinned: retentionPinned, reason: retentionReason.trim() }),
+      });
+      const data = await response.json() as { saved?: boolean; note?: string; error?: string };
+      if (!response.ok || !data.saved) throw new Error(data.error ?? "The retention setting could not be saved.");
+      setRetentionReason("");
+      setMessage(data.note ?? "Original-file retention setting saved.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The retention setting could not be saved.");
+    } finally { setBusy(false); }
   }
 
   async function checkHealth(item: Destination) {
@@ -283,6 +305,13 @@ function AdminStoragePage() {
             <div className="mt-8 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-xs leading-6 text-amber-100/80">
               Registering a location does not create it or move files. Enter usage exactly as shown in a provider report. A location can receive new files only after its connection, usage, shared capacity and transfer allowance have been checked.
             </div>
+            <form onSubmit={saveRetentionPin} className="mt-6 grid gap-3 rounded-2xl border border-cyan-300/20 bg-[#07143d] p-5">
+              <div><h2 className="text-lg font-bold">Keep original uploads</h2><p className="mt-1 text-xs leading-5 text-blue-100/55">Pin an original upload to exclude it from any future automatic source-file cleanup. Unpinning does not delete it; the retention period and safety checks still apply.</p></div>
+              <label className="grid gap-2 text-xs text-blue-100/70">Content reference<input required pattern="[A-Za-z0-9_-]{1,100}" value={retentionAssetId} onChange={event => setRetentionAssetId(event.target.value)} placeholder="content asset reference" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+              <label className="grid gap-2 text-xs text-blue-100/70">Retention setting<select value={retentionPinned ? "pinned" : "unpinned"} onChange={event => setRetentionPinned(event.target.value === "pinned")} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white"><option value="pinned">Keep original upload</option><option value="unpinned">Remove keep mark (retention still applies)</option></select></label>
+              <label className="grid gap-2 text-xs text-blue-100/70">Reason<textarea required minLength={3} maxLength={1000} value={retentionReason} onChange={event => setRetentionReason(event.target.value)} rows={2} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+              <button disabled={busy || !retentionAssetId.trim()} className="rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-4 py-3 text-sm font-bold text-cyan-100 disabled:opacity-50">{busy ? "Saving…" : "Save retention setting"}</button>
+            </form>
             <form onSubmit={saveGroupBudget} className="mt-6 grid gap-3 rounded-2xl border border-cyan-300/20 bg-[#07143d] p-5">
               <div><h2 className="text-lg font-bold">Shared delivery allowance</h2><p className="mt-1 text-xs leading-5 text-blue-100/55">One limit applies to every location in the same account. Changes are saved together and require a reason.</p></div>
               <label className="grid gap-2 text-xs text-blue-100/70">Storage account<select value={budgetGroupId} onChange={event => {
