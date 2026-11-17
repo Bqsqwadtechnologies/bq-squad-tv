@@ -19,6 +19,8 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/claim")(
         ...processing.filter(row => typeof row["leaseExpiresAt"] !== "string" || Date.parse(row["leaseExpiresAt"]) <= now),
       ];
       for (const row of candidates) {
+        const notBefore = typeof row["notBefore"] === "string" ? Date.parse(row["notBefore"]) : 0;
+        if (Number.isFinite(notBefore) && notBefore > now) continue;
         const taskId = row.__id;
         if (!/^[A-Za-z0-9_-]{1,120}$/.test(taskId)) continue;
         const path = "videoMaintenanceJobs/" + taskId;
