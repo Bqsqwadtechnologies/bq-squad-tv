@@ -33,13 +33,36 @@ export type StorageConfigurationBackup = {
   egressLedgers: Array<Record<string, unknown>>;
 };
 
+const FORBIDDEN_BACKUP_FIELD = /credential|service.?role|app.?key|secret|password|private.?key|access.?token|refresh.?token|api.?key|key.?id/i;
+
+function assertNoBackupSecrets(value: unknown, depth = 0): void {
+  if (depth > 20) throw new ApiError(400, "STORAGE_BACKUP_INVALID", "The configuration backup contains an unsupported structure.");
+  if (Array.isArray(value)) {
+    if (value.length > 20_000) throw new ApiError(413, "STORAGE_BACKUP_TOO_LARGE", "The configuration backup is too large.");
+    for (const item of value) assertNoBackupSecrets(item, depth + 1);
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
+    if (FORBIDDEN_BACKUP_FIELD.test(key)) {
+      throw new ApiError(400, "STORAGE_BACKUP_SECRET_FIELD", "Private connection details cannot be included in a configuration backup.");
+    }
+    assertNoBackupSecrets(item, depth + 1);
+  }
+}
+
 export async function encryptStorageConfigurationBackup(
   data: StorageConfigurationBackup,
   secret: string,
 ): Promise<string> {
+  assertNoBackupSecrets(data);
+  const serialized = JSON.stringify(data);
+  if (encoder.encode(serialized).byteLength > 10_000_000) {
+    throw new ApiError(413, "STORAGE_BACKUP_TOO_LARGE", "The configuration backup is too large.");
+  }
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const key = await backupKey(secret);
-  const plain = encoder.encode(JSON.stringify(data));
+  const plain = encoder.encode(serialized);
   const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plain);
   return JSON.stringify({ version: 1, algorithm: "AES-GCM", iv: bytesToBase64(iv), ciphertext: bytesToBase64(new Uint8Array(encrypted)) });
 }
@@ -60,6 +83,7 @@ export async function decryptStorageConfigurationBackup(
       base64ToBytes(envelope.ciphertext),
     );
     const data = JSON.parse(decoder.decode(plain)) as StorageConfigurationBackup;
+    assertNoBackupSecrets(data);
     if (data.version !== 1 || !Array.isArray(data.destinations) || !Array.isArray(data.poolIndex) ||
         !Array.isArray(data.assetBindings) || !Array.isArray(data.egressLedgers) ||
         data.destinations.some(item => "credentials" in item || "serviceRoleKey" in item || "appKey" in item || "keyId" in item)) {
