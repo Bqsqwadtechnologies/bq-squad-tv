@@ -4,6 +4,7 @@ import com.bqsqwad.tv.ui.ErrorMessages
 import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.view.TextureView
+import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -50,6 +51,10 @@ fun PlayerScreen(
 ) {
     val context = LocalContext.current
     val activity = context as? Activity
+  DisposableEffect(activity) {
+      activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+      onDispose { activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE) }
+  }
     val scope = rememberCoroutineScope()
     val repo = remember { SessionRepository() }
     var session by remember { mutableStateOf<SessionSnapshot?>(null) }
