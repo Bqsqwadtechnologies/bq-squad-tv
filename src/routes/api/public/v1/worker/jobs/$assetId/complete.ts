@@ -11,10 +11,13 @@ import { listAllStorageObjects } from "@/lib/server/storage/listing";
 import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
 import { sendPushNotificationToUser } from "@/lib/server/notifications";
 import { estimateModalComputeCost } from "@/lib/server/modal-spend";
+import { getPlatformFlags } from "@/lib/server/flags";
+import { encryptHlsContentKey, getStreamingSourceKey } from "@/lib/server/streaming/source-encryption";
 
 const schema = z.object({
   claimToken: z.string().regex(/^[a-f0-9]{32}$/),
   sourceSha256: z.string().regex(/^[a-f0-9]{64}$/i).optional(),
+  hlsEncryptionKey: z.string().regex(/^[A-Za-z0-9_-]{22}$/).optional(),
   files: z.array(z.object({ key: z.string().min(1).max(1024), sizeBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) })).min(2).max(20000),
   computeUsage: z.object({
     cores: z.number().finite().min(0.125).max(64),
@@ -116,6 +119,22 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       if (masterRenditionCount === 0) throw new ApiError(409, "HLS_MASTER_EMPTY", "The HLS master playlist contains no verified renditions.");
       if (referencedKeys.size !== keys.size || [...keys].some(key => !referencedKeys.has(key))) {
         throw new ApiError(409, "HLS_UNREFERENCED_OBJECT", "The output contains files that are not referenced by its playlists.");
+      }
+      const flags = await getPlatformFlags(fs);
+      let encryptedHlsKey: Awaited<ReturnType<typeof encryptHlsContentKey>> | null = null;
+      if (flags.hlsEncryption) {
+        if (!body.hlsEncryptionKey) {
+          throw new ApiError(409, "HLS_ENCRYPTION_KEY_REQUIRED", "The encrypted HLS package is missing its content key.");
+        }
+        const wrappingKey = getStreamingSourceKey();
+        encryptedHlsKey = await encryptHlsContentKey(
+          body.hlsEncryptionKey,
+          assetId,
+          wrappingKey.keyVersion,
+          wrappingKey.keyBase64Url,
+        );
+      } else if (body.hlsEncryptionKey) {
+        throw new ApiError(409, "HLS_ENCRYPTION_NOT_ENABLED", "This job was not assigned encrypted HLS output.");
       }
       const reservation = await fs.getDoc("storageReservations/" + reservationId);
       const reservedBytes = typeof reservation?.["reservedBytes"] === "number" ? reservation["reservedBytes"] : 0;
