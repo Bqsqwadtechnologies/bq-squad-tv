@@ -343,7 +343,7 @@ function AccountPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#030b2a] px-4 py-12 text-white">
       <div className="w-full max-w-md">
         <a href="/" className="mb-8 flex justify-center" aria-label="BQ SQWAD TV home">
-          <img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="h-auto w-56 object-contain" />
+          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-auto w-56 object-contain" />
         </a>
         <section className="rounded-3xl border border-cyan-200/15 bg-[#08163e] p-6 shadow-2xl shadow-blue-950/50 sm:p-8">
           {signedIn ? (
@@ -383,7 +383,7 @@ function AccountPage() {
                 aria-label="Continue to BQ SQWAD TV"
                 className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 text-sm font-extrabold text-[#031039] transition hover:brightness-110 disabled:pointer-events-none disabled:opacity-50"
               >
-                <img src="/brand/bq-sqwad-tv-logo.svg" alt="" className="h-8 w-auto max-w-[120px] object-contain" />
+                <img src="/brand/bq-sqwad-tv-logo.png" alt="" className="h-8 w-auto max-w-[120px] object-contain" />
                 <span>Continue</span>
               </button>
               <details className="mt-5 rounded-xl border border-white/10 p-3">
