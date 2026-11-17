@@ -9,12 +9,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.bqsqwad.tv.data.currency.CurrencyFormatter
 import com.bqsqwad.tv.data.wallet.WalletRepository
-import kotlinx.coroutines.launch
 
 @Composable
 fun HistoryScreen(onBack: () -> Unit) {
     val repository = remember { WalletRepository() }
-    val scope = rememberCoroutineScope()
     var entries by remember { mutableStateOf(emptyList<com.bqsqwad.tv.data.wallet.LedgerEntry>()) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
