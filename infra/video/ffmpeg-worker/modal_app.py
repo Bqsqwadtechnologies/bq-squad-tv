@@ -21,6 +21,8 @@ MODAL_RESOURCE_CONFIG = {
     "poll": {"cpu": 0.25, "memory": 512, "timeout": 90, "max_containers": 1},
     "standard": {"cpu": 2, "memory": 4096, "timeout": 10_800, "max_containers": 2},
     "copy": {"cpu": 0.5, "memory": 1024, "timeout": 3600, "max_containers": 1},
+    "maintenance": {"cpu": 0.5, "memory": 512, "timeout": 1800, "max_containers": 1},
+    "wake": {"timeout": 30, "max_containers": 1},
 }
 
 image = (
@@ -60,10 +62,7 @@ def poll_firestore_queue() -> None:
 @app.function(
     image=image,
     secrets=[worker_secret],
-    cpu=0.5,
-    memory=512,
-    timeout=1800,
-    max_containers=1,
+    **MODAL_RESOURCE_CONFIG["maintenance"],
 )
 def run_maintenance_task(task: dict) -> None:
     import runner
@@ -101,7 +100,7 @@ def transcode_claimed_job(job: dict) -> None:
         raise
 
 
-@app.function(image=image, secrets=[worker_secret], timeout=30)
+@app.function(image=image, secrets=[worker_secret], **MODAL_RESOURCE_CONFIG["wake"])
 @modal.fastapi_endpoint(method="POST")
 def wake(request: Request) -> dict:
     """Secured, short-lived wake hook called when a source upload is queued."""
