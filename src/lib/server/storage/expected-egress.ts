@@ -85,9 +85,11 @@ export async function reserveExpectedStorageEgress(
   }
   if (metadata.paidEgressEnabled === true) throw new ApiError(409, "STORAGE_PAID_EGRESS_DISABLED", "Paid data transfer is disabled for this service.");
   const budget = metadata.freeEgressBudgetBytes;
+  // A daily cap applies only when the provider publishes/configures one.
+  // Lovable's conservative default is monthly; do not invent a 1/30 daily limit.
   const dailyBudget = typeof metadata.dailyEgressCapBytes === "number" && Number.isSafeInteger(metadata.dailyEgressCapBytes)
     ? metadata.dailyEgressCapBytes
-    : typeof budget === "number" ? Math.floor(budget / 30) : 0;
+    : typeof budget === "number" ? budget : 0;
   if (typeof budget !== "number" || !Number.isSafeInteger(budget) || budget < 1 || dailyBudget < 1) {
     throw new ApiError(503, "EGRESS_BUDGET_UNKNOWN", "The free delivery allowance must be checked before playback.");
   }
@@ -108,11 +110,18 @@ export async function reserveExpectedStorageEgress(
     const result = await fs.transact([gp, dp, gc, dc, rp], docs => {
       const [group, destination, groupShard, destShard, existing] = docs;
       if (existing) {
-        if (existing["status"] === "reserved") {
+        if (existing["status"] === "reserved" && existing["destinationId"] === metadata.destinationId &&
+            existing["reservedBytes"] === expectedBytes) {
           const level = typeof group?.["level"] === "string" ? group["level"] as EgressLevel : "normal";
           return { result: { level, monthBytes: safe(group?.["monthExpectedBytes"]), dayBytes: safe(group?.["dayExpectedBytes"]), priorLevel: level }, writes: [] };
         }
-        throw new ApiError(409, "EGRESS_RESERVATION_EXISTS", "This playback reservation has already been used.");
+        throw new ApiError(409, "EGRESS_RESERVATION_EXISTS", "This playback reservation has already been used for a different delivery grant.");
+      }
+      if (group?.["monthKey"] === month && typeof group["budgetBytes"] === "number" && group["budgetBytes"] !== budget) {
+        throw new ApiError(503, "EGRESS_ACCOUNT_CONFIGURATION_MISMATCH", "The provider account monthly allowance differs across its storage locations.");
+      }
+      if (group?.["dayKey"] === day && typeof group["dailyBudgetBytes"] === "number" && group["dailyBudgetBytes"] !== dailyBudget) {
+        throw new ApiError(503, "EGRESS_ACCOUNT_CONFIGURATION_MISMATCH", "The provider account daily allowance differs across its storage locations.");
       }
       const currentMonth = group?.["monthKey"] === month ? safe(group["monthExpectedBytes"]) : 0;
       const currentDay = group?.["dayKey"] === day ? safe(group["dayExpectedBytes"]) : 0;
