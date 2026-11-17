@@ -726,8 +726,8 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           : [];
         let pageIndex = typeof payload?.["pageIndex"] === "number" && Number.isSafeInteger(payload["pageIndex"])
           ? Math.max(0, Math.min(pageIds.length, payload["pageIndex"])) : 0;
-        let cursorValue = typeof payload?.["cursorValue"] === "string" ? payload["cursorValue"] : null;
-        let cursorId = typeof payload?.["cursorId"] === "string" ? payload["cursorId"] : null;
+        const cursorValue = typeof payload?.["cursorValue"] === "string" ? payload["cursorValue"] : null;
+        const cursorId = typeof payload?.["cursorId"] === "string" ? payload["cursorId"] : null;
         let pageLastValue = typeof payload?.["pageLastValue"] === "string" ? payload["pageLastValue"] : null;
         let pageLastId = typeof payload?.["pageLastId"] === "string" ? payload["pageLastId"] : null;
 
