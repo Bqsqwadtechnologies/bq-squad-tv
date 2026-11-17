@@ -152,7 +152,7 @@ export async function reserveExpectedStorageEgress(
         dayConsumedBytes: safe(destination?.["dayKey"] === day ? destination["dayConsumedBytes"] : 0),
         budgetBytes: budget, dailyBudgetBytes: dailyBudget, level: nextLevel, updatedAt: nowIso,
       };
-      const counter = (raw: Record<string, unknown> | null, scope: string, id: string) => ({
+      const counter = (raw: Record<string, unknown> | null | undefined, scope: string, id: string) => ({
         scope, id, shard, monthKey: month, dayKey: day,
         monthExpectedBytes: safe(raw?.["monthKey"] === month ? raw["monthExpectedBytes"] : 0) + expectedBytes,
         dayExpectedBytes: safe(raw?.["dayKey"] === day ? raw["dayExpectedBytes"] : 0) + expectedBytes,
