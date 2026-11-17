@@ -30,18 +30,19 @@ export const Route = createFileRoute("/api/public/v1/admin/content-assets/$asset
       if (license?.["status"] !== "verified" || license["verificationStatus"] !== "verified") {
         throw new ApiError(403, "CONTENT_RIGHTS_NOT_VERIFIED", "Verified distribution rights are required.");
       }
-      const assetTerritories = Array.isArray(asset["territories"])
-        ? asset["territories"].filter((value): value is string => typeof value === "string").map(value => value.trim().toUpperCase())
+      const rawAssetTerritories = asset["territoryCodes"] ?? asset["territories"];
+      const assetTerritories = Array.isArray(rawAssetTerritories)
+        ? rawAssetTerritories.filter((value): value is string => typeof value === "string").map(value => value.trim().toUpperCase())
         : [];
-      const rightsTerritories = Array.isArray(license["territories"])
-        ? license["territories"].filter((value): value is string => typeof value === "string").map(value => value.trim().toUpperCase())
+      const rightsTerritories = Array.isArray(license["territoryCodes"])
+        ? license["territoryCodes"].filter((value): value is string => typeof value === "string").map(value => value.trim().toUpperCase())
         : [];
       if (!assetTerritories.length || !rightsTerritories.length ||
           assetTerritories.some(territory => !rightsTerritories.includes(territory))) {
         throw new ApiError(409, "CONTENT_TERRITORY_INVALID", "The video's viewing countries do not match the verified rights.");
       }
       const ageRating = typeof asset["ageRating"] === "string" ? asset["ageRating"].trim().toUpperCase() : "";
-      if (!["G", "PG", "PG-13", "12", "12A", "15", "16", "18", "R", "NC-17"].includes(ageRating)) {
+      if (!["TV-Y", "TV-Y7", "TV-G", "TV-PG", "TV-14", "TV-MA", "G", "PG", "PG-13", "12", "12A", "15", "16", "18", "R", "NC-17"].includes(ageRating)) {
         throw new ApiError(409, "CONTENT_AGE_RATING_REQUIRED", "Choose a valid age rating before approval.");
       }
       const posterKey = typeof asset["posterObjectKey"] === "string"
