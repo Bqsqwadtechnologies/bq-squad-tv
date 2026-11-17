@@ -201,7 +201,14 @@ def verify_hls_output(output_dir: Path) -> dict[str, int]:
             raise RuntimeError("An HLS rendition contains no media segments.")
     return {"renditionCount": len(variant_paths), "segmentCount": segment_count, "segmentBytes": total_segment_bytes}
 
-def transcode(source: Path, output_dir: Path, threads: int, profile: str = "standard", mode: str = "auto") -> list[Variant]:
+def transcode(
+    source: Path,
+    output_dir: Path,
+    threads: int,
+    profile: str = "standard",
+    mode: str = "auto",
+    key_info_file: Path | None = None,
+) -> list[Variant]:
     source = source.expanduser().resolve(strict=True)
     if not source.is_file() or source.suffix.lower() not in ALLOWED_EXTENSIONS:
         raise ValueError("Use a regular MP4, MOV, MKV or WebM source file.")
@@ -231,6 +238,7 @@ def transcode(source: Path, output_dir: Path, threads: int, profile: str = "stan
             copy_command = [
                 "ffmpeg", "-hide_banner", "-nostdin", "-y", "-protocol_whitelist", "file,pipe",
                 "-i", str(source), "-map", "0:v:0", "-map", "0:a:0", "-sn", "-dn",
+                *(["-hls_key_info_file", str(key_info_file)] if key_info_file else []),
                 "-c", "copy", "-f", "hls", "-hls_time", str(SEGMENT_SECONDS),
                 "-hls_playlist_type", "vod", "-hls_flags", "independent_segments",
                 "-hls_segment_filename", str(native_dir / "segment_%05d.ts"),
@@ -268,6 +276,7 @@ def transcode(source: Path, output_dir: Path, threads: int, profile: str = "stan
                 "-threads", str(threads),
                 "-f", "hls", "-hls_time", str(SEGMENT_SECONDS),
                 "-hls_playlist_type", "vod", "-hls_flags", "independent_segments",
+                *(["-hls_key_info_file", str(key_info_file)] if key_info_file else []),
                 "-hls_segment_filename", str(segment_pattern),
                 str(variant_dir / "index.m3u8"),
             ]
@@ -287,9 +296,10 @@ def main() -> int:
     parser.add_argument("--threads", type=int, default=2, choices=range(1, 9), help="FFmpeg CPU thread limit (1-8).")
     parser.add_argument("--profile", choices=("economy", "standard", "high"), default="standard")
     parser.add_argument("--mode", choices=("auto", "copy", "encode"), default="auto")
+    parser.add_argument("--key-info-file", type=Path, default=None)
     args = parser.parse_args()
     try:
-        variants = transcode(args.input, args.output, args.threads, args.profile, args.mode)
+        variants = transcode(args.input, args.output, args.threads, args.profile, args.mode, args.key_info_file)
     except (OSError, ValueError, RuntimeError) as error:
         print(str(error), file=sys.stderr)
         return 1
