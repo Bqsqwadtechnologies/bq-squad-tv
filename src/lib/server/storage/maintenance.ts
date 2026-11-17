@@ -1,4 +1,5 @@
-import { ApiError } from "../firebase-admin";
+import { ApiError, Firestore } from "../firebase-admin";
+import { refreshStoragePoolDestination } from "./pool-index";
 import type { StorageProviderAdapter } from "./providers";
 
 export type StorageListingObject = { key: string; sizeBytes: number };
@@ -37,6 +38,42 @@ export function isStorageQuotaOrRateLimit(code: string): boolean {
   return code === "STORAGE_PROVIDER_PAYMENT_REQUIRED" ||
     code === "STORAGE_PROVIDER_RATE_LIMITED" ||
     code === "STORAGE_PROVIDER_QUOTA";
+}
+
+export async function markStorageDestinationDegraded(
+  fs: Firestore,
+  destinationId: string,
+  error: unknown,
+): Promise<boolean> {
+  const code = storageFailureCode(error);
+  if (!isStorageQuotaOrRateLimit(code)) return false;
+  if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId)) return false;
+  const destinationPath = "storageDestinations/" + destinationId;
+  const destination = await fs.getDoc(destinationPath);
+  if (!destination) return false;
+  const now = new Date().toISOString();
+  const degradedUntil = new Date(Date.now() + 24 * 60 * 60_000).toISOString();
+  const message = storageFailureMessage(code);
+  await fs.patchDoc(destinationPath, {
+    healthStatus: "degraded",
+    healthCheckedAt: now,
+    lastErrorCode: code,
+    lastErrorMessage: message,
+    degradedUntil,
+    updatedAt: now,
+  });
+  await refreshStoragePoolDestination(fs, destinationId).catch(() => undefined);
+  await fs.setDoc("storageAlerts/" + crypto.randomUUID().replace(/-/g, ""), {
+    destinationId,
+    accountGroup: typeof destination["accountGroup"] === "string" ? destination["accountGroup"] : null,
+    severity: "warning",
+    reasonCode: code,
+    message,
+    createdAt: now,
+    expiresAt: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+    acknowledged: false,
+  }).catch(() => undefined);
+  return true;
 }
 
 export function storageFailureMessage(code: string): string {
