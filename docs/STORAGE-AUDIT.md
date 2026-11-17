@@ -28,7 +28,7 @@ Audit method: read-only inspection of the current Git tree and server source. No
 7. `src/lib/server/storage/providers.ts` already contains Backblaze S3-compatible and Lovable adapters with paginated listing. B2 listing is object-based; no provider-level bucket-usage endpoint is used.
 8. Expected-delivery reservations are now made at playback grant and extended on heartbeats. The legacy per-segment recorder is retired. Sharded expected-delivery accounting is implemented, but production usage accuracy and transition alerts need runtime verification.
 9. `src/lib/server/storage/transfers.ts` keeps the two legacy Lovable buckets as fallbacks for assets without destination IDs.
-10. File 02 already added a Modal-driven maintenance queue and worker maintenance endpoints. Its current task runner only handles abandoned HLS attempt-folder deletion; storage health and usage sweep task types still need to be added.
+10. The existing Modal maintenance queue now has source handlers for storage health/usage listing, replica copies, destination draining, verified old-copy cleanup, configuration backups, source retention, orphan scanning/deletion, payment reconciliation and audit-chain verification. The worker runs these through the existing maintenance claim/run/complete flow. Source presence is confirmed; provider credentials, scheduling, task continuation, concurrency, and live destination behavior still require runtime verification.
 
 ## Allowance decisions for File 03
 
