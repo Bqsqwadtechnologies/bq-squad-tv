@@ -2,6 +2,7 @@
 """Authenticated polling runner for the BQ SQWAD TV transcode queue."""
 from __future__ import annotations
 
+import base64
 import hashlib
 import hmac
 import json
@@ -260,11 +261,24 @@ def process_job(job: dict) -> None:
             if expected_hash and not hmac.compare_digest(str(expected_hash).lower(), source_sha256):
                 raise RuntimeError("SOURCE_HASH_MISMATCH")
             update_stage("encode", 0)
+            hls_key_bytes = None
+            key_info_path = None
+            if job.get("hlsEncryption") is True:
+                hls_key_bytes = secrets.token_bytes(16)
+                key_path = root / "hls-content.key"
+                key_path.write_bytes(hls_key_bytes)
+                key_path.chmod(0o600)
+                key_info_path = root / "hls-key-info.txt"
+                key_uri = API_BASE + "/api/public/v1/streaming/key/" + asset_id
+                key_info_path.write_text(key_uri + "\\n" + str(key_path) + "\\n", encoding="utf-8")
+                key_info_path.chmod(0o600)
             command = [
                 "nice", "-n", "10", "python", "/app/transcode.py", "--input", str(source),
                 "--output", str(output), "--threads", str(max(1, min(8, int(os.environ.get("FFMPEG_THREADS", "2"))))),
                 "--profile", str(job.get("profile", "standard")), "--mode", "auto",
             ]
+            if key_info_path:
+                command.extend(["--key-info-file", str(key_info_path)])
             process = subprocess.Popen(command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             while process.poll() is None:
                 if lease_lost.wait(1):
@@ -336,6 +350,7 @@ def process_job(job: dict) -> None:
                 "claimToken": job["claimToken"],
                 "sourceSha256": source_sha256,
                 "files": manifest,
+                **({"hlsEncryptionKey": base64.urlsafe_b64encode(hls_key_bytes).decode("ascii").rstrip("=")} if hls_key_bytes else {}),
                 "computeUsage": {
                     "cores": float(job.get("modalCores", 2)),
                     "memoryGiB": float(job.get("modalMemoryGiB", 4)),
