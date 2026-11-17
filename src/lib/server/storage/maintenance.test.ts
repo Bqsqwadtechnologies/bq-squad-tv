@@ -7,6 +7,7 @@ import {
   isStorageQuotaOrRateLimit,
   storageFailureCode,
   storageFailureMessage,
+  markStorageDestinationDegraded,
 } from "./maintenance";
 
 describe("storage maintenance accounting", () => {
@@ -51,6 +52,31 @@ describe("storage maintenance accounting", () => {
     expect(isStorageQuotaOrRateLimit("STORAGE_PROVIDER_PAYMENT_REQUIRED")).toBe(true);
     expect(isStorageQuotaOrRateLimit("STORAGE_PROVIDER_RATE_LIMITED")).toBe(true);
     expect(isStorageQuotaOrRateLimit("STORAGE_PROVIDER_UNAVAILABLE")).toBe(false);
+  });
+
+  it("marks quota failures degraded for 24 hours and creates an owner alert", async () => {
+    const patches: Array<{ path: string; fields: Record<string, unknown> }> = [];
+    const alerts: Array<{ path: string; fields: Record<string, unknown> }> = [];
+    const fakeFs = {
+      async getDoc(path: string) {
+        return path === "storageDestinations/lov-001" ? { accountGroup: "lovable:project" } : null;
+      },
+      async patchDoc(path: string, fields: Record<string, unknown>) { patches.push({ path, fields }); },
+      async setDoc(path: string, fields: Record<string, unknown>) { alerts.push({ path, fields }); },
+    };
+    const marked = await markStorageDestinationDegraded(
+      fakeFs as never,
+      "lov-001",
+      new ApiError(429, "STORAGE_PROVIDER_QUOTA", "private provider response"),
+    );
+    expect(marked).toBe(true);
+    expect(patches[0]?.fields["healthStatus"]).toBe("degraded");
+    expect(patches[0]?.fields["lastErrorCode"]).toBe("STORAGE_PROVIDER_QUOTA");
+    const until = Date.parse(String(patches[0]?.fields["degradedUntil"]));
+    expect(until - Date.now()).toBeGreaterThan(23 * 60 * 60_000);
+    expect(until - Date.now()).toBeLessThanOrEqual(24 * 60 * 60_000);
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]?.fields["message"]).not.toContain("private provider response");
   });
 
   it("uses safe error wording and does not surface provider response text", () => {
