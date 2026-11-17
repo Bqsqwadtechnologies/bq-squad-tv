@@ -22,6 +22,7 @@ data class SessionSnapshot(
     val timeRemainingSeconds: Long,
     val sessionTotalMinor: Long,
     val active: Boolean = true,
+    val leaseToken: String? = null,
 )
 
 data class HeartbeatRequest(
