@@ -91,6 +91,11 @@ function ZillionaireDashboard() {
   const [legalSeedBusy, setLegalSeedBusy] = useState(false);
   const [legalSeedMessage, setLegalSeedMessage] = useState("");
   const [legalSeedError, setLegalSeedError] = useState("");
+  const [legalSettings, setLegalSettings] = useState<Record<string, string>>({});
+  const [legalSettingsReason, setLegalSettingsReason] = useState("");
+  const [legalSettingsMessage, setLegalSettingsMessage] = useState("");
+  const [legalSettingsError, setLegalSettingsError] = useState("");
+  const [legalSettingsBusy, setLegalSettingsBusy] = useState(false);
 
   async function loadAccess(idToken: string) {
     const response = await fetch("/api/public/v1/admin/overview", {
@@ -114,6 +119,10 @@ function ZillionaireDashboard() {
       const flagsData = await flagsResponse.json() as { flags?: PlatformFlags; error?: string };
       if (!flagsResponse.ok || !flagsData.flags) throw new Error(flagsData.error ?? "Could not load platform controls.");
       setPlatformFlags(flagsData.flags);
+      const legalResponse = await fetch("/api/public/v1/admin/pages/settings", { headers: await getWebAuthHeaders(idToken), cache: "no-store" });
+      const legalData = await legalResponse.json() as { values?: Record<string, string>; error?: string };
+      if (!legalResponse.ok) throw new Error(legalData.error ?? "Could not load legal settings.");
+      setLegalSettings(legalData.values ?? {});
     }
   }
 
@@ -146,6 +155,23 @@ function ZillionaireDashboard() {
       setLegalSeedMessage("Created: " + (result.created?.join(", ") || "none") + ". Left unchanged: " + (result.skipped?.join(", ") || "none") + ". " + (result.message ?? ""));
     } catch (caught) { setLegalSeedError(caught instanceof Error ? caught.message : "Could not load the draft pages."); }
     finally { setLegalSeedBusy(false); }
+  }
+
+  async function saveLegalSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setLegalSettingsBusy(true); setLegalSettingsMessage(""); setLegalSettingsError("");
+    try {
+      const token = await restoreWebSession();
+      if (!token) throw new Error("Sign in again to continue.");
+      const values = Object.fromEntries(Object.entries(legalSettings).filter(([, value]) => value.trim().length > 0));
+      const response = await fetch("/api/public/v1/admin/pages/settings", {
+        method: "POST", headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ values, reason: legalSettingsReason }),
+      });
+      const result = await response.json() as { saved?: boolean; error?: string };
+      if (!response.ok || !result.saved) throw new Error(result.error ?? "Could not save legal settings.");
+      setLegalSettingsReason(""); setLegalSettingsMessage("Legal settings saved. Draft pages remain unpublished until each required value is complete and the owner publishes them.");
+    } catch (caught) { setLegalSettingsError(caught instanceof Error ? caught.message : "Could not save legal settings."); }
+    finally { setLegalSettingsBusy(false); }
   }
 
   async function login(event: FormEvent<HTMLFormElement>) {
@@ -304,6 +330,23 @@ function ZillionaireDashboard() {
                     </tbody>
                   </table>
                 </div>
+                <form onSubmit={saveLegalSettings} className="mt-7 grid gap-3 sm:grid-cols-2">
+                  <h3 className="sm:col-span-2 text-sm font-bold">Fill legal placeholders</h3>
+                  {[
+                    ["effective_date", "Effective date"], ["last_updated", "Last updated"],
+                    ["minimum_age", "Minimum account age"], ["viewing_history_retention", "Viewing history retention"],
+                    ["evidence_retention", "Evidence retention"], ["security_log_retention", "Security log retention"],
+                    ["dispute_window_days", "Charge dispute window (days)"], ["wallet_refund_rule", "Wallet refund rule"],
+                    ["closure_balance_rule", "Balance on account closure"], ["liability_period_months", "Liability period (months)"],
+                    ["governing_law", "Governing law"], ["jurisdiction", "Court jurisdiction"],
+                    ["postal_address_if_required", "Postal address if required"], ["revenue_basis", "Producer revenue basis"],
+                    ["revenue_change_notice_days", "Revenue change notice (days)"], ["minimum_payout", "Minimum payout"],
+                  ].map(([key, label]) => <label key={key} className="grid gap-1 text-xs text-blue-100/70">{label}<input value={legalSettings[key] ?? ""} onChange={event => setLegalSettings(current => ({ ...current, [key]: event.target.value }))} className="min-h-10 rounded-lg border border-white/10 bg-[#030b2a] px-3 text-sm text-white outline-none focus:border-cyan-300" /></label>)}
+                  <label className="sm:col-span-2 grid gap-2 text-xs text-blue-100/70">Reason for this change<textarea required minLength={3} maxLength={1000} value={legalSettingsReason} onChange={event => setLegalSettingsReason(event.target.value)} className="min-h-16 rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-white" /></label>
+                  {legalSettingsError ? <p role="alert" className="sm:col-span-2 text-sm text-rose-200">{legalSettingsError}</p> : null}
+                  {legalSettingsMessage ? <p role="status" className="sm:col-span-2 text-sm text-cyan-200">{legalSettingsMessage}</p> : null}
+                  <button type="submit" disabled={legalSettingsBusy || legalSettingsReason.trim().length < 3} className="sm:col-span-2 w-fit rounded-xl border border-cyan-300/40 px-5 py-3 text-sm font-bold text-cyan-100 disabled:opacity-50">{legalSettingsBusy ? "Saving…" : "Save legal settings"}</button>
+                </form>
                 <p className="mt-4 text-xs leading-5 text-blue-100/55">Provider terms also need contract-specific revenue model and deductible-cost rules. Do not publish until all legal and operational details are accurate.</p>
               </section>
             ) : null}
