@@ -46,3 +46,11 @@
 
 ## Legal review notice
 **These documents are drafts. They must be reviewed by a qualified lawyer in every country where BQ SQWAD TV operates before launch. The owner must edit them whenever an actual product practice changes.**
+
+
+## Final follow-up
+- Added editable owner legal-setting fields and an audited settings endpoint; publishing now substitutes saved values and rejects missing placeholders.
+- Corrected placeholder matching, Markdown line rendering and acceptance-version lookup.
+- Added native sign-up/profile acceptance before profile completion and redirected the legacy `/privacy` and `/terms` paths to the new legal pages.
+- The web route tree did not contain a dedicated public sign-up route when inspected, so website sign-up acceptance remains unimplemented until that flow exists.
+- The File 08 implementation does not complete the outstanding work in Files 02–07. Those files still require their own audit, integration and verification passes; this report does not mark them complete.
