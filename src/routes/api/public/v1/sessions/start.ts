@@ -369,6 +369,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
                       fields: encodeFields({
                         uid: user.uid, sessionId, amountMinor: hold.holdMinor, currency,
                         status: hold.holdMinor > 0 ? "active" : "released",
+                        expiresAt: hold.holdMinor > 0 ? new Date(now.getTime() + 120_000).toISOString() : null,
                         createdAt: nowIso, updatedAt: nowIso,
                       }),
                     },
