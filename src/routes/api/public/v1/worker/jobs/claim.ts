@@ -7,12 +7,17 @@ import { estimateReservedBytes } from "@/lib/server/storage/routing";
 import { resolveStorageDestinationConfiguration, validateStorageDestinationMetadata } from "@/lib/server/storage/registry";
 import { loadSourceStorageConfiguration, createStorageDownloadTarget } from "@/lib/server/storage/transfers";
 import { videoWorkerLeaseExpiry, videoWorkerRetryIsDue } from "@/lib/server/video-worker-policy";
+import { getModalSpendSnapshot } from "@/lib/server/modal-spend";
 
 export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
   server: { handlers: { POST: async ({ request }) => {
     try {
       const fs = await Firestore.create();
       const workerId = await requireVideoWorker(request, fs);
+      const spend = await getModalSpendSnapshot(fs);
+      if (spend.pauseNewJobs) {
+        return Response.json({ job: null, paused: true, reason: "MONTHLY_SPEND_LIMIT", spend });
+      }
       const queued = await fs.query("videoTranscodeJobs", { filters: [{ field: "status", op: "EQUAL", value: "queued" }], orderByField: "createdAt", limit: 10 });
       const processing = await fs.query("videoTranscodeJobs", { filters: [{ field: "status", op: "EQUAL", value: "processing" }], limit: 500 });
       const now = new Date();
