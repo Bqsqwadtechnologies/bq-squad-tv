@@ -61,7 +61,8 @@ export function estimateExpectedPlaybackBytes(asset: Record<string, unknown>): n
     }
   }
   if (!bytes) bytes = 1_350_000_000; // conservative two-hour standard-quality fallback for legacy assets
-  const estimate = Math.ceil(bytes * 1.1);
+  const estimateBig = (BigInt(bytes) * 11n + 9n) / 10n;
+  const estimate = estimateBig <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(estimateBig) : Number.NaN;
   if (!Number.isSafeInteger(estimate) || estimate < 1) throw new ApiError(409, "EGRESS_ESTIMATE_INVALID", "The expected playback size could not be estimated safely.");
   return estimate;
 }
