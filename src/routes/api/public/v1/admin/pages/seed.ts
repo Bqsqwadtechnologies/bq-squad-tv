@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import defaultPages from "@/../content/legal/default-pages.json";
+import { defaultPages } from "@/lib/legal/default-pages";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAdminModule } from "@/lib/server/roles";
