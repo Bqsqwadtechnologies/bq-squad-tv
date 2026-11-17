@@ -12,7 +12,7 @@ export const Route = createFileRoute("/api/public/v1/pages/$slug")({
       if (!page || page["status"] !== "published" || page["audience"] !== "public" || typeof page["body"] !== "string") {
         throw new ApiError(404, "PAGE_NOT_FOUND", "This page is not available.");
       }
-      if (page["body"].match(/\\{\\{[a-z0-9_]+\\}\\}/)) throw new ApiError(503, "PAGE_REVIEW_REQUIRED", "This page is being reviewed and is not available yet.");
+      if (page["body"].match(/\{\{[a-z0-9_]+\}\}/)) throw new ApiError(503, "PAGE_REVIEW_REQUIRED", "This page is being reviewed and is not available yet.");
       return Response.json({
         slug, title: page["title"], body: page["body"], version: page["version"],
         effectiveAt: page["effectiveAt"], audience: page["audience"],
