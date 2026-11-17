@@ -43,10 +43,6 @@ data class PushTokenResponse(
     val registered: Boolean,
 )
 
-data class NotificationReadResponse(
-    val read: Boolean = true,
-)
-
 data class ThemePreferenceResponse(
     val themeMode: String = "system",
 )
