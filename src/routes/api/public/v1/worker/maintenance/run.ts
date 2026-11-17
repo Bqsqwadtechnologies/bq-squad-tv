@@ -365,15 +365,42 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         if (config.configurationStatus !== "configured") throw new ApiError(503, "REBALANCE_DESTINATION_MISCONFIGURED", "The old storage location could not be checked.");
         const adapter = createStorageProviderAdapter(config);
         const cursor = typeof payload?.["deleteCursor"] === "string" ? payload["deleteCursor"] : null;
-        const page = await adapter.listObjects(prefix, cursor);
-        const batch = page.objects.slice(0, 40);
-        await Promise.all(batch.map(item => adapter.deleteObject(item.key)));
-        if (page.nextCursor) {
+        const pendingKeys = Array.isArray(payload?.["pendingKeys"])
+          ? payload["pendingKeys"].filter((key): key is string => typeof key === "string") : [];
+        const pendingIndex = typeof payload?.["pendingIndex"] === "number" ? payload["pendingIndex"] : 0;
+        if (pendingIndex < pendingKeys.length) {
+          const batch = pendingKeys.slice(pendingIndex, pendingIndex + 40);
+          await Promise.all(batch.map(key => adapter.deleteObject(key)));
           await fs.patchDoc(taskPath, {
-            payload: { ...payload, deleteCursor: page.nextCursor },
+            payload: { ...payload, pendingIndex: pendingIndex + batch.length },
+            deletedObjectCount: (typeof task["deletedObjectCount"] === "number" ? task["deletedObjectCount"] : 0) + batch.length,
             leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
           });
           return Response.json({ done: false, deletedCount: batch.length });
+        }
+        if (pendingKeys.length > 0 && cursor) {
+          await fs.patchDoc(taskPath, {
+            payload: { ...payload, pendingKeys: [], pendingIndex: 0 },
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+          });
+          return Response.json({ done: false, deletedCount: 0 });
+        }
+        if (pendingKeys.length === 0) {
+          const page = await adapter.listObjects(prefix, cursor);
+          if (page.objects.length > 0) {
+            await fs.patchDoc(taskPath, {
+              payload: { ...payload, pendingKeys: page.objects.map(item => item.key), pendingIndex: 0, deleteCursor: page.nextCursor },
+              leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+            });
+            return Response.json({ done: false, deletedCount: 0 });
+          }
+          if (page.nextCursor) {
+            await fs.patchDoc(taskPath, {
+              payload: { ...payload, pendingKeys: [], pendingIndex: 0, deleteCursor: page.nextCursor },
+              leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+            });
+            return Response.json({ done: false, deletedCount: 0 });
+          }
         }
         await fs.transact(["contentAssets/" + assetId, "storageReplicaRecords/" + assetId + "_" + destinationId], docs => {
           const currentAsset = docs[0];
@@ -394,8 +421,8 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           };
         });
         await rebuildStoragePoolIndex(fs, ["hls_streaming"]);
-        await fs.patchDoc(taskPath, { status: "completed", phase: "done", deletedObjectCount: (typeof task["deletedObjectCount"] === "number" ? task["deletedObjectCount"] : 0) + batch.length, completedAt: now, updatedAt: now });
-        return Response.json({ done: true, deletedCount: batch.length });
+        await fs.patchDoc(taskPath, { phase: "done", completedAt: now, updatedAt: now });
+        return Response.json({ done: true, deletedCount: typeof task["deletedObjectCount"] === "number" ? task["deletedObjectCount"] : 0 });
       }
 
       if (task["taskType"] !== "delete_attempt_prefix") {
