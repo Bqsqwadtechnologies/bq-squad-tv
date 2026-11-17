@@ -46,3 +46,34 @@ export function resolveDestinationId(asset: Record<string, unknown>, role: "sour
   const fallback = role === "source" ? legacy.source : role === "stream" ? legacy.stream : (legacy.poster ?? legacy.stream);
   return fallback;
 }
+
+
+export type AssetStorageRole = "source" | "stream" | "poster";
+export type AssetStorageBinding = {
+  primaryDestinationId: string;
+  replicaIds: string[];
+  objectPrefix: string | null;
+};
+
+/** Resolve current and legacy asset bindings without moving legacy objects. */
+export function resolveAssetStorageBinding(
+  asset: Record<string, unknown>,
+  role: AssetStorageRole,
+  legacy: { source: string; stream: string; poster?: string },
+): AssetStorageBinding {
+  const primaryDestinationId = resolveDestinationId(asset, role, legacy);
+  const rawReplicas = Array.isArray(asset["streamReplicaIds"]) ? asset["streamReplicaIds"] : [];
+  const replicaIds = [...new Set(rawReplicas.filter((value): value is string =>
+    typeof value === "string" && /^[a-z0-9][a-z0-9_-]{1,79}$/.test(value) && value !== primaryDestinationId))];
+  const rawPrefix = role === "source"
+    ? (asset["sourceObjectPrefix"] ?? asset["sourcePath"])
+    : role === "poster"
+      ? (asset["posterObjectPrefix"] ?? asset["objectPrefix"] ?? asset["streamObjectPrefix"])
+      : (asset["objectPrefix"] ?? asset["streamObjectPrefix"]);
+  const objectPrefix = typeof rawPrefix === "string" && rawPrefix.length <= 1024 &&
+    !rawPrefix.startsWith("/") && !rawPrefix.includes("\\\\") &&
+    rawPrefix.split("/").every(part => part && part !== "." && part !== "..")
+    ? rawPrefix.replace(/\\/$/, "")
+    : null;
+  return { primaryDestinationId, replicaIds, objectPrefix };
+}
