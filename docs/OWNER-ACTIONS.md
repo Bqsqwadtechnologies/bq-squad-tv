@@ -46,7 +46,7 @@ When a batch identifies a required missing credential:
 4. Save it in the provider console only; never paste its value into chat, source code, logs or Git.
 5. Keep the related feature disabled until the required setting is present and verified.
 
-The Zillionaire dashboard is the only top-level control centre. Configure only `ZILLIONAIRE_EMAIL` as its owner identity; there is no separate `ADMIN_EMAIL` setting. Do not guess secret names or create duplicate credentials.
+The Zillionaire dashboard is the only top-level control centre. Configure only `ZILLIONAIRE_EMAIL` as its owner identity. Do not guess secret names or create duplicate credentials.
 
 ## 5. Existing storage-account credentials
 
