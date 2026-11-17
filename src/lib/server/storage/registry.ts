@@ -37,6 +37,9 @@ export type StorageDestinationMetadata = {
   egressDayKey?: string;
   freeEgressBudgetBytes?: number | null;
   paidEgressEnabled?: boolean;
+  egressBudgetSource?: string | null;
+  egressBudgetCheckedAt?: string | null;
+  egressBudgetSourceUrl?: string | null;
   egressLevel?: "normal" | "warn" | "throttle" | "blocked" | "paid";
   egressAlertAt?: string | null;
   healthStatus?: "healthy" | "degraded" | "misconfigured" | "unreachable" | "unknown";
@@ -142,8 +145,12 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
   const egressMonthBytes = input["egressMonthBytes"] ?? 0;
   const egressAccountMonthBytes = input["egressAccountMonthBytes"];
   const egressDayBytes = input["egressDayBytes"] ?? 0;
-  const freeEgressBudgetBytes = input["freeEgressBudgetBytes"] ?? null;
-  const paidEgressEnabled = input["paidEgressEnabled"] ?? false;
+  const freeEgressBudgetBytes = input["freeEgressBudgetBytes"] ??
+    (providerType === "lovable_storage" && typeof softCapBytes === "number" ? softCapBytes * 2 : 0);
+  const paidEgressEnabled = false;
+  const egressBudgetSource = input["egressBudgetSource"] ?? null;
+  const egressBudgetCheckedAt = input["egressBudgetCheckedAt"] ?? null;
+  const egressBudgetSourceUrl = input["egressBudgetSourceUrl"] ?? null;
   const egressLevel = input["egressLevel"] ?? "normal";
   const lastErrorCode = input["lastErrorCode"] ?? null;
 
@@ -169,7 +176,9 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
       (egressAccountMonthBytes !== undefined && (typeof egressAccountMonthBytes !== "number" || !Number.isSafeInteger(egressAccountMonthBytes) || egressAccountMonthBytes < 0)) ||
       typeof egressDayBytes !== "number" || !Number.isSafeInteger(egressDayBytes) || egressDayBytes < 0 ||
       (freeEgressBudgetBytes !== null && (typeof freeEgressBudgetBytes !== "number" || !Number.isSafeInteger(freeEgressBudgetBytes) || freeEgressBudgetBytes < 0)) ||
-      typeof paidEgressEnabled !== "boolean" ||
+      (egressBudgetSource !== null && (typeof egressBudgetSource !== "string" || egressBudgetSource.length > 500)) ||
+      (egressBudgetCheckedAt !== null && (typeof egressBudgetCheckedAt !== "string" || !Number.isFinite(Date.parse(egressBudgetCheckedAt)))) ||
+      (egressBudgetSourceUrl !== null && (typeof egressBudgetSourceUrl !== "string" || egressBudgetSourceUrl.length > 2048)) ||
       !["normal", "warn", "throttle", "blocked", "paid"].includes(String(egressLevel)) ||
       (lastErrorCode !== null && (typeof lastErrorCode !== "string" || !/^[A-Z0-9_]{1,80}$/.test(lastErrorCode)))) {
     throw new ApiError(400, "STORAGE_DESTINATION_INVALID", "One or more storage destination fields are invalid.");
@@ -200,7 +209,10 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
     egressDayBytes,
     ...(typeof input["egressDayKey"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input["egressDayKey"]) ? { egressDayKey: input["egressDayKey"] } : {}),
     freeEgressBudgetBytes: freeEgressBudgetBytes as number | null,
-    paidEgressEnabled,
+    paidEgressEnabled: false,
+    egressBudgetSource: egressBudgetSource as string | null,
+    egressBudgetCheckedAt: egressBudgetCheckedAt as string | null,
+    egressBudgetSourceUrl: egressBudgetSourceUrl as string | null,
     egressLevel: egressLevel as NonNullable<StorageDestinationMetadata["egressLevel"]>,
     egressAlertAt: typeof input["egressAlertAt"] === "string" ? input["egressAlertAt"] : null,
     healthStatus: healthStatus as NonNullable<StorageDestinationMetadata["healthStatus"]>,
