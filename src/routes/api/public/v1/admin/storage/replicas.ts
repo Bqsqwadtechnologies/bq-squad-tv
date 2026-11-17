@@ -89,7 +89,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/replicas")({
       const excludedDestinations = [...excludeDestinationIds];
       const excludedGroups = [...excludeAccountGroups];
       for (let index = 0; index < queueCount; index++) {
-        const reservationId = "replica-" + body.assetId + "-" + crypto.randomUUID().replace(/-/g, "").slice(0, 18);
+        const reservationId = "replica-" + crypto.randomUUID().replace(/-/g, "");
         try {
           const reservation = await reserveStorageDestination(fs, {
             purpose: "hls_streaming",
@@ -100,6 +100,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/replicas")({
             excludeAccountGroups: excludedGroups,
           });
           targetReservations.push({ destinationId: reservation.destinationId, reservationId });
+          reservations.push(reservationId);
           excludedDestinations.push(reservation.destinationId);
           const target = await fs.getDoc("storageDestinations/" + reservation.destinationId);
           if (typeof target?.["accountGroup"] === "string") excludedGroups.push(target["accountGroup"]);
@@ -166,12 +167,18 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/replicas")({
         },
         currentDocument: { exists: false },
       }));
-      await fs.commit(writes);
-      await fs.patchDoc(assetPath, {
-        popular: true, popularMarkedBy: user.uid,
-        popularMarkedAt: now, popularReason: body.reason,
-        replicaCountRequested: body.replicaCount,
+      writes.push({
+        update: {
+          name: fs.docName(assetPath),
+          fields: encodeFields({
+            popular: true, popularMarkedBy: user.uid,
+            popularMarkedAt: now, popularReason: body.reason,
+            replicaCountRequested: body.replicaCount,
+          }),
+        },
+        updateMask: { fieldPaths: ["popular", "popularMarkedBy", "popularMarkedAt", "popularReason", "replicaCountRequested"] },
       });
+      await fs.commit(writes);
       await writeAuditLog(fs, {
         actorUid: user.uid, action: "storage.asset_replication_queued",
         targetType: "contentAsset", targetId: body.assetId, reason: body.reason,
