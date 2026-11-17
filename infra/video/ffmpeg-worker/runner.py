@@ -21,6 +21,11 @@ from pathlib import Path
 
 API_BASE = os.environ.get("BQ_TV_API_BASE_URL", "").rstrip("/")
 WORKER_SECRET = os.environ.get("STREAMING_HMAC_SECRET", "")
+WORKER_ID = os.environ.get("VIDEO_WORKER_ID", "legacy-shared")
+try:
+    WORKER_KEYS = json.loads(os.environ.get("VIDEO_WORKER_KEYS_JSON", "{}"))
+except json.JSONDecodeError:
+    WORKER_KEYS = {}
 POLL_SECONDS = max(5, int(os.environ.get("WORKER_POLL_SECONDS", "15")))
 MAX_SOURCE_BYTES = 5 * 1024 * 1024 * 1024
 
@@ -31,14 +36,22 @@ def canonical_message(timestamp: str, nonce: str, method: str, path: str, body_h
 
 
 def signed_request(method: str, path: str, payload: dict | None = None) -> dict:
-    if not API_BASE.startswith("https://") or len(WORKER_SECRET) < 32:
-        raise RuntimeError("Worker API URL or signing secret is not configured.")
+    if not API_BASE.startswith("https://"):
+        raise RuntimeError("Worker API URL is not configured.")
+    if WORKER_KEYS:
+        secret = WORKER_KEYS.get(WORKER_ID)
+        if not isinstance(secret, str) or len(secret) < 48:
+            raise RuntimeError("This processing worker has no valid individual credential.")
+        derived_key = secret.encode()
+    else:
+        if WORKER_ID != "legacy-shared" or len(WORKER_SECRET) < 32:
+            raise RuntimeError("Worker signing credentials are not configured.")
+        derived_key = hmac.new(WORKER_SECRET.encode(), b"BQ-SQWAD-TV:VIDEO-WORKER:V1", hashlib.sha256).digest()
     body = json.dumps(payload or {}, separators=(",", ":"), ensure_ascii=False).encode()
     timestamp = str(int(time.time()))
     nonce = secrets.token_hex(16)
     body_hash = hashlib.sha256(body).hexdigest()
     message = canonical_message(timestamp, nonce, method, path, body_hash)
-    derived_key = hmac.new(WORKER_SECRET.encode(), b"BQ-SQWAD-TV:VIDEO-WORKER:V1", hashlib.sha256).digest()
     signature = hmac.new(derived_key, message, hashlib.sha256).hexdigest()
     request = urllib.request.Request(
         API_BASE + path,
@@ -46,6 +59,7 @@ def signed_request(method: str, path: str, payload: dict | None = None) -> dict:
         method=method.upper(),
         headers={
             "content-type": "application/json",
+            "x-bq-worker-id": WORKER_ID,
             "x-bq-worker-time": timestamp,
             "x-bq-worker-nonce": nonce,
             "x-bq-worker-signature": signature,
@@ -247,8 +261,13 @@ def process_job(job: dict) -> None:
 
 
 def run_forever() -> None:
-    if not API_BASE.startswith("https://") or len(WORKER_SECRET) < 32:
-        raise SystemExit("Set BQ_TV_API_BASE_URL and STREAMING_HMAC_SECRET before starting the worker.")
+    if not API_BASE.startswith("https://"):
+        raise SystemExit("Set BQ_TV_API_BASE_URL before starting the worker.")
+    if WORKER_KEYS:
+        if not isinstance(WORKER_KEYS.get(WORKER_ID), str) or len(WORKER_KEYS[WORKER_ID]) < 48:
+            raise SystemExit("Set a valid per-worker credential for VIDEO_WORKER_ID.")
+    elif WORKER_ID != "legacy-shared" or len(WORKER_SECRET) < 32:
+        raise SystemExit("Set VIDEO_WORKER_KEYS_JSON or the temporary legacy worker secret.")
     print("BQ SQWAD TV video worker started; waiting for jobs.", flush=True)
     while True:
         try:
