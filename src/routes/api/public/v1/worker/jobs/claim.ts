@@ -35,18 +35,18 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
         const leaseExpiresAt = videoWorkerLeaseExpiry(now.getTime(), leaseMinutes);
         const claimed = await fs.transact([jobPath], docs => {
           const job = docs[0];
-          if (!job || !["queued", "processing"].includes(String(job["status"]))) return { result: "", writes: [] };
+          if (!job || !["queued", "processing"].includes(String(job["status"]))) return { result: false as const, writes: [] };
           if (job["status"] === "processing" && typeof job["leaseExpiresAt"] === "string" && Date.parse(job["leaseExpiresAt"]) > now.getTime()) return { result: false, writes: [] };
           const currentAttempts = typeof job["attempts"] === "number" ? job["attempts"] : 0;
           if (job["status"] === "processing" && currentAttempts >= 6) {
-            return { result: "dead", writes: [{ update: { name: fs.docName(jobPath), fields: {
+            return { result: "dead" as const, writes: [{ update: { name: fs.docName(jobPath), fields: {
               status: { stringValue: "failed" }, workerStatus: { stringValue: "failed" },
               lastErrorCode: { stringValue: "WORKER_LEASE_EXPIRED" },
               claimToken: { nullValue: null }, leaseExpiresAt: { nullValue: null },
               updatedAt: { stringValue: now.toISOString() },
             } }, updateMask: { fieldPaths: ["status", "workerStatus", "lastErrorCode", "claimToken", "leaseExpiresAt", "updatedAt"] } }] };
           }
-          return { result: "claimed", writes: [{ update: { name: fs.docName(jobPath), fields: {
+          return { result: "claimed" as const, writes: [{ update: { name: fs.docName(jobPath), fields: {
             status: { stringValue: "processing" }, workerStatus: { stringValue: "processing" },
             claimToken: { stringValue: claimToken }, leaseExpiresAt: { stringValue: leaseExpiresAt },
             workerId: { stringValue: workerId },
