@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, getUserProfile, parseBody, requireAdultForContent, requireUser } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { recordRiskSignal } from "@/lib/server/risk-engine";
 
 const schema = z.object({ body: z.string().trim().min(2).max(1500) });
 
@@ -75,6 +76,7 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/com
           createdAt: now,
           updatedAt: now,
         }, { mustNotExist: true });
+        await recordRiskSignal(fs, user.uid, "comment_burst");
         return Response.json({ commentId, status: "PENDING", message: "Your comment was submitted for moderation." }, { status: 202 });
       } catch (error) { return errorBody(error); }
     },
