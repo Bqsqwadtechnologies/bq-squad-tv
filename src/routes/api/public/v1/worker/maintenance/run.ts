@@ -11,6 +11,7 @@ import { refreshStoragePoolDestination, updateStorageUsageAndPool } from "@/lib/
 import { copyReplicaObject, replicaCopyPhase } from "@/lib/server/storage/replication";
 import { commitStorageReservation } from "@/lib/server/storage/reservations";
 import { addVerifiedAssetStreamReplica, bindAssetStreamStorage } from "@/lib/server/storage/asset-binding";
+import { isExpiredTemporaryObject } from "@/lib/server/storage/cleanup";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
@@ -305,6 +306,12 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
       if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId) || !/^hls\/[A-Za-z0-9_-]{1,100}\/a[1-9][0-9]*$/.test(prefix) ||
           !destinationId || !prefix.startsWith("hls/" + assetId + "/")) {
         throw new ApiError(400, "MAINTENANCE_PREFIX_INVALID", "The cleanup folder is not valid for this content asset.");
+      }
+      const createdAt = typeof payload?.["createdAt"] === "string"
+        ? payload["createdAt"]
+        : typeof task["createdAt"] === "string" ? task["createdAt"] : "";
+      if (!createdAt || !isExpiredTemporaryObject(createdAt)) {
+        throw new ApiError(409, "TEMPORARY_OBJECT_RETENTION", "Temporary files are retained for at least 24 hours before cleanup.");
       }
       const raw = await fs.getDoc("storageDestinations/" + destinationId);
       if (!raw) throw new ApiError(503, "HLS_DESTINATION_MISSING", "The assigned storage location is unavailable.");
