@@ -43,6 +43,16 @@ async function workerKey(workerId: string): Promise<CryptoKey> {
   return crypto.subtle.importKey("raw", derived, { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
 }
 
+export async function createWorkerSignatureMessage(
+  timestamp: string,
+  nonce: string,
+  method: string,
+  pathname: string,
+  body: string,
+): Promise<string> {
+  return [timestamp, nonce, method.toUpperCase(), pathname, await sha256(body)].join("\\n");
+}
+
 /** Worker requests are bound to method, path, timestamp, nonce and exact body bytes. */
 export async function requireVideoWorker(request: Request, fs: Firestore): Promise<string> {
   const workerId = request.headers.get("x-bq-worker-id") ?? "legacy-shared";
