@@ -975,7 +975,6 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
       const page = await adapter.listObjects(prefix, null);
       const batch = page.objects.slice(0, 40);
       await Promise.all(batch.map(item => adapter.deleteObject(item.key)));
-      const now = new Date().toISOString();
       await fs.patchDoc(taskPath, {
         leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()),
         deletedObjectCount: (typeof task["deletedObjectCount"] === "number" ? task["deletedObjectCount"] : 0) + batch.length,
