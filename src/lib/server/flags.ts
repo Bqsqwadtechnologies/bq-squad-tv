@@ -8,6 +8,11 @@ export const DEFAULT_FLAGS = {
   commentsOpen: true,
   newStreamGrants: true,
   adultChannels: false,
+  liveTv: false,
+  providerConsole: false,
+  hlsEncryption: false,
+  forYou: false,
+  reminders: false,
 } as const;
 
 export type PlatformFlags = { -readonly [K in keyof typeof DEFAULT_FLAGS]: boolean };
@@ -33,5 +38,8 @@ export function publicFlags(flags: PlatformFlags) {
     commentsOpen: flags.commentsOpen,
     newStreamGrants: flags.newStreamGrants,
     adultChannels: flags.adultChannels,
+    liveTv: flags.liveTv,
+    forYou: flags.forYou,
+    reminders: flags.reminders,
   };
 }
