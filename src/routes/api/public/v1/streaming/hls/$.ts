@@ -71,12 +71,12 @@ async function rewritePlaylistForSession(
         "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(childToken);
     };
     if (trimmed.startsWith("#")) {
-      const matches = [...line.matchAll(/(URI\\s*=\\s*")([^"]+)(")/gi)];
+      const matches = [...line.matchAll(/(URI\s*=\s*")([^"]+)(")/gi)];
       let rewritten = line;
       for (const match of matches) {
         const original = match[2] ?? "";
         if (original.startsWith("data:")) continue;
-        const keyMatch = original.match(/\\/api\\/public\\/v1\\/streaming\\/key\\/([A-Za-z0-9_-]{1,100})(?:$|[?#])/);
+        const keyMatch = original.match(/\/api\/public\/v1\/streaming\/key\/([A-Za-z0-9_-]{1,100})(?:$|[?#])/);
         let replacement: string;
         if (keyMatch?.[1]) {
           const keyAssetId = keyMatch[1];
