@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const pages = JSON.parse(await readFile(path.join(root, "content/legal/default-pages.json"), "utf8"));
 const expected = new Set(["privacy-policy", "terms", "producer-terms", "producer-policy", "provider-terms"]);
-const placeholders = [...new Set(pages.flatMap(page => [...page.body.matchAll(/\\{\\{([a-z0-9_]+)\\}\\}/g)].map(match => match[1])))].sort();
+const placeholders = [...new Set(pages.flatMap(page => [...page.body.matchAll(/\{\{([a-z0-9_]+)\}\}/g)].map(match => match[1])))].sort();
 if (pages.length !== expected.size || pages.some(page => !expected.has(page.slug)) || new Set(pages.map(page => page.slug)).size !== pages.length) {
   throw new Error("The legal page seed list is incomplete or contains duplicate slugs.");
 }
