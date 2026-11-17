@@ -395,6 +395,10 @@ def process_maintenance_task(task: dict) -> None:
             usage_bytes = int(response["usageBytes"])
         if "healthStatus" in response:
             health_status = str(response["healthStatus"])
+        if response.get("done") is not True and task.get("taskType") == "storage_health_usage":
+            # One maintenance worker processes provider pages serially. A delay
+            # bounds request rate and avoids flooding a shared project/account.
+            time.sleep(1.0)
         if response.get("done") is True:
             result = {"deletedObjectCount": deleted, "processedObjectCount": processed_objects}
             if usage_bytes is not None:
