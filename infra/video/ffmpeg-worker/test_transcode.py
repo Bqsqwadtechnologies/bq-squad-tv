@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import tempfile
 import unittest
 from pathlib import Path
@@ -14,6 +16,24 @@ class WorkerAuthenticationTests(unittest.TestCase):
             message.decode(),
         )
         self.assertNotIn(b"\\n", message)
+
+
+class WorkerSignatureVectorTests(unittest.TestCase):
+    def test_per_worker_hmac_matches_typescript_vector(self):
+        secret = b"unit-test-worker-secret-with-more-than-48-characters-000000"
+        body = b'{"claimToken":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}'
+        body_hash = hashlib.sha256(body).hexdigest()
+        message = canonical_message(
+            "1794850000",
+            "0123456789abcdef0123456789abcdef",
+            "POST",
+            "/api/public/v1/worker/jobs/claim",
+            body_hash,
+        )
+        self.assertEqual(
+            "97912dd55a4cb7b448da4c8bb30d9873ca76e6af398c861cd50a9eb1b4597cf6",
+            hmac.new(secret, message, hashlib.sha256).hexdigest(),
+        )
 
 
 class VariantLadderTests(unittest.TestCase):
