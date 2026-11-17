@@ -26,7 +26,7 @@ export const Route = createFileRoute("/api/public/v1/admin/secret-health")({
       try {
         const user = await requireUser(request);
         const fs = await Firestore.create();
-        await requireAdminModule(fs, user, "settings");
+        await requireAdminModule(fs, user, "security");
         const secrets = SECRET_NAMES.map(name => ({
           name,
           status: typeof process.env[name] === "string" && process.env[name]!.trim().length > 0 ? "present" : "missing",
