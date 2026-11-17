@@ -178,13 +178,23 @@ export async function reserveStorageDestination(
               throw new ApiError(409, "STORAGE_PAID_EGRESS_DISABLED", "Paid data transfer is disabled for this service.");
             }
             const budget = metadata.freeEgressBudgetBytes;
-            if (typeof budget !== "number" || !Number.isSafeInteger(budget) || budget < 1) {
+            const dailyBudget = metadata.dailyEgressCapBytes ?? budget;
+            if (typeof budget !== "number" || !Number.isSafeInteger(budget) || budget < 1 ||
+                typeof dailyBudget !== "number" || !Number.isSafeInteger(dailyBudget) || dailyBudget < 1) {
               throw new ApiError(409, "STORAGE_EGRESS_BUDGET_UNKNOWN", "The free data-transfer allowance must be checked before streaming.");
             }
-            const monthKey = new Date().toISOString().slice(0, 7);
+            if ((typeof egress?.["budgetBytes"] === "number" && egress["budgetBytes"] !== budget) ||
+                (typeof egress?.["dailyBudgetBytes"] === "number" && egress["dailyBudgetBytes"] !== dailyBudget)) {
+              throw new ApiError(409, "STORAGE_EGRESS_CONFIGURATION_MISMATCH", "The shared provider account has inconsistent delivery limits.");
+            }
+            const now = new Date();
+            const monthKey = now.toISOString().slice(0, 7);
+            const dayKey = now.toISOString().slice(0, 10);
             const used = egress?.["monthKey"] === monthKey ? safeBytes(egress["monthExpectedBytes"]) : 0;
-            if (calculateEgressLevel(used, budget, false) === "blocked") {
-              throw new ApiError(409, "STORAGE_EGRESS_LIMIT_REACHED", "This storage account has reached its safe monthly delivery limit.");
+            const dayUsed = egress?.["dayKey"] === dayKey ? safeBytes(egress["dayExpectedBytes"]) : 0;
+            if (calculateEgressLevel(used, budget, false) === "blocked" ||
+                calculateEgressLevel(dayUsed, dailyBudget, false) === "blocked") {
+              throw new ApiError(409, "STORAGE_EGRESS_LIMIT_REACHED", "This storage account has reached its safe free delivery limit.");
             }
           }
           const currentUsage = metadata.usageBytes;
