@@ -63,7 +63,10 @@ export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
             return { name: collection, fields };
           }));
 
-          return Response.json({ projectId: serviceAccount.project_id, collections });
+          return Response.json(
+            { projectId: serviceAccount.project_id, collections },
+            { headers: { "cache-control": "no-store", "x-robots-tag": "noindex, nofollow, noarchive" } },
+          );
         } catch (error) {
           console.error("Firestore schema inspection failed", error);
           return Response.json({ error: "The data structure could not be loaded. Check the service connection and try again." }, { status: 502 });
