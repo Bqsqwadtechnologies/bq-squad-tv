@@ -139,5 +139,5 @@ export async function readStorageUsagePage(
     throw new ApiError(409, "STORAGE_LISTING_CURSOR_STALLED", "The storage listing did not advance.");
   }
   const totals = accumulateStorageUsage(currentBytes, currentObjectCount, page.objects);
-  return { ...totals, nextCursor: page.nextCursor };
+  return { ...totals, nextCursor: page.nextCursor, processedObjectCount: page.objects.length };
 }
