@@ -145,12 +145,30 @@ fun DownloadsScreen() {
 fun SettingsScreen(
     onWallet: () -> Unit,
     onProfile: () -> Unit,
+    themeMode: String = "system",
+    onThemeModeChange: (String) -> Unit = {},
 ) {
     var notifications by remember { mutableStateOf(true) }
     var wifiOnly by remember { mutableStateOf(false) }
     var quality by remember { mutableStateOf("Auto") }
     Column(Modifier.fillMaxSize().padding(18.dp)) {
         Text("Settings", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+        Spacer(Modifier.height(18.dp))
+        Text("Appearance", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Text("Choose how BQ SQWAD TV looks on this device.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            listOf("system" to "System", "light" to "Light", "dark" to "Dark").forEach { (value, label) ->
+                FilterChip(
+                    selected = themeMode == value,
+                    onClick = { onThemeModeChange(value) },
+                    label = { Text(label) },
+                )
+            }
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Spacer(Modifier.height(14.dp))
         SettingsSwitchRow("Notifications", "Programme and account updates", notifications) { notifications = it }
         SettingsSwitchRow("Wi-Fi only downloads", "Use Wi-Fi for offline downloads", wifiOnly) { wifiOnly = it }
