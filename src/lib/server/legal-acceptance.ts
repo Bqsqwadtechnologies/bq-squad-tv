@@ -3,7 +3,7 @@ import { ApiError, type Firestore } from "./firebase-admin";
 export type LegalAudience = "public" | "producer" | "provider";
 
 export function findUnfilledLegalPlaceholders(body: string): string[] {
-  return [...new Set([...body.matchAll(/\\{\\{([a-z0-9_]+)\\}\\}/g)].map(match => match[1] ?? ""))].filter(Boolean).sort();
+  return [...new Set([...body.matchAll(/\{\{([a-z0-9_]+)\}\}/g)].map(match => match[1] ?? ""))].filter(Boolean).sort();
 }
 
 const REQUIRED_BY_AUDIENCE: Record<LegalAudience, string[]> = {
