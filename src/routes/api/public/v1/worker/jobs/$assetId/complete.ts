@@ -7,6 +7,7 @@ import { validateStorageDestinationMetadata, resolveStorageDestinationConfigurat
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 import { commitStorageReservation } from "@/lib/server/storage/reservations";
 import { assertStorageObjectKey } from "@/lib/server/storage/ledger";
+import { listAllStorageObjects } from "@/lib/server/storage/listing";
 import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
 
 const schema = z.object({
@@ -49,16 +50,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       const config = resolveStorageDestinationConfiguration(metadata);
       if (config.configurationStatus !== "configured") throw new ApiError(503, "HLS_DESTINATION_MISCONFIGURED", "The HLS destination is not configured.");
       const adapter = createStorageProviderAdapter(config);
-      const listedObjects: Array<{ key: string; sizeBytes: number }> = [];
-      let cursor: string | null = null;
-      let listingCalls = 0;
-      do {
-        if (++listingCalls > 30) throw new ApiError(503, "HLS_LISTING_LIMIT", "The HLS output contains too many storage listing pages.");
-        const page = await adapter.listObjects(prefix, cursor);
-        listedObjects.push(...page.objects);
-        if (listedObjects.length > 20_000) throw new ApiError(413, "HLS_OUTPUT_TOO_LARGE", "The HLS output contains too many files.");
-        cursor = page.nextCursor;
-      } while (cursor);
+      const listedObjects = await listAllStorageObjects(adapter, prefix);
       const listedByKey = new Map(listedObjects.map(item => [item.key, item.sizeBytes]));
       if (listedByKey.size !== listedObjects.length || listedByKey.size !== body.files.length) {
         throw new ApiError(409, "HLS_OBJECT_COUNT_MISMATCH", "The uploaded file count does not match the storage listing.");
