@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody } from "@/lib/server/api";
-import { creditPaystackPayment, fetchPaystackVerification, verifyPaystackSignature } from "@/lib/server/paystack";
+import { creditPaystackPayment, fetchPaystackVerification, paystackEventDocumentId, verifyPaystackSignature } from "@/lib/server/paystack";
 
 export const Route = createFileRoute("/api/public/v1/payments/paystack/webhook")({
   server: { handlers: { POST: async ({ request }) => {
@@ -17,8 +17,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/webhook")
       }
       const reference = event.data.reference;
       const fs = await Firestore.create();
-      const eventDigest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("paystack:" + String(event.id)));
-      const eventId = Array.from(new Uint8Array(eventDigest), byte => byte.toString(16).padStart(2, "0")).join("");
+      const eventId = await paystackEventDocumentId(event.id);
       const eventPath = "paymentWebhookEvents/" + eventId;
       if (await fs.getDoc(eventPath)) return Response.json({ received: true, duplicate: true });
       const payment = await fs.getDoc("payments/paystack_" + reference);
