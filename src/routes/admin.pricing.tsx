@@ -81,7 +81,7 @@ function AdminPricingPage() {
       setPassword("");
       await loadConfig(result.idToken);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Administrator sign-in failed.");
+      setError(caught instanceof Error ? caught.message : "Zillionaire Dashboard sign-in failed.");
       setPassword("");
     } finally {
       setBusy(false);
@@ -139,7 +139,7 @@ function AdminPricingPage() {
       <header className="border-b border-cyan-300/15 bg-[#050f35]">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
           <a href="/"><img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="w-44" /></a>
-          <span className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Admin · Pricing</span>
+          <span className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Zillionaire Dashboard · Pricing</span>
         </div>
       </header>
       <section className="mx-auto max-w-5xl px-5 py-10 sm:py-14">
@@ -149,7 +149,7 @@ function AdminPricingPage() {
 
         {!token ? (
           <form onSubmit={login} className="mt-9 grid max-w-md gap-4 rounded-3xl border border-white/10 bg-[#07143d] p-6">
-            <h2 className="text-xl font-bold">Administrator sign in</h2>
+            <h2 className="text-xl font-bold">Zillionaire Dashboard sign-in</h2>
             <label className="grid gap-2 text-sm text-blue-100/70">Email<input type="email" required autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300" /></label>
             <label className="grid gap-2 text-sm text-blue-100/70">Password<input type="password" required autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300" /></label>
             {error ? <p role="alert" className="text-sm text-rose-300">{error}</p> : null}
