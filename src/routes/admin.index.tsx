@@ -194,7 +194,7 @@ function ZillionaireDashboard() {
             <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
               <ShieldCheck size={16} /> Protected platform controls
             </p>
-            <h1 className="mt-4 text-3xl font-black sm:text-5xl">{access?.owner ? "ZILLIONAIRE Control Centre" : "Secure dashboard access"}</h1>
+            <h1 className="mt-4 text-3xl font-black sm:text-5xl">{access?.owner ? "Zillionaire Dashboard" : "Secure dashboard access"}</h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100/60">
               Manage BQ SQWAD TV through server-authorized modules. Access is checked against your account and permissions on every request.
             </p>
@@ -202,7 +202,7 @@ function ZillionaireDashboard() {
           {access?.owner ? (
             <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/5 px-4 py-3">
               <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-cyan-200">Access verified</p>
-              <p className="mt-1 text-sm font-bold">{access.owner ? "Protected owner account" : "Delegated operator"}</p>
+              <p className="mt-1 text-sm font-bold">{access.owner ? "Zillionaire Dashboard owner" : "Delegated operator"}</p>
               <p className="mt-1 text-xs text-blue-100/50">{access.modules.length} authorized modules</p>
             </div>
           ) : null}
@@ -243,7 +243,7 @@ function ZillionaireDashboard() {
               </div>
               <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
                 <LockKeyhole className="text-cyan-200" size={22} />
-                <p className="mt-4 text-sm font-bold">Owner protection</p>
+                <p className="mt-4 text-sm font-bold">Dashboard protection</p>
                 <p className="mt-1 text-xs leading-5 text-blue-100/55">{access.owner ? "Owner identity is anchored to the configured verified email." : "This account is limited to its delegated scopes."}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
@@ -262,7 +262,7 @@ function ZillionaireDashboard() {
               <section className="mt-10 rounded-3xl border border-cyan-300/20 bg-[#07143d] p-5 sm:p-7" aria-labelledby="platform-controls-heading">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">Owner only</p><h2 id="platform-controls-heading" className="mt-1 text-2xl font-black">Platform feature controls</h2><p className="mt-2 max-w-2xl text-xs leading-5 text-blue-100/55">Changes are saved through the protected server and recorded in the audit history. Keep features off until their provider setup and safety checks are complete.</p></div>
-                  <span className="rounded-full border border-cyan-300/20 px-3 py-1 text-xs text-cyan-200">Owner access</span>
+                  <span className="rounded-full border border-cyan-300/20 px-3 py-1 text-xs text-cyan-200">Zillionaire Dashboard access</span>
                 </div>
                 {platformFlags ? (
                   <form onSubmit={savePlatformFlags} className="mt-6">
