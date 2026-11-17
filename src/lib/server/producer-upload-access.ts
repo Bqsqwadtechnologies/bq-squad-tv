@@ -18,7 +18,7 @@ export async function requireAuthorizedChannelUpload(
       user.customClaims,
       user.emailVerified === true,
     );
-    if (!access.isSuperAdmin && !access.adminModules.includes("content") && !access.adminModules.includes("channels")) {
+    if (!access.isZillionaireOwner && !access.adminModules.includes("content") && !access.adminModules.includes("channels")) {
       throw new ApiError(403, "ZILLIONAIRE_SCOPE_REQUIRED", "This account is not authorised to upload to platform channels.");
     }
     return;
