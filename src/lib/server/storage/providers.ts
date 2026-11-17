@@ -248,7 +248,7 @@ function createLovableAdapter(config: StorageDestinationConfiguration): StorageP
     },
     async deleteObject(key) {
       const { error } = await bucket.remove([assertStorageObjectKey(key)]);
-      if (error) throw safeProviderError();
+      if (error) throw safeProviderError(providerErrorStatus(error));
     },
   };
 }
