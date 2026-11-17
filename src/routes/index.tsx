@@ -23,8 +23,8 @@ export const Route = createFileRoute("/")({
 
 const quick = [
   { label: "Live TV", icon: Tv2, href: "#live-channels" },
-  { label: "Movies", icon: Film, href: "#library" },
-  { label: "Series", icon: Clapperboard, href: "#library" },
+  { label: "Movies", icon: Film, href: "/movies" },
+  { label: "Series", icon: Clapperboard, href: "/series" },
   { label: "Kids", icon: Smile, href: "#family" },
 ];
 
@@ -187,7 +187,7 @@ function HomePage() {
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             {featuredContent.map(item => (
-              <a key={item.id} href={"/content/" + encodeURIComponent(item.id)} aria-label={"View " + item.title} className="group block overflow-hidden rounded-2xl border border-blue-100 bg-white">
+              <a key={item.id} href={"/channels/" + encodeURIComponent(item.channelId)} aria-label={"View " + item.title} className="group block overflow-hidden rounded-2xl border border-blue-100 bg-white">
                 <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-gradient-to-br from-blue-100 via-sky-100 to-slate-100">
                   {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" /> : <Film size={48} className="text-blue-300" />}
                   <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-900/80 to-transparent px-3 pb-4 pt-12">
@@ -238,7 +238,7 @@ function HomePage() {
           <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="mx-auto h-auto w-40 object-contain" />
           <p className="mt-2">© {new Date().getFullYear()} Bq Sqwad Technologies. All rights reserved.</p>
           <p className="mt-1">Content availability depends on distribution rights and your region.</p>
-          <div className="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-2"><a href="/search" className="font-semibold text-blue-700 hover:underline">Search channels</a><a href="/help" className="font-semibold text-blue-700 hover:underline">Help centre</a><a href="/contact" className="font-semibold text-blue-700 hover:underline">Contact</a><a href="/about" className="font-semibold text-blue-700 hover:underline">About</a><a href="/privacy" className="font-semibold text-blue-700 hover:underline">Privacy</a><a href="/terms" className="font-semibold text-blue-700 hover:underline">Terms</a><a href="/account" className="font-semibold text-blue-700 hover:underline">Account</a></div>
+          <div className="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-2"><a href="/search" className="font-semibold text-blue-700 hover:underline">Search channels</a><a href="/movies" className="font-semibold text-blue-700 hover:underline">Movies</a><a href="/series" className="font-semibold text-blue-700 hover:underline">Series</a><a href="/help" className="font-semibold text-blue-700 hover:underline">Help centre</a><a href="/contact" className="font-semibold text-blue-700 hover:underline">Contact</a><a href="/about" className="font-semibold text-blue-700 hover:underline">About</a><a href="/privacy" className="font-semibold text-blue-700 hover:underline">Privacy</a><a href="/terms" className="font-semibold text-blue-700 hover:underline">Terms</a><a href="/account" className="font-semibold text-blue-700 hover:underline">Account</a></div>
         </footer>
       </div>
 
