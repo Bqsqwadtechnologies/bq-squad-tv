@@ -114,6 +114,41 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/schedule
           // Deterministic weekly task IDs make repeated scheduling idempotent.
         }
       }
+      const sourceDestinations = destinations.filter(row =>
+        row["purpose"] === "source_media" &&
+        !["legacy_lovable_source", "legacy_lovable_streaming", "lovable-source-legacy", "lovable-stream-legacy"].includes(row.__id) &&
+        row["enabled"] === true &&
+        row["mode"] === "active",
+      );
+      const sourceRetentionWrites: FirestoreWrite[] = sourceDestinations.map(row => {
+        const taskId = "storage-source-retention-" + scheduleKey + "-" + row.__id;
+        return {
+          update: {
+            name: fs.docName("videoMaintenanceJobs/" + taskId),
+            fields: encodeFields({
+              taskType: "storage_source_retention",
+              destinationId: row.__id,
+              scheduleKey,
+              payload: { destinationId: row.__id, processedAssetIds: [] },
+              status: "queued",
+              attempts: 0,
+              reason: "Weekly original-upload retention review",
+              createdAt: now,
+              updatedAt: now,
+            }),
+          },
+          currentDocument: { exists: false },
+        };
+      });
+      let sourceRetentionQueuedCount = 0;
+      if (sourceRetentionWrites.length) {
+        try {
+          await fs.commit(sourceRetentionWrites);
+          sourceRetentionQueuedCount = sourceRetentionWrites.length;
+        } catch (error) {
+          if (!(error instanceof ApiError) || error.status !== 409) throw error;
+        }
+      }
       const backupDestinations = process.env["CONFIG_BACKUP_KEY"] && process.env["CONFIG_BACKUP_KEY"].length >= 32
         ? destinations.filter(row => row["purpose"] === "backup" && row["enabled"] === true && row["mode"] === "active" && row["healthStatus"] === "healthy")
         : [];
@@ -151,6 +186,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/schedule
         scheduleKey,
         queuedCount: pending.length,
         orphanScanQueuedCount: orphanQueuedCount,
+        sourceRetentionQueuedCount,
         backupQueuedCount,
         backupDisabledReason: backupQueuedCount === 0
           ? (!process.env["CONFIG_BACKUP_KEY"] ? "private_backup_setting_missing" : backupDestinations.length === 0 ? "no_healthy_backup_location" : "already_scheduled")
