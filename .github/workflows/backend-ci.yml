@@ -1,8 +1,6 @@
 name: Website and API CI
 "on":
-  # Owner explicitly requested a real verification run for delivery work.
-  push:
-    branches: [main]
+  # Manual only: automatic CI stays disabled by owner instruction.
   workflow_dispatch: {}
 permissions:
   contents: read
