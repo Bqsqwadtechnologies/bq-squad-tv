@@ -13,6 +13,7 @@ import { isSafeStoragePath, signPlaybackToken } from "@/lib/server/storage/secur
 import { signSessionLeaseToken } from "@/lib/server/session-lease-token";
 import { assertRiskStepUp, recordRiskSignal } from "@/lib/server/risk-engine";
 import { acquireSessionLease } from "@/lib/server/session-limits";
+import { initialSessionHold } from "@/lib/server/session-holds";
 import { loadStreamStorageConfiguration } from "@/lib/server/storage/transfers";
 import { estimateExpectedPlaybackBytes, reserveExpectedStorageEgress, releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
 import { LEGACY_STREAM_DESTINATION_ID, resolveAssetStreamBinding } from "@/lib/server/storage/asset-binding";
@@ -272,6 +273,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             fs, streamConfiguration.metadata, sessionId, initialEgressBytes,
           );
           const activeSessionsPath = "activeSessions/" + user.uid;
+          const walletPath = "wallets/" + user.uid;
+          const holdPath = "walletHolds/" + sessionId;
           const configuredSessionLimit = integer(pricing["maxConcurrentSessions"]);
           const maxConcurrentSessions = configuredSessionLimit !== null && configuredSessionLimit >= 1 && configuredSessionLimit <= 5
             ? configuredSessionLimit
@@ -289,13 +292,33 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             ratePerMinuteMinor, currency, paidPlayback, dailySpendLimitMinor, status: "active", active: true,
             startedAt: nowIso, lastHeartbeatAt: nowIso, lastClientSequence: 0,
             lastPlaybackState: "idle", lastPlaybackPositionMs: 0, billedSeconds: 0,
-            sessionTotalMinor: 0, walletBalanceMinor: balanceMinor,
+            sessionTotalMinor: 0, walletBalanceMinor: balanceMinor, walletHoldMinor: 0,
             pricingVersion: pricing.version, licenseValidUntil: rights?.["validUntil"] ?? null,
           };
+          let committedBalanceMinor = balanceMinor;
           try {
-            await fs.transact([idempotencyPath, activeSessionsPath], docs => {
+            await fs.transact([idempotencyPath, activeSessionsPath, walletPath, holdPath], docs => {
               if (docs[0]) throw new ApiError(409, "IDEMPOTENCY_KEY_ALREADY_USED", "This session request has already been used.");
               const activeSessionDoc = docs[1] ?? {};
+              const currentWallet = docs[2] ?? {};
+              const currentBalance = requireMinorUnitAmount(currentWallet["balanceMinor"], "wallet balance");
+              const heldBalance = integer(currentWallet["heldBalanceMinor"]) ?? 0;
+              const today = nowIso.slice(0, 10);
+              const spentToday = currentWallet["spentDate"] === today ? integer(currentWallet["spentTodayMinor"]) ?? 0 : 0;
+              const dailyLimit = typeof currentWallet["dailySpendLimitMinor"] === "number"
+                ? currentWallet["dailySpendLimitMinor"] : dailySpendLimitMinor;
+              const dailyRemaining = typeof dailyLimit === "number" && Number.isSafeInteger(dailyLimit)
+                ? Math.max(0, dailyLimit - spentToday) : Number.MAX_SAFE_INTEGER;
+              const targetHoldMinor = ratePerMinuteMinor > 0
+                ? Math.min(Number.MAX_SAFE_INTEGER, ratePerMinuteMinor * 10, dailyRemaining)
+                : 0;
+              const hold = initialSessionHold(currentBalance, heldBalance, targetHoldMinor);
+              if (paidPlayback && hold.holdMinor < 1) {
+                throw new ApiError(402, "INSUFFICIENT_AVAILABLE_BALANCE", "Your available wallet balance is already reserved by another viewing session.");
+              }
+              if (currentWallet["currency"] !== currency) {
+                throw new ApiError(409, "WALLET_CURRENCY_MISMATCH", "The wallet currency changed while playback was starting.");
+              }
               const nowMs = now.getTime();
               const liveSessions = acquireSessionLease(
                 activeSessionDoc["sessions"],
@@ -310,10 +333,16 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
                   "Your account is already using the maximum number of concurrent playback sessions.",
                 );
               }
+              committedBalanceMinor = currentBalance;
+              const committedSessionFields = {
+                ...sessionFields,
+                walletBalanceMinor: currentBalance,
+                walletHoldMinor: hold.holdMinor,
+              };
               return {
                 result: undefined,
                 writes: [
-                  { update: { name: fs.docName("sessions/" + sessionId), fields: encodeFields(sessionFields) }, currentDocument: { exists: false } },
+                  { update: { name: fs.docName("sessions/" + sessionId), fields: encodeFields(committedSessionFields) }, currentDocument: { exists: false } },
                   { update: { name: fs.docName(idempotencyPath), fields: encodeFields({ uid: user.uid, sessionId, createdAt: nowIso }) }, currentDocument: { exists: false } },
                   {
                     update: {
@@ -321,6 +350,24 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
                       fields: encodeFields({ sessions: liveSessions, updatedAt: nowIso }),
                     },
                     updateMask: { fieldPaths: ["sessions", "updatedAt"] },
+                  },
+                  {
+                    update: {
+                      name: fs.docName(walletPath),
+                      fields: encodeFields({ heldBalanceMinor: hold.heldBalanceMinor, updatedAt: nowIso }),
+                    },
+                    updateMask: { fieldPaths: ["heldBalanceMinor", "updatedAt"] },
+                  },
+                  {
+                    update: {
+                      name: fs.docName(holdPath),
+                      fields: encodeFields({
+                        uid: user.uid, sessionId, amountMinor: hold.holdMinor, currency,
+                        status: hold.holdMinor > 0 ? "active" : "released",
+                        createdAt: nowIso, updatedAt: nowIso,
+                      }),
+                    },
+                    currentDocument: { exists: false },
                   },
                 ],
               };
@@ -336,8 +383,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           });
           await recordRiskSignal(fs, user.uid, "session_start");
           return Response.json({
-            sessionId, playbackUrl, leaseToken, ratePerMinuteMinor, walletBalanceMinor: balanceMinor,
-            currency, timeRemainingSeconds: remainingSeconds(balanceMinor, ratePerMinuteMinor),
+            sessionId, playbackUrl, leaseToken, ratePerMinuteMinor, walletBalanceMinor: committedBalanceMinor,
+            currency, timeRemainingSeconds: remainingSeconds(committedBalanceMinor, ratePerMinuteMinor),
             sessionTotalMinor: 0, active: true,
           }, { status: 201, ...(responseHeaders ? { headers: responseHeaders } : {}) });
         } catch (error) {
