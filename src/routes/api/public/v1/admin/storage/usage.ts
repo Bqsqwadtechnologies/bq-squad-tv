@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/usage")({
       const body = await parseBody(request, schema);
       const fs = await Firestore.create();
       const access = await requireAdminModule(fs, user, "system");
-      if (!access.isSuperAdmin) throw new ApiError(403, "OWNER_ONLY", "Only the protected platform owner can reconcile storage usage.");
+      if (!access.isZillionaireOwner) throw new ApiError(403, "OWNER_ONLY", "Only the Zillionaire owner can reconcile storage usage.");
       const raw = await fs.getDoc("storageDestinations/" + body.destinationId);
       if (!raw) throw new ApiError(404, "STORAGE_DESTINATION_NOT_FOUND", "The storage destination could not be found.");
       const metadata = validateStorageDestinationMetadata({ ...raw, destinationId: body.destinationId });
