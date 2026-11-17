@@ -5,6 +5,7 @@ import { ageInYears, errorBody, parseBody, requireUser } from "@/lib/server/api"
 import { hashParentalPin } from "@/lib/server/parental-pin";
 import { currencyForCountry, normalizeCountryCode } from "@/lib/server/currency";
 import { writeAuditLog } from "@/lib/server/audit";
+import { liveSessionLeases } from "@/lib/server/session-limits";
 
 const bodySchema = z.object({
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "dateOfBirth must be YYYY-MM-DD"),
@@ -39,13 +40,7 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
             const held = ["heldMinor", "heldBalanceMinor", "holdsMinor"].reduce((sum, key) =>
               sum + (typeof existingWallet?.[key] === "number" && Number.isSafeInteger(existingWallet[key]) ? existingWallet[key] as number : 0), 0);
             const activeSessions = await fs.getDoc("activeSessions/" + user.uid);
-            const activeSessionIds = Array.isArray(activeSessions?.["sessions"])
-              ? activeSessions["sessions"].filter((entry): entry is Record<string, unknown> =>
-                  Boolean(entry) && typeof entry === "object" &&
-                  typeof (entry as Record<string, unknown>)["sessionId"] === "string" &&
-                  typeof (entry as Record<string, unknown>)["expiresAt"] === "number" &&
-                  (entry as Record<string, unknown>)["expiresAt"] as number > Date.now())
-              : [];
+            const activeSessionIds = Object.keys(liveSessionLeases(activeSessions?.["sessions"], Date.now()));
             if (balance !== 0 || held !== 0 || activeSessionIds.length > 0) {
               throw new ApiError(409, "WALLET_CURRENCY_LOCKED", "Your wallet currency can change only when your balance is zero and no viewing sessions or held funds remain. Learn more in Wallet help.");
             }
