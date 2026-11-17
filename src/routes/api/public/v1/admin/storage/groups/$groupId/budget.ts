@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAdminModule } from "@/lib/server/roles";
-import { calculateB2DailyFreeEgressBudget, calculateB2MonthlyFreeEgressBudget, storageAccountEgressId } from "@/lib/server/storage/ledger";
+import { calculateB2DailyFreeEgressBudget, calculateB2MonthlyFreeEgressBudget, calculateEgressLevel, storageAccountEgressId } from "@/lib/server/storage/ledger";
 import { rebuildStoragePoolIndex } from "@/lib/server/storage/pool-index";
 import { writeAuditLog } from "@/lib/server/audit";
 
@@ -64,10 +64,12 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/groups/$group
         throw new ApiError(409, "STORAGE_GROUP_CAP_MISMATCH", "All locations in this account must share one capacity limit before changing its delivery allowance.");
       }
       const policyPath = "storageAccountPolicies/" + storageAccountEgressId(groupId);
-      const paths = [policyPath, ...rows.map(row => "storageDestinations/" + String(row["__id"]))];
+      const egressStatePath = "storageEgressState/" + storageAccountEgressId(groupId);
+      const paths = [policyPath, egressStatePath, ...rows.map(row => "storageDestinations/" + String(row["__id"]))];
       await fs.transact(paths, docs => {
         const policy = docs[0];
-        const groupDocs = docs.slice(1);
+        const egressState = docs[1];
+        const groupDocs = docs.slice(2);
         if (groupDocs.length !== rows.length || groupDocs.some(doc => !doc || doc["accountGroup"] !== groupId)) {
           throw new ApiError(409, "STORAGE_GROUP_CHANGED", "The account group changed while its allowance was being saved.");
         }
@@ -77,6 +79,20 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/groups/$group
         if (previousBudget !== null && body.monthlyBudgetBytes > previousBudget && body.reason.length < 3) {
           throw new ApiError(400, "STORAGE_BUDGET_REASON_REQUIRED", "A reason is required when raising a shared delivery allowance.");
         }
+        const monthKey = now.slice(0, 7);
+        const dayKey = now.slice(0, 10);
+        const monthExpected = egressState?.["monthKey"] === monthKey ? Number(egressState["monthExpectedBytes"] ?? 0) : 0;
+        const monthReserved = egressState?.["monthKey"] === monthKey ? Number(egressState["monthReservedBytes"] ?? 0) : 0;
+        const monthConsumed = egressState?.["monthKey"] === monthKey ? Number(egressState["monthConsumedBytes"] ?? 0) : 0;
+        const dayExpected = egressState?.["dayKey"] === dayKey ? Number(egressState["dayExpectedBytes"] ?? 0) : 0;
+        const dayReserved = egressState?.["dayKey"] === dayKey ? Number(egressState["dayReservedBytes"] ?? 0) : 0;
+        const dayConsumed = egressState?.["dayKey"] === dayKey ? Number(egressState["dayConsumedBytes"] ?? 0) : 0;
+        const effectiveDailyBudget = dailyBudgetBytes ?? body.monthlyBudgetBytes;
+        const monthLevel = calculateEgressLevel(monthExpected, body.monthlyBudgetBytes, false);
+        const dayLevel = calculateEgressLevel(dayExpected, effectiveDailyBudget, false);
+        const rank: Record<string, number> = { normal: 0, warn: 1, throttle: 2, blocked: 3 };
+        const level = rank[monthLevel] >= rank[dayLevel] ? monthLevel : dayLevel;
+        const previousLevel = typeof egressState?.["level"] === "string" ? egressState["level"] : "normal";
         const writes = [
           {
             update: {
@@ -93,6 +109,28 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/groups/$group
               }),
             },
             ...(policy ? {} : { currentDocument: { exists: false } }),
+          },
+          {
+            update: {
+              name: fs.docName(egressStatePath),
+              fields: encodeFields({
+                accountGroup: groupId,
+                monthKey, monthExpectedBytes: monthExpected, monthReservedBytes: monthReserved,
+                monthConsumedBytes: monthConsumed,
+                dayKey, dayExpectedBytes: dayExpected, dayReservedBytes: dayReserved,
+                dayConsumedBytes: dayConsumed,
+                budgetBytes: body.monthlyBudgetBytes,
+                dailyBudgetBytes: effectiveDailyBudget,
+                level,
+                updatedAt: now,
+              }),
+              updateMask: { fieldPaths: [
+                "accountGroup", "monthKey", "monthExpectedBytes", "monthReservedBytes", "monthConsumedBytes",
+                "dayKey", "dayExpectedBytes", "dayReservedBytes", "dayConsumedBytes",
+                "budgetBytes", "dailyBudgetBytes", "level", "updatedAt",
+              ] },
+            },
+            ...(egressState ? {} : { currentDocument: { exists: false } }),
           },
           ...rows.map((row, index) => ({
             update: {
@@ -112,6 +150,21 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/groups/$group
         return { result: undefined, writes };
       });
       await rebuildStoragePoolIndex(fs);
+      const alertRank: Record<string, number> = { normal: 0, warn: 1, throttle: 2, blocked: 3 };
+      const egressState = await fs.getDoc("storageEgressState/" + storageAccountEgressId(groupId));
+      if ((alertRank[String(egressState?.["level"])] ?? 0) > 0) {
+        const alertId = "egress-budget-owner-" + storageAccountEgressId(groupId) + "-" + new Date().toISOString().slice(0, 10);
+        await fs.setDoc("storageAlerts/" + alertId, {
+          scope: "account_group",
+          accountGroup: groupId,
+          severity: egressState?.["level"] === "blocked" ? "critical" : egressState?.["level"] === "throttle" ? "warning" : "info",
+          reasonCode: "EGRESS_ALLOWANCE_UPDATED",
+          message: "The shared free delivery allowance was updated. New playback may be limited by the current usage level.",
+          level: egressState?.["level"],
+          createdAt: now,
+          acknowledged: false,
+        }, { mustNotExist: true }).catch(() => undefined);
+      }
       await writeAuditLog(fs, {
         actorUid: user.uid,
         action: "storage.account_egress_budget_updated",
