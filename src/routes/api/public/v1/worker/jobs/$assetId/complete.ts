@@ -74,7 +74,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       if (!rawDestination) throw new ApiError(503, "HLS_DESTINATION_MISSING", "The HLS destination is unavailable.");
       const metadata = validateStorageDestinationMetadata({ ...rawDestination, destinationId });
       const config = resolveStorageDestinationConfiguration(metadata);
-      if (config.configurationStatus !== "configured") throw new ApiError(503, "HLS_DESTINATION_MISCONFIGURED", "The HLS destination is not configured.");
+      if (config.configurationStatus !== "configured" || !metadata.enabled || metadata.mode !== "active" || metadata.healthStatus !== "healthy" || metadata.paidEgressEnabled === true) throw new ApiError(503, "HLS_DESTINATION_MISCONFIGURED", "The HLS destination is not ready for a verified upload.");
       const adapter = createStorageProviderAdapter(config);
       const listedObjects = await listAllStorageObjects(adapter, prefix);
       const listedByKey = new Map(listedObjects.map(item => [item.key, item.sizeBytes]));
