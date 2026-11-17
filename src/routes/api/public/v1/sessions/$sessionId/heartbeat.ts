@@ -138,7 +138,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             const exhausted = rate > 0 && (
               affordableSeconds < billableSeconds ||
               balance <= charge.chargeMinor ||
-              dailyRemaining <= charge.chargeMinor
+              dailyRemaining <= charge.chargeMinor ||
+              monthlyRemaining <= charge.chargeMinor
             );
             const active = !missedTwoHeartbeats && !exhausted;
             const newBalance = balance - charge.chargeMinor;
