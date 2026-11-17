@@ -41,7 +41,7 @@ export function classifyPaymentReconciliation(
 
 /** Stable review key: repeated reconciliation runs update the same case, never create ledger entries. */
 export async function paymentReviewKey(provider: string, reference: string): Promise<string> {
-  if (!/^(paystack|google_play)$/.test(provider) || !/^[A-Za-z0-9_-]{8,120}$/.test(reference)) {
+  if (!/^(paystack|google_play)$/.test(provider) || !/^[A-Za-z0-9_.-]{8,120}$/.test(reference)) {
     throw new ApiError(400, "PAYMENT_REVIEW_KEY_INVALID", "The payment review reference is invalid.");
   }
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(provider + ":" + reference));
