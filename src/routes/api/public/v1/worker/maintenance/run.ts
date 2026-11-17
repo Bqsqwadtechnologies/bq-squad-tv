@@ -191,6 +191,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           Date.parse(task["leaseExpiresAt"]) <= Date.now()) {
         throw new ApiError(409, "MAINTENANCE_LEASE_INVALID", "The maintenance task lease is no longer valid.");
       }
+      const now = new Date().toISOString();
       if (task["taskType"] === "storage_health_usage") {
         const payload = task["payload"] as Record<string, unknown> | undefined;
         const storageId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
