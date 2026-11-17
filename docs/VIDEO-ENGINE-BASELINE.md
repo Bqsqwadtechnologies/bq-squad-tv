@@ -37,19 +37,24 @@ The implementation remains on the existing Modal worker, `infra/video/ffmpeg-wor
 Existing Python worker tests in `infra/video/ffmpeg-worker/test_transcode.py` cover canonical signing message formatting, rendition selection without upscaling, and local HLS output validation.
 
 Added Vitest coverage:
-- `src/test/video-worker-policy.test.ts`: ten-minute lease policy, retry backoff (1, 2, 4, 8, 16 minutes), terminal retry count, and retry eligibility.
+- `src/test/video-worker-policy.test.ts`: ten-minute lease policy, exact stale-lease boundary, retry backoff (1, 2, 4, 8, 16 minutes), terminal retry count, and retry eligibility.
 - `src/test/storage-listing.test.ts`: 6,000 fake objects are collected in six listing calls (under 30), plus duplicate/out-of-prefix rejection.
+- `src/test/video-worker-auth.test.ts`: one-use nonce replay rejection with a fake Firestore transaction.
+- `src/test/video-worker-signature.test.ts`: shared fixed HMAC vector matching the Python runner.
+- `src/test/content-review.test.ts`: missing rights, territory, age rating, poster, master playlist, segment verification, object-count and verification-time cases.
+- `src/test/roles.test.ts`: producer role alone cannot approve content; delegated permissions are module-specific and the Zillionaire identity is the only top-level controller.
 
 ## Required tests not yet covered
 
 The following integration-level tests are not yet present and remain required before production:
 - Firestore claim transaction contention and expired-lease recovery.
-- Worker nonce replay against a transactional Firestore fake.
-- Stale worker heartbeat, fail and completion rejection after lease expiry.
+- Firestore claim transaction contention and expired-lease recovery through the actual claim route.
+- Stale worker heartbeat, fail and completion rejection through route-level integration tests.
 - Retry count and `nextAttemptAt` persisted through actual route handlers.
 - Completion route full fake-provider verification, including 6,000 objects and playlist reference integrity.
-- Ready/approval route authorization, rights, territory, age, poster and validation prerequisites.
-- Cross-language Python-to-TypeScript signature verification.
+- Actual storage adapter pagination tests against both provider implementations.
+- Poster object existence and image content-type verification through the approval route.
+- Cross-language Python-to-TypeScript signature verification against the live runner and server verifier.
 - End-to-end generated test video with a fake storage adapter.
 
 ## Execution results
