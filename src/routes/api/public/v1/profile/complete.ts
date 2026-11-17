@@ -4,6 +4,7 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { ageInYears, errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { hashParentalPin } from "@/lib/server/parental-pin";
 import { currencyForCountry, normalizeCountryCode } from "@/lib/server/currency";
+import { writeAuditLog } from "@/lib/server/audit";
 
 const bodySchema = z.object({
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "dateOfBirth must be YYYY-MM-DD"),
@@ -31,8 +32,38 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           const existingCurrency = typeof existingWallet?.["currency"] === "string"
             ? existingWallet["currency"] as string
             : existingWallet ? "NGN" : null;
-          if (existingWallet && nextCountry && existingCurrency && currencyForCountry(nextCountry) !== existingCurrency) {
-            throw new ApiError(409, "WALLET_CURRENCY_LOCKED", "Your wallet currency is already established and cannot be changed by changing your country.");
+          const nextCurrency = nextCountry ? currencyForCountry(nextCountry) : existingCurrency ?? "USD";
+          const currencyChanging = Boolean(existingWallet && existingCurrency && nextCurrency !== existingCurrency);
+          if (currencyChanging) {
+            const balance = typeof existingWallet?.["balanceMinor"] === "number" ? existingWallet["balanceMinor"] as number : 0;
+            const held = ["heldMinor", "heldBalanceMinor", "holdsMinor"].reduce((sum, key) =>
+              sum + (typeof existingWallet?.[key] === "number" && Number.isSafeInteger(existingWallet[key]) ? existingWallet[key] as number : 0), 0);
+            const activeSessions = await fs.getDoc("activeSessions/" + user.uid);
+            const activeSessionIds = Array.isArray(activeSessions?.["sessions"])
+              ? activeSessions["sessions"].filter((entry): entry is Record<string, unknown> =>
+                  Boolean(entry) && typeof entry === "object" &&
+                  typeof (entry as Record<string, unknown>)["sessionId"] === "string" &&
+                  typeof (entry as Record<string, unknown>)["expiresAt"] === "number" &&
+                  (entry as Record<string, unknown>)["expiresAt"] as number > Date.now())
+              : [];
+            if (balance !== 0 || held !== 0 || activeSessionIds.length > 0) {
+              throw new ApiError(409, "WALLET_CURRENCY_LOCKED", "Your wallet currency can change only when your balance is zero and no viewing sessions or held funds remain. Learn more in Wallet help.");
+            }
+            await fs.patchDoc("wallets/" + user.uid, { currency: nextCurrency, updatedAt: new Date().toISOString() });
+            await writeAuditLog(fs, {
+              actorUid: user.uid, action: "wallet.currency.changed",
+              targetType: "wallet", targetId: user.uid,
+              reason: "Viewer changed account country while the wallet had no balance, holds or active sessions",
+              metadata: { fromCurrency: existingCurrency, toCurrency: nextCurrency },
+            });
+          }
+          if (!existingWallet) {
+            await fs.setDoc("wallets/" + user.uid, {
+              balanceMinor: 0, currency: nextCurrency, dailySpendLimitMinor: null,
+              spentTodayMinor: 0, updatedAt: new Date().toISOString(),
+            }, { mustNotExist: true }).catch(async error => {
+              if (!(error instanceof ApiError) || error.status !== 409) throw error;
+            });
           }
           const sameVerifiedDateOfBirth = existingProfile?.["dateOfBirth"] === body.dateOfBirth;
           const adultAgeVerified = adultEligible && sameVerifiedDateOfBirth &&
@@ -49,7 +80,7 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
             adultIdentityVerified,
             adultEligible: verifiedAdultEligible,
             parentalPinEnabled: typeof body.parentalPin === "string",
-            ...(nextCountry && !existingWallet ? { preferredCurrency: currencyForCountry(nextCountry) } : {}),
+            ...(nextCountry ? { preferredCurrency: nextCurrency } : {}),
             updatedAt: new Date().toISOString(),
           };
           if (typeof body.parentalPin === "string") {
@@ -67,7 +98,7 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
             profileComplete: true,
             adultEligible: verifiedAdultEligible,
             parentalPinEnabled: typeof body.parentalPin === "string",
-            ...(nextCountry ? { countryCode: nextCountry, currency: existingCurrency ?? currencyForCountry(nextCountry) } : { currency: existingCurrency ?? "USD" }),
+            ...(nextCountry ? { countryCode: nextCountry, currency: nextCurrency } : { currency: existingCurrency ?? "USD" }),
           });
         } catch (error) {
           return errorBody(error);
