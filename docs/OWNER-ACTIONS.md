@@ -59,3 +59,17 @@ Follow the credential bundle format and naming rules documented in **File 03** b
 - Confirm the Firestore TTL policy for `videoWorkerNonces.expiresAt`.
 - Add only the exact missing secret names documented by the relevant batch.
 - Keep paid delivery, paid egress and optional fee-bearing integrations disabled unless the owner explicitly approves a separate change.
+
+## 7. Required secret names referenced by this project
+
+The checker reports names only. Add or verify each name in the hosting provider's server-side secrets/settings screen; never put values in Git or chat.
+
+- `ZILLIONAIRE_EMAIL` — the owner's exact sign-in email; configure in the hosting project's server environment.
+- `FIREBASE_SERVICE_ACCOUNT_JSON` — Firebase project settings → Service accounts → generate a private key, then store the JSON securely as a server-side secret.
+- `ADMIN_EMAIL` — the designated administrator email; configure in the hosting project's server environment.
+- `PAYSTACK_SECRET_KEY` — Paystack Dashboard → Settings / API Keys & Webhooks; server-side only.
+- `PAYSTACK_PUBLIC_KEY` — Paystack Dashboard → Settings / API Keys & Webhooks; use only where the client integration requires it.
+- `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` — Google Play Console API access service account credentials; server-side only.
+- `GOOGLE_PLAY_PACKAGE_NAME` — the Android application ID configured in the Play Console; this is a setting, not a credential.
+
+Only enable a feature after its required server-side setting is present and verified. The checker cannot inspect provider dashboards and does not establish that a credential is valid.
