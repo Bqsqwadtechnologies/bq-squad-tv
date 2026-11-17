@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
       if (!user.emailVerified) throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email before submitting producer verification.");
       const body = await parseBody(request, schema);
       const fs = await Firestore.create();
+      await assertLegalAcceptance(fs, user.uid, "producer");
       await enforceRateLimit(fs, "producer-verification:" + user.uid, { limit: 3, windowMs: 24 * 60 * 60_000 });
       const existing = await fs.getDoc("producers/" + user.uid);
       if (existing?.["verificationStatus"] === "APPROVED") {
