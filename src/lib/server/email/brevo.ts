@@ -87,3 +87,64 @@ export async function sendVerificationCodeEmail(input: VerificationEmailInput): 
     );
   }
 }
+
+
+export type SupportContactEmailInput = {
+  name: string;
+  replyEmail: string;
+  subject: string;
+  message: string;
+};
+
+/** Delivers a user-submitted support enquiry to the public support mailbox. */
+export async function sendSupportContactEmail(input: SupportContactEmailInput): Promise<void> {
+  const name = input.name.trim().slice(0, 100);
+  const replyEmail = input.replyEmail.trim().toLowerCase();
+  const subjectLine = input.subject.trim().slice(0, 120);
+  const message = input.message.trim();
+  if (!name || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(replyEmail) ||
+      !subjectLine || message.length < 10 || message.length > 5000) {
+    throw new ApiError(400, "CONTACT_DETAILS_INVALID", "Check the contact form and try again.");
+  }
+
+  const apiKey = requiredEnv("BREVO_API_KEY");
+  const senderEmail = (process.env["BREVO_SENDER_EMAIL"] ?? DEFAULT_SENDER_EMAIL).trim();
+  const senderName = (process.env["BREVO_SENDER_NAME"] ?? DEFAULT_SENDER_NAME).trim();
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(replyEmail);
+  const safeSubject = escapeHtml(subjectLine);
+  const safeMessage = escapeHtml(message).replace(/\\r?\\n/g, "<br>");
+
+  let response: Response;
+  try {
+    response = await fetch(BREVO_EMAIL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "api-key": apiKey,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        sender: { name: senderName, email: senderEmail },
+        to: [{ email: "tv@bqsqwad.com" }],
+        replyTo: { email: replyEmail, name },
+        subject: "BQ SQWAD TV contact: " + subjectLine,
+        textContent: [
+          "New BQ SQWAD TV contact message",
+          "Name: " + name,
+          "Reply email: " + replyEmail,
+          "Subject: " + subjectLine,
+          "",
+          message,
+        ].join("\\n"),
+        htmlContent: `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#142033"><h2>BQ SQWAD TV contact message</h2><p><strong>Name:</strong> ${safeName}</p><p><strong>Reply email:</strong> ${safeEmail}</p><p><strong>Subject:</strong> ${safeSubject}</p><p>${safeMessage}</p></body></html>`,
+      }),
+    });
+  } catch {
+    throw new ApiError(502, "CONTACT_DELIVERY_FAILED", "Your message could not be sent. Please try again later.");
+  }
+
+  if (!response.ok) {
+    throw new ApiError(502, "CONTACT_DELIVERY_FAILED", "Your message could not be sent. Please try again later.");
+  }
+}
