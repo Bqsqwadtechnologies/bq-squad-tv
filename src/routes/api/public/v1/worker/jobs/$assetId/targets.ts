@@ -34,13 +34,7 @@ function allowedOutput(relativePath: string, contentType: string): boolean {
     webp: "image/webp",
     aac: "audio/aac",
   };
-  if (!extension || expected[extension] !== contentType) return false;
-  return /^(?:[A-Za-z0-9_-]+\/)*(?:master|index)\.m3u8$/.test(relativePath) ||
-    /^(?:[A-Za-z0-9_-]+\/)*segment_[0-9]{5}\.(?:ts|m4s)$/.test(relativePath) ||
-    /^(?:[A-Za-z0-9_-]+\/)*init\.mp4$/.test(relativePath) ||
-    /^(?:[A-Za-z0-9_-]+\/)*subtitle_[A-Za-z0-9_-]+\.vtt$/.test(relativePath) ||
-    /^(?:[A-Za-z0-9_-]+\/)*(?:thumbnail|sprite)[A-Za-z0-9_-]*\.(?:jpg|jpeg|png|webp)$/.test(relativePath) ||
-    /^(?:[A-Za-z0-9_-]+\/)*audio_[A-Za-z0-9_-]+\.aac$/.test(relativePath);
+  return Boolean(extension && expected[extension] === contentType && isAllowedHlsOutputPath(relativePath));
 }
 
 export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/targets")({
