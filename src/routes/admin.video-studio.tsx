@@ -17,6 +17,7 @@ function VideoStudio() {
   const [token, setToken] = useState("");
   const [channels, setChannels] = useState<Channel[]>([]);
   const [channelId, setChannelId] = useState("");
+  const [transcodeProfile, setTranscodeProfile] = useState<"economy" | "standard" | "high">("standard");
   const [file, setFile] = useState<File | null>(null);
   const [upload, setUpload] = useState<UploadState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -60,7 +61,7 @@ function VideoStudio() {
       const intentResponse = await fetch("/api/public/v1/storage/intent", {
         method: "POST",
         headers: { ...headers, "content-type": "application/json" },
-        body: JSON.stringify({ channelId, filename: file.name, sizeBytes: file.size, mimeType: file.type }),
+        body: JSON.stringify({ channelId, filename: file.name, sizeBytes: file.size, mimeType: file.type, transcodeProfile }),
       });
       const intent = await intentResponse.json() as { assetId?: string; path?: string; signedUrl?: string; method?: string; error?: string };
       if (!intentResponse.ok || !intent.assetId || !intent.path || !intent.signedUrl) throw new Error(intent.error ?? "Could not create the private upload.");
@@ -127,6 +128,20 @@ function VideoStudio() {
                 </select>
               </label>
               {channels.length === 0 ? <p className="text-xs text-amber-200">No platform channels are available to this account. Create or authorize a channel first.</p> : null}
+              <label className="grid gap-2 text-sm text-blue-100/70">
+                Processing quality
+                <select
+                  value={transcodeProfile}
+                  onChange={event => setTranscodeProfile(event.target.value as "economy" | "standard" | "high")}
+                  disabled={busy}
+                  className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white"
+                >
+                  <option value="economy">Economy · smaller files</option>
+                  <option value="standard">Standard · recommended</option>
+                  <option value="high">High · higher picture quality</option>
+                </select>
+                <span className="text-xs text-blue-100/45">The video is never enlarged beyond its original resolution.</span>
+              </label>
               <label className="grid gap-2 text-sm text-blue-100/70">Video file (MP4, MOV, MKV or WebM · maximum 5 GB)
                 <input type="file" accept="video/mp4,video/quicktime,video/x-matroska,video/webm,.mp4,.mov,.mkv,.webm" onChange={event => setFile(event.target.files?.[0] ?? null)} disabled={busy} className="block w-full rounded-xl border border-white/10 bg-[#030b2a] p-3 text-xs text-blue-100 file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-300 file:px-3 file:py-2 file:font-bold file:text-[#031039]" />
               </label>
