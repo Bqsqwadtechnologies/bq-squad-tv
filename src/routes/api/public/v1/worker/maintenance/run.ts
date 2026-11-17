@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { ApiError, Firestore } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody } from "@/lib/server/api";
 import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
@@ -128,7 +128,7 @@ async function processReplicaCopyTask(fs: Firestore, taskPath: string, task: Rec
         return {
           result: undefined,
           writes: [{
-            update: { name: fs.docName("storageReplicaBudget/global"), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ usedBytes: nextUsed, updatedAt: now }) },
+            update: { name: fs.docName("storageReplicaBudget/global"), fields: encodeFields({ usedBytes: nextUsed, updatedAt: now }) },
             updateMask: { fieldPaths: ["usedBytes", "updatedAt"] },
           }],
         };
@@ -422,7 +422,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
               throw new ApiError(507, "STORAGE_DRAIN_REPLICA_BUDGET", "There is not enough reserved spare space to move this film.");
             }
             return { result: undefined, writes: [{
-              update: { name: fs.docName(budgetPath), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ usedBytes: usedBytes + streamBytes, updatedAt: now }) },
+              update: { name: fs.docName(budgetPath), fields: encodeFields({ usedBytes: usedBytes + streamBytes, updatedAt: now }) },
               updateMask: { fieldPaths: ["usedBytes", "updatedAt"] },
             }] };
           });
@@ -457,7 +457,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
               if (!current) return { result: undefined, writes: [] };
               const used = typeof current["usedBytes"] === "number" ? current["usedBytes"] : 0;
               return { result: undefined, writes: [{
-                update: { name: fs.docName(budgetPath), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ usedBytes: Math.max(0, used - streamBytes), updatedAt: now }) },
+                update: { name: fs.docName(budgetPath), fields: encodeFields({ usedBytes: Math.max(0, used - streamBytes), updatedAt: now }) },
                 updateMask: { fieldPaths: ["usedBytes", "updatedAt"] },
               }] };
             }).catch(() => undefined);
@@ -554,8 +554,8 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           return {
             result: undefined,
             writes: [
-              { update: { name: fs.docName("contentAssets/" + assetId), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ streamReplicaIds: currentReplicas.filter(id => id !== destinationId), updatedAt: now }) }, updateMask: { fieldPaths: ["streamReplicaIds", "updatedAt"] } },
-              { update: { name: fs.docName("storageReplicaRecords/" + assetId + "_" + destinationId), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ status: "deleted", deletedAt: now }) }, updateMask: { fieldPaths: ["status", "deletedAt"] } },
+              { update: { name: fs.docName("contentAssets/" + assetId), fields: encodeFields({ streamReplicaIds: currentReplicas.filter(id => id !== destinationId), updatedAt: now }) }, updateMask: { fieldPaths: ["streamReplicaIds", "updatedAt"] } },
+              { update: { name: fs.docName("storageReplicaRecords/" + assetId + "_" + destinationId), fields: encodeFields({ status: "deleted", deletedAt: now }) }, updateMask: { fieldPaths: ["status", "deletedAt"] } },
             ],
           };
         });
