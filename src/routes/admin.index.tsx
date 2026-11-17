@@ -54,7 +54,7 @@ const moduleCards: Array<{
   { id: "system", title: "Storage locations", description: "Review available storage locations, their status and where new files are placed.", href: "/admin/storage", icon: Database },
   { id: "channels", title: "Channel operations", description: "The tools are in place; the management screen is still being completed.", icon: Tv2 },
   { id: "content", title: "Content & rights", description: "Rights evidence, review state, publishing and featured-content controls.", href: "/admin/video-studio", icon: Film },
-  { id: "users", title: "Viewer accounts", description: "Account status and access administration.", icon: Users },
+  { id: "users", title: "Viewer accounts", description: "Account status and access controls.", icon: Users },
   { id: "producers", title: "Producer verification", description: "Review producer verification and channel ownership.", icon: BadgeCheck },
   { id: "wallets", title: "Wallet operations", description: "Wallet and ledger oversight with audited actions.", icon: Wallet },
   { id: "payments", title: "Payments & reversals", description: "Payment review and controlled reversal workflows.", icon: LockKeyhole },
