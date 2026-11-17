@@ -21,7 +21,7 @@ const bodySchema = z.object({
   clientSequence: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   playbackState: z.enum(["playing", "paused", "buffering", "idle", "ended"]),
   playbackPositionMs: z.number().int().nonnegative().max(31_536_000_000),
-  leaseToken: z.string().max(2048).optional(),
+  leaseToken: z.string().min(1).max(2048),
 });
 
 function integer(value: unknown, fallback = 0): number {
