@@ -35,9 +35,19 @@ private val mainTabs =
     )
 
 @Composable
-fun BqSqwadTvApp() {
+fun BqSqwadTvApp(
+    themeMode: String = "system",
+    onThemeModeChange: (String) -> Unit = {},
+) {
     val nav = rememberNavController()
     val auth = remember { AuthRepository() }
+    val scope = rememberCoroutineScope()
+    val signedInUid = FirebaseAuth.getInstance().currentUser?.uid
+    LaunchedEffect(signedInUid) {
+        if (signedInUid != null) {
+            auth.loadThemePreference()?.let(onThemeModeChange)
+        }
+    }
     val initialDestination =
         remember {
             if (FirebaseAuth.getInstance().currentUser != null) "home" else "signin"
@@ -108,6 +118,11 @@ fun BqSqwadTvApp() {
                     SettingsScreen(
                         onWallet = { nav.navigate("wallet") },
                         onProfile = { nav.navigate("account") },
+                        themeMode = themeMode,
+                        onThemeModeChange = { next ->
+                            onThemeModeChange(next)
+                            scope.launch { runCatching { auth.saveThemePreference(next) } }
+                        },
                     )
                 }
                 composable("account") {
