@@ -110,6 +110,10 @@ function AccountPage() {
   const [walletCurrency, setWalletCurrency] = useState("USD");
   const [countryReady, setCountryReady] = useState(false);
   const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
+  const [legalConsentAccepted, setLegalConsentAccepted] = useState(false);
+  const [legalAcceptanceRequired, setLegalAcceptanceRequired] = useState(false);
+  const [legalAcceptanceBusy, setLegalAcceptanceBusy] = useState(false);
+  const [legalPages, setLegalPages] = useState<Array<{ slug: string; title: string; version: number; accepted: boolean }>>([]);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("bq-sqwad-theme");
@@ -227,6 +231,37 @@ function AccountPage() {
     if (showStatus) setMessage("Country saved. Your wallet uses " + (result.currency ?? "USD") + ".");
   }
 
+  async function loadLegalStatus() {
+    const token = await getActiveWebIdToken();
+    if (!token) throw new Error("Sign in again to review the current service terms.");
+    const response = await fetch("/api/public/v1/legal/status?audience=public", {
+      headers: await getWebAuthHeaders(token), cache: "no-store",
+    });
+    const result = await response.json() as { pages?: Array<{ slug: string; title: string; version: number; accepted: boolean }>; acceptanceRequired?: boolean; error?: string };
+    if (!response.ok || !result.pages) throw new Error(result.error ?? "The current legal pages could not be checked.");
+    setLegalPages(result.pages);
+    setLegalAcceptanceRequired(result.acceptanceRequired === true);
+    return result.acceptanceRequired === true;
+  }
+
+  async function acceptCurrentLegalPages() {
+    setLegalAcceptanceBusy(true);
+    try {
+      const token = await getActiveWebIdToken();
+      if (!token) throw new Error("Sign in again to continue.");
+      const response = await fetch("/api/public/v1/legal/acceptance", {
+        method: "POST",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ audience: "public", acceptedSlugs: legalPages.map(page => page.slug) }),
+      });
+      const result = await response.json() as { accepted?: boolean; error?: string };
+      if (!response.ok || !result.accepted) throw new Error(result.error ?? "Your acceptance could not be saved.");
+      setLegalAcceptanceRequired(false);
+      setMessage("Your acceptance has been saved. You can continue.");
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Your acceptance could not be saved."); }
+    finally { setLegalAcceptanceBusy(false); }
+  }
+
   const continueWithEmailAccount = useCallback(async (accountEmailValue: string) => {
     setEmail(accountEmailValue);
     setAccountEmail(accountEmailValue);
@@ -235,7 +270,8 @@ function AccountPage() {
     if (account?.emailVerified) {
       setSignedIn(true);
       setVerificationPending(false);
-      setMessage("You're signed in to BQ SQWAD TV.");
+      const needsAcceptance = await loadLegalStatus();
+      setMessage(needsAcceptance ? "Please review and accept the updated service terms before continuing." : "You're signed in to BQ SQWAD TV.");
       return;
     }
     const sent = await sendEmailVerificationCode();
@@ -260,10 +296,22 @@ function AccountPage() {
         ? await createAccountWithEmailPassword(email, password)
         : await signInWithEmailPassword(email, password);
       if (createAccount) {
+        if (!legalConsentAccepted) throw new Error("Read and accept the Terms and Privacy Policy before creating your account.");
+        for (const slug of ["terms", "privacy-policy"]) {
+          const legalResponse = await fetch("/api/public/v1/pages/" + slug, { cache: "no-store" });
+          if (!legalResponse.ok) throw new Error("Account creation is temporarily unavailable until our Terms and Privacy Policy are published.");
+        }
         if (!dateOfBirth) throw new Error("Enter your date of birth to finish creating your account.");
         const idToken = await getActiveWebIdToken();
         if (!idToken) throw new Error("Your account was created, but its profile could not be completed. Sign in again to continue.");
         const region = new Intl.Locale(navigator.language).region;
+        const acceptanceResponse = await fetch("/api/public/v1/legal/acceptance", {
+          method: "POST",
+          headers: { ...(await getWebAuthHeaders(idToken)), "content-type": "application/json" },
+          body: JSON.stringify({ audience: "public", acceptedSlugs: ["terms", "privacy-policy"] }),
+        });
+        const acceptanceResult = await acceptanceResponse.json() as { accepted?: boolean; error?: string };
+        if (!acceptanceResponse.ok || !acceptanceResult.accepted) throw new Error(acceptanceResult.error ?? "Your acceptance could not be saved.");
         const profileResponse = await fetch("/api/public/v1/profile/complete", {
           method: "POST",
           headers: { ...(await getWebAuthHeaders(idToken)), "content-type": "application/json" },
@@ -307,7 +355,8 @@ function AccountPage() {
       setSignedIn(true);
       setVerificationPending(false);
       setCode("");
-      setMessage("Your email is verified. You're signed in.");
+      const needsAcceptance = await loadLegalStatus();
+      setMessage(needsAcceptance ? "Please review and accept the updated service terms before continuing." : "Your email is verified. You're signed in.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Email verification failed.");
     } finally {
@@ -418,7 +467,17 @@ function AccountPage() {
           </select>
         </label>
         <section className="rounded-3xl border border-cyan-200/15 bg-[#08163e] p-6 shadow-2xl shadow-blue-950/50 sm:p-8">
-          {signedIn ? (
+          {legalAcceptanceRequired ? (
+            <>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Updated terms</p>
+              <h1 className="mt-3 text-2xl font-black">Please review these pages</h1>
+              <p className="mt-3 text-sm leading-6 text-blue-100/70">We have updated one or more documents. Review each current version before continuing to watch.</p>
+              <ul className="mt-5 space-y-3">
+                {legalPages.map(page => <li key={page.slug} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#030b2a] p-3 text-sm"><span>{page.title} · version {page.version}</span><a className="font-bold text-cyan-200 underline" href={"/legal/" + page.slug} target="_blank" rel="noreferrer">Review</a></li>)}
+              </ul>
+              <button type="button" onClick={() => void acceptCurrentLegalPages()} disabled={legalAcceptanceBusy} className="mt-6 w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 font-extrabold text-[#031039] disabled:opacity-50">{legalAcceptanceBusy ? "Saving acceptance…" : "I have reviewed and accept"}</button>
+            </>
+          ) : signedIn ? (
             <>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Account active</p>
               <h1 className="mt-3 text-2xl font-black">Welcome back</h1>
@@ -573,18 +632,17 @@ function AccountPage() {
                 ) : null}
                 <button
                   type="submit"
-                  disabled={busy || !email.includes("@") || password.length < 6 || (createAccount && !dateOfBirth)}
+                  disabled={busy || !email.includes("@") || password.length < 6 || (createAccount && (!dateOfBirth || !legalConsentAccepted))}
                   className="w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 font-extrabold text-[#031039] disabled:opacity-50"
                 >
                   {busy ? "Please wait…" : createAccount ? "Create account" : "Sign in"}
                 </button>
               </form>
               {createAccount ? (
-                <p className="mt-3 text-xs leading-5 text-blue-100/60">
-                  By creating an account, you acknowledge the
-                  {" "}<a href="/terms" className="underline underline-offset-4">Terms of service</a>
-                  {" "}and <a href="/privacy" className="underline underline-offset-4">Privacy notice</a>.
-                </p>
+                <label className="mt-3 flex items-start gap-3 text-xs leading-5 text-blue-100/70">
+                  <input type="checkbox" checked={legalConsentAccepted} onChange={event => setLegalConsentAccepted(event.target.checked)} className="mt-1 size-4 accent-cyan-300" required />
+                  <span>I have read and accept the <a href="/legal/terms" target="_blank" rel="noreferrer" className="underline underline-offset-4 text-cyan-200">Terms of service</a> and <a href="/legal/privacy-policy" target="_blank" rel="noreferrer" className="underline underline-offset-4 text-cyan-200">Privacy Policy</a>.</span>
+                </label>
               ) : null}
 
               <div className="mt-4 flex items-center justify-between gap-3 text-sm">
@@ -592,6 +650,7 @@ function AccountPage() {
                   type="button"
                   onClick={() => {
                     setCreateAccount(value => !value);
+                    setLegalConsentAccepted(false);
                     setMessage("");
                   }}
                   className="font-semibold text-cyan-200 hover:text-white"
