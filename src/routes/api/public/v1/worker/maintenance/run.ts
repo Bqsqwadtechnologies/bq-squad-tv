@@ -14,6 +14,8 @@ import { addVerifiedAssetStreamReplica, bindAssetStreamStorage } from "@/lib/ser
 import { isExpiredTemporaryObject } from "@/lib/server/storage/cleanup";
 import { nextHealthRecoveryState } from "@/lib/server/storage/failover";
 import { confirmOrphanDeletion } from "@/lib/server/storage/cleanup";
+import { encryptStorageConfigurationBackup, type StorageConfigurationBackup } from "@/lib/server/storage/config-backup";
+import { reserveStorageDestination, releaseStorageReservation, commitStorageReservation } from "@/lib/server/storage/reservations";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
@@ -424,6 +426,96 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         await rebuildStoragePoolIndex(fs, ["hls_streaming"]);
         await fs.patchDoc(taskPath, { phase: "done", completedAt: now, updatedAt: now });
         return Response.json({ done: true, deletedCount: typeof task["deletedObjectCount"] === "number" ? task["deletedObjectCount"] : 0 });
+      }
+
+      if (task["taskType"] === "storage_config_backup") {
+        const payload = task["payload"] as Record<string, unknown> | undefined;
+        const destinationId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
+        if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId)) {
+          throw new ApiError(400, "STORAGE_BACKUP_DESTINATION_INVALID", "The backup location is invalid.");
+        }
+        const backupKey = process.env["CONFIG_BACKUP_KEY"];
+        if (!backupKey || backupKey.length < 32) {
+          throw new ApiError(503, "STORAGE_BACKUP_KEY_MISSING", "The private backup setting is not configured.");
+        }
+        const raw = await fs.getDoc("storageDestinations/" + destinationId);
+        if (!raw) throw new ApiError(404, "STORAGE_BACKUP_DESTINATION_MISSING", "The backup location could not be found.");
+        const metadata = validateStorageDestinationMetadata({ ...raw, destinationId });
+        if (metadata.purpose !== "backup" || metadata.mode !== "active" || !metadata.enabled || metadata.healthStatus !== "healthy") {
+          throw new ApiError(409, "STORAGE_BACKUP_DESTINATION_UNAVAILABLE", "The backup location must be active and recently checked before use.");
+        }
+        const config = resolveStorageDestinationConfiguration(metadata);
+        if (config.configurationStatus !== "configured") throw new ApiError(503, "STORAGE_BACKUP_DESTINATION_MISCONFIGURED", "The backup location needs its connection settings checked.");
+        const [destinations, poolIndex, assets, egressLedgers] = await Promise.all([
+          fs.query("storageDestinations", { limit: 500 }),
+          fs.query("storagePool", { limit: 500 }),
+          fs.query("contentAssets", { limit: 500 }),
+          fs.query("storageEgressState", { limit: 500 }),
+        ]);
+        const backup: StorageConfigurationBackup = {
+          version: 1,
+          createdAt: now,
+          destinations: destinations.map(row => {
+            const { __id, secretPrefix: _secretPrefix, ...fields } = row;
+            return { destinationId: __id, ...fields };
+          }),
+          poolIndex: poolIndex.map(row => {
+            const { __id, ...fields } = row;
+            return { documentId: __id, ...fields };
+          }),
+          assetBindings: assets.map(row => ({
+            assetId: row.__id,
+            ...(typeof row["streamDestinationId"] === "string" ? { streamDestinationId: row["streamDestinationId"] } : {}),
+            ...(Array.isArray(row["streamReplicaIds"]) ? { streamReplicaIds: row["streamReplicaIds"] } : {}),
+            ...(typeof row["objectPrefix"] === "string" ? { objectPrefix: row["objectPrefix"] } : {}),
+            ...(typeof row["streamObjectPrefix"] === "string" ? { streamObjectPrefix: row["streamObjectPrefix"] } : {}),
+            ...(typeof row["posterMediaId"] === "string" ? { posterMediaId: row["posterMediaId"] } : {}),
+            ...(Array.isArray(row["thumbnailMediaIds"]) ? { thumbnailMediaIds: row["thumbnailMediaIds"] } : {}),
+          })),
+          egressLedgers: egressLedgers.map(row => {
+            const { __id, ...fields } = row;
+            return { documentId: __id, ...fields };
+          }),
+        };
+        const encrypted = await encryptStorageConfigurationBackup(backup, backupKey);
+        const bodyBytes = new TextEncoder().encode(encrypted);
+        const reservationId = "backup-" + crypto.randomUUID().replace(/-/g, "");
+        let uploadedKey = "";
+        try {
+          const reservation = await reserveStorageDestination(fs, {
+            purpose: "backup",
+            incomingBytes: bodyBytes.byteLength,
+            reservationId,
+          });
+          if (reservation.destinationId !== destinationId) {
+            await releaseStorageReservation(fs, reservationId);
+            throw new ApiError(409, "STORAGE_BACKUP_ROUTING_CHANGED", "The selected backup location is no longer the location chosen by the storage pool.");
+          }
+          const adapter = createStorageProviderAdapter(config);
+          const week = String(payload?.["scheduleKey"] ?? new Date().toISOString().slice(0, 10));
+          uploadedKey = "config-backups/" + week + "-" + Date.now() + ".json.enc";
+          await adapter.putObject(uploadedKey, bodyBytes, "application/octet-stream");
+          const stored = await adapter.headObject(uploadedKey);
+          if (!stored || stored.sizeBytes !== bodyBytes.byteLength) throw new ApiError(409, "STORAGE_BACKUP_UPLOAD_UNVERIFIED", "The encrypted backup did not pass its storage check.");
+          await commitStorageReservation(fs, reservationId, stored.sizeBytes);
+          let cursor: string | null = null;
+          const backups: string[] = [];
+          do {
+            const page = await adapter.listObjects("config-backups", cursor);
+            backups.push(...page.objects.map(item => item.key).filter(key => key.endsWith(".json.enc")));
+            cursor = page.nextCursor;
+          } while (cursor && backups.length < 1000);
+          const ordered = backups.sort().reverse();
+          const excess = ordered.slice(8);
+          for (const key of excess) await adapter.deleteObject(key);
+          if (excess.length) await rebuildStoragePoolIndex(fs, ["backup"]);
+          await fs.patchDoc(taskPath, { phase: "done", backupObjectKey: uploadedKey, backupBytes: stored.sizeBytes, retainedBackupCount: Math.min(8, ordered.length), completedAt: now, updatedAt: now });
+          return Response.json({ done: true, backupObjectKey: uploadedKey, backupBytes: stored.sizeBytes, retainedBackupCount: Math.min(8, ordered.length) });
+        } catch (error) {
+          if (uploadedKey) await createStorageProviderAdapter(config).deleteObject(uploadedKey).catch(() => undefined);
+          await releaseStorageReservation(fs, reservationId).catch(() => undefined);
+          throw error;
+        }
       }
 
       if (task["taskType"] === "storage_orphan_scan") {
