@@ -1,11 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
-import { ApiError, Firestore } from "@/lib/server/firebase-admin";
+import { Firestore } from "@/lib/server/firebase-admin";
+import { toPublicDeviceRecord } from "@/lib/server/device-registry";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { writeAuditLog } from "@/lib/server/audit";
-
-const deviceIdSchema = z.string().regex(/^[a-f0-9]{64}$/);
 
 export const Route = createFileRoute("/api/public/v1/devices")({
   server: { handlers: {
@@ -15,13 +13,7 @@ export const Route = createFileRoute("/api/public/v1/devices")({
         const fs = await Firestore.create();
         const devices = await fs.query("users/" + user.uid + "/devices", { limit: 100 });
         return Response.json({
-          devices: devices.map(device => ({
-            id: device.__id,
-            platform: device["platform"] === "web" ? "web" : "android",
-            deviceName: typeof device["deviceName"] === "string" ? device["deviceName"] : null,
-            status: device["status"] === "REVOKED" ? "REVOKED" : "ACTIVE",
-            updatedAt: typeof device["updatedAt"] === "string" ? device["updatedAt"] : null,
-          })),
+          devices: devices.map(toPublicDeviceRecord),
         }, { headers: { "cache-control": "private, no-store" } });
       } catch (error) { return errorBody(error); }
     },
@@ -48,5 +40,3 @@ export const Route = createFileRoute("/api/public/v1/devices")({
     },
   } },
 });
-
-export const deviceIdValidator = deviceIdSchema;
