@@ -19,6 +19,9 @@ Run on a physical Android phone after installing the same release candidate that
 - [ ] Check reduced-motion/system animation settings.
 
 ## Viewer journeys
+- [ ] New account creation is blocked until published Terms and Privacy Policy are reviewed and accepted.
+- [ ] After a legal version requiring reacceptance is published, the next sign-in displays both current documents and blocks entry until accepted.
+- [ ] Producer onboarding displays Terms, Privacy Policy, Producer Terms and Producer Content Policy; acceptance is saved before producer data is shown.
 - [ ] Sign in, complete profile, set country and confirm displayed currency.
 - [ ] Browse home, open a movie/channel, inspect rating, territory and price information.
 - [ ] Search titles and channels; verify unavailable or age-restricted content is not exposed.
