@@ -110,3 +110,13 @@ export function assertMediaMatchesExtension(bytes: Uint8Array, filename: string)
   }
   return kind;
 }
+
+export function isAllowedHlsOutputPath(relativePath: string): boolean {
+  if (!isSafeStoragePath(relativePath) || relativePath.length > 220) return false;
+  const name = relativePath.split("/").pop()?.toLowerCase() ?? "";
+  return /^(?:master|index|variant(?:_[a-z0-9_-]+)?)\.m3u8$/.test(name) ||
+    /^segment_[0-9]{5}\.(?:ts|m4s)$/.test(name) ||
+    name === "init.mp4" ||
+    /^subtitle_[a-z0-9_-]+\.vtt$/.test(name) ||
+    /^(?:encryption|stream)_[a-z0-9_-]+\.(?:key|keyinfo)$/.test(name);
+}
