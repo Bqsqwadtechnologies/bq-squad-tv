@@ -63,7 +63,9 @@ function visibleCandidates(content, relative) {
     if (/\/res\/values(?:-[^/]+)?\/.*\.xml$/i.test(relative)) return content;
     const matches = [];
     for (const match of content.matchAll(/\bText\s*\(\s*["']([^"']+)["']/g)) matches.push(match[1]);
+    for (const match of content.matchAll(/\bText\s*\([\s\S]{0,500}?\btext\s*=\s*["']([^"']+)["']/g)) matches.push(match[1]);
     for (const match of content.matchAll(/contentDescription\s*=\s*["']([^"']+)["']/g)) matches.push(match[1]);
+    for (const match of content.matchAll(/semantics\s*\{[\s\S]{0,300}?contentDescription\s*=\s*["']([^"']+)["']/g)) matches.push(match[1]);
     return matches.join("\n");
   }
   if (/\.(md|txt)$/i.test(relative) || /(^|\/)(emails?|email-templates?|legal|content\/legal|seed)(\/|$)/i.test(relative)) return content;
