@@ -196,6 +196,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
                   fields: encodeFields({ uid: user.uid, month: budgetMonth, spentMinor: nextMonthlySpent, currency, updatedAt: nowIso }),
                 },
                 updateMask: { fieldPaths: ["uid", "month", "spentMinor", "currency", "updatedAt"] },
+                ...(monthlyUsage ? {} : { currentDocument: { exists: false } }),
               });
               const monthlyBudget = integer(wallet["monthlyBudgetMinor"]);
               if (monthlyBudget > 0 && monthlySpent < monthlyBudget && nextMonthlySpent >= monthlyBudget && !monthlyBudgetAlert) {
