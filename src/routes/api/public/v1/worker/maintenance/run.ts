@@ -502,15 +502,19 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         }
         if (pendingKeys.length > 0 && listingNextCursor) {
           await fs.patchDoc(taskPath, {
-            payload: { ...payload, cursor: listingNextCursor, pendingKeys: [], pendingIndex: 0, listingNextCursor: null },
+            payload: { ...payload, cursor: listingNextCursor, pendingKeys: [], pendingIndex: 0, listingNextCursor: null, listingDone: false },
             leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
           });
           return Response.json({ done: false, scannedCount: 0 });
         }
+        if (pendingKeys.length > 0 && payload?.["listingDone"] === true) {
+          await fs.patchDoc(taskPath, { phase: "done", completedAt: now, updatedAt: now });
+          return Response.json({ done: true, scannedCount: pendingKeys.length });
+        }
         const page = await adapter.listObjects("hls", cursor);
         if (page.objects.length > 0 || page.nextCursor) {
           await fs.patchDoc(taskPath, {
-            payload: { ...payload, pendingKeys: page.objects.map(item => item.key), pendingIndex: 0, listingNextCursor: page.nextCursor },
+            payload: { ...payload, pendingKeys: page.objects.map(item => item.key), pendingIndex: 0, listingNextCursor: page.nextCursor, listingDone: !page.nextCursor },
             leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
           });
           return Response.json({ done: false, scannedCount: 0 });
