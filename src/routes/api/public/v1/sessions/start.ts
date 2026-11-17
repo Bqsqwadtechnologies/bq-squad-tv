@@ -269,6 +269,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             producerUid: producerUid || null, producerShareBps: shareBps, deliveryMode: "bq_hosted",
             storagePath, playbackUrl, clientPlatform: body.clientPlatform, viewerCountry,
             streamDestinationId: streamConfiguration.metadata.destinationId,
+            replicaId: streamConfiguration.metadata.destinationId === assetBinding.streamDestinationId ? null : streamConfiguration.metadata.destinationId,
             streamBitrateBps, streamQualityCap: egressGrant.qualityCap,
             storageEgressReservationId: sessionId,
             storageEgressGroupId: streamConfiguration.metadata.accountGroup,
