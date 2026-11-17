@@ -8,7 +8,10 @@ type TeamMember = { uid: string; role: TeamRole; permissions: string[]; status: 
 
 export const Route = createFileRoute("/producer/channels/$channelId/team")({
   component: ChannelTeamPage,
-  head: () => ({ meta: [{ title: "Channel team | BQ SQWAD TV" }] }),
+  head: () => ({ meta: [
+    { title: "Channel team | BQ SQWAD TV" },
+    { name: "robots", content: "noindex, nofollow, noarchive" },
+  ] }),
 });
 
 const roles: Array<{ value: TeamRole; label: string }> = [
@@ -131,7 +134,7 @@ function ChannelTeamPage() {
         <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-300"><Users size={16} /> Channel team</p>
         <h1 className="mt-3 text-3xl font-black">Team access</h1>
         <p className="mt-2 break-all text-xs text-blue-100/45">Channel {channelId}</p>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100/60">Invite an existing BQ SQWAD TV account using its Firebase user ID. Channel ownership cannot be assigned through team membership. Access is checked on every protected API request.</p>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100/60">Add an existing BQ SQWAD TV member using their member ID. Channel ownership cannot be assigned through team membership. Access is checked for every protected action.</p>
 
         {!token ? (
           <form onSubmit={signIn} className="mt-8 grid max-w-md gap-4 rounded-3xl border border-white/10 bg-[#07143d] p-6">
@@ -154,7 +157,7 @@ function ChannelTeamPage() {
             </section>
             <form onSubmit={addMember} className="grid content-start gap-4 rounded-3xl border border-cyan-300/20 bg-gradient-to-b from-[#0b2057] to-[#07143d] p-6">
               <div><h2 className="text-xl font-bold">Add or update member</h2><p className="mt-1 text-xs text-blue-100/55">The server restricts which roles each manager may grant.</p></div>
-              <label className="grid gap-2 text-sm text-blue-100/70">Firebase user ID<input required minLength={20} maxLength={128} value={memberUid} onChange={event => setMemberUid(event.target.value.trim())} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
+              <label className="grid gap-2 text-sm text-blue-100/70">Member ID<input required minLength={20} maxLength={128} value={memberUid} onChange={event => setMemberUid(event.target.value.trim())} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
               <label className="grid gap-2 text-sm text-blue-100/70">Team role<select value={role} onChange={event => setRole(event.target.value as TeamRole)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white">{roles.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
               <label className="grid gap-2 text-sm text-blue-100/70">Reason for access change<textarea required minLength={3} maxLength={500} value={reason} onChange={event => setReason(event.target.value)} rows={3} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" /></label>
               {error ? <p role="alert" className="text-sm text-rose-300">{error}</p> : null}
