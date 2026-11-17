@@ -12,7 +12,7 @@ describe("authorized channel uploads", () => {
   it("allows a delegated ZILLIONAIRE content operator to upload to a platform channel", async () => {
     const fs = firestore({
       "channels/platform-channel": { ownerUid: "platform" },
-      "users/operator": { roleTags: ["admin"], adminModules: ["content"] },
+      "users/operator": { roleTags: [], adminModules: ["content"] },
       "producers/operator": null,
     });
     await expect(requireAuthorizedChannelUpload(fs, "platform-channel", {
@@ -23,7 +23,7 @@ describe("authorized channel uploads", () => {
   it("allows a delegated channels operator without content scope", async () => {
     const fs = firestore({
       "channels/platform-channel": { ownerUid: "platform" },
-      "users/operator": { roleTags: ["admin"], adminModules: ["channels"] },
+      "users/operator": { roleTags: [], adminModules: ["channels"] },
       "producers/operator": null,
     });
     await expect(requireAuthorizedChannelUpload(fs, "platform-channel", {
@@ -46,12 +46,12 @@ describe("authorized channel uploads", () => {
   it("rejects platform uploads when the delegated account has neither required module", async () => {
     const fs = firestore({
       "channels/platform-channel": { ownerUid: "platform" },
-      "users/operator": { roleTags: ["admin"], adminModules: ["pricing"] },
+      "users/operator": { roleTags: [], adminModules: ["pricing"] },
       "producers/operator": null,
     });
     await expect(requireAuthorizedChannelUpload(fs, "platform-channel", {
       uid: "operator", email: "operator@example.com", emailVerified: true,
-    })).rejects.toMatchObject({ status: 403, code: "ADMIN_SCOPE_REQUIRED" });
+    })).rejects.toMatchObject({ status: 403, code: "ZILLIONAIRE_SCOPE_REQUIRED" });
   });
 
   it("requires the producer channel owner to be active and legally verified", async () => {
