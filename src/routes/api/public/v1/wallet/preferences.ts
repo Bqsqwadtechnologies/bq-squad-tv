@@ -5,6 +5,8 @@ import { errorBody, getWallet, parseBody, requireUser } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { requestDailyLimitChange } from "@/lib/server/wallet-limits";
 import { writeAuditLog } from "@/lib/server/audit";
+import { minorUnitDigits } from "@/lib/server/currency";
+import { currencySymbol, formatMinorCurrency } from "@/lib/server/currency-format";
 
 const schema = z.object({
   monthlyBudgetMinor: z.number().int().nonnegative().safe().nullable().optional(),
@@ -19,9 +21,25 @@ export const Route = createFileRoute("/api/public/v1/wallet/preferences")({
         const user = await requireUser(request);
         const fs = await Firestore.create();
         const wallet = await getWallet(fs, user.uid);
+        const month = new Date().toISOString().slice(0, 7);
+        const usage = await fs.getDoc("walletMonthlyUsage/" + user.uid + "_" + month);
+        const monthlySpentMinor = typeof usage?.["spentMinor"] === "number" && Number.isSafeInteger(usage["spentMinor"])
+          ? usage["spentMinor"] as number : 0;
+        const monthlyBudgetMinor = typeof wallet.monthlyBudgetMinor === "number" ? wallet.monthlyBudgetMinor : null;
+        const monthlyBudgetRemainingMinor = monthlyBudgetMinor === null
+          ? null : Math.max(0, monthlyBudgetMinor - monthlySpentMinor);
+        const digits = minorUnitDigits(wallet.currency);
+        const symbol = currencySymbol(wallet.currency);
         return Response.json({
           currencyCode: wallet.currency,
-          monthlyBudgetMinor: typeof wallet.monthlyBudgetMinor === "number" ? wallet.monthlyBudgetMinor : null,
+          minorUnitDigits: digits,
+          symbol,
+          monthlySpentMinor,
+          formattedMonthlySpent: formatMinorCurrency(monthlySpentMinor, wallet.currency),
+          monthlyBudgetMinor,
+          monthlyBudgetRemainingMinor,
+          formattedMonthlyBudgetRemaining: monthlyBudgetRemainingMinor === null
+            ? null : formatMinorCurrency(monthlyBudgetRemainingMinor, wallet.currency),
           lowBalanceAlertMinor: typeof wallet.lowBalanceAlertMinor === "number" ? wallet.lowBalanceAlertMinor : null,
           dailySpendLimitMinor: wallet.dailySpendLimitMinor,
           pendingDailySpendLimitMinor: typeof wallet.pendingDailySpendLimitMinor === "number" ? wallet.pendingDailySpendLimitMinor : null,
