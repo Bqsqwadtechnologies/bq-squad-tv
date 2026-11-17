@@ -33,6 +33,9 @@ describe("platform flags", () => {
       commentsOpen: true,
       newStreamGrants: true,
       adultChannels: false,
+      liveTv: false,
+      forYou: false,
+      reminders: false,
     });
     expect(result).not.toHaveProperty("producerChannelCreation");
   });
