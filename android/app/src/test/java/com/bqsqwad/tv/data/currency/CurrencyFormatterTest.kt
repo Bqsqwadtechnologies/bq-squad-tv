@@ -24,6 +24,20 @@ class CurrencyFormatterTest {
         }
     }
 
+
+    @Test
+    fun formatsSingleMinorUnitsAndNegativeAmountsExactly() {
+        assertTrue(CurrencyFormatter.formatMinorUnits(1L, "NGN", Locale.US).endsWith("0.01"))
+        assertTrue(CurrencyFormatter.formatMinorUnits(-1L, "KWD", Locale.US).contains("0.001"))
+        assertTrue(CurrencyFormatter.formatMinorUnits(1L, "JPY", Locale.US).endsWith("1"))
+    }
+
+    @Test
+    fun keepsLargeMinorUnitAmountsExact() {
+        val formatted = CurrencyFormatter.formatMinorUnits(9_007_199_254_740_991L, "USD", Locale.US)
+        assertTrue(formatted.contains("90,071,992,547,409.91"))
+    }
+
     @Test
     fun doesNotUseFloatingPointForMinorUnitConversion() {
         assertTrue(
