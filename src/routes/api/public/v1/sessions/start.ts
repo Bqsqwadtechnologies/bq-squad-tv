@@ -90,8 +90,15 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
               const currentWallet = await getWallet(fs, user.uid);
               const balance = requireMinorUnitAmount(currentWallet.balanceMinor, "wallet balance");
               const rate = requireMinorUnitAmount(priorSession["ratePerMinuteMinor"], "ratePerMinuteMinor");
+              const leaseToken = await signSessionLeaseToken({
+                sid: priorRequest["sessionId"],
+                seq: integer(priorSession["lastClientSequence"]) ?? 0,
+                positionMs: integer(priorSession["lastPlaybackPositionMs"]) ?? 0,
+                billedSeconds: integer(priorSession["billedSeconds"]) ?? 0,
+                leaseExp: Math.floor(Date.now() / 1000) + 45,
+              });
               return Response.json({
-                sessionId: priorRequest["sessionId"], playbackUrl, ratePerMinuteMinor: rate,
+                sessionId: priorRequest["sessionId"], playbackUrl, leaseToken, ratePerMinuteMinor: rate,
                 walletBalanceMinor: balance, currency: typeof priorSession["currency"] === "string" ? priorSession["currency"] as string : currentWallet.currency,
                 timeRemainingSeconds: remainingSeconds(balance, rate),
                 sessionTotalMinor: integer(priorSession["sessionTotalMinor"]) ?? 0, active: true,
