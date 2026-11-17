@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  redactStorageDestination,
   resolveStorageDestinationConfiguration,
   validateStorageDestinationMetadata,
   type StorageDestinationMetadata,
@@ -148,6 +149,18 @@ describe("Lovable credential bundles", () => {
       expect(config.configurationStatus).toBe("misconfigured");
       expect(config.credentials).toBeUndefined();
     }
+  });
+
+  it("accepts a shared-project bundle containing 326 bucket names", () => {
+    const buckets = Array.from({ length: 326 }, (_, index) => "bucket-" + String(index + 1).padStart(3, "0"));
+    const config = resolveStorageDestinationConfiguration(lovableMetadata("lov-326", "bucket-326"), {
+      STORAGE_LOV_BUNDLE_01: JSON.stringify({
+        url: "https://project-a.supabase.co",
+        serviceRoleKey: "private-key",
+        buckets,
+      }),
+    });
+    expect(config.configurationStatus).toBe("configured");
   });
 
   it("reports a missing bundle by name without throwing or exposing values", () => {
