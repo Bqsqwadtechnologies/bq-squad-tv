@@ -45,3 +45,41 @@ export function storageFailureMessage(code: string): string {
   if (code === "STORAGE_PROVIDER_PERMISSION_DENIED") return "The storage provider denied access.";
   return "The storage location could not be checked.";
 }
+
+
+export async function reconcileStorageUsage(
+  adapter: {
+    listObjects(prefix: string, cursor: string | null): Promise<{
+      objects: StorageListingObject[];
+      nextCursor: string | null;
+    }>;
+  },
+  limits: { maxPages?: number; maxObjects?: number } = {},
+): Promise<{ usageBytes: number; objectCount: number }> {
+  const maxPages = limits.maxPages ?? 10_000;
+  const maxObjects = limits.maxObjects ?? 10_000_000;
+  if (!Number.isSafeInteger(maxPages) || maxPages < 1 ||
+      !Number.isSafeInteger(maxObjects) || maxObjects < 1) {
+    throw new ApiError(400, "STORAGE_RECONCILE_LIMIT_INVALID", "The storage reconciliation limit is invalid.");
+  }
+  let cursor: string | null = null;
+  let usageBytes = 0;
+  let objectCount = 0;
+  const cursors = new Set<string>();
+  for (let pageNumber = 0; pageNumber < maxPages; pageNumber++) {
+    const page = await adapter.listObjects("", cursor);
+    const totals = accumulateStorageUsage(usageBytes, objectCount, page.objects);
+    usageBytes = totals.usageBytes;
+    objectCount = totals.objectCount;
+    if (objectCount > maxObjects) {
+      throw new ApiError(413, "STORAGE_RECONCILE_OBJECT_LIMIT", "The storage location contains more objects than one reconciliation can safely inspect.");
+    }
+    if (!page.nextCursor) return { usageBytes, objectCount };
+    if (cursors.has(page.nextCursor) || page.nextCursor === cursor) {
+      throw new ApiError(409, "STORAGE_LISTING_CURSOR_STALLED", "The storage listing did not advance.");
+    }
+    cursors.add(page.nextCursor);
+    cursor = page.nextCursor;
+  }
+  throw new ApiError(413, "STORAGE_RECONCILE_PAGE_LIMIT", "The storage location needs more than one safe reconciliation pass.");
+}
