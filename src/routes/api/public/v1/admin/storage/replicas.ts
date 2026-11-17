@@ -11,6 +11,7 @@ const schema = z.object({
   assetId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),
   replicaCount: z.number().int().min(1).max(8).default(3),
   popular: z.boolean().default(true),
+  movePrimary: z.boolean().default(false),
   reason: z.string().trim().min(3).max(1000),
 }).strict();
 
@@ -79,7 +80,7 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/replicas")({
       const budgetBytes = safeBytes(budget?.["budgetBytes"]);
       const usedBytes = safeBytes(budget?.["usedBytes"]);
       if (budgetBytes < 1) throw new ApiError(507, "STORAGE_REPLICA_BUDGET_EMPTY", "There is not enough spare storage capacity for additional film copies.");
-      const desiredCount = Math.max(0, body.replicaCount - existingReplicas.length);
+      const desiredCount = body.movePrimary ? 1 : Math.max(0, body.replicaCount - existingReplicas.length);
       const availableBytes = Math.max(0, budgetBytes - usedBytes);
       const budgetCount = Math.floor(availableBytes / streamBytes);
       const queueCount = Math.min(desiredCount, budgetCount, 8 - existingReplicas.length);
@@ -142,8 +143,9 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/replicas")({
         update: {
           name: fs.docName("videoMaintenanceJobs/" + taskIds[index]),
           fields: encodeFields({
-            taskType: "storage_replica_copy",
+            taskType: body.movePrimary ? "storage_rebalance" : "storage_replica_copy",
             payload: {
+              switchPrimary: body.movePrimary,
               assetId: body.assetId,
               sourceDestinationId,
               targetDestinationId: target.destinationId,
@@ -194,7 +196,9 @@ export const Route = createFileRoute("/api/public/v1/admin/storage/replicas")({
         updated: true, popular: true,
         queuedCount: targetReservations.length,
         taskIds,
-        note: "Complete copies are queued on the maintenance worker. The primary remains unchanged until each copy is verified.",
+        note: body.movePrimary
+          ? "A complete copy is queued. The primary changes only after every copied file is verified and its reservation is committed; the old copy is retained."
+          : "Complete copies are queued on the maintenance worker. The primary remains unchanged until each copy is verified.",
       }, { status: 202 });
     } catch (error) {
       for (const reservationId of reservations) await releaseStorageReservation(fs, reservationId).catch(() => undefined);
