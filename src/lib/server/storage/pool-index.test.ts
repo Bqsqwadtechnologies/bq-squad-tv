@@ -83,6 +83,10 @@ describe("compact storage pool index", () => {
   });
 
   it("uses the lower remaining daily headroom when building HLS routing entries", async () => {
+    vi.stubEnv("STORAGE_B2_01_KEY_ID", "key-id");
+    vi.stubEnv("STORAGE_B2_01_APP_KEY", "app-key");
+    vi.stubEnv("STORAGE_B2_01_BUCKET_ID", "bucket-id");
+    vi.stubEnv("STORAGE_B2_01_ENDPOINT", "https://s3.us-west-004.backblazeb2.com");
     const hlsDestination = {
       ...destination("b2-hls", 10),
       purpose: "hls_streaming",
