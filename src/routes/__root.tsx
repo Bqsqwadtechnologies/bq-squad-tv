@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
   type ErrorComponentProps,
@@ -132,11 +133,14 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: state => state.location.pathname });
+  const showLegalFooter = !pathname.startsWith("/admin") && !pathname.startsWith("/producer") && !pathname.startsWith("/provider");
 
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      {showLegalFooter ? <footer className="border-t border-border bg-background px-5 py-6 text-center text-xs text-muted-foreground"><nav aria-label="Legal and contact links" className="flex flex-wrap justify-center gap-x-5 gap-y-3"><a href="/legal/privacy-policy" className="hover:text-foreground">Privacy Policy</a><a href="/legal/terms" className="hover:text-foreground">Terms</a><a href="/legal/privacy-policy" className="hover:text-foreground">Cookie notice</a><a href="mailto:tv@bqsqwad.com" className="hover:text-foreground">Contact</a></nav><p className="mt-3">© BQ SQWAD TV</p></footer> : null}
     </QueryClientProvider>
   );
 }
