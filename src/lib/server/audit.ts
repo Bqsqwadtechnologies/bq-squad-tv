@@ -66,31 +66,48 @@ export async function writeAuditLog(fs: Firestore, input: AuditInput): Promise<s
   return id;
 }
 
-export async function verifyAuditChain(fs: Firestore, limit = 500): Promise<AuditChainResult> {
-  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500) {
+export async function verifyAuditChain(fs: Firestore, pageSize = 500): Promise<AuditChainResult> {
+  if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 500) {
     throw new ApiError(400, "AUDIT_VERIFY_LIMIT_INVALID", "The audit verification page size is invalid.");
   }
-  const rows = await fs.query("auditLog", { orderByField: "sequence", limit });
   let previousHash = "GENESIS";
   let expectedSequence = 1;
-  for (const row of rows) {
-    const storedHash = row["hash"];
-    const storedPrevious = row["previousHash"];
-    const sequence = row["sequence"];
-    if (storedPrevious !== previousHash || sequence !== expectedSequence || typeof storedHash !== "string") {
-      return { valid: false, checked: expectedSequence - 1, brokenEntryId: row.__id, reason: "chain_link_invalid" };
+  let checked = 0;
+  let cursor: { fieldValue: unknown; documentId: string } | undefined;
+  for (;;) {
+    const rows = await fs.query("auditLog", {
+      filters: [{ field: "sequence", op: "GREATER_THAN", value: 0 }],
+      orderByField: "sequence",
+      limit: pageSize,
+      ...(cursor ? { startAfter: cursor } : {}),
+    });
+    for (const row of rows) {
+      const storedHash = row["hash"];
+      if (row["previousHash"] !== previousHash || row["sequence"] !== expectedSequence || typeof storedHash !== "string") {
+        return { valid: false, checked, brokenEntryId: row.__id, reason: "chain_link_invalid" };
+      }
+      const { __id: _id, hash: _hash, ...entry } = row;
+      const actualHash = await auditEntryHash(entry);
+      if (actualHash !== storedHash) {
+        return { valid: false, checked, brokenEntryId: row.__id, reason: "entry_hash_invalid" };
+      }
+      previousHash = storedHash;
+      expectedSequence++;
+      checked++;
     }
-    const { __id: _id, hash: _hash, ...entry } = row;
-    const actualHash = await auditEntryHash(entry);
-    if (actualHash !== storedHash) {
-      return { valid: false, checked: expectedSequence - 1, brokenEntryId: row.__id, reason: "entry_hash_invalid" };
+    if (rows.length < pageSize) break;
+    const last = rows[rows.length - 1];
+    if (!last || typeof last["sequence"] !== "number") {
+      return { valid: false, checked, brokenEntryId: last?.__id ?? null, reason: "chain_cursor_invalid" };
     }
-    previousHash = storedHash;
-    expectedSequence++;
+    cursor = { fieldValue: last["sequence"], documentId: last.__id };
   }
   const head = await fs.getDoc("auditChain/head");
-  if (rows.length > 0 && (head?.["hash"] !== previousHash || head?.["sequence"] !== rows.length)) {
-    return { valid: false, checked: rows.length, brokenEntryId: null, reason: "chain_head_mismatch_or_page_incomplete" };
+  if (checked > 0 && (head?.["hash"] !== previousHash || head?.["sequence"] !== checked)) {
+    return { valid: false, checked, brokenEntryId: null, reason: "chain_head_mismatch" };
   }
-  return { valid: true, checked: rows.length, brokenEntryId: null, reason: null };
+  if (checked === 0 && head) {
+    return { valid: false, checked: 0, brokenEntryId: null, reason: "chain_head_without_entries" };
+  }
+  return { valid: true, checked, brokenEntryId: null, reason: null };
 }
