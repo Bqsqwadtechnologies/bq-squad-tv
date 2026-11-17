@@ -76,8 +76,8 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            TextButton(onClick = { uriHandler.openUri("https://bqsqwad.com/terms") }) { Text("Terms of service") }
-            TextButton(onClick = { uriHandler.openUri("https://bqsqwad.com/privacy") }) { Text("Privacy notice") }
+            TextButton(onClick = { uriHandler.openUri("https://bqsqwad.com/legal/terms") }) { Text("Terms of service") }
+            TextButton(onClick = { uriHandler.openUri("https://bqsqwad.com/legal/privacy-policy") }) { Text("Privacy notice") }
         }
         OutlinedTextField(
             value = email,
