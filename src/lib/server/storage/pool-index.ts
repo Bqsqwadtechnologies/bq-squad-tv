@@ -105,7 +105,7 @@ export async function rebuildStoragePoolIndex(
     const reservedBytes = items.reduce((sum, item) => sum + item.reservedBytes, 0);
     const capBytes = calculateStorageGroupCap(items.map(item => ({
       softCapBytes: item.metadata.softCapBytes,
-      accountCapBytes: item.metadata.accountCapBytes,
+      ...(item.metadata.accountCapBytes !== undefined ? { accountCapBytes: item.metadata.accountCapBytes } : {}),
     })));
     const freeBytes = usageBytes === null || capBytes === null
       ? 0
@@ -387,7 +387,7 @@ export async function updateStorageUsageAndPool(
         const monthLevel = calculateEgressLevel(monthUsed, nextB2MonthlyBudget, false);
         const dayLevel = calculateEgressLevel(dayUsed, nextB2DailyBudget, false);
         const rank: Record<string, number> = { normal: 0, warn: 1, throttle: 2, blocked: 3 };
-        const level = rank[monthLevel] >= rank[dayLevel] ? monthLevel : dayLevel;
+        const level = (rank[monthLevel] ?? 0) >= (rank[dayLevel] ?? 0) ? monthLevel : dayLevel;
         await fs.patchDoc(egressStatePath, {
           budgetBytes: nextB2MonthlyBudget,
           dailyBudgetBytes: nextB2DailyBudget,
