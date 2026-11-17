@@ -83,6 +83,11 @@ function AdminStoragePage() {
   const [retentionAssetId, setRetentionAssetId] = useState("");
   const [retentionPinned, setRetentionPinned] = useState(true);
   const [retentionReason, setRetentionReason] = useState("");
+  const [restoreDestinationId, setRestoreDestinationId] = useState("");
+  const [restoreObjectKey, setRestoreObjectKey] = useState("");
+  const [restoreReason, setRestoreReason] = useState("");
+  const [restoreTicketId, setRestoreTicketId] = useState("");
+  const [restorePreview, setRestorePreview] = useState("");
   const filteredDestinations = destinations.filter(item => {
     const query = destinationSearch.trim().toLowerCase();
     return !query || [item.destinationId, item.accountAlias, item.bucketName, item.accountGroup, item.purpose, item.healthStatus]
@@ -123,6 +128,45 @@ function AdminStoragePage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function previewBackupRestore(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!token || busy) return;
+    setBusy(true); setError(""); setRestoreTicketId(""); setRestorePreview("");
+    try {
+      const response = await fetch("/api/public/v1/admin/storage/backups/restore", {
+        method: "POST",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ action: "preview", destinationId: restoreDestinationId, objectKey: restoreObjectKey.trim(), reason: restoreReason.trim() }),
+      });
+      const data = await response.json() as { previewed?: boolean; ticketId?: string; counts?: Record<string, number>; error?: string };
+      if (!response.ok || !data.previewed || !data.ticketId) throw new Error(data.error ?? "The backup preview could not be created.");
+      setRestoreTicketId(data.ticketId);
+      setRestorePreview("Preview ready: " + JSON.stringify(data.counts ?? {}) + ". Apply restores existing non-legacy location settings only; connection references are preserved and fresh checks are required.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The backup preview could not be created.");
+    } finally { setBusy(false); }
+  }
+
+  async function applyBackupRestore() {
+    if (!token || busy || !restoreTicketId) return;
+    setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/public/v1/admin/storage/backups/restore", {
+        method: "POST",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ action: "apply", destinationId: restoreDestinationId, objectKey: restoreObjectKey.trim(), ticketId: restoreTicketId, reason: restoreReason.trim() }),
+      });
+      const data = await response.json() as { applied?: boolean; restoredCount?: number; skippedCount?: number; note?: string; error?: string };
+      if (!response.ok || !data.applied) throw new Error(data.error ?? "The backup could not be applied.");
+      setRestoreTicketId("");
+      setRestorePreview("");
+      setMessage("Restored " + (data.restoredCount ?? 0) + " location settings; skipped " + (data.skippedCount ?? 0) + ". " + (data.note ?? ""));
+      await loadDestinations(token);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The backup could not be applied.");
+    } finally { setBusy(false); }
   }
 
   async function saveRetentionPin(event: FormEvent<HTMLFormElement>) {
@@ -305,6 +349,15 @@ function AdminStoragePage() {
             <div className="mt-8 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-xs leading-6 text-amber-100/80">
               Registering a location does not create it or move files. Enter usage exactly as shown in a provider report. A location can receive new files only after its connection, usage, shared capacity and transfer allowance have been checked.
             </div>
+            <form onSubmit={previewBackupRestore} className="mt-6 grid gap-3 rounded-2xl border border-cyan-300/20 bg-[#07143d] p-5">
+              <div><h2 className="text-lg font-bold">Restore storage settings</h2><p className="mt-1 text-xs leading-5 text-blue-100/55">Preview first, then confirm within ten minutes. Legacy locations, playback bindings and delivery ledgers are protected from automatic overwrite.</p></div>
+              <label className="grid gap-2 text-xs text-blue-100/70">Backup location<select required value={restoreDestinationId} onChange={event => setRestoreDestinationId(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white"><option value="">Choose a backup location</option>{destinations.filter(item => item.purpose === "backup" && item.mode === "active" && item.enabled).map(item => <option key={item.destinationId} value={item.destinationId}>{item.accountAlias}</option>)}</select></label>
+              <label className="grid gap-2 text-xs text-blue-100/70">Backup file reference<input required value={restoreObjectKey} onChange={event => { setRestoreObjectKey(event.target.value); setRestoreTicketId(""); setRestorePreview(""); }} placeholder="config-backups/..." className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+              <label className="grid gap-2 text-xs text-blue-100/70">Reason<textarea required minLength={3} maxLength={1000} value={restoreReason} onChange={event => setRestoreReason(event.target.value)} rows={2} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+              <button disabled={busy || !restoreDestinationId || !restoreObjectKey.trim()} className="rounded-xl border border-cyan-300/25 bg-cyan-300/10 px-4 py-3 text-sm font-bold text-cyan-100 disabled:opacity-50">{busy ? "Checking backup…" : "Preview restore"}</button>
+              {restorePreview ? <p role="status" className="text-xs leading-5 text-cyan-100">{restorePreview}</p> : null}
+              {restoreTicketId ? <button type="button" onClick={() => void applyBackupRestore()} disabled={busy} className="rounded-xl bg-cyan-300 px-4 py-3 text-sm font-extrabold text-[#031039] disabled:opacity-50">Confirm and apply restore</button> : null}
+            </form>
             <form onSubmit={saveRetentionPin} className="mt-6 grid gap-3 rounded-2xl border border-cyan-300/20 bg-[#07143d] p-5">
               <div><h2 className="text-lg font-bold">Keep original uploads</h2><p className="mt-1 text-xs leading-5 text-blue-100/55">Pin an original upload to exclude it from any future automatic source-file cleanup. Unpinning does not delete it; the retention period and safety checks still apply.</p></div>
               <label className="grid gap-2 text-xs text-blue-100/70">Content reference<input required pattern="[A-Za-z0-9_-]{1,100}" value={retentionAssetId} onChange={event => setRetentionAssetId(event.target.value)} placeholder="content asset reference" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
