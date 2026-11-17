@@ -12,7 +12,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
   server: { handlers: { POST: async ({ request }) => {
     try {
       const fs = await Firestore.create();
-      await requireVideoWorker(request, fs);
+      const workerId = await requireVideoWorker(request, fs);
       const queued = await fs.query("videoTranscodeJobs", { filters: [{ field: "status", op: "EQUAL", value: "queued" }], orderByField: "createdAt", limit: 10 });
       const processing = await fs.query("videoTranscodeJobs", { filters: [{ field: "status", op: "EQUAL", value: "processing" }], limit: 500 });
       const now = new Date();
@@ -34,9 +34,10 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           return { result: true, writes: [{ update: { name: fs.docName(jobPath), fields: {
             status: { stringValue: "processing" }, workerStatus: { stringValue: "processing" },
             claimToken: { stringValue: claimToken }, leaseExpiresAt: { stringValue: leaseExpiresAt },
+            workerId: { stringValue: workerId },
             attempts: { integerValue: String((typeof job["attempts"] === "number" ? job["attempts"] : 0) + 1) },
             startedAt: { stringValue: now.toISOString() }, updatedAt: { stringValue: now.toISOString() },
-          } }, updateMask: { fieldPaths: ["status", "workerStatus", "claimToken", "leaseExpiresAt", "attempts", "startedAt", "updatedAt"] } }] };
+          } }, updateMask: { fieldPaths: ["status", "workerStatus", "claimToken", "leaseExpiresAt", "attempts", "startedAt", "updatedAt", "workerId"] } }] };
         });
         if (!claimed) continue;
         let newReservationId = "";
@@ -73,7 +74,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
             updatedAt: new Date().toISOString(),
           });
           return Response.json({ job: {
-            assetId, claimToken, leaseExpiresAt, sourceDownloadUrl: sourceTarget.signedUrl,
+            assetId, claimToken, leaseExpiresAt, workerId, sourceDownloadUrl: sourceTarget.signedUrl,
             sourceFilename: job["sourceFilename"], sourceSizeBytes: job["sourceSizeBytes"],
             outputDestinationId: outputReservation.destinationId, outputPrefix, outputReservedBytes: reservedBytes,
           } });
