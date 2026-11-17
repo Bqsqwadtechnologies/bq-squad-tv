@@ -54,7 +54,7 @@ function AdminStoragePage() {
   const [secretPrefix, setSecretPrefix] = useState("LOVABLE_STORAGE_01");
   const [bucketName, setBucketName] = useState("bq-sqwad-source-media");
   const [region, setRegion] = useState("africa-south1");
-  const [purpose, setUsed for] = useState("source_media");
+  const [purpose, setPurpose] = useState("source_media");
   const [softCapGb, setSoftCapGb] = useState("9");
   const [accountCapGb, setAccountCapGb] = useState("");
   const [dailyEgressGb, setDailyEgressGb] = useState("");
@@ -155,7 +155,7 @@ function AdminStoragePage() {
     setSecretPrefix(item.secretPrefix);
     setBucketName(item.bucketName);
     setRegion(item.region);
-    setUsed for(item.purpose);
+    setPurpose(item.purpose);
     setSoftCapGb(String(item.softCapBytes / 1_000_000_000));
     setAccountCapGb(item.accountCapBytes == null ? "" : String(item.accountCapBytes / 1_000_000_000));
     setDailyEgressGb(item.dailyEgressCapBytes === null ? "" : String(item.dailyEgressCapBytes / 1_000_000_000));
@@ -261,7 +261,7 @@ function AdminStoragePage() {
                 <label className="grid gap-2 text-xs text-blue-100/70">Secure connection group<input required pattern="[A-Z][A-Z0-9_]{1,47}" value={secretPrefix} onChange={event => setSecretPrefix(event.target.value.toUpperCase())} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 font-mono text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Storage location name<input required value={bucketName} onChange={event => setBucketName(event.target.value)} placeholder="Main video storage" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Region<input required value={region} onChange={event => setRegion(event.target.value)} placeholder="us-west-004" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
-                <label className="grid gap-2 text-xs text-blue-100/70">Used for<select value={purpose} onChange={event => setUsed for(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white">{PURPOSES.map(value => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Used for<select value={purpose} onChange={event => setPurpose(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white">{PURPOSES.map(value => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Location capacity limit (GB)<input required type="number" min="0.01" step="0.01" value={softCapGb} onChange={event => setSoftCapGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Shared account capacity limit (GB, optional; use the same value for all locations in one account)<input type="number" min="0.01" step="0.01" value={accountCapGb} onChange={event => setAccountCapGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Monthly data transfer allowance (GB; shared by all locations in the account)<input type="number" min="0" step="0.01" value={monthlyEgressGb} onChange={event => setMonthlyEgressGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
