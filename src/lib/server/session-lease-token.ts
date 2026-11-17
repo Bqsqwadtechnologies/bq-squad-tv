@@ -55,7 +55,7 @@ export async function verifySessionLeaseToken(
   let claims: SessionLeaseClaims;
   try { claims = JSON.parse(decoder.decode(decode(parts[0]!))) as SessionLeaseClaims; }
   catch { throw new ApiError(401, "SESSION_LEASE_INVALID", "The playback lease is invalid."); }
-  const valid = await crypto.subtle.verify("HMAC", await key(secret), decode(parts[1]!), encoder.encode(parts[0]!).slice().buffer as ArrayBuffer);
+  const valid = await crypto.subtle.verify("HMAC", await key(secret), decode(parts[1]!).slice().buffer as ArrayBuffer, encoder.encode(parts[0]!).slice().buffer as ArrayBuffer);
   if (!valid || claims.sid !== expectedSessionId ||
       !Number.isSafeInteger(claims.seq) || claims.seq < 0 ||
       !Number.isSafeInteger(claims.positionMs) || claims.positionMs < 0 ||
