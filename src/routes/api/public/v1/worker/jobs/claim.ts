@@ -8,13 +8,14 @@ import { resolveStorageDestinationConfiguration, validateStorageDestinationMetad
 import { loadSourceStorageConfiguration, createStorageDownloadTarget } from "@/lib/server/storage/transfers";
 import { videoWorkerLeaseExpiry, videoWorkerRetryIsDue } from "@/lib/server/video-worker-policy";
 import { getModalSpendSnapshot } from "@/lib/server/modal-spend";
+import { getPlatformFlags } from "@/lib/server/flags";
 
 export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
   server: { handlers: { POST: async ({ request }) => {
     try {
       const fs = await Firestore.create();
       const workerId = await requireVideoWorker(request, fs);
-      const spend = await getModalSpendSnapshot(fs);
+      const [spend, flags] = await Promise.all([getModalSpendSnapshot(fs), getPlatformFlags(fs)]);
       if (spend.pauseNewJobs) {
         return Response.json({ job: null, paused: true, reason: "MONTHLY_SPEND_LIMIT", spend });
       }
@@ -85,6 +86,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           return Response.json({ job: {
             assetId, claimToken, leaseExpiresAt, workerId, profile, attemptNumber,
             sourceSha256: typeof job["sourceSha256"] === "string" ? job["sourceSha256"] : null,
+            hlsEncryption: flags.hlsEncryption,
             sourceDownloadUrl: sourceTarget.signedUrl,
             sourceFilename: job["sourceFilename"], sourceSizeBytes: job["sourceSizeBytes"],
             outputDestinationId: outputReservation.destinationId, outputPrefix, outputReservedBytes: reservedBytes,
