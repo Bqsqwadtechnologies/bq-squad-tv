@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "scan:public-text": "node scripts/scan-public-text.mjs"
+    "scan:public-text": "node scripts/scan-public-text.mjs",
+    "check:secret-names": "node scripts/check-secret-names.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"
