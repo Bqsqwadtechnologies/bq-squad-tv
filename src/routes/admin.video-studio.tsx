@@ -85,7 +85,7 @@ function VideoStudio() {
         progress: 100,
         status: "Source verified · processing job queued",
         detail: completed.transcodeJobStatus === "queued"
-          ? "The private source is verified and a durable HLS processing job has been recorded. The authenticated FFmpeg queue runner is implemented, but an always-on worker host has not been deployed. This asset remains unavailable for playback and publishing until processing finishes."
+          ? "Your private video has been received. Video processing is not running yet, so this title cannot be played or published. It will become available after processing is complete."
           : "The private source is verified. Processing has not been confirmed; this asset remains unavailable for playback and publishing.",
       });
       setFile(null);
@@ -109,11 +109,11 @@ function VideoStudio() {
       <section className="mx-auto max-w-6xl px-5 py-10">
         <div className="flex items-center gap-3 text-cyan-200"><Film size={22} /><span className="text-xs font-bold uppercase tracking-[0.2em]">Content operations</span></div>
         <h1 className="mt-3 text-3xl font-black sm:text-5xl">Video Studio</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-7 text-blue-100/60">Upload a source movie from your phone or computer browser into an assigned private storage destination. Legacy Lovable storage remains supported. Every upload is checked against your platform channel permissions and verified before it enters the processing queue.</p>
+        <p className="mt-3 max-w-3xl text-sm leading-7 text-blue-100/60">Upload a movie from your phone or computer into an assigned private storage location. Previously stored files remain supported. Each upload is checked against your channel access and verified before video processing begins.</p>
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-cyan-300/20 bg-[#07143d] p-5"><UploadCloud className="text-cyan-200" /><p className="mt-3 font-bold">1 · Secure upload</p><p className="mt-1 text-xs leading-5 text-blue-100/55">Private source storage, a short-lived upload authorization and server-side file verification.</p></div>
-          <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5"><Clock3 className="text-cyan-200" /><p className="mt-3 font-bold">2 · Video processing</p><p className="mt-1 text-xs leading-5 text-blue-100/55">The authenticated HLS worker is implemented, but its persistent host is not deployed yet. Uploads remain queued until a worker host is running and processing is verified.</p></div>
-          <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5"><ShieldCheck className="text-cyan-200" /><p className="mt-3 font-bold">3 · Rights & publishing</p><p className="mt-1 text-xs leading-5 text-blue-100/55">Independent rights review, HLS verification and existing publish safeguards remain required.</p></div>
+          <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5"><Clock3 className="text-cyan-200" /><p className="mt-3 font-bold">2 · Video processing</p><p className="mt-1 text-xs leading-5 text-blue-100/55">The video processing service is ready in the project, but its always-on host has not been deployed. Uploads remain on hold until processing is running and verified.</p></div>
+          <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5"><ShieldCheck className="text-cyan-200" /><p className="mt-3 font-bold">3 · Rights & publishing</p><p className="mt-1 text-xs leading-5 text-blue-100/55">Independent rights review, final video checks and the existing publishing safeguards remain required.</p></div>
         </div>
         <div className="mt-8 rounded-3xl border border-white/10 bg-[#07143d] p-5 sm:p-7">
           <h2 className="text-xl font-black">Upload a movie source</h2>
@@ -143,7 +143,7 @@ function VideoStudio() {
             <p className="mt-2 text-xs leading-5 text-blue-100/55">{upload.detail}</p>
           </div> : null}
         </div>
-        <p className="mt-6 text-xs leading-6 text-blue-100/40">Existing private Lovable buckets remain registered and legacy assets remain readable. New uploads and HLS output use one assigned destination per asset. No phone-side conversion is used.</p>
+        <p className="mt-6 text-xs leading-6 text-blue-100/40">Previously stored private videos remain available. New uploads and streaming-ready files use one assigned storage location per title. Your phone does not need to convert the video.</p>
       </section>
     </main>
   );
