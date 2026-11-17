@@ -74,10 +74,10 @@ function visibleCandidates(content, relative) {
   const attrPattern = /(?:title|content|aria-label|aria-description|placeholder|alt|label|description|subject|text)\s*=\s*["'\`]([^"'\`]+)["'\`]/g;
   for (const match of content.matchAll(attrPattern)) matches.push(match[1]);
   // TanStack head() metadata is commonly expressed as object properties.
-  const metadataPattern = /(?:^|[,{\\s])(?:title|content)\\s*:\\s*["'\`]([^"'\`]+)["'\`]/gm;
+  const metadataPattern = /(?:^|[,{\s])(?:title|content)\s*:\s*["'`]([^"'`]+)["'`]/gm;
   for (const match of content.matchAll(metadataPattern)) matches.push(match[1]);
   // Catch literal strings rendered inside JSX expression containers.
-  const expressionTextPattern = /\\{\\s*["'\`]([^"'\`]{2,})["'\`]\\s*\\}/g;
+  const expressionTextPattern = /\{\s*["'`]([^"'`]{2,})["'`]\s*\}/g;
   for (const match of content.matchAll(expressionTextPattern)) matches.push(match[1]);
   const textPattern = /<(?:Text|Button|Label|Badge|Alert|CardTitle|CardDescription)[^>]*>([^<>]+)</g;
   for (const match of content.matchAll(textPattern)) matches.push(match[1]);
