@@ -5,6 +5,7 @@ import {
   incrementalSessionCharge,
   maxAffordableSeconds,
   producerShareMinor,
+  splitRevenueMinor,
   requireSessionOwned,
   reportedPlaybackSeconds,
   safeAddMinor,
@@ -59,6 +60,27 @@ describe("session metering", () => {
   it("allocates producer shares with integer basis-point arithmetic", () => {
     expect(producerShareMinor(101, 7000)).toBe(70);
     expect(producerShareMinor(99, 3333)).toBe(32);
+  });
+
+
+  it("reconciles producer and platform shares exactly across currencies and varied block sizes", () => {
+    const currencies = ["NGN", "USD", "JPY", "KWD"];
+    let seed = 0x5eed;
+    const next = () => {
+      seed = (seed * 1_103_515_245 + 12_345) & 0x7fffffff;
+      return seed;
+    };
+    for (const currency of currencies) {
+      for (let i = 0; i < 500; i += 1) {
+        const debit = next() % 9_000_000;
+        const shareBps = next() % 10_001;
+        const split = splitRevenueMinor(debit, shareBps);
+        expect(split.producerMinor + split.platformMinor, currency).toBe(debit);
+        expect(Number.isSafeInteger(split.producerMinor)).toBe(true);
+        expect(Number.isSafeInteger(split.platformMinor)).toBe(true);
+        expect(split.producerMinor).toBeLessThanOrEqual(debit);
+      }
+    }
   });
 
   it("rejects invalid amounts and elapsed windows", () => {
