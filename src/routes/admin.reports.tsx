@@ -13,14 +13,41 @@ type Report = {
   note: string;
 };
 
-function formatMoney(amount: number, currency: string) {
-  const digits = new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
-  return new Intl.NumberFormat(undefined, { style: "currency", currency, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(amount / (10 ** digits));
+function formatMoney(amountMinor: number, currency: string) {
+  if (!Number.isSafeInteger(amountMinor)) return "—";
+  const locale = undefined;
+  const digits = new Intl.NumberFormat(locale, { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
+  const absolute = BigInt(Math.abs(amountMinor));
+  const scale = 10n ** BigInt(digits);
+  const whole = absolute / scale;
+  const fraction = absolute % scale;
+  const signedWhole = amountMinor < 0 && whole === 0n ? -1n : amountMinor < 0 ? -whole : whole;
+  const formatter = new Intl.NumberFormat(locale, {
+    style: "currency", currency, minimumFractionDigits: 0, maximumFractionDigits: 0,
+  });
+  const parts = formatter.formatToParts(signedWhole);
+  if (amountMinor < 0 && whole === 0n) {
+    const zero = new Intl.NumberFormat(locale, { useGrouping: false, maximumFractionDigits: 0 }).format(0);
+    const integer = parts.findIndex(part => part.type === "integer");
+    if (integer >= 0) parts[integer] = { ...parts[integer], value: zero };
+  }
+  if (digits === 0) return parts.map(part => part.value).join("");
+  const decimal = new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 })
+    .formatToParts(1.1).find(part => part.type === "decimal")?.value ?? ".";
+  const fractionText = new Intl.NumberFormat(locale, {
+    useGrouping: false, minimumIntegerDigits: digits, maximumFractionDigits: 0,
+  }).format(fraction);
+  let lastNumeric = -1;
+  parts.forEach((part, index) => {
+    if (part.type === "integer" || part.type === "group") lastNumeric = index;
+  });
+  parts.splice(lastNumeric + 1, 0, { type: "decimal", value: decimal }, { type: "fraction", value: fractionText });
+  return parts.map(part => part.value).join("");
 }
 
 export const Route = createFileRoute("/admin/reports")({
   component: MonthlyReportsPage,
-  head: () => ({ meta: [{ title: "Monthly reports | BQ SQWAD TV" }] }),
+  head: () => ({ meta: [{ title: "Monthly reports | BQ SQWAD TV" }, { name: "robots", content: "noindex, nofollow, noarchive" }] }),
 });
 
 function MonthlyReportsPage() {
