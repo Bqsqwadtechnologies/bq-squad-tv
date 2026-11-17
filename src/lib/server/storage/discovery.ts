@@ -1,8 +1,8 @@
 import { ApiError } from "../firebase-admin";
 import type { StorageDestinationMetadata, StoragePurpose } from "./registry";
 
-const LOVABLE_BUNDLE = /^STORAGE_LOV_BUNDLE_\\d{2,}$/;
-const B2_PREFIX = /^STORAGE_B2_(?:NN)?(\\d{2})$/;
+const LOVABLE_BUNDLE = /^STORAGE_LOV_BUNDLE_\d{2,}$/;
+const B2_PREFIX = /^STORAGE_B2_(?:NN)?(\d{2})$/;
 const GB = 1_000_000_000;
 const DEFAULT_LOVABLE_SOFT_CAP = 4_500_000_000;
 const DEFAULT_LOVABLE_EGRESS = 9_000_000_000;
@@ -24,7 +24,7 @@ function safeId(value: string): string {
   return normalized.slice(0, 76);
 }
 function accountGroupForHost(host: string): string {
-  return "lovable:" + safeId(host.replace(/\\./g, "-")).slice(0, 90);
+  return "lovable:" + safeId(host.replace(/\./g, "-")).slice(0, 90);
 }
 function validHttpsUrl(value: unknown): value is string {
   if (typeof value !== "string" || value.length > 2048) return false;
@@ -48,7 +48,7 @@ async function discoverB2Bucket(
     const parsed = new URL(endpoint);
     if (parsed.protocol !== "https:" || parsed.username || parsed.password ||
         parsed.search || parsed.hash || !parsed.hostname.endsWith(".backblazeb2.com")) return null;
-    region = parsed.hostname.match(/^s3\\.([a-z0-9-]+)\\.backblazeb2\\.com$/i)?.[1] ?? "";
+    region = parsed.hostname.match(/^s3\.([a-z0-9-]+)\.backblazeb2\.com$/i)?.[1] ?? "";
   } catch { return null; }
   if (!region) return null;
 
@@ -128,7 +128,7 @@ export async function discoverStorageDestinations(
   const output: DiscoveredStorageDestination[] = [];
   const seen = new Set<string>();
   const secretNames = Object.keys(env).filter(name =>
-    LOVABLE_BUNDLE.test(name) || /^STORAGE_B2_(?:NN)?\\d{2}_(?:KEY_ID|APP_KEY|BUCKET_ID|ENDPOINT)$/.test(name),
+    LOVABLE_BUNDLE.test(name) || /^STORAGE_B2_(?:NN)?\d{2}_(?:KEY_ID|APP_KEY|BUCKET_ID|ENDPOINT)$/.test(name),
   ).sort();
   let skippedRegistered = 0;
   let unresolvedBackblaze = 0;
