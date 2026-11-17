@@ -142,10 +142,6 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
           }
           const allowedExtension = /\.(?:m3u8|ts|m4s|mp4|vtt|aac|m4a|key|bin)$/i;
           if (!allowedExtension.test(resourcePath)) throw new ApiError(415, "STREAM_RESOURCE_TYPE_INVALID", "This media resource type is not allowed.");
-          const rootPath = typeof session["storagePath"] === "string" ? session["storagePath"] : "";
-          if (!isSafeStoragePath(rootPath) || !resourcePath.startsWith(rootPath.slice(0, rootPath.lastIndexOf("/") + 1))) {
-            throw new ApiError(403, "STREAM_RESOURCE_OUTSIDE_ASSET", "This resource is outside the authorized media asset.");
-          }
           const channelId = typeof session["channelId"] === "string" ? session["channelId"] : "";
           const assetId = typeof session["contentAssetId"] === "string" ? session["contentAssetId"] : "";
           const [channel, asset, profile] = await Promise.all([
