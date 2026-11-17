@@ -332,6 +332,120 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         return await processReplicaCopyTask(fs, taskPath, task);
       }
 
+      if (task["taskType"] === "storage_destination_drain") {
+        const payload = task["payload"] as Record<string, unknown> | undefined;
+        const destinationId = typeof payload?.["destinationId"] === "string" ? payload["destinationId"] : "";
+        const cursorValue = typeof payload?.["cursorValue"] === "string" ? payload["cursorValue"] : null;
+        const cursorId = typeof payload?.["cursorId"] === "string" ? payload["cursorId"] : null;
+        if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId) ||
+            ["legacy_lovable_source", "legacy_lovable_streaming", "lovable-source-legacy", "lovable-stream-legacy"].includes(destinationId)) {
+          throw new ApiError(400, "STORAGE_DRAIN_DESTINATION_INVALID", "This storage location is protected or invalid.");
+        }
+        const sourceRaw = await fs.getDoc("storageDestinations/" + destinationId);
+        if (!sourceRaw) throw new ApiError(404, "STORAGE_DRAIN_DESTINATION_MISSING", "The storage location could not be found.");
+        const sourceMetadata = validateStorageDestinationMetadata({ ...sourceRaw, destinationId });
+        if (sourceMetadata.purpose !== "hls_streaming" || sourceMetadata.mode !== "drain") {
+          throw new ApiError(409, "STORAGE_DRAIN_MODE_REQUIRED", "Only a streaming location already in drain mode can be moved.");
+        }
+        const page = await fs.query("contentAssets", {
+          filters: [{ field: "streamDestinationId", op: "EQUAL", value: destinationId }],
+          orderByField: "updatedAt",
+          ...(cursorValue && cursorId ? { startAfter: { fieldValue: cursorValue, documentId: "contentAssets/" + cursorId } } : {}),
+          limit: 1,
+        });
+        if (page.length === 0) {
+          // A fresh first-page query is the final safety check before retirement.
+          const remaining = await fs.query("contentAssets", {
+            filters: [{ field: "streamDestinationId", op: "EQUAL", value: destinationId }],
+            limit: 1,
+          });
+          if (remaining.length > 0) {
+            await fs.patchDoc(taskPath, { payload: { destinationId, cursorValue: null, cursorId: null }, leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now });
+            return Response.json({ done: false, resetCursor: true });
+          }
+          await fs.patchDoc("storageDestinations/" + destinationId, {
+            mode: "retired", enabled: false, drainCompletedAt: now, updatedAt: now,
+          });
+          await rebuildStoragePoolIndex(fs, ["hls_streaming"]);
+          await fs.patchDoc(taskPath, { phase: "done", completedAt: now, updatedAt: now });
+          return Response.json({ done: true, retired: true });
+        }
+        const asset = page[0]!;
+        const assetId = asset.__id;
+        const objectPrefix = typeof asset["objectPrefix"] === "string" ? asset["objectPrefix"] : "";
+        const streamBytes = typeof asset["streamBytes"] === "number" && Number.isSafeInteger(asset["streamBytes"])
+          ? asset["streamBytes"] : typeof asset["actualHlsBytes"] === "number" && Number.isSafeInteger(asset["actualHlsBytes"])
+            ? asset["actualHlsBytes"] : 0;
+        if (!/^hls\/[A-Za-z0-9_-]{1,100}\/a[1-9][0-9]*$/.test(objectPrefix) ||
+            !objectPrefix.startsWith("hls/" + assetId + "/") || streamBytes < 1) {
+          throw new ApiError(409, "STORAGE_DRAIN_ASSET_UNVERIFIABLE", "A film on this location has no complete verified copy details; the drain remains paused.");
+        }
+        const sourceGroup = sourceMetadata.accountGroup;
+        const replicaIds = Array.isArray(asset["streamReplicaIds"])
+          ? asset["streamReplicaIds"].filter((id): id is string => typeof id === "string") : [];
+        const excludedGroups = [sourceGroup];
+        for (const replicaId of replicaIds) {
+          const replica = await fs.getDoc("storageDestinations/" + replicaId);
+          if (typeof replica?.["accountGroup"] === "string") excludedGroups.push(replica["accountGroup"]);
+        }
+        const reservationId = "drain-" + crypto.randomUUID().replace(/-/g, "");
+        const reservation = await reserveStorageDestination(fs, {
+          purpose: "hls_streaming", incomingBytes: streamBytes, reservationId, assetId,
+          excludeDestinationIds: [destinationId, ...replicaIds],
+          excludeAccountGroups: excludedGroups,
+        });
+        const budgetPath = "storageReplicaBudget/global";
+        try {
+          await fs.transact([budgetPath], docs => {
+            const current = docs[0];
+            const budgetBytes = typeof current?.["budgetBytes"] === "number" ? current["budgetBytes"] : 0;
+            const usedBytes = typeof current?.["usedBytes"] === "number" ? current["usedBytes"] : 0;
+            if (!Number.isSafeInteger(budgetBytes) || !Number.isSafeInteger(usedBytes) ||
+                budgetBytes < 1 || usedBytes + streamBytes > budgetBytes) {
+              throw new ApiError(507, "STORAGE_DRAIN_REPLICA_BUDGET", "There is not enough reserved spare space to move this film.");
+            }
+            return { result: undefined, writes: [{
+              update: { name: fs.docName(budgetPath), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ usedBytes: usedBytes + streamBytes, updatedAt: now }) },
+              updateMask: { fieldPaths: ["usedBytes", "updatedAt"] },
+            }] };
+          });
+          const next = page[0]!;
+          const nextCursorValue = typeof next["updatedAt"] === "string" ? next["updatedAt"] : "";
+          if (!nextCursorValue) throw new ApiError(409, "STORAGE_DRAIN_CURSOR_UNAVAILABLE", "The film record is missing its update date; the drain was paused safely.");
+          const copyTaskId = "drain-copy-" + crypto.randomUUID().replace(/-/g, "").slice(0, 24);
+          await fs.setDoc("videoMaintenanceJobs/" + copyTaskId, {
+            taskType: "storage_rebalance", payload: {
+              switchPrimary: true, assetId, sourceDestinationId: destinationId,
+              targetDestinationId: reservation.destinationId, sourcePrefix: objectPrefix,
+              targetPrefix: objectPrefix, reservationId, streamBytes,
+              phase: "files", listingCursor: null, pendingKeys: [], pendingIndex: 0,
+              copiedBytes: 0, copiedObjectCount: 0, verifyCursor: null,
+              verifiedBytes: 0, verifiedObjectCount: 0,
+            },
+            status: "queued", attempts: 0, reason: "Move a film from a draining storage location",
+            createdAt: now, updatedAt: now,
+          }, { mustNotExist: true });
+          await fs.patchDoc(taskPath, {
+            payload: { destinationId, cursorValue: nextCursorValue, cursorId: assetId, queuedAssetId: assetId, queuedCopyTaskId: copyTaskId },
+            queuedAssetCount: (typeof task["queuedAssetCount"] === "number" ? task["queuedAssetCount"] : 0) + 1,
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+          });
+          return Response.json({ done: false, queuedCopy: true, assetId, copyTaskId });
+        } catch (error) {
+          await releaseStorageReservation(fs, reservationId).catch(() => undefined);
+          await fs.transact([budgetPath], docs => {
+            const current = docs[0];
+            if (!current) return { result: undefined, writes: [] };
+            const used = typeof current["usedBytes"] === "number" ? current["usedBytes"] : 0;
+            return { result: undefined, writes: [{
+              update: { name: fs.docName(budgetPath), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ usedBytes: Math.max(0, used - streamBytes), updatedAt: now }) },
+              updateMask: { fieldPaths: ["usedBytes", "updatedAt"] },
+            }] };
+          }).catch(() => undefined);
+          throw error;
+        }
+      }
+
       if (task["taskType"] === "storage_rebalance_cleanup") {
         const payload = task["payload"] as Record<string, unknown> | undefined;
         const assetId = typeof payload?.["assetId"] === "string" ? payload["assetId"] : "";
