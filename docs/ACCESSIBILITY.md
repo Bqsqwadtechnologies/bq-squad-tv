@@ -58,3 +58,7 @@ Not verified:
 - Website 320/360/390/430/768 px screenshots.
 
 No accessibility conformance claim is made. Automated and manual checks remain required.
+
+
+- The Android player already exposes a **Subtitles** track-selection control; the current work retained it. Its behavior and accessibility labels were not tested on a device.
+- Recent wording cleanup replaced raw exception text from Android catalogue, channel, search, wallet, profile, sign-in, producer and player flows with the central safe-message mapping. This avoids exposing vendor/library error details to people using the app.
