@@ -15,6 +15,8 @@
 - Version changes marked `requiresReacceptance` require acceptance of the exact new version. Website sign-in now checks current acceptance and presents updated public documents before allowing the account flow to continue.
 - Website account creation requires an explicit Terms and Privacy checkbox, verifies that both pages are published, records acceptance, and only then completes the profile. The profile-completion endpoint independently enforces the acceptance record.
 - Legal page templates now have one canonical JSON source shared by the owner seed API and the standalone validation script. Published page audience is checked against the requested audience to prevent cross-audience document substitution.
+- Added an authenticated legal-status endpoint for current-version checks across viewer, producer and provider audiences. The website and Android sign-in flows use it for public-page reacceptance; the Android app checks before entering the viewer experience.
+- Website and Android account creation now preflight that both public legal pages are published and require explicit consent before profile completion.
 - Added unit coverage for audience-specific required documents, wrong-audience pages, draft and placeholder rejection, exact-version reacceptance and legacy acceptance when reacceptance is not required.
 
 ## Not completed
@@ -28,6 +30,8 @@
 ## Verification
 - `scripts/scan-public-text.mjs`: **not run**. The repository runtime was not available in this session. No claim of a clean scan is made.
 - `node --check` on the standalone seed script syntax: **passed** using the current script source copied for syntax validation; the script itself and full repository scanner were not executed.
+- Read-only validation of the canonical seed JSON: **passed** — five unique expected slugs, correct audience assignments, 16 distinct placeholders, and no obvious credential literal.
+- Seed-template wording was checked against the scanner's forbidden vocabulary list: **no matches in the five legal document bodies**. This is not a substitute for running `scripts/scan-public-text.mjs` across the repository.
 - New `src/test/legal-acceptance.test.ts` coverage was committed but has not been executed.
 - Vitest: **not run**.
 - Website typecheck/build and Android build: **not run**.
