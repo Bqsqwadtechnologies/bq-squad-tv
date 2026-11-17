@@ -124,3 +124,13 @@ The current website routes are placeholders that explicitly say publication is p
 - Keep the two legacy storage locations intact. They remain read-only fallbacks for older assets and must never be deleted, renamed or migrated as part of pool registration.
 - Keep paid egress disabled. Do not add paid egress secrets, controls or automatic fallback to paid transfer.
 - The application owner and adult billing owner should review account allowances and alerts before enabling production storage or playback.
+
+## Direct playback storage CORS setup
+
+Direct-signed playback sends HLS segments from the selected storage provider straight to the viewer's player. Configure browser CORS on every active HLS bucket before selecting **Direct signed storage links** for that location. Keep **Website delivery fallback** selected until the bucket's CORS test succeeds.
+
+For each Backblaze B2 S3-compatible bucket, allow only the exact production website origins used by BQ SQWAD TV (including the https scheme; do not use * when credentials or private headers are involved). Allow methods `GET` and `HEAD`. Allow request headers `Range`, `If-Range`, and `Origin`. Expose response headers `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag`, and `Last-Modified`. Set a bounded preflight cache (for example, one hour). Do not enable public bucket access.
+
+For every managed Lovable storage bucket used for HLS, apply the equivalent exact-origin CORS policy in the storage provider's bucket CORS settings: `GET` and `HEAD`, request headers `Range`, `If-Range`, `Origin`, and exposed headers `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag`, and `Last-Modified`. If the managed bucket interface does not expose a CORS setting or the browser test fails, leave that destination in `api_proxy` mode.
+
+The player uses signed query-string URLs and does not require cross-origin cookies. Do not enable credentialed wildcard CORS. Test a real playlist and a byte-range segment from the production site before switching a destination to direct delivery. These CORS rules do not apply to the two protected legacy locations unless the owner independently confirms they are already configured; do not alter those locations as part of this work.
