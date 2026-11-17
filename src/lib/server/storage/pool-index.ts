@@ -116,7 +116,10 @@ export async function rebuildStoragePoolIndex(
     const paidConsistent = paidChoices.every(value => value === false);
     const budgetConsistent = budgets.every(value => value === budgetValue);
     const ledger = await fs.getDoc("storageAccountEgress/" + storageAccountEgressId(groupId));
-    const egressUsed = ledger?.["monthKey"] === monthKey ? safeBytes(ledger["monthBytes"]) : 0;
+    const egressState = await fs.getDoc("storageEgressState/" + storageAccountEgressId(groupId));
+    const egressUsed = egressState?.["monthKey"] === monthKey
+      ? safeBytes(egressState["monthExpectedBytes"])
+      : ledger?.["monthKey"] === monthKey ? safeBytes(ledger["monthBytes"]) : 0;
     const egressHeadroomBytes = budgetConsistent && paidConsistent &&
       typeof budgetValue === "number" && Number.isSafeInteger(budgetValue) && budgetValue >= 0
       ? Math.max(0, budgetValue - egressUsed)
