@@ -22,14 +22,14 @@ function encodeQuery(entries: Array<[string, string]>): string {
     .join("&");
 }
 async function sha256(value: string | Uint8Array): Promise<string> {
-  const bytes = typeof value === "string" ? encoder.encode(value) : value;
-  return hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)));
+  const bytes = typeof value === "string" ? encoder.encode(value) : new Uint8Array(value);
+  return hex(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes.slice().buffer as ArrayBuffer)));
 }
 async function hmac(key: Uint8Array, value: string): Promise<Uint8Array> {
   const cryptoKey = await crypto.subtle.importKey(
-    "raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+    "raw", key.slice().buffer as ArrayBuffer, { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
   );
-  return new Uint8Array(await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(value)));
+  return new Uint8Array(await crypto.subtle.sign("HMAC", cryptoKey, encoder.encode(value).buffer as ArrayBuffer);
 }
 async function signingKey(secret: string, date: string, region: string): Promise<Uint8Array> {
   const dateKey = await hmac(encoder.encode("AWS4" + secret), date);
