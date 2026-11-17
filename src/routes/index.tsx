@@ -86,7 +86,7 @@ function HomePage() {
   ];
 
   return (
-    <main id="home" className="min-h-screen overflow-hidden bg-[#030b2a] pb-24 text-white md:pb-8">
+    <main id="home" className="min-h-screen overflow-hidden bg-white pb-24 text-slate-900 md:pb-8">
       <div className="pointer-events-none fixed inset-0 -z-0 overflow-hidden" aria-hidden="true">
         <div className="absolute -top-72 left-1/2 h-[42rem] w-[70rem] -translate-x-1/2 rounded-full bg-blue-600/20 blur-[150px]" />
         <div className="absolute right-[-16rem] top-[30rem] h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-[130px]" />
@@ -96,24 +96,24 @@ function HomePage() {
         <a href="#home" className="shrink-0" aria-label="BQ SQWAD TV home">
           <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-auto w-[120px] object-contain min-[400px]:w-[168px] sm:w-[205px]" />
         </a>
-        <nav className="hidden items-center gap-8 text-sm font-semibold text-white/65 lg:flex">
+        <nav className="hidden items-center gap-8 text-sm font-semibold text-slate-600 lg:flex">
           {nav.slice(0, 3).map(item => (
             <a key={item.label} href={item.href} onClick={() => setActiveNav(item.label)}
-              className={activeNav === item.label ? "text-cyan-300" : "transition hover:text-white"}>
+              className={activeNav === item.label ? "text-cyan-300" : "transition hover:text-blue-700"}>
               {item.label}
             </a>
           ))}
-          <a href="#family" className="transition hover:text-white">Kids & Family</a>
+          <a href="#family" className="transition hover:text-blue-700">Kids & Family</a>
         </nav>
         <div className="relative flex shrink-0 items-center gap-1.5 sm:gap-3">
-          <a href="/account" aria-label="Sign in or view account" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-cyan-200/50 bg-[#08163e] text-cyan-100 ring-2 ring-cyan-300/15">
+          <a href="/account" aria-label="Sign in or view account" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-cyan-200/50 bg-white text-blue-700 ring-2 ring-cyan-300/15">
             <UserRound size={21} aria-hidden="true" />
           </a>
-          <a href="/wallet" aria-label="Wallet" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-xs font-bold text-cyan-100 transition hover:border-cyan-300/50">{walletCurrencySymbol}</a>
-          <a href="#library" aria-label="Search" className="hidden h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50 hover:text-cyan-200 min-[381px]:grid"><Search size={19} /></a>
-          <button onClick={() => setNotice("Notifications will appear here when your account is connected.")} aria-label="Notifications" className="relative hidden h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 transition hover:border-cyan-300/50 min-[381px]:grid"><Bell size={18} /><span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-cyan-300" /></button>
-          <button onClick={() => setHeaderMenuOpen(value => !value)} aria-label="More options" aria-expanded={headerMenuOpen} className="grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.05] text-white/80 min-[381px]:hidden"><MoreHorizontal size={20} /></button>
-          {headerMenuOpen ? <div className="absolute right-0 top-12 z-50 grid min-w-40 gap-1 rounded-xl border border-white/10 bg-[#07143d] p-2 shadow-xl min-[381px]:hidden">
+          <a href="/wallet" aria-label="Wallet" className="grid h-11 w-11 shrink-0 place-items-center rounded-full border border-blue-100 bg-blue-50 text-xs font-bold text-blue-700 transition hover:border-cyan-300/50">{walletCurrencySymbol}</a>
+          <a href="#library" aria-label="Search" className="hidden h-10 w-10 place-items-center rounded-full border border-blue-100 bg-white text-blue-700 transition hover:border-cyan-300/50 hover:text-cyan-200 min-[381px]:grid"><Search size={19} /></a>
+          <button onClick={() => setNotice("Notifications will appear here when your account is connected.")} aria-label="Notifications" className="relative hidden h-10 w-10 place-items-center rounded-full border border-blue-100 bg-white text-blue-700 transition hover:border-cyan-300/50 min-[381px]:grid"><Bell size={18} /><span className="absolute right-2 top-1 h-2 w-2 rounded-full bg-cyan-300" /></button>
+          <button onClick={() => setHeaderMenuOpen(value => !value)} aria-label="More options" aria-expanded={headerMenuOpen} className="grid h-10 w-10 place-items-center rounded-full border border-blue-100 bg-white text-blue-700 min-[381px]:hidden"><MoreHorizontal size={20} /></button>
+          {headerMenuOpen ? <div className="absolute right-0 top-12 z-50 grid min-w-40 gap-1 rounded-xl border border-blue-100 bg-white p-2 text-slate-800 shadow-xl min-[381px]:hidden">
             <a href="#library" onClick={() => setHeaderMenuOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm"><Search size={16} /> Search</a>
             <button onClick={() => { setHeaderMenuOpen(false); setNotice("Notifications will appear here when your account is connected."); }} className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm"><Bell size={16} /> Notifications</button>
           </div> : null}
@@ -131,14 +131,14 @@ function HomePage() {
               <p className="mt-5 max-w-lg text-sm leading-7 text-blue-50/75 sm:text-base">Live channels, movies, series and family entertainment — brought together in one viewing experience.</p>
               <div className="mt-7 flex flex-wrap gap-3">
                 <a href="#live-channels" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-300 to-blue-400 px-5 py-3 text-sm font-extrabold text-[#031039] shadow-lg shadow-cyan-500/20 transition hover:brightness-110"><Play size={16} fill="currentColor" /> Explore channels</a>
-                <a href="#library" className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/[0.06] px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10"><CirclePlay size={17} /> Browse library</a>
+                <a href="#library" className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-bold text-blue-800 transition hover:bg-blue-50"><CirclePlay size={17} /> Browse library</a>
               </div>
             </div>
             <div className="relative hidden min-h-[250px] items-center justify-center lg:flex">
               <div className="absolute h-64 w-64 rounded-full border border-cyan-200/20 shadow-[0_0_90px_rgba(34,211,238,0.15)]" />
               <div className="absolute h-48 w-48 rounded-full border border-blue-100/20" />
               <div className="relative flex h-44 w-72 -rotate-6 items-center justify-center rounded-[2rem] border border-cyan-100/30 bg-gradient-to-br from-blue-400/35 via-[#061b60] to-[#020824] shadow-2xl shadow-black/40">
-                <div className="absolute inset-3 rounded-[1.4rem] border border-white/10" />
+                <div className="absolute inset-3 rounded-[1.4rem] border border-blue-100" />
                 <div className="grid h-20 w-20 place-items-center rounded-3xl border border-cyan-100/50 bg-cyan-300/10 text-cyan-100 shadow-[0_0_35px_rgba(34,211,238,0.28)]"><Tv2 size={42} /></div>
                 <span className="absolute bottom-5 text-xs font-black tracking-[0.22em] text-white">WATCH · STREAM · ENJOY</span>
               </div>
@@ -158,7 +158,7 @@ function HomePage() {
           <div className="grid grid-cols-4 gap-2.5 sm:gap-4">
             {quick.map(({ label, icon: Icon, href }) => (
               <a key={label} href={href} onClick={() => setActiveQuick(label)}
-                className={activeQuick === label ? "group flex min-h-[104px] flex-col items-center justify-center gap-3 rounded-2xl border border-cyan-300/50 bg-gradient-to-b from-blue-600/80 to-[#071b59] text-cyan-100 shadow-[0_10px_35px_rgba(0,102,255,0.22)] transition sm:min-h-[125px]" : "group flex min-h-[104px] flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-b from-[#0c2465] to-[#06133d] text-white/80 transition hover:border-cyan-300/40 sm:min-h-[125px]"}>
+                className={activeQuick === label ? "group flex min-h-[104px] flex-col items-center justify-center gap-3 rounded-2xl border border-cyan-300/50 bg-gradient-to-b from-blue-600/80 to-[#071b59] text-cyan-100 shadow-[0_10px_35px_rgba(0,102,255,0.22)] transition sm:min-h-[125px]" : "group flex min-h-[104px] flex-col items-center justify-center gap-3 rounded-2xl border border-blue-100 bg-gradient-to-b from-white to-blue-50 text-slate-700 transition hover:border-cyan-300/40 sm:min-h-[125px]"}>
                 <span className="grid h-11 w-11 place-items-center rounded-xl bg-cyan-300/10 text-cyan-200 transition group-hover:scale-105"><Icon size={25} /></span>
                 <span className="text-xs font-bold sm:text-sm">{label}</span>
               </a>
@@ -173,20 +173,20 @@ function HomePage() {
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             {featuredContent.map(item => (
-              <a key={item.id} href={"/content/" + encodeURIComponent(item.id)} aria-label={"View " + item.title} className="group block overflow-hidden rounded-2xl border border-white/10 bg-[#07143d]">
-                <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-gradient-to-br from-blue-800 via-indigo-950 to-slate-950">
-                  {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" /> : <Film size={48} className="text-white/30" />}
-                  <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#020824] via-[#020824]/80 to-transparent px-3 pb-4 pt-12">
+              <a key={item.id} href={"/content/" + encodeURIComponent(item.id)} aria-label={"View " + item.title} className="group block overflow-hidden rounded-2xl border border-blue-100 bg-white">
+                <div className="relative flex aspect-[4/5] items-center justify-center overflow-hidden bg-gradient-to-br from-blue-100 via-sky-100 to-slate-100">
+                  {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" /> : <Film size={48} className="text-blue-300" />}
+                  <span className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-900/80 to-transparent px-3 pb-4 pt-12">
                     <span className="block text-sm font-black leading-tight sm:text-base">{item.title}</span>
-                    <span className="mt-1 block text-[10px] font-semibold text-white/60">{item.category}</span>
+                    <span className="mt-1 block text-[10px] font-semibold text-slate-700">{item.category}</span>
                   </span>
                 </div>
               </a>
             ))}
-            {catalogState === "loading" && <p className="col-span-full py-8 text-center text-sm text-white/50">Loading featured content…</p>}
-            {catalogState === "signed_out" && <p className="col-span-full py-8 text-center text-sm text-white/50">Sign in to view the live catalogue and featured titles.</p>}
-            {catalogState === "error" && <p className="col-span-full py-8 text-center text-sm text-white/50">The catalogue is temporarily unavailable.</p>}
-            {catalogState === "ready" && featuredContent.length === 0 && <p className="col-span-full py-8 text-center text-sm text-white/50">No featured titles have been published yet.</p>}
+            {catalogState === "loading" && <p className="col-span-full py-8 text-center text-sm text-slate-500">Loading featured content…</p>}
+            {catalogState === "signed_out" && <p className="col-span-full py-8 text-center text-sm text-slate-500">Sign in to view the live catalogue and featured titles.</p>}
+            {catalogState === "error" && <p className="col-span-full py-8 text-center text-sm text-slate-500">The catalogue is temporarily unavailable.</p>}
+            {catalogState === "ready" && featuredContent.length === 0 && <p className="col-span-full py-8 text-center text-sm text-slate-500">No featured titles have been published yet.</p>}
           </div>
         </section>
 
@@ -197,15 +197,15 @@ function HomePage() {
           </div>
           <div className="grid gap-2.5 sm:grid-cols-2">
             {channels.map(channel => (
-              <article key={channel.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-gradient-to-r from-[#0b1e58] to-[#07143d] p-3">
+              <article key={channel.id} className="flex items-center gap-3 rounded-2xl border border-blue-100 bg-gradient-to-r from-white to-blue-50 p-3">
                 <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 text-white shadow-lg">
                   {channel.posterUrl ? <img src={channel.posterUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : <Tv2 size={22} />}
                 </span>
-                <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{channel.title}</span><span className="mt-1 block text-[11px] text-white/50">{channel.currentProgramme || channel.category}</span></span>
+                <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{channel.title}</span><span className="mt-1 block text-[11px] text-slate-500">{channel.currentProgramme || channel.category}</span></span>
                 <span className="flex items-center gap-1.5 text-cyan-200"><Signal size={17} /><span className="hidden text-[10px] font-bold uppercase sm:inline">{channel.isLive ? "Live" : "Channel"}</span></span>
               </article>
             ))}
-            {catalogState === "ready" && channels.length === 0 && <p className="col-span-full py-6 text-center text-sm text-white/50">No published channels are available yet.</p>}
+            {catalogState === "ready" && channels.length === 0 && <p className="col-span-full py-6 text-center text-sm text-slate-500">No published channels are available yet.</p>}
           </div>
         </section>
 
@@ -220,18 +220,18 @@ function HomePage() {
 
         {notice && <div role="status" className="fixed bottom-24 left-1/2 z-50 w-[min(92vw,440px)] -translate-x-1/2 rounded-2xl border border-cyan-200/30 bg-[#061a4d] px-5 py-4 text-sm text-white shadow-2xl shadow-black/50 md:bottom-6"><div className="flex items-start justify-between gap-4"><p>{notice}</p><button onClick={() => setNotice("")} className="text-cyan-200">Close</button></div></div>}
 
-        <footer id="settings" className="mt-12 border-t border-white/10 py-7 text-center text-xs text-white/35">
+        <footer id="settings" className="mt-12 border-t border-blue-100 py-7 text-center text-xs text-slate-500">
           <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="mx-auto h-auto w-40 object-contain" />
           <p className="mt-2">© {new Date().getFullYear()} Bq Sqwad Technologies. All rights reserved.</p>
           <p className="mt-1">Content availability depends on distribution rights and your region.</p>
         </footer>
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-cyan-300/15 bg-[#030b2a]/95 px-2 pb-[env(safe-area-inset-bottom)] pt-2 backdrop-blur-xl md:hidden" aria-label="Primary navigation">
+      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-blue-100 bg-white/95 px-2 pb-[env(safe-area-inset-bottom)] pt-2 backdrop-blur-xl md:hidden" aria-label="Primary navigation">
         <div className="mx-auto flex max-w-xl items-center justify-around">
           {nav.map(({ label, icon: Icon, href }) => (
             <a key={label} href={href} onClick={() => setActiveNav(label)}
-              className={activeNav === label ? "flex min-w-0 flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-cyan-200" : "flex min-w-0 flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-white/55"}>
+              className={activeNav === label ? "flex min-w-0 flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-cyan-200" : "flex min-w-0 flex-col items-center gap-1 rounded-xl px-3 py-1.5 text-slate-500"}>
               <Icon size={19} /><span className="text-[10px] font-bold">{label}</span>
             </a>
           ))}
