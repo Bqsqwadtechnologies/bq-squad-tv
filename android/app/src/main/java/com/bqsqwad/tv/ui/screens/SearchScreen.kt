@@ -1,4 +1,5 @@
 package com.bqsqwad.tv.ui.screens
+import com.bqsqwad.tv.ui.ErrorMessages
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,7 +42,7 @@ import kotlinx.coroutines.launch
                         error = null
                     }.onFailure {
                         error =
-                            it.localizedMessage ?: "Search unavailable."
+                            ErrorMessages.TRY_AGAIN
                     }
             }
     }
