@@ -1,7 +1,80 @@
 import type { ReactNode } from "react";
-import { Star, UserRound } from "lucide-react";
+import { Star, UserRound, type LucideIcon } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Action = { label: string; onClick: () => void };
+
+export function AppTopBar({ title, leading, actions }: {
+  title: string; leading?: ReactNode; actions?: ReactNode;
+}) {
+  return <header className="sticky top-0 z-30 flex min-h-14 items-center gap-3 border-b border-border bg-background/95 px-4 py-2 backdrop-blur">
+    {leading}
+    <h1 className="min-w-0 flex-1 truncate text-base font-bold text-foreground">{title}</h1>
+    <div className="flex shrink-0 items-center gap-2">{actions}</div>
+  </header>;
+}
+
+export function IconButton({ label, icon: Icon, onClick, disabled = false }: {
+  label: string; icon: LucideIcon; onClick: () => void; disabled?: boolean;
+}) {
+  return <button type="button" aria-label={label} title={label} disabled={disabled} onClick={onClick}
+    className="inline-grid h-11 w-11 shrink-0 place-items-center rounded-full border border-border bg-card text-foreground transition hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50">
+    <Icon size={19} aria-hidden="true" />
+  </button>;
+}
+
+export function BottomSheet({ open, onOpenChange, title, description, children }: {
+  open: boolean; onOpenChange: (open: boolean) => void; title: string; description?: string; children: ReactNode;
+}) {
+  return <Sheet open={open} onOpenChange={onOpenChange}>
+    <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl">
+      <SheetHeader>
+        <SheetTitle>{title}</SheetTitle>
+        {description ? <SheetDescription>{description}</SheetDescription> : null}
+      </SheetHeader>
+      <div className="mt-5">{children}</div>
+    </SheetContent>
+  </Sheet>;
+}
+
+export function ConfirmDialog({ open, onOpenChange, title, description, confirmLabel = "Confirm", onConfirm }: {
+  open: boolean; onOpenChange: (open: boolean) => void; title: string; description: string;
+  confirmLabel?: string; onConfirm: () => void;
+}) {
+  return <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{title}</AlertDialogTitle>
+        <AlertDialogDescription>{description}</AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel className="min-h-11">Cancel</AlertDialogCancel>
+        <AlertDialogAction className="min-h-11" onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>;
+}
+
+export function showToast(message: string, description?: string) {
+  toast(message, description ? { description } : undefined);
+}
+
+export function LearnMoreSheet({ open, onOpenChange, title, children }: {
+  open: boolean; onOpenChange: (open: boolean) => void; title: string; children: ReactNode;
+}) {
+  return <BottomSheet open={open} onOpenChange={onOpenChange} title={title} description="More information">
+    {children}
+  </BottomSheet>;
+}
+
 
 export function AppCard({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <section className={`rounded-2xl border border-border bg-card p-4 text-card-foreground ${className}`}>{children}</section>;
