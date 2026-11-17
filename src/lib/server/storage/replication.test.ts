@@ -9,7 +9,7 @@ function fakeAdapter(objects: Map<string, Uint8Array>): StorageProviderAdapter {
     async getObject(key) {
       const body = objects.get(key);
       if (!body) throw new Error("missing");
-      return { body: body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength), info: { sizeBytes: body.byteLength, etag: null, contentType: "video/mp2t" } };
+      return { body: Uint8Array.from(body).buffer, info: { sizeBytes: body.byteLength, etag: null, contentType: "video/mp2t" } };
     },
     async headObject(key) {
       const body = objects.get(key);
