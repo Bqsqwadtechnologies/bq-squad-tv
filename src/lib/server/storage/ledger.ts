@@ -90,7 +90,9 @@ export function resolveAssetStorageBinding(
     ? (asset["sourceObjectPrefix"] ?? asset["sourcePath"])
     : role === "poster"
       ? (asset["posterObjectPrefix"] ?? asset["objectPrefix"] ?? asset["streamObjectPrefix"])
-      : (asset["objectPrefix"] ?? asset["streamObjectPrefix"]);
+      : (asset["objectPrefix"] ?? asset["streamObjectPrefix"] ??
+          (typeof asset["hlsManifestKey"] === "string" && asset["hlsManifestKey"].includes("/")
+            ? asset["hlsManifestKey"].slice(0, asset["hlsManifestKey"].lastIndexOf("/")) : null));
   const objectPrefix = typeof rawPrefix === "string" && rawPrefix.length <= 1024 &&
     !rawPrefix.startsWith("/") && !rawPrefix.includes("\\\\") &&
     rawPrefix.split("/").every(part => part && part !== "." && part !== "..")
