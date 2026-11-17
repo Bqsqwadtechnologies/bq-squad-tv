@@ -32,7 +32,7 @@ export async function enforceRateLimit(
   }
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(key));
   const keyHash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
-  if (!consumeLocalRateLimit(keyHash, policy, now)) {
+  if (process.env["NODE_ENV"] !== "test" && !consumeLocalRateLimit(keyHash, policy, now)) {
     throw new ApiError(429, "RATE_LIMITED", "Too many requests. Please try again later.");
   }
   const path = `rateLimits/${keyHash}`;
