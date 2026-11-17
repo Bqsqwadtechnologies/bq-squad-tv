@@ -10,7 +10,7 @@ import { getPricingConfig, requireMinorUnitAmount } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSafeStoragePath, signPlaybackToken } from "@/lib/server/storage/security";
 import { signSessionLeaseToken } from "@/lib/server/session-lease-token";
-import { recordRiskSignal } from "@/lib/server/risk-engine";
+import { assertRiskStepUp, recordRiskSignal } from "@/lib/server/risk-engine";
 import { acquireSessionLease } from "@/lib/server/session-limits";
 import { loadStreamStorageConfiguration } from "@/lib/server/storage/transfers";
 import { estimateExpectedPlaybackBytes, reserveExpectedStorageEgress, releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
@@ -77,6 +77,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             ? { "set-cookie": rotatedWebCookie, "cache-control": "no-store", pragma: "no-cache" }
             : undefined;
           await enforceRateLimit(fs, "session-start:" + user.uid, { limit: 8, windowMs: 60_000 });
+          await assertRiskStepUp(fs, user.uid, user.authTime);
 
           const idempotencyDigest = await crypto.subtle.digest(
             "SHA-256", new TextEncoder().encode(user.uid + ":" + body.idempotencyKey),
