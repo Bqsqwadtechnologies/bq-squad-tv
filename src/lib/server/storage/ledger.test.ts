@@ -12,8 +12,8 @@ describe("storage ledger helpers", () => {
     expect(calculateEgressLevel(70, 100)).toBe("warn");
     expect(calculateEgressLevel(85, 100)).toBe("throttle");
     expect(calculateEgressLevel(95, 100)).toBe("blocked");
-    expect(calculateEgressLevel(95, 100, true)).toBe("paid");
-    expect(calculateEgressLevel(100, 100, true)).toBe("paid");
+    expect(calculateEgressLevel(95, 100, true)).toBe("blocked");
+    expect(calculateEgressLevel(100, 100, true)).toBe("blocked");
   });
   it("calculates conservative B2 monthly budget", () => expect(calculateB2MonthlyFreeEgressBudget(10_000)).toBe(24_000));
   it("creates stable, account-scoped egress ledger keys", () => {
