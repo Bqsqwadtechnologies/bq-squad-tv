@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.graphics.Color
 
 private val SqwadDarkColors =
@@ -37,11 +38,16 @@ private val SqwadLightColors =
 
 @Composable
 fun BqSqwadTheme(
-    darkTheme: Boolean = false,
+    themeMode: String = "system",
     content: @Composable () -> Unit,
 ) {
+    val useDarkTheme = when (themeMode) {
+        "dark" -> true
+        "light" -> false
+        else -> isSystemInDarkTheme()
+    }
     MaterialTheme(
-        colorScheme = if (darkTheme) SqwadDarkColors else SqwadLightColors,
+        colorScheme = if (useDarkTheme) SqwadDarkColors else SqwadLightColors,
         content = content,
     )
 }
