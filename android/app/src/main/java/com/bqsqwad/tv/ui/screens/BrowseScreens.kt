@@ -136,8 +136,7 @@ fun LibraryScreen(onChannel: (String) -> Unit = {}) {
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    gridItems(visibleChannels.size, key = { index -> visibleChannels[index].id }) { index ->
-                        val channel = visibleChannels[index]
+                    gridItems(visibleChannels, key = { channel -> channel.id }) { channel ->
                         Card(
                             modifier = Modifier.fillMaxWidth().clickable { onChannel(channel.id) },
                             shape = RoundedCornerShape(18.dp),
