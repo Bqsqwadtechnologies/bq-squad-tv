@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -259,7 +260,7 @@ fun AccountScreen(
     val user = FirebaseAuth.getInstance().currentUser
     val uriHandler = LocalUriHandler.current
     Column(
-        Modifier.fillMaxSize().padding(18.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(18.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(18.dp))
@@ -286,7 +287,7 @@ fun AccountScreen(
         ProfileAction("Help & support", "Get help with your account", { uriHandler.openUri("https://bqsqwad.com/help") })
         ProfileAction("About BQ SQWAD TV", "Bq Sqwad Technologies", { uriHandler.openUri("https://bqsqwad.com/about") })
         ProfileAction("Settings", "Playback and notifications", onSettings)
-        Spacer(Modifier.weight(1f))
+        Spacer(Modifier.height(18.dp))
         OutlinedButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) { Text("Log out") }
     }
 }
