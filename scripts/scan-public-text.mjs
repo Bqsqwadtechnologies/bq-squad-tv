@@ -60,23 +60,20 @@ function isTarget(file) {
 
 function visibleCandidates(content, relative) {
   if (relative.startsWith("android/")) {
-    if (/\\/res\\/values(?:-[^/]+)?\\/.*\\.xml$/i.test(relative)) return content;
+    if (/\/res\/values(?:-[^/]+)?\/.*\.xml$/i.test(relative)) return content;
     const matches = [];
-    for (const match of content.matchAll(/\\bText\\s*\\(\\s*["'`]([^"'`]+)["'`]/g)) matches.push(match[1]);
-    for (const match of content.matchAll(/contentDescription\\s*=\\s*["'`]([^"'`]+)["'`]/g)) matches.push(match[1]);
-    return matches.join("\\n");
+    for (const match of content.matchAll(/\bText\s*\(\s*["']([^"']+)["']/g)) matches.push(match[1]);
+    for (const match of content.matchAll(/contentDescription\s*=\s*["']([^"']+)["']/g)) matches.push(match[1]);
+    return matches.join("\n");
   }
-  if (/\\.(md|txt)$/i.test(relative) || /(^|\\/)(emails?|email-templates?|legal|content\\/legal|seed)(\\/|$)/i.test(relative)) return content;
+  if (/\.(md|txt)$/i.test(relative) || /(^|\/)(emails?|email-templates?|legal|content\/legal|seed)(\/|$)/i.test(relative)) return content;
   const matches = [];
-  // JSX text nodes.
   for (const match of content.matchAll(/>([^<>]+)</g)) matches.push(match[1]);
-  // Values assigned to attributes that are commonly exposed by browsers and assistive tech.
-  const attrPattern = /(?:title|content|aria-label|aria-description|placeholder|alt|label|description|subject|text)\\s*=\\s*["'`]([^"'`]+)["'`]/g;
+  const attrPattern = /(?:title|content|aria-label|aria-description|placeholder|alt|label|description|subject|text)\s*=\s*["']([^"']+)["']/g;
   for (const match of content.matchAll(attrPattern)) matches.push(match[1]);
-  // Text passed to common React UI primitives.
   const textPattern = /<(?:Text|Button|Label|Badge|Alert|CardTitle|CardDescription)[^>]*>([^<>]+)</g;
   for (const match of content.matchAll(textPattern)) matches.push(match[1]);
-  return matches.join("\\n");
+  return matches.join("\n");
 }
 
 const findings = [];
