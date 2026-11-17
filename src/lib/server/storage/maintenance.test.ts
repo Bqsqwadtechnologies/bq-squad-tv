@@ -42,8 +42,8 @@ describe("storage maintenance accounting", () => {
     expect(await checkStorageProviderHealth(fakeAdapter)).toEqual({ healthy: true });
     const first = await readStorageUsagePage(fakeAdapter, null, 0, 0);
     const second = await readStorageUsagePage(fakeAdapter, first.nextCursor, first.usageBytes, first.objectCount);
-    expect(first).toEqual({ usageBytes: 10, objectCount: 1, nextCursor: "page-2" });
-    expect(second).toEqual({ usageBytes: 30, objectCount: 2, nextCursor: null });
+    expect(first).toEqual({ usageBytes: 10, objectCount: 1, nextCursor: "page-2", processedObjectCount: 1 });
+    expect(second).toEqual({ usageBytes: 30, objectCount: 2, nextCursor: null, processedObjectCount: 1 });
     expect(calls).toEqual(["health", "first-page", "page-2"]);
   });
 
