@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
+import ts from "typescript";
 
 const root = process.cwd();
 const forbiddenTerms = [
@@ -60,25 +61,34 @@ function isTarget(file) {
 
 function visibleCandidates(content, relative) {
   if (relative.startsWith("android/")) {
-    if (/\/res\/values(?:-[^/]+)?\/.*\.xml$/i.test(relative)) return content;
+    if (/\\/res\\/values(?:-[^/]+)?\\/.*\\.xml$/i.test(relative)) return content;
     const matches = [];
-    for (const match of content.matchAll(/\bText\s*\(\s*["']([^"']+)["']/g)) matches.push(match[1]);
-    for (const match of content.matchAll(/\bText\s*\([\s\S]{0,500}?\btext\s*=\s*["']([^"']+)["']/g)) matches.push(match[1]);
-    for (const match of content.matchAll(/contentDescription\s*=\s*["']([^"']+)["']/g)) matches.push(match[1]);
-    for (const match of content.matchAll(/semantics\s*\{[\s\S]{0,300}?contentDescription\s*=\s*["']([^"']+)["']/g)) matches.push(match[1]);
-    return matches.join("\n");
+    for (const match of content.matchAll(/\\bText\\s*\\(\\s*["']([^"']+)["']/g)) matches.push(match[1]);
+    for (const match of content.matchAll(/contentDescription\\s*=\\s*["']([^"']+)["']/g)) matches.push(match[1]);
+    return matches.join("\\n");
   }
-  if (/\.(md|txt)$/i.test(relative) || /(^|\/)(emails?|email-templates?|legal|content\/legal|seed)(\/|$)/i.test(relative)) return content;
+  if (/\\.(md|txt)$/i.test(relative) || /(^|\\/)(emails?|email-templates?|legal|content\\/legal|seed)(\\/|$)/i.test(relative)) return content;
+  if (/\\.xml$/i.test(relative)) return content;
+  const source = ts.createSourceFile(relative, content, ts.ScriptTarget.Latest, true, relative.endsWith(".tsx") || relative.endsWith(".jsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
   const matches = [];
-  for (const match of content.matchAll(/>([^<>]+)</g)) matches.push(match[1]);
-  const attrPattern = /(?:title|content|aria-label|aria-description|placeholder|alt|label|description|subject|text)\s*=\s*["'\`]([^"'\`]+)["'\`]/g;
-  for (const match of content.matchAll(attrPattern)) matches.push(match[1]);
-  // TanStack head() metadata is commonly expressed as object properties.
-  const metadataPattern = /(?:^|[,{\s])(?:title|content)\s*:\s*["'`]([^"'`]+)["'`]/gm;
-  for (const match of content.matchAll(metadataPattern)) matches.push(match[1]);
-  const textPattern = /<(?:Text|Button|Label|Badge|Alert|CardTitle|CardDescription)[^>]*>([^<>]+)</g;
-  for (const match of content.matchAll(textPattern)) matches.push(match[1]);
-  return matches.join("\n");
+  const visibleAttributes = new Set(["title", "aria-label", "aria-description", "placeholder", "alt", "label", "description", "subject"]);
+  function visit(node) {
+    if (ts.isJsxText(node)) {
+      if (node.text.trim()) matches.push(node.text);
+    } else if (ts.isJsxAttribute(node) && visibleAttributes.has(node.name.getText(source))) {
+      const value = node.initializer;
+      if (value && ts.isStringLiteral(value)) matches.push(value.text);
+      else if (value && ts.isJsxExpression(value) && value.expression && ts.isStringLiteral(value.expression)) matches.push(value.expression.text);
+    } else if (ts.isCallExpression(node) && ["Text", "Button", "Label", "Badge"].includes(node.expression.getText(source))) {
+      const first = node.arguments[0];
+      if (first && ts.isStringLiteral(first)) matches.push(first.text);
+    } else if (ts.isPropertyAssignment(node) && ["title", "description"].includes(node.name.getText(source)) && ts.isStringLiteral(node.initializer)) {
+      matches.push(node.initializer.text);
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(source);
+  return matches.join("\\n");
 }
 
 const findings = [];
