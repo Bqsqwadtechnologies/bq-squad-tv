@@ -150,6 +150,10 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                     busy = true
                     message = null
                     try {
+                        if (createAccount) {
+                            require(legalConsentChecked) { "Read and accept the Terms and Privacy Policy first." }
+                            repository.ensurePublicLegalPagesPublished()
+                        }
                         val result = repository.signInEmail(email, password, createAccount)
                         if (result.emailVerified) {
                             if (createAccount) {
