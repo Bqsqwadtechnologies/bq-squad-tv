@@ -16,7 +16,7 @@ export async function getRequiredLegalPages(fs: Firestore, audience: LegalAudien
     if (!page || page["status"] !== "published" || !Number.isSafeInteger(page["version"])) {
       throw new ApiError(503, "LEGAL_PAGES_NOT_READY", "The required legal pages are not published yet. Please try again later.");
     }
-    if (typeof page["body"] !== "string" || /\\{\\{[a-z0-9_]+\\}\\}/.test(page["body"] as string)) {
+    if (typeof page["body"] !== "string" || /\{\{[a-z0-9_]+\}\}/.test(page["body"] as string)) {
       throw new ApiError(503, "LEGAL_PAGE_INCOMPLETE", "A required legal page is incomplete and cannot be accepted.");
     }
     return { slug, version: page["version"] as number, title: String(page["title"] ?? slug), requiresReacceptance: page["requiresReacceptance"] === true };
