@@ -66,16 +66,29 @@ The checker reports names only. Add or verify each name in the hosting provider'
 
 - `ZILLIONAIRE_EMAIL` — the owner's exact sign-in email; configure in the hosting project's server environment.
 - `FIREBASE_SERVICE_ACCOUNT_JSON` — Firebase project settings → Service accounts → generate a private key, then store the JSON securely as a server-side secret.
-- `ADMIN_EMAIL` — the designated administrator email; configure in the hosting project's server environment.
 - `PAYSTACK_SECRET_KEY` — Paystack Dashboard → Settings / API Keys & Webhooks; server-side only.
 - `PAYSTACK_PUBLIC_KEY` — Paystack Dashboard → Settings / API Keys & Webhooks; use only where the client integration requires it.
 - `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` — Google Play Console API access service account credentials; server-side only.
 - `GOOGLE_PLAY_PACKAGE_NAME` — the Android application ID configured in the Play Console; this is a setting, not a credential.
+- `VIDEO_WORKER_KEYS_JSON` — JSON map of worker IDs to independent random credentials (each at least 48 characters); add only to the server environment and the Modal worker secret.
+- `MODAL_WAKE_URL` — the deployed Modal secured wake endpoint URL; store as a server-side setting.
+- `MODAL_WAKE_SECRET` — random secret of at least 32 characters shared by the API and Modal wake endpoint; secret-manager only.
+- `VIDEO_WORKER_LEASE_MINUTES` — optional server setting for the worker lease (default 10, bounded 2–30 minutes).
+- `STREAMING_URL_ENCRYPTION_KEYS_JSON` and `STREAMING_URL_ACTIVE_KEY_VERSION` — existing versioned server-side encryption key ring required only when encrypted HLS is enabled.
 
 Only enable a feature after its required server-side setting is present and verified. The checker cannot inspect provider dashboards and does not establish that a credential is valid.
 
 
-## 8. Legal policy publication
+## 8. Modal worker setup and key rotation
+
+1. Keep the existing Modal application name and existing worker deployment; do not create a second worker app or queue.
+2. Add `VIDEO_WORKER_KEYS_JSON` to the server and Modal secret managers. Use one unique credential per worker ID; never paste credentials into Git or chat.
+3. Set `MODAL_WAKE_SECRET` in the API and the existing Modal secret. Set `MODAL_WAKE_URL` to the deployed wake endpoint.
+4. Rotate a worker by adding its replacement credential, deploying the new worker, verifying successful claims, then disabling the old worker ID in the Zillionaire dashboard.
+5. Keep the legacy shared worker key only during the migration window. Remove `STREAMING_HMAC_SECRET` worker fallback after all worker IDs use individual credentials; the same secret may still be required by playback signing until that separate use is migrated.
+6. Keep the monthly spend guard on. Confirm provider account limits with the billing owner before any production processing.
+
+## 9. Legal policy publication
 
 Before publishing the legal pages as final policies:
 
