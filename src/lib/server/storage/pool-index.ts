@@ -1,5 +1,5 @@
 import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "../firebase-admin";
-import { storageAccountEgressId } from "./ledger";
+import { calculateB2DailyFreeEgressBudget, calculateB2MonthlyFreeEgressBudget, storageAccountEgressId } from "./ledger";
 import {
   resolveStorageDestinationConfiguration,
   validateStorageDestinationMetadata,
@@ -315,18 +315,26 @@ export async function updateStorageUsageAndPool(
       const nextFreeBytes = nextUsageBytes === null || capBytes === null
         ? 0 : Math.max(0, capBytes - nextUsageBytes - reservedBytes);
       const now = checkedAt;
+      const isBackblaze = destination["providerType"] === "backblaze_b2";
+      const budgetFields = isBackblaze ? {
+        freeEgressBudgetBytes: calculateB2MonthlyFreeEgressBudget(newUsageBytes),
+        dailyEgressCapBytes: calculateB2DailyFreeEgressBudget(),
+        egressBudgetSource: "Backblaze published 3× monthly allowance and older 1 GB/day cap; lower reading with 20% safety margin",
+        egressBudgetCheckedAt: now,
+        egressBudgetSourceUrl: "https://www.backblaze.com/cloud-storage/pricing; https://help.backblaze.com/hc/en-us/articles/217931138-How-to-use-B2-data-caps-alerts",
+      } : {};
       return {
-        result: { becameFullyKnown: unknownCount > 0 && nextUnknownCount === 0, groupFreeBytes: nextFreeBytes },
+        result: { becameFullyKnown: unknownCount > 0 && nextUnknownCount === 0, groupFreeBytes: nextFreeBytes, isBackblaze },
         writes: [
           {
             update: {
               name: fs.docName("storageDestinations/" + destinationId),
               fields: encodeFields({
                 usageBytes: newUsageBytes, usageSource: "provider_listing",
-                usageCheckedAt: now, updatedAt: now,
+                usageCheckedAt: now, updatedAt: now, ...budgetFields,
               }),
             },
-            updateMask: { fieldPaths: ["usageBytes", "usageSource", "usageCheckedAt", "updatedAt"] },
+            updateMask: { fieldPaths: ["usageBytes", "usageSource", "usageCheckedAt", "updatedAt", ...Object.keys(budgetFields)] },
           },
           {
             update: {
@@ -341,7 +349,7 @@ export async function updateStorageUsageAndPool(
         ],
       };
     });
-    if (result.becameFullyKnown) {
+    if (result.becameFullyKnown || result.isBackblaze) {
       await rebuildStoragePoolIndex(fs);
       return;
     }
