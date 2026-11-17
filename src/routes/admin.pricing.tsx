@@ -5,7 +5,7 @@ import { getWebAuthHeaders, signInWithEmailPassword } from "@/lib/firebase-web-a
 
 export const Route = createFileRoute("/admin/pricing")({
   component: AdminPricingPage,
-  head: () => ({ meta: [{ title: "Pricing settings | BQ SQWAD TV" }] }),
+  head: () => ({ meta: [{ title: "Pricing settings | BQ SQWAD TV" }, { name: "robots", content: "noindex, nofollow, noarchive" }] }),
 });
 
 type PricingConfig = {
