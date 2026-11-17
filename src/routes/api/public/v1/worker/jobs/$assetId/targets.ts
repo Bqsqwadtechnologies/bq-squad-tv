@@ -66,7 +66,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/target
       if (!raw) throw new ApiError(503, "HLS_DESTINATION_MISSING", "The assigned storage location is unavailable.");
       const metadata = validateStorageDestinationMetadata({ ...raw, destinationId });
       const config = resolveStorageDestinationConfiguration(metadata);
-      if (config.configurationStatus !== "configured" || metadata.healthStatus !== "healthy" || !metadata.enabled || metadata.mode === "retired") {
+      if (config.configurationStatus !== "configured" || metadata.healthStatus !== "healthy" || !metadata.enabled || metadata.mode !== "active" || metadata.paidEgressEnabled === true) {
         throw new ApiError(503, "HLS_DESTINATION_UNAVAILABLE", "The assigned storage location is not ready.");
       }
       const targets = await Promise.all(body.files.map(async file => {
