@@ -44,8 +44,8 @@ const moduleCards: Array<{
   { id: "pricing", title: "Pricing & billing rules", description: "Versioned PAYG rates, wallet packages and Google Play products.", href: "/admin/pricing", icon: Wallet },
   { id: "ads", title: "Advertising providers", description: "Separate Android and website providers, placements and credentials.", href: "/admin/ads", icon: Megaphone },
   { id: "overview", title: "Monthly operations reports", description: "Review monthly ledger, payout, advertising and producer-review activity.", href: "/admin/reports", icon: Gauge },
-  { id: "system", title: "Firebase schema inspector", description: "Inspect field names and types without exposing production document values.", href: "/admin/firebase-schema", icon: Settings2 },
-  { id: "system", title: "Storage destinations", description: "Register Lovable Storage and Backblaze destinations, inspect secret configuration and manage routing metadata.", href: "/admin/storage", icon: Database },
+  { id: "system", title: "Data structure", description: "Review the platform data structure without viewing private record contents.", href: "/admin/firebase-schema", icon: Settings2 },
+  { id: "system", title: "Storage locations", description: "Review available storage locations, their status and where new files are placed.", href: "/admin/storage", icon: Database },
   { id: "channels", title: "Channel operations", description: "Server APIs are present; the dedicated management screen is being completed.", icon: Tv2 },
   { id: "content", title: "Content & rights", description: "Rights evidence, review state, publishing and featured-content controls.", href: "/admin/video-studio", icon: Film },
   { id: "users", title: "Viewer accounts", description: "Account status and access administration.", icon: Users },
@@ -65,6 +65,7 @@ export const Route = createFileRoute("/admin/")({
     meta: [
       { title: "Dashboard | BQ SQWAD TV" },
       { name: "description", content: "Secure account access for BQ SQWAD TV." },
+      { name: "robots", content: "noindex, nofollow, noarchive" },
     ],
   }),
 });
@@ -150,7 +151,7 @@ function ZillionaireDashboard() {
             </p>
             <h1 className="mt-4 text-3xl font-black sm:text-5xl">{access?.owner ? "ZILLIONAIRE Control Centre" : "Secure dashboard access"}</h1>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100/60">
-              Manage BQ SQWAD TV through server-authorized modules. Access is checked against the verified account and current Firestore permissions on every request.
+              Manage BQ SQWAD TV through server-authorized modules. Access is checked against your account and permissions on every request.
             </p>
           </div>
           {access?.owner ? (
