@@ -13,6 +13,7 @@ type VideoJob = {
   queuePosition: number | null; createdAt: string | null; updatedAt: string | null;
 };
 type SpendSnapshot = { month: string; estimatedCostUsd: number; outputBytes: number; monthlyLimitUsd: number; override: boolean; pauseNewJobs: boolean };
+type WorkerRecord = { workerId: string; disabled: boolean; updatedAt: string | null };
 
 export const Route = createFileRoute("/admin/video-studio")({
   component: VideoStudio,
@@ -33,6 +34,13 @@ function VideoStudio() {
   const [error, setError] = useState("");
   const [jobs, setJobs] = useState<VideoJob[]>([]);
   const [spend, setSpend] = useState<SpendSnapshot | null>(null);
+  const [workers, setWorkers] = useState<WorkerRecord[]>([]);
+  const [monthlyLimit, setMonthlyLimit] = useState("25");
+  const [spendOverride, setSpendOverride] = useState(false);
+  const [settingsReason, setSettingsReason] = useState("");
+  const [workerReason, setWorkerReason] = useState("");
+  const [savingSpend, setSavingSpend] = useState(false);
+  const [savingWorker, setSavingWorker] = useState("");
 
   async function loadChannels(idToken: string) {
     const response = await fetch("/api/public/v1/admin/channels", { headers: await getWebAuthHeaders(idToken), cache: "no-store" });
@@ -80,19 +88,39 @@ function VideoStudio() {
         // Keep the last known job state during a temporary network interruption.
       }
     };
+    const refreshWorkers = async () => {
+      try {
+        const response = await fetch("/api/public/v1/admin/workers", {
+          headers: await getWebAuthHeaders(token),
+          cache: "no-store",
+        });
+        if (response.ok && active) {
+          const data = await response.json() as { workers?: WorkerRecord[] };
+          setWorkers(data.workers ?? []);
+        }
+      } catch {
+        // Worker controls are only visible when the owner endpoint is available.
+      }
+    };
     const refreshSpend = async () => {
       try {
         const response = await fetch("/api/public/v1/admin/config/modal-spend", {
           headers: await getWebAuthHeaders(token),
           cache: "no-store",
         });
-        if (response.ok && active) setSpend(await response.json() as SpendSnapshot);
+        if (response.ok && active) {
+          const snapshot = await response.json() as SpendSnapshot;
+          setSpend(snapshot);
+          setMonthlyLimit(String(snapshot.monthlyLimitUsd));
+          setSpendOverride(snapshot.override);
+        }
       } catch {
         // Cost telemetry is supplementary; do not hide job status when it is unavailable.
       }
     };
     void refreshJobs();
     void refreshSpend();
+    void refreshWorkers();
     const jobTimer = window.setInterval(() => void refreshJobs(), 5_000);
     const spendTimer = window.setInterval(() => void refreshSpend(), 60_000);
     return () => {
@@ -101,6 +129,51 @@ function VideoStudio() {
       window.clearInterval(spendTimer);
     };
   }, [token]);
+
+  async function saveSpendSettings() {
+    if (!token || settingsReason.trim().length < 3 || savingSpend) return;
+    setSavingSpend(true);
+    try {
+      const response = await fetch("/api/public/v1/admin/config/modal-spend", {
+        method: "PUT",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({
+          monthlyLimitUsd: Number(monthlyLimit),
+          override: spendOverride,
+          reason: settingsReason.trim(),
+        }),
+      });
+      const data = await response.json() as SpendSnapshot & { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Could not save the processing spend settings.");
+      setSpend(data);
+      setSettingsReason("");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not save the processing spend settings.");
+    } finally {
+      setSavingSpend(false);
+    }
+  }
+
+  async function setWorkerDisabled(workerId: string, disabled: boolean) {
+    if (!token || workerReason.trim().length < 3 || savingWorker) return;
+    setSavingWorker(workerId);
+    try {
+      const response = await fetch("/api/public/v1/admin/workers/" + encodeURIComponent(workerId), {
+        method: "POST",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ disabled, reason: workerReason.trim() }),
+      });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Could not update the worker.");
+      setWorkerReason("");
+      const refresh = await fetch("/api/public/v1/admin/workers", { headers: await getWebAuthHeaders(token), cache: "no-store" });
+      if (refresh.ok) setWorkers((await refresh.json() as { workers?: WorkerRecord[] }).workers ?? []);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update the worker.");
+    } finally {
+      setSavingWorker("");
+    }
+  }
 
   async function startUpload() {
     if (!token || !file || !channelId || busy) return;
@@ -179,6 +252,25 @@ function VideoStudio() {
               <p className="mt-2 text-xs text-blue-100/55">{(spend.outputBytes / (1024 ** 3)).toFixed(2)} GiB of output transferred</p>
               {spend.pauseNewJobs ? <p className="mt-2 text-xs font-bold text-amber-200">New processing is paused at the monthly limit.</p> : null}
               {spend.override ? <p className="mt-2 text-xs font-bold text-amber-200">The monthly limit override is active.</p> : null}
+              <div className="mt-4 grid gap-3 border-t border-white/10 pt-4">
+                <label className="grid gap-1 text-xs text-blue-100/65">
+                  Monthly estimate limit (USD)
+                  <input type="number" min="1" max="1000" step="0.01" value={monthlyLimit}
+                    onChange={event => setMonthlyLimit(event.target.value)}
+                    className="rounded-lg border border-white/15 bg-[#030b2a] px-3 py-2 text-white" />
+                </label>
+                <label className="flex items-center gap-2 text-xs text-blue-100/65">
+                  <input type="checkbox" checked={spendOverride} onChange={event => setSpendOverride(event.target.checked)} />
+                  Temporarily override the application spend guard
+                </label>
+                <input value={settingsReason} onChange={event => setSettingsReason(event.target.value)}
+                  placeholder="Reason for changing the limit or override"
+                  className="rounded-lg border border-white/15 bg-[#030b2a] px-3 py-2 text-sm text-white" />
+                <button type="button" onClick={() => void saveSpendSettings()} disabled={savingSpend || settingsReason.trim().length < 3}
+                  className="min-h-11 rounded-xl bg-cyan-300 px-4 py-2 text-sm font-bold text-[#03102d] disabled:opacity-50">
+                  {savingSpend ? "Saving…" : "Save spend settings"}
+                </button>
+              </div>
             </> : <p className="mt-3 text-xs text-blue-100/55">Monthly usage is not available for this account.</p>}
           </section>
           <section className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
@@ -205,6 +297,23 @@ function VideoStudio() {
             )}
           </section>
         </div>
+        <section className="mt-4 rounded-2xl border border-white/10 bg-[#07143d] p-5">
+          <h2 className="font-black">Processing workers</h2>
+          <p className="mt-1 text-xs text-blue-100/55">Disable an individual worker if its credential may have been exposed. The change is recorded.</p>
+          {workers.length ? <div className="mt-3 grid gap-2">
+            {workers.map(worker => <div key={worker.workerId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#030b2a] p-3">
+              <span className="text-sm font-semibold">{worker.workerId} · {worker.disabled ? "Disabled" : "Enabled"}</span>
+              <button type="button" onClick={() => void setWorkerDisabled(worker.workerId, !worker.disabled)}
+                disabled={savingWorker === worker.workerId || workerReason.trim().length < 3}
+                className="min-h-11 rounded-lg border border-white/15 px-3 text-xs font-bold text-white disabled:opacity-40">
+                {worker.disabled ? "Enable worker" : "Disable worker"}
+              </button>
+            </div>)}
+          </div> : <p className="mt-3 text-xs text-blue-100/55">No individual worker credentials are configured yet.</p>}
+          <input value={workerReason} onChange={event => setWorkerReason(event.target.value)}
+            placeholder="Reason for worker change"
+            className="mt-3 w-full rounded-lg border border-white/15 bg-[#030b2a] px-3 py-2 text-sm text-white" />
+        </section>
         <div className="mt-8 rounded-3xl border border-white/10 bg-[#07143d] p-5 sm:p-7">
           <h2 className="text-xl font-black">Upload a movie source</h2>
           {loading ? <p className="mt-5 text-sm text-blue-100/55">Checking your secure session…</p> : null}
