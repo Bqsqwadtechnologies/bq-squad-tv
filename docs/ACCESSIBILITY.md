@@ -5,9 +5,11 @@ Date: 2026-11-17
 ## Implemented in this foundation pass
 
 - Website header has accessible names for account, wallet, search, notifications and overflow actions.
-- Android home actions use Material vector icons with content descriptions and 48 dp touch targets.
-- Android home content now applies the top safe-drawing inset before rendering the header.
+- Android home search and notifications use Material vector icons with content descriptions and 48 dp touch targets; the profile action now shows the signed-in member's initial in a 48 dp ringed button.
+- Android home content applies the top safe-drawing inset before rendering the header, and the header row has a 56 dp minimum height.
 - Website and Android semantic theme palettes now include light and dark variants.
+
+- Website header duplicate Search-link attribute was removed; no browser build or visual regression test was available.
 
 ## Not yet verified
 
