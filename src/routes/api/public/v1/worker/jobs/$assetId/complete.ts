@@ -9,6 +9,7 @@ import { commitStorageReservation } from "@/lib/server/storage/reservations";
 import { assertStorageObjectKey } from "@/lib/server/storage/ledger";
 import { listAllStorageObjects } from "@/lib/server/storage/listing";
 import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
+import { sendPushNotificationToUser } from "@/lib/server/notifications";
 
 const schema = z.object({
   claimToken: z.string().regex(/^[a-f0-9]{32}$/),
@@ -122,6 +123,35 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
         outputFileCount: body.files.length, completedAt: now, updatedAt: now,
         claimToken: null, leaseExpiresAt: null,
       });
+      try {
+        const ownerEmail = (process.env["ZILLIONAIRE_EMAIL"] ?? "").trim().toLowerCase();
+        if (ownerEmail) {
+          const owners = await fs.query("users", {
+            filters: [{ field: "email", op: "EQUAL", value: ownerEmail }],
+            limit: 1,
+          });
+          const ownerUid = owners[0]?.__id;
+          if (ownerUid) {
+            const notificationId = crypto.randomUUID().replace(/-/g, "");
+            await fs.setDoc("users/" + ownerUid + "/notifications/" + notificationId, {
+              title: "A video is ready for review",
+              body: "A processed video has passed its file checks and is waiting for your review.",
+              deepLink: "/admin/video-studio",
+              read: false,
+              deliveryStatus: "pending",
+              createdAt: now,
+            });
+            await sendPushNotificationToUser(fs, ownerUid, {
+              notificationId,
+              title: "A video is ready for review",
+              body: "A processed video is waiting for your review.",
+              deepLink: "/admin/video-studio",
+            }).catch(() => undefined);
+          }
+        }
+      } catch {
+        console.error("Owner review notification could not be delivered", { assetId });
+      }
       return Response.json({ assetId, status: "processed_pending_review", destinationId, manifestKey: masterKey, outputBytes: totalBytes, outputFileCount: body.files.length });
     } catch (error) { return errorBody(error); }
   } } },
