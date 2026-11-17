@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { ApiError } from "../firebase-admin";
-import { assertStorageObjectKey } from "./ledger";
+import { assertStorageObjectKey, resolveAssetStorageBinding } from "./ledger";
 import type { StorageDestinationConfiguration } from "./registry";
 
 const encoder = new TextEncoder();
@@ -113,8 +113,11 @@ export async function loadSourceStorageConfiguration(
   fs: import("../firebase-admin").Firestore,
   asset: Record<string, unknown>,
 ): Promise<import("./registry").StorageDestinationConfiguration> {
-  const destinationId = typeof asset["sourceDestinationId"] === "string" ? asset["sourceDestinationId"] : null;
-  if (destinationId) {
+  const binding = resolveAssetStorageBinding(asset, "source", {
+    source: "lovable-source-legacy", stream: "lovable-stream-legacy",
+  });
+  const destinationId = binding.primaryDestinationId;
+  if (destinationId !== "lovable-source-legacy") {
     const raw = await fs.getDoc("storageDestinations/" + destinationId);
     if (!raw) throw new ApiError(503, "STORAGE_DESTINATION_MISSING", "The source storage destination is unavailable.");
     const { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } = await import("./registry");
@@ -171,8 +174,11 @@ export async function loadStreamStorageConfiguration(
   fs: import("../firebase-admin").Firestore,
   asset: Record<string, unknown>,
 ): Promise<StorageDestinationConfiguration> {
-  const destinationId = typeof asset["streamDestinationId"] === "string" ? asset["streamDestinationId"] : null;
-  if (destinationId) {
+  const binding = resolveAssetStorageBinding(asset, "stream", {
+    source: "lovable-source-legacy", stream: "lovable-stream-legacy",
+  });
+  const destinationId = binding.primaryDestinationId;
+  if (destinationId !== "lovable-stream-legacy") {
     const raw = await fs.getDoc("storageDestinations/" + destinationId);
     if (!raw) throw new ApiError(503, "STREAM_DESTINATION_MISSING", "The streaming storage destination is unavailable.");
     const { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } = await import("./registry");
