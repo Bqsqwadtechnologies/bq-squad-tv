@@ -5,10 +5,24 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 data class LegalAcceptanceRequest(val audience: String = "public", val acceptedSlugs: List<String>)
 
 data class LegalAcceptanceResponse(val accepted: Boolean)
+
+data class LegalPageStatus(
+    val slug: String,
+    val title: String,
+    val version: Int,
+    val accepted: Boolean,
+)
+
+data class LegalStatusResponse(
+    val audience: String,
+    val pages: List<LegalPageStatus>,
+    val acceptanceRequired: Boolean,
+)
 
 data class CompleteProfileRequest(
     val dateOfBirth: String,
@@ -61,6 +75,12 @@ data class ThemePreferenceSaveResponse(
 )
 
 interface ProfileApi {
+    @GET("v1/legal/status")
+    suspend fun legalStatus(
+        @Header("Authorization") bearerToken: String,
+        @Query("audience") audience: String = "public",
+    ): LegalStatusResponse
+
     @POST("v1/legal/acceptance")
     suspend fun acceptLegalPages(
         @Header("Authorization") bearerToken: String,
