@@ -66,13 +66,13 @@ export async function rebuildStoragePoolIndex(
   const monthKey = now.slice(0, 7);
 
   for (const [groupId, items] of groups) {
-    const usageKnown = items.every(item =>
+    const knownItems = items.filter(item =>
       typeof item.metadata.usageBytes === "number" &&
       Number.isSafeInteger(item.metadata.usageBytes) &&
       item.metadata.usageBytes >= 0);
-    const usageBytes = usageKnown
-      ? items.reduce((sum, item) => sum + safeBytes(item.metadata.usageBytes), 0)
-      : null;
+    const knownUsageBytes = knownItems.reduce((sum, item) => sum + safeBytes(item.metadata.usageBytes), 0);
+    const unknownUsageCount = items.length - knownItems.length;
+    const usageBytes = unknownUsageCount === 0 ? knownUsageBytes : null;
     const reservedBytes = items.reduce((sum, item) => sum + item.reservedBytes, 0);
     const capBytes = groupCap(items.map(item => ({
       softCapBytes: item.metadata.softCapBytes,
@@ -92,7 +92,7 @@ export async function rebuildStoragePoolIndex(
       typeof budgetValue === "number" && Number.isSafeInteger(budgetValue) && budgetValue >= 0
       ? Math.max(0, budgetValue - egressUsed)
       : null;
-    const summary = { usageBytes, reservedBytes, capBytes, freeBytes, egressHeadroomBytes, destinationCount: items.length };
+    const summary = { usageBytes, knownUsageBytes, unknownUsageCount, reservedBytes, capBytes, freeBytes, egressHeadroomBytes, destinationCount: items.length };
     groupSummaries.set(groupId, summary);
     writes.push({
       update: {
@@ -229,4 +229,160 @@ export function adjustPoolShardEntries(
   });
   if (!found) throw new ApiError(409, "STORAGE_POOL_ENTRY_MISSING", "The selected storage location is no longer in the pool.");
   return entries as Array<Record<string, unknown>>;
+}
+
+
+/** Update a destination's verified usage and its shared account counter atomically. */
+export async function updateStorageUsageAndPool(
+  fs: Firestore,
+  destinationId: string,
+  newUsageBytes: number,
+  checkedAt = new Date().toISOString(),
+): Promise<void> {
+  if (!/^[a-z0-9][a-z0-9_-]{1,79}$/.test(destinationId) ||
+      !Number.isSafeInteger(newUsageBytes) || newUsageBytes < 0) {
+    throw new ApiError(400, "STORAGE_USAGE_UPDATE_INVALID", "The storage usage update is invalid.");
+  }
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const raw = await fs.getDoc("storageDestinations/" + destinationId);
+    if (!raw || typeof raw["accountGroup"] !== "string") {
+      throw new ApiError(404, "STORAGE_DESTINATION_NOT_FOUND", "The storage location could not be found.");
+    }
+    const groupId = raw["accountGroup"];
+    const groupPath = groupCapacityPath(groupId);
+    const oldUsage = typeof raw["usageBytes"] === "number" && Number.isSafeInteger(raw["usageBytes"]) && raw["usageBytes"] >= 0
+      ? raw["usageBytes"] : null;
+    const groupBefore = await fs.getDoc(groupPath);
+    if (!groupBefore) {
+      await rebuildStoragePoolIndex(fs);
+      continue;
+    }
+    const result = await fs.transact(["storageDestinations/" + destinationId, groupPath], docs => {
+      const destination = docs[0];
+      const group = docs[1];
+      if (!destination || !group) throw new ApiError(409, "STORAGE_GROUP_CHANGED", "The storage account summary changed; retry.");
+      const currentUsage = typeof destination["usageBytes"] === "number" &&
+        Number.isSafeInteger(destination["usageBytes"]) && destination["usageBytes"] >= 0
+        ? destination["usageBytes"] : null;
+      const knownUsage = safeBytes(group["knownUsageBytes"]);
+      const unknownCount = safeBytes(group["unknownUsageCount"]);
+      const nextKnownUsage = currentUsage === null
+        ? knownUsage + newUsageBytes
+        : knownUsage + newUsageBytes - currentUsage;
+      const nextUnknownCount = currentUsage === null ? Math.max(0, unknownCount - 1) : unknownCount;
+      if (!Number.isSafeInteger(nextKnownUsage) || nextKnownUsage < 0) {
+        throw new ApiError(409, "STORAGE_GROUP_USAGE_INVALID", "The shared storage usage counter is inconsistent.");
+      }
+      const capBytes = typeof group["capBytes"] === "number" && Number.isSafeInteger(group["capBytes"])
+        ? group["capBytes"] : null;
+      const reservedBytes = safeBytes(group["reservedBytes"]);
+      const nextUsageBytes = nextUnknownCount === 0 ? nextKnownUsage : null;
+      const nextFreeBytes = nextUsageBytes === null || capBytes === null
+        ? 0 : Math.max(0, capBytes - nextUsageBytes - reservedBytes);
+      const now = checkedAt;
+      return {
+        result: { becameFullyKnown: unknownCount > 0 && nextUnknownCount === 0, groupFreeBytes: nextFreeBytes },
+        writes: [
+          {
+            update: {
+              name: fs.docName("storageDestinations/" + destinationId),
+              fields: encodeFields({
+                usageBytes: newUsageBytes, usageSource: "provider_listing",
+                usageCheckedAt: now, updatedAt: now,
+              }),
+            },
+            updateMask: { fieldPaths: ["usageBytes", "usageSource", "usageCheckedAt", "updatedAt"] },
+          },
+          {
+            update: {
+              name: fs.docName(groupPath),
+              fields: encodeFields({
+                usageBytes: nextUsageBytes, knownUsageBytes: nextKnownUsage,
+                unknownUsageCount: nextUnknownCount, freeBytes: nextFreeBytes, updatedAt: now,
+              }),
+            },
+            updateMask: { fieldPaths: ["usageBytes", "knownUsageBytes", "unknownUsageCount", "freeBytes", "updatedAt"] },
+          },
+        ],
+      };
+    });
+    if (result.becameFullyKnown) {
+      await rebuildStoragePoolIndex(fs);
+      return;
+    }
+    const destination = await fs.getDoc("storageDestinations/" + destinationId);
+    if (!destination) return;
+    const purpose = destination["purpose"] as StoragePurpose;
+    const shards = await fs.query("storagePool", {
+      filters: [{ field: "purpose", op: "EQUAL", value: purpose }],
+      limit: 500,
+    });
+    const shard = shards.find(row => Array.isArray(row["entries"]) &&
+      (row["entries"] as Array<Record<string, unknown>>).some(entry => entry?.["id"] === destinationId));
+    if (!shard) {
+      if (result.groupFreeBytes > 0) await rebuildStoragePoolIndex(fs);
+      return;
+    }
+    const metadata = validateStorageDestinationMetadata({ ...destination, destinationId });
+    const groupFree = result.groupFreeBytes;
+    const bucketFree = Math.max(0, metadata.softCapBytes - newUsageBytes - safeBytes(destination["reservedBytes"]));
+    const freeBytes = Math.min(bucketFree, groupFree);
+    const nextEntries = (shard["entries"] as Array<Record<string, unknown>>).map(entry =>
+      entry["id"] === destinationId
+        ? { ...entry, freeBytes, state: freeBytes > 0 ? "eligible" : "full" }
+        : entry,
+    );
+    await fs.patchDoc("storagePool/" + shard.__id, { entries: nextEntries, updatedAt: checkedAt });
+    return;
+  }
+  throw new ApiError(409, "STORAGE_USAGE_UPDATE_CONFLICT", "Storage usage changed repeatedly; retry reconciliation.");
+}
+
+/** Remove an unhealthy location or refresh its existing compact pool entry. */
+export async function refreshStoragePoolDestination(fs: Firestore, destinationId: string): Promise<void> {
+  const raw = await fs.getDoc("storageDestinations/" + destinationId);
+  if (!raw) return;
+  const metadata = validateStorageDestinationMetadata({ ...raw, destinationId });
+  const config = resolveStorageDestinationConfiguration(metadata);
+  const purpose = metadata.purpose;
+  const shards = await fs.query("storagePool", {
+    filters: [{ field: "purpose", op: "EQUAL", value: purpose }],
+    limit: 500,
+  });
+  const shard = shards.find(row => Array.isArray(row["entries"]) &&
+    (row["entries"] as Array<Record<string, unknown>>).some(entry => entry?.["id"] === destinationId));
+  const eligible = metadata.enabled && metadata.mode === "active" &&
+    metadata.healthStatus === "healthy" && config.configurationStatus === "configured" &&
+    typeof metadata.usageBytes === "number" && Number.isSafeInteger(metadata.usageBytes);
+  if (!eligible) {
+    if (shard) {
+      const entries = (shard["entries"] as Array<Record<string, unknown>>).filter(entry => entry["id"] !== destinationId);
+      await fs.patchDoc("storagePool/" + shard.__id, { entries, updatedAt: new Date().toISOString() });
+    }
+    return;
+  }
+  const group = await fs.getDoc(groupCapacityPath(metadata.accountGroup));
+  if (!group || group["usageBytes"] === null || typeof group["freeBytes"] !== "number") {
+    await rebuildStoragePoolIndex(fs);
+    return;
+  }
+  const freeBytes = Math.min(
+    Math.max(0, metadata.softCapBytes - metadata.usageBytes! - safeBytes(raw["reservedBytes"])),
+    safeBytes(group["freeBytes"]),
+  );
+  if (freeBytes <= 0 || (purpose === "hls_streaming" && !(typeof group["egressHeadroomBytes"] === "number" && group["egressHeadroomBytes"] > 0))) {
+    if (shard) {
+      const entries = (shard["entries"] as Array<Record<string, unknown>>).filter(entry => entry["id"] !== destinationId);
+      await fs.patchDoc("storagePool/" + shard.__id, { entries, updatedAt: new Date().toISOString() });
+    }
+    return;
+  }
+  if (!shard) {
+    await rebuildStoragePoolIndex(fs);
+    return;
+  }
+  const entries = (shard["entries"] as Array<Record<string, unknown>>).map(entry =>
+    entry["id"] === destinationId ? { ...entry, freeBytes, state: "eligible" } : entry,
+  );
+  await fs.patchDoc("storagePool/" + shard.__id, { entries, updatedAt: new Date().toISOString() });
 }
