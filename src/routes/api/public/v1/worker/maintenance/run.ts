@@ -12,6 +12,7 @@ import { copyReplicaObject, replicaCopyPhase } from "@/lib/server/storage/replic
 import { commitStorageReservation } from "@/lib/server/storage/reservations";
 import { addVerifiedAssetStreamReplica, bindAssetStreamStorage } from "@/lib/server/storage/asset-binding";
 import { isExpiredTemporaryObject } from "@/lib/server/storage/cleanup";
+import { nextHealthRecoveryState } from "@/lib/server/storage/failover";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
@@ -199,8 +200,13 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           const code = storageFailureCode(error);
           const degraded = isStorageQuotaOrRateLimit(code);
           const message = storageFailureMessage(code);
+          const recovery = nextHealthRecoveryState({
+            status: typeof raw["healthStatus"] === "string" ? raw["healthStatus"] : "unknown",
+            cleanChecks: typeof raw["cleanHealthChecks"] === "number" ? raw["cleanHealthChecks"] : 0,
+          }, "failed");
           await fs.patchDoc("storageDestinations/" + storageId, {
             healthStatus: degraded ? "degraded" : "unreachable",
+            cleanHealthChecks: recovery.cleanChecks,
             healthCheckedAt: now,
             lastErrorCode: code,
             degradedUntil: degraded ? new Date(Date.now() + 24 * 60 * 60_000).toISOString() : null,
@@ -234,14 +240,26 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         if (task["phase"] !== "listing") {
           try {
             await checkStorageProviderHealth(adapter);
+            const previousStatus = typeof raw["healthStatus"] === "string" ? raw["healthStatus"] : "unknown";
+            const recovering = previousStatus === "degraded" || previousStatus === "unreachable";
+            const recovery = recovering
+              ? nextHealthRecoveryState({
+                  status: previousStatus,
+                  cleanChecks: typeof raw["cleanHealthChecks"] === "number" ? raw["cleanHealthChecks"] : 0,
+                }, "clean")
+              : { status: "healthy", cleanChecks: 3 };
+            const recovered = recovery.status === "healthy";
             await fs.patchDoc("storageDestinations/" + storageId, {
-              healthStatus: "healthy", healthCheckedAt: now, lastErrorCode: null,
-              degradedUntil: null, updatedAt: now,
+              healthStatus: recovered ? "healthy" : "degraded",
+              cleanHealthChecks: recovery.cleanChecks,
+              healthCheckedAt: now, lastErrorCode: null,
+              degradedUntil: recovered ? null : new Date(Date.now() + 60 * 60_000).toISOString(),
+              updatedAt: now,
             });
             await refreshStoragePoolDestination(fs, storageId).catch(() => undefined);
             await fs.patchDoc(taskPath, {
               phase: "listing", listingCursor: null, usageBytes: 0, objectCount: 0,
-              healthStatus: "healthy", leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()),
+              healthStatus: recovered ? "healthy" : "degraded", leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()),
               updatedAt: now,
             });
             return Response.json({ done: false, phase: "listing", processedObjectCount: 0 });
