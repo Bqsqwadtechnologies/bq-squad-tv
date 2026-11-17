@@ -41,7 +41,23 @@ describe("storage discovery", () => {
     expect(result.destinations.map(item => item.destinationId)).toEqual(["lov-002"]);
   });
 
-  it("ignores malformed bundles and enforces the 25-bucket bound", async () => {
+  it("discovers all 326 buckets from one shared project bundle", async () => {
+    const buckets = Array.from({ length: 326 }, (_, index) => "bucket-" + String(index + 1).padStart(3, "0"));
+    const result = await discoverStorageDestinations({
+      STORAGE_LOV_BUNDLE_01: JSON.stringify({
+        url: "https://project-a.supabase.co",
+        serviceRoleKey: "private-key",
+        buckets,
+      }),
+    });
+    expect(result.counts.lovable).toBe(326);
+    expect(result.destinations).toHaveLength(326);
+    expect(new Set(result.destinations.map(item => item.accountGroup)).size).toBe(1);
+    expect(JSON.stringify(result)).not.toContain("private-key");
+    expect(JSON.stringify(result)).not.toContain("project-a.supabase.co");
+  });
+
+  it("ignores malformed bundles and enforces the 500-bucket bound", async () => {
     const result = await discoverStorageDestinations({
       STORAGE_LOV_BUNDLE_01: "{not-json",
       STORAGE_LOV_BUNDLE_02: JSON.stringify({
