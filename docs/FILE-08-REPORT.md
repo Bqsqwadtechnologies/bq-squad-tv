@@ -17,10 +17,11 @@
 - Legal page templates now have one canonical JSON source shared by the owner seed API and the standalone validation script. Published page audience is checked against the requested audience to prevent cross-audience document substitution.
 - Added an authenticated legal-status endpoint for current-version checks across viewer, producer and provider audiences. The website and Android sign-in flows use it for public-page reacceptance; the Android app checks before entering the viewer experience.
 - Website and Android account creation now preflight that both public legal pages are published and require explicit consent before profile completion.
+- Producer Console now retrieves the four required documents, displays their current text and versions, and withholds earnings/channel workspace data until the producer accepts all of them.
 - Added unit coverage for audience-specific required documents, wrong-audience pages, draft and placeholder rejection, exact-version reacceptance and legacy acceptance when reacceptance is not required.
 
 ## Not completed
-- Provider invitations: the provider invitation workflow is not present, so provider-term acceptance is not connected to an invitation flow. Provider acceptance remains available through the protected audience-specific acceptance endpoint for integration by the provider workflow.
+- Provider invitations: the provider invitation workflow is not present, so provider-term acceptance is not connected to an invitation flow. Provider acceptance remains available through the protected audience-specific acceptance endpoint. The latest surface requirement keeps only Zillionaire Dashboard and Producer Console on the website; no separate provider console was added.
 - Provider invitations: the provider invitation workflow is not present, so provider-term acceptance is not connected to an invitation flow.
 - The provider audience and acceptance endpoint exist, but the provider console/invitation UI remains a File 06 dependency.
 - There is no complete owner page editor/preview/rollback UI in the current website tree. The owner settings and publishing endpoints exist, but routine editing of page Markdown still needs the File 06 editor.
