@@ -66,8 +66,8 @@ function AdminAdsPage() {
       if (!response.ok || !result.saved) throw new Error(result.error ?? "Ad provider configuration could not be saved.");
       setSecretKey("");
       setMessage(platform === "android"
-        ? "Android ad provider saved separately from the website provider."
-        : "Website ad provider saved separately from the Android provider.");
+        ? "Android advertising settings saved separately from the website settings."
+        : "Website advertising settings saved separately from the Android settings.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Ad provider configuration could not be saved.");
       setSecretKey("");
@@ -81,13 +81,13 @@ function AdminAdsPage() {
       <header className="border-b border-cyan-300/15 bg-[#050f35]">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
           <a href="/"><img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="w-44" /></a>
-          <span className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Admin · Ads</span>
+          <span className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Settings · Advertising</span>
         </div>
       </header>
       <section className="mx-auto max-w-5xl px-5 py-10 sm:py-14">
         <p className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-cyan-300"><ShieldCheck size={16} /> Advertising configuration</p>
-        <h1 className="mt-4 text-3xl font-black sm:text-4xl">Separate providers for each platform.</h1>
-        <p className="mt-3 max-w-2xl leading-7 text-blue-100/60">Android and the website have independent provider IDs, placements and encrypted credentials. No provider secret is returned to the client.</p>
+        <h1 className="mt-4 text-3xl font-black sm:text-4xl">Separate advertising services for each platform.</h1>
+        <p className="mt-3 max-w-2xl leading-7 text-blue-100/60">Android and the website have separate account references and advertising placements. Private connection details are protected and never shown again.</p>
 
         {!token ? (
           <form onSubmit={login} className="mt-9 grid max-w-md gap-4 rounded-3xl border border-white/10 bg-[#07143d] p-6">
@@ -107,17 +107,17 @@ function AdminAdsPage() {
               <h2 className="font-bold">Choose platform</h2>
               <button onClick={() => setPlatform("android")} className={platform === "android" ? "mt-4 flex w-full items-center gap-3 rounded-2xl border border-cyan-300/40 bg-cyan-300/10 p-4 text-left text-cyan-100" : "mt-4 flex w-full items-center gap-3 rounded-2xl border border-white/10 p-4 text-left text-white/65"}><Smartphone /> Android app</button>
               <button onClick={() => setPlatform("web")} className={platform === "web" ? "mt-3 flex w-full items-center gap-3 rounded-2xl border border-cyan-300/40 bg-cyan-300/10 p-4 text-left text-cyan-100" : "mt-3 flex w-full items-center gap-3 rounded-2xl border border-white/10 p-4 text-left text-white/65"}><Monitor /> Website</button>
-              <p className="mt-5 text-xs leading-5 text-blue-100/45">Each platform is stored independently in Firestore. Configuring one does not overwrite the other.</p>
+              <p className="mt-5 text-xs leading-5 text-blue-100/45">Each platform is saved separately. Changing one does not overwrite the other.</p>
             </aside>
             <form onSubmit={save} className="grid gap-4 rounded-3xl border border-cyan-300/20 bg-gradient-to-b from-[#0b2057] to-[#07143d] p-6">
-              <div><h2 className="text-xl font-bold">{platform === "android" ? "Android app provider" : "Website provider"}</h2><p className="mt-1 text-xs text-blue-100/55">Provider credentials are encrypted server-side.</p></div>
-              <label className="grid gap-2 text-sm text-blue-100/70">Provider ID
+              <div><h2 className="text-xl font-bold">{platform === "android" ? "Android app provider" : "Website provider"}</h2><p className="mt-1 text-xs text-blue-100/55">Connection details are protected and are never shown again.</p></div>
+              <label className="grid gap-2 text-sm text-blue-100/70">Account reference
                 <input required value={providerId} onChange={event => setProviderId(event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300" />
               </label>
-              <label className="grid gap-2 text-sm text-blue-100/70">Public app/site ID
+              <label className="grid gap-2 text-sm text-blue-100/70">Public app or site reference
                 <input value={publicAppId} onChange={event => setPublicAppId(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300" />
               </label>
-              <label className="grid gap-2 text-sm text-blue-100/70">Provider secret key
+              <label className="grid gap-2 text-sm text-blue-100/70">Private connection key
                 <input required type="password" autoComplete="new-password" value={secretKey} onChange={event => setSecretKey(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300" />
               </label>
               <div className="grid gap-3 sm:grid-cols-3">
