@@ -481,11 +481,13 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         const bodyBytes = new TextEncoder().encode(encrypted);
         const reservationId = "backup-" + crypto.randomUUID().replace(/-/g, "");
         let uploadedKey = "";
+        let reservationCommitted = false;
         try {
           const reservation = await reserveStorageDestination(fs, {
             purpose: "backup",
             incomingBytes: bodyBytes.byteLength,
             reservationId,
+            excludeDestinationIds: destinations.map(row => row.__id).filter(id => id !== destinationId),
           });
           if (reservation.destinationId !== destinationId) {
             await releaseStorageReservation(fs, reservationId);
@@ -498,6 +500,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           const stored = await adapter.headObject(uploadedKey);
           if (!stored || stored.sizeBytes !== bodyBytes.byteLength) throw new ApiError(409, "STORAGE_BACKUP_UPLOAD_UNVERIFIED", "The encrypted backup did not pass its storage check.");
           await commitStorageReservation(fs, reservationId, stored.sizeBytes);
+          reservationCommitted = true;
           let cursor: string | null = null;
           const backups: string[] = [];
           do {
@@ -512,8 +515,8 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           await fs.patchDoc(taskPath, { phase: "done", backupObjectKey: uploadedKey, backupBytes: stored.sizeBytes, retainedBackupCount: Math.min(8, ordered.length), completedAt: now, updatedAt: now });
           return Response.json({ done: true, backupObjectKey: uploadedKey, backupBytes: stored.sizeBytes, retainedBackupCount: Math.min(8, ordered.length) });
         } catch (error) {
-          if (uploadedKey) await createStorageProviderAdapter(config).deleteObject(uploadedKey).catch(() => undefined);
-          await releaseStorageReservation(fs, reservationId).catch(() => undefined);
+          if (uploadedKey && !reservationCommitted) await createStorageProviderAdapter(config).deleteObject(uploadedKey).catch(() => undefined);
+          if (!reservationCommitted) await releaseStorageReservation(fs, reservationId).catch(() => undefined);
           throw error;
         }
       }
