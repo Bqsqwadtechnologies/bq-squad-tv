@@ -50,6 +50,25 @@ def poll_firestore_queue() -> None:
     job = response.get("job")
     if job:
         transcode_claimed_job.spawn(job)
+        return
+    maintenance = runner.signed_request("POST", "/api/public/v1/worker/maintenance/claim", {})
+    task = maintenance.get("task")
+    if task:
+        run_maintenance_task.spawn(task)
+
+
+@app.function(
+    image=image,
+    secrets=[worker_secret],
+    cpu=0.5,
+    memory=512,
+    timeout=1800,
+    max_containers=1,
+)
+def run_maintenance_task(task: dict) -> None:
+    import runner
+
+    runner.process_maintenance_task(task)
 
 
 @app.function(
