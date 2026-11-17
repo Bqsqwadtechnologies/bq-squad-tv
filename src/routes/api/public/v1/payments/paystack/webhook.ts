@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Firestore, encodeFields } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody } from "@/lib/server/api";
 import { creditPaystackPayment, fetchPaystackVerification, verifyPaystackSignature } from "@/lib/server/paystack";
 
@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/webhook")
         return Response.json({ received: true });
       }
       if ((typeof event.id !== "number" && typeof event.id !== "string") || String(event.id).length < 1 || String(event.id).length > 120) {
-        throw new Error("Paystack event identifier is missing.");
+        throw new ApiError(400, "PAYSTACK_EVENT_ID_REQUIRED", "The payment notification identifier is missing.");
       }
       const reference = event.data.reference;
       const fs = await Firestore.create();
