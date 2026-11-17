@@ -362,7 +362,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           await fs.patchDoc(taskPath, {
             payload: { destinationId, cursorValue, cursorId },
             completedCopyCount: (typeof task["completedCopyCount"] === "number" ? task["completedCopyCount"] : 0) + 1,
-            leaseExpiresAt: videoWorkerLeaseExpiry(Date.drainNow()), updatedAt: drainNow,
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: drainNow,
           });
         }
         const page = await fs.query("contentAssets", {
@@ -378,7 +378,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
             limit: 1,
           });
           if (remaining.length > 0) {
-            await fs.patchDoc(taskPath, { payload: { destinationId, cursorValue: null, cursorId: null }, leaseExpiresAt: videoWorkerLeaseExpiry(Date.drainNow()), updatedAt: drainNow });
+            await fs.patchDoc(taskPath, { payload: { destinationId, cursorValue: null, cursorId: null }, leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: drainNow });
             return Response.json({ done: false, resetCursor: true });
           }
           await fs.patchDoc("storageDestinations/" + destinationId, {
@@ -448,7 +448,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           await fs.patchDoc(taskPath, {
             payload: { destinationId, cursorValue: nextCursorValue, cursorId: assetId, queuedAssetId: assetId, queuedCopyTaskId: copyTaskId },
             queuedAssetCount: (typeof task["queuedAssetCount"] === "number" ? task["queuedAssetCount"] : 0) + 1,
-            leaseExpiresAt: videoWorkerLeaseExpiry(Date.drainNow()), updatedAt: drainNow,
+            leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: drainNow,
           });
           return Response.json({ done: false, queuedCopy: true, assetId, copyTaskId });
         } catch (error) {
