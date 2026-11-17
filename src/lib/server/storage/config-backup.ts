@@ -73,8 +73,8 @@ export async function decryptStorageConfigurationBackup(
 ): Promise<StorageConfigurationBackup> {
   try {
     const envelope = JSON.parse(serialized) as Record<string, unknown>;
-    if (envelope.version !== 1 || envelope.algorithm !== "AES-GCM" ||
-        typeof envelope.iv !== "string" || typeof envelope.ciphertext !== "string") {
+    if (envelope["version"] !== 1 || envelope["algorithm"] !== "AES-GCM" ||
+        typeof envelope["iv"] !== "string" || typeof envelope["ciphertext"] !== "string") {
       throw new Error("invalid envelope");
     }
     const plain = await crypto.subtle.decrypt(
