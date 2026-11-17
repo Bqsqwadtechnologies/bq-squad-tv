@@ -41,7 +41,7 @@ export function resolveAssetMediaBinding(
 ): AssetStreamBinding & { objectKey: string | null; mediaType: string | null } {
   const binding = resolveAssetStreamBinding(media, assetId);
   const key = typeof media["objectKey"] === "string" ? media["objectKey"] : "";
-  const objectKey = key.startsWith(binding.objectPrefix + "/") &&
+  const objectKey = key.length > binding.objectPrefix.length + 1 && key.startsWith(binding.objectPrefix + "/") &&
     !key.includes("\\") && !key.split("/").some(part => part === "." || part === "..")
     ? key : null;
   const mediaType = media["mediaType"] === "poster" || media["mediaType"] === "thumbnail" || media["mediaType"] === "sprite"
@@ -58,7 +58,7 @@ export function classifyAssetMediaOutput(relativePath: string): "poster" | "thum
 }
 
 export function isAllowedHlsOutputPath(relativePath: string): boolean {
-  if (!relativePath || relativePath.startsWith("/") || relativePath.includes("\\") ||
+  if (!relativePath || relativePath.length > 220 || relativePath.startsWith("/") || relativePath.includes("\\") ||
       relativePath.split("/").some(part => !part || part === "." || part === "..")) return false;
   return /^(?:[A-Za-z0-9_-]+\/)*(?:master|index)\.m3u8$/i.test(relativePath) ||
     /^(?:[A-Za-z0-9_-]+\/)*segment_[0-9]{5}\.(?:ts|m4s)$/i.test(relativePath) ||
