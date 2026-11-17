@@ -26,6 +26,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
@@ -42,6 +43,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SignInScreen(onAuthenticated: () -> Unit) {
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
     val repository = remember { AuthRepository() }
     val scope = rememberCoroutineScope()
     var email by remember { mutableStateOf("") }
@@ -72,6 +74,10 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
             style = MaterialTheme.typography.titleLarge,
         )
         Spacer(modifier = Modifier.height(14.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { uriHandler.openUri("https://bqsqwad.com/terms") }) { Text("Terms of service") }
+            TextButton(onClick = { uriHandler.openUri("https://bqsqwad.com/privacy") }) { Text("Privacy notice") }
+        }
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
