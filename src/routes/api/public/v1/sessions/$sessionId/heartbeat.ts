@@ -52,10 +52,12 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           const initialSession = requireSessionOwned(await fs.getDoc(sessionPath), sessionId, user.uid);
           if (leaseToken) {
             const lease = await verifySessionLeaseToken(leaseToken, sessionId);
-            if (lease.seq !== integer(initialSession["lastClientSequence"]) ||
-                lease.billedSeconds !== integer(initialSession["billedSeconds"]) ||
-                lease.positionMs !== integer(initialSession["lastPlaybackPositionMs"]) ||
-                clientSequence !== lease.seq + 1) {
+            const lastSequence = integer(initialSession["lastClientSequence"]);
+            const isIdempotentRetry = clientSequence === lastSequence && lease.seq === clientSequence - 1;
+            const isNextHeartbeat = clientSequence === lastSequence + 1 && lease.seq === lastSequence &&
+              lease.billedSeconds === integer(initialSession["billedSeconds"]) &&
+              lease.positionMs === integer(initialSession["lastPlaybackPositionMs"]);
+            if (!isIdempotentRetry && !isNextHeartbeat) {
               throw new ApiError(409, "HEARTBEAT_LEASE_STALE", "The playback lease is out of date. Refresh the playback session.");
             }
           }
