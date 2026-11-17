@@ -11,7 +11,7 @@ describe("formatMinorCurrency", () => {
   it("respects zero-decimal currencies such as JPY", () => {
     const value = formatMinorCurrency(12345, "JPY");
     expect(value).toContain("12,345");
-    expect(value).not.toMatch(/[.,]\d{2}/);
+    expect(value).not.toMatch(/[.,]\d{2}$/);
   });
 
   it("respects three-decimal currencies such as KWD", () => {
