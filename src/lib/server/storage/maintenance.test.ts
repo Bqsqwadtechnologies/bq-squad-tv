@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { ApiError } from "../firebase-admin";
 import {
   accumulateStorageUsage,
+  checkStorageProviderHealth,
+  readStorageUsagePage,
   isStorageQuotaOrRateLimit,
   storageFailureCode,
   storageFailureMessage,
@@ -20,6 +22,28 @@ describe("storage maintenance accounting", () => {
     expect(() => accumulateStorageUsage(Number.MAX_SAFE_INTEGER, 0, [
       { key: "overflow", sizeBytes: 1 },
     ])).toThrow();
+  });
+
+  it("runs health and paginated usage through a fake provider adapter", async () => {
+    const calls: string[] = [];
+    const fakeAdapter = {
+      async healthCheck() {
+        calls.push("health");
+        return { healthy: true as const };
+      },
+      async listObjects(_prefix: string, cursor: string | null) {
+        calls.push(cursor ?? "first-page");
+        return cursor === null
+          ? { objects: [{ key: "one.ts", sizeBytes: 10 }], nextCursor: "page-2" }
+          : { objects: [{ key: "two.ts", sizeBytes: 20 }], nextCursor: null };
+      },
+    };
+    expect(await checkStorageProviderHealth(fakeAdapter)).toEqual({ healthy: true });
+    const first = await readStorageUsagePage(fakeAdapter, null, 0, 0);
+    const second = await readStorageUsagePage(fakeAdapter, first.nextCursor, first.usageBytes, first.objectCount);
+    expect(first).toEqual({ usageBytes: 10, objectCount: 1, nextCursor: "page-2" });
+    expect(second).toEqual({ usageBytes: 30, objectCount: 2, nextCursor: null });
+    expect(calls).toEqual(["health", "first-page", "page-2"]);
   });
 
   it("marks only quota, payment-required and rate-limit errors for the 24-hour degraded state", () => {
