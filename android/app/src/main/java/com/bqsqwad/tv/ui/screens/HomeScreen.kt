@@ -5,12 +5,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.NotificationsNone
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,8 +80,9 @@ fun HomeScreen(
     Column(
         Modifier
             .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
             .verticalScroll(rememberScrollState())
-            .padding(top = 12.dp, bottom = 20.dp),
+            .padding(top = 4.dp, bottom = 20.dp),
     ) {
         Row(
             Modifier
@@ -88,14 +99,17 @@ fun HomeScreen(
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onSearch) {
-                    Text("⌕", style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
+                IconButton(onClick = onSearch, modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Default.Search, contentDescription = "Search", tint = MaterialTheme.colorScheme.onSurface)
                 }
-                IconButton(onClick = { showNotifications = true }) {
-                    Text("♧", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge)
+                IconButton(onClick = { showNotifications = true }, modifier = Modifier.size(48.dp)) {
+                    Icon(Icons.Default.NotificationsNone, contentDescription = "Notifications", tint = MaterialTheme.colorScheme.primary)
                 }
-                IconButton(onClick = onProfile) {
-                    Text("●", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleLarge)
+                IconButton(
+                    onClick = onProfile,
+                    modifier = Modifier.size(48.dp).border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = "Profile", tint = MaterialTheme.colorScheme.onSurface)
                 }
             }
         }
