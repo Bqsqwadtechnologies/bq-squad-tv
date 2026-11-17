@@ -73,3 +73,16 @@ The checker reports names only. Add or verify each name in the hosting provider'
 - `GOOGLE_PLAY_PACKAGE_NAME` — the Android application ID configured in the Play Console; this is a setting, not a credential.
 
 Only enable a feature after its required server-side setting is present and verified. The checker cannot inspect provider dashboards and does not establish that a credential is valid.
+
+
+## 8. Legal policy publication
+
+Before publishing the legal pages as final policies:
+
+1. Have the company's legal reviewer approve the Privacy Notice, Terms of Service and Producer Terms.
+2. Confirm the company's legal entity name, operating address and governing jurisdiction.
+3. Confirm data categories, service-provider disclosures, retention periods, user rights/contact process and any cross-border processing language.
+4. Confirm wallet, payment, cancellation/refund, content-rights, producer revenue and payout clauses against the actual product configuration.
+5. Only then replace the publication-pending page notices and remove their noindex metadata.
+
+The current website routes are placeholders that explicitly say publication is pending. They are not legal agreements and must not be represented as approved policies.
