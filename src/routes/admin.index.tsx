@@ -26,6 +26,12 @@ type AdminModule =
   | "pricing" | "wallets" | "payments" | "payouts" | "ads" | "notifications"
   | "moderation" | "security" | "system";
 
+type PlatformFlags = {
+  producerChannelCreation: boolean; waitingRoom: boolean; maintenanceMode: boolean; signupsOpen: boolean;
+  commentsOpen: boolean; newStreamGrants: boolean; adultChannels: boolean; liveTv: boolean;
+  providerConsole: boolean; hlsEncryption: boolean; forYou: boolean; reminders: boolean;
+};
+
 type Access = {
   controlCentre?: "ZILLIONAIRE";
   owner: boolean;
@@ -77,6 +83,11 @@ function ZillionaireDashboard() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [checking, setChecking] = useState(true);
+  const [platformFlags, setPlatformFlags] = useState<PlatformFlags | null>(null);
+  const [flagsReason, setFlagsReason] = useState("");
+  const [flagsBusy, setFlagsBusy] = useState(false);
+  const [flagsMessage, setFlagsMessage] = useState("");
+  const [flagsError, setFlagsError] = useState("");
 
   async function loadAccess(idToken: string) {
     const response = await fetch("/api/public/v1/admin/overview", {
@@ -92,6 +103,15 @@ function ZillionaireDashboard() {
     }
     setAccess(result);
     setError("");
+    if (result.owner) {
+      const flagsResponse = await fetch("/api/public/v1/admin/config/flags", {
+        headers: await getWebAuthHeaders(idToken),
+        cache: "no-store",
+      });
+      const flagsData = await flagsResponse.json() as { flags?: PlatformFlags; error?: string };
+      if (!flagsResponse.ok || !flagsData.flags) throw new Error(flagsData.error ?? "Could not load platform controls.");
+      setPlatformFlags(flagsData.flags);
+    }
   }
 
   useEffect(() => {
@@ -127,6 +147,31 @@ function ZillionaireDashboard() {
   }
 
   const allowedModules = new Set(access?.modules ?? []);
+
+  async function savePlatformFlags(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!platformFlags || !access?.owner || flagsBusy || flagsReason.trim().length < 3) return;
+    setFlagsBusy(true);
+    setFlagsError("");
+    setFlagsMessage("");
+    try {
+      const token = await restoreWebSession();
+      if (!token) throw new Error("Your secure session has expired. Sign in again.");
+      const response = await fetch("/api/public/v1/admin/config/flags", {
+        method: "PUT",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ flags: platformFlags, reason: flagsReason.trim() }),
+      });
+      const result = await response.json() as { saved?: boolean; version?: number; error?: string };
+      if (!response.ok || !result.saved) throw new Error(result.error ?? "Could not save platform controls.");
+      setFlagsMessage("Platform controls saved as version " + result.version + ".");
+      setFlagsReason("");
+    } catch (caught) {
+      setFlagsError(caught instanceof Error ? caught.message : "Could not save platform controls.");
+    } finally {
+      setFlagsBusy(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[#030b2a] text-white">
@@ -212,6 +257,46 @@ function ZillionaireDashboard() {
                 <p className="mt-1 text-xs leading-5 text-blue-100/55">Provider setup remains separate from owner controls and requires approved rights and provider credentials.</p>
               </div>
             </div>
+
+            {access.owner ? (
+              <section className="mt-10 rounded-3xl border border-cyan-300/20 bg-[#07143d] p-5 sm:p-7" aria-labelledby="platform-controls-heading">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div><p className="text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-300">Owner only</p><h2 id="platform-controls-heading" className="mt-1 text-2xl font-black">Platform feature controls</h2><p className="mt-2 max-w-2xl text-xs leading-5 text-blue-100/55">Changes are saved through the protected server and recorded in the audit history. Keep features off until their provider setup and safety checks are complete.</p></div>
+                  <span className="rounded-full border border-cyan-300/20 px-3 py-1 text-xs text-cyan-200">Owner access</span>
+                </div>
+                {platformFlags ? (
+                  <form onSubmit={savePlatformFlags} className="mt-6">
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {([
+                        ["producerChannelCreation", "Producer channel creation", "Allow eligible producers to request channel creation."],
+                        ["waitingRoom", "Waiting room", "Enable the waiting room experience."],
+                        ["maintenanceMode", "Maintenance mode", "Show the platform maintenance state."],
+                        ["signupsOpen", "New account registration", "Allow new viewers to create accounts."],
+                        ["commentsOpen", "Viewer comments", "Allow comments where the content supports them."],
+                        ["newStreamGrants", "New viewing sessions", "Allow new session grants."],
+                        ["adultChannels", "Age-restricted channels", "Keep off unless age and rights controls are approved."],
+                        ["liveTv", "Live TV", "Enable live TV surfaces after provider checks."],
+                        ["providerConsole", "Provider console", "Keep off until provider access is configured."],
+                        ["hlsEncryption", "Stream encryption", "Keep off until key delivery and playback are verified."],
+                        ["forYou", "For You recommendations", "Enable personalized discovery surfaces."],
+                        ["reminders", "Viewing reminders", "Enable reminder surfaces after delivery setup."],
+                      ] as const).map(([key, title, description]) => (
+                        <label key={key} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-[#030b2a] p-4">
+                          <input type="checkbox" checked={platformFlags[key]} onChange={event => setPlatformFlags(current => current ? { ...current, [key]: event.target.checked } : current)} className="mt-1 size-4 accent-cyan-300" />
+                          <span><span className="block text-sm font-bold">{title}</span><span className="mt-1 block text-xs leading-5 text-blue-100/50">{description}</span><span className="mt-2 block text-[10px] font-bold uppercase tracking-wider text-cyan-200">{platformFlags[key] ? "Enabled" : "Disabled"}</span></span>
+                        </label>
+                      ))}
+                    </div>
+                    <label className="mt-5 grid gap-2 text-sm text-blue-100/70">Reason for this change
+                      <textarea required minLength={3} maxLength={1000} value={flagsReason} onChange={event => setFlagsReason(event.target.value)} className="min-h-20 rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300" placeholder="Describe why these settings are changing." />
+                    </label>
+                    {flagsError ? <p role="alert" className="mt-3 text-sm text-rose-200">{flagsError}</p> : null}
+                    {flagsMessage ? <p role="status" className="mt-3 text-sm text-cyan-200">{flagsMessage}</p> : null}
+                    <button type="submit" disabled={flagsBusy || flagsReason.trim().length < 3} className="mt-4 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-5 py-3 text-sm font-extrabold text-[#031039] disabled:cursor-not-allowed disabled:opacity-50">{flagsBusy ? "Saving controls…" : "Save platform controls"}</button>
+                  </form>
+                ) : <p className="mt-5 text-sm text-blue-100/55">Loading owner controls…</p>}
+              </section>
+            ) : null}
 
             <div className="mt-10">
               <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
