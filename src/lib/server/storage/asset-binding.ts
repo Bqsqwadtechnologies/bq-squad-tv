@@ -114,7 +114,8 @@ export async function bindAssetStreamStorage(
       throw new ApiError(409, "ASSET_STORAGE_DESTINATION_UNAVAILABLE", "The new streaming location is not ready.");
     }
     if (reservation["status"] !== "committed" || reservation["destinationId"] !== input.destinationId ||
-        reservation["purpose"] !== "hls_streaming" || typeof reservation["actualBytes"] !== "number" ||
+        reservation["assetId"] !== input.assetId || reservation["purpose"] !== "hls_streaming" ||
+        typeof reservation["actualBytes"] !== "number" ||
         !Number.isSafeInteger(reservation["actualBytes"]) || reservation["actualBytes"] < 1) {
       throw new ApiError(409, "ASSET_STORAGE_RESERVATION_UNVERIFIED", "The new package must be verified and its storage reservation completed first.");
     }
