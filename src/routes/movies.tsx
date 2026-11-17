@@ -94,7 +94,7 @@ function MoviesPage() {
           {!busy && !error && signedIn && visibleItems.length === 0 ? <p className="mt-8 rounded-2xl border border-dashed border-blue-200 bg-slate-50 p-8 text-center text-sm text-slate-500">No featured movies are available in this category yet.</p> : null}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4">
             {visibleItems.map(item => (
-              <a key={item.id} href={"/channels/" + encodeURIComponent(item.channelId)} className="group overflow-hidden rounded-2xl border border-blue-100 bg-white transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg">
+              <a key={item.id} href={"/content/" + encodeURIComponent(item.id)} className="group overflow-hidden rounded-2xl border border-blue-100 bg-white transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg">
                 <div className="relative aspect-[3/4] overflow-hidden bg-gradient-to-br from-blue-100 to-cyan-100">
                   {item.posterUrl ? <img src={item.posterUrl} alt="" loading="lazy" className="h-full w-full object-cover transition group-hover:scale-[1.03]" /> : <div className="grid h-full place-items-center text-blue-400"><Film size={42} /></div>}
                 </div>
