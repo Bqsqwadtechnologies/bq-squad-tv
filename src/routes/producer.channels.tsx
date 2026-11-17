@@ -191,7 +191,7 @@ function ProducerChannelsPage() {
                   <label className="grid gap-2 text-sm text-blue-100/70">Provider ID
                     <input required value={providerId} onChange={event => setProviderId(event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))} placeholder="your_provider" className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300" />
                   </label>
-                  <label className="grid gap-2 text-sm text-blue-100/70">Provider API key
+                  <label className="grid gap-2 text-sm text-blue-100/70">Provider access key
                     <input required type="password" autoComplete="new-password" value={providerKey} onChange={event => setProviderKey(event.target.value)} placeholder="Enter provider key" className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300" />
                   </label>
                   <p className="text-[11px] leading-5 text-blue-100/50">The key is sent over HTTPS and encrypted before storage. It is never returned to the browser. Playback stays disabled until the provider adapter is connected and verified.</p>
