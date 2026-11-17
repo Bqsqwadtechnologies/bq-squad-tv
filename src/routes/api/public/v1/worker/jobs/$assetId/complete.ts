@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody } from "@/lib/server/api";
 import { requireVideoWorker } from "@/lib/server/video-worker-auth";
+import { isVideoWorkerLeaseActive } from "@/lib/server/video-worker-policy";
 import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 import { commitStorageReservation } from "@/lib/server/storage/reservations";
@@ -38,7 +39,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       const jobPath = "videoTranscodeJobs/" + assetId;
       const job = await fs.getDoc(jobPath);
       if (!job || job["status"] !== "processing" || job["claimToken"] !== body.claimToken || job["workerId"] !== workerId ||
-          typeof job["leaseExpiresAt"] !== "string" || Date.parse(job["leaseExpiresAt"]) <= Date.now()) {
+          !isVideoWorkerLeaseActive(job["leaseExpiresAt"])) {
         throw new ApiError(409, "WORKER_LEASE_INVALID", "The processing job lease is no longer valid.");
       }
       if (typeof job["sourceSha256"] === "string" && body.sourceSha256 &&
