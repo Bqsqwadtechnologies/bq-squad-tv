@@ -322,20 +322,6 @@ private fun ProfileAction(
 }
 
 @Composable
-private fun SettingsSwitchRow(
-    title: String,
-    detail: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-) {
-    ListItem(
-        headlineContent = { Text(title) },
-        supportingContent = { Text(detail) },
-        trailingContent = { Switch(checked = checked, onCheckedChange = onCheckedChange) },
-    )
-}
-
-@Composable
 private fun EmptyPanel(
     symbol: String,
     title: String,
