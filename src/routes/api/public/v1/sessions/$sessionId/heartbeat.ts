@@ -4,6 +4,7 @@ import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/se
 import { errorBody, requireUser } from "@/lib/server/api";
 import { signSessionLeaseToken, verifySessionLeaseToken } from "@/lib/server/session-lease-token";
 import { releaseSessionLease, renewSessionLease } from "@/lib/server/session-limits";
+import { sessionSpendableBalance, settleSessionHold } from "@/lib/server/session-holds";
 import { estimatePlaybackProgressBytes, recordExpectedStorageEgressProgress, releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
 import {
   elapsedSeconds,
@@ -47,6 +48,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           const nowIso = now.toISOString();
           const sessionPath = "sessions/" + sessionId;
           const walletPath = "wallets/" + user.uid;
+          const holdPath = "walletHolds/" + sessionId;
           const receiptPath = sessionPath + "/heartbeats/" + clientSequence;
           const activeSessionsPath = "activeSessions/" + user.uid;
           const budgetMonth = nowIso.slice(0, 7);
@@ -69,7 +71,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
           const producerPath = producerUid ? "producers/" + producerUid : null;
           const readPaths = [
             sessionPath, walletPath, receiptPath, activeSessionsPath,
-            monthlyUsagePath, monthlyBudgetAlertPath, lowBalanceAlertPath,
+            monthlyUsagePath, monthlyBudgetAlertPath, lowBalanceAlertPath, holdPath,
             ...(producerPath ? [producerPath] : []),
           ];
 
@@ -90,7 +92,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             const monthlyUsage = docs[4] ?? {};
             const monthlyBudgetAlert = docs[5];
             const lowBalanceAlert = docs[6];
-            const producer = producerPath ? docs[7] : null;
+            const walletHold = docs[7] ?? {};
+            const producer = producerPath ? docs[8] : null;
             if (existingReceipt && typeof existingReceipt["response"] === "object" && existingReceipt["response"] !== null) {
               return { result: existingReceipt["response"] as Record<string, unknown>, writes: [] };
             }
@@ -116,6 +119,10 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
             const rate = integer(session["ratePerMinuteMinor"]);
             const previousBilledSeconds = integer(session["billedSeconds"]);
             const balance = integer(wallet["balanceMinor"]);
+            const heldBalance = integer(wallet["heldBalanceMinor"]);
+            const ownHold = walletHold["uid"] === user.uid && walletHold["sessionId"] === sessionId
+              ? integer(walletHold["amountMinor"]) : 0;
+            const spendableBalance = sessionSpendableBalance(balance, heldBalance, ownHold);
             const today = nowIso.slice(0, 10);
             const spentToday = wallet["spentDate"] === today ? integer(wallet["spentTodayMinor"]) : 0;
             const dailyLimit = Object.prototype.hasOwnProperty.call(session, "dailySpendLimitMinor")
@@ -131,18 +138,29 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
               : Number.MAX_SAFE_INTEGER;
             const affordableSeconds = maxAffordableSeconds(
               previousBilledSeconds, billableSeconds, rate,
-              Math.min(balance, dailyRemaining, monthlyRemaining),
+              Math.min(spendableBalance, dailyRemaining, monthlyRemaining),
             );
             const charge = incrementalSessionCharge(previousBilledSeconds, affordableSeconds, rate);
             const missedTwoHeartbeats = elapsed > 45;
             const exhausted = rate > 0 && (
               affordableSeconds < billableSeconds ||
-              balance <= charge.chargeMinor ||
+              spendableBalance <= charge.chargeMinor ||
               dailyRemaining <= charge.chargeMinor ||
               monthlyRemaining <= charge.chargeMinor
             );
             const active = !missedTwoHeartbeats && !exhausted;
             const newBalance = balance - charge.chargeMinor;
+            const targetHoldMinor = rate > 0
+              ? Math.min(
+                  Number.MAX_SAFE_INTEGER, rate * 10,
+                  Math.max(0, dailyRemaining - charge.chargeMinor),
+                  Math.max(0, monthlyRemaining - charge.chargeMinor),
+                )
+              : 0;
+            const nextHold = settleSessionHold({
+              balanceMinor: balance, heldBalanceMinor: heldBalance, ownHoldMinor: ownHold,
+              chargeMinor: charge.chargeMinor, targetHoldMinor, keepActive: active,
+            });
             const currency = typeof session["currency"] === "string" ? session["currency"] as string :
               typeof wallet["currency"] === "string" ? wallet["currency"] as string : "NGN";
             if (typeof wallet["currency"] === "string" && wallet["currency"] !== currency) {
@@ -157,6 +175,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
               lastClientSequence: clientSequence,
               lastPlaybackState: playbackState,
               lastPlaybackPositionMs: playbackPositionMs,
+              walletHoldMinor: nextHold.holdMinor,
               active,
               ...(active ? {} : { endedAt: nowIso, endReason: missedTwoHeartbeats ? "HEARTBEAT_TIMEOUT" : "WALLET_LIMIT" }),
             };
@@ -167,14 +186,25 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/heartbe
 
             const writes: FirestoreWrite[] = [
               {
+                update: {
+                  name: fs.docName(holdPath),
+                  fields: encodeFields({
+                    uid: user.uid, sessionId, amountMinor: nextHold.holdMinor, currency,
+                    status: nextHold.holdMinor > 0 ? "active" : "released", updatedAt: nowIso,
+                  }),
+                },
+                ...(docs[7] ? {} : { currentDocument: { exists: false } }),
+              },
+              {
                 update: { name: fs.docName(sessionPath), fields: encodeFields(newSession) },
                 updateMask: { fieldPaths: Object.keys(newSession) },
               },
               {
                 update: { name: fs.docName(walletPath), fields: encodeFields({
-                  balanceMinor: newBalance, spentDate: today, spentTodayMinor: newSpentToday, currency, updatedAt: nowIso,
+                  balanceMinor: newBalance, heldBalanceMinor: nextHold.heldBalanceMinor,
+                  spentDate: today, spentTodayMinor: newSpentToday, currency, updatedAt: nowIso,
                 }) },
-                updateMask: { fieldPaths: ["balanceMinor", "spentDate", "spentTodayMinor", "currency", "updatedAt"] },
+                updateMask: { fieldPaths: ["balanceMinor", "heldBalanceMinor", "spentDate", "spentTodayMinor", "currency", "updatedAt"] },
               },
               {
                 update: {
