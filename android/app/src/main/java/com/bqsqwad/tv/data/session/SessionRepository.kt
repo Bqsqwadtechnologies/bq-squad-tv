@@ -12,9 +12,10 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
-class SessionRepository {
+class SessionRepository {\n    private val leaseTokens = ConcurrentHashMap<String, String>()
     private val api: SessionApi by lazy {
         require(
             !BuildConfig.API_BASE_URL.contains(".invalid"),
@@ -53,7 +54,7 @@ class SessionRepository {
                 .requestIntegrityToken(IntegrityTokenRequest.builder().setNonce(nonce).build())
                 .awaitResult()
                 .token()
-        return api.start(auth, StartSessionRequest(channelId, integrity, nonce, UUID.randomUUID().toString(), "android"))
+        val session = api.start(auth, StartSessionRequest(channelId, integrity, nonce, UUID.randomUUID().toString(), "android"))\n        session.leaseToken?.let { leaseTokens[session.sessionId] = it }\n        return session
     }
 
     suspend fun heartbeat(
@@ -61,9 +62,9 @@ class SessionRepository {
         sequence: Long,
         playbackState: String,
         playbackPositionMs: Long,
-    ) = api.heartbeat(bearer(), sessionId, HeartbeatRequest(sequence, playbackState, playbackPositionMs))
+    ) : SessionSnapshot {\n        val response = api.heartbeat(\n            bearer(),\n            sessionId,\n            HeartbeatRequest(sequence, playbackState, playbackPositionMs, leaseTokens[sessionId]),\n        )\n        response.leaseToken?.let { leaseTokens[sessionId] = it }\n        if (!response.active) leaseTokens.remove(sessionId)\n        return response\n    }
 
     suspend fun refresh(sessionId: String) = api.refresh(bearer(), sessionId)
 
-    suspend fun end(sessionId: String) = api.end(bearer(), sessionId)
+    suspend fun end(sessionId: String) {\n        try { api.end(bearer(), sessionId) } finally { leaseTokens.remove(sessionId) }\n    }
 }
