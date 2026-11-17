@@ -35,6 +35,7 @@ import com.bqsqwad.tv.ui.player.PlayerScreen
 import com.bqsqwad.tv.ui.screens.*
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private data class MainTab(
     val route: String,
