@@ -283,7 +283,7 @@ export async function loadStreamStorageConfiguration(
         healthStatus: item.healthStatus,
         mode: item.mode,
         enabled: item.enabled,
-        degradedUntil: item.degradedUntil,
+        degradedUntil: item.degradedUntil ?? null,
       })).find(item => item.destinationId === binding.streamDestinationId) ?? {
         destinationId: binding.streamDestinationId,
         healthStatus: "unreachable",
