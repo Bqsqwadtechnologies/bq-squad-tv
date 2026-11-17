@@ -35,7 +35,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
         const leaseExpiresAt = videoWorkerLeaseExpiry(now.getTime(), leaseMinutes);
         const claimed = await fs.transact([jobPath], docs => {
           const job = docs[0];
-          if (!job || !["queued", "processing"].includes(String(job["status"]))) return { result: false, writes: [] };
+          if (!job || !["queued", "processing"].includes(String(job["status"]))) return { result: "", writes: [] };
           if (job["status"] === "processing" && typeof job["leaseExpiresAt"] === "string" && Date.parse(job["leaseExpiresAt"]) > now.getTime()) return { result: false, writes: [] };
           const currentAttempts = typeof job["attempts"] === "number" ? job["attempts"] : 0;
           if (job["status"] === "processing" && currentAttempts >= 6) {
@@ -46,7 +46,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
               updatedAt: { stringValue: now.toISOString() },
             } }, updateMask: { fieldPaths: ["status", "workerStatus", "lastErrorCode", "claimToken", "leaseExpiresAt", "updatedAt"] } }] };
           }
-          return { result: true, writes: [{ update: { name: fs.docName(jobPath), fields: {
+          return { result: "claimed", writes: [{ update: { name: fs.docName(jobPath), fields: {
             status: { stringValue: "processing" }, workerStatus: { stringValue: "processing" },
             claimToken: { stringValue: claimToken }, leaseExpiresAt: { stringValue: leaseExpiresAt },
             workerId: { stringValue: workerId },
@@ -75,7 +75,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
           }
           continue;
         }
-        if (!claimed) continue;
+        if (claimed !== "claimed") continue;
         if (row["status"] === "processing" && typeof row["outputPrefix"] === "string" &&
             typeof row["outputDestinationId"] === "string" && typeof row["attemptSequence"] === "number") {
           const cleanupId = "cleanup_" + assetId + "_a" + row["attemptSequence"];
