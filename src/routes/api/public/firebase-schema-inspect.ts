@@ -13,10 +13,10 @@ export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const adminEmail = (process.env["ZILLIONAIRE_EMAIL"] ?? process.env["ADMIN_EMAIL"])?.trim().toLowerCase();
+        const adminEmail = process.env["ZILLIONAIRE_EMAIL"]?.trim().toLowerCase();
         const authorization = request.headers.get("authorization");
         if (!hasAdminBearerAuthorization(authorization, adminEmail) || !authorization || !adminEmail) {
-          return Response.json({ error: "Administrator sign-in is required." }, { status: 401 });
+          return Response.json({ error: "Zillionaire dashboard sign-in is required." }, { status: 401 });
         }
 
         const rawServiceAccount = process.env["FIREBASE_SERVICE_ACCOUNT_JSON"];
@@ -38,7 +38,7 @@ export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
         try {
           await verifyAdminToken(authorization.slice("Bearer ".length), serviceAccount.project_id, adminEmail);
         } catch {
-          return Response.json({ error: "Administrator sign-in could not be verified." }, { status: 401 });
+          return Response.json({ error: "Zillionaire dashboard sign-in could not be verified." }, { status: 401 });
         }
 
         try {
@@ -77,7 +77,7 @@ export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
 });
 
 async function verifyAdminToken(token: string, projectId: string, adminEmail: string): Promise<void> {
-  if (token.length > 8192) throw new Error("Invalid administrator token.");
+  if (token.length > 8192) throw new Error("Invalid dashboard sign-in.");
   const parts = token.split(".");
   if (parts.length !== 3) throw new Error("Invalid administrator token.");
   const encodedHeader = parts[0];
@@ -90,7 +90,7 @@ async function verifyAdminToken(token: string, projectId: string, adminEmail: st
   if (header["alg"] !== "RS256" || typeof header["kid"] !== "string") throw new Error("Invalid administrator token.");
 
   const keysResponse = await fetch("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com");
-  if (!keysResponse.ok) throw new Error("Could not verify administrator token.");
+  if (!keysResponse.ok) throw new Error("Could not verify dashboard sign-in.");
   const keySet = await keysResponse.json() as { keys?: Array<JsonWebKey & { kid?: string; alg?: string }> };
   const signingKey = keySet.keys?.find((key) => key.kid === header["kid"] && key.alg === "RS256");
   if (!signingKey) throw new Error("Invalid administrator token.");
@@ -115,7 +115,7 @@ async function verifyAdminToken(token: string, projectId: string, adminEmail: st
     claims["email_verified"] !== true ||
     email !== adminEmail
   ) {
-    throw new Error("Administrator token is invalid or not authorized.");
+    throw new Error("Dashboard sign-in is invalid or not authorized.");
   }
 }
 
