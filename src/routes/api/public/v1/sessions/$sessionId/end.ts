@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { releaseSessionLease } from "@/lib/server/session-limits";
+import { sessionSpendableBalance, settleSessionHold } from "@/lib/server/session-holds";
 import { releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
 import {
   incrementalSessionCharge,
@@ -31,20 +32,42 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
           const nowIso = now.toISOString();
           const sessionPath = "sessions/" + sessionId;
           const walletPath = "wallets/" + user.uid;
+          const holdPath = "walletHolds/" + sessionId;
           const initialSession = requireSessionOwned(await fs.getDoc(sessionPath), sessionId, user.uid);
           const producerUid = typeof initialSession["producerUid"] === "string" ? initialSession["producerUid"] as string : null;
           const producerPath = producerUid ? "producers/" + producerUid : null;
           const activeSessionsPath = "activeSessions/" + user.uid;
-          const readPaths = [sessionPath, walletPath, activeSessionsPath, ...(producerPath ? [producerPath] : [])];
+          const readPaths = [sessionPath, walletPath, activeSessionsPath, holdPath, ...(producerPath ? [producerPath] : [])];
 
           const snapshot = await fs.transact(readPaths, (docs) => {
             const session = requireSessionOwned(docs[0] ?? null, sessionId, user.uid);
             const wallet = docs[1] ?? {};
             const activeSessionDoc = docs[2] ?? {};
-            const producer = producerPath ? docs[3] : null;
+            const walletHold = docs[3] ?? {};
+            const producer = producerPath ? docs[4] : null;
             const balance = integer(wallet["balanceMinor"]);
+            const heldBalance = integer(wallet["heldBalanceMinor"]);
+            const ownHold = walletHold["uid"] === user.uid && walletHold["sessionId"] === sessionId
+              ? integer(walletHold["amountMinor"]) : 0;
             if (session["active"] !== true) {
-              return { result: toSessionSnapshot(sessionId, session, balance, null), writes: [] };
+              if (ownHold <= 0) return { result: toSessionSnapshot(sessionId, session, balance, null), writes: [] };
+              const releasedHold = settleSessionHold({
+                balanceMinor: balance, heldBalanceMinor: heldBalance, ownHoldMinor: ownHold,
+                chargeMinor: 0, targetHoldMinor: 0, keepActive: false,
+              });
+              return {
+                result: toSessionSnapshot(sessionId, session, balance, null),
+                writes: [
+                  {
+                    update: { name: fs.docName(walletPath), fields: encodeFields({ heldBalanceMinor: releasedHold.heldBalanceMinor, updatedAt: nowIso }) },
+                    updateMask: { fieldPaths: ["heldBalanceMinor", "updatedAt"] },
+                  },
+                  {
+                    update: { name: fs.docName(holdPath), fields: encodeFields({ amountMinor: 0, status: "released", updatedAt: nowIso }) },
+                    updateMask: { fieldPaths: ["amountMinor", "status", "updatedAt"] },
+                  },
+                ],
+              };
             }
             if (producerPath && !producer) {
               throw new ApiError(503, "PRODUCER_ACCOUNT_MISSING", "The channel producer account is not available for settlement.");
@@ -69,12 +92,18 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
             const dailyRemaining = typeof dailyLimit === "number" && Number.isSafeInteger(dailyLimit)
               ? Math.max(0, dailyLimit - spentToday)
               : Number.MAX_SAFE_INTEGER;
-            const affordableSeconds = maxAffordableSeconds(previouslyBilledSeconds, 0, rate, Math.min(balance, dailyRemaining));
+            const spendableBalance = sessionSpendableBalance(balance, heldBalance, ownHold);
+            const affordableSeconds = maxAffordableSeconds(previouslyBilledSeconds, 0, rate, Math.min(spendableBalance, dailyRemaining));
             const charge = incrementalSessionCharge(previouslyBilledSeconds, affordableSeconds, rate);
             const newBalance = balance - charge.chargeMinor;
+            const releasedHold = settleSessionHold({
+              balanceMinor: balance, heldBalanceMinor: heldBalance, ownHoldMinor: ownHold,
+              chargeMinor: charge.chargeMinor, targetHoldMinor: 0, keepActive: false,
+            });
             const newSession = {
               billedSeconds: charge.billedSeconds,
               sessionTotalMinor: safeAddMinor(integer(session["sessionTotalMinor"]), charge.chargeMinor),
+              walletHoldMinor: 0,
               active: false,
               endedAt: nowIso,
               endReason: "USER_ENDED",
@@ -87,6 +116,13 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
 
             const writes: FirestoreWrite[] = [
               {
+                update: {
+                  name: fs.docName(holdPath),
+                  fields: encodeFields({ amountMinor: 0, status: "released", updatedAt: nowIso }),
+                },
+                updateMask: { fieldPaths: ["amountMinor", "status", "updatedAt"] },
+              },
+              {
                 update: { name: fs.docName(sessionPath), fields: encodeFields(newSession) },
                 updateMask: { fieldPaths: Object.keys(newSession) },
               },
@@ -94,11 +130,11 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                 update: {
                   name: fs.docName(walletPath),
                   fields: encodeFields({
-                    balanceMinor: newBalance, spentDate: today,
-                    spentTodayMinor: safeAddMinor(spentToday, charge.chargeMinor), currency, updatedAt: nowIso,
+                    balanceMinor: newBalance, heldBalanceMinor: releasedHold.heldBalanceMinor,
+                    spentDate: today, spentTodayMinor: safeAddMinor(spentToday, charge.chargeMinor), currency, updatedAt: nowIso,
                   }),
                 },
-                updateMask: { fieldPaths: ["balanceMinor", "spentDate", "spentTodayMinor", "currency", "updatedAt"] },
+                updateMask: { fieldPaths: ["balanceMinor", "heldBalanceMinor", "spentDate", "spentTodayMinor", "currency", "updatedAt"] },
               },
               {
                 update: {
