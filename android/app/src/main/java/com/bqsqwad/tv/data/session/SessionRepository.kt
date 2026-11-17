@@ -76,8 +76,13 @@ class SessionRepository {
             sessionId,
             HeartbeatRequest(sequence, playbackState, playbackPositionMs, leaseToken),
         )
-        response.leaseToken?.let { leaseTokens[sessionId] = it }
-        if (!response.active) leaseTokens.remove(sessionId)
+        if (response.active) {
+            leaseTokens[sessionId] = requireNotNull(response.leaseToken) {
+                "The playback service did not renew the secure session lease."
+            }
+        } else {
+            leaseTokens.remove(sessionId)
+        }
         return response
     }
 
