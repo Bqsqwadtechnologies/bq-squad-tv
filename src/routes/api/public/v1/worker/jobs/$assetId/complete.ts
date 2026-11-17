@@ -14,6 +14,7 @@ import { estimateModalComputeCost } from "@/lib/server/modal-spend";
 
 const schema = z.object({
   claimToken: z.string().regex(/^[a-f0-9]{32}$/),
+  sourceSha256: z.string().regex(/^[a-f0-9]{64}$/i).optional(),
   files: z.array(z.object({ key: z.string().min(1).max(1024), sizeBytes: z.number().int().positive().max(Number.MAX_SAFE_INTEGER) })).min(2).max(20000),
   computeUsage: z.object({
     cores: z.number().finite().min(0.125).max(64),
@@ -36,6 +37,10 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       if (!job || job["status"] !== "processing" || job["claimToken"] !== body.claimToken ||
           typeof job["leaseExpiresAt"] !== "string" || Date.parse(job["leaseExpiresAt"]) <= Date.now()) {
         throw new ApiError(409, "WORKER_LEASE_INVALID", "The processing job lease is no longer valid.");
+      }
+      if (typeof job["sourceSha256"] === "string" && body.sourceSha256 &&
+          job["sourceSha256"].toLowerCase() !== body.sourceSha256.toLowerCase()) {
+        throw new ApiError(409, "SOURCE_HASH_MISMATCH", "The downloaded source does not match the previously verified source.");
       }
       const destinationId = typeof job["outputDestinationId"] === "string" ? job["outputDestinationId"] : "";
       const prefix = typeof job["outputPrefix"] === "string" ? job["outputPrefix"] : "";
@@ -119,6 +124,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       const now = new Date().toISOString();
       await fs.patchDoc("contentAssets/" + assetId, {
         status: "processed_pending_review", transcodeJobStatus: "completed", streamDestinationId: destinationId,
+        ...(body.sourceSha256 ? { sourceSha256: body.sourceSha256.toLowerCase() } : {}),
         streamObjectPrefix: prefix, storagePath: masterKey, hlsManifestKey: masterKey,
         actualHlsBytes: totalBytes, hlsVerifiedAt: now,
         outputResolutions: body.outputResolutions ?? [],
@@ -140,6 +146,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       });
       await fs.patchDoc(jobPath, {
         status: "completed", workerStatus: "completed", outputBytes: totalBytes,
+        ...(body.sourceSha256 ? { sourceSha256: body.sourceSha256.toLowerCase() } : {}),
         outputFileCount: body.files.length, outputResolutions: body.outputResolutions ?? [],
         completedAt: now, updatedAt: now,
         modalCores: cores, modalMemoryGiB: memoryGiB, modalSeconds: seconds,
