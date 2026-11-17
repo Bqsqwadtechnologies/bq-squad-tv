@@ -56,7 +56,15 @@ The Zillionaire dashboard is the only top-level control centre. Configure only `
 - Use the protected Storage locations screen to discover and register destinations. Discovery and registration require a recent sign-in confirmation.
 - Do not create a new storage account or paid service to work around a missing credential. Keep credentials server-side and never expose them to browser or Android clients.
 
-## 6. Owner review checklist
+## 6. Encrypted storage configuration backup (pending route integration)
+
+- Create a high-entropy `CONFIG_BACKUP_KEY` in the hosting provider's server-side secret manager only after the encrypted backup and restore routes are integrated and reviewed.
+- Keep the value private; never share it in chat or commit it.
+- Select and verify a dedicated backup destination with known capacity and health before enabling scheduled backups.
+- Confirm the restore procedure against a non-production copy before relying on it.
+- The current source contains AES-GCM backup encryption/decryption primitives, but the weekly export, destination upload, eight-copy retention and owner restore route are not yet connected. Do not treat backups as active.
+
+## 7. Owner review checklist
 
 - Review the free-allowance caps and alerts for all ten storage accounts.
 - Review the video-processing spend limit and current usage.
@@ -64,7 +72,7 @@ The Zillionaire dashboard is the only top-level control centre. Configure only `
 - Add only the exact missing secret names documented by the relevant batch.
 - Paid egress is permanently disabled in application policy; there is no setting to turn it on. The application must refuse new grants before the safe free allowance is exhausted.
 
-## 7. Required secret names referenced by this project
+## 8. Required secret names referenced by this project
 
 The checker reports names only. Add or verify each name in the hosting provider's server-side secrets/settings screen; never put values in Git or chat.
 
@@ -83,7 +91,7 @@ The checker reports names only. Add or verify each name in the hosting provider'
 Only enable a feature after its required server-side setting is present and verified. The checker cannot inspect provider dashboards and does not establish that a credential is valid.
 
 
-## 8. Modal worker setup and key rotation
+## 9. Modal worker setup and key rotation
 
 1. Keep the existing Modal application name and existing worker deployment; do not create a second worker app or queue.
 2. Add `VIDEO_WORKER_KEYS_JSON` to the server and Modal secret managers. Use one unique credential per worker ID; never paste credentials into Git or chat.
@@ -92,7 +100,7 @@ Only enable a feature after its required server-side setting is present and veri
 5. Keep the legacy shared worker key only during the migration window. Remove `STREAMING_HMAC_SECRET` worker fallback after all worker IDs use individual credentials; the same secret may still be required by playback signing until that separate use is migrated.
 6. Keep the monthly spend guard on. Confirm provider account limits with the billing owner before any production processing.
 
-## 9. Legal policy publication
+## 10. Legal policy publication
 
 Before publishing the legal pages as final policies:
 
@@ -105,7 +113,7 @@ Before publishing the legal pages as final policies:
 The current website routes are placeholders that explicitly say publication is pending. They are not legal agreements and must not be represented as approved policies.
 
 
-## 10. Storage Fabric — File 03
+## 11. Storage Fabric — File 03
 
 - For each Backblaze account, verify the provider's daily caps and email alerts. The application independently uses an 800 MB/day safe ceiling and a monthly ceiling based on the lower published reading; the application limit does not replace provider caps.
 - Review the allowance source and last-checked date shown for each account group. Backblaze's current pricing describes free egress up to three times average monthly storage; the older help guidance describes 1 GB/day. The application uses the lower monthly interpretation and a 20% safety margin.
