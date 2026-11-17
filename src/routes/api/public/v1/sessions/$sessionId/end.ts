@@ -123,7 +123,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
               {
                 update: {
                   name: fs.docName(holdPath),
-                  fields: encodeFields({ amountMinor: 0, status: "released", updatedAt: nowIso }),
+                  fields: encodeFields({ amountMinor: 0, status: "released", expiresAt: null, updatedAt: nowIso }),
                 },
                 updateMask: { fieldPaths: ["amountMinor", "status", "updatedAt"] },
                 ...(docs[3] ? {} : { currentDocument: { exists: false } }),
