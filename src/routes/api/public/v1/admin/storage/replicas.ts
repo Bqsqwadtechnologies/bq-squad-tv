@@ -28,7 +28,7 @@ function safeBytes(value: unknown): number {
 export const Route = createFileRoute("/api/public/v1/admin/storage/replicas")({
   server: { handlers: { POST: async ({ request }) => {
     const fs = await Firestore.create();
-    let reservations: string[] = [];
+    const reservations: string[] = [];
     let budgetReserved = 0;
     try {
       const user = await requireUser(request);
