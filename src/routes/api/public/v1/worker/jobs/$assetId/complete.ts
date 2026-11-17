@@ -187,6 +187,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       if (posterFiles.length > 1) throw new ApiError(409, "HLS_POSTER_DUPLICATE", "The output contains more than one poster image.");
       const posterMediaIds: string[] = [];
       const thumbnailMediaIds: string[] = [];
+      const spriteMediaIds: string[] = [];
       for (const item of mediaFiles) {
         const mediaId = await createAssetMediaRecordId(assetId, item.file.key);
         const extension = item.file.key.split(".").pop()?.toLowerCase();
@@ -206,7 +207,8 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
           createdAt: now,
         });
         if (item.mediaType === "poster") posterMediaIds.push(mediaId);
-        else thumbnailMediaIds.push(mediaId);
+        else if (item.mediaType === "thumbnail") thumbnailMediaIds.push(mediaId);
+        else spriteMediaIds.push(mediaId);
       }
       await fs.patchDoc("contentAssets/" + assetId, {
         status: "processed_pending_review", transcodeJobStatus: "completed",
@@ -222,6 +224,11 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
           thumbnailMediaIds,
           thumbnailDestinationId: binding.streamDestinationId,
           thumbnailObjectPrefix: binding.objectPrefix,
+        } : {}),
+        ...(spriteMediaIds.length ? {
+          spriteMediaIds,
+          spriteDestinationId: binding.streamDestinationId,
+          spriteObjectPrefix: binding.objectPrefix,
         } : {}),
         ...(body.sourceSha256 ? { sourceSha256: body.sourceSha256.toLowerCase() } : {}),
         hlsEncryptionEnabled: flags.hlsEncryption,
