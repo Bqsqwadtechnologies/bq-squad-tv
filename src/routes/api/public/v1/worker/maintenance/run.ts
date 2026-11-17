@@ -19,6 +19,7 @@ import { classifyPaymentReconciliation, paymentReviewKey } from "@/lib/server/pa
 import { verifyAuditChain } from "@/lib/server/audit";
 import { releaseSessionLease } from "@/lib/server/session-limits";
 import { releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
+import { settleSessionHold } from "@/lib/server/session-holds";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
@@ -253,6 +254,13 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
             if (amountMinor > heldBalance) {
               throw new ApiError(409, "WALLET_HOLD_TOTAL_MISMATCH", "The wallet hold total needs owner review before it can be released.");
             }
+            const balanceMinor = typeof wallet["balanceMinor"] === "number" &&
+              Number.isSafeInteger(wallet["balanceMinor"]) && wallet["balanceMinor"] >= 0
+              ? wallet["balanceMinor"] : 0;
+            const releasedHold = settleSessionHold({
+              balanceMinor, heldBalanceMinor: heldBalance, ownHoldMinor: amountMinor,
+              chargeMinor: 0, targetHoldMinor: 0, keepActive: false,
+            });
             const writes = [
               {
                 update: {
@@ -266,7 +274,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
               writes.push({
                 update: {
                   name: fs.docName(walletPath),
-                  fields: encodeFields({ heldBalanceMinor: heldBalance - amountMinor, updatedAt: now }),
+                  fields: encodeFields({ heldBalanceMinor: releasedHold.heldBalanceMinor, updatedAt: now }),
                 },
                 updateMask: { fieldPaths: ["heldBalanceMinor", "updatedAt"] },
               });
