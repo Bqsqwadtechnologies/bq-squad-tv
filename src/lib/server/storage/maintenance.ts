@@ -133,7 +133,7 @@ export async function readStorageUsagePage(
   cursor: string | null,
   currentBytes: number,
   currentObjectCount: number,
-): Promise<{ usageBytes: number; objectCount: number; nextCursor: string | null }> {
+): Promise<{ usageBytes: number; objectCount: number; nextCursor: string | null; processedObjectCount: number }> {
   const page = await adapter.listObjects("", cursor);
   if (page.nextCursor && page.nextCursor === cursor) {
     throw new ApiError(409, "STORAGE_LISTING_CURSOR_STALLED", "The storage listing did not advance.");
