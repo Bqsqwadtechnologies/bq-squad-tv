@@ -134,3 +134,18 @@ For each Backblaze B2 S3-compatible bucket, allow only the exact production webs
 For every managed Lovable storage bucket used for HLS, apply the equivalent exact-origin CORS policy in the storage provider's bucket CORS settings: `GET` and `HEAD`, request headers `Range`, `If-Range`, `Origin`, and exposed headers `Accept-Ranges`, `Content-Length`, `Content-Range`, `Content-Type`, `ETag`, and `Last-Modified`. If the managed bucket interface does not expose a CORS setting or the browser test fails, leave that destination in `api_proxy` mode.
 
 The player uses signed query-string URLs and does not require cross-origin cookies. Do not enable credentialed wildcard CORS. Test a real playlist and a byte-range segment from the production site before switching a destination to direct delivery. These CORS rules do not apply to the two protected legacy locations unless the owner independently confirms they are already configured; do not alter those locations as part of this work.
+
+## 8. Money, wallet and playback security settings
+
+Keep these values in the hosting provider's server-side environment settings only. Never share them in chat, source files, issue comments or logs.
+
+- `FIREBASE_SERVICE_ACCOUNT_JSON`: existing Firebase server identity used by the application.
+- `PAYSTACK_SECRET_KEY`: server-only Paystack transaction verification and webhook signature verification. `PAYSTACK_PUBLIC_KEY`: website checkout configuration; it is not a substitute for server verification.
+- `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`: server-side Google Play purchase verification. `GOOGLE_PLAY_PACKAGE_NAME`: expected Android package identifier (`com.bqsqwad.tv`), not a credential.
+- `STREAMING_HMAC_SECRET`: random signing secret for playback and session lease tokens. Keep playback signing disabled until this value is configured with at least 32 characters.
+- `CONFIG_BACKUP_KEY`: encrypted storage configuration backups, as described above.
+- `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET`: only for the existing approved Modal worker deployment; do not deploy or increase spend as part of wallet work.
+
+The owner-only secret health endpoint reports names and presence only; it never returns values. It is a diagnostic, not proof that a credential is valid or that the corresponding provider account is ready. Keep paid egress disabled and preserve both legacy storage locations.
+
+The current security-header policy enforces transport, MIME, framing, referrer and browser-permission headers. Its CSP is in report-only mode while the website's script/style/asset requirements are audited; do not treat CSP enforcement as complete until a nonce/hash policy is verified against production rendering.
