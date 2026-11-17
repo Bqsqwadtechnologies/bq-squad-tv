@@ -7,6 +7,7 @@ import { isVideoWorkerLeaseActive } from "@/lib/server/video-worker-policy";
 import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
 import { createStorageUploadTarget } from "@/lib/server/storage/transfers";
 import { assertStorageObjectKey } from "@/lib/server/storage/ledger";
+import { isAllowedHlsOutputPath } from "@/lib/server/storage/asset-binding";
 
 const schema = z.object({
   claimToken: z.string().regex(/^[a-f0-9]{32}$/),
@@ -36,13 +37,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/target
         mp4: "video/mp4", vtt: "text/vtt", jpg: "image/jpeg", jpeg: "image/jpeg",
         png: "image/png", webp: "image/webp", aac: "audio/aac",
       };
-      const allowedName =
-        /^(?:[A-Za-z0-9_-]+\/)*(?:master|index)\.m3u8$/.test(relativePath) ||
-        /^(?:[A-Za-z0-9_-]+\/)*segment_[0-9]{5}\.(?:ts|m4s)$/.test(relativePath) ||
-        /^(?:[A-Za-z0-9_-]+\/)*init\.mp4$/.test(relativePath) ||
-        /^(?:[A-Za-z0-9_-]+\/)*subtitle_[A-Za-z0-9_-]+\.vtt$/.test(relativePath) ||
-        /^(?:[A-Za-z0-9_-]+\/)*(?:thumbnail|sprite)[A-Za-z0-9_-]*\.(?:jpg|jpeg|png|webp)$/.test(relativePath) ||
-        /^(?:[A-Za-z0-9_-]+\/)*audio_[A-Za-z0-9_-]+\.aac$/.test(relativePath);
+      const allowedName = isAllowedHlsOutputPath(relativePath);
       if (!prefix || !allowedName || objectKey.length > prefix.length + 220 ||
           expectedType[extension] !== body.contentType) {
         throw new ApiError(400, "WORKER_OBJECT_KEY_INVALID", "The output object key is outside the assigned HLS file allow-list.");
