@@ -205,14 +205,15 @@ export async function reserveStorageDestination(
         });
         return { reservationId, destinationId: selected.id, purpose: input.purpose, reservedBytes: input.incomingBytes, expiresAt };
       } catch (error) {
-        if (error instanceof ApiError && error.status === 409) {
-          if (error.code === "STORAGE_ACCOUNT_CAPACITY_CHANGED") {
-            remaining = remaining.filter(entry => entry.groupId !== selected.groupId);
-            groupSkips++;
-            continue;
-          }
-          if (attempt < 2) break;
+        if (error instanceof ApiError &&
+            (error.code === "STORAGE_ACCOUNT_CAPACITY_CHANGED" ||
+             error.code === "STORAGE_EGRESS_LIMIT_REACHED" ||
+             error.code === "STORAGE_EGRESS_BUDGET_UNKNOWN")) {
+          remaining = remaining.filter(entry => entry.groupId !== selected.groupId);
+          groupSkips++;
+          continue;
         }
+        if (error instanceof ApiError && error.status === 409 && attempt < 2) break;
         throw error;
       }
     }
