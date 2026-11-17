@@ -7,6 +7,7 @@ import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
 import { getUserProfile, requireAdultForContent } from "@/lib/server/api";
 import { loadStreamStorageConfiguration, createStorageDownloadTarget } from "@/lib/server/storage/transfers";
 import { resolveAssetStreamBinding } from "@/lib/server/storage/asset-binding";
+import { getPlatformFlags } from "@/lib/server/flags";
 import { signHlsObjectsDirectly } from "@/lib/server/storage/direct-signing";
 import { rewritePlaylistWithSignedObjects } from "@/lib/server/streaming/direct-playlist";
 
@@ -69,7 +70,7 @@ async function rewritePlaylistForSession(
         iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 900,
       });
       return "/api/public/v1/streaming/hls/" + childPath.split("/").map(encodeURIComponent).join("/") +
-        "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(childToken);
+        "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(childToken) + "&delivery=proxy";
     };
     if (trimmed.startsWith("#")) {
       const matches = [...line.matchAll(/(URI\s*=\s*")([^"]+)(")/gi)];
@@ -192,8 +193,11 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
             if (session["streamQualityCap"] === 480 && /(?:^|\/)master\.m3u8$/i.test(resourcePath)) {
               playlist = capMasterPlaylistAt480p(playlist);
             }
-            const rewritten = storageConfig.metadata.deliveryMode === "direct_signed"
-              ? (await rewritePlaylistWithSignedObjects({
+            const flags = await getPlatformFlags(fs);
+            let rewritten: string;
+            if (storageConfig.metadata.deliveryMode === "direct_signed" && url.searchParams.get("delivery") !== "proxy") {
+              try {
+                rewritten = (await rewritePlaylistWithSignedObjects({
                   playlist,
                   playlistPath: resourcePath,
                   signObjects: objectPaths => signHlsObjectsDirectly({
@@ -218,8 +222,14 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
                     return "/api/public/v1/streaming/key/" + encodeURIComponent(keyAssetId) +
                       "?sid=" + encodeURIComponent(sid) + "&token=" + encodeURIComponent(keyToken);
                   },
-                })).playlist
-              : await rewritePlaylistForSession(playlist, resourcePath, sid, uid);
+                })).playlist;
+              } catch (error) {
+                if (!flags.deliveryProxyFallback || (error instanceof ApiError && error.status < 500)) throw error;
+                rewritten = await rewritePlaylistForSession(playlist, resourcePath, sid, uid);
+              }
+            } else {
+              rewritten = await rewritePlaylistForSession(playlist, resourcePath, sid, uid);
+            }
             return new Response(rewritten, {
               status: 200,
               headers: {
