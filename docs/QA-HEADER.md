@@ -27,3 +27,11 @@ Not run in this environment: no local browser, Playwright runtime, or checked-ou
 - The profile control shows the signed-in member's initial in a ringed circle and has a Profile content description.
 
 **Verification remains outstanding:** no Android emulator, screenshot test or device was available. In particular, the 320 dp compact width and a cutout/notch layout have not been visually inspected.
+
+
+## Current header layout after the latest update
+
+- Logo width: 120 px below 400 px, 150 px from 400–439 px, 168 px from 440–639 px, and 205 px at 640 px and above.
+- Right-hand priority remains Profile, Wallet, then Search and Notifications. Search and Notifications collapse into the More menu below 381 px.
+- The signed-in profile control shows the member's initial; signed-out visitors see the generic person icon.
+- The header uses the top safe-area inset. The manual viewport checks at 320, 360, 390, 430 and 768 px have **not** been run in a browser or screenshot harness.
