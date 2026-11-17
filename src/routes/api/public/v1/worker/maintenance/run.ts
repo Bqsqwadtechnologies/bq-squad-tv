@@ -411,6 +411,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           excludeAccountGroups: excludedGroups,
         });
         const budgetPath = "storageReplicaBudget/global";
+        let budgetCharged = false;
         try {
           await fs.transact([budgetPath], docs => {
             const current = docs[0];
@@ -425,6 +426,7 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
               updateMask: { fieldPaths: ["usedBytes", "updatedAt"] },
             }] };
           });
+          budgetCharged = true;
           const next = page[0]!;
           const nextCursorValue = typeof next["updatedAt"] === "string" ? next["updatedAt"] : "";
           if (!nextCursorValue) throw new ApiError(409, "STORAGE_DRAIN_CURSOR_UNAVAILABLE", "The film record is missing its update date; the drain was paused safely.");
@@ -449,15 +451,17 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
           return Response.json({ done: false, queuedCopy: true, assetId, copyTaskId });
         } catch (error) {
           await releaseStorageReservation(fs, reservationId).catch(() => undefined);
-          await fs.transact([budgetPath], docs => {
-            const current = docs[0];
-            if (!current) return { result: undefined, writes: [] };
-            const used = typeof current["usedBytes"] === "number" ? current["usedBytes"] : 0;
-            return { result: undefined, writes: [{
-              update: { name: fs.docName(budgetPath), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ usedBytes: Math.max(0, used - streamBytes), updatedAt: now }) },
-              updateMask: { fieldPaths: ["usedBytes", "updatedAt"] },
-            }] };
-          }).catch(() => undefined);
+          if (budgetCharged) {
+            await fs.transact([budgetPath], docs => {
+              const current = docs[0];
+              if (!current) return { result: undefined, writes: [] };
+              const used = typeof current["usedBytes"] === "number" ? current["usedBytes"] : 0;
+              return { result: undefined, writes: [{
+                update: { name: fs.docName(budgetPath), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ usedBytes: Math.max(0, used - streamBytes), updatedAt: now }) },
+                updateMask: { fieldPaths: ["usedBytes", "updatedAt"] },
+              }] };
+            }).catch(() => undefined);
+          }
           throw error;
         }
       }
