@@ -19,9 +19,11 @@ export type StorageCandidate = {
 export type DestinationPick = { id: string; nextCursor: number };
 
 /**
- * Selects within the lowest numbered priority group first. Rotation is stable
- * by destination id, and full/unhealthy/draining destinations are skipped.
- * Unknown usage and unknown streaming egress are never treated as zero.
+ * Selects from the lowest numbered priority group with available capacity.
+ * The caller stores nextCursor in storageRouting/{purpose}; each package advances
+ * one position within that group. Full or unavailable entries are skipped and
+ * lower-priority groups are considered only after higher-priority groups have
+ * no eligible capacity. Unknown usage and egress are never treated as zero.
  */
 export function pickDestination(
   candidates: StorageCandidate[],
@@ -54,12 +56,10 @@ export function pickDestination(
   const priorities = [...new Set(eligible.map(item => item.priority))].sort((a, b) => a - b);
   for (const priority of priorities) {
     const group = eligible.filter(item => item.priority === priority).sort((a, b) => a.id.localeCompare(b.id));
+    if (group.length === 0) continue;
     const start = ((Math.trunc(cursor) % group.length) + group.length) % group.length;
-    for (let offset = 0; offset < group.length; offset++) {
-      const index = (start + offset) % group.length;
-      const chosen = group[index]!;
-      return { id: chosen.id, nextCursor: (index + 1) % group.length };
-    }
+    const chosen = group[start];
+    if (chosen) return { id: chosen.id, nextCursor: (start + 1) % group.length };
   }
   return null;
 }
