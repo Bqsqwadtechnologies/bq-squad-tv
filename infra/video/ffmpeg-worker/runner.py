@@ -395,6 +395,15 @@ def process_maintenance_task(task: dict) -> None:
             usage_bytes = int(response["usageBytes"])
         if "healthStatus" in response:
             health_status = str(response["healthStatus"])
+        if response.get("yield") is True:
+            # Long-running orchestration must release its lease so the same
+            # Modal worker can claim the child task it just queued.
+            release_payload = {"taskId": task_id, "claimToken": claim_token}
+            retry_at = response.get("retryAt")
+            if isinstance(retry_at, str):
+                release_payload["notBefore"] = retry_at
+            signed_request("POST", "/api/public/v1/worker/maintenance/release", release_payload)
+            return
         if response.get("done") is not True and task.get("taskType") == "storage_health_usage":
             # One maintenance worker processes provider pages serially. A delay
             # bounds request rate and avoids flooding a shared project/account.
