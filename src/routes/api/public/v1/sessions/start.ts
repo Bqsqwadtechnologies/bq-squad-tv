@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, getUserProfile, getWallet, parseBody, requireUser } from "@/lib/server/api";
@@ -59,6 +60,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
           const user = await requireUser(request);
           const body = await parseBody(request, bodySchema);
           const fs = await Firestore.create();
+          await assertLegalAcceptance(fs, user.uid, "public");
           if (body.clientPlatform === "web") {
             requireSameOrigin(request);
             const refreshToken = readWebRefreshCookie(request);
