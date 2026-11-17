@@ -150,7 +150,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
   const egressBudgetSource = input["egressBudgetSource"] ?? null;
   const egressBudgetCheckedAt = input["egressBudgetCheckedAt"] ?? null;
   const egressBudgetSourceUrl = input["egressBudgetSourceUrl"] ?? null;
-  const egressLevel = input["egressLevel"] ?? "normal";
+  const egressLevel = input["egressLevel"] === "paid" ? "blocked" : input["egressLevel"] ?? "normal";
   const lastErrorCode = input["lastErrorCode"] ?? null;
 
   if (typeof destinationId !== "string" || !DESTINATION_ID.test(destinationId) ||
@@ -178,7 +178,7 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
       (egressBudgetSource !== null && (typeof egressBudgetSource !== "string" || egressBudgetSource.length > 500)) ||
       (egressBudgetCheckedAt !== null && (typeof egressBudgetCheckedAt !== "string" || !Number.isFinite(Date.parse(egressBudgetCheckedAt)))) ||
       (egressBudgetSourceUrl !== null && (typeof egressBudgetSourceUrl !== "string" || egressBudgetSourceUrl.length > 2048)) ||
-      !["normal", "warn", "throttle", "blocked", "paid"].includes(String(egressLevel)) ||
+      !["normal", "warn", "throttle", "blocked"].includes(String(egressLevel)) ||
       (lastErrorCode !== null && (typeof lastErrorCode !== "string" || !/^[A-Z0-9_]{1,80}$/.test(lastErrorCode)))) {
     throw new ApiError(400, "STORAGE_DESTINATION_INVALID", "One or more storage destination fields are invalid.");
   }
