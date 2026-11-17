@@ -64,3 +64,38 @@ export async function recordRiskSignal(
     };
   });
 }
+
+export async function assertRiskStepUp(
+  fs: Firestore,
+  uid: string,
+  authTime: number,
+  nowMs = Date.now(),
+): Promise<void> {
+  if (!/^[A-Za-z0-9_-]{1,128}$/.test(uid) || !Number.isSafeInteger(nowMs) || nowMs < 0) {
+    throw new ApiError(400, "RISK_STEP_UP_INPUT_INVALID", "The security check could not be completed.");
+  }
+  const since = new Date(nowMs - 24 * 60 * 60_000).toISOString();
+  const rows = await fs.query("riskCounters", {
+    filters: [{ field: "uid", op: "EQUAL", value: uid }],
+    limit: 1600,
+  });
+  const counts: Partial<Record<RiskSignalType, number>> = {};
+  for (const type of RISK_SIGNAL_TYPES) counts[type] = 0;
+  for (const row of rows) {
+    if (typeof row["windowStart"] !== "string" || row["windowStart"] <= since) continue;
+    const values = row["counts"] && typeof row["counts"] === "object"
+      ? row["counts"] as Record<string, unknown> : {};
+    for (const type of RISK_SIGNAL_TYPES) {
+      const value = values[type];
+      if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) {
+        counts[type] = (counts[type] ?? 0) + value;
+      }
+    }
+  }
+  const risk = scoreRiskSignals(counts);
+  const nowSeconds = Math.floor(nowMs / 1000);
+  if (risk.level === "high" &&
+      (!Number.isSafeInteger(authTime) || authTime <= 0 || nowSeconds - authTime > 300 || authTime > nowSeconds + 30)) {
+    throw new ApiError(401, "STEP_UP_REQUIRED", "Please sign in again to confirm this sensitive action.");
+  }
+}
