@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody } from "@/lib/server/api";
 import { requireVideoWorker } from "@/lib/server/video-worker-auth";
+import { isVideoWorkerLeaseActive } from "@/lib/server/video-worker-policy";
 import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
 import { createStorageUploadTarget } from "@/lib/server/storage/transfers";
 import { assertStorageObjectKey } from "@/lib/server/storage/ledger";
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/target
       if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId)) throw new ApiError(400, "WORKER_JOB_INVALID", "The processing job identifier is invalid.");
       const job = await fs.getDoc("videoTranscodeJobs/" + assetId);
       if (!job || job["status"] !== "processing" || job["claimToken"] !== body.claimToken || job["workerId"] !== workerId ||
-          typeof job["leaseExpiresAt"] !== "string" || Date.parse(job["leaseExpiresAt"]) <= Date.now()) {
+          !isVideoWorkerLeaseActive(job["leaseExpiresAt"])) {
         throw new ApiError(409, "WORKER_LEASE_INVALID", "The processing job lease is no longer valid.");
       }
       const prefix = typeof job["outputPrefix"] === "string" ? job["outputPrefix"] : "";
