@@ -27,9 +27,14 @@ export const Route = createFileRoute("/api/public/v1/admin/pages/publish")({
       const path = "sitePages/" + body.slug;
       const existing = await fs.getDoc(path);
       if (!existing || typeof existing["body"] !== "string") throw new ApiError(404, "PAGE_NOT_FOUND", "The draft page could not be found.");
-      const markdown = existing["body"] as string;
-      const placeholders = [...new Set([...markdown.matchAll(/\{\{([a-z0-9_]+)\}\}/g)].map(match => match[1]))];
-      if (placeholders.length) throw new ApiError(409, "PAGE_PLACEHOLDERS_UNFILLED", "Complete these page settings before publishing: " + placeholders.join(", "));
+      const settingsDoc = await fs.getDoc("platformConfig/legalSettings");
+      const settings = settingsDoc?.["values"] && typeof settingsDoc["values"] === "object"
+        ? settingsDoc["values"] as Record<string, unknown> : {};
+      const sourceMarkdown = existing["body"] as string;
+      const missing = [...new Set([...sourceMarkdown.matchAll(/\{\{([a-z0-9_]+)\}\}/g)].map(match => match[1] ?? ""))]
+        .filter(key => !key || typeof settings[key] !== "string" || !(settings[key] as string).trim());
+      if (missing.length) throw new ApiError(409, "PAGE_PLACEHOLDERS_UNFILLED", "Complete these page settings before publishing: " + missing.join(", "));
+      const markdown = sourceMarkdown.replace(/\{\{([a-z0-9_]+)\}\}/g, (_match, key: string) => String(settings[key]).trim());
       if (/<\/?[a-z][^>]*>/i.test(markdown)) throw new ApiError(400, "PAGE_MARKDOWN_UNSAFE", "Remove raw HTML from the page. Use supported Markdown only.");
       if (/\]\(\s*(?!https:\/\/|mailto:)[^)]+\)/i.test(markdown)) throw new ApiError(400, "PAGE_LINK_UNSAFE", "Only secure web and email links are allowed.");
       const nextVersion = (Number.isSafeInteger(existing["version"]) ? Number(existing["version"]) : 0) + 1;
@@ -41,7 +46,7 @@ export const Route = createFileRoute("/api/public/v1/admin/pages/publish")({
         if (!current || current["version"] !== existing["version"]) throw new ApiError(409, "PAGE_CHANGED", "This page changed. Reload it before publishing.");
         return { result: undefined, writes: [{
           update: { name: fs.docName(path), fields: encodeFields({
-            status: "published", version: nextVersion, effectiveAt: body.effectiveAt,
+            status: "published", body: markdown, version: nextVersion, effectiveAt: body.effectiveAt,
             changeSummary: body.changeSummary, requiresReacceptance: body.requiresReacceptance,
             updatedBy: user.uid, updatedAt: now, versions: [...history, versionRecord],
           }) },
