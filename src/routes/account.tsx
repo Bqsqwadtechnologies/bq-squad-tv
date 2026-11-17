@@ -108,8 +108,14 @@ function AccountPage() {
   const [countryCode, setCountryCode] = useState("US");
   const [walletCurrency, setWalletCurrency] = useState("USD");
   const [countryReady, setCountryReady] = useState(false);
+  const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
 
   useEffect(() => {
+    const storedTheme = localStorage.getItem("bq-sqwad-theme");
+    const initialTheme = storedTheme === "dark" ? "dark" : "light";
+    setThemeMode(initialTheme);
+    document.documentElement.classList.toggle("dark", initialTheme === "dark");
+    document.documentElement.classList.toggle("light", initialTheme === "light");
     let active = true;
     void fetch("/api/public/v1/auth/web/config", { cache: "no-store" })
       .then(response => response.json() as Promise<{ googleClientId?: string }>)
@@ -127,6 +133,23 @@ function AccountPage() {
       setAccountEmail(account.email ?? "");
       setEmail(account.email ?? "");
       void loadAccountCountry();
+      try {
+        const preferenceResponse = await fetch("/api/public/v1/profile/preferences", {
+          headers: await getWebAuthHeaders(token),
+          cache: "no-store",
+        });
+        if (preferenceResponse.ok) {
+          const preference = await preferenceResponse.json() as { themeMode?: string };
+          if (preference.themeMode === "light" || preference.themeMode === "dark") {
+            setThemeMode(preference.themeMode);
+            localStorage.setItem("bq-sqwad-theme", preference.themeMode);
+            document.documentElement.classList.toggle("dark", preference.themeMode === "dark");
+            document.documentElement.classList.toggle("light", preference.themeMode === "light");
+          }
+        }
+      } catch {
+        // Keep the saved device preference when account sync is unavailable.
+      }
       setSignedIn(account.emailVerified);
       setVerificationPending(!account.emailVerified);
       if (!account.emailVerified) {
@@ -137,6 +160,25 @@ function AccountPage() {
       active = false;
     };
   }, []);
+
+  async function saveThemePreference(next: "light" | "dark") {
+    setThemeMode(next);
+    localStorage.setItem("bq-sqwad-theme", next);
+    document.documentElement.classList.toggle("dark", next === "dark");
+    document.documentElement.classList.toggle("light", next === "light");
+    const token = await getActiveWebIdToken();
+    if (!token) return;
+    try {
+      const response = await fetch("/api/public/v1/profile/preferences", {
+        method: "PUT",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ themeMode: next }),
+      });
+      if (!response.ok) setMessage("Your appearance is saved on this device. Account sync is temporarily unavailable.");
+    } catch {
+      setMessage("Your appearance is saved on this device. Account sync is temporarily unavailable.");
+    }
+  }
 
   async function loadAccountCountry() {
     const token = await getActiveWebIdToken();
@@ -354,6 +396,18 @@ function AccountPage() {
               <p className="mt-5 text-sm leading-6 text-blue-100/70">
                 Your account is signed in. Your wallet uses the currency assigned to your account country.
               </p>
+              <label className="mt-5 block text-sm font-semibold text-blue-50">
+                Appearance
+                <select
+                  value={themeMode}
+                  onChange={event => void saveThemePreference(event.target.value as "light" | "dark")}
+                  className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-3 py-3 text-white"
+                  aria-label="Choose appearance"
+                >
+                  <option value="light">White theme</option>
+                  <option value="dark">Dark navy theme</option>
+                </select>
+              </label>
               <label className="mt-5 block text-sm font-semibold text-blue-50">
                 Account country
                 <select
