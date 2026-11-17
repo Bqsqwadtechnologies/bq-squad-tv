@@ -39,6 +39,16 @@ type Destination = {
 };
 
 const PURPOSES = ["source_media", "hls_streaming", "posters", "thumbnails", "downloads", "temporary", "backup", "producer_verification"];
+const PURPOSE_LABELS: Record<string, string> = {
+  source_media: "Original video files",
+  hls_streaming: "Processed streaming files",
+  posters: "Posters",
+  thumbnails: "Preview images",
+  downloads: "Legacy archived files",
+  temporary: "Temporary files",
+  backup: "Backup files",
+  producer_verification: "Producer verification files",
+};
 
 function AdminStoragePage() {
   const [email, setEmail] = useState("");
@@ -48,7 +58,7 @@ function AdminStoragePage() {
   const [destinationId, setDestinationId] = useState("");
   const [providerType, setProviderType] = useState<Destination["providerType"]>("lovable_storage");
   const [accountAlias, setAccountAlias] = useState("");
-  const [accountGroup, setAccountGroup] = useState("lovable-default-workspace");
+  const [accountGroup, setAccountGroup] = useState("primary-storage-account");
   const [mode, setMode] = useState<Destination["mode"]>("active");
   const [replicaOf, setReplicaOf] = useState("");
   const [secretPrefix, setSecretPrefix] = useState("LOVABLE_STORAGE_01");
@@ -240,7 +250,7 @@ function AdminStoragePage() {
                       <div><h3 className="font-bold">{item.accountAlias}</h3><p className="mt-1 text-xs text-blue-100/55">{item.providerType === "lovable_storage" ? "Managed storage" : "Other storage service"}</p></div>
                       <span className={"rounded-full px-3 py-1 text-[10px] font-bold uppercase " + (item.configurationStatus === "configured" ? "bg-emerald-300/10 text-emerald-200" : "bg-amber-300/10 text-amber-200")}>{item.configurationStatus}</span>
                     </div>
-                    <p className="mt-3 break-all text-xs text-blue-100/70">{item.region} · {item.purpose === "source_media" ? "Original videos" : item.purpose === "hls_streaming" ? "Streaming files" : item.purpose.replaceAll("_", " ")} · {item.mode === "active" ? "available" : item.mode === "drain" ? "no new files" : "retired"}</p>
+                    <p className="mt-3 break-all text-xs text-blue-100/70">Storage region configured · {PURPOSE_LABELS[item.purpose] ?? "Other files"} · {item.mode === "active" ? "available" : item.mode === "drain" ? "no new files" : "retired"}</p>
                     <p className="mt-1 text-xs text-blue-100/45">Capacity limit {(item.softCapBytes / 1_000_000_000).toFixed(2)} GB · priority {item.priority} · {item.enabled ? "enabled" : "disabled"}</p>
                     <p className="mt-1 text-xs text-blue-100/55">Connection status: {item.healthStatus ?? "unknown"}{item.healthCheckedAt ? " · " + new Date(item.healthCheckedAt).toLocaleString() : ""} · Usage report: {item.usageBytes == null ? "unknown" : (item.usageBytes / 1_000_000_000).toFixed(2) + " GB"}{item.usageSource ? " (" + item.usageSource + ")" : ""}</p>
                     <p className="mt-1 text-xs text-blue-100/45">Shared capacity: {item.accountCapBytes == null ? "not configured" : (item.accountCapBytes / 1_000_000_000).toFixed(2) + " GB"} · Data transferred: {item.egressAccountMonthBytes == null ? "unknown" : (item.egressAccountMonthBytes / 1_000_000_000).toFixed(2) + " GB"} / {item.freeEgressBudgetBytes == null ? "budget unknown" : (item.freeEgressBudgetBytes / 1_000_000_000).toFixed(2) + " GB"} · {item.egressLevel ?? "unknown"}</p>
@@ -252,16 +262,16 @@ function AdminStoragePage() {
               </div>
               <form onSubmit={save} className="grid content-start gap-4 rounded-3xl border border-white/10 bg-[#07143d] p-5">
                 <div className="flex items-center gap-2"><Database className="text-cyan-200" size={20} /><h2 className="text-xl font-bold">Register location</h2></div>
-                <label className="grid gap-2 text-xs text-blue-100/70">Location reference<input required pattern="[a-z0-9][a-z0-9_-]{1,79}" value={destinationId} onChange={event => setDestinationId(event.target.value)} placeholder="lovable_source_01" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
-                <label className="grid gap-2 text-xs text-blue-100/70">Storage service<select value={providerType} onChange={event => { const value = event.target.value as Destination["providerType"]; setProviderType(value); const prefix = value === "lovable_storage" ? "LOVABLE_STORAGE_01" : "STORAGE_B2_01"; setSecretPrefix(prefix); setAccountGroup(value === "lovable_storage" ? "lovable-default-workspace" : "b2:STORAGE_B2_01"); }} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white"><option value="lovable_storage">Managed storage</option><option value="backblaze_b2">Other storage service</option></select></label>
-                <label className="grid gap-2 text-xs text-blue-100/70">Display name<input required minLength={2} value={accountAlias} onChange={event => setAccountAlias(event.target.value)} placeholder="Lovable primary" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
-                <label className="grid gap-2 text-xs text-blue-100/70">Shared storage account (use the same name for locations in one account)<input required minLength={2} maxLength={100} value={accountGroup} onChange={event => setAccountGroup(event.target.value)} placeholder="lovable-default-workspace or b2:account-01" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Location reference<input required pattern="[a-z0-9][a-z0-9_-]{1,79}" value={destinationId} onChange={event => setDestinationId(event.target.value)} placeholder="storage_location_01" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Storage service<select value={providerType} onChange={event => { const value = event.target.value as Destination["providerType"]; setProviderType(value); const prefix = value === "lovable_storage" ? "LOVABLE_STORAGE_01" : "STORAGE_B2_01"; setSecretPrefix(prefix); setAccountGroup(value === "lovable_storage" ? "primary-storage-account" : "external-storage-account"); }} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white"><option value="lovable_storage">Managed storage</option><option value="backblaze_b2">Other storage service</option></select></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Display name<input required minLength={2} value={accountAlias} onChange={event => setAccountAlias(event.target.value)} placeholder="Primary storage location" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Storage account group (use the same name for locations in one account)<input required minLength={2} maxLength={100} value={accountGroup} onChange={event => setAccountGroup(event.target.value)} placeholder="Primary storage account" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Availability<select value={mode} onChange={event => setMode(event.target.value as Destination["mode"])} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white"><option value="active">Available for new files</option><option value="drain">Keep existing files, stop new assignments</option><option value="retired">Unavailable</option></select></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Copy of location reference (optional)<input value={replicaOf} onChange={event => setReplicaOf(event.target.value)} placeholder="existing-destination-id" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
-                <label className="grid gap-2 text-xs text-blue-100/70">Secure connection group<input required pattern="[A-Z][A-Z0-9_]{1,47}" value={secretPrefix} onChange={event => setSecretPrefix(event.target.value.toUpperCase())} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 font-mono text-white" /></label>
+                
                 <label className="grid gap-2 text-xs text-blue-100/70">Storage location name<input required value={bucketName} onChange={event => setBucketName(event.target.value)} placeholder="Main video storage" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
-                <label className="grid gap-2 text-xs text-blue-100/70">Region<input required value={region} onChange={event => setRegion(event.target.value)} placeholder="us-west-004" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
-                <label className="grid gap-2 text-xs text-blue-100/70">Used for<select value={purpose} onChange={event => setPurpose(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white">{PURPOSES.map(value => <option key={value} value={value}>{value.replaceAll("_", " ")}</option>)}</select></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Region<input required value={region} onChange={event => setRegion(event.target.value)} placeholder="Storage region" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
+                <label className="grid gap-2 text-xs text-blue-100/70">Used for<select value={purpose} onChange={event => setPurpose(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white">{PURPOSES.map(value => <option key={value} value={value}>{PURPOSE_LABELS[value] ?? "Other files"}</option>)}</select></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Location capacity limit (GB)<input required type="number" min="0.01" step="0.01" value={softCapGb} onChange={event => setSoftCapGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Shared account capacity limit (GB, optional; use the same value for all locations in one account)<input type="number" min="0.01" step="0.01" value={accountCapGb} onChange={event => setAccountCapGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
                 <label className="grid gap-2 text-xs text-blue-100/70">Monthly data transfer allowance (GB; shared by all locations in the account)<input type="number" min="0" step="0.01" value={monthlyEgressGb} onChange={event => setMonthlyEgressGb(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-white" /></label>
