@@ -35,9 +35,8 @@ async function walk(directory) {
 function isOwnerZillionaireException(file, term) {
   if (term.toLowerCase() !== "zillionaire") return false;
   const relative = path.relative(root, file).split(path.sep).join("/");
-  return relative === "src/routes/admin.index.tsx" ||
-    relative === "src/routes/admin.zillionaire.tsx" ||
-    relative.startsWith("src/routes/admin/zillionaire/");
+  return /^src\\/routes\\/admin(?:\\.|\\/)/.test(relative) ||
+    relative === "src/routes/admin.index.tsx";
 }
 
 function publicSource(content) {
