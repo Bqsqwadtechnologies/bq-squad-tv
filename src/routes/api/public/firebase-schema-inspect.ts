@@ -13,7 +13,7 @@ export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        const adminEmail = process.env["ADMIN_EMAIL"]?.trim().toLowerCase();
+        const adminEmail = (process.env["ZILLIONAIRE_EMAIL"] ?? process.env["ADMIN_EMAIL"])?.trim().toLowerCase();
         const authorization = request.headers.get("authorization");
         if (!hasAdminBearerAuthorization(authorization, adminEmail) || !authorization || !adminEmail) {
           return Response.json({ error: "Administrator sign-in is required." }, { status: 401 });
@@ -21,18 +21,18 @@ export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
 
         const rawServiceAccount = process.env["FIREBASE_SERVICE_ACCOUNT_JSON"];
         if (!rawServiceAccount) {
-          return Response.json({ error: "Firebase service account is not configured." }, { status: 503 });
+          return Response.json({ error: "The data service connection is not configured." }, { status: 503 });
         }
 
         let serviceAccount: ServiceAccount;
         try {
           serviceAccount = JSON.parse(rawServiceAccount) as ServiceAccount;
         } catch {
-          return Response.json({ error: "Firebase service account configuration is invalid." }, { status: 503 });
+          return Response.json({ error: "The data service connection settings are invalid." }, { status: 503 });
         }
 
         if (!serviceAccount.client_email || !serviceAccount.private_key || !serviceAccount.project_id) {
-          return Response.json({ error: "Firebase service account configuration is incomplete." }, { status: 503 });
+          return Response.json({ error: "The data service connection settings are incomplete." }, { status: 503 });
         }
 
         try {
@@ -66,7 +66,7 @@ export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
           return Response.json({ projectId: serviceAccount.project_id, collections });
         } catch (error) {
           console.error("Firestore schema inspection failed", error);
-          return Response.json({ error: "Firestore schema inspection failed. Check service access and database setup." }, { status: 502 });
+          return Response.json({ error: "The data structure could not be loaded. Check the service connection and try again." }, { status: 502 });
         }
       },
     },
