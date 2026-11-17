@@ -13,6 +13,7 @@ export const DEFAULT_FLAGS = {
   hlsEncryption: false,
   forYou: false,
   reminders: false,
+  modalSpendGuard: true,
 } as const;
 
 export type PlatformFlags = { -readonly [K in keyof typeof DEFAULT_FLAGS]: boolean };
