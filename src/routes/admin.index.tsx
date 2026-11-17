@@ -332,7 +332,7 @@ function ZillionaireDashboard() {
                 </div>
                 <form onSubmit={saveLegalSettings} className="mt-7 grid gap-3 sm:grid-cols-2">
                   <h3 className="sm:col-span-2 text-sm font-bold">Fill legal placeholders</h3>
-                  {[
+                  {([
                     ["effective_date", "Effective date"], ["last_updated", "Last updated"],
                     ["minimum_age", "Minimum account age"], ["viewing_history_retention", "Viewing history retention"],
                     ["evidence_retention", "Evidence retention"], ["security_log_retention", "Security log retention"],
