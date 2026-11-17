@@ -4,6 +4,7 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { creditPaystackPayment, fetchPaystackVerification } from "@/lib/server/paystack";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { recordRiskSignal } from "@/lib/server/risk-engine";
 
 const schema = z.object({ reference: z.string().min(8).max(100) });
 
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/verify")(
       if (verified["status"] !== "success" || verified["currency"] !== currency ||
           verified["amount"] !== payment["amountMinor"] ||
           (verified["metadata"] as Record<string, unknown> | undefined)?.["uid"] !== user.uid) {
+        await recordRiskSignal(fs, user.uid, "failed_payment");
         throw new ApiError(402, "PAYMENT_NOT_CONFIRMED", "The payment has not been confirmed.");
       }
       const result = await creditPaystackPayment(fs, {
