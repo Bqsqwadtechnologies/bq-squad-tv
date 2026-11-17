@@ -1,56 +1,36 @@
 # File 08 — Legal Page Seed Text Report
 
-**Status:** Draft seeding, owner settings, publication guard, public page reader, acceptance records and native settings links have been added to `main`. This is not a launch approval.
+**Implementation status: partially complete; not launch-ready.** All source changes were committed directly to `main`. No production Firestore writes were performed.
 
-## Completed
-- Added five default Markdown drafts: `privacy-policy`, `terms`, `producer-terms`, `producer-policy` and `provider-terms`.
-- Added a validation script and an owner-only, create-if-absent seed endpoint. Existing documents are never overwritten by seeding.
-- Added the owner dashboard action **Load default pages**, the placeholder reference table and audited fields for legal settings.
-- Added an owner-only publishing endpoint. It fills placeholders from saved settings, blocks missing values and raw HTML/unsafe links, requires a recent owner sign-in, increments the version, preserves version history and records an audit reason.
-- Added a public legal-page read endpoint and a website route. Only published public-audience pages are exposed publicly.
-- Added versioned acceptance records for public, producer and provider audiences. Session start checks public acceptance; producer verification checks public and producer acceptance. A published version marked `requiresReacceptance` requires acceptance of that exact version.
-- Added Android sign-up/profile setup acceptance for Terms and Privacy Policy and updated native settings/sign-in links.
-- Added public website footer links to Privacy Policy, Terms, Cookie Notice (currently points to the Privacy Policy cookie section) and Contact.
+## Implemented
+- Five draft templates: Privacy Policy, Terms and Conditions, Producer Terms, Producer Content Policy and Licensed Channel Provider Terms.
+- `scripts/seed-pages.mjs` validates the five expected slugs and placeholder list. The owner-only seed endpoint creates version 1 drafts only when a slug does not already exist.
+- Owner dashboard action **Load default pages**, a placeholder reference table and audited settings fields.
+- Owner-only publish endpoint with recent-sign-in check, audit reason, version history, placeholder substitution, missing-value blocking, raw-HTML rejection and HTTPS/mailto-only Markdown link validation.
+- Public read endpoint and website legal-page route. Only published public-audience pages are exposed to unauthenticated readers.
+- Versioned acceptance records and required-page endpoint for public, producer and provider audiences.
+- Public acceptance is checked before a viewing session starts. Producer acceptance is checked before producer verification.
+- Native Android profile setup requires acceptance of Terms and Privacy Policy before profile completion. Android sign-in and settings links point to the new legal paths.
+- Public website footer links to Privacy Policy, Terms, Cookie Notice and Contact. Legacy `/privacy` and `/terms` paths redirect to the new legal pages.
+- Version changes marked `requiresReacceptance` require acceptance of the exact new version.
 
-## Commits
-- `401488d` — five legal draft templates
-- `6343706` — seed script
-- `86fc1bf` — owner seed endpoint
-- `5ed6e82` — public legal read endpoint
-- `3afcdf3` — owner dashboard load action and placeholder table
-- `0bd44eb`, `307e681`, `574489d` — legal acceptance helper and routes
-- `ff6745d`, `bd27fa2` — session and producer verification acceptance gates
-- `360b68a` — public legal page route
-- `0028d94`, `fcd70bc` — Android settings and website footer links
-- `99f230b`, `b30c0a6`, `e5dc83e`, `159a309` — publish guard and owner legal settings
-- `5612e3e`, `81c7e59`, `d11c27e`, `804bb6c`, `a406546` — native acceptance API, profile setup and sign-in links
-- `15cab49`, `f1abfb2`, `cf62d4e` — placeholder helper and legal tests
-- `046d452`, `adb100b`, `f88d414`, `dc27b97`, `577d369`, `738ea16`, `20480bb` — validation and reacceptance corrections
-- `1603b2b` — publish validation corrections
-- `b30c0a6` — owner settings endpoint
-- `159a309` — owner placeholder form
+## Not completed
+- Website sign-up: no dedicated sign-up route was present in the inspected website route tree, so website registration acceptance is not wired.
+- Provider invitations: the provider invitation workflow is not present, so provider-term acceptance is not connected to an invitation flow.
+- The provider audience and acceptance endpoint exist, but the provider console/invitation UI remains a File 06 dependency.
+- There is no complete owner page editor/preview/rollback UI in the current website tree. The owner settings and publishing endpoints exist, but routine editing of page Markdown still needs the File 06 editor.
+- The cookie-notice footer item currently points to the cookie section in the Privacy Policy; there is no separate Cookie Notice document.
+- The owner must load the drafts, fill every placeholder, review the actual content, and publish. Until then, public legal pages and session starts remain blocked by design.
 
 ## Verification
-- Unit tests: **not run** — no repository runtime or dependency installation was available in this session.
-- `scripts/scan-public-text.mjs`: **not run** for the same reason. The legal source was reviewed against the scanner's configured prohibited-term list, but that is not a substitute for running the scanner.
-- Website build, typecheck, Android build and device QA: **not run**.
-- No production Firestore writes were performed. The owner seed action has not been executed.
-- No claims are made that routes are deployed or live.
+- `scripts/scan-public-text.mjs`: **not run**. The repository runtime was not available in this session. No claim of a clean scan is made.
+- Vitest: **not run**.
+- Website typecheck/build and Android build: **not run**.
+- Browser and device QA: **not run**.
+- The legal test file was added, but its assertions have not been executed.
 
-## Remaining work / launch blockers
-- No complete legal draft editor/preview/rollback screen has been added; the owner settings and publish API exist, but content editing must be completed in the website console before routine use.
-- The provider invitation flow and provider-console acceptance UI are not present in the inspected tree. The provider audience and acceptance API are prepared, but invitations are not yet wired.
-- The web sign-up surface was not present in the inspected route tree; native sign-up/profile setup now records acceptance.
-- Public legal pages remain unavailable until the owner loads drafts, completes placeholders, obtains qualified legal review and publishes.
-- Confirm that the Cookie Notice content and every privacy statement match actual deployed behaviour before publication.
+## Required legal review
+**All five documents are drafts. They must be reviewed by a qualified lawyer in every country where BQ SQWAD TV operates before launch. The owner must edit the documents whenever an actual product practice changes.** In particular, the owner must confirm minimum age, retention periods, charge dispute window, wallet refund and closure rules, liability terms, governing law, jurisdiction, postal address if required, producer revenue basis, notice period and minimum payout. Provider terms must match each signed provider contract.
 
-## Legal review notice
-**These documents are drafts. They must be reviewed by a qualified lawyer in every country where BQ SQWAD TV operates before launch. The owner must edit them whenever an actual product practice changes.**
-
-
-## Final follow-up
-- Added editable owner legal-setting fields and an audited settings endpoint; publishing now substitutes saved values and rejects missing placeholders.
-- Corrected placeholder matching, Markdown line rendering and acceptance-version lookup.
-- Added native sign-up/profile acceptance before profile completion and redirected the legacy `/privacy` and `/terms` paths to the new legal pages.
-- The web route tree did not contain a dedicated public sign-up route when inspected, so website sign-up acceptance remains unimplemented until that flow exists.
-- The File 08 implementation does not complete the outstanding work in Files 02–07. Those files still require their own audit, integration and verification passes; this report does not mark them complete.
+## Dependencies outside File 08
+This work does not complete the remaining implementation and verification in Files 02–07. Those files must be audited and finished separately before File 09 or launch is treated as unblocked.
