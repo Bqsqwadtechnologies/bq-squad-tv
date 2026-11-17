@@ -7,6 +7,12 @@ import { isVideoWorkerLeaseActive } from "@/lib/server/video-worker-policy";
 import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 import { commitStorageReservation } from "@/lib/server/storage/reservations";
+import {
+  bindAssetStreamStorage,
+  classifyAssetMediaOutput,
+  createAssetMediaRecordId,
+  isAllowedHlsOutputPath,
+} from "@/lib/server/storage/asset-binding";
 import { assertStorageObjectKey } from "@/lib/server/storage/ledger";
 import { listAllStorageObjects } from "@/lib/server/storage/listing";
 import { resolveHlsReference } from "@/lib/server/streaming/hls-playlist";
@@ -54,7 +60,10 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
       let totalBytes = 0;
       for (const file of body.files) {
         const key = assertStorageObjectKey(file.key);
-        if (!key.startsWith(prefix + "/") || keys.has(key) || !/\.(m3u8|ts)$/i.test(key)) throw new ApiError(400, "WORKER_OUTPUT_INVALID", "The output file list contains an invalid object key.");
+        const relativePath = key.startsWith(prefix + "/") ? key.slice(prefix.length + 1) : "";
+        if (!relativePath || !isAllowedHlsOutputPath(relativePath) || keys.has(key)) {
+          throw new ApiError(400, "WORKER_OUTPUT_INVALID", "The output file list contains an invalid object key.");
+        }
         keys.add(key);
         totalBytes += file.sizeBytes;
         if (!Number.isSafeInteger(totalBytes)) throw new ApiError(400, "WORKER_OUTPUT_INVALID", "The total output size is invalid.");
@@ -131,8 +140,11 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
         if (referenceCount === 0) throw new ApiError(409, "HLS_PLAYLIST_EMPTY", "An HLS playlist does not reference any media objects.");
       }
       if (masterRenditionCount === 0) throw new ApiError(409, "HLS_MASTER_EMPTY", "The HLS master playlist contains no verified renditions.");
-      if (referencedKeys.size !== keys.size || [...keys].some(key => !referencedKeys.has(key))) {
-        throw new ApiError(409, "HLS_UNREFERENCED_OBJECT", "The output contains files that are not referenced by its playlists.");
+      const sidecarKeys = new Set(body.files
+        .filter(file => classifyAssetMediaOutput(file.key.slice(prefix.length + 1)) !== null)
+        .map(file => file.key));
+      if ([...keys].some(key => !sidecarKeys.has(key) && !referencedKeys.has(key))) {
+        throw new ApiError(409, "HLS_UNREFERENCED_OBJECT", "The output contains files that are not referenced by its playlists or approved artwork.");
       }
       const flags = await getPlatformFlags(fs);
       if (flags.hlsEncryption !== hlsKeyUriSeen) {
