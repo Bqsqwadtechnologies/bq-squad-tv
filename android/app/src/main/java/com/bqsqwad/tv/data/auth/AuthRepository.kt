@@ -139,6 +139,10 @@ class AuthRepository(
         registerPushTokenIfAvailable()
     }
 
+    suspend fun needsLegalAcceptance(): Boolean {
+        return profileApi.legalStatus(currentBearerToken(), "public").acceptanceRequired
+    }
+
     suspend fun acceptLegalPages(): Boolean {
         return profileApi.acceptLegalPages(
             currentBearerToken(),
