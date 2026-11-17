@@ -19,6 +19,7 @@ export const Route = createFileRoute("/producer/channels")({
     meta: [
       { title: "Producer channels | BQ SQWAD TV" },
       { name: "description", content: "Create and manage BQ SQWAD TV channels." },
+          { name: "robots", content: "noindex, nofollow, noarchive" },
     ],
   }),
 });
