@@ -47,7 +47,7 @@ describe("streaming source URL encryption", () => {
   });
 
   it("encrypts each 128-bit HLS content key at rest and decrypts it only for its asset", async () => {
-    const rawContentKey = "AAECAwQFBgcICQoLDA0ODw";
+    const rawContentKey = btoa("0123456789abcdef").replace(/=+$/, "");
     const envelope = await encryptHlsContentKey(rawContentKey, "asset_123", "v1", key);
     expect(envelope.algorithm).toBe("A256GCM");
     expect(envelope.ciphertext).not.toContain(rawContentKey);
