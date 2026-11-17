@@ -150,6 +150,7 @@ def upload_file(job: dict, file_path: Path, root: Path, target: dict, lease_lost
 
 
 def process_job(job: dict) -> None:
+    started_at = time.monotonic()
     asset_id = job["assetId"]
     extension = Path(str(job.get("sourceFilename", "source.mp4"))).suffix.lower()
     if extension not in {".mp4", ".mov", ".mkv", ".webm"}:
@@ -252,8 +253,15 @@ def process_job(job: dict) -> None:
 
             ensure_lease()
             update_stage("verify", 100)
+            elapsed_seconds = max(0, int(time.monotonic() - started_at))
             signed_request("POST", f"/api/public/v1/worker/jobs/{asset_id}/complete", {
-                "claimToken": job["claimToken"], "files": manifest,
+                "claimToken": job["claimToken"],
+                "files": manifest,
+                "computeUsage": {
+                    "cores": float(job.get("modalCores", 2)),
+                    "memoryGiB": float(job.get("modalMemoryGiB", 4)),
+                    "seconds": elapsed_seconds,
+                },
             })
         finally:
             lease_lost.set()
