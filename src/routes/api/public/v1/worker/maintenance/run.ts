@@ -7,11 +7,147 @@ import { validateStorageDestinationMetadata, resolveStorageDestinationConfigurat
 import { createStorageProviderAdapter } from "@/lib/server/storage/providers";
 import { videoWorkerLeaseExpiry } from "@/lib/server/video-worker-policy";
 import { checkStorageProviderHealth, isStorageQuotaOrRateLimit, readStorageUsagePage, storageFailureCode, storageFailureMessage } from "@/lib/server/storage/maintenance";
+import { refreshStoragePoolDestination, updateStorageUsageAndPool } from "@/lib/server/storage/pool-index";
+import { copyReplicaObject, replicaCopyPhase } from "@/lib/server/storage/replication";
+import { commitStorageReservation } from "@/lib/server/storage/reservations";
+import { addVerifiedAssetStreamReplica } from "@/lib/server/storage/asset-binding";
 
 const schema = z.object({
   taskId: z.string().regex(/^[A-Za-z0-9_-]{1,120}$/),
   claimToken: z.string().regex(/^[a-f0-9]{32}$/),
 }).strict();
+
+
+async function processReplicaCopyTask(fs: Firestore, taskPath: string, task: Record<string, unknown>): Promise<Response> {
+  const payload = task["payload"] as Record<string, unknown> | undefined;
+  const assetId = typeof payload?.["assetId"] === "string" ? payload["assetId"] : "";
+  const sourceId = typeof payload?.["sourceDestinationId"] === "string" ? payload["sourceDestinationId"] : "";
+  const targetId = typeof payload?.["targetDestinationId"] === "string" ? payload["targetDestinationId"] : "";
+  const sourcePrefix = typeof payload?.["sourcePrefix"] === "string" ? payload["sourcePrefix"] : "";
+  const targetPrefix = typeof payload?.["targetPrefix"] === "string" ? payload["targetPrefix"] : "";
+  const reservationId = typeof payload?.["reservationId"] === "string" ? payload["reservationId"] : "";
+  if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId) ||
+      !/^[a-z0-9][a-z0-9_-]{1,79}$/.test(sourceId) ||
+      !/^[a-z0-9][a-z0-9_-]{1,79}$/.test(targetId) ||
+      !/^[A-Za-z0-9_-]{8,100}$/.test(reservationId) ||
+      !/^hls\/[A-Za-z0-9_-]{1,100}\/a[1-9][0-9]*$/.test(sourcePrefix) ||
+      !/^hls\/[A-Za-z0-9_-]{1,100}\/a[1-9][0-9]*$/.test(targetPrefix)) {
+    throw new ApiError(400, "STORAGE_REPLICA_TASK_INVALID", "The film copy task is invalid.");
+  }
+  const sourceRaw = await fs.getDoc("storageDestinations/" + sourceId);
+  const targetRaw = await fs.getDoc("storageDestinations/" + targetId);
+  if (!sourceRaw || !targetRaw) throw new ApiError(503, "STORAGE_REPLICA_DESTINATION_MISSING", "A storage location for this copy is unavailable.");
+  const sourceConfig = resolveStorageDestinationConfiguration(validateStorageDestinationMetadata({ ...sourceRaw, destinationId: sourceId }));
+  const targetConfig = resolveStorageDestinationConfiguration(validateStorageDestinationMetadata({ ...targetRaw, destinationId: targetId }));
+  if (sourceConfig.configurationStatus !== "configured" || targetConfig.configurationStatus !== "configured") {
+    throw new ApiError(503, "STORAGE_REPLICA_DESTINATION_MISCONFIGURED", "A storage location for this copy needs its connection settings checked.");
+  }
+  const source = createStorageProviderAdapter(sourceConfig);
+  const target = createStorageProviderAdapter(targetConfig);
+  const now = new Date().toISOString();
+  const phase = String(payload?.["phase"] ?? "files");
+  const pendingKeys = Array.isArray(payload?.["pendingKeys"])
+    ? payload["pendingKeys"].filter((item): item is { key: string; sizeBytes: number } =>
+        Boolean(item) && typeof item === "object" &&
+        typeof (item as Record<string, unknown>)["key"] === "string" &&
+        typeof (item as Record<string, unknown>)["sizeBytes"] === "number")
+    : [];
+  const pendingIndex = typeof payload?.["pendingIndex"] === "number" ? payload["pendingIndex"] : 0;
+  const listingCursor = typeof payload?.["listingCursor"] === "string" ? payload["listingCursor"] : null;
+  const listingDone = payload?.["listingDone"] === true;
+  const copiedBytes = typeof payload?.["copiedBytes"] === "number" ? payload["copiedBytes"] : 0;
+  const copiedObjectCount = typeof payload?.["copiedObjectCount"] === "number" ? payload["copiedObjectCount"] : 0;
+  const patchPayload = async (next: Record<string, unknown>, done = false) => {
+    await fs.patchDoc(taskPath, {
+      payload: next, phase: done ? "done" : phase,
+      leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+    });
+    return Response.json({ done, phase: done ? "done" : next["phase"] ?? phase, processedObjectCount: 1 });
+  };
+
+  if (phase === "verify") {
+    const verifyCursor = typeof payload?.["verifyCursor"] === "string" ? payload["verifyCursor"] : null;
+    const page = await target.listObjects(targetPrefix, verifyCursor);
+    const verifiedBytes = (typeof payload?.["verifiedBytes"] === "number" ? payload["verifiedBytes"] : 0) +
+      page.objects.reduce((sum, item) => sum + item.sizeBytes, 0);
+    const verifiedObjectCount = (typeof payload?.["verifiedObjectCount"] === "number" ? payload["verifiedObjectCount"] : 0) +
+      page.objects.length;
+    if (page.nextCursor) {
+      await fs.patchDoc(taskPath, {
+        payload: { ...payload, verifyCursor: page.nextCursor, verifiedBytes, verifiedObjectCount },
+        leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+      });
+      return Response.json({ done: false, phase: "verify", processedObjectCount: page.objects.length });
+    }
+    if (verifiedBytes !== copiedBytes || verifiedObjectCount !== copiedObjectCount || copiedBytes < 1 || copiedObjectCount < 1) {
+      throw new ApiError(409, "STORAGE_REPLICA_LISTING_MISMATCH", "The copied film files did not match the verified source totals.");
+    }
+    const asset = await fs.getDoc("contentAssets/" + assetId);
+    if (!asset) throw new ApiError(404, "STORAGE_REPLICA_ASSET_MISSING", "The film record could not be found.");
+    await commitStorageReservation(fs, reservationId, copiedBytes);
+    await addVerifiedAssetStreamReplica(fs, {
+      assetId, destinationId: targetId, objectPrefix: targetPrefix,
+      reservationId, sizeBytes: copiedBytes, objectCount: copiedObjectCount,
+    });
+    const reservedBytes = typeof payload?.["streamBytes"] === "number" ? payload["streamBytes"] : copiedBytes;
+    const unused = Math.max(0, reservedBytes - copiedBytes);
+    if (unused > 0) {
+      await fs.transact(["storageReplicaBudget/global"], docs => {
+        const budget = docs[0];
+        if (!budget) return { result: undefined, writes: [] };
+        const nextUsed = Math.max(0, (typeof budget["usedBytes"] === "number" ? budget["usedBytes"] : 0) - unused);
+        return {
+          result: undefined,
+          writes: [{
+            update: { name: fs.docName("storageReplicaBudget/global"), fields: (await import("@/lib/server/firebase-admin")).encodeFields({ usedBytes: nextUsed, updatedAt: now }) },
+            updateMask: { fieldPaths: ["usedBytes", "updatedAt"] },
+          }],
+        };
+      });
+    }
+    await fs.patchDoc(taskPath, {
+      payload: { ...payload, phase: "done", verifiedBytes, verifiedObjectCount },
+      phase: "done", completedAt: now, leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now,
+    });
+    return Response.json({ done: true, phase: "done", verifiedBytes, verifiedObjectCount });
+  }
+
+  if (pendingIndex < pendingKeys.length) {
+    const item = pendingKeys[pendingIndex]!;
+    if (!item.key.startsWith(sourcePrefix + "/") || !Number.isSafeInteger(item.sizeBytes) || item.sizeBytes < 1) {
+      throw new ApiError(409, "STORAGE_REPLICA_SOURCE_KEY_INVALID", "A source file path could not be verified.");
+    }
+    const targetKey = targetPrefix + item.key.slice(sourcePrefix.length);
+    const copied = await copyReplicaObject(source, target, item.key, targetKey);
+    const next = {
+      ...payload, phase, pendingIndex: pendingIndex + 1,
+      copiedBytes: copiedBytes + copied.sizeBytes,
+      copiedObjectCount: copiedObjectCount + 1,
+    };
+    await fs.patchDoc(taskPath, { payload: next, phase, leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now });
+    return Response.json({ done: false, phase, processedObjectCount: 1 });
+  }
+
+  if (listingDone) {
+    const nextPhase = phase === "files" ? "playlists" : phase === "playlists" ? "master" : "verify";
+    const next = {
+      ...payload, phase: nextPhase, listingCursor: null, listingDone: false,
+      pendingKeys: [], pendingIndex: 0,
+      ...(nextPhase === "verify" ? { verifyCursor: null, verifiedBytes: 0, verifiedObjectCount: 0 } : {}),
+    };
+    await fs.patchDoc(taskPath, { payload: next, phase: nextPhase, leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now });
+    return Response.json({ done: false, phase: nextPhase, processedObjectCount: 0 });
+  }
+
+  const page = await source.listObjects(sourcePrefix, listingCursor);
+  const wanted = page.objects.filter(item => replicaCopyPhase(item.key) === phase);
+  const next = {
+    ...payload, phase, pendingKeys: wanted, pendingIndex: 0,
+    listingCursor: page.nextCursor, listingDone: !page.nextCursor,
+  };
+  await fs.patchDoc(taskPath, { payload: next, phase, leaseExpiresAt: videoWorkerLeaseExpiry(Date.now()), updatedAt: now });
+  return Response.json({ done: false, phase, processedObjectCount: wanted.length });
+}
 
 export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
   server: { handlers: { POST: async ({ request }) => {
@@ -144,6 +280,10 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
         } catch (error) {
           return await failDestination(error);
         }
+      }
+
+      if (task["taskType"] === "storage_replica_copy") {
+        return await processReplicaCopyTask(fs, taskPath, task);
       }
 
       if (task["taskType"] !== "delete_attempt_prefix") {
