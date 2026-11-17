@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ApiError, Firestore } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import { errorBody } from "@/lib/server/api";
 import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 import { reserveStorageDestination, releaseStorageReservation } from "@/lib/server/storage/reservations";
@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/claim")({
         const claimToken = crypto.randomUUID().replace(/-/g, "");
         const leaseMinutes = Number(process.env["VIDEO_WORKER_LEASE_MINUTES"] ?? "10");
         const leaseExpiresAt = videoWorkerLeaseExpiry(now.getTime(), leaseMinutes);
-        const claimed = await fs.transact<string | boolean>([jobPath], docs => {
+        const claimed = await fs.transact<string | boolean>([jobPath], (docs): { result: string | boolean; writes: FirestoreWrite[] } => {
           const job = docs[0];
           if (!job || !["queued", "processing"].includes(String(job["status"]))) return { result: false as const, writes: [] };
           if (job["status"] === "processing" && typeof job["leaseExpiresAt"] === "string" && Date.parse(job["leaseExpiresAt"]) > now.getTime()) return { result: false, writes: [] };
