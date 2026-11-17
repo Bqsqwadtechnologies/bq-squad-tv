@@ -110,7 +110,7 @@ function AdminAdsPage() {
               <p className="mt-5 text-xs leading-5 text-blue-100/45">Each platform is saved separately. Changing one does not overwrite the other.</p>
             </aside>
             <form onSubmit={save} className="grid gap-4 rounded-3xl border border-cyan-300/20 bg-gradient-to-b from-[#0b2057] to-[#07143d] p-6">
-              <div><h2 className="text-xl font-bold">{platform === "android" ? "Android app provider" : "Website provider"}</h2><p className="mt-1 text-xs text-blue-100/55">Connection details are protected and are never shown again.</p></div>
+              <div><h2 className="text-xl font-bold">{platform === "android" ? "Android advertising settings" : "Website advertising settings"}</h2><p className="mt-1 text-xs text-blue-100/55">Connection details are protected and are never shown again.</p></div>
               <label className="grid gap-2 text-sm text-blue-100/70">Account reference
                 <input required value={providerId} onChange={event => setProviderId(event.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300" />
               </label>
