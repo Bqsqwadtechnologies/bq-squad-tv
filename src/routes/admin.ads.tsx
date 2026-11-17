@@ -81,7 +81,7 @@ function AdminAdsPage() {
       <header className="border-b border-cyan-300/15 bg-[#050f35]">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-5">
           <a href="/"><img src="/brand/bq-sqwad-tv-logo.svg" alt="BQ SQWAD TV" className="w-44" /></a>
-          <span className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Settings · Advertising</span>
+          <span className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-200">Zillionaire Dashboard · Advertising</span>
         </div>
       </header>
       <section className="mx-auto max-w-5xl px-5 py-10 sm:py-14">
