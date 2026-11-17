@@ -100,18 +100,18 @@ function FirebaseSchemaPage() {
       <section className="mx-auto max-w-5xl px-5 py-10 sm:py-14">
         <div className="max-w-2xl">
           <p className="flex items-center gap-2 text-sm font-semibold text-primary">
-            <ShieldCheck size={17} /> Administrator access
+            <ShieldCheck size={17} /> Owner access
           </p>
           <h1 className="mt-4 text-3xl font-bold">Data structure</h1>
           <p className="mt-3 leading-7 text-muted-foreground">
-            Sign in with an authorised administrator account to view the platform's data structure. Private record contents are not displayed.
+            Sign in with an owner account to view the platform's data structure. Private record contents are not displayed.
           </p>
         </div>
 
         {!report ? (
           <form onSubmit={inspectSchema} className="mt-9 grid max-w-md gap-5">
             <div className="grid gap-2">
-              <Label htmlFor="admin-email">Administrator email</Label>
+              <Label htmlFor="admin-email">Owner email</Label>
               <Input id="admin-email" type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} />
             </div>
             <div className="grid gap-2">
@@ -132,7 +132,7 @@ function FirebaseSchemaPage() {
                 <p className="font-semibold">{report.projectId}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Collections</p>
+                <p className="text-sm text-muted-foreground">Data groups</p>
                 <p className="font-semibold">{report.collections.length}</p>
               </div>
               <Button variant="outline" onClick={clearReport}><LogOut /> Sign out</Button>
@@ -145,7 +145,7 @@ function FirebaseSchemaPage() {
                   <article key={collection.name} className="py-5">
                     <h2 className="font-semibold">{collection.name}</h2>
                     {Object.keys(collection.fields).length === 0 ? (
-                      <p className="mt-2 text-sm text-muted-foreground">No fields to display</p>
+                      <p className="mt-2 text-sm text-muted-foreground">No information fields to display</p>
                     ) : (
                       <dl className="mt-3 grid gap-x-8 gap-y-2 sm:grid-cols-2">
                         {Object.entries(collection.fields).map(([field, type]) => (
