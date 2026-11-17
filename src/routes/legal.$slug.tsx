@@ -33,7 +33,7 @@ function LegalPage() {
     </header>
     {page ? <><h1 className="mb-2 text-3xl font-black">{page.title}</h1><p className="mb-7 text-xs text-muted-foreground">Version {page.version}{page.effectiveAt ? " · Effective " + page.effectiveAt : ""}</p><article className="space-y-1">{page.body.split("\n").map(renderLine)}</article></> : <section role={error ? "alert" : "status"} className="rounded-2xl border border-border bg-card p-6"><h1 className="text-xl font-bold">{error ? "Page not available" : "Loading page…"}</h1><p className="mt-2 text-sm text-muted-foreground">{error || "We are retrieving the latest published version."}</p></section>}
     <footer className="mt-12 flex flex-wrap gap-x-5 gap-y-2 border-t border-border pt-5 text-xs text-muted-foreground">
-      <Link to="/legal/privacy-policy">Privacy Policy</Link><Link to="/legal/terms">Terms</Link><Link to="/legal/privacy-policy">Cookie notice</Link><a href="mailto:tv@bqsqwad.com">Contact</a>
+      <a href="/legal/privacy-policy">Privacy Policy</a><a href="/legal/terms">Terms</a><a href="/legal/privacy-policy">Cookie notice</a><a href="mailto:tv@bqsqwad.com">Contact</a>
     </footer>
   </main>;
 }
