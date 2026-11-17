@@ -1,4 +1,5 @@
 package com.bqsqwad.tv.ui.screens
+import com.bqsqwad.tv.ui.ErrorMessages
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -65,7 +66,7 @@ fun ProfileSetupScreen(
                     } else {
                         message = "Your profile could not be verified. Please try again."
                     }
-                }.onFailure { message = it.localizedMessage ?: "Profile verification failed." }
+                }.onFailure { message = ErrorMessages.PROFILE_FAILED }
                 busy = false
             }
         }, modifier = Modifier.fillMaxWidth()) { Text(if (busy) "Verifying…" else "Continue to BQ SQWAD TV") }
