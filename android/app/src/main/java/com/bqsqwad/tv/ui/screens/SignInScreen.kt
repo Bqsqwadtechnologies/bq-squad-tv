@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -52,8 +53,19 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
     var verificationCode by remember { mutableStateOf("") }
     var createAccount by remember { mutableStateOf(false) }
     var verificationPending by remember { mutableStateOf(false) }
+    var legalAcceptancePending by remember { mutableStateOf(false) }
+    var legalConsentChecked by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+
+    suspend fun continueAfterLegalCheck() {
+        if (repository.needsLegalAcceptance()) {
+            legalAcceptancePending = true
+            legalConsentChecked = false
+        } else {
+            onAuthenticated()
+        }
+    }
 
     Column(
         modifier =
@@ -111,7 +123,13 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                         message = null
                         try {
                             googleSignIn(context, repository)
-                            onAuthenticated()
+                            if (createAccount) {
+                                require(legalConsentChecked) { "Read and accept the Terms and Privacy Policy first." }
+                                repository.acceptLegalPages()
+                                onAuthenticated()
+                            } else {
+                                continueAfterLegalCheck()
+                            }
                         } catch (error: Exception) {
                             message = ErrorMessages.SIGN_IN_FAILED
                         } finally {
@@ -126,7 +144,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
         }
         Spacer(modifier = Modifier.height(12.dp))
         Button(
-            enabled = !busy && email.contains("@") && password.length >= 6 && !verificationPending,
+            enabled = !busy && email.contains("@") && password.length >= 6 && !verificationPending && (!createAccount || legalConsentChecked),
             onClick = {
                 scope.launch {
                     busy = true
@@ -134,7 +152,12 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                     try {
                         val result = repository.signInEmail(email, password, createAccount)
                         if (result.emailVerified) {
-                            onAuthenticated()
+                            if (createAccount) {
+                                repository.acceptLegalPages()
+                                onAuthenticated()
+                            } else {
+                                continueAfterLegalCheck()
+                            }
                         } else {
                             verificationPending = true
                             message =
@@ -167,10 +190,46 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
             enabled = !verificationPending,
             onClick = {
                 createAccount = !createAccount
+                legalConsentChecked = false
                 message = null
             },
         ) {
             Text(if (createAccount) "Already have an account? Sign in" else "New here? Create an account")
+        }
+        if (createAccount) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = legalConsentChecked, onCheckedChange = { legalConsentChecked = it }, enabled = !busy)
+                Text("I have read and accept the Terms of service and Privacy Policy.", style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        if (legalAcceptancePending) {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text("Please review the updated service terms before continuing.", style = MaterialTheme.typography.bodyMedium)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = { uriHandler.openUri("https://bqsqwad.com/legal/terms") }) { Text("Terms") }
+                TextButton(onClick = { uriHandler.openUri("https://bqsqwad.com/legal/privacy-policy") }) { Text("Privacy Policy") }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(checked = legalConsentChecked, onCheckedChange = { legalConsentChecked = it }, enabled = !busy)
+                Text("I have reviewed and accept the current versions.", style = MaterialTheme.typography.bodySmall)
+            }
+            Button(
+                enabled = !busy && legalConsentChecked,
+                onClick = {
+                    scope.launch {
+                        busy = true
+                        message = null
+                        try {
+                            repository.acceptLegalPages()
+                            legalAcceptancePending = false
+                            onAuthenticated()
+                        } catch (error: Exception) {
+                            message = error.message ?: "Your acceptance could not be saved."
+                        } finally { busy = false }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(if (busy) "Saving…" else "Accept and continue") }
         }
         TextButton(
             enabled = !busy && email.contains("@") && !verificationPending,
@@ -213,7 +272,12 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                         try {
                             if (repository.verifyEmailCode(verificationCode)) {
                                 verificationPending = false
-                                onAuthenticated()
+                                if (createAccount) {
+                                    repository.acceptLegalPages()
+                                    onAuthenticated()
+                                } else {
+                                    continueAfterLegalCheck()
+                                }
                             } else {
                                 message = "The code could not be verified. Request another code."
                             }
