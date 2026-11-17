@@ -253,8 +253,11 @@ fun AccountScreen(
     onProducer: () -> Unit,
     onSettings: () -> Unit,
     onSignOut: () -> Unit,
+    onHistory: () -> Unit = {},
+    onNotifications: () -> Unit = {},
 ) {
     val user = FirebaseAuth.getInstance().currentUser
+    val uriHandler = LocalUriHandler.current
     Column(
         Modifier.fillMaxSize().padding(18.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -276,7 +279,12 @@ fun AccountScreen(
         Spacer(Modifier.height(20.dp))
         ProfileAction("My profile", "Account details", onSettings)
         ProfileAction("My wallet", "Balance and top-ups", onWallet)
+        ProfileAction("My purchases", "Wallet transactions", onWallet)
+        ProfileAction("Watch history", "Recent viewing sessions", onHistory)
+        ProfileAction("Notifications", "Account and programme updates", onNotifications)
         ProfileAction("Producer studio", "Manage your channels", onProducer)
+        ProfileAction("Help & support", "Get help with your account", { uriHandler.openUri("https://bqsqwad.com/help") })
+        ProfileAction("About BQ SQWAD TV", "Bq Sqwad Technologies", { uriHandler.openUri("https://bqsqwad.com/about") })
         ProfileAction("Settings", "Playback and notifications", onSettings)
         Spacer(Modifier.weight(1f))
         OutlinedButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) { Text("Log out") }
