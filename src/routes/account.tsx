@@ -107,6 +107,7 @@ function AccountPage() {
   const [accountEmail, setAccountEmail] = useState("");
   const [countryCode, setCountryCode] = useState("US");
   const [walletCurrency, setWalletCurrency] = useState("USD");
+  const [countryReady, setCountryReady] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -146,6 +147,7 @@ function AccountPage() {
     });
     if (!response.ok) return;
     const data = await response.json() as { countryCode?: string | null; currency?: string; walletCurrencyLocked?: boolean };
+    setCountryReady(true);
     if (data.countryCode) {
       setCountryCode(data.countryCode);
     } else if (!data.walletCurrencyLocked) {
@@ -162,6 +164,7 @@ function AccountPage() {
   async function saveAccountCountry(nextCountry: string, token?: string, showStatus = true) {
     const idToken = token ?? await getActiveWebIdToken();
     if (!idToken) return;
+    setCountryReady(false);
     const response = await fetch("/api/public/v1/profile/country", {
       method: "POST",
       headers: {
@@ -177,6 +180,7 @@ function AccountPage() {
     }
     setCountryCode(nextCountry);
     setWalletCurrency(result.currency ?? "USD");
+    setCountryReady(true);
     if (showStatus) setMessage("Country saved. Your wallet uses " + (result.currency ?? "USD") + ".");
   }
 
@@ -357,6 +361,14 @@ function AccountPage() {
                 </select>
                 <span className="mt-1 block text-xs text-blue-100/55">Wallet currency: {walletCurrency}. It cannot be changed after your wallet is established.</span>
               </label>
+              <a
+                href="/"
+                aria-disabled={!countryReady || busy}
+                onClick={event => { if (!countryReady || busy) event.preventDefault(); }}
+                className={`mt-6 block w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 text-center text-sm font-extrabold text-[#031039] transition hover:brightness-110 ${countryReady && !busy ? "" : "pointer-events-none opacity-50"}`}
+              >
+                Continue to BQ SQWAD TV
+              </a>
               <button
                 type="button"
                 disabled={busy}
