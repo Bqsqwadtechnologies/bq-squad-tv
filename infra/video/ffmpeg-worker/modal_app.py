@@ -48,6 +48,12 @@ def poll_firestore_queue() -> None:
     """Slow fallback poll; each invocation exits when no job is available."""
     import runner
 
+    try:
+        runner.signed_request("POST", "/api/public/v1/worker/maintenance/schedule-wallet-holds", {})
+    except Exception:
+        # The next five-minute poll retries the idempotent expiry scheduler.
+        print("Wallet hold expiry sweep could not be scheduled.", flush=True)
+
     response = runner.signed_request("POST", "/api/public/v1/worker/jobs/claim", {})
     job = response.get("job")
     if job:
