@@ -122,9 +122,12 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                         busy = true
                         message = null
                         try {
-                            googleSignIn(context, repository)
                             if (createAccount) {
                                 require(legalConsentChecked) { "Read and accept the Terms and Privacy Policy first." }
+                                repository.ensurePublicLegalPagesPublished()
+                            }
+                            googleSignIn(context, repository)
+                            if (createAccount) {
                                 repository.acceptLegalPages()
                                 onAuthenticated()
                             } else {
