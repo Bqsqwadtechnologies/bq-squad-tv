@@ -225,7 +225,7 @@ export async function requireProviderAccess(
     await recordAccessDenial(fs, {
       actorUid: user.uid,
       actorRoleClass: "provider",
-      requiredRole: `provider:${targetProviderId}`,
+      requiredRole: "provider",
       resourceKind: "provider_tenant",
       targetId: targetProviderId,
       reasonCode: "CROSS_TENANT_DENIED",

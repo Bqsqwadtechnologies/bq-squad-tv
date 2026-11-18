@@ -414,7 +414,8 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
       const firstDenialKey = denials[0]!;
       const denial = storedDocs[firstDenialKey]!;
       expect(denial["reasonCode"]).toBe("CROSS_TENANT_DENIED");
-      expect(denial["requiredRole"]).toBe("provider:prov_beta");
+      expect(denial["requiredRole"]).toBe("provider");
+      expect(denial["targetHash"]).toMatch(/^[a-f0-9]{64}$/);
       expect(denial["targetHash"]).toBeDefined();
     });
 

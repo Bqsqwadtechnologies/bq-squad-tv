@@ -1,33 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { requireProviderAccess, requireAdminModule } from "@/lib/server/roles";
 import { ApiError, type Firestore } from "@/lib/server/firebase-admin";
-
-type MockDoc = Record<string, unknown>;
+import { createRoleIsolationStore, type MockDoc } from "@/test/role-isolation-harness";
 
 function createE2EStore() {
-  const store = new Map<string, MockDoc>();
-
-  const fs: Partial<Firestore> = {
-    getDoc: vi.fn(async (path: string) => store.get(path) || null),
-    setDoc: vi.fn(async (path: string, data: MockDoc) => {
-      store.set(path, { ...data });
-    }),
-    patchDoc: vi.fn(async (path: string, data: MockDoc) => {
-      const existing = store.get(path) || {};
-      store.set(path, { ...existing, ...data });
-    }),
-    query: vi.fn(async (collection: string) => {
-      const results: Array<Record<string, unknown> & { __id: string }> = [];
-      for (const [key, val] of store.entries()) {
-        if (key.startsWith(`${collection}/`)) {
-          results.push({ __id: key.replace(`${collection}/`, ""), ...val });
-        }
-      }
-      return results;
-    }),
-  };
-
-  return { store, fs: fs as unknown as Firestore };
+  return createRoleIsolationStore();
 }
 
 describe("End-to-End Provider Workflows", () => {
