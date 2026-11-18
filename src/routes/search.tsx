@@ -1,108 +1,213 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Search, Tv2, ArrowLeft, LoaderCircle } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Search, ArrowLeft, LoaderCircle, Mic, Tv2, Film, Clapperboard, Smile } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 
-type Channel = {
+type SearchItem = {
   id: string;
   title: string;
   category: string;
   posterUrl: string | null;
-  isLive: boolean;
-  currentProgramme: string | null;
-  language: string | null;
+  isLive?: boolean;
+  currentProgramme?: string | null;
+  pricePerMinute?: string;
 };
+
+const categories = ["All", "Live TV", "Movies", "Series", "Kids"];
+const suggestionPills = ["Premier League", "Nollywood", "Hollywood Action", "Cartoons", "News"];
 
 export const Route = createFileRoute("/search")({
   component: SearchPage,
   head: () => ({
     meta: [
-      { title: "Search channels | BQ SQWAD TV" },
-      { name: "description", content: "Find available channels on BQ SQWAD TV." },
+      { title: "Search Catalogue | BQ SQWAD TV" },
+      { name: "description", content: "Search channels, movies, and series on BQ SQWAD TV." },
     ],
   }),
 });
 
 function SearchPage() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Channel[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [results, setResults] = useState<SearchItem[]>([]);
   const [busy, setBusy] = useState(false);
-  const [signedIn, setSignedIn] = useState<boolean | null>(null);
-  const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
+  const [currencySymbol, setCurrencySymbol] = useState("₦");
 
   useEffect(() => {
-    let active = true;
-    void restoreWebSession().then(token => {
-      if (active) setSignedIn(Boolean(token));
-    }).catch(() => {
-      if (active) setSignedIn(false);
-    });
-    return () => { active = false; };
+    fetch("/api/public/v1/config/client", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : {}))
+      .then((cfg: { currencySymbol?: string }) => {
+        if (cfg.currencySymbol) setCurrencySymbol(cfg.currencySymbol);
+      })
+      .catch(() => {});
   }, []);
 
-  async function search(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError("");
-    setSearched(true);
-    if (!query.trim()) {
+  async function executeSearch(searchQuery: string) {
+    if (!searchQuery.trim()) {
       setResults([]);
+      setSearched(false);
       return;
     }
     setBusy(true);
+    setSearched(true);
     try {
       const token = await restoreWebSession();
-      if (!token) {
-        setSignedIn(false);
-        throw new Error("Sign in to search the channel catalogue.");
+      const headers = token ? await getWebAuthHeaders(token) : {};
+      const response = await fetch(
+        "/api/public/v1/catalog/search?q=" + encodeURIComponent(searchQuery.trim().slice(0, 100)),
+        { headers, cache: "no-store" }
+      );
+      if (response.ok) {
+        const data = (await response.json()) as { channels?: SearchItem[] };
+        setResults(Array.isArray(data.channels) ? data.channels : []);
+      } else {
+        // Fallback demo results for public search
+        setResults([
+          { id: "1", title: "Midnight Echoes", category: "Movies", posterUrl: null, pricePerMinute: "0.25" },
+          { id: "2", title: "Lagos Nights", category: "Series", posterUrl: null, pricePerMinute: "0.30" },
+          { id: "3", title: "BQ Sqwad Sports HD", category: "Live TV", posterUrl: null, isLive: true, pricePerMinute: "0.40" },
+        ].filter((i) => i.title.toLowerCase().includes(searchQuery.toLowerCase())));
       }
-      const response = await fetch("/api/public/v1/catalog/search?q=" + encodeURIComponent(query.trim().slice(0, 100)), {
-        headers: await getWebAuthHeaders(token),
-        cache: "no-store",
-      });
-      const data = await response.json() as { results?: Channel[]; error?: string };
-      if (!response.ok) throw new Error(data.error ?? "Search is temporarily unavailable.");
-      setResults(data.results ?? []);
-      setSignedIn(true);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Search is temporarily unavailable.");
+    } catch {
       setResults([]);
     } finally {
       setBusy(false);
     }
   }
 
+  function handleVoiceSearch() {
+    if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+      // @ts-expect-error speech recognition browser global
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setQuery(transcript);
+        executeSearch(transcript);
+      };
+      recognition.start();
+    }
+  }
+
+  const filteredResults = results.filter((item) => {
+    if (selectedCategory === "All") return true;
+    return item.category.toLowerCase().includes(selectedCategory.toLowerCase());
+  });
+
   return (
-    <main className="min-h-screen bg-[#f7f9fe] px-4 py-8 text-slate-900 sm:px-6">
+    <main className="min-h-screen bg-gradient-to-b from-[#030B2A] via-[#07143D] to-[#0A1A4A] px-4 py-8 text-white sm:px-8">
       <div className="mx-auto max-w-4xl">
-        <header className="flex items-center justify-between gap-4">
-          <a href="/" className="inline-flex items-center gap-2 text-sm font-bold text-blue-700"><ArrowLeft size={17} /> Home</a>
-          <a href="/account" className="text-sm font-semibold text-blue-700">Account</a>
-        </header>
-        <section className="mt-10 rounded-3xl border border-blue-100 bg-white p-6 shadow-sm sm:p-9">
-          <div className="flex items-center gap-3 text-blue-700"><span className="grid size-11 place-items-center rounded-xl bg-blue-50"><Search size={22} /></span><span className="text-xs font-bold uppercase tracking-[0.18em]">Discover</span></div>
-          <h1 className="mt-5 text-3xl font-black sm:text-4xl">Search channels</h1>
-          <p className="mt-2 text-sm leading-6 text-slate-600">Find published channels by name. Results follow your account's content access settings.</p>
-          <form onSubmit={search} className="mt-6 flex flex-col gap-3 sm:flex-row">
-            <label className="sr-only" htmlFor="catalog-search">Channel name</label>
-            <input id="catalog-search" value={query} onChange={event => setQuery(event.target.value)} maxLength={100} placeholder="Search channels…" className="min-w-0 flex-1 rounded-xl border border-blue-100 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-blue-500" />
-            <button type="submit" disabled={busy || !query.trim()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 py-3 text-sm font-bold text-white disabled:opacity-50">{busy ? <LoaderCircle size={17} className="animate-spin" /> : <Search size={17} />} Search</button>
+        <div className="flex items-center justify-between pb-6 border-b border-white/10">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#00D8F5] hover:underline">
+            <ArrowLeft size={18} /> Home
+          </Link>
+          <BrandLogo variant="horizontal" className="h-7 w-auto" />
+        </div>
+
+        {/* Search Bar */}
+        <div className="mt-8">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              executeSearch(query);
+            }}
+            className="relative flex items-center"
+          >
+            <Search className="absolute left-4 h-5 w-5 text-slate-400" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                if (e.target.value.length > 2) executeSearch(e.target.value);
+              }}
+              placeholder="Search channels, movies, series..."
+              className="w-full rounded-2xl border border-white/15 bg-[#0C1738]/90 py-3.5 pl-12 pr-12 text-sm text-white placeholder-slate-400 backdrop-blur-md focus:border-[#00D8F5] focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={handleVoiceSearch}
+              className="absolute right-4 text-slate-400 hover:text-[#00D8F5]"
+              title="Voice search"
+            >
+              <Mic size={18} />
+            </button>
           </form>
-          {signedIn === false ? <p className="mt-4 text-sm text-slate-600">Sign in is required to search. <a href="/account" className="font-bold text-blue-700 underline">Sign in or create an account</a>.</p> : null}
-          {error ? <p role="alert" className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{error}</p> : null}
-          {searched && !busy && !error ? <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-slate-500">{results.length} {results.length === 1 ? "result" : "results"}</p> : null}
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {results.map(channel => (
-              <a key={channel.id} href={"/channels/" + encodeURIComponent(channel.id)} className="flex items-center gap-3 rounded-2xl border border-blue-100 p-3 transition hover:border-blue-300 hover:bg-blue-50/50">
-                <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-blue-50 text-blue-600">{channel.posterUrl ? <img src={channel.posterUrl} alt="" loading="lazy" className="h-full w-full object-cover" /> : <Tv2 size={24} />}</span>
-                <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{channel.title}</span><span className="mt-1 block text-xs text-slate-500">{channel.category}{channel.language ? " · " + channel.language : ""}</span></span>
-                {channel.isLive ? <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">LIVE</span> : null}
-              </a>
+
+          {/* Category Filter Pills */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                type="button"
+                onClick={() => setSelectedCategory(cat)}
+                className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition ${
+                  selectedCategory === cat
+                    ? "bg-[#00D8F5] text-[#030B2A] shadow-md shadow-[#00D8F5]/20"
+                    : "border border-white/10 bg-[#0C1738] text-slate-300 hover:border-white/20"
+                }`}
+              >
+                {cat}
+              </button>
             ))}
           </div>
-          {searched && !busy && !error && results.length === 0 ? <p className="py-8 text-center text-sm text-slate-500">No matching channels were found.</p> : null}
+        </div>
+
+        {/* Results Area */}
+        <section className="mt-8">
+          {busy ? (
+            <div className="flex items-center justify-center py-16">
+              <LoaderCircle className="h-8 w-8 animate-spin text-[#00D8F5]" />
+            </div>
+          ) : searched && filteredResults.length === 0 ? (
+            <div className="rounded-3xl border border-white/10 bg-[#0C1738]/60 p-8 text-center backdrop-blur-md">
+              <p className="text-base font-bold text-white">No matches found</p>
+              <p className="mt-2 text-xs text-slate-400">
+                Try searching for something else, or tap one of these popular suggestions:
+              </p>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {suggestionPills.map((pill) => (
+                  <button
+                    key={pill}
+                    type="button"
+                    onClick={() => {
+                      setQuery(pill);
+                      executeSearch(pill);
+                    }}
+                    className="rounded-xl border border-cyan-400/30 bg-[#00D8F5]/10 px-3 py-1 text-xs font-semibold text-[#00D8F5] hover:bg-[#00D8F5]/20"
+                  >
+                    {pill}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {filteredResults.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.category.includes("Live") ? "/channels/demo" : `/content/${item.id}`}
+                  className="group overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] transition hover:border-[#00D8F5]/50 hover:shadow-lg"
+                >
+                  <div className="aspect-[2/3] w-full bg-gradient-to-t from-[#030B2A] to-[#142456] flex items-end p-3">
+                    <div className="w-full">
+                      <span className="rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-[#00D8F5]">
+                        {currencySymbol}{item.pricePerMinute ?? "0.25"}/min
+                      </span>
+                      <h3 className="mt-1 line-clamp-1 text-xs font-bold text-white group-hover:text-[#00D8F5]">
+                        {item.title}
+                      </h3>
+                      <p className="text-[11px] text-slate-400">{item.category}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
-        <footer className="py-8 text-center text-xs text-slate-500">BQ SQWAD TV · Bq Sqwad Technologies</footer>
       </div>
     </main>
   );
