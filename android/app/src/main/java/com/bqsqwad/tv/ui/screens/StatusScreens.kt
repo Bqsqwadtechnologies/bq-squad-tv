@@ -1,5 +1,6 @@
 package com.bqsqwad.tv.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.HourglassTop
@@ -12,14 +13,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.bqsqwad.tv.R
 
 @Composable
 private fun BqStatusScreen(
     title: String,
     message: String,
-    icon: ImageVector,
+    icon: ImageVector? = null,
     actionLabel: String,
     onAction: () -> Unit,
 ) {
@@ -29,7 +32,11 @@ private fun BqStatusScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(48.dp))
+            Image(
+                painter = painterResource(id = R.drawable.bq_sqwad_tv_mark),
+                contentDescription = "BQ SQWAD TV",
+                modifier = Modifier.size(56.dp)
+            )
             Spacer(Modifier.height(18.dp))
             Text(title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(8.dp))
@@ -43,71 +50,21 @@ private fun BqStatusScreen(
 }
 
 @Composable
-fun MaintenanceScreen(onRetry: () -> Unit) {
-    BqStatusScreen(
-        title = "We’ll be back soon",
-        message = "BQ SQWAD TV is temporarily unavailable while we make improvements. Please try again shortly.",
-        icon = Icons.Default.Info,
-        actionLabel = "Try again",
-        onAction = onRetry,
-    )
-}
+fun OfflineScreen(onRetry: () -> Unit) =
+    BqStatusScreen("You're offline", "Check your internet connection and try again.", Icons.Default.WifiOff, "Retry", onRetry)
 
 @Composable
-fun OfflineScreen(onRetry: () -> Unit) {
-    BqStatusScreen(
-        title = "You're offline",
-        message = "Check your internet connection, then try loading BQ SQWAD TV again.",
-        icon = Icons.Default.WifiOff,
-        actionLabel = "Try again",
-        onAction = onRetry,
-    )
-}
+fun MaintenanceScreen(onRetry: () -> Unit) =
+    BqStatusScreen("Under maintenance", "We're making updates. Back shortly.", Icons.Default.HourglassTop, "Refresh", onRetry)
 
 @Composable
-fun HighDemandScreen(onRetry: () -> Unit) {
-    BqStatusScreen(
-        title = "A lot of people are watching",
-        message = "We’re experiencing high demand right now. Please wait a moment and try again.",
-        icon = Icons.Default.HourglassTop,
-        actionLabel = "Try again",
-        onAction = onRetry,
-    )
-}
+fun NotAvailableScreen(onRetry: () -> Unit) =
+    BqStatusScreen("Not available", "This channel or title isn't available right now.", Icons.Default.Public, "Explore other channels", onRetry)
 
 @Composable
-fun CountryUnavailableScreen(onBack: () -> Unit) {
-    BqStatusScreen(
-        title = "Not available in your country",
-        message = "This programme is not currently licensed for viewing in your country.",
-        icon = Icons.Default.Public,
-        actionLabel = "Go back",
-        onAction = onBack,
-    )
-}
+fun AgeRestrictedScreen(onDismiss: () -> Unit) =
+    BqStatusScreen("Age restricted", "This content requires adult verification.", Icons.Default.Lock, "Go back", onDismiss)
 
 @Composable
-fun AgeRestrictionScreen(onBack: () -> Unit) {
-    BqStatusScreen(
-        title = "Age restriction",
-        message = "This programme has an age restriction. Browse content available for your account.",
-        icon = Icons.Default.Lock,
-        actionLabel = "Go back",
-        onAction = onBack,
-    )
-}
-
-@Composable
-fun LegalNoticeScreen(
-    title: String,
-    message: String = "This document is being prepared for publication. Please contact tv@bqsqwad.com if you need assistance.",
-    onBack: () -> Unit,
-) {
-    BqStatusScreen(
-        title = title,
-        message = message,
-        icon = Icons.Default.Info,
-        actionLabel = "Go back",
-        onAction = onBack,
-    )
-}
+fun HighDemandScreen(onRetry: () -> Unit) =
+    BqStatusScreen("High demand", "Servers are currently busy. Please wait a moment.", Icons.Default.Info, "Try again", onRetry)
