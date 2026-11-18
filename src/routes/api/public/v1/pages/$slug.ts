@@ -68,7 +68,7 @@ export const Route = createFileRoute("/api/public/v1/pages/$slug")({
                 title: bundled.title,
                 body: bundled.body,
                 version: 0,
-                effectiveAt: bundled.effectiveAt ?? "2026-01-01T00:00:00.000Z",
+                effectiveAt: (bundled as Record<string, unknown>)["effectiveAt"] ?? "2026-01-01T00:00:00.000Z",
                 audience: bundled.audience ?? "public",
               },
               { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=300" } }

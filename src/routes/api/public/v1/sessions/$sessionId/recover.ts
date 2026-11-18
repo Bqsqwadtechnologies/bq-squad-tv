@@ -62,7 +62,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/recover
 
             const activeLeases = releaseSessionLease(
               activeSessionDoc["sessions"],
-              sessionId
+              sessionId,
+              Date.now()
             );
 
             const writes: FirestoreWrite[] = [

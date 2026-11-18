@@ -24,7 +24,7 @@ export const Route = createFileRoute("/api/public/v1/profiles/")({
 
           return Response.json({
             items: profiles.map((p: Record<string, unknown>) => ({
-              id: p.__id,
+              id: p["__id"],
               name: p["name"],
               avatarUrl: p["avatarUrl"] ?? null,
               isKids: p["isKids"] ?? false,

@@ -54,7 +54,7 @@ export const Route = createFileRoute("/api/public/v1/admin/pages/rollback")({
             createdBy: user.uid,
           };
 
-          await fs.updateDoc(path, {
+          await fs.patchDoc(path, {
             body: target["body"],
             version: nextVersion,
             status: "published",

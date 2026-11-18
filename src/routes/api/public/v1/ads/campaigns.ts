@@ -8,8 +8,8 @@ export const Route = createFileRoute("/api/public/v1/ads/campaigns")({
       GET: async ({ request }) => {
         try {
           const fs = await Firestore.create();
-          const campaigns = await fs.listDocs("adCampaigns");
-          const active = campaigns.filter((c) => c["status"] === "active");
+          const campaigns = await fs.query("adCampaigns");
+          const active = campaigns.filter((c: Record<string, unknown>) => c["status"] === "active");
 
           return Response.json({ items: active });
         } catch (error) {

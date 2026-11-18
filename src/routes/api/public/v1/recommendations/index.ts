@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/v1/recommendations/")({
           const items = allTitles
             .filter((t: Record<string, unknown>) => t["status"] === "published")
             .map((t: Record<string, unknown>) => ({
-              id: t.__id,
+              id: t["__id"],
               title: t["title"],
               category: t["category"] ?? "general",
               score: 0.95,

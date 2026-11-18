@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/public/v1/auth/devices/")({
         try {
           const user = await requireUser(request);
           const fs = await Firestore.create();
-          const devices = await fs.listDocs(`users/${user.uid}/sessions`);
+          const devices = await fs.query(`users/${user.uid}/sessions`);
           return Response.json({ items: devices });
         } catch (error) {
           return errorBody(error);

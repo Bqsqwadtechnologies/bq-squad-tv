@@ -84,9 +84,11 @@ function SearchPage() {
       const recognition = new SpeechRecognition();
       recognition.lang = "en-US";
       recognition.onresult = (event: { results: Array<Array<{ transcript: string }>> }) => {
-        const transcript = event.results[0][0].transcript;
-        setQuery(transcript);
-        executeSearch(transcript);
+        const transcript = event.results?.[0]?.[0]?.transcript;
+        if (transcript) {
+          setQuery(transcript);
+          executeSearch(transcript);
+        }
       };
       recognition.start();
     }

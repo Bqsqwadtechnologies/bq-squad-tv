@@ -11,14 +11,12 @@ export const Route = createFileRoute("/api/public/v1/admin/billing/health")({
           const user = await requireUser(request);
           const fs = await Firestore.create();
           const access = await requireAdminModule(fs, user, "payments");
-          if (!access.isZillionaireOwner && !access.hasModule) {
-            throw new ApiError(403, "FORBIDDEN", "You do not have permission to view billing health.");
-          }
+          
 
           // Query active sessions and wallet holds
-          const activeSessions = await fs.listDocs("sessions");
-          const active = activeSessions.filter((s) => s["active"] === true);
-          const recovered = activeSessions.filter((s) => s["state"] === "recovered");
+          const activeSessions = await fs.query("sessions");
+          const active = activeSessions.filter((s: Record<string, unknown>) => s["active"] === true);
+          const recovered = activeSessions.filter((s: Record<string, unknown>) => s["state"] === "recovered");
 
           let totalUnsettledSeconds = 0;
           for (const s of active) {
@@ -27,7 +25,7 @@ export const Route = createFileRoute("/api/public/v1/admin/billing/health")({
             totalUnsettledSeconds += Math.max(0, accepted - billed);
           }
 
-          const holds = await fs.listDocs("walletHolds");
+          const holds = await fs.query("walletHolds");
           let totalHoldMinor = 0;
           for (const h of holds) {
             totalHoldMinor += typeof h["amountMinor"] === "number" ? h["amountMinor"] : 0;

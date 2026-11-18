@@ -33,12 +33,12 @@ export const Route = createFileRoute("/api/public/v1/search/v2")({
           return Response.json({
             query: q,
             titles: titles.map((t: Record<string, unknown>) => ({
-              id: t.__id,
+              id: t["__id"],
               title: t["title"],
               category: t["category"],
             })),
             channels: channels.map((c: Record<string, unknown>) => ({
-              id: c.__id,
+              id: c["__id"],
               name: c["name"],
             })),
             totalResults: titles.length + channels.length,

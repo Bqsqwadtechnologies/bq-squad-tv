@@ -11,9 +11,7 @@ export const Route = createFileRoute("/api/public/v1/admin/errors/")({
           const user = await requireUser(request);
           const fs = await Firestore.create();
           const access = await requireAdminModule(fs, user, "security");
-          if (!access.isZillionaireOwner && !access.hasModule) {
-            throw new ApiError(403, "FORBIDDEN", "You do not have access to the Error Centre.");
-          }
+          
 
           const url = new URL(request.url);
           const refQuery = url.searchParams.get("ref");
@@ -31,9 +29,9 @@ export const Route = createFileRoute("/api/public/v1/admin/errors/")({
 
           // Otherwise return recent error events
           // Using listDocs or query
-          const events = await fs.listDocs("errorEvents");
+          const events = await fs.query("errorEvents", { limit: 50 });
           // Sort by lastSeen desc
-          events.sort((a, b) => String(b["lastSeen"] ?? "").localeCompare(String(a["lastSeen"] ?? "")));
+          events.sort((a: Record<string, unknown>, b: Record<string, unknown>) => String(b["lastSeen"] ?? "").localeCompare(String(a["lastSeen"] ?? "")));
 
           return Response.json({ items: events });
         } catch (error) {

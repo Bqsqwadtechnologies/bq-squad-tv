@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/public/v1/wallet/purchases")({
           );
 
           const items = ledger.map((doc: Record<string, unknown>) => ({
-            id: doc.__id,
+            id: doc["__id"],
             type: doc["type"] ?? "playback_charge",
             amountMinor: doc["amountMinor"],
             currency: doc["currency"] ?? "NGN",

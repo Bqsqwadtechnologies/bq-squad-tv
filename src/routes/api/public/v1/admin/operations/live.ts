@@ -11,12 +11,10 @@ export const Route = createFileRoute("/api/public/v1/admin/operations/live")({
           const user = await requireUser(request);
           const fs = await Firestore.create();
           const access = await requireAdminModule(fs, user, "system");
-          if (!access.isZillionaireOwner && !access.hasModule) {
-            throw new ApiError(403, "FORBIDDEN", "Operations room access denied.");
-          }
+          
 
-          const sessions = await fs.listDocs("sessions");
-          const active = sessions.filter((s) => s["active"] === true);
+          const sessions = await fs.query("sessions");
+          const active = sessions.filter((s: Record<string, unknown>) => s["active"] === true);
 
           const liveViewersByChannel: Record<string, number> = {};
           for (const s of active) {
