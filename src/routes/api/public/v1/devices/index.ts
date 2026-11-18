@@ -5,7 +5,7 @@ import { errorBody, requireUser } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { writeAuditLog } from "@/lib/server/audit";
 
-export const Route = createFileRoute("/api/public/v1/devices")({
+export const Route = createFileRoute("/api/public/v1/devices/")({
   server: { handlers: {
     GET: async ({ request }) => {
       try {

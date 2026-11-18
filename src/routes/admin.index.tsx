@@ -13,6 +13,8 @@ import {
   ShieldCheck,
   Tv2,
   Users,
+  Radio,
+  Inbox,
   Wallet,
 } from "lucide-react";
 import {
@@ -24,7 +26,7 @@ import {
 type AdminModule =
   | "overview" | "users" | "roles" | "producers" | "channels" | "content"
   | "pricing" | "wallets" | "payments" | "payouts" | "ads" | "notifications"
-  | "moderation" | "security" | "system";
+  | "moderation" | "security" | "system" | "providers" | "support";
 
 type PlatformFlags = {
   producerChannelCreation: boolean; waitingRoom: boolean; maintenanceMode: boolean; signupsOpen: boolean;
@@ -49,6 +51,8 @@ const moduleCards: Array<{
 }> = [
   { id: "pricing", title: "Pricing & billing rules", description: "Versioned PAYG rates, wallet packages and Google Play products.", href: "/admin/pricing", icon: Wallet },
   { id: "ads", title: "Advertising providers", description: "Separate Android and website providers, placements and credentials.", href: "/admin/ads", icon: Megaphone },
+  { id: "providers", title: "Licensed Providers & Live TV", description: "Register stream providers, manage live channels, test playback and expiry.", href: "/admin/providers", icon: Radio },
+  { id: "support", title: "Support Inbox", description: "Review inquiries submitted via contact forms and track resolution.", href: "/admin/support", icon: Inbox },
   { id: "overview", title: "Monthly operations reports", description: "Review monthly ledger, payout, advertising and producer-review activity.", href: "/admin/reports", icon: Gauge },
   { id: "system", title: "Data structure", description: "Review the platform data structure without viewing private record contents.", href: "/admin/firebase-schema", icon: Settings2 },
   { id: "system", title: "Storage locations", description: "Review available storage locations, their status and where new files are placed.", href: "/admin/storage", icon: Database },

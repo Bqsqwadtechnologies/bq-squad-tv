@@ -119,3 +119,38 @@ describe("Zillionaire identity and delegated module permissions", () => {
     vi.unstubAllEnvs();
   });
 });
+
+describe("Provider role and isolation", () => {
+  it("recognizes provider role with valid providerUser record", async () => {
+    const fs = {
+      getDoc: vi.fn(async (path: string) => {
+        if (path.startsWith("providerUsers/")) {
+          return { status: "ACTIVE", providerId: "prov-123" };
+        }
+        return null;
+      }),
+    } as unknown as Firestore;
+    const access = await resolvePlatformAccess(fs, "u-prov", "rep@provider.com", {}, true);
+    expect(access.roles).toContain("provider");
+    expect(access.providerId).toBe("prov-123");
+  });
+
+  it("enforces provider isolation between different provider organisations", async () => {
+    const { requireProviderAccess } = await import("@/lib/server/roles");
+    const fs = {
+      getDoc: vi.fn(async (path: string) => {
+        if (path.startsWith("providerUsers/")) {
+          return { status: "ACTIVE", providerId: "prov-alpha" };
+        }
+        return null;
+      }),
+    } as unknown as Firestore;
+    // Own provider access succeeds
+    await expect(requireProviderAccess(fs, { uid: "u1", email: "a@p.com", emailVerified: true }, "prov-alpha"))
+      .resolves.toMatchObject({ providerId: "prov-alpha" });
+
+    // Other provider access fails
+    await expect(requireProviderAccess(fs, { uid: "u1", email: "a@p.com", emailVerified: true }, "prov-beta"))
+      .rejects.toMatchObject({ status: 403 });
+  });
+});
