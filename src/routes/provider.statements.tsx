@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Download, FileText, LoaderCircle, Printer, AlertCircle } from "lucide-react";
+import { ArrowLeft, Download, FileText, LoaderCircle, Printer } from "lucide-react";
 import { restoreWebSession } from "@/lib/firebase-web-auth";
 
 type Statement = {
@@ -59,14 +59,14 @@ function ProviderStatementsPage() {
     let active = true;
     void (async () => {
       try {
-        const session = await restoreWebSession();
-        if (!session?.idToken) {
+        const token = await restoreWebSession();
+        if (!token) {
           setError("Please sign in from the partner portal home.");
           setBusy(false);
           return;
         }
         const res = await fetch("/api/public/v1/provider/statements", {
-          headers: { Authorization: `Bearer ${session.idToken}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to load partner statements");
         const data = await res.json() as { statements: Statement[] };
@@ -111,25 +111,33 @@ function ProviderStatementsPage() {
       <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-20 print:hidden">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/provider" className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+            <Link
+              to="/provider"
+              aria-label="Back to partner dashboard"
+              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            >
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <h1 className="font-bold text-lg text-white">Monthly Statements</h1>
           </div>
-          <Link to="/provider" className="text-xs text-cyan-400 hover:underline">
+          <Link
+            to="/provider"
+            aria-label="Return to partner dashboard"
+            className="text-xs text-cyan-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded"
+          >
             Partner Dashboard
           </Link>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
+      <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full" role="main">
         {busy ? (
-          <div className="py-24 text-center">
+          <div className="py-24 text-center" role="status" aria-live="polite">
             <LoaderCircle className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-3" />
             <p className="text-sm text-slate-400">Loading statements...</p>
           </div>
         ) : error ? (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm" role="alert">
             {error}
           </div>
         ) : (
@@ -142,7 +150,7 @@ function ProviderStatementsPage() {
             </div>
 
             {statements.length === 0 ? (
-              <div className="p-12 text-center rounded-2xl bg-slate-900 border border-slate-800">
+              <div className="p-12 text-center rounded-2xl bg-slate-900 border border-slate-800" role="status">
                 <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
                 <h3 className="text-base font-semibold text-white mb-1">No closed statements yet</h3>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
@@ -150,9 +158,9 @@ function ProviderStatementsPage() {
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4" role="region" aria-label="Provider revenue statements">
                 {statements.map((s) => (
-                  <div key={s.id} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+                  <div key={s.id} tabIndex={0} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
                       <div>
                         <div className="flex items-center gap-2">
@@ -172,15 +180,19 @@ function ProviderStatementsPage() {
 
                       <div className="flex items-center gap-2">
                         <button
+                          type="button"
                           onClick={() => exportCSV(s)}
-                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5"
+                          aria-label={`Export statement ${s.period} as CSV`}
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                         >
                           <Download className="w-3.5 h-3.5" />
                           CSV
                         </button>
                         <button
+                          type="button"
                           onClick={() => window.print()}
-                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5"
+                          aria-label={`Print statement ${s.period}`}
+                          className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-200 flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                         >
                           <Printer className="w-3.5 h-3.5" />
                           Print

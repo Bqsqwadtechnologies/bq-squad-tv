@@ -163,3 +163,10 @@ The current security-header policy enforces transport, MIME, framing, referrer a
 - No new credential or secret is required for these legal drafts. Do not put identity evidence, payment details or provider credentials into legal page text.
 - The seed script can validate the draft list locally. Remote seeding requires an authenticated owner session; never place an owner token in source control.
 - Provider invitation acceptance and a complete provider console flow remain dependent on the provider-console implementation. Producer acceptance is enforced at producer verification; paid viewing is blocked until public terms and privacy acceptance are recorded.
+
+## 9. Partner Portal & Provider Console Setup
+
+- In the Zillionaire Dashboard (`/admin/providers`), provision licensed partner records with their registered legal name, agreement reference, settlement currency (e.g. NGN), and provider revenue share in basis points (e.g. 2500 BPS = 25.0%).
+- Assign provider representatives in `providerUsers` with status `ACTIVE` and their corresponding `providerId`. Only verified provider representatives can access the partner portal at `/provider`.
+- Reconcile monthly statements at the close of each calendar period: calculate Gross Viewing Revenue, deduct direct delivery and processing costs (CDN egress, payment processing, playback infrastructure), and compute the Net Gross Profit and provider share before approving and marking statements as paid.
+- Monitor and resolve dispute threads from `/admin/support?type=disputes` or through the support inquiries inbox.

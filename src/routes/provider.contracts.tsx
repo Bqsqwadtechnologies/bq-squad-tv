@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, FileText, LoaderCircle, ShieldCheck, Globe, Layers } from "lucide-react";
+import { ArrowLeft, LoaderCircle } from "lucide-react";
 import { restoreWebSession } from "@/lib/firebase-web-auth";
 
 type Contract = {
@@ -36,14 +36,14 @@ function ProviderContractsPage() {
     let active = true;
     void (async () => {
       try {
-        const session = await restoreWebSession();
-        if (!session?.idToken) {
+        const token = await restoreWebSession();
+        if (!token) {
           setError("Please sign in from the partner portal home.");
           setBusy(false);
           return;
         }
         const res = await fetch("/api/public/v1/provider/contracts", {
-          headers: { Authorization: `Bearer ${session.idToken}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to load contract details");
         const data = await res.json() as { contracts: Contract[] };
@@ -62,25 +62,33 @@ function ProviderContractsPage() {
       <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/provider" className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+            <Link
+              to="/provider"
+              aria-label="Back to partner dashboard"
+              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            >
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <h1 className="font-bold text-lg text-white">Licence Agreement</h1>
           </div>
-          <Link to="/provider" className="text-xs text-cyan-400 hover:underline">
+          <Link
+            to="/provider"
+            aria-label="Return to partner dashboard"
+            className="text-xs text-cyan-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded"
+          >
             Partner Dashboard
           </Link>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
+      <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full" role="main">
         {busy ? (
-          <div className="py-24 text-center">
+          <div className="py-24 text-center" role="status" aria-live="polite">
             <LoaderCircle className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-3" />
             <p className="text-sm text-slate-400">Loading agreement summary...</p>
           </div>
         ) : error ? (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm" role="alert">
             {error}
           </div>
         ) : (
@@ -91,7 +99,7 @@ function ProviderContractsPage() {
             </div>
 
             {contracts.length === 0 ? (
-              <div className="p-8 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+              <div tabIndex={0} className="p-8 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950" role="region" aria-label="Standard channel distribution agreement">
                 <div className="flex items-start justify-between">
                   <div>
                     <h3 className="text-base font-bold text-white">Standard Channel Distribution Agreement</h3>
@@ -127,9 +135,9 @@ function ProviderContractsPage() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4" role="region" aria-label="Active contracts and agreements">
                 {contracts.map((c) => (
-                  <div key={c.id} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+                  <div key={c.id} tabIndex={0} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="text-base font-bold text-white">{c.agreementReference}</h3>

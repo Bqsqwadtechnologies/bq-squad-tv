@@ -88,11 +88,11 @@ function AdminProvidersPage() {
   useEffect(() => {
     let active = true;
     void (async () => {
-      const session = await restoreWebSession();
+      const tokenStr = await restoreWebSession();
       if (!active) return;
-      if (session?.idToken) {
-        setToken(session.idToken);
-        void loadData(session.idToken);
+      if (tokenStr) {
+        setToken(tokenStr);
+        void loadData(tokenStr);
       } else {
         setError("Sign in with owner credentials required.");
         setBusy(false);
@@ -174,7 +174,7 @@ function AdminProvidersPage() {
       <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/admin" className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+            <Link to="/admin" className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900" aria-label="Back to administration dashboard">
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <h1 className="font-bold text-lg text-white">Providers & Live TV Management</h1>

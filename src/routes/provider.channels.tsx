@@ -36,14 +36,14 @@ function ProviderChannelsPage() {
     let active = true;
     void (async () => {
       try {
-        const session = await restoreWebSession();
-        if (!session?.idToken) {
+        const token = await restoreWebSession();
+        if (!token) {
           setError("Please sign in from the partner portal home.");
           setBusy(false);
           return;
         }
         const res = await fetch("/api/public/v1/provider/channels", {
-          headers: { Authorization: `Bearer ${session.idToken}` },
+          headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to load partner channels");
         const data = await res.json() as { channels: Channel[] };
@@ -62,25 +62,33 @@ function ProviderChannelsPage() {
       <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/provider" className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+            <Link
+              to="/provider"
+              aria-label="Back to partner dashboard"
+              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+            >
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <h1 className="font-bold text-lg text-white">Live Channels</h1>
           </div>
-          <Link to="/provider" className="text-xs text-cyan-400 hover:underline">
+          <Link
+            to="/provider"
+            aria-label="Return to partner dashboard"
+            className="text-xs text-cyan-400 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded"
+          >
             Partner Dashboard
           </Link>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
+      <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full" role="main">
         {busy ? (
-          <div className="py-24 text-center">
+          <div className="py-24 text-center" role="status" aria-live="polite">
             <LoaderCircle className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-3" />
             <p className="text-sm text-slate-400">Loading channels...</p>
           </div>
         ) : error ? (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm" role="alert">
             {error}
           </div>
         ) : (
@@ -96,7 +104,7 @@ function ProviderChannelsPage() {
             </div>
 
             {channels.length === 0 ? (
-              <div className="p-12 text-center rounded-2xl bg-slate-900 border border-slate-800">
+              <div className="p-12 text-center rounded-2xl bg-slate-900 border border-slate-800" role="status">
                 <Tv2 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
                 <h3 className="text-base font-semibold text-white mb-1">No channels provisioned yet</h3>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
@@ -104,16 +112,16 @@ function ProviderChannelsPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" role="region" aria-label="Channels list">
                 {channels.map((channel) => (
-                  <div key={channel.id} className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+                  <div key={channel.id} tabIndex={0} className="p-5 rounded-2xl bg-slate-900 border border-slate-800 flex flex-col justify-between focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
                     <div>
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3">
                           {channel.logoUrl ? (
-                            <img src={channel.logoUrl} alt={channel.name} className="w-10 h-10 rounded-xl object-cover bg-slate-800" />
+                            <img src={channel.logoUrl} alt={`Logo of ${channel.name}`} className="w-10 h-10 rounded-xl object-cover bg-slate-800" />
                           ) : (
-                            <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-cyan-400 font-bold">
+                            <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-cyan-400 font-bold" aria-hidden="true">
                               <Radio className="w-5 h-5" />
                             </div>
                           )}

@@ -93,11 +93,11 @@ function ProviderConsoleIndex() {
   useEffect(() => {
     let active = true;
     void (async () => {
-      const session = await restoreWebSession();
+      const tokenStr = await restoreWebSession();
       if (!active) return;
-      if (session?.idToken) {
-        setToken(session.idToken);
-        void loadDashboard(session.idToken);
+      if (tokenStr) {
+        setToken(tokenStr);
+        void loadDashboard(tokenStr);
       }
     })();
     return () => { active = false; };
