@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { formatMinorCurrency as formatMoney } from "@/lib/format-money";
 import { createFileRoute } from "@tanstack/react-router";
+import { BrandLogo } from "@/components/BrandLogo";
+import { Wallet as WalletIcon } from "lucide-react";
 import {
   getActiveWebIdToken,
   getWebAccount,
@@ -151,7 +153,7 @@ function WalletPage() {
     <main className="min-h-screen bg-[#030b2a] px-4 py-8 text-white sm:px-6">
       <div className="mx-auto max-w-5xl">
         <header className="flex flex-wrap items-center justify-between gap-4">
-          <a href="/" className="text-xl font-black tracking-[0.12em] text-cyan-200">BQ SQWAD TV</a>
+          <a href="/" aria-label="BQ SQWAD TV home"><BrandLogo variant="horizontal" className="h-8 w-auto" /></a>
           <nav className="flex gap-4 text-sm text-blue-100/70">
             <a href="/account" className="hover:text-white">Account</a>
             <a href="/" className="hover:text-white">Home</a>
@@ -235,7 +237,13 @@ function WalletPage() {
               ))}
             </div>
           ) : (
-            <p className="mt-5 text-sm text-blue-100/55">Your wallet transactions will appear here.</p>
+            <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-[#0C1738]/50 p-8 text-center">
+              <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#00D8F5]/15 text-[#00D8F5]">
+                <WalletIcon size={24} />
+              </div>
+              <p className="mt-3 text-sm font-semibold text-white">No transactions yet</p>
+              <p className="mt-1 text-xs text-slate-400">Top up your wallet to start watching channels and movies.</p>
+            </div>
           )}
         </section>
         <p className="mt-6 text-center text-xs text-blue-100/35">Payments are verified server-side before wallet credits are applied.</p>
