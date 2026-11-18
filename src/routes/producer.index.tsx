@@ -1,3 +1,4 @@
+import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { BadgeCheck, Film, LoaderCircle, LogOut, Radio, Users, Wallet } from "lucide-react";
@@ -27,7 +28,7 @@ function money(value: number, currency: string) {
 }
 
 export const Route = createFileRoute("/producer/")({
-  component: ProducerConsole,
+  component: ProducerPage,
   head: () => ({ meta: [
     { title: "Workspace | BQ SQWAD TV" },
     { name: "description", content: "Manage channels, team access and earnings." },
@@ -35,7 +36,15 @@ export const Route = createFileRoute("/producer/")({
   ] }),
 });
 
-function ProducerConsole() {
+function ProducerPage() {
+  return (
+    <ConsolePageGuard role="producer">
+      {({ token }) => <ProducerConsole sessionToken={token} />}
+    </ConsolePageGuard>
+  );
+}
+
+function ProducerConsole({ sessionToken }: { sessionToken?: string } = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
@@ -74,7 +83,7 @@ function ProducerConsole() {
     let active = true;
     void (async () => {
       try {
-        const restored = await restoreWebSession();
+        const restored = sessionToken || (await restoreWebSession());
         if (restored && active) {
           setToken(restored);
           await load(restored);
@@ -84,7 +93,7 @@ function ProducerConsole() {
       }
     })();
     return () => { active = false; };
-  }, []);
+  }, [sessionToken]);
 
   async function acceptProducerTerms() {
     if (!legalConsentChecked || !token || !legalPages.length || legalBusy) return;
@@ -147,18 +156,10 @@ function ProducerConsole() {
         <h1 className="mt-3 text-3xl font-black sm:text-5xl">Your production workspace</h1>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-blue-100/60">Manage your channels, authorized team members, programming schedules and revenue statements. Your channel permissions and producer verification are checked by the server.</p>
 
-        {!token ? (
-          <form onSubmit={signIn} className="mt-8 grid max-w-md gap-4 rounded-3xl border border-white/10 bg-[#07143d] p-6">
-            <h2 className="text-xl font-bold">Producer sign in</h2>
-            <label className="grid gap-2 text-sm text-blue-100/70">Email
-              <input type="email" required autoComplete="username" value={email} onChange={event => setEmail(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" />
-            </label>
-            <label className="grid gap-2 text-sm text-blue-100/70">Password
-              <input type="password" required autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white" />
-            </label>
-            {error ? <p role="alert" className="text-sm text-rose-200">{error}</p> : null}
-            <button disabled={busy} className="rounded-xl bg-cyan-300 px-5 py-3 font-extrabold text-[#031039] disabled:opacity-60">{busy ? "Signing in…" : "Open Producer Console"}</button>
-          </form>
+        {error && !summary ? (
+          <div role="alert" className="mt-8 max-w-md rounded-3xl border border-rose-300/20 bg-rose-300/5 p-6 text-sm text-rose-200">
+            {error}
+          </div>
         ) : null}
 
         {token && legalPages.length ? (

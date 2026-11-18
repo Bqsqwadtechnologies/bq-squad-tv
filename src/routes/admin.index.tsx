@@ -1,3 +1,4 @@
+import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -70,7 +71,7 @@ const moduleCards: Array<{
 ];
 
 export const Route = createFileRoute("/admin/")({
-  component: ZillionaireDashboard,
+  component: AdminPage,
   head: () => ({
     meta: [
       { title: "Dashboard | BQ SQWAD TV" },
@@ -80,7 +81,15 @@ export const Route = createFileRoute("/admin/")({
   }),
 });
 
-function ZillionaireDashboard() {
+function AdminPage() {
+  return (
+    <ConsolePageGuard role="admin">
+      {({ token }) => <ZillionaireDashboard sessionToken={token} />}
+    </ConsolePageGuard>
+  );
+}
+
+function ZillionaireDashboard({ sessionToken }: { sessionToken?: string } = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [access, setAccess] = useState<Access | null>(null);
@@ -134,7 +143,7 @@ function ZillionaireDashboard() {
     let active = true;
     void (async () => {
       try {
-        const token = await restoreWebSession();
+        const token = sessionToken || (await restoreWebSession());
         if (token && active) await loadAccess(token);
       } catch (caught) {
         if (active) setError(caught instanceof Error ? caught.message : "Could not verify access.");
@@ -143,7 +152,7 @@ function ZillionaireDashboard() {
       }
     })();
     return () => { active = false; };
-  }, []);
+  }, [sessionToken]);
 
   async function loadDefaultLegalPages() {
     setLegalSeedBusy(true); setLegalSeedMessage(""); setLegalSeedError("");

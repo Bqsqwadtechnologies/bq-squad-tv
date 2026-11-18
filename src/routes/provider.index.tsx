@@ -1,3 +1,4 @@
+import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { 
@@ -45,7 +46,7 @@ function formatCurrency(minorUnits: number, currency: string) {
 }
 
 export const Route = createFileRoute("/provider/")({
-  component: ProviderConsoleIndex,
+  component: ProviderPage,
   head: () => ({
     meta: [
       { title: "Partner Portal | BQ SQWAD TV" },
@@ -55,7 +56,15 @@ export const Route = createFileRoute("/provider/")({
   }),
 });
 
-function ProviderConsoleIndex() {
+function ProviderPage() {
+  return (
+    <ConsolePageGuard role="provider">
+      {({ token }) => <ProviderConsoleIndex sessionToken={token} />}
+    </ConsolePageGuard>
+  );
+}
+
+function ProviderConsoleIndex({ sessionToken }: { sessionToken?: string } = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
@@ -93,7 +102,7 @@ function ProviderConsoleIndex() {
   useEffect(() => {
     let active = true;
     void (async () => {
-      const tokenStr = await restoreWebSession();
+      const tokenStr = sessionToken || (await restoreWebSession());
       if (!active) return;
       if (tokenStr) {
         setToken(tokenStr);
@@ -101,7 +110,7 @@ function ProviderConsoleIndex() {
       }
     })();
     return () => { active = false; };
-  }, []);
+  }, [sessionToken]);
 
   async function handleLogin(e: FormEvent) {
     e.preventDefault();
@@ -169,55 +178,12 @@ function ProviderConsoleIndex() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
-        {!token ? (
-          <div className="max-w-md mx-auto my-12 p-6 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl">
-            <div className="text-center mb-6">
-              <h1 className="text-xl font-bold text-white mb-2">Partner Representative Sign-In</h1>
-              <p className="text-sm text-slate-400">
-                Sign in with the verified representative email authorised by BQ SQWAD TV.
-              </p>
+        {error && !provider ? (
+          <div className="max-w-md mx-auto my-12 p-6 rounded-2xl bg-slate-900 border border-slate-800 text-center">
+            <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>{error}</span>
             </div>
-
-            {error && (
-              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 text-sm"
-                  placeholder="representative@provider.com"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 text-sm"
-                  placeholder="••••••••••••"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={busy}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 disabled:opacity-50"
-              >
-                {busy ? <LoaderCircle className="w-4 h-4 animate-spin" /> : "Sign In to Partner Portal"}
-              </button>
-            </form>
           </div>
         ) : busy && !metrics ? (
           <div className="py-24 text-center">

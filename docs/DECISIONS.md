@@ -102,3 +102,27 @@ V3-01 Batch 07 mandates fine-grained module access for Zillionaire operators (`r
 5. **Comprehensive Automated Verification**:
    - Added `src/test/module-delegation.test.ts` (24 tests) verifying pairwise and matrix isolation across all 16 targeted modules, multi-module configurations, owner bypass, unassigned rejection, and immediate revocation.
    - Total test suite now: 80 test files, 407 tests passing.
+
+## Batch 08 — Server-Checked Console Page Guards & Anti-Probing 404 Parity (File 01)
+
+### Context & Requirements
+V3-01 Batch 08 requires server-checked page guards for privileged console entry points (`/admin`, `/producer`, `/provider`). Unauthenticated or unauthorized visitors must see no login forms, no console headers, and no hint that a control surface exists at the URI. The failure mode must match an unknown route's plain 404 "Page not found" screen. No console data or API requests may trigger before the server validates the visitor's role.
+
+### Architecture & Implementation
+1. **Server Role Resolution (`/api/public/v1/auth/web/me`)**:
+   - Replaced basic user check with central `requireViewer(request)` and platform role resolution.
+   - Securely returns `{ uid, email, emailVerified, roles, isOwner, modules, producerPlanActive, providerId }` with `no-store` cache headers.
+2. **Unified `ConsolePageGuard` (`src/components/ConsolePageGuard.tsx`)**:
+   - Renders a minimal neutral loading shell (`data-testid="console-loading-shell"`) while verifying session via `restoreWebSession()` and server role endpoint.
+   - Evaluates caller permissions against target console role (`admin`, `producer`, `provider`) and optional required module.
+   - Injects the authenticated session token and account details directly to child consoles upon authorization, eliminating in-console login forms.
+3. **Anti-Probing 404 Parity (`NotFoundView`)**:
+   - Extracted root 404 presentation to reusable `NotFoundView` (`src/components/NotFoundView.tsx`).
+   - Guard renders identical 404 layout, status, and copy ("Page not found", "The page you're looking for doesn't exist or has been moved.") for unauthorized or unauthenticated visits.
+   - Console routes retain `noindex, nofollow, noarchive` robots directives.
+4. **Data Isolation**:
+   - Console root components (`AdminPage`, `ProducerPage`, `ProviderPage`) are wrapped in `ConsolePageGuard`.
+   - Data fetching hooks (`/admin/overview`, `/producer/mobile-summary`, `/provider/dashboard`) only mount after `ConsolePageGuard` confirms authorization.
+5. **Comprehensive Automated Verification**:
+   - Added `src/test/console-page-guards.test.tsx` (19 tests) covering anonymous 404 presentation, viewer denial across consoles, cross-role isolation (producer denied on admin/provider, provider denied on admin/producer, Zillionaire denied on producer/provider unless role assigned), owner & delegated module authorization, and route robots metadata.
+   - Test suite now: 81 test files, 426 tests passing.
