@@ -23,7 +23,7 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/test-playba
         // Test playback connectivity without billing
         const streamUrl = String(channel["streamUrl"] || "");
         let connectivityOk = false;
-        let testDetails = "Verified test stream connectivity without viewer billing.";
+        const testDetails = "Verified test stream connectivity without viewer billing.";
 
         if (streamUrl.startsWith("http://") || streamUrl.startsWith("https://")) {
           connectivityOk = true;

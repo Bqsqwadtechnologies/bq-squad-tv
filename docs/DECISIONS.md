@@ -33,3 +33,14 @@
 - Provider data isolation: Provider accounts receive access only to resources (live channels, statements, contracts, dispute threads) where `providerId` strictly matches their active association. Any cross-provider query or mutation throws `PROVIDER_ISOLATION_VIOLATION` (403).
 - Dispute threads: Dispute threads are bidirectional and support operator replies via `/api/public/v1/admin/support/messages` and provider replies via `/api/public/v1/provider/disputes`. Thread isolation prevents any other provider from reading or appending to foreign dispute threads.
 - Accessibility & navigation: All three consoles (Zillionaire Dashboard, Producer Console, Partner Portal) implement visible focus indicators (`focus-visible:ring-2 focus-visible:ring-cyan-400`), keyboard navigation (tabIndex, form submission, enter key handling), and explicit accessible labels (`aria-label`, `role="region"`, `role="status"`).
+
+
+## Automatic Checks & Role Isolation CI — File 01, Batch 01
+
+- 2026-11-18 — Automatic checks enabled on push to  and  via . Concurrency cancels obsolete runs, actions are pinned to immutable commit SHAs, and jobs independently isolate , , , , , , and . Manual workflows remain preserved.
+- 2026-11-18 — Decisions superseding earlier orders (File 00):
+  1. Automatic checks are now on. The owner asked for the role-isolation and workflow suites to run on every change and block on failure. Because there are no pull requests, add a workflow that runs on every push to  (and on pull requests if one is ever opened), with path filters, concurrency that cancels older runs, and a failing run reported on the commit. Keep the old manual workflows as they are.
+  2. The role named "admin" is replaced by Zillionaire in code, data and tests (file 01).
+  3. Bottom navigation follows the uploaded design: Home, Live TV, Library, Downloads, Settings. Downloads has no download function: it opens a well-designed "Coming soon" screen (viewing stays online only). The profile avatar sits top right on every screen.
+  4. Dark navy and black is the normal theme; white is the second theme. Default is dark.
+  5. Per-minute billing is completed and extended to live channels (file 04).
