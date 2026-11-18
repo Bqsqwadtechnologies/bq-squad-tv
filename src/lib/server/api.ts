@@ -9,19 +9,24 @@ import { verifyFirebaseIdToken, type VerifiedUser } from "./firebase-auth";
 import { assertAccountActive } from "./account-status";
 import { assertAuthenticationSessionActive } from "./auth-session-revocation";
 import { currencyForCountry } from "./currency";
+import { generateErrorRef, getFriendlyErrorMessage } from "./friendly-errors";
 
 export function errorBody(error: unknown): Response {
+  const ref = generateErrorRef();
   if (error instanceof ApiError) {
-    return Response.json({ error: error.message, code: error.code }, { status: error.status });
+    const message = getFriendlyErrorMessage(error.code, error.message);
+    return Response.json({ code: error.code, message, error: error.message, ref }, { status: error.status });
   }
   if (error instanceof z.ZodError) {
+    const message = getFriendlyErrorMessage("INVALID_REQUEST", "Invalid request.");
     return Response.json(
-      { error: "Invalid request.", code: "INVALID_REQUEST", issues: error.issues.map((issue) => issue.message) },
+      { code: "INVALID_REQUEST", message, error: message, ref, issues: error.issues.map((issue) => issue.message) },
       { status: 400 },
     );
   }
-  console.error("Unhandled API error", error);
-  return Response.json({ error: "Internal server error.", code: "INTERNAL" }, { status: 500 });
+  console.error("Unhandled API error", ref, error);
+  const message = getFriendlyErrorMessage("INTERNAL", "Something went wrong on our end.");
+  return Response.json({ code: "INTERNAL", message, error: message, ref }, { status: 500 });
 }
 
 export async function requireUser(request: Request): Promise<VerifiedUser> {

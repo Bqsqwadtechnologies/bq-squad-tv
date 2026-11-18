@@ -1,0 +1,22 @@
+{
+  "AUTH_EXPIRED": "Your sign-in session has expired. Please sign in again.",
+  "UNAUTHENTICATED": "Sign in to access this feature.",
+  "FORBIDDEN": "You do not have permission to view or perform this action.",
+  "OWNER_ONLY": "Only the signed-in owner can perform this action.",
+  "NOT_FOUND": "The requested item could not be found.",
+  "PAGE_NOT_FOUND": "This page is not available.",
+  "TRY_AGAIN": "Something unexpected happened. Please try again.",
+  "BUSY": "Our servers are experiencing high demand. Please wait a moment and try again.",
+  "LOW_BALANCE": "Your wallet balance is too low for this stream. Please top up your wallet.",
+  "GEO_BLOCKED": "This content is not available in your region.",
+  "AGE_RESTRICTED": "This content requires adult verification.",
+  "UPLOAD_FAILED": "There was a problem uploading your file. Please check the format and try again.",
+  "PAYMENT_FAILED": "There was a problem processing your payment. Please try again or use another payment method.",
+  "INVALID_REQUEST": "The submitted request was incomplete or invalid.",
+  "STEP_UP_REQUIRED": "Please sign in again to confirm your identity before continuing.",
+  "RATE_LIMITED": "Too many requests. Please slow down and try again shortly.",
+  "LEGAL_ACCEPTANCE_REQUIRED": "Please review and accept our updated terms to continue.",
+  "SUSPENDED": "Your account is currently suspended. Please contact support.",
+  "INTERNAL": "Something went wrong on our end. Please try again shortly.",
+  "GENERIC_ERROR": "Something went wrong on our end. Please try again shortly."
+}
