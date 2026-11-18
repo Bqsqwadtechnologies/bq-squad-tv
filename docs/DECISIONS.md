@@ -74,3 +74,10 @@
   - Sensitive Operations: Channel deletion and ownership transfer are strictly reserved for the primary owner (`role === "owner"`).
   - Resource Bounds: Assets, uploads, and ledger records are query-scoped to the producer's UID to prevent cross-producer data exposure.
 - **Integration Tests**: Added `src/test/producer-isolation.test.ts` covering subscription states, channel team delegation, and cross-producer isolation.
+
+## 2026-04-18 — File 01 Batch 06: Provider Organization Isolation & Refactored Route Layer
+
+- **Provider Auth & Access:** Migrated all 5 provider API routes (`channels.ts`, `contracts.ts`, `dashboard.ts`, `disputes.ts`, `statements.ts`) to central `requireProvider(request)` from `@/lib/server/access`.
+- **Query Hardening:** Replaced legacy/non-existent `fs.listCollection` calls with strict `fs.query` filtered by `providerId` equality to ensure tenant isolation at the Firestore query layer.
+- **Dispute & Statement Isolation:** Enforced strict check verifying that requested statements or dispute threads belong to the authenticated caller's `providerId`, returning `403 PROVIDER_ISOLATION_VIOLATION` or `404` without leaking cross-tenant data.
+- **Test Suite:** Added `src/test/provider-isolation.test.ts` verifying active provider org resolution, suspended provider rejection, viewer rejection, and cross-provider query and document isolation. All 79 test files (383 tests) pass.

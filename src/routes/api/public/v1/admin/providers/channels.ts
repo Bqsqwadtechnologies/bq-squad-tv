@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { errorBody, requireUser } from "@/lib/server/api";
+import { Firestore } from "@/lib/server/firebase-admin";
 import { requireAdminModule } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
 
@@ -7,13 +8,14 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/channels")(
   server: { handlers: {
     GET: async ({ request }) => {
       try {
-        const { user, fs } = await requireUser(request);
+        const user = await requireUser(request);
+        const fs = await Firestore.create();
         await requireAdminModule(fs, user, "providers");
 
-        const channels = await fs.listCollection("liveChannels", { limit: 100 });
+        const channels = await fs.query("liveChannels", { limit: 100 });
         return Response.json({
           channels: channels.map(c => ({
-            id: c["id"] || c["channelId"],
+            id: c.__id || c["id"] || c["channelId"],
             providerId: c["providerId"],
             name: c["name"],
             logoUrl: c["logoUrl"] || null,
@@ -34,7 +36,8 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/channels")(
     },
     POST: async ({ request }) => {
       try {
-        const { user, fs } = await requireUser(request);
+        const user = await requireUser(request);
+        const fs = await Firestore.create();
         await requireAdminModule(fs, user, "providers");
 
         const body = await request.json() as {
@@ -61,7 +64,7 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/channels")(
           language: body.language || "en",
           streamUrl: body.streamUrl.trim(),
           playbackType: "hls_token",
-          status: "draft", // Must pass playback test before publish
+          status: "draft",
           health: "healthy",
           licenceExpiresAt: body.licenceExpiresAt || null,
           playbackTestPassed: false,
@@ -73,8 +76,10 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/channels")(
         await writeAuditLog(fs, {
           action: "live_channel_created",
           actorUid: user.uid,
+          targetType: "live_channel",
           targetId: channelId,
-          details: { name: body.name, providerId: body.providerId },
+          reason: `Created channel: ${body.name}`,
+          metadata: { name: body.name, providerId: body.providerId },
         });
 
         return Response.json({ ok: true, channel: newChannel }, { status: 201 });

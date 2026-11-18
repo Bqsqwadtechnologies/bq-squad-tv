@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { errorBody, requireUser } from "@/lib/server/api";
-import { requireProviderAccess } from "@/lib/server/roles";
+import { errorBody } from "@/lib/server/api";
+import { requireProvider } from "@/lib/server/access";
 import { writeAuditLog } from "@/lib/server/audit";
 import { ApiError } from "@/lib/server/firebase-admin";
 
@@ -8,23 +8,23 @@ export const Route = createFileRoute("/api/public/v1/provider/disputes")({
   server: { handlers: {
     GET: async ({ request }) => {
       try {
-        const { user, fs } = await requireUser(request);
-        const access = await requireProviderAccess(fs, user);
-        const providerId = access.providerId;
+        const { fs, providerId } = await requireProvider(request);
 
-        const allDisputes = await fs.listCollection("providerDisputes", { limit: 50 });
-        const disputes = allDisputes
-          .filter(d => d["providerId"] === providerId)
-          .map(d => ({
-            id: d["id"] || d["disputeId"],
-            subject: d["subject"] || "General Dispute",
-            statementId: d["statementId"] || null,
-            channelId: d["channelId"] || null,
-            status: d["status"] || "open", // open, under_review, resolved, rejected
-            createdAt: d["createdAt"] || new Date().toISOString(),
-            updatedAt: d["updatedAt"] || d["createdAt"] || new Date().toISOString(),
-            messages: Array.isArray(d["messages"]) ? d["messages"] : [],
-          }));
+        const disputeDocs = await fs.query("providerDisputes", {
+          filters: [{ field: "providerId", op: "EQUAL", value: providerId }],
+          limit: 50,
+        });
+
+        const disputes = disputeDocs.map(d => ({
+          id: d.__id || d["disputeId"] || d["id"],
+          subject: d["subject"] || "General Dispute",
+          statementId: d["statementId"] || null,
+          channelId: d["channelId"] || null,
+          status: d["status"] || "open",
+          createdAt: d["createdAt"] || new Date().toISOString(),
+          updatedAt: d["updatedAt"] || d["createdAt"] || new Date().toISOString(),
+          messages: Array.isArray(d["messages"]) ? d["messages"] : [],
+        }));
 
         return Response.json({ disputes });
       } catch (err: unknown) {
@@ -33,9 +33,7 @@ export const Route = createFileRoute("/api/public/v1/provider/disputes")({
     },
     POST: async ({ request }) => {
       try {
-        const { user, fs } = await requireUser(request);
-        const access = await requireProviderAccess(fs, user);
-        const providerId = access.providerId;
+        const { user, fs, access, providerId } = await requireProvider(request);
 
         const body = await request.json() as {
           disputeId?: string;
@@ -72,7 +70,7 @@ export const Route = createFileRoute("/api/public/v1/provider/disputes")({
 
           existingMessages.push(newMsg);
 
-          await fs.updateDoc(`providerDisputes/${body.disputeId}`, {
+          await fs.patchDoc(`providerDisputes/${body.disputeId}`, {
             messages: existingMessages,
             updatedAt: new Date().toISOString(),
             status: disputeDoc["status"] === "resolved" ? "open" : (disputeDoc["status"] || "open"),
@@ -81,8 +79,10 @@ export const Route = createFileRoute("/api/public/v1/provider/disputes")({
           await writeAuditLog(fs, {
             action: "provider_dispute_reply",
             actorUid: user.uid,
+            targetType: "provider_dispute",
             targetId: body.disputeId,
-            details: { providerId, messageLength: body.message.trim().length },
+            reason: `Provider reply to dispute ${body.disputeId}`,
+            metadata: { providerId, messageLength: body.message.trim().length },
           });
 
           return Response.json({ ok: true, disputeId: body.disputeId, message: newMsg });
@@ -118,8 +118,10 @@ export const Route = createFileRoute("/api/public/v1/provider/disputes")({
         await writeAuditLog(fs, {
           action: "provider_dispute_created",
           actorUid: user.uid,
+          targetType: "provider_dispute",
           targetId: disputeId,
-          details: { providerId, subject: body.subject.trim() },
+          reason: `Created dispute: ${body.subject.trim()}`,
+          metadata: { providerId, subject: body.subject.trim() },
         });
 
         return Response.json({ ok: true, dispute: newDispute }, { status: 201 });

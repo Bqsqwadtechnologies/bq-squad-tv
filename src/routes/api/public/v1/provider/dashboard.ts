@@ -1,32 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { errorBody, requireUser } from "@/lib/server/api";
-import { requireProviderAccess } from "@/lib/server/roles";
+import { errorBody } from "@/lib/server/api";
+import { requireProvider } from "@/lib/server/access";
 
 export const Route = createFileRoute("/api/public/v1/provider/dashboard")({
   server: { handlers: {
     GET: async ({ request }) => {
       try {
-        const { user, fs } = await requireUser(request);
-        const access = await requireProviderAccess(fs, user);
-        const providerId = access.providerId;
+        const { fs, providerId } = await requireProvider(request);
 
         // Fetch provider document and channels
-        const [providerDoc, channels] = await Promise.all([
+        const [providerDoc, providerChannels] = await Promise.all([
           fs.getDoc(`providers/${providerId}`),
-          fs.listCollection(`liveChannels`, { limit: 100 }),
+          fs.query(`liveChannels`, {
+            filters: [{ field: "providerId", op: "EQUAL", value: providerId }],
+            limit: 100,
+          }),
         ]);
 
-        const providerChannels = channels.filter(c => c["providerId"] === providerId);
-        const activeChannels = providerChannels.filter(c => c["status"] === "published").length;
+        const activeChannels = providerChannels.filter(c => c["status"] === "published" || c["status"] === "active").length;
 
-        // Calculate aggregated estimates from usageBlocks and providerLedger
-        // In integer minor units
         const providerShareBps = Number(providerDoc?.["providerShareBps"] || 2500);
         const settlementCurrency = String(providerDoc?.["settlementCurrency"] || "NGN");
 
         const estimatedMinutes = providerChannels.reduce((sum, c) => sum + Number(c["totalWatchMinutes"] || 0), 0);
         const estimatedRevenueMinor = providerChannels.reduce((sum, c) => sum + Number(c["grossRevenueMinor"] || 0), 0);
-        const allocatedDeductibleCostsMinor = Math.floor(estimatedRevenueMinor * 0.15); // e.g. payment processing & infrastructure
+        const allocatedDeductibleCostsMinor = Math.floor(estimatedRevenueMinor * 0.15);
         const grossProfitMinor = Math.max(0, estimatedRevenueMinor - allocatedDeductibleCostsMinor);
         const estimatedEarningsMinor = Math.floor((grossProfitMinor * providerShareBps) / 10000);
 

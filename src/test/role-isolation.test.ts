@@ -98,9 +98,9 @@ describe("Server-Side Role Checks and Role Data Isolation", () => {
 
     it("producer A cannot access or manage Producer B's channel resources", async () => {
       const channelBDoc = store["channels/chan-producer-B"];
-      expect(channelBDoc.ownerUid).toBe("producer-B");
+      expect(channelBDoc?.["ownerUid"]).toBe("producer-B");
       // Verification check that channel B does not match producer A's UID
-      expect(channelBDoc.ownerUid).not.toBe(producerAUser.uid);
+      expect(channelBDoc?.["ownerUid"]).not.toBe(producerAUser.uid);
     });
   });
 

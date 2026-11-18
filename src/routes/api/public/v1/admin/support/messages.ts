@@ -1,24 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { errorBody, requireUser } from "@/lib/server/api";
+import { Firestore, ApiError } from "@/lib/server/firebase-admin";
 import { requireAdminModule } from "@/lib/server/roles";
-import { ApiError } from "@/lib/server/firebase-admin";
 import { writeAuditLog } from "@/lib/server/audit";
 
 export const Route = createFileRoute("/api/public/v1/admin/support/messages")({
   server: { handlers: {
     GET: async ({ request }) => {
       try {
-        const { user, fs } = await requireUser(request);
+        const user = await requireUser(request);
+        const fs = await Firestore.create();
         await requireAdminModule(fs, user, "support");
 
         const url = new URL(request.url);
         const type = url.searchParams.get("type");
 
         if (type === "disputes") {
-          const disputes = await fs.listCollection("providerDisputes", { limit: 100 });
+          const disputes = await fs.query("providerDisputes", { limit: 100 });
           return Response.json({
             disputes: disputes.map(d => ({
-              id: d["id"] || d["disputeId"],
+              id: d.__id || d["id"] || d["disputeId"],
               providerId: d["providerId"] || "unknown",
               subject: d["subject"] || "General Dispute",
               statementId: d["statementId"] || null,
@@ -31,15 +32,15 @@ export const Route = createFileRoute("/api/public/v1/admin/support/messages")({
           });
         }
 
-        const messages = await fs.listCollection("supportMessages", { limit: 100 });
+        const messages = await fs.query("supportMessages", { limit: 100 });
         return Response.json({
           messages: messages.map(m => ({
-            id: m["id"] || m["messageId"],
+            id: m.__id || m["id"] || m["messageId"],
             name: m["name"] || "Visitor",
             email: m["email"] || "",
             subject: m["subject"] || "Inquiry",
             message: m["message"] || "",
-            status: m["status"] || "new", // new, in_progress, resolved
+            status: m["status"] || "new",
             notes: m["notes"] || "",
             createdAt: m["createdAt"] || null,
           })),
@@ -50,7 +51,8 @@ export const Route = createFileRoute("/api/public/v1/admin/support/messages")({
     },
     POST: async ({ request }) => {
       try {
-        const { user, fs } = await requireUser(request);
+        const user = await requireUser(request);
+        const fs = await Firestore.create();
         await requireAdminModule(fs, user, "support");
 
         const body = await request.json() as {
@@ -82,7 +84,7 @@ export const Route = createFileRoute("/api/public/v1/admin/support/messages")({
           }
 
           const newStatus = body.status || "under_review";
-          await fs.updateDoc(`providerDisputes/${body.disputeId}`, {
+          await fs.patchDoc(`providerDisputes/${body.disputeId}`, {
             messages: existingMessages,
             status: newStatus,
             updatedAt: new Date().toISOString(),
@@ -92,8 +94,10 @@ export const Route = createFileRoute("/api/public/v1/admin/support/messages")({
           await writeAuditLog(fs, {
             action: "admin_dispute_reply",
             actorUid: user.uid,
+            targetType: "provider_dispute",
             targetId: body.disputeId,
-            details: { status: newStatus, providerId: disputeDoc["providerId"] },
+            reason: `Support reply to dispute ${body.disputeId}`,
+            metadata: { status: newStatus, providerId: disputeDoc["providerId"] },
           });
 
           return Response.json({ ok: true, disputeId: body.disputeId, status: newStatus });
@@ -103,7 +107,7 @@ export const Route = createFileRoute("/api/public/v1/admin/support/messages")({
           return Response.json({ error: "messageId or disputeId is required" }, { status: 400 });
         }
 
-        await fs.updateDoc(`supportMessages/${body.messageId}`, {
+        await fs.patchDoc(`supportMessages/${body.messageId}`, {
           ...(body.status ? { status: body.status } : {}),
           ...(body.notes !== undefined ? { notes: body.notes } : {}),
           updatedAt: new Date().toISOString(),

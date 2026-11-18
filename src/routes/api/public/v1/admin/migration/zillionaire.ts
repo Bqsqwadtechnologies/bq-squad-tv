@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { requireZillionaireModule } from "@/lib/server/roles";
-import { recordTamperEvidentAudit } from "@/lib/server/audit";
+import { writeAuditLog } from "@/lib/server/audit";
 
 export const Route = createFileRoute("/api/public/v1/admin/migration/zillionaire")({
   server: {
@@ -35,11 +35,13 @@ export const Route = createFileRoute("/api/public/v1/admin/migration/zillionaire
             }
           }
 
-          await recordTamperEvidentAudit(fs, {
+          await writeAuditLog(fs, {
+            actorUid: user.uid,
             action: "ZILLIONAIRE_IDENTITY_MIGRATION",
-            actorId: user.uid,
-            actorRole: "zillionaire-owner",
-            details: { migratedCount },
+            targetType: "system",
+            targetId: "users",
+            reason: `Migrated ${migratedCount} user records to zillionaireModules`,
+            metadata: { migratedCount },
           });
 
           return Response.json({

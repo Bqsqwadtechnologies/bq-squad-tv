@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { errorBody, requireUser } from "@/lib/server/api";
+import { Firestore } from "@/lib/server/firebase-admin";
 import { requireAdminModule } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
 
@@ -7,13 +8,14 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/")({
   server: { handlers: {
     GET: async ({ request }) => {
       try {
-        const { user, fs } = await requireUser(request);
+        const user = await requireUser(request);
+        const fs = await Firestore.create();
         await requireAdminModule(fs, user, "providers");
 
-        const providers = await fs.listCollection("providers", { limit: 100 });
+        const providers = await fs.query("providers", { limit: 100 });
         return Response.json({
           providers: providers.map(p => ({
-            id: p["id"] || p["providerId"],
+            id: p.__id || p["id"] || p["providerId"],
             name: p["name"] || "Provider",
             contactEmail: p["contactEmail"] || "",
             settlementCurrency: p["settlementCurrency"] || "NGN",
@@ -28,7 +30,8 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/")({
     },
     POST: async ({ request }) => {
       try {
-        const { user, fs } = await requireUser(request);
+        const user = await requireUser(request);
+        const fs = await Firestore.create();
         await requireAdminModule(fs, user, "providers");
 
         const body = await request.json() as {
@@ -69,8 +72,10 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/")({
         await writeAuditLog(fs, {
           action: "provider_registered",
           actorUid: user.uid,
+          targetType: "provider",
           targetId: providerId,
-          details: { name: body.name, contactEmail: body.contactEmail },
+          reason: `Registered provider: ${body.name}`,
+          metadata: { name: body.name, contactEmail: body.contactEmail },
         });
 
         return Response.json({ ok: true, provider: newProvider }, { status: 201 });

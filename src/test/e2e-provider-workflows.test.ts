@@ -12,15 +12,15 @@ function createE2EStore() {
     setDoc: vi.fn(async (path: string, data: MockDoc) => {
       store.set(path, { ...data });
     }),
-    updateDoc: vi.fn(async (path: string, data: MockDoc) => {
+    patchDoc: vi.fn(async (path: string, data: MockDoc) => {
       const existing = store.get(path) || {};
       store.set(path, { ...existing, ...data });
     }),
-    listCollection: vi.fn(async (collection: string) => {
-      const results: MockDoc[] = [];
+    query: vi.fn(async (collection: string) => {
+      const results: Array<Record<string, unknown> & { __id: string }> = [];
       for (const [key, val] of store.entries()) {
         if (key.startsWith(`${collection}/`)) {
-          results.push(val);
+          results.push({ __id: key.replace(`${collection}/`, ""), ...val });
         }
       }
       return results;
@@ -165,7 +165,7 @@ describe("End-to-End Provider Workflows", () => {
         .rejects.toMatchObject({ status: 403, code: "PROVIDER_ISOLATION_VIOLATION" });
 
       // Statement moves to paid status with reference
-      await fs.updateDoc(`providerStatements/${statementId}`, {
+      await fs.patchDoc(`providerStatements/${statementId}`, {
         status: "paid",
         paymentReference: "PAY-NGN-2026-09-00124",
         paidAt: new Date().toISOString(),
@@ -222,7 +222,7 @@ describe("End-to-End Provider Workflows", () => {
 
       // 2. Admin with support module inspects dispute
       await requireAdminModule(fs, adminSupportUser, "support");
-      const adminDisputes = await fs.listCollection("providerDisputes");
+      const adminDisputes = await fs.query("providerDisputes");
       expect(adminDisputes.length).toBe(1);
 
       // Admin replies to dispute thread
@@ -234,7 +234,7 @@ describe("End-to-End Provider Workflows", () => {
         timestamp: new Date().toISOString(),
       });
 
-      await fs.updateDoc(`providerDisputes/${disputeId}`, {
+      await fs.patchDoc(`providerDisputes/${disputeId}`, {
         messages: currentMessages,
         status: "under_review",
         updatedAt: new Date().toISOString(),
@@ -254,13 +254,13 @@ describe("End-to-End Provider Workflows", () => {
         timestamp: new Date().toISOString(),
       });
 
-      await fs.updateDoc(`providerDisputes/${disputeId}`, {
+      await fs.patchDoc(`providerDisputes/${disputeId}`, {
         messages: providerReplyMessages,
         updatedAt: new Date().toISOString(),
       });
 
       // 4. Support resolves the dispute
-      await fs.updateDoc(`providerDisputes/${disputeId}`, {
+      await fs.patchDoc(`providerDisputes/${disputeId}`, {
         status: "resolved",
         resolvedByUid: adminSupportUser.uid,
         updatedAt: new Date().toISOString(),

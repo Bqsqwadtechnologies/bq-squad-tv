@@ -1,18 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { errorBody, requireUser } from "@/lib/server/api";
+import { Firestore } from "@/lib/server/firebase-admin";
 import { requireAdminModule } from "@/lib/server/roles";
 
 export const Route = createFileRoute("/api/public/v1/admin/users/")({
   server: { handlers: {
     GET: async ({ request }) => {
       try {
-        const { user, fs } = await requireUser(request);
+        const user = await requireUser(request);
+        const fs = await Firestore.create();
         await requireAdminModule(fs, user, "users");
 
         const url = new URL(request.url);
         const search = url.searchParams.get("q")?.toLowerCase().trim();
 
-        const allUsers = await fs.listCollection("users", { limit: 100 });
+        const allUsers = await fs.query("users", { limit: 100 });
         let filtered = allUsers;
         if (search) {
           filtered = allUsers.filter(u => 
@@ -24,7 +26,7 @@ export const Route = createFileRoute("/api/public/v1/admin/users/")({
 
         return Response.json({
           users: filtered.map(u => ({
-            id: u["id"] || u["uid"],
+            id: u.__id || u["id"] || u["uid"],
             email: u["email"] || "",
             displayName: u["displayName"] || "Viewer",
             suspended: Boolean(u["suspended"]),

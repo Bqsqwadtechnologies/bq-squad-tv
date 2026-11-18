@@ -40,7 +40,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "user-1",
         email: "viewer@example.com",
-        emailVerified: true,
+        emailVerified: true, issuedAt: 1700000000, customClaims: {},
         authTime: 123456,
       });
 
@@ -64,7 +64,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "owner-1",
         email: "owner@zillionaire.com",
-        emailVerified: true,
+        emailVerified: true, issuedAt: 1700000000, customClaims: {},
         authTime: 123456,
       });
 
@@ -85,7 +85,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "staff-1",
         email: "staff@example.com",
-        emailVerified: true,
+        emailVerified: true, issuedAt: 1700000000, customClaims: {},
         authTime: 123456,
       });
 
@@ -105,7 +105,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "viewer-1",
         email: "viewer@example.com",
-        emailVerified: true,
+        emailVerified: true, issuedAt: 1700000000, customClaims: {},
         authTime: 123456,
       });
 
@@ -127,7 +127,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "prod-1",
         email: "producer@example.com",
-        emailVerified: true,
+        emailVerified: true, issuedAt: 1700000000, customClaims: {},
         authTime: 123456,
       });
 
@@ -148,7 +148,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "viewer-1",
         email: "viewer@example.com",
-        emailVerified: true,
+        emailVerified: true, issuedAt: 1700000000, customClaims: {},
         authTime: 123456,
       });
 
@@ -170,7 +170,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "prov-rep-1",
         email: "rep@provider.org",
-        emailVerified: true,
+        emailVerified: true, issuedAt: 1700000000, customClaims: {},
         authTime: 123456,
       });
 
@@ -191,7 +191,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "prov-rep-1",
         email: "rep@provider.org",
-        emailVerified: true,
+        emailVerified: true, issuedAt: 1700000000, customClaims: {},
         authTime: 123456,
       });
 
@@ -237,7 +237,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "zillionaire-channels-1",
         email: "admin@bqsqwad.tv",
-        emailVerified: true,
+        emailVerified: true, issuedAt: 1700000000, customClaims: {},
         authTime: 123456,
       });
 
@@ -260,7 +260,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "prov-rep-1",
         email: "rep@provider.org",
-        emailVerified: true,
+        emailVerified: true, issuedAt: 1700000000, customClaims: {},
         authTime: 123456,
       });
 
@@ -284,7 +284,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "producer-1",
         email: "prod@example.com",
-        emailVerified: true,
+        emailVerified: true, issuedAt: 1700000000, customClaims: {},
         authTime: 123456,
       });
 

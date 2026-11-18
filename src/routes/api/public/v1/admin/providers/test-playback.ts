@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { errorBody, requireUser } from "@/lib/server/api";
+import { Firestore } from "@/lib/server/firebase-admin";
 import { requireAdminModule } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
 
@@ -7,7 +8,8 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/test-playba
   server: { handlers: {
     POST: async ({ request }) => {
       try {
-        const { user, fs } = await requireUser(request);
+        const user = await requireUser(request);
+        const fs = await Firestore.create();
         await requireAdminModule(fs, user, "providers");
 
         const body = await request.json() as { channelId?: string };
@@ -23,14 +25,13 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/test-playba
         // Test playback connectivity without billing
         const streamUrl = String(channel["streamUrl"] || "");
         let connectivityOk = false;
-        const testDetails = "Verified test stream connectivity without viewer billing.";
 
         if (streamUrl.startsWith("http://") || streamUrl.startsWith("https://")) {
           connectivityOk = true;
         }
 
         const now = new Date().toISOString();
-        await fs.updateDoc(`liveChannels/${body.channelId}`, {
+        await fs.patchDoc(`liveChannels/${body.channelId}`, {
           lastPlaybackTestAt: now,
           playbackTestPassed: connectivityOk,
           status: connectivityOk ? "published" : "draft",
@@ -39,8 +40,10 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/test-playba
         await writeAuditLog(fs, {
           action: "channel_playback_tested",
           actorUid: user.uid,
+          targetType: "live_channel",
           targetId: body.channelId,
-          details: { passed: connectivityOk, now },
+          reason: `Playback test for channel ${body.channelId}: ${connectivityOk ? "passed" : "failed"}`,
+          metadata: { passed: connectivityOk, now },
         });
 
         return Response.json({
