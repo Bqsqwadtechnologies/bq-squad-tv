@@ -54,3 +54,14 @@
   - Read path in `resolvePlatformAccess` supports both `zillionaireModules` and legacy `adminModules` with automated logging.
   - Created idempotent owner migration endpoint `POST /api/public/v1/admin/migration/zillionaire` with tamper-evident audit trail.
   - Removed legacy `ADMIN_EMAIL` fallback in favor of strictly enforced `ZILLIONAIRE_EMAIL`.
+
+## Batch 04: Central Access Library
+
+- **Consolidated Access Architecture**: Created `src/lib/server/access.ts` defining central resolvers:
+  - `requireViewer(req)`: Authenticated viewer token, active account status, unrevoked session.
+  - `requireZillionaire(req, module?)`: Primary owner or delegated module member with audited module check.
+  - `requireProducer(req)`: Verified producer role with active subscription and KYC status.
+  - `requireProvider(req, providerId?)`: Verified provider representative scoped to licensed provider organisation.
+  - `requireWorker(req)`: Cryptographically verified Modal/background worker signature.
+  - `requireChannelPermission(req, channelId, permission?)`: Unified channel gate reconciling public status, producer ownership/team delegation, provider licensing, and Zillionaire channels operators.
+- **Context Payloads**: All functions return the resolved entity (`user`, `access`, `fs`, `producerUid`, `providerId`, `workerId`, `role`, `permissions`) to eliminate redundant Firestore queries.
