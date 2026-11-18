@@ -16,4 +16,24 @@ object ErrorMessages {
     const val PASSWORD_RESET_FAILED = "We could not request a password reset. Check your email and try again."
     const val PROFILE_FAILED = "Your profile could not be updated. Try again."
     const val WALLET_UNAVAILABLE = "Your wallet is not available right now. Try again."
+    const val GENERIC = "Something went wrong. Please try again."
+
+    fun friendlyMessage(code: String?, fallback: String? = null): String {
+        return when (code?.uppercase()) {
+            "AUTH_EXPIRED", "UNAUTHENTICATED" -> SIGN_IN_EXPIRED
+            "LOW_BALANCE" -> NOT_ENOUGH_BALANCE
+            "GEO_BLOCKED" -> COUNTRY_UNAVAILABLE
+            "NETWORK", "TIMEOUT" -> NETWORK
+            "NOT_FOUND", "PAGE_NOT_FOUND" -> NOT_AVAILABLE
+            else -> fallback ?: TRY_AGAIN
+        }
+    }
+
+    fun formatWithRef(message: String, ref: String?): String {
+        return if (!ref.isNullOrBlank()) {
+            "$message\nReference: $ref"
+        } else {
+            message
+        }
+    }
 }
