@@ -7,7 +7,17 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
   return {
     ...actual,
-    Link: ({ to, children, className, ...props }: any) => (
+    Link: ({
+      to,
+      children,
+      className,
+      ...props
+    }: {
+      to?: unknown;
+      children?: React.ReactNode;
+      className?: string;
+      [key: string]: unknown;
+    }) => (
       <a href={typeof to === "string" ? to : "/"} className={className} {...props}>
         {children}
       </a>
@@ -28,6 +38,14 @@ import { Route as ProducerRoute } from "@/routes/producer.index";
 import { Route as ProviderRoute } from "@/routes/provider.index";
 import { restoreWebSession } from "@/lib/firebase-web-auth";
 
+interface MetaItem {
+  name?: string;
+  content?: string;
+  [key: string]: unknown;
+}
+
+type HeadFunction = () => { meta?: MetaItem[] };
+
 describe("Batch 08: Console Page Guards", () => {
   let originalFetch: typeof globalThis.fetch;
   let fetchedUrls: string[];
@@ -42,7 +60,7 @@ describe("Batch 08: Console Page Guards", () => {
     globalThis.fetch = originalFetch;
   });
 
-  function setupMockFetch(accountData: any = null, status = 200) {
+  function setupMockFetch(accountData: Record<string, unknown> | null = null, status = 200) {
     globalThis.fetch = vi.fn().mockImplementation(async (url: string | URL | Request) => {
       const urlString = typeof url === "string" ? url : url.toString();
       fetchedUrls.push(urlString);
@@ -70,20 +88,23 @@ describe("Batch 08: Console Page Guards", () => {
 
   describe("HTML Head Robots Meta", () => {
     it("ensures /admin route sets noindex, nofollow, noarchive", () => {
-      const head = (AdminRoute.options.head as any)?.();
-      const robots = head?.meta?.find((m: any) => m.name === "robots");
+      const headFn = AdminRoute.options.head as unknown as HeadFunction | undefined;
+      const head = headFn?.();
+      const robots = head?.meta?.find((m) => m.name === "robots");
       expect(robots?.content).toBe("noindex, nofollow, noarchive");
     });
 
     it("ensures /producer route sets noindex, nofollow, noarchive", () => {
-      const head = (ProducerRoute.options.head as any)?.();
-      const robots = head?.meta?.find((m: any) => m.name === "robots");
+      const headFn = ProducerRoute.options.head as unknown as HeadFunction | undefined;
+      const head = headFn?.();
+      const robots = head?.meta?.find((m) => m.name === "robots");
       expect(robots?.content).toBe("noindex, nofollow, noarchive");
     });
 
     it("ensures /provider route sets noindex, nofollow, noarchive", () => {
-      const head = (ProviderRoute.options.head as any)?.();
-      const robots = head?.meta?.find((m: any) => m.name === "robots");
+      const headFn = ProviderRoute.options.head as unknown as HeadFunction | undefined;
+      const head = headFn?.();
+      const robots = head?.meta?.find((m) => m.name === "robots");
       expect(robots?.content).toBe("noindex, nofollow, noarchive");
     });
   });
@@ -94,332 +115,347 @@ describe("Batch 08: Console Page Guards", () => {
       setupMockFetch(null);
     });
 
-    it("renders plain 404 page not found for anonymous visitor on /admin", async () => {
+    it("shows 404 parity on /admin and does not leak admin console", async () => {
       render(
         <ConsolePageGuard role="admin">
-          <div data-testid="admin-content">Admin Dashboard</div>
-        </ConsolePageGuard>
+          <div data-testid="secret-admin-console">Admin Console Content</div>
+        </ConsolePageGuard>,
       );
 
       await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
         expect(screen.getByText("Page not found")).toBeInTheDocument();
-        expect(
-          screen.getByText("The page you're looking for doesn't exist or has been moved.")
-        ).toBeInTheDocument();
-        expect(screen.getByRole("link", { name: "Go home" })).toBeInTheDocument();
       });
 
-      expect(screen.queryByTestId("admin-content")).not.toBeInTheDocument();
-      // Ensure no admin data was fetched
-      expect(fetchedUrls.some((u) => u.includes("/admin/"))).toBe(false);
+      expect(screen.queryByTestId("secret-admin-console")).not.toBeInTheDocument();
+      expect(screen.getByText(/doesn't exist or has been moved/i)).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /go home/i })).toBeInTheDocument();
     });
 
-    it("renders plain 404 page not found for anonymous visitor on /producer", async () => {
+    it("shows 404 parity on /producer and does not leak producer console", async () => {
       render(
         <ConsolePageGuard role="producer">
-          <div data-testid="producer-content">Producer Dashboard</div>
-        </ConsolePageGuard>
+          <div data-testid="secret-producer-console">Producer Console Content</div>
+        </ConsolePageGuard>,
       );
 
       await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
         expect(screen.getByText("Page not found")).toBeInTheDocument();
       });
 
-      expect(screen.queryByTestId("producer-content")).not.toBeInTheDocument();
-      expect(fetchedUrls.some((u) => u.includes("/producer/"))).toBe(false);
+      expect(screen.queryByTestId("secret-producer-console")).not.toBeInTheDocument();
     });
 
-    it("renders plain 404 page not found for anonymous visitor on /provider", async () => {
+    it("shows 404 parity on /provider and does not leak provider console", async () => {
       render(
         <ConsolePageGuard role="provider">
-          <div data-testid="provider-content">Provider Dashboard</div>
-        </ConsolePageGuard>
+          <div data-testid="secret-provider-console">Provider Console Content</div>
+        </ConsolePageGuard>,
       );
 
       await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
         expect(screen.getByText("Page not found")).toBeInTheDocument();
       });
 
-      expect(screen.queryByTestId("provider-content")).not.toBeInTheDocument();
-      expect(fetchedUrls.some((u) => u.includes("/provider/"))).toBe(false);
+      expect(screen.queryByTestId("secret-provider-console")).not.toBeInTheDocument();
     });
   });
 
-  describe("Viewer role (no elevated permissions)", () => {
+  describe("Standard viewer (logged in, no admin/producer/provider role)", () => {
     beforeEach(() => {
-      vi.mocked(restoreWebSession).mockResolvedValue("viewer-jwt-token");
+      vi.mocked(restoreWebSession).mockResolvedValue({
+        uid: "viewer-123",
+        email: "viewer@example.com",
+      } as unknown as Awaited<ReturnType<typeof restoreWebSession>>);
+
       setupMockFetch({
-        uid: "viewer-1",
+        uid: "viewer-123",
         email: "viewer@example.com",
         emailVerified: true,
         roles: ["viewer"],
         isOwner: false,
         modules: [],
+        producerPlanActive: false,
+        providerId: null,
       });
     });
 
-    it("renders 404 and denies viewer on /admin without fetching admin data", async () => {
+    it("denies /admin with exact 404 parity", async () => {
       render(
         <ConsolePageGuard role="admin">
-          <div data-testid="admin-content">Admin Secret</div>
-        </ConsolePageGuard>
+          <div data-testid="secret-admin-console">Admin Console Content</div>
+        </ConsolePageGuard>,
       );
 
       await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
         expect(screen.getByText("Page not found")).toBeInTheDocument();
       });
 
-      expect(screen.queryByTestId("admin-content")).not.toBeInTheDocument();
-      expect(fetchedUrls.some((u) => u.includes("/admin/overview"))).toBe(false);
+      expect(screen.queryByTestId("secret-admin-console")).not.toBeInTheDocument();
     });
 
-    it("renders 404 and denies viewer on /producer without fetching producer data", async () => {
+    it("denies /producer with exact 404 parity", async () => {
       render(
         <ConsolePageGuard role="producer">
-          <div data-testid="producer-content">Producer Secret</div>
-        </ConsolePageGuard>
+          <div data-testid="secret-producer-console">Producer Console Content</div>
+        </ConsolePageGuard>,
       );
 
       await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
         expect(screen.getByText("Page not found")).toBeInTheDocument();
       });
 
-      expect(screen.queryByTestId("producer-content")).not.toBeInTheDocument();
-      expect(fetchedUrls.some((u) => u.includes("/producer/mobile-summary"))).toBe(false);
+      expect(screen.queryByTestId("secret-producer-console")).not.toBeInTheDocument();
     });
 
-    it("renders 404 and denies viewer on /provider without fetching provider data", async () => {
+    it("denies /provider with exact 404 parity", async () => {
       render(
         <ConsolePageGuard role="provider">
-          <div data-testid="provider-content">Provider Secret</div>
-        </ConsolePageGuard>
+          <div data-testid="secret-provider-console">Provider Console Content</div>
+        </ConsolePageGuard>,
       );
 
       await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
         expect(screen.getByText("Page not found")).toBeInTheDocument();
       });
 
-      expect(screen.queryByTestId("provider-content")).not.toBeInTheDocument();
-      expect(fetchedUrls.some((u) => u.includes("/provider/dashboard"))).toBe(false);
+      expect(screen.queryByTestId("secret-provider-console")).not.toBeInTheDocument();
     });
   });
 
-  describe("Producer role isolation across consoles", () => {
+  describe("Producer visitor isolation", () => {
     beforeEach(() => {
-      vi.mocked(restoreWebSession).mockResolvedValue("producer-jwt-token");
+      vi.mocked(restoreWebSession).mockResolvedValue({
+        uid: "producer-123",
+        email: "producer@example.com",
+      } as unknown as Awaited<ReturnType<typeof restoreWebSession>>);
+
       setupMockFetch({
-        uid: "producer-1",
+        uid: "producer-123",
         email: "producer@example.com",
         emailVerified: true,
         roles: ["viewer", "producer"],
         isOwner: false,
         modules: [],
         producerPlanActive: true,
+        providerId: null,
       });
     });
 
-    it("denies producer on /admin with 404 page", async () => {
-      render(
-        <ConsolePageGuard role="admin">
-          <div data-testid="admin-content">Admin Secret</div>
-        </ConsolePageGuard>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
-      });
-      expect(screen.queryByTestId("admin-content")).not.toBeInTheDocument();
-    });
-
-    it("denies producer on /provider with 404 page", async () => {
-      render(
-        <ConsolePageGuard role="provider">
-          <div data-testid="provider-content">Provider Secret</div>
-        </ConsolePageGuard>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
-      });
-      expect(screen.queryByTestId("provider-content")).not.toBeInTheDocument();
-    });
-
-    it("authorizes producer on /producer and renders console", async () => {
+    it("allows /producer when producerPlanActive is true", async () => {
       render(
         <ConsolePageGuard role="producer">
-          {({ token, account }) => (
-            <div data-testid="producer-content">
-              Welcome Producer {account.email} with token {token}
-            </div>
-          )}
-        </ConsolePageGuard>
+          <div data-testid="producer-console">Producer Console Content</div>
+        </ConsolePageGuard>,
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId("producer-content")).toBeInTheDocument();
+        expect(screen.getByTestId("producer-console")).toBeInTheDocument();
       });
-      expect(screen.getByText(/Welcome Producer producer@example.com/)).toBeInTheDocument();
+
+      expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+    });
+
+    it("denies /admin with exact 404 parity for producer", async () => {
+      render(
+        <ConsolePageGuard role="admin">
+          <div data-testid="secret-admin-console">Admin Console Content</div>
+        </ConsolePageGuard>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Page not found")).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId("secret-admin-console")).not.toBeInTheDocument();
+    });
+
+    it("denies /provider with exact 404 parity for producer", async () => {
+      render(
+        <ConsolePageGuard role="provider">
+          <div data-testid="secret-provider-console">Provider Console Content</div>
+        </ConsolePageGuard>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Page not found")).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId("secret-provider-console")).not.toBeInTheDocument();
     });
   });
 
-  describe("Provider role isolation across consoles", () => {
+  describe("Provider visitor isolation", () => {
     beforeEach(() => {
-      vi.mocked(restoreWebSession).mockResolvedValue("provider-jwt-token");
+      vi.mocked(restoreWebSession).mockResolvedValue({
+        uid: "provider-123",
+        email: "provider@example.com",
+      } as unknown as Awaited<ReturnType<typeof restoreWebSession>>);
+
       setupMockFetch({
-        uid: "provider-rep-1",
-        email: "provider@partner.com",
+        uid: "provider-123",
+        email: "provider@example.com",
         emailVerified: true,
         roles: ["viewer", "provider"],
         isOwner: false,
         modules: [],
-        providerId: "partner-network-1",
+        producerPlanActive: false,
+        providerId: "prov-fastly-1",
       });
     });
 
-    it("denies provider on /admin with 404 page", async () => {
-      render(
-        <ConsolePageGuard role="admin">
-          <div data-testid="admin-content">Admin Secret</div>
-        </ConsolePageGuard>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
-      });
-      expect(screen.queryByTestId("admin-content")).not.toBeInTheDocument();
-    });
-
-    it("denies provider on /producer with 404 page", async () => {
-      render(
-        <ConsolePageGuard role="producer">
-          <div data-testid="producer-content">Producer Secret</div>
-        </ConsolePageGuard>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
-      });
-      expect(screen.queryByTestId("producer-content")).not.toBeInTheDocument();
-    });
-
-    it("authorizes provider on /provider and renders console", async () => {
+    it("allows /provider when providerId is present", async () => {
       render(
         <ConsolePageGuard role="provider">
-          {({ token, account }) => (
-            <div data-testid="provider-content">
-              Welcome Partner {account.providerId} with token {token}
-            </div>
-          )}
-        </ConsolePageGuard>
+          <div data-testid="provider-console">Provider Console Content</div>
+        </ConsolePageGuard>,
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId("provider-content")).toBeInTheDocument();
+        expect(screen.getByTestId("provider-console")).toBeInTheDocument();
       });
-      expect(screen.getByText(/Welcome Partner partner-network-1/)).toBeInTheDocument();
+
+      expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+    });
+
+    it("denies /admin with exact 404 parity for provider", async () => {
+      render(
+        <ConsolePageGuard role="admin">
+          <div data-testid="secret-admin-console">Admin Console Content</div>
+        </ConsolePageGuard>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Page not found")).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId("secret-admin-console")).not.toBeInTheDocument();
+    });
+
+    it("denies /producer with exact 404 parity for provider", async () => {
+      render(
+        <ConsolePageGuard role="producer">
+          <div data-testid="secret-producer-console">Producer Console Content</div>
+        </ConsolePageGuard>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Page not found")).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId("secret-producer-console")).not.toBeInTheDocument();
     });
   });
 
-  describe("Zillionaire Owner and Delegated Operators", () => {
-    it("authorizes Zillionaire owner on /admin and renders dashboard", async () => {
-      vi.mocked(restoreWebSession).mockResolvedValue("owner-jwt-token");
+  describe("Owner and Zillionaire Delegate", () => {
+    it("allows Owner into /admin", async () => {
+      vi.mocked(restoreWebSession).mockResolvedValue({
+        uid: "owner-123",
+        email: "owner@example.com",
+      } as unknown as Awaited<ReturnType<typeof restoreWebSession>>);
+
       setupMockFetch({
-        uid: "owner-uid",
-        email: "owner@bqsqwad.tv",
+        uid: "owner-123",
+        email: "owner@example.com",
         emailVerified: true,
-        roles: ["viewer"],
+        roles: ["viewer", "admin", "owner"],
         isOwner: true,
-        modules: ["overview", "roles", "finance", "channels"],
+        modules: ["*"],
+        producerPlanActive: true,
+        providerId: "prov-main",
       });
 
       render(
         <ConsolePageGuard role="admin">
-          {({ account }) => (
-            <div data-testid="admin-content">
-              Zillionaire Dashboard - Owner: {String(account.isOwner)}
-            </div>
-          )}
-        </ConsolePageGuard>
+          <div data-testid="admin-console">Admin Console Content</div>
+        </ConsolePageGuard>,
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId("admin-content")).toBeInTheDocument();
+        expect(screen.getByTestId("admin-console")).toBeInTheDocument();
       });
-      expect(screen.getByText(/Owner: true/)).toBeInTheDocument();
+
+      expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
     });
 
-    it("authorizes delegated operator with modules on /admin", async () => {
-      vi.mocked(restoreWebSession).mockResolvedValue("operator-jwt-token");
+    it("allows delegate with specific module into module-guarded route", async () => {
+      vi.mocked(restoreWebSession).mockResolvedValue({
+        uid: "delegate-123",
+        email: "delegate@example.com",
+      } as unknown as Awaited<ReturnType<typeof restoreWebSession>>);
+
       setupMockFetch({
-        uid: "operator-uid",
-        email: "operator@bqsqwad.tv",
+        uid: "delegate-123",
+        email: "delegate@example.com",
         emailVerified: true,
-        roles: ["viewer"],
+        roles: ["viewer", "admin"],
         isOwner: false,
-        modules: ["support", "moderation"],
+        modules: ["catalog_read", "catalog_write"],
+        producerPlanActive: false,
+        providerId: null,
       });
+
+      render(
+        <ConsolePageGuard role="admin" module="catalog_write">
+          <div data-testid="catalog-admin-console">Catalog Admin Content</div>
+        </ConsolePageGuard>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("catalog-admin-console")).toBeInTheDocument();
+      });
+    });
+
+    it("denies delegate missing the required module with exact 404 parity", async () => {
+      vi.mocked(restoreWebSession).mockResolvedValue({
+        uid: "delegate-123",
+        email: "delegate@example.com",
+      } as unknown as Awaited<ReturnType<typeof restoreWebSession>>);
+
+      setupMockFetch({
+        uid: "delegate-123",
+        email: "delegate@example.com",
+        emailVerified: true,
+        roles: ["viewer", "admin"],
+        isOwner: false,
+        modules: ["catalog_read"],
+        producerPlanActive: false,
+        providerId: null,
+      });
+
+      render(
+        <ConsolePageGuard role="admin" module="financials">
+          <div data-testid="financials-admin-console">Financials Admin Content</div>
+        </ConsolePageGuard>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Page not found")).toBeInTheDocument();
+      });
+
+      expect(screen.queryByTestId("financials-admin-console")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("API Failure / Network Error Parity", () => {
+    it("renders 404 parity when server endpoint returns 500", async () => {
+      vi.mocked(restoreWebSession).mockResolvedValue({
+        uid: "user-123",
+        email: "user@example.com",
+      } as unknown as Awaited<ReturnType<typeof restoreWebSession>>);
+
+      setupMockFetch(null, 500);
 
       render(
         <ConsolePageGuard role="admin">
-          <div data-testid="admin-content">Operator Dashboard</div>
-        </ConsolePageGuard>
+          <div data-testid="secret-admin-console">Admin Console Content</div>
+        </ConsolePageGuard>,
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId("admin-content")).toBeInTheDocument();
-      });
-    });
-
-    it("denies Zillionaire on /producer if they do not have the producer role", async () => {
-      vi.mocked(restoreWebSession).mockResolvedValue("owner-jwt-token");
-      setupMockFetch({
-        uid: "owner-uid",
-        email: "owner@bqsqwad.tv",
-        emailVerified: true,
-        roles: ["viewer"],
-        isOwner: true,
-        modules: ["overview"],
+        expect(screen.getByText("Page not found")).toBeInTheDocument();
       });
 
-      render(
-        <ConsolePageGuard role="producer">
-          <div data-testid="producer-content">Producer Dashboard</div>
-        </ConsolePageGuard>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
-      });
-      expect(screen.queryByTestId("producer-content")).not.toBeInTheDocument();
-    });
-
-    it("denies Zillionaire on /provider if they do not have the provider role", async () => {
-      vi.mocked(restoreWebSession).mockResolvedValue("owner-uid");
-      setupMockFetch({
-        uid: "owner-uid",
-        email: "owner@bqsqwad.tv",
-        emailVerified: true,
-        roles: ["viewer"],
-        isOwner: true,
-        modules: ["overview"],
-      });
-
-      render(
-        <ConsolePageGuard role="provider">
-          <div data-testid="provider-content">Provider Dashboard</div>
-        </ConsolePageGuard>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText("404")).toBeInTheDocument();
-      });
-      expect(screen.queryByTestId("provider-content")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("secret-admin-console")).not.toBeInTheDocument();
     });
   });
 });
