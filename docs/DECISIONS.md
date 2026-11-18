@@ -65,3 +65,12 @@
   - `requireWorker(req)`: Cryptographically verified Modal/background worker signature.
   - `requireChannelPermission(req, channelId, permission?)`: Unified channel gate reconciling public status, producer ownership/team delegation, provider licensing, and Zillionaire channels operators.
 - **Context Payloads**: All functions return the resolved entity (`user`, `access`, `fs`, `producerUid`, `providerId`, `workerId`, `role`, `permissions`) to eliminate redundant Firestore queries.
+
+## Batch 05: Producer Isolation and Channel Security
+
+- **Producer Enforcements**:
+  - Verification & Subscription Gate: Verified plan status (`ACTIVE`) and approved verification (`APPROVED`) are strictly checked before role activation.
+  - Channel Scoping: Handlers strictly enforce `ownerUid === user.uid` or active membership in `channels/{channelId}/members/{uid}` with granular role templates.
+  - Sensitive Operations: Channel deletion and ownership transfer are strictly reserved for the primary owner (`role === "owner"`).
+  - Resource Bounds: Assets, uploads, and ledger records are query-scoped to the producer's UID to prevent cross-producer data exposure.
+- **Integration Tests**: Added `src/test/producer-isolation.test.ts` covering subscription states, channel team delegation, and cross-producer isolation.
