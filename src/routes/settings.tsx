@@ -41,7 +41,7 @@ function SettingsPage() {
 
       const savedParental = localStorage.getItem("bq-sqwad-parental");
       if (savedParental !== null) setParentalControlsActive(savedParental === "true");
-    } catch {}
+    } catch (_err) { void _err; }
   }, []);
 
   function triggerSaveToast() {

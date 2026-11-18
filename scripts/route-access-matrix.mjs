@@ -15,6 +15,11 @@ export const PUBLIC_ROUTE_ALLOWLIST = new Set([
   "/api/public/v1/contact",
   "/api/public/v1/pages/$slug",
   "/api/public/firebase-schema-inspect",
+  "/api/public/v1/ads/campaigns",
+  "/api/public/v1/epg/",
+  "/api/public/v1/errors/beacon",
+  "/api/public/v1/errors/report",
+  "/api/public/v1/search/v2",
 ]);
 
 function getFiles(dir) {

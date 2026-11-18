@@ -39,7 +39,7 @@ export function redactString(input: string): string {
 
   // Redact query parameter secrets
   text = text.replace(
-    /(?:api_?key|secret|token|password|signature|sig)=([^\s&"'>]+)/gi,
+    /(?:api_?key|\bkey|secret|token|password|signature|sig)=([^\s&"'>]+)/gi,
     "secret=[REDACTED]"
   );
 

@@ -5,14 +5,17 @@ import {
   encodeFields,
 } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
+import { releaseSessionLease } from "@/lib/server/session-limits";
+import { settleSessionHold } from "@/lib/server/session-holds";
+import { releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
 import {
-  integer,
-  releaseSessionLease,
   requireSessionOwned,
   toSessionSnapshot,
-} from "@/lib/server/session-helpers";
-import { settleSessionHold } from "@/lib/server/session-holds";
-import { releaseExpectedStorageEgress } from "@/lib/server/storage/budget";
+} from "../-shared";
+
+function integer(value: unknown, fallback = 0): number {
+  return typeof value === "number" && Number.isSafeInteger(value) ? value : fallback;
+}
 
 export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/recover")({
   server: {
@@ -58,7 +61,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/recover
             });
 
             const activeLeases = releaseSessionLease(
-              Array.isArray(activeSessionDoc["sessions"]) ? (activeSessionDoc["sessions"] as string[]) : [],
+              activeSessionDoc["sessions"],
               sessionId
             );
 

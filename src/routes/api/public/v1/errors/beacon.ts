@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody } from "@/lib/server/api";
-import { logErrorEvent } from "@/lib/server/error-telemetry";
+import { logErrorEvent } from "@/lib/server/error-events";
 
 const schema = z.object({
   code: z.string().trim().min(1).max(64),

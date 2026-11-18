@@ -83,7 +83,7 @@ function SearchPage() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       const recognition = new SpeechRecognition();
       recognition.lang = "en-US";
-      recognition.onresult = (event: any) => {
+      recognition.onresult = (event: { results: Array<Array<{ transcript: string }>> }) => {
         const transcript = event.results[0][0].transcript;
         setQuery(transcript);
         executeSearch(transcript);

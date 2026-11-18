@@ -140,7 +140,7 @@ function ChannelPage() {
           await video.requestPictureInPicture();
         }
       }
-    } catch {}
+    } catch (_err) { void _err; }
   }
 
   return (

@@ -150,7 +150,7 @@ export async function logErrorEvent(fs: Firestore, {
       affectedUserCount: Math.min(prevCount + 1, 1000),
       redactedTechnicalMessage: redactedMsg,
       topStackFrames,
-      statusState: (existing?.["statusState"] as any) ?? "new",
+      statusState: typeof existing?.["statusState"] === "string" ? (existing["statusState"] as string) : "new",
       expiresAt,
     });
 
