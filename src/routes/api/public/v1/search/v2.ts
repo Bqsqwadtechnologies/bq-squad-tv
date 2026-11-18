@@ -8,41 +8,40 @@ export const Route = createFileRoute("/api/public/v1/search/v2")({
       GET: async ({ request }) => {
         try {
           const url = new URL(request.url);
-          const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
-          const genre = (url.searchParams.get("genre") ?? "").trim().toLowerCase();
-          const isKids = url.searchParams.get("isKids") === "true";
-
+          const q = (url.searchParams.get("q") ?? "").toLowerCase().trim();
+          const category = url.searchParams.get("category");
           const fs = await Firestore.create();
 
-          // Search published titles and channels
-          const allTitles = await fs.listDocs("titles");
-          const allChannels = await fs.listDocs("channels");
-
-          const matches: unknown[] = [];
-
-          for (const item of [...allTitles, ...allChannels]) {
-            if (item["status"] !== "published") continue;
-            if (isKids && (item["rating"] === "18+" || item["rating"] === "16+")) continue;
-
-            const title = String(item["title"] ?? "").toLowerCase();
-            const desc = String(item["description"] ?? "").toLowerCase();
-            const itemGenre = String(item["genre"] ?? "").toLowerCase();
-            const cast = Array.isArray(item["cast"]) ? item["cast"].join(" ").toLowerCase() : "";
-
-            const matchesText = !q || title.includes(q) || desc.includes(q) || cast.includes(q);
-            const matchesGenre = !genre || itemGenre.includes(genre);
-
-            if (matchesText && matchesGenre) {
-              matches.push(item);
-            }
+          if (!q && !category) {
+            return Response.json({ titles: [], channels: [], totalResults: 0 });
           }
 
-          // Return top 30 matches and search suggestions
+          const allTitles = await fs.query("contentAssets", { limit: 100 });
+          const allChannels = await fs.query("channels", { limit: 50 });
+
+          const titles = allTitles.filter((t: Record<string, unknown>) => {
+            const titleMatch = String(t["title"] ?? "").toLowerCase().includes(q);
+            const catMatch = !category || t["category"] === category;
+            return (titleMatch || !q) && catMatch && t["status"] === "published";
+          });
+
+          const channels = allChannels.filter((c: Record<string, unknown>) => {
+            const nameMatch = String(c["name"] ?? "").toLowerCase().includes(q);
+            return (nameMatch || !q) && c["status"] === "published";
+          });
+
           return Response.json({
             query: q,
-            count: matches.length,
-            items: matches.slice(0, 30),
-            suggestions: matches.slice(0, 5).map((m: any) => m["title"]),
+            titles: titles.map((t: Record<string, unknown>) => ({
+              id: t.__id,
+              title: t["title"],
+              category: t["category"],
+            })),
+            channels: channels.map((c: Record<string, unknown>) => ({
+              id: c.__id,
+              name: c["name"],
+            })),
+            totalResults: titles.length + channels.length,
           });
         } catch (error) {
           return errorBody(error);

@@ -2,15 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody } from "@/lib/server/api";
-import { logErrorEvent } from "@/lib/server/error-events";
+import { logErrorEvent } from "@/lib/server/error-telemetry";
 
 const schema = z.object({
-  ref: z.string().trim().min(3).max(20),
-  code: z.string().trim().min(1).max(50),
-  routePattern: z.string().trim().min(1).max(200),
-  status: z.number().int().min(100).max(599).default(500),
-  platform: z.enum(["web", "android", "ios", "worker", "unknown"]).default("web"),
-  appVersion: z.string().trim().max(30).optional(),
+  code: z.string().trim().min(1).max(64),
+  routePattern: z.string().trim().min(1).max(256),
+  status: z.number().int().min(100).max(599),
+  ref: z.string().trim().min(1).max(64),
+  platform: z.enum(["android", "web", "ios", "worker", "unknown"]).default("unknown"),
+  appVersion: z.string().trim().max(64).optional(),
 }).strict();
 
 export const Route = createFileRoute("/api/public/v1/errors/beacon")({
@@ -27,7 +27,7 @@ export const Route = createFileRoute("/api/public/v1/errors/beacon")({
             status: body.status,
             ref: body.ref,
             platform: body.platform,
-            appVersion: body.appVersion,
+            ...(body.appVersion ? { appVersion: body.appVersion } : {}),
           });
 
           return Response.json({ recorded: true, ref: body.ref });

@@ -189,7 +189,7 @@ function SearchPage() {
               {filteredResults.map((item) => (
                 <Link
                   key={item.id}
-                  to={item.category.includes("Live") ? "/channels/demo" : `/content/${item.id}`}
+                  to="/channels/$channelId" params={{ channelId: "demo" }}
                   className="group overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] transition hover:border-[#00D8F5]/50 hover:shadow-lg"
                 >
                   <div className="aspect-[2/3] w-full bg-gradient-to-t from-[#030B2A] to-[#142456] flex items-end p-3">

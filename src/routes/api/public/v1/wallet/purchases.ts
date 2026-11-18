@@ -10,22 +10,25 @@ export const Route = createFileRoute("/api/public/v1/wallet/purchases")({
           const user = await requireUser(request);
           const fs = await Firestore.create();
 
-          // Get wallet ledger records for viewing charges & top-ups
-          const ledgerDocs = await fs.listDocs(`walletLedgers/${user.uid}/entries`);
-          ledgerDocs.sort((a, b) => String(b["createdAt"] ?? "").localeCompare(String(a["createdAt"] ?? "")));
+          const ledger = await fs.query("walletLedger", {
+            filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
+          });
 
-          const purchases = ledgerDocs.map((doc) => ({
-            id: doc["id"] ?? doc["reference"] ?? "",
-            type: doc["type"] ?? "viewing_charge",
-            amountMinor: doc["amountMinor"] ?? 0,
-            currency: doc["currency"] ?? "USD",
-            title: doc["title"] ?? (doc["type"] === "top_up" ? "Wallet Top-up" : "Stream Viewing"),
+          ledger.sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
+            String(b["createdAt"] ?? "").localeCompare(String(a["createdAt"] ?? ""))
+          );
+
+          const items = ledger.map((doc: Record<string, unknown>) => ({
+            id: doc.__id,
+            type: doc["type"] ?? "playback_charge",
+            amountMinor: doc["amountMinor"],
+            currency: doc["currency"] ?? "NGN",
             sessionId: doc["sessionId"] ?? null,
-            receiptRef: doc["receiptRef"] ?? `RCP-${String(doc["id"] ?? "").slice(-6).toUpperCase()}`,
-            createdAt: doc["createdAt"] ?? new Date().toISOString(),
+            channelId: doc["channelId"] ?? null,
+            createdAt: doc["createdAt"],
           }));
 
-          return Response.json({ items: purchases });
+          return Response.json({ items });
         } catch (error) {
           return errorBody(error);
         }

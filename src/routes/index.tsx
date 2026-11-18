@@ -106,7 +106,7 @@ function HomePage() {
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-300 md:flex">
             <Link to="/" className="text-[#00D8F5] transition hover:text-white">Home</Link>
-            <Link to="/channels/demo" className="transition hover:text-[#00D8F5]">Live TV</Link>
+            <Link to="/channels/$channelId" params={{ channelId: "demo" }} className="transition hover:text-[#00D8F5]">Live TV</Link>
             <Link to="/movies" className="transition hover:text-[#00D8F5]">Movies</Link>
             <Link to="/series" className="transition hover:text-[#00D8F5]">Series</Link>
           </nav>
@@ -154,7 +154,7 @@ function HomePage() {
             </p>
             <div className="mt-6 flex items-center gap-4">
               <Link
-                to="/channels/demo"
+                to="/channels/$channelId" params={{ channelId: "demo" }}
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#00D8F5] to-[#0052D4] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#0052D4]/40 transition hover:brightness-110"
               >
                 <Play size={16} fill="currentColor" /> Watch Now
@@ -233,7 +233,7 @@ function HomePage() {
               ]).map((item) => (
                 <Link
                   key={item.id}
-                  to={item.category === "Live TV" ? "/channels/demo" : `/content/${item.id}`}
+                  to="/channels/$channelId" params={{ channelId: "demo" }}
                   className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] transition hover:border-[#00D8F5]/40 hover:shadow-lg hover:shadow-[#0052D4]/20"
                 >
                   <div className="aspect-[2/3] w-full bg-gradient-to-t from-[#030B2A] to-[#142456] flex items-end p-3">
@@ -299,7 +299,7 @@ function HomePage() {
           <span>Home</span>
         </Link>
         <Link
-          to="/channels/demo"
+          to="/channels/$channelId" params={{ channelId: "demo" }}
           onClick={() => setActiveNav("Live TV")}
           className={`flex flex-col items-center gap-1 text-[11px] font-semibold ${
             activeNav === "Live TV" ? "text-[#00D8F5] drop-shadow-[0_0_8px_rgba(0,216,245,0.6)]" : "text-slate-400"

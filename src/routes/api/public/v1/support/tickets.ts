@@ -16,8 +16,12 @@ export const Route = createFileRoute("/api/public/v1/support/tickets")({
         try {
           const user = await requireUser(request);
           const fs = await Firestore.create();
-          const tickets = await fs.listDocs(`users/${user.uid}/supportTickets`);
-          tickets.sort((a, b) => String(b["createdAt"] ?? "").localeCompare(String(a["createdAt"] ?? "")));
+          const tickets = await fs.query("supportTickets", {
+            filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
+          });
+          tickets.sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
+            String(b["createdAt"] ?? "").localeCompare(String(a["createdAt"] ?? ""))
+          );
           return Response.json({ items: tickets });
         } catch (error) {
           return errorBody(error);
@@ -43,8 +47,7 @@ export const Route = createFileRoute("/api/public/v1/support/tickets")({
             updatedAt: now,
           };
 
-          await fs.setDoc(`users/${user.uid}/supportTickets/${ticketId}`, ticket);
-          await fs.setDoc(`supportInbox/${ticketId}`, ticket);
+          await fs.setDoc(`supportTickets/${ticketId}`, ticket);
 
           return Response.json({ ticket });
         } catch (error) {

@@ -12,13 +12,14 @@ export const Route = createFileRoute("/api/public/v1/producer/analytics")({
           const producer = await fs.getDoc(`producers/${user.uid}`);
           if (!producer) throw new ApiError(403, "FORBIDDEN", "Producer account required.");
 
-          const sessions = await fs.listDocs("sessions");
-          const mySessions = sessions.filter((s) => s["producerUid"] === user.uid);
+          const sessions = await fs.query("sessions", {
+            filters: [{ field: "producerUid", op: "EQUAL", value: user.uid }],
+          });
 
           let totalSeconds = 0;
           let totalEarningsMinor = 0;
 
-          for (const s of mySessions) {
+          for (const s of sessions) {
             totalSeconds += typeof s["acceptedSeconds"] === "number" ? s["acceptedSeconds"] : 0;
             totalEarningsMinor += typeof s["producerShareMinor"] === "number" ? s["producerShareMinor"] : 0;
           }
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/api/public/v1/producer/analytics")({
             totalMinutesWatched: Math.round(totalSeconds / 60),
             totalEarningsMinor,
             currency: producer["currency"] ?? "USD",
-            sessionCount: mySessions.length,
+            sessionCount: sessions.length,
           });
         } catch (error) {
           return errorBody(error);

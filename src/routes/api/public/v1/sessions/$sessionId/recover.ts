@@ -1,18 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
-import { errorBody, requireUser } from "@/lib/server/api";
-import { releaseSessionLease } from "@/lib/server/session-limits";
-import { settleSessionHold } from "@/lib/server/session-holds";
-import { releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
 import {
-  incrementalSessionCharge,
+  Firestore,
+  FirestoreWrite,
+  encodeFields,
+} from "@/lib/server/firebase-admin";
+import { errorBody, requireUser } from "@/lib/server/api";
+import {
+  integer,
+  releaseSessionLease,
   requireSessionOwned,
   toSessionSnapshot,
-} from "../-shared";
-
-function integer(value: unknown, fallback = 0): number {
-  return typeof value === "number" && Number.isSafeInteger(value) ? value : fallback;
-}
+} from "@/lib/server/session-helpers";
+import { settleSessionHold } from "@/lib/server/session-holds";
+import { releaseExpectedStorageEgress } from "@/lib/server/storage/budget";
 
 export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/recover")({
   server: {
@@ -21,15 +21,12 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/recover
         try {
           const user = await requireUser(request);
           const sessionId = params.sessionId;
-          if (!/^[A-Za-z0-9_-]{1,100}$/.test(sessionId)) {
-            throw new ApiError(400, "INVALID_REQUEST", "Invalid session id.");
-          }
           const fs = await Firestore.create();
           const nowIso = new Date().toISOString();
+
           const sessionPath = "sessions/" + sessionId;
           const walletPath = "wallets/" + user.uid;
           const holdPath = "walletHolds/" + sessionId;
-          const initialSession = requireSessionOwned(await fs.getDoc(sessionPath), sessionId, user.uid);
           const activeSessionsPath = "activeSessions/" + user.uid;
           const readPaths = [sessionPath, walletPath, activeSessionsPath, holdPath];
 
@@ -38,43 +35,43 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/recover
             const wallet = docs[1] ?? {};
             const activeSessionDoc = docs[2] ?? {};
             const walletHold = docs[3] ?? {};
+
             const balance = integer(wallet["balanceMinor"]);
             const heldBalance = integer(wallet["heldBalanceMinor"]);
-            const ownHold = walletHold["uid"] === user.uid && walletHold["sessionId"] === sessionId
-              ? integer(walletHold["amountMinor"]) : 0;
+            const ownHold =
+              walletHold["uid"] === user.uid && walletHold["sessionId"] === sessionId
+                ? integer(walletHold["amountMinor"])
+                : 0;
 
             if (session["active"] !== true) {
               return { result: toSessionSnapshot(sessionId, session, balance, null), writes: [] };
             }
 
             const currentAcceptedSeconds = integer(session["acceptedSeconds"]);
-            const billedSeconds = integer(session["billedSeconds"]);
-            const unbilledSeconds = Math.max(0, currentAcceptedSeconds - billedSeconds);
-            const rate = integer(session["pricePerMinuteMinor"]);
-            const finalDebit = incrementalSessionCharge(rate, billedSeconds, currentAcceptedSeconds);
-
-            const holdSettlement = settleSessionHold({
+            const releasedHold = settleSessionHold({
               balanceMinor: balance,
               heldBalanceMinor: heldBalance,
               ownHoldMinor: ownHold,
-              chargeMinor: finalDebit,
+              chargeMinor: 0,
               targetHoldMinor: 0,
               keepActive: false,
             });
+
+            const activeLeases = releaseSessionLease(
+              Array.isArray(activeSessionDoc["sessions"]) ? (activeSessionDoc["sessions"] as string[]) : [],
+              sessionId
+            );
 
             const writes: FirestoreWrite[] = [
               {
                 update: {
                   name: fs.docName(walletPath),
                   fields: encodeFields({
-                    balanceMinor: holdSettlement.balanceMinor,
-                    heldBalanceMinor: holdSettlement.heldBalanceMinor,
+                    heldBalanceMinor: releasedHold.heldBalanceMinor,
                     updatedAt: nowIso,
                   }),
                 },
-              },
-              {
-                delete: fs.docName(holdPath),
+                updateMask: { fieldPaths: ["heldBalanceMinor", "updatedAt"] },
               },
               {
                 update: {
@@ -84,26 +81,30 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/recover
                     state: "recovered",
                     endedAt: nowIso,
                     billedSeconds: currentAcceptedSeconds,
-                    totalChargedMinor: integer(session["totalChargedMinor"]) + finalDebit,
+                    walletHoldMinor: 0,
                     updatedAt: nowIso,
                   }),
                 },
+                updateMask: { fieldPaths: ["active", "state", "endedAt", "billedSeconds", "walletHoldMinor", "updatedAt"] },
+              },
+              {
+                update: {
+                  name: fs.docName(holdPath),
+                  fields: encodeFields({ amountMinor: 0, status: "released", expiresAt: null, updatedAt: nowIso }),
+                },
+                updateMask: { fieldPaths: ["amountMinor", "status", "expiresAt", "updatedAt"] },
+              },
+              {
+                update: {
+                  name: fs.docName(activeSessionsPath),
+                  fields: encodeFields({ sessions: activeLeases, updatedAt: nowIso }),
+                },
+                updateMask: { fieldPaths: ["sessions", "updatedAt"] },
               },
             ];
 
-            const activeLeases = releaseSessionLease(
-              Array.isArray(activeSessionDoc["sessions"]) ? (activeSessionDoc["sessions"] as string[]) : [],
-              sessionId
-            );
-            writes.push({
-              set: {
-                name: fs.docName(activeSessionsPath),
-                fields: encodeFields({ sessions: activeLeases, updatedAt: nowIso }),
-              },
-            });
-
             return {
-              result: toSessionSnapshot(sessionId, session, holdSettlement.balanceMinor, null),
+              result: toSessionSnapshot(sessionId, session, balance, null),
               writes,
             };
           });

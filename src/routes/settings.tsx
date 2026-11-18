@@ -224,11 +224,11 @@ function SettingsPage() {
         <section className="mt-6 rounded-2xl border border-white/10 bg-[#0C1738]/80 p-5 backdrop-blur-md">
           <h2 className="text-xs font-bold uppercase tracking-wider text-[#00D8F5]">Legal & Company</h2>
           <div className="mt-4 divide-y divide-white/10">
-            <Link to="/legal/terms" className="flex items-center justify-between py-3 group">
+            <Link to="/terms" className="flex items-center justify-between py-3 group">
               <span className="text-sm font-medium text-slate-200 group-hover:text-[#00D8F5]">Terms & Conditions</span>
               <ChevronRight size={18} className="text-slate-400" />
             </Link>
-            <Link to="/legal/privacy" className="flex items-center justify-between py-3 group">
+            <Link to="/privacy" className="flex items-center justify-between py-3 group">
               <span className="text-sm font-medium text-slate-200 group-hover:text-[#00D8F5]">Privacy Policy</span>
               <ChevronRight size={18} className="text-slate-400" />
             </Link>

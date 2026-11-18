@@ -3,12 +3,12 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 
-const schema = z.object({
-  name: z.string().trim().min(1).max(50),
+const createProfileSchema = z.object({
+  name: z.string().trim().min(1).max(30),
   avatarUrl: z.string().url().optional(),
   isKids: z.boolean().default(false),
-  ratingCeiling: z.enum(["G", "PG", "PG-13", "16+", "18+"]).default("18+"),
-  screenTimeLimitMinutes: z.number().int().min(0).max(1440).default(0), // 0 = unlimited
+  maturityRating: z.enum(["G", "PG", "13+", "16+", "18+"]).default("18+"),
+  pin: z.string().regex(/^\d{4}$/).optional(),
 }).strict();
 
 export const Route = createFileRoute("/api/public/v1/profiles/")({
@@ -18,8 +18,20 @@ export const Route = createFileRoute("/api/public/v1/profiles/")({
         try {
           const user = await requireUser(request);
           const fs = await Firestore.create();
-          const profiles = await fs.listDocs(`users/${user.uid}/profiles`);
-          return Response.json({ items: profiles });
+          const profiles = await fs.query("profiles", {
+            filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
+          });
+
+          return Response.json({
+            items: profiles.map((p: Record<string, unknown>) => ({
+              id: p.__id,
+              name: p["name"],
+              avatarUrl: p["avatarUrl"] ?? null,
+              isKids: p["isKids"] ?? false,
+              maturityRating: p["maturityRating"] ?? "18+",
+              hasPin: Boolean(p["pinHash"]),
+            })),
+          });
         } catch (error) {
           return errorBody(error);
         }
@@ -27,30 +39,41 @@ export const Route = createFileRoute("/api/public/v1/profiles/")({
       POST: async ({ request }) => {
         try {
           const user = await requireUser(request);
-          const body = await parseBody(request, schema);
+          const body = await parseBody(request, createProfileSchema);
           const fs = await Firestore.create();
 
-          const existing = await fs.listDocs(`users/${user.uid}/profiles`);
+          const existing = await fs.query("profiles", {
+            filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
+          });
+
           if (existing.length >= 5) {
-            throw new ApiError(400, "PROFILE_LIMIT_REACHED", "Maximum 5 profiles per account.");
+            throw new ApiError(400, "MAX_PROFILES_EXCEEDED", "Maximum of 5 profiles per account reached.");
           }
 
-          const profileId = `p_${Date.now()}`;
+          const profileId = `prof_${Date.now()}`;
           const now = new Date().toISOString();
 
-          const profile = {
+          await fs.setDoc(`profiles/${user.uid}_${profileId}`, {
             id: profileId,
+            uid: user.uid,
             name: body.name,
-            avatarUrl: body.avatarUrl ?? "",
+            avatarUrl: body.avatarUrl ?? null,
             isKids: body.isKids,
-            ratingCeiling: body.isKids ? "PG" : body.ratingCeiling,
-            screenTimeLimitMinutes: body.screenTimeLimitMinutes,
+            maturityRating: body.isKids ? "G" : body.maturityRating,
+            pinHash: body.pin ? "pin_set" : null,
             createdAt: now,
             updatedAt: now,
-          };
+          });
 
-          await fs.setDoc(`users/${user.uid}/profiles/${profileId}`, profile);
-          return Response.json({ profile });
+          return Response.json({
+            profile: {
+              id: profileId,
+              name: body.name,
+              isKids: body.isKids,
+              maturityRating: body.isKids ? "G" : body.maturityRating,
+              hasPin: Boolean(body.pin),
+            },
+          });
         } catch (error) {
           return errorBody(error);
         }

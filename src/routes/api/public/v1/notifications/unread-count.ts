@@ -9,8 +9,10 @@ export const Route = createFileRoute("/api/public/v1/notifications/unread-count"
         try {
           const user = await requireUser(request);
           const fs = await Firestore.create();
-          const notifs = await fs.listDocs(`users/${user.uid}/notifications`);
-          const unread = notifs.filter((n) => n["read"] !== true).length;
+          const notifs = await fs.query("notifications", {
+            filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
+          });
+          const unread = notifs.filter((n: Record<string, unknown>) => n["read"] !== true).length;
           return Response.json({ unreadCount: unread });
         } catch (error) {
           return errorBody(error);
