@@ -1,0 +1,20 @@
+{
+  "app_name": "BQ SQWAD TV",
+  "tagline": "REGARDEZ • DIFFUSEZ • PROFITEZ",
+  "subline": "Divertissement sans limites",
+  "nav_home": "Accueil",
+  "nav_live_tv": "Télé en direct",
+  "nav_movies": "Films",
+  "nav_series": "Séries",
+  "nav_kids": "Enfants",
+  "nav_library": "Bibliothèque",
+  "nav_downloads": "Téléchargements",
+  "nav_settings": "Paramètres",
+  "nav_profile": "Profil",
+  "nav_wallet": "Portefeuille",
+  "button_watch_now": "Regarder maintenant",
+  "wallet_top_up_button": "Recharger le portefeuille",
+  "common_retry": "Réessayer",
+  "search_placeholder": "Rechercher des chaînes, films, séries...",
+  "help_support": "Aide & Support"
+}
