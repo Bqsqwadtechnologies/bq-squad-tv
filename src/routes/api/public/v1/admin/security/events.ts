@@ -69,22 +69,32 @@ export const Route = createFileRoute("/api/public/v1/admin/security/events")({
               continue;
             }
 
-            const reasonCode = typeof row["reasonCode"] === "string" ? row["reasonCode"] : "UNKNOWN";
+            const reasonCode =
+              typeof row["reasonCode"] === "string" ? row["reasonCode"] : "UNKNOWN";
             if (reasonFilter && reasonFilter !== "ALL" && reasonCode !== reasonFilter) {
               continue;
             }
 
-            const actorRoleClass = typeof row["actorRoleClass"] === "string" ? (row["actorRoleClass"] as AccessDenialEvent["actorRoleClass"]) : "anonymous";
+            const actorRoleClass =
+              typeof row["actorRoleClass"] === "string"
+                ? (row["actorRoleClass"] as AccessDenialEvent["actorRoleClass"])
+                : "anonymous";
             if (roleFilter && roleFilter !== "ALL" && actorRoleClass !== roleFilter) {
               continue;
             }
 
             const routePattern = typeof row["routePattern"] === "string" ? row["routePattern"] : "";
-            if (routePatternFilter && !routePattern.toLowerCase().includes(routePatternFilter.toLowerCase().trim())) {
+            if (
+              routePatternFilter &&
+              !routePattern.toLowerCase().includes(routePatternFilter.toLowerCase().trim())
+            ) {
               continue;
             }
 
-            const platformClass = typeof row["platformClass"] === "string" ? (row["platformClass"] as AccessDenialEvent["platformClass"]) : "unknown";
+            const platformClass =
+              typeof row["platformClass"] === "string"
+                ? (row["platformClass"] as AccessDenialEvent["platformClass"])
+                : "unknown";
             if (platformFilter && platformFilter !== "ALL" && platformClass !== platformFilter) {
               continue;
             }
@@ -96,11 +106,14 @@ export const Route = createFileRoute("/api/public/v1/admin/security/events")({
               actorRoleClass,
               routePattern,
               method: typeof row["method"] === "string" ? row["method"] : "GET",
-              requiredRole: typeof row["requiredRole"] === "string" ? row["requiredRole"] : "unknown",
-              resourceKind: typeof row["resourceKind"] === "string" ? row["resourceKind"] : "unknown",
-              targetHash: typeof row["targetHash"] === "string" ? row["targetHash"] : undefined,
+              requiredRole:
+                typeof row["requiredRole"] === "string" ? row["requiredRole"] : "unknown",
+              resourceKind:
+                typeof row["resourceKind"] === "string" ? row["resourceKind"] : "unknown",
+              targetHash: typeof row["targetHash"] === "string" ? row["targetHash"] : null,
               reasonCode,
-              coarseNetworkHash: typeof row["coarseNetworkHash"] === "string" ? row["coarseNetworkHash"] : "",
+              coarseNetworkHash:
+                typeof row["coarseNetworkHash"] === "string" ? row["coarseNetworkHash"] : "",
               platformClass,
               expiresAt: typeof row["expiresAt"] === "string" ? row["expiresAt"] : "",
             });

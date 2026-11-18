@@ -1,5 +1,5 @@
 import { vi } from "vitest";
-import { decodeFields, type Firestore } from "@/lib/server/firebase-admin";
+import { decodeFields, type Firestore, type FirestoreWrite } from "@/lib/server/firebase-admin";
 
 export type MockDoc = Record<string, unknown>;
 
@@ -38,27 +38,23 @@ export function createRoleIsolationStore(initialDocs: Record<string, MockDoc> = 
     transact: vi.fn(
       async <T>(
         paths: string[],
-        fn: (docs: Array<MockDoc | null>) =>
-          | Promise<{
-              result: T;
-              writes: Array<{ update?: { name: string; fields: unknown }; delete?: string }>;
-            }>
-          | {
-              result: T;
-              writes: Array<{ update?: { name: string; fields: unknown }; delete?: string }>;
-            },
+        fn: (
+          docs: Array<Record<string, unknown> | null>,
+        ) =>
+          | Promise<{ result: T; writes: FirestoreWrite[] }>
+          | { result: T; writes: FirestoreWrite[] },
       ): Promise<T> => {
         const docs = paths.map((path) => store.get(path) || null);
         const { result, writes } = await fn(docs);
         const prefix = "projects/test-project/databases/(default)/documents/";
         for (const write of writes) {
-          if (write.update) {
+          if ("update" in write) {
             const path = write.update.name.startsWith(prefix)
               ? write.update.name.slice(prefix.length)
               : write.update.name;
-            store.set(path, decodeFields(write.update.fields as Record<string, unknown>));
+            store.set(path, decodeFields(write.update.fields));
           }
-          if (write.delete) {
+          if ("delete" in write) {
             const path = write.delete.startsWith(prefix)
               ? write.delete.slice(prefix.length)
               : write.delete;
@@ -67,7 +63,7 @@ export function createRoleIsolationStore(initialDocs: Record<string, MockDoc> = 
         }
         return result;
       },
-    ),
+    ) as unknown as Firestore["transact"],
     query: vi.fn(async (collection: string, options?: QueryOptions) => {
       const prefix = `${collection}/`;
       const results: Array<Record<string, unknown> & { __id: string }> = [];
@@ -118,8 +114,8 @@ export function createRoleIsolationStore(initialDocs: Record<string, MockDoc> = 
           const valA = a[field];
           const valB = b[field];
           if (valA === valB) return 0;
-          if (valA === undefined) return 1;
-          if (valB === undefined) return -1;
+          if (valA == null) return 1;
+          if (valB == null) return -1;
           if (desc) {
             return valA < valB ? 1 : -1;
           } else {

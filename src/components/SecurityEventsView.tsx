@@ -23,8 +23,8 @@ import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 import type { AccessDenialEvent } from "@/lib/server/access-denials";
 
 export type SecurityEventsViewProps = {
-  sessionToken?: string;
-  isOwner?: boolean;
+  sessionToken?: string | undefined;
+  isOwner?: boolean | undefined;
 };
 
 type HourlyCount = {
@@ -81,7 +81,20 @@ function formatHourLabel(hourBucket: string): string {
     if (parts.length === 2) {
       const dateParts = parts[0]!.split("-");
       const hour = parts[1];
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const monthNames = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ];
       const monthIndex = Number.parseInt(dateParts[1]!, 10) - 1;
       const day = Number.parseInt(dateParts[2]!, 10);
       return `${monthNames[monthIndex] || dateParts[1]} ${day}, ${hour}:00`;
@@ -182,7 +195,10 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
       });
 
       if (!res.ok) {
-        const errJson = (await res.json().catch(() => ({}))) as { message?: string; error?: string };
+        const errJson = (await res.json().catch(() => ({}))) as {
+          message?: string;
+          error?: string;
+        };
         throw new Error(errJson.message || errJson.error || "Failed to load security events.");
       }
 
@@ -196,7 +212,11 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
       setHourlyCounts(data.hourlyCounts || []);
       setTotalCount(data.total || 0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred while loading security events.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred while loading security events.",
+      );
     } finally {
       setLoading(false);
     }
@@ -275,10 +295,11 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
         throw new Error(result.message || result.error || "Could not resolve identity.");
       }
 
-      setLookupResult({
-        found: result.found,
-        account: result.account,
-      });
+      setLookupResult(
+        result.account !== undefined
+          ? { found: result.found, account: result.account }
+          : { found: result.found },
+      );
     } catch (err) {
       setLookupError(err instanceof Error ? err.message : "Lookup failed.");
     } finally {
@@ -307,11 +328,15 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
             <ShieldAlert size={14} aria-hidden="true" />
             Security Events & Access Denials
           </div>
-          <h2 id="security-events-heading" className="mt-2 text-2xl font-black tracking-tight sm:text-3xl">
+          <h2
+            id="security-events-heading"
+            className="mt-2 text-2xl font-black tracking-tight sm:text-3xl"
+          >
             Access restriction ledger
           </h2>
           <p className="mt-1 max-w-3xl text-xs leading-5 text-blue-100/60">
-            Privacy-safe monitoring of denied access attempts, sharded counters, and audited platform identity resolution.
+            Privacy-safe monitoring of denied access attempts, sharded counters, and audited
+            platform identity resolution.
           </p>
         </div>
 
@@ -342,7 +367,9 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
         </div>
 
         {hourlyCounts.length === 0 ? (
-          <p className="mt-4 text-xs text-blue-100/50">No access denial events recorded in this time window.</p>
+          <p className="mt-4 text-xs text-blue-100/50">
+            No access denial events recorded in this time window.
+          </p>
         ) : (
           <div className="mt-4 grid gap-2" role="region" aria-label="Hourly distribution">
             <div className="flex items-end gap-1.5 overflow-x-auto pb-2 pt-4">
@@ -384,7 +411,10 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
       >
         {/* Time Window */}
         <div>
-          <label htmlFor={timeSelectId} className="block text-[10px] font-bold uppercase tracking-wider text-blue-100/60">
+          <label
+            htmlFor={timeSelectId}
+            className="block text-[10px] font-bold uppercase tracking-wider text-blue-100/60"
+          >
             Time Window
           </label>
           <div className="relative mt-1">
@@ -400,13 +430,19 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
               <option value="30d">Past 30 days</option>
               <option value="all">All recorded</option>
             </select>
-            <ChevronDown size={14} className="pointer-events-none absolute right-3 top-2.5 text-blue-100/40" />
+            <ChevronDown
+              size={14}
+              className="pointer-events-none absolute right-3 top-2.5 text-blue-100/40"
+            />
           </div>
         </div>
 
         {/* Reason */}
         <div>
-          <label htmlFor={reasonSelectId} className="block text-[10px] font-bold uppercase tracking-wider text-blue-100/60">
+          <label
+            htmlFor={reasonSelectId}
+            className="block text-[10px] font-bold uppercase tracking-wider text-blue-100/60"
+          >
             Restriction Reason
           </label>
           <div className="relative mt-1">
@@ -424,13 +460,19 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
               <option value="SUSPENDED_PRODUCER">Suspended account</option>
               <option value="INVALID_WORKER_SIGNATURE">Worker signature</option>
             </select>
-            <ChevronDown size={14} className="pointer-events-none absolute right-3 top-2.5 text-blue-100/40" />
+            <ChevronDown
+              size={14}
+              className="pointer-events-none absolute right-3 top-2.5 text-blue-100/40"
+            />
           </div>
         </div>
 
         {/* Role */}
         <div>
-          <label htmlFor={roleSelectId} className="block text-[10px] font-bold uppercase tracking-wider text-blue-100/60">
+          <label
+            htmlFor={roleSelectId}
+            className="block text-[10px] font-bold uppercase tracking-wider text-blue-100/60"
+          >
             Account Role
           </label>
           <div className="relative mt-1">
@@ -448,13 +490,19 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
               <option value="admin">Administrator</option>
               <option value="worker">Background worker</option>
             </select>
-            <ChevronDown size={14} className="pointer-events-none absolute right-3 top-2.5 text-blue-100/40" />
+            <ChevronDown
+              size={14}
+              className="pointer-events-none absolute right-3 top-2.5 text-blue-100/40"
+            />
           </div>
         </div>
 
         {/* Platform */}
         <div>
-          <label htmlFor={platformSelectId} className="block text-[10px] font-bold uppercase tracking-wider text-blue-100/60">
+          <label
+            htmlFor={platformSelectId}
+            className="block text-[10px] font-bold uppercase tracking-wider text-blue-100/60"
+          >
             Platform / Client
           </label>
           <div className="relative mt-1">
@@ -471,13 +519,19 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
               <option value="worker">Background worker</option>
               <option value="unknown">Unspecified</option>
             </select>
-            <ChevronDown size={14} className="pointer-events-none absolute right-3 top-2.5 text-blue-100/40" />
+            <ChevronDown
+              size={14}
+              className="pointer-events-none absolute right-3 top-2.5 text-blue-100/40"
+            />
           </div>
         </div>
 
         {/* Route Pattern Search */}
         <div className="sm:col-span-2">
-          <label htmlFor={searchInputId} className="block text-[10px] font-bold uppercase tracking-wider text-blue-100/60">
+          <label
+            htmlFor={searchInputId}
+            className="block text-[10px] font-bold uppercase tracking-wider text-blue-100/60"
+          >
             Route Pattern Match
           </label>
           <div className="mt-1 flex items-center gap-2">
@@ -490,7 +544,11 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
                 placeholder="e.g. /admin/overview or /channels"
                 className="w-full rounded-xl border border-white/10 bg-[#07143d] pl-9 pr-3 py-2 text-xs text-white placeholder-blue-100/30 focus:border-cyan-300 focus:outline-none"
               />
-              <Search size={14} className="absolute left-3 top-2.5 text-blue-100/40" aria-hidden="true" />
+              <Search
+                size={14}
+                className="absolute left-3 top-2.5 text-blue-100/40"
+                aria-hidden="true"
+              />
             </div>
             <button
               type="submit"
@@ -513,7 +571,10 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
 
       {/* Status / Error Notifications */}
       {error ? (
-        <div role="alert" className="mt-4 flex items-center gap-3 rounded-2xl border border-rose-300/20 bg-rose-300/10 p-4 text-xs text-rose-200">
+        <div
+          role="alert"
+          className="mt-4 flex items-center gap-3 rounded-2xl border border-rose-300/20 bg-rose-300/10 p-4 text-xs text-rose-200"
+        >
           <AlertCircle size={16} className="shrink-0" />
           <span>{error}</span>
         </div>
@@ -522,15 +583,30 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
       {/* Events Table / List */}
       <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-[#030b2a]">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-left text-xs" aria-label="Access denial events table">
+          <table
+            className="w-full min-w-[700px] text-left text-xs"
+            aria-label="Access denial events table"
+          >
             <thead className="border-b border-white/10 bg-[#051139] text-[11px] font-bold uppercase tracking-wider text-cyan-200">
               <tr>
-                <th scope="col" className="px-4 py-3">Timestamp</th>
-                <th scope="col" className="px-4 py-3">Reason</th>
-                <th scope="col" className="px-4 py-3">Role & Client</th>
-                <th scope="col" className="px-4 py-3">Route Pattern</th>
-                <th scope="col" className="px-4 py-3">Hashed Actor</th>
-                <th scope="col" className="px-4 py-3 text-right">Actions</th>
+                <th scope="col" className="px-4 py-3">
+                  Timestamp
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Reason
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Role & Client
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Route Pattern
+                </th>
+                <th scope="col" className="px-4 py-3">
+                  Hashed Actor
+                </th>
+                <th scope="col" className="px-4 py-3 text-right">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -554,9 +630,7 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
                       {/* Timestamp */}
                       <td className="px-4 py-3 text-blue-100/70 whitespace-nowrap">
                         <div className="font-mono text-[11px]">{formatEventTime(event.time)}</div>
-                        <div className="text-[10px] text-blue-100/40 font-mono">
-                          {event.method}
-                        </div>
+                        <div className="text-[10px] text-blue-100/40 font-mono">{event.method}</div>
                       </td>
 
                       {/* Reason */}
@@ -602,7 +676,11 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
                             aria-label="Copy full actor hash"
                             className="text-blue-100/40 hover:text-cyan-200"
                           >
-                            {isCopied ? <CheckCircle2 size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                            {isCopied ? (
+                              <CheckCircle2 size={13} className="text-emerald-400" />
+                            ) : (
+                              <Copy size={13} />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -691,7 +769,9 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
                     </div>
                     <dl className="mt-3 grid gap-2 text-xs">
                       <div>
-                        <dt className="text-[10px] text-blue-100/50 uppercase">Account Identifier</dt>
+                        <dt className="text-[10px] text-blue-100/50 uppercase">
+                          Account Identifier
+                        </dt>
                         <dd className="font-mono text-white">{lookupResult.account.uid}</dd>
                       </div>
                       <div>
@@ -713,9 +793,12 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
                   </div>
                 ) : (
                   <div>
-                    <p className="font-semibold text-amber-200">No account matches this identifier.</p>
+                    <p className="font-semibold text-amber-200">
+                      No account matches this identifier.
+                    </p>
                     <p className="mt-1 text-blue-100/60 text-[11px]">
-                      The access denial may originate from an unauthenticated request or expired credentials. Audit entry recorded.
+                      The access denial may originate from an unauthenticated request or expired
+                      credentials. Audit entry recorded.
                     </p>
                   </div>
                 )}
@@ -731,7 +814,8 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
               /* Step-Up Confirmation Form */
               <form onSubmit={executeActorLookup} className="mt-4 grid gap-4">
                 <div className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-xs leading-5 text-amber-100/80">
-                  <strong>Notice:</strong> Resolving a security identifier reveals account details and is recorded in the permanent platform audit log.
+                  <strong>Notice:</strong> Resolving a security identifier reveals account details
+                  and is recorded in the permanent platform audit log.
                 </div>
 
                 <div>
@@ -754,7 +838,10 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
                   />
                 </div>
 
-                <label htmlFor={stepUpCheckId} className="flex items-start gap-3 rounded-xl border border-white/10 bg-[#030b2a] p-3 cursor-pointer">
+                <label
+                  htmlFor={stepUpCheckId}
+                  className="flex items-start gap-3 rounded-xl border border-white/10 bg-[#030b2a] p-3 cursor-pointer"
+                >
                   <input
                     id={stepUpCheckId}
                     type="checkbox"
@@ -763,12 +850,16 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
                     className="mt-0.5 size-4 accent-cyan-300"
                   />
                   <span className="text-xs leading-5 text-blue-100/80">
-                    I confirm that I am the verified platform owner and authorize this identity resolution under platform audit rules.
+                    I confirm that I am the verified platform owner and authorize this identity
+                    resolution under platform audit rules.
                   </span>
                 </label>
 
                 {lookupError ? (
-                  <p role="alert" className="rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-xs text-rose-200">
+                  <p
+                    role="alert"
+                    className="rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-xs text-rose-200"
+                  >
                     {lookupError}
                   </p>
                 ) : null}

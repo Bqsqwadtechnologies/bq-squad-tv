@@ -107,7 +107,14 @@ function seedIsolationStore() {
 }
 
 function user(uid: string, email: string, emailVerified = true) {
-  return { uid, email, emailVerified };
+  return {
+    uid,
+    email,
+    emailVerified,
+    authTime: Math.floor(Date.now() / 1000),
+    issuedAt: Math.floor(Date.now() / 1000),
+    customClaims: {},
+  };
 }
 
 describe("Batch 12: role-isolation end-to-end boundaries", () => {
@@ -187,11 +194,9 @@ describe("Batch 12: role-isolation end-to-end boundaries", () => {
       status: "uploaded_pending_transcode",
     });
     vi.spyOn(FirestoreClass, "create").mockResolvedValue(fs);
-    vi.spyOn(apiModule, "requireUser").mockResolvedValue({
-      uid: "producer-b",
-      email: "producer-b@example.test",
-      emailVerified: true,
-    });
+    vi.spyOn(apiModule, "requireUser").mockResolvedValue(
+      user("producer-b", "producer-b@example.test"),
+    );
     const handler = (
       ProducerAssetsRoute.options.server as unknown as {
         handlers: {
@@ -227,11 +232,9 @@ describe("Batch 12: role-isolation end-to-end boundaries", () => {
       status: "uploaded_pending_transcode",
     });
 
-    vi.mocked(apiModule.requireUser).mockResolvedValue({
-      uid: "producer-a",
-      email: "producer-a@example.test",
-      emailVerified: true,
-    });
+    vi.mocked(apiModule.requireUser).mockResolvedValue(
+      user("producer-a", "producer-a@example.test"),
+    );
     const acceptedPayload = {
       ...payload,
       rightsEvidencePath: "producers/producer-a/channel-a/evidence.pdf",
@@ -259,9 +262,9 @@ describe("Batch 12: role-isolation end-to-end boundaries", () => {
     vi.spyOn(apiModule, "requireUser").mockResolvedValue(
       user("provider-a", "provider-a@example.test"),
     );
-    const getHandler = (route: { options: { server: unknown } }) =>
+    const getHandler = (route: unknown) =>
       (
-        route.options.server as {
+        (route as { options: { server: unknown } }).options.server as {
           handlers: { GET: (ctx: { request: Request }) => Promise<Response> };
         }
       ).handlers.GET;
@@ -310,6 +313,8 @@ describe("Batch 12: role-isolation end-to-end boundaries", () => {
       email: "viewer@example.test",
       emailVerified: true,
       authTime: Math.floor(Date.now() / 1000),
+      issuedAt: Math.floor(Date.now() / 1000),
+      customClaims: {},
     });
     const notificationList = (
       NotificationsRoute.options.server as {
