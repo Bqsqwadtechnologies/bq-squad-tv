@@ -1,4 +1,4 @@
-import { Firestore, type FirestoreDocument } from "./firebase-admin";
+import { Firestore } from "./firebase-admin";
 
 export type CauseCategory =
   | "database"

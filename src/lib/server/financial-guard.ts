@@ -73,7 +73,7 @@ export async function requestFinancialAction(
     currency,
     initiatedBy: actorUid,
     initiatedAt: now.toISOString(),
-    coolingOffExpiresAt,
+    ...(coolingOffExpiresAt ? { coolingOffExpiresAt } : {}),
     firstApprovedBy: actorUid,
     status,
     reason,
@@ -105,7 +105,7 @@ export async function approveFinancialAction(
       );
     }
     action.status = "approved";
-    await fs.updateDoc(`financialActions/${actionId}`, { status: "approved" });
+    await fs.patchDoc(`financialActions/${actionId}`, { status: "approved" });
     return action;
   }
 
@@ -119,7 +119,7 @@ export async function approveFinancialAction(
     }
     action.secondApprovedBy = approverUid;
     action.status = "approved";
-    await fs.updateDoc(`financialActions/${actionId}`, {
+    await fs.patchDoc(`financialActions/${actionId}`, {
       secondApprovedBy: approverUid,
       status: "approved",
     });
