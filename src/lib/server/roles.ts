@@ -6,7 +6,8 @@ export type ZillionaireModule =
   | "overview" | "users" | "roles" | "producers" | "channels" | "content"
   | "video" | "storage" | "delivery" | "pricing" | "wallets" | "payments"
   | "payouts" | "ads" | "notifications" | "moderation" | "security" | "reports"
-  | "settings" | "system" | "providers" | "support" | "pages";
+  | "settings" | "system" | "providers" | "support" | "pages"
+  | "finance" | "catalog";
 
 // Backward-compatible type alias during migration
 export type AdminModule = ZillionaireModule;
@@ -26,6 +27,7 @@ export const ZILLIONAIRE_MODULES: ZillionaireModule[] = [
   "video", "storage", "delivery", "pricing", "wallets", "payments",
   "payouts", "ads", "notifications", "moderation", "security", "reports",
   "settings", "system", "providers", "support", "pages",
+  "finance", "catalog",
 ];
 
 // Backward-compatible constant alias
@@ -35,6 +37,23 @@ function stringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
 }
 
+export function hasModuleAccess(
+  activeModules: readonly ZillionaireModule[],
+  required: ZillionaireModule,
+): boolean {
+  if (activeModules.includes(required)) return true;
+  // Module family aliases: finance covers payments, payouts, wallets; catalog covers content
+  if ((required === "payments" || required === "payouts" || required === "wallets") && activeModules.includes("finance")) {
+    return true;
+  }
+  if (required === "finance" && (activeModules.includes("payments") || activeModules.includes("payouts") || activeModules.includes("wallets"))) {
+    return true;
+  }
+  if (required === "content" && activeModules.includes("catalog")) return true;
+  if (required === "catalog" && activeModules.includes("content")) return true;
+  return false;
+}
+
 export async function resolvePlatformAccess(
   fs: Firestore,
   uid: string,
@@ -42,46 +61,47 @@ export async function resolvePlatformAccess(
   customClaims: Record<string, unknown> = {},
   emailVerified = false,
 ): Promise<PlatformAccess> {
-  const [user, producer, providerUser] = await Promise.all([
-    fs.getDoc("users/" + uid),
-    fs.getDoc("producers/" + uid),
-    fs.getDoc("providerUsers/" + uid),
-  ]);
-  // The app's six-digit OTP flow records verification server-side. Accept that
-  // proof only while it remains bound to the exact current Firebase email;
-  // a changed account email invalidates the app-level verification.
-  const appEmailVerified = Boolean(
-    user?.["appEmailVerified"] === true &&
-    typeof user["email"] === "string" &&
-    email && user["email"].trim().toLowerCase() === email.trim().toLowerCase(),
+  const roles: PlatformRole[] = ["viewer"];
+  const user = await fs.getDoc("users/" + uid);
+  const userDocEmail = typeof user?.["email"] === "string" ? (user["email"] as string) : null;
+  const effectiveEmail = email || userDocEmail;
+
+  // Verify email status from Firebase Auth claim or verified OTP proof recorded on user doc
+  const isEmailVerified = emailVerified || (
+    Boolean(user?.["appEmailVerified"]) &&
+    typeof user?.["email"] === "string" &&
+    typeof effectiveEmail === "string" &&
+    user["email"].trim().toLowerCase() === effectiveEmail.trim().toLowerCase()
   );
-  const effectiveEmailVerified = emailVerified || appEmailVerified;
-  // Strictly ZILLIONAIRE_EMAIL only - no ADMIN_EMAIL fallback
-  const configuredZillionaireEmail = process.env["ZILLIONAIRE_EMAIL"]?.trim().toLowerCase();
-  const isZillionaireOwner = Boolean(
-    effectiveEmailVerified && configuredZillionaireEmail && email?.trim().toLowerCase() === configuredZillionaireEmail,
-  );
+
+  // Producer role resolution
   const storedRoles = stringArray(user?.["roleTags"]);
-  const claimedRoles = stringArray(customClaims["roleTags"]);
+  const claimedProducer = Boolean(customClaims["producer"]) || storedRoles.includes("producer");
+  const producer = claimedProducer ? await fs.getDoc("producers/" + uid) : null;
   const producerPlanActive = producer?.["planStatus"] === "ACTIVE";
   const producerVerified = producer?.["verificationStatus"] === "APPROVED";
-  const roles: PlatformRole[] = ["viewer"];
-  if (producerPlanActive && producerVerified && (storedRoles.includes("producer") || claimedRoles.includes("producer") || customClaims["producer"] === true)) {
+
+  if (claimedProducer && producerPlanActive && producerVerified) {
     roles.push("producer");
   }
 
-  // Provider role check
-  let resolvedProviderId: string | undefined = undefined;
-  const providerActive = providerUser?.["status"] === "ACTIVE" || providerUser?.["active"] === true;
-  if (providerActive && typeof providerUser?.["providerId"] === "string") {
+  // Provider representative resolution
+  const providerRep = await fs.getDoc("providerUsers/" + uid);
+  let providerId: string | undefined;
+  if (providerRep && providerRep["status"] === "ACTIVE" && typeof providerRep["providerId"] === "string") {
     roles.push("provider");
-    resolvedProviderId = providerUser["providerId"] as string;
-  } else if (storedRoles.includes("provider") || claimedRoles.includes("provider") || customClaims["provider"] === true) {
-    if (typeof user?.["providerId"] === "string") {
-      roles.push("provider");
-      resolvedProviderId = user["providerId"] as string;
-    }
+    providerId = providerRep["providerId"];
   }
+
+  // Zillionaire owner resolution
+  // Strictly requires configured ZILLIONAIRE_EMAIL and verified email address
+  const configuredOwnerEmail = (process.env["ZILLIONAIRE_EMAIL"] || "").trim().toLowerCase();
+  const normalizedUserEmail = (effectiveEmail || "").trim().toLowerCase();
+  const isZillionaireOwner = Boolean(
+    configuredOwnerEmail &&
+    normalizedUserEmail === configuredOwnerEmail &&
+    isEmailVerified,
+  );
 
   // The Zillionaire identity is the only top-level control identity.
   // Delegated access is expressed as individual module permissions, not an administrator role.
@@ -103,11 +123,24 @@ export async function resolvePlatformAccess(
     roles,
     isZillionaireOwner,
     zillionaireModules: activeModules,
-    adminModules: activeModules,
+    adminModules: activeModules, // Backward-compat alias
     producerPlanActive,
-    emailVerified: effectiveEmailVerified,
-    ...(resolvedProviderId ? { providerId: resolvedProviderId } : {}),
+    emailVerified: isEmailVerified,
+    ...(providerId ? { providerId } : {}),
   };
+}
+
+export function isProtectedZillionaire(email: string | null): boolean {
+  if (!email) return false;
+  const configuredOwnerEmail = (process.env["ZILLIONAIRE_EMAIL"] || "").trim().toLowerCase();
+  if (!configuredOwnerEmail) return false;
+  return email.trim().toLowerCase() === configuredOwnerEmail;
+}
+
+export function assertNotProtectedZillionaire(email: string | null, action: string): void {
+  if (isProtectedZillionaire(email)) {
+    throw new ApiError(403, "OWNER_ACCOUNT_PROTECTED", `The protected platform-owner account cannot be ${action.endsWith("e") ? action + "d" : action + "ed"}.`);
+  }
 }
 
 export async function requirePlatformRole(
@@ -140,8 +173,8 @@ export async function requireZillionaireModule(
     user.customClaims,
     user.emailVerified === true,
   );
-  if (!access.isZillionaireOwner && !access.zillionaireModules.includes(module)) {
-    throw new ApiError(403, "ZILLIONAIRE_SCOPE_REQUIRED", "This account does not have permission to access this section.");
+  if (!access.isZillionaireOwner && !hasModuleAccess(access.zillionaireModules, module)) {
+    throw new ApiError(403, "ZILLIONAIRE_SCOPE_REQUIRED", `Zillionaire module permission '${module}' is required for this action.`);
   }
   return access;
 }
@@ -161,33 +194,14 @@ export async function requireProviderAccess(
     user.customClaims,
     user.emailVerified === true,
   );
-  if (access.isZillionaireOwner) {
-    return { ...access, providerId: targetProviderId || "zillionaire-owner" };
-  }
+
   if (!access.roles.includes("provider") || !access.providerId) {
-    throw new ApiError(403, "PROVIDER_ROLE_REQUIRED", "Access restricted to licensed channel provider representatives.");
+    throw new ApiError(403, "PROVIDER_ROLE_REQUIRED", "This account is not associated with an active channel provider.");
   }
+
   if (targetProviderId && access.providerId !== targetProviderId) {
-    throw new ApiError(403, "PROVIDER_ISOLATION_VIOLATION", "You can only access data belonging to your own provider organisation.");
+    throw new ApiError(403, "PROVIDER_ISOLATION_VIOLATION", "You do not have permission to access resources belonging to another provider.");
   }
-  return access as PlatformAccess & { providerId: string };
-}
 
-export function isProtectedZillionaire(
-  targetEmail: string | null,
-  configuredZillionaireEmail = process.env["ZILLIONAIRE_EMAIL"],
-): boolean {
-  return Boolean(
-    configuredZillionaireEmail?.trim() &&
-    targetEmail?.trim().toLowerCase() === configuredZillionaireEmail.trim().toLowerCase(),
-  );
-}
-
-export function assertNotProtectedZillionaire(
-  targetEmail: string | null,
-  operation: "demote" | "suspend" | "delete" | "remove",
-): void {
-  if (isProtectedZillionaire(targetEmail)) {
-    throw new ApiError(403, "PROTECTED_ZILLIONAIRE_OWNER", `The Zillionaire owner cannot be ${operation === "suspend" ? "suspended" : operation === "demote" ? "demoted" : operation === "delete" ? "deleted" : "removed"}.`);
-  }
+  return { ...access, providerId: access.providerId };
 }

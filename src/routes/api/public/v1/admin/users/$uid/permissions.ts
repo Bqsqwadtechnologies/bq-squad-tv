@@ -2,18 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
-import { isProtectedZillionaire, resolvePlatformAccess, type AdminModule } from "@/lib/server/roles";
+import { isProtectedZillionaire, resolvePlatformAccess, ZILLIONAIRE_MODULES } from "@/lib/server/roles";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { writeAuditLog } from "@/lib/server/audit";
 
-const adminModules = [
-  "overview", "users", "roles", "producers", "channels", "content", "pricing",
-  "wallets", "payments", "payouts", "ads", "notifications", "moderation",
-  "security", "system",
-] as const satisfies readonly AdminModule[];
-
 const schema = z.object({
-  modules: z.array(z.enum(adminModules)).max(adminModules.length),
+  modules: z.array(z.enum(ZILLIONAIRE_MODULES as [string, ...string[]])).max(ZILLIONAIRE_MODULES.length),
   reason: z.string().trim().min(3).max(1000),
 }).superRefine((value, context) => {
   if (new Set(value.modules).size !== value.modules.length) {
@@ -68,13 +62,14 @@ export const Route = createFileRoute("/api/public/v1/admin/users/$uid/permission
                 update: {
                   name: fs.docName(targetPath),
                   fields: encodeFields({
+                    zillionaireModules: modules,
                     adminModules: modules,
                     roleTags,
                     permissionsUpdatedAt: now,
                     permissionsUpdatedBy: actor.uid,
                   }),
                 },
-                updateMask: { fieldPaths: ["adminModules", "roleTags", "permissionsUpdatedAt", "permissionsUpdatedBy"] },
+                updateMask: { fieldPaths: ["zillionaireModules", "adminModules", "roleTags", "permissionsUpdatedAt", "permissionsUpdatedBy"] },
               }],
             };
           });

@@ -81,3 +81,24 @@
 - **Query Hardening:** Replaced legacy/non-existent `fs.listCollection` calls with strict `fs.query` filtered by `providerId` equality to ensure tenant isolation at the Firestore query layer.
 - **Dispute & Statement Isolation:** Enforced strict check verifying that requested statements or dispute threads belong to the authenticated caller's `providerId`, returning `403 PROVIDER_ISOLATION_VIOLATION` or `404` without leaking cross-tenant data.
 - **Test Suite:** Added `src/test/provider-isolation.test.ts` verifying active provider org resolution, suspended provider rejection, viewer rejection, and cross-provider query and document isolation. All 79 test files (383 tests) pass.
+
+## Batch 07 — Fine-Grained Module Delegation for Zillionaire Operators (File 01)
+
+### Context & Requirements
+V3-01 Batch 07 mandates fine-grained module access for Zillionaire operators (`roles`, `finance`, `channels`, `storage`, `catalog`, `support`, `moderation`, `pricing`, `providers`, `producers`, `users`, `ads`, `reports`, `video`, `delivery`, `settings`). The platform must strictly enforce that operators granted one module cannot call endpoints or access resources of another.
+
+### Architecture & Implementation
+1. **Module Registry Expansion**: Expanded `ZILLIONAIRE_MODULES` in `src/lib/server/roles.ts` to include `"finance"` and `"catalog"`, alongside all operational modules.
+2. **Family Aliasing & Compatibility**:
+   - Operator granted `"finance"` receives permission for `"finance"`, `"payments"`, `"payouts"`, and `"wallets"`, but remains strictly isolated from all other modules.
+   - Operator granted `"catalog"` receives permission for `"catalog"` and `"content"`, while remaining isolated from other modules.
+3. **Strict Disjoint Isolation**:
+   - `requireZillionaireModule(fs, user, module)` evaluates `hasModuleAccess(access.zillionaireModules, module)`.
+   - Operators with only a single granted module fail access to every other targeted module with HTTP 403 `ZILLIONAIRE_SCOPE_REQUIRED`.
+4. **Permissions Endpoint Governance**:
+   - `PUT /api/public/v1/admin/users/$uid/permissions` validates all modules against `ZILLIONAIRE_MODULES`.
+   - Writes both `zillionaireModules` and `adminModules` simultaneously for zero-downtime backward compatibility.
+   - Guarded by protected Zillionaire owner requirement (`OWNER_AUTHORITY_REQUIRED`) and owner account self-protection (`OWNER_ACCOUNT_PROTECTED`).
+5. **Comprehensive Automated Verification**:
+   - Added `src/test/module-delegation.test.ts` (24 tests) verifying pairwise and matrix isolation across all 16 targeted modules, multi-module configurations, owner bypass, unassigned rejection, and immediate revocation.
+   - Total test suite now: 80 test files, 407 tests passing.
