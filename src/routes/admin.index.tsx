@@ -1,3 +1,4 @@
+import { SecurityEventsView } from "@/components/SecurityEventsView";
 import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
@@ -66,7 +67,7 @@ const moduleCards: Array<{
   { id: "payouts", title: "Producer payouts", description: "Review, settle and audit producer payout requests.", icon: Wallet },
   { id: "moderation", title: "Community moderation", description: "Review viewer comments before public visibility.", icon: ShieldCheck },
   { id: "notifications", title: "Notifications", description: "Platform notices and delivery controls.", icon: Megaphone },
-  { id: "security", title: "Security controls", description: "Session, device and integrity controls.", icon: LockKeyhole },
+  { id: "security", title: "Security events & controls", description: "Review access denials, hourly trends and audited identity resolution.", href: "#security-events", icon: LockKeyhole },
   { id: "roles", title: "Delegated access", description: "Least-privilege module permissions for delegated operators.", icon: Users },
 ];
 
@@ -429,6 +430,12 @@ function ZillionaireDashboard({ sessionToken }: { sessionToken?: string } = {}) 
                 })}
               </div>
             </div>
+
+            {allowedModules.has("security") ? (
+              <div id="security-events" className="mt-12">
+                <SecurityEventsView sessionToken={sessionToken} isOwner={access.owner} />
+              </div>
+            ) : null}
           </>
         ) : null}
       </section>

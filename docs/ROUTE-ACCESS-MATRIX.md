@@ -2,13 +2,13 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **160**
+Total scanned routes: **162**
 
 ### Summary by Guard Class
 
 | Guard Class | Count |
 |---|---|
-| `zillionaire module` | 65 |
+| `zillionaire module` | 67 |
 | `public` | 8 |
 | `viewer` | 57 |
 | `webhook signature` | 1 |
@@ -70,6 +70,8 @@ Total scanned routes: **160**
 | `/api/public/v1/admin/providers/test-playback` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/admin/providers/test-playback.ts` |
 | `/api/public/v1/admin/reports/monthly` | `zillionaire module` | requireZillionaire (Module: overview) | `src/routes/api/public/v1/admin/reports/monthly.ts` |
 | `/api/public/v1/admin/secret-health` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/admin/secret-health.ts` |
+| `/api/public/v1/admin/security/events` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/admin/security/events.ts` |
+| `/api/public/v1/admin/security/lookup-actor` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/admin/security/lookup-actor.ts` |
 | `/api/public/v1/admin/storage/backups/restore` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/admin/storage/backups/restore.ts` |
 | `/api/public/v1/admin/storage/destinations` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/admin/storage/destinations.ts` |
 | `/api/public/v1/admin/storage/discover` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/admin/storage/discover.ts` |
