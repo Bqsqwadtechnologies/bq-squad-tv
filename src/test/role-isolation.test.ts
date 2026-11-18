@@ -58,9 +58,9 @@ describe("Server-Side Role Checks and Role Data Isolation", () => {
 
     it("viewer role is barred from Zillionaire /admin console", async () => {
       await expect(requireAdminModule(fs, viewerUser, "overview"))
-        .rejects.toMatchObject({ status: 403, code: "ADMIN_SCOPE_REQUIRED" });
+        .rejects.toMatchObject({ status: 403, code: "ZILLIONAIRE_SCOPE_REQUIRED" });
       await expect(requireAdminModule(fs, viewerUser, "providers"))
-        .rejects.toMatchObject({ status: 403, code: "ADMIN_SCOPE_REQUIRED" });
+        .rejects.toMatchObject({ status: 403, code: "ZILLIONAIRE_SCOPE_REQUIRED" });
     });
 
     it("viewer role is barred from /producer console and API actions", async () => {
@@ -86,9 +86,9 @@ describe("Server-Side Role Checks and Role Data Isolation", () => {
 
     it("producer is strictly barred from /admin console", async () => {
       await expect(requireAdminModule(fs, producerAUser, "pricing"))
-        .rejects.toMatchObject({ status: 403, code: "ADMIN_SCOPE_REQUIRED" });
+        .rejects.toMatchObject({ status: 403, code: "ZILLIONAIRE_SCOPE_REQUIRED" });
       await expect(requireAdminModule(fs, producerAUser, "storage"))
-        .rejects.toMatchObject({ status: 403, code: "ADMIN_SCOPE_REQUIRED" });
+        .rejects.toMatchObject({ status: 403, code: "ZILLIONAIRE_SCOPE_REQUIRED" });
     });
 
     it("producer is strictly barred from /provider console", async () => {
@@ -116,7 +116,7 @@ describe("Server-Side Role Checks and Role Data Isolation", () => {
 
     it("provider 1 is strictly barred from /admin console", async () => {
       await expect(requireAdminModule(fs, provider1User, "providers"))
-        .rejects.toMatchObject({ status: 403, code: "ADMIN_SCOPE_REQUIRED" });
+        .rejects.toMatchObject({ status: 403, code: "ZILLIONAIRE_SCOPE_REQUIRED" });
     });
 
     it("provider 1 is strictly barred from /producer console", async () => {

@@ -154,3 +154,30 @@ describe("Provider role and isolation", () => {
       .rejects.toMatchObject({ status: 403 });
   });
 });
+
+describe("Zillionaire migration and owner protection", () => {
+  it("reads zillionaireModules directly when set", async () => {
+    const { requireZillionaireModule } = await import("@/lib/server/roles");
+    const fs = fakeFirestore({ zillionaireModules: ["security", "wallets"] }, null);
+    const access = await requireZillionaireModule(fs, { uid: "u1", email: "staff@example.com", emailVerified: true }, "security");
+    expect(access.zillionaireModules).toContain("security");
+    expect(access.zillionaireModules).toContain("wallets");
+  });
+
+  it("falls back to legacy adminModules when zillionaireModules is not yet set", async () => {
+    const { requireZillionaireModule } = await import("@/lib/server/roles");
+    const fs = fakeFirestore({ adminModules: ["pricing", "channels"] }, null);
+    const access = await requireZillionaireModule(fs, { uid: "u2", email: "staff2@example.com", emailVerified: true }, "pricing");
+    expect(access.zillionaireModules).toContain("pricing");
+  });
+
+  it("prevents demotion or suspension of protected Zillionaire owner", async () => {
+    const { assertNotProtectedZillionaire } = await import("@/lib/server/roles");
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
+    expect(() => assertNotProtectedZillionaire("owner@example.com", "demote")).toThrowError(/cannot be demoted/);
+    expect(() => assertNotProtectedZillionaire("owner@example.com", "suspend")).toThrowError(/cannot be suspended/);
+    expect(() => assertNotProtectedZillionaire("owner@example.com", "delete")).toThrowError(/cannot be deleted/);
+    expect(() => assertNotProtectedZillionaire("other@example.com", "demote")).not.toThrow();
+    vi.unstubAllEnvs();
+  });
+});

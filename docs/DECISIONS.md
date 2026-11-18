@@ -44,3 +44,13 @@
   3. Bottom navigation follows the uploaded design: Home, Live TV, Library, Downloads, Settings. Downloads has no download function: it opens a well-designed "Coming soon" screen (viewing stays online only). The profile avatar sits top right on every screen.
   4. Dark navy and black is the normal theme; white is the second theme. Default is dark.
   5. Per-minute billing is completed and extended to live channels (file 04).
+
+## Batch 03: Zillionaire Identity and Migration
+
+- **Zillionaire Terminology**: Renamed administrative permission model and types to Zillionaire identity (`ZillionaireModule`, `zillionaireModules`, `requireZillionaireModule`, `isZillionaireOwner`).
+- **Owner Protection**: Hardened `assertNotProtectedZillionaire` invariant to guarantee that the primary Zillionaire owner (`ZILLIONAIRE_EMAIL`) cannot be demoted, suspended, or deleted under any circumstance.
+- **Migration & Backward Compatibility**:
+  - Maintained backward-compatible aliases (`AdminModule`, `requireAdminModule`, `ADMIN_MODULES`) across the codebase.
+  - Read path in `resolvePlatformAccess` supports both `zillionaireModules` and legacy `adminModules` with automated logging.
+  - Created idempotent owner migration endpoint `POST /api/public/v1/admin/migration/zillionaire` with tamper-evident audit trail.
+  - Removed legacy `ADMIN_EMAIL` fallback in favor of strictly enforced `ZILLIONAIRE_EMAIL`.

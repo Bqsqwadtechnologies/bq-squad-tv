@@ -1,25 +1,35 @@
 import { ApiError, type Firestore } from "./firebase-admin";
 
 export type PlatformRole = "viewer" | "producer" | "provider";
-export type AdminModule =
+
+export type ZillionaireModule =
   | "overview" | "users" | "roles" | "producers" | "channels" | "content"
-  | "pricing" | "wallets" | "payments" | "payouts" | "ads" | "notifications"
-  | "moderation" | "security" | "system" | "providers" | "support" | "pages";
+  | "video" | "storage" | "delivery" | "pricing" | "wallets" | "payments"
+  | "payouts" | "ads" | "notifications" | "moderation" | "security" | "reports"
+  | "settings" | "system" | "providers" | "support" | "pages";
+
+// Backward-compatible type alias during migration
+export type AdminModule = ZillionaireModule;
 
 export type PlatformAccess = {
   roles: PlatformRole[];
   isZillionaireOwner: boolean;
-  adminModules: AdminModule[];
+  zillionaireModules: ZillionaireModule[];
+  adminModules: ZillionaireModule[]; // Backward-compat alias
   producerPlanActive: boolean;
   emailVerified: boolean;
   providerId?: string;
 };
 
-const ADMIN_MODULES: AdminModule[] = [
-  "overview", "users", "roles", "producers", "channels", "content", "pricing",
-  "wallets", "payments", "payouts", "ads", "notifications", "moderation",
-  "security", "system", "providers", "support", "pages",
+export const ZILLIONAIRE_MODULES: ZillionaireModule[] = [
+  "overview", "users", "roles", "producers", "channels", "content",
+  "video", "storage", "delivery", "pricing", "wallets", "payments",
+  "payouts", "ads", "notifications", "moderation", "security", "reports",
+  "settings", "system", "providers", "support", "pages",
 ];
+
+// Backward-compatible constant alias
+export const ADMIN_MODULES = ZILLIONAIRE_MODULES;
 
 function stringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
@@ -46,6 +56,7 @@ export async function resolvePlatformAccess(
     email && user["email"].trim().toLowerCase() === email.trim().toLowerCase(),
   );
   const effectiveEmailVerified = emailVerified || appEmailVerified;
+  // Strictly ZILLIONAIRE_EMAIL only - no ADMIN_EMAIL fallback
   const configuredZillionaireEmail = process.env["ZILLIONAIRE_EMAIL"]?.trim().toLowerCase();
   const isZillionaireOwner = Boolean(
     effectiveEmailVerified && configuredZillionaireEmail && email?.trim().toLowerCase() === configuredZillionaireEmail,
@@ -76,12 +87,23 @@ export async function resolvePlatformAccess(
   // Delegated access is expressed as individual module permissions, not an administrator role.
   // Delegated module permissions live in Firestore so the protected owner can
   // revoke them immediately; stale Firebase custom claims must not preserve access.
-  const configuredScopes = stringArray(user?.["adminModules"])
-    .filter((scope): scope is AdminModule => ADMIN_MODULES.includes(scope as AdminModule));
+  // Reads accept both zillionaireModules and legacy adminModules for one release.
+  let rawModules = stringArray(user?.["zillionaireModules"]);
+  if (!rawModules.length && Array.isArray(user?.["adminModules"])) {
+    rawModules = stringArray(user?.["adminModules"]);
+    if (rawModules.length > 0) {
+      console.warn(`[LEGACY_ADMIN_MODULES] User ${uid} used legacy adminModules; migration recommended.`);
+    }
+  }
+  const configuredScopes = rawModules
+    .filter((scope): scope is ZillionaireModule => ZILLIONAIRE_MODULES.includes(scope as ZillionaireModule));
+  const activeModules = isZillionaireOwner ? ZILLIONAIRE_MODULES : [...new Set(configuredScopes)];
+
   return {
     roles,
     isZillionaireOwner,
-    adminModules: isZillionaireOwner ? ADMIN_MODULES : [...new Set(configuredScopes)],
+    zillionaireModules: activeModules,
+    adminModules: activeModules,
     producerPlanActive,
     emailVerified: effectiveEmailVerified,
     ...(resolvedProviderId ? { providerId: resolvedProviderId } : {}),
@@ -106,10 +128,10 @@ export async function requirePlatformRole(
   return access;
 }
 
-export async function requireAdminModule(
+export async function requireZillionaireModule(
   fs: Firestore,
   user: { uid: string; email: string | null; emailVerified?: boolean; customClaims?: Record<string, unknown> },
-  module: AdminModule,
+  module: ZillionaireModule,
 ): Promise<PlatformAccess> {
   const access = await resolvePlatformAccess(
     fs,
@@ -118,11 +140,14 @@ export async function requireAdminModule(
     user.customClaims,
     user.emailVerified === true,
   );
-  if (!access.isZillionaireOwner && !access.adminModules.includes(module)) {
-    throw new ApiError(403, "ADMIN_SCOPE_REQUIRED", "This account does not have permission to access this section.");
+  if (!access.isZillionaireOwner && !access.zillionaireModules.includes(module)) {
+    throw new ApiError(403, "ZILLIONAIRE_SCOPE_REQUIRED", "This account does not have permission to access this section.");
   }
   return access;
 }
+
+// Backward-compatible function alias
+export const requireAdminModule = requireZillionaireModule;
 
 export async function requireProviderAccess(
   fs: Firestore,
@@ -137,7 +162,7 @@ export async function requireProviderAccess(
     user.emailVerified === true,
   );
   if (access.isZillionaireOwner) {
-    return { ...access, providerId: targetProviderId || "admin-owner" };
+    return { ...access, providerId: targetProviderId || "zillionaire-owner" };
   }
   if (!access.roles.includes("provider") || !access.providerId) {
     throw new ApiError(403, "PROVIDER_ROLE_REQUIRED", "Access restricted to licensed channel provider representatives.");
@@ -156,4 +181,13 @@ export function isProtectedZillionaire(
     configuredZillionaireEmail?.trim() &&
     targetEmail?.trim().toLowerCase() === configuredZillionaireEmail.trim().toLowerCase(),
   );
+}
+
+export function assertNotProtectedZillionaire(
+  targetEmail: string | null,
+  operation: "demote" | "suspend" | "delete" | "remove",
+): void {
+  if (isProtectedZillionaire(targetEmail)) {
+    throw new ApiError(403, "PROTECTED_ZILLIONAIRE_OWNER", `The Zillionaire owner cannot be ${operation === "suspend" ? "suspended" : operation === "demote" ? "demoted" : operation === "delete" ? "deleted" : "removed"}.`);
+  }
 }

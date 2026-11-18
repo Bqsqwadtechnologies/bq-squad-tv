@@ -2,13 +2,13 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **159**
+Total scanned routes: **160**
 
 ### Summary by Guard Class
 
 | Guard Class | Count |
 |---|---|
-| `zillionaire module` | 64 |
+| `zillionaire module` | 65 |
 | `public` | 8 |
 | `viewer` | 57 |
 | `webhook signature` | 1 |
@@ -53,6 +53,7 @@ Total scanned routes: **159**
 | `/api/public/v1/admin/content-assets/$assetId/reprocess` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/admin/content-assets/$assetId/reprocess.ts` |
 | `/api/public/v1/admin/content-assets/$assetId/rights` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/admin/content-assets/$assetId/rights.ts` |
 | `/api/public/v1/admin/content-comments/$commentId/moderate` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/admin/content-comments/$commentId/moderate.ts` |
+| `/api/public/v1/admin/migration/zillionaire` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/admin/migration/zillionaire.ts` |
 | `/api/public/v1/admin/moderation/` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/admin/moderation/index.ts` |
 | `/api/public/v1/admin/notifications` | `zillionaire module` | requireZillionaire (Module: notifications) | `src/routes/api/public/v1/admin/notifications.ts` |
 | `/api/public/v1/admin/overview` | `zillionaire module` | requireZillionaire (Module: overview) | `src/routes/api/public/v1/admin/overview.ts` |
