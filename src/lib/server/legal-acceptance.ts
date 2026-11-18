@@ -1,9 +1,10 @@
 import { ApiError, type Firestore } from "./firebase-admin";
+import { defaultPages } from "../legal/default-pages";
 
 export type LegalAudience = "public" | "producer" | "provider";
 
 export function findUnfilledLegalPlaceholders(body: string): string[] {
-  return [...new Set([...body.matchAll(/\{\{([a-z0-9_]+)\}\}/g)].map(match => match[1] ?? ""))].filter(Boolean).sort();
+  return [...new Set([...body.matchAll(/\{\{([a-z0-9_]+)\}\}/g)].map((match) => match[1] ?? ""))].filter(Boolean).sort();
 }
 
 const REQUIRED_BY_AUDIENCE: Record<LegalAudience, string[]> = {
@@ -14,16 +15,34 @@ const REQUIRED_BY_AUDIENCE: Record<LegalAudience, string[]> = {
 
 export async function getRequiredLegalPages(fs: Firestore, audience: LegalAudience) {
   const slugs = REQUIRED_BY_AUDIENCE[audience];
-  const pages = await Promise.all(slugs.map(slug => fs.getDoc("sitePages/" + slug)));
+  const pages = await Promise.all(slugs.map((slug) => fs.getDoc("sitePages/" + slug)));
+
   return pages.map((page, index) => {
     const slug = slugs[index]!;
-    if (!page || page["status"] !== "published" || page["audience"] !== (slug === "terms" || slug === "privacy-policy" ? "public" : audience === "producer" ? "producer" : "provider") || !Number.isSafeInteger(page["version"])) {
-      throw new ApiError(503, "LEGAL_PAGES_NOT_READY", "The required legal pages are not published yet. Please try again later.");
+    // If Firestore has a published document without placeholders, use it
+    if (
+      page &&
+      page["status"] === "published" &&
+      typeof page["body"] === "string" &&
+      !/\{\{[a-z0-9_]+\}\}/.test(page["body"]) &&
+      Number.isSafeInteger(page["version"])
+    ) {
+      return {
+        slug,
+        version: page["version"] as number,
+        title: String(page["title"] ?? slug),
+        requiresReacceptance: page["requiresReacceptance"] === true,
+      };
     }
-    if (typeof page["body"] !== "string" || /\{\{[a-z0-9_]+\}\}/.test(page["body"] as string)) {
-      throw new ApiError(503, "LEGAL_PAGE_INCOMPLETE", "A required legal page is incomplete and cannot be accepted.");
-    }
-    return { slug, version: page["version"] as number, title: String(page["title"] ?? slug), requiresReacceptance: page["requiresReacceptance"] === true };
+
+    // Otherwise, fall back to bundled default as version 0
+    const bundled = defaultPages.find((p: { slug: string }) => p.slug === slug);
+    return {
+      slug,
+      version: 0,
+      title: bundled?.title ?? slug,
+      requiresReacceptance: false,
+    };
   });
 }
 
@@ -33,15 +52,23 @@ export async function assertLegalAcceptance(fs: Firestore, uid: string, audience
     const exact = await fs.getDoc("legalAcceptances/" + uid + "_" + page.slug + "_v" + page.version);
     let accepted = exact;
     if (!accepted && !page.requiresReacceptance) {
-      for (let version = page.version - 1; version >= 1; version -= 1) {
+      for (let version = page.version - 1; version >= 0; version -= 1) {
         accepted = await fs.getDoc("legalAcceptances/" + uid + "_" + page.slug + "_v" + version);
         if (accepted) break;
       }
     }
-    if (!accepted || accepted["uid"] !== uid || accepted["slug"] !== page.slug ||
+    if (
+      !accepted ||
+      accepted["uid"] !== uid ||
+      accepted["slug"] !== page.slug ||
       !Number.isSafeInteger(accepted["version"]) ||
-      (page.requiresReacceptance && accepted["version"] !== page.version)) {
-      throw new ApiError(403, "LEGAL_ACCEPTANCE_REQUIRED", "Please review and accept the current service terms and privacy notice before continuing.");
+      (page.requiresReacceptance && accepted["version"] !== page.version)
+    ) {
+      throw new ApiError(
+        403,
+        "LEGAL_ACCEPTANCE_REQUIRED",
+        "Please review and accept the current service terms and privacy notice before continuing."
+      );
     }
   }
 }
