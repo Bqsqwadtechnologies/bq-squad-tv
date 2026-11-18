@@ -84,6 +84,7 @@ The checker reports names only. Add or verify each name in the hosting provider'
 - `PAYSTACK_PUBLIC_KEY` — Paystack Dashboard → Settings / API Keys & Webhooks; use only where the client integration requires it.
 - `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` — Google Play Console API access service account credentials; server-side only.
 - `GOOGLE_PLAY_PACKAGE_NAME` — the Android application ID configured in the Play Console; this is a setting, not a credential.
+- `AUDIT_HASH_KEY` — secret server-side HMAC key (minimum 32 characters) used to pseudonymize actor and target identifiers in access denial privacy audit records; server-side hosting secret only.
 - `VIDEO_WORKER_KEYS_JSON` — JSON map of worker IDs to independent random credentials (each at least 48 characters); add only to the server environment and the Modal worker secret.
 - `CONFIG_BACKUP_KEY` — optional until an adult account owner configures and tests encrypted storage backups; server-side hosting secret only.
 - `MODAL_WAKE_URL` — the deployed Modal secured wake endpoint URL; store as a server-side setting.

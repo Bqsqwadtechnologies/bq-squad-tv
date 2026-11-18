@@ -1,4 +1,5 @@
 import { ApiError, type Firestore } from "./firebase-admin";
+import { recordAccessDenial } from "./access-denials";
 
 export type PlatformRole = "viewer" | "producer" | "provider";
 
@@ -156,6 +157,13 @@ export async function requirePlatformRole(
     user.emailVerified === true,
   );
   if (!access.roles.includes(role)) {
+    await recordAccessDenial(fs, {
+      actorUid: user.uid,
+      actorRoleClass: access.roles.includes("producer") ? "producer" : access.roles.includes("provider") ? "provider" : "viewer",
+      requiredRole: role,
+      resourceKind: "platform_role",
+      reasonCode: "CROSS_ROLE_DENIED",
+    }).catch(() => undefined);
     throw new ApiError(403, "FORBIDDEN", "This account does not have the required platform role.");
   }
   return access;
@@ -174,6 +182,13 @@ export async function requireZillionaireModule(
     user.emailVerified === true,
   );
   if (!access.isZillionaireOwner && !hasModuleAccess(access.zillionaireModules, module)) {
+    await recordAccessDenial(fs, {
+      actorUid: user.uid,
+      actorRoleClass: access.roles.includes("producer") ? "producer" : access.roles.includes("provider") ? "provider" : "viewer",
+      requiredRole: `module:${module}`,
+      resourceKind: "zillionaire_module",
+      reasonCode: "MISSING_MODULE",
+    }).catch(() => undefined);
     throw new ApiError(403, "ZILLIONAIRE_SCOPE_REQUIRED", `Zillionaire module permission '${module}' is required for this action.`);
   }
   return access;
@@ -196,10 +211,25 @@ export async function requireProviderAccess(
   );
 
   if (!access.roles.includes("provider") || !access.providerId) {
+    await recordAccessDenial(fs, {
+      actorUid: user.uid,
+      actorRoleClass: access.roles.includes("producer") ? "producer" : "viewer",
+      requiredRole: "provider",
+      resourceKind: "provider_tenant",
+      reasonCode: "CROSS_ROLE_DENIED",
+    }).catch(() => undefined);
     throw new ApiError(403, "PROVIDER_ROLE_REQUIRED", "This account is not associated with an active channel provider.");
   }
 
   if (targetProviderId && access.providerId !== targetProviderId) {
+    await recordAccessDenial(fs, {
+      actorUid: user.uid,
+      actorRoleClass: "provider",
+      requiredRole: `provider:${targetProviderId}`,
+      resourceKind: "provider_tenant",
+      targetId: targetProviderId,
+      reasonCode: "CROSS_TENANT_DENIED",
+    }).catch(() => undefined);
     throw new ApiError(403, "PROVIDER_ISOLATION_VIOLATION", "You do not have permission to access resources belonging to another provider.");
   }
 

@@ -1,4 +1,4 @@
-import type { Firestore } from "./firebase-admin";
+import { ApiError, type Firestore } from "./firebase-admin";
 
 export const DEFAULT_FLAGS = {
   producerChannelCreation: false,
@@ -44,4 +44,15 @@ export function publicFlags(flags: PlatformFlags) {
     forYou: flags.forYou,
     reminders: flags.reminders,
   };
+}
+
+
+export function assertFeatureFlag(
+  flags: PlatformFlags,
+  key: keyof PlatformFlags,
+  message?: string,
+): void {
+  if (!flags[key]) {
+    throw new ApiError(403, "FEATURE_FLAG_DISABLED", message || `Feature flag '${key}' is currently disabled.`);
+  }
 }

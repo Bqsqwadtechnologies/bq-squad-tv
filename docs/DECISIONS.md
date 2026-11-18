@@ -126,3 +126,28 @@ V3-01 Batch 08 requires server-checked page guards for privileged console entry 
 5. **Comprehensive Automated Verification**:
    - Added `src/test/console-page-guards.test.tsx` (19 tests) covering anonymous 404 presentation, viewer denial across consoles, cross-role isolation (producer denied on admin/provider, provider denied on admin/producer, Zillionaire denied on producer/provider unless role assigned), owner & delegated module authorization, and route robots metadata.
    - Test suite now: 81 test files, 426 tests passing.
+
+## Batch 09 — Privacy-Safe Denied-Access Audit Events & Sharded Counters (File 01)
+
+### Context & Requirements
+V3-01 Batch 09 requires writing structured privacy-safe audit records (`accessDenials/{id}`) on every authorization failure (cross-role, cross-tenant, missing module, bad worker signature, disabled feature flag). Under no circumstances may raw user emails, display names, bearer tokens, cookies, auth headers, request bodies, query strings, raw database identifiers, signed playback links, or wallet figures be persisted in denial logs. The system must support sharded hourly counters per `(actorHash, routePattern, reasonCode)`, enforce a 90-day retention TTL, and emit immediate security alerts when any single actor exceeds 10 denials in a rolling hour.
+
+### Architecture & Implementation
+1. **Privacy-Preserving Hashing & Coarse Attributes (`src/lib/server/access-denials.ts`)**:
+   - `actorHash` and `targetHash`: HMAC-SHA256 digests generated with server-side `AUDIT_HASH_KEY`. Raw IDs are never recorded in Firestore denial documents.
+   - `routePattern`: Normalized URL path mapping dynamic segments (UUIDs, prefixed IDs like `usr_`, `ch_`, `prov_`, numeric IDs) to canonical route patterns (e.g. `/api/public/v1/content-assets/:assetId/approve`), stripping query parameters, hashes, and request bodies.
+   - `networkPrefix`: Truncated to coarse subnets (`/24` for IPv4, `/48` for IPv6) and HMAC-hashed; individual IP addresses are never recorded.
+   - `platformClass`: High-level client classification (`web`, `android`, `ios`, `worker`, `unknown`) based on standard client identifiers.
+   - Schema enforcement: Strict 13-property whitelist stored in `accessDenials/{id}` with 90-day `expiresAt` TTL.
+2. **Sharded Counters & Rate-Based Alerting**:
+   - Hourly sharding (`accessDenialCounters/{actorHash}_{patternHash}_{reason}_{hourUtc}_shard{0-4}`) distributes counter writes across 5 shards to prevent write bottlenecks.
+   - Central hourly rollup (`accessDenialHourlyTotals/{actorHash}_{hourUtc}`) tracks aggregate denials across all endpoints and triggers a high-severity security alert (`securityAlerts/{actorHash}_{hourUtc}`) as soon as an actor exceeds 10 denials within an hour.
+3. **Authorization & Worker Middleware Integration**:
+   - `roles.ts`: Integrated into `requirePlatformRole` (403 `FORBIDDEN`), `requireZillionaireModule` (403 `ZILLIONAIRE_SCOPE_REQUIRED`), and `requireProviderAccess` (403 `PROVIDER_ROLE_REQUIRED` and `PROVIDER_ISOLATION_VIOLATION`).
+   - `video-worker-auth.ts`: Integrated into `requireVideoWorker` on worker status check (403 `WORKER_DISABLED`) and HMAC signature verification (401 `INVALID_SIGNATURE`).
+   - `flags.ts`: Introduced `assertFeatureFlag` helper throwing 403 `FEATURE_FLAG_DISABLED` with denial tracking.
+4. **Leak-Proof Canary Verification & Schema Snapshot (`src/test/access-denials.test.ts`)**:
+   - Comprehensive test suite (14 tests) validating exact Firestore event schemas, 90-day expiration timestamps, IPv4/IPv6 coarse subnet truncation, and route pattern normalization.
+   - Canary injection test asserts that synthetic canary secrets in headers, request bodies, query parameters, and resource IDs never leak into audit records, server logs, or error responses.
+   - Validated sharded counter increments and security alert document creation when denial threshold (>10/hr) is breached.
+   - Total test suite now: 82 test files, 440 tests passing.

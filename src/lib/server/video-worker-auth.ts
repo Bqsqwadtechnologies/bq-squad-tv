@@ -1,4 +1,5 @@
 import { ApiError, Firestore } from "./firebase-admin";
+import { recordAccessDenial } from "./access-denials";
 
 const encoder = new TextEncoder();
 const MAX_CLOCK_SKEW_SECONDS = 300;
@@ -60,7 +61,18 @@ export async function requireVideoWorker(request: Request, fs: Firestore): Promi
     throw new ApiError(401, "WORKER_AUTH_INVALID", "The worker authorization is invalid.");
   }
   const disabled = await fs.getDoc("videoWorkerRegistry/" + workerId);
-  if (disabled?.["disabled"] === true) throw new ApiError(403, "WORKER_DISABLED", "This processing worker is disabled.");
+  if (disabled?.["disabled"] === true) {
+    await recordAccessDenial(fs, {
+      request,
+      actorUid: workerId,
+      actorRoleClass: "worker",
+      requiredRole: "worker",
+      resourceKind: "video_worker",
+      targetId: workerId,
+      reasonCode: "WORKER_DISABLED",
+    }).catch(() => undefined);
+    throw new ApiError(403, "WORKER_DISABLED", "This processing worker is disabled.");
+  }
   const timestamp = request.headers.get("x-bq-worker-time") ?? "";
   const nonce = request.headers.get("x-bq-worker-nonce") ?? "";
   const signature = request.headers.get("x-bq-worker-signature") ?? "";
@@ -77,7 +89,18 @@ export async function requireVideoWorker(request: Request, fs: Firestore): Promi
   const url = new URL(request.url);
   const message = await createWorkerSignatureMessage(timestamp, nonce, request.method, url.pathname, body);
   const valid = await crypto.subtle.verify("HMAC", await workerKey(workerId), toBuffer(fromHex(signature)), toBuffer(encoder.encode(message)));
-  if (!valid) throw new ApiError(401, "WORKER_AUTH_INVALID", "The worker authorization is invalid.");
+  if (!valid) {
+    await recordAccessDenial(fs, {
+      request,
+      actorUid: workerId,
+      actorRoleClass: "worker",
+      requiredRole: "worker",
+      resourceKind: "video_worker",
+      targetId: workerId,
+      reasonCode: "BAD_WORKER_SIGNATURE",
+    }).catch(() => undefined);
+    throw new ApiError(401, "WORKER_AUTH_INVALID", "The worker authorization is invalid.");
+  }
   await fs.transact(["videoWorkerNonces/" + workerId + "_" + nonce], docs => {
     if (docs[0]) throw new ApiError(409, "WORKER_NONCE_REPLAYED", "The worker request has already been used.");
     return {
