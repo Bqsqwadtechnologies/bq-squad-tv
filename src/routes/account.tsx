@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { BrandLogo } from "@/components/BrandLogo";
 import {
   createAccountWithEmailPassword,
   getWebAccount,
@@ -464,7 +465,7 @@ function AccountPage() {
     <main className="flex min-h-screen items-center justify-center bg-[#030b2a] px-4 py-12 text-white">
       <div className="w-full max-w-md">
         <a href="/" className="mb-8 flex justify-center" aria-label="BQ SQWAD TV home">
-          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-auto w-56 object-contain" />
+          <BrandLogo variant="horizontal" className="h-10 w-auto" />
         </a>
         <label className="mb-4 block text-sm font-semibold text-blue-50">
           Appearance
