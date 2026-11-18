@@ -47,3 +47,31 @@ export function StatusPage({
     </main>
   );
 }
+
+export function PolicyPublicationNotice({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <main className="min-h-screen bg-background px-5 py-12 text-foreground">
+      <article className="mx-auto max-w-3xl rounded-3xl border border-border bg-card p-6 sm:p-10 flex flex-col items-center">
+        <BrandLogo variant="icon" className="mb-4 h-12 w-12" />
+        <a href="/" className="text-sm font-semibold text-primary">BQ SQWAD TV</a>
+        <h1 className="mt-6 text-3xl font-black text-center">{title}</h1>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground text-center">{description}</p>
+        <div className="mt-8 w-full rounded-2xl border border-border bg-muted p-5 text-center">
+          <p className="font-semibold">Publication pending</p>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            This document is not yet an approved policy and should not be treated as the final terms. We will publish the approved version after the company has completed its review.
+          </p>
+        </div>
+        <p className="mt-6 text-sm text-muted-foreground text-center">
+          Questions? Contact <a className="font-semibold text-primary underline underline-offset-4" href="mailto:tv@bqsqwad.com">tv@bqsqwad.com</a>.
+        </p>
+      </article>
+    </main>
+  );
+}
