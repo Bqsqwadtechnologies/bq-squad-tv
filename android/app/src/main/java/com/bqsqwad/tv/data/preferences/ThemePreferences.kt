@@ -10,7 +10,7 @@ object ThemePreferences {
         return context.getSharedPreferences(FILE_NAME, Context.MODE_PRIVATE)
             .getString(KEY_THEME_MODE, "system")
             ?.takeIf { it == "system" || it == "light" || it == "dark" }
-            ?: "system"
+            ?: "dark"
     }
 
     fun save(context: Context, themeMode: String) {

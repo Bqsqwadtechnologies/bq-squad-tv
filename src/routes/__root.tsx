@@ -91,13 +91,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className="light">
+    <html lang="en" className="dark">
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `try {
               const saved = localStorage.getItem("bq-sqwad-theme");
-              const mode = saved === "dark" ? "dark" : "light";
+              const mode = saved === "light" ? "light" : "dark";
               document.documentElement.classList.toggle("dark", mode === "dark");
               document.documentElement.classList.toggle("light", mode === "light");
             } catch {}
