@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **233**
+Total scanned routes: **234**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **233**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 112 |
+| `zillionaire module` | 113 |
 | `producer` | 4 |
 
 ### Inventory
@@ -205,6 +205,7 @@ Total scanned routes: **233**
 | `/api/public/v1/zillionaire/storage/replicas` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/storage/replicas.ts` |
 | `/api/public/v1/zillionaire/storage/seed` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/storage/seed.ts` |
 | `/api/public/v1/zillionaire/storage/usage` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/storage/usage.ts` |
+| `/api/public/v1/zillionaire/support/` | `zillionaire module` | requireZillionaire (Module: support) | `src/routes/api/public/v1/zillionaire/support/index.ts` |
 | `/api/public/v1/zillionaire/support/messages` | `zillionaire module` | requireZillionaire (Module: support) | `src/routes/api/public/v1/zillionaire/support/messages.ts` |
 | `/api/public/v1/zillionaire/team` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/team.ts` |
 | `/api/public/v1/zillionaire/team/$uid` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/team/$uid.ts` |

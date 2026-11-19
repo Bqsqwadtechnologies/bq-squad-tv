@@ -222,3 +222,9 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
   - Month-End Accounting Close & Payout Calendar: Immutable period locking (`financialPeriods`) requiring mandatory audit reasons, historical locked periods registry, and bi-weekly creator payout settlement calendar with cutoff and disbursement milestones.
   - Anomaly Monitor: Automated heuristic detection of sudden top-up volume velocity surges, repeated payment card reversal bursts, and high-value debits with mandatory audit reason dismissal.
   - Route Access & Quality: Navigation wired to ConsoleShell under Money section, dead `/zillionaire/wallets` link resolved, 233 routes catalogued in `ROUTE-ACCESS-MATRIX.md`, role-matrix expectations verified, and all 2,850 Vitest tests passing.
+
+## V5-01 Batch 8 — Support desk and user accounts (2026-11-19)
+- Unified support desk at `/zillionaire/support` with ticket priority, status workflow, internal operator notes (private to team), canned reply templates, and linked records (User Account UID, Payment Reference, Receipt ID).
+- Reusable audience segments with min-spend, platform, and geographic criteria saved to Firestore `userSegments` with audience count estimates and CSV export.
+- Account recovery challenge queue at `/api/public/v1/zillionaire/support/` with identity check verification (email, billing, device fingerprint); operators never view or handle plaintext user passwords, dispatching cryptographic verification tokens.
+- Role matrix and route access matrix updated to 234 routes with all 96 test files / 2,865 tests passing.

@@ -219,6 +219,7 @@ import { Route as ApiPublicV1ZillionaireStorageRegisterDiscoveredRouteImport } f
 import { Route as ApiPublicV1ZillionaireStorageReplicasRouteImport } from './routes/api/public/v1/zillionaire/storage/replicas'
 import { Route as ApiPublicV1ZillionaireStorageSeedRouteImport } from './routes/api/public/v1/zillionaire/storage/seed'
 import { Route as ApiPublicV1ZillionaireStorageUsageRouteImport } from './routes/api/public/v1/zillionaire/storage/usage'
+import { Route as ApiPublicV1ZillionaireSupportIndexRouteImport } from './routes/api/public/v1/zillionaire/support/index'
 import { Route as ApiPublicV1ZillionaireSupportMessagesRouteImport } from './routes/api/public/v1/zillionaire/support/messages'
 import { Route as ApiPublicV1ZillionaireTeamUidRouteImport } from './routes/api/public/v1/zillionaire/team/$uid'
 import { Route as ApiPublicV1ZillionaireUsersIndexRouteImport } from './routes/api/public/v1/zillionaire/users/index'
@@ -1452,6 +1453,12 @@ const ApiPublicV1ZillionaireStorageUsageRoute =
     path: '/api/public/v1/zillionaire/storage/usage',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireSupportIndexRoute =
+  ApiPublicV1ZillionaireSupportIndexRouteImport.update({
+    id: '/api/public/v1/zillionaire/support/',
+    path: '/api/public/v1/zillionaire/support/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireSupportMessagesRoute =
   ApiPublicV1ZillionaireSupportMessagesRouteImport.update({
     id: '/api/public/v1/zillionaire/support/messages',
@@ -1937,6 +1944,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/producers/': typeof ApiPublicV1ZillionaireProducersIndexRoute
   '/api/public/v1/zillionaire/providers/': typeof ApiPublicV1ZillionaireProvidersIndexRoute
   '/api/public/v1/zillionaire/receipts/': typeof ApiPublicV1ZillionaireReceiptsIndexRoute
+  '/api/public/v1/zillionaire/support/': typeof ApiPublicV1ZillionaireSupportIndexRoute
   '/api/public/v1/zillionaire/users/': typeof ApiPublicV1ZillionaireUsersIndexRoute
   '/api/public/v1/auth/web/session/logout': typeof ApiPublicV1AuthWebSessionLogoutRoute
   '/api/public/v1/auth/web/session/refresh': typeof ApiPublicV1AuthWebSessionRefreshRoute
@@ -2193,6 +2201,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/producers': typeof ApiPublicV1ZillionaireProducersIndexRoute
   '/api/public/v1/zillionaire/providers': typeof ApiPublicV1ZillionaireProvidersIndexRoute
   '/api/public/v1/zillionaire/receipts': typeof ApiPublicV1ZillionaireReceiptsIndexRoute
+  '/api/public/v1/zillionaire/support': typeof ApiPublicV1ZillionaireSupportIndexRoute
   '/api/public/v1/zillionaire/users': typeof ApiPublicV1ZillionaireUsersIndexRoute
   '/api/public/v1/auth/web/session/logout': typeof ApiPublicV1AuthWebSessionLogoutRoute
   '/api/public/v1/auth/web/session/refresh': typeof ApiPublicV1AuthWebSessionRefreshRoute
@@ -2451,6 +2460,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/producers/': typeof ApiPublicV1ZillionaireProducersIndexRoute
   '/api/public/v1/zillionaire/providers/': typeof ApiPublicV1ZillionaireProvidersIndexRoute
   '/api/public/v1/zillionaire/receipts/': typeof ApiPublicV1ZillionaireReceiptsIndexRoute
+  '/api/public/v1/zillionaire/support/': typeof ApiPublicV1ZillionaireSupportIndexRoute
   '/api/public/v1/zillionaire/users/': typeof ApiPublicV1ZillionaireUsersIndexRoute
   '/api/public/v1/auth/web/session/logout': typeof ApiPublicV1AuthWebSessionLogoutRoute
   '/api/public/v1/auth/web/session/refresh': typeof ApiPublicV1AuthWebSessionRefreshRoute
@@ -2710,6 +2720,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/producers/'
     | '/api/public/v1/zillionaire/providers/'
     | '/api/public/v1/zillionaire/receipts/'
+    | '/api/public/v1/zillionaire/support/'
     | '/api/public/v1/zillionaire/users/'
     | '/api/public/v1/auth/web/session/logout'
     | '/api/public/v1/auth/web/session/refresh'
@@ -2966,6 +2977,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/producers'
     | '/api/public/v1/zillionaire/providers'
     | '/api/public/v1/zillionaire/receipts'
+    | '/api/public/v1/zillionaire/support'
     | '/api/public/v1/zillionaire/users'
     | '/api/public/v1/auth/web/session/logout'
     | '/api/public/v1/auth/web/session/refresh'
@@ -3223,6 +3235,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/producers/'
     | '/api/public/v1/zillionaire/providers/'
     | '/api/public/v1/zillionaire/receipts/'
+    | '/api/public/v1/zillionaire/support/'
     | '/api/public/v1/zillionaire/users/'
     | '/api/public/v1/auth/web/session/logout'
     | '/api/public/v1/auth/web/session/refresh'
@@ -3462,6 +3475,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireProducersIndexRoute: typeof ApiPublicV1ZillionaireProducersIndexRoute
   ApiPublicV1ZillionaireProvidersIndexRoute: typeof ApiPublicV1ZillionaireProvidersIndexRoute
   ApiPublicV1ZillionaireReceiptsIndexRoute: typeof ApiPublicV1ZillionaireReceiptsIndexRoute
+  ApiPublicV1ZillionaireSupportIndexRoute: typeof ApiPublicV1ZillionaireSupportIndexRoute
   ApiPublicV1ZillionaireUsersIndexRoute: typeof ApiPublicV1ZillionaireUsersIndexRoute
   ApiPublicV1SessionsSessionIdReplicaNextRoute: typeof ApiPublicV1SessionsSessionIdReplicaNextRoute
   ApiPublicV1WorkerJobsAssetIdCompleteRoute: typeof ApiPublicV1WorkerJobsAssetIdCompleteRoute
@@ -4966,6 +4980,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireStorageUsageRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/support/': {
+      id: '/api/public/v1/zillionaire/support/'
+      path: '/api/public/v1/zillionaire/support'
+      fullPath: '/api/public/v1/zillionaire/support/'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireSupportIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/support/messages': {
       id: '/api/public/v1/zillionaire/support/messages'
       path: '/api/public/v1/zillionaire/support/messages'
@@ -5787,6 +5808,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireProvidersIndexRoute,
   ApiPublicV1ZillionaireReceiptsIndexRoute:
     ApiPublicV1ZillionaireReceiptsIndexRoute,
+  ApiPublicV1ZillionaireSupportIndexRoute:
+    ApiPublicV1ZillionaireSupportIndexRoute,
   ApiPublicV1ZillionaireUsersIndexRoute: ApiPublicV1ZillionaireUsersIndexRoute,
   ApiPublicV1SessionsSessionIdReplicaNextRoute:
     ApiPublicV1SessionsSessionIdReplicaNextRoute,
