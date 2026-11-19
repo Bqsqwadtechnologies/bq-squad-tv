@@ -187,3 +187,4 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 
 ## Batch V4-02 Batch 04 — Blocked Content Log
 - 2026-11-19 — Implemented dedicated Blocked Content compliance registry (`zillionaire.blocked-content.tsx`), DMCA/copyright complaint notice inspection modal, and one-click owner instant unblock route (`/api/public/v1/zillionaire/blocked-content/$assetId/unblock`).
+- **v4-02-batch05**: Implemented Channels Master Control console (`/zillionaire/channels`) and API endpoints (`api/public/v1/zillionaire/channels/` & `$channelId/actions`). Supports complete channel governance across platform and provider channels: verified badge grants/revocations, instant suspension with content playback lock, featured homepage showcase, audited ownership transfer, 30-day soft deletion with restore, handle modification, live broadcast permissions, and per-channel revenue share split overrides (70/30, 80/20, 85/15, 50/50, 100/0).

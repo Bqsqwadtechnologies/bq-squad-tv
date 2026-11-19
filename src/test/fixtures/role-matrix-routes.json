@@ -2023,6 +2023,40 @@
     }
   },
   {
+    "route": "/api/public/v1/zillionaire/channels/",
+    "file": "src/routes/api/public/v1/zillionaire/channels/index.ts",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/zillionaire/channels/$channelId/actions",
+    "file": "src/routes/api/public/v1/zillionaire/channels/$channelId/actions.ts",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/zillionaire/channels/$channelId/assets",
     "file": "src/routes/api/public/v1/zillionaire/channels/$channelId/assets.ts",
     "guard": "zillionaire module",
@@ -3334,6 +3368,23 @@
   {
     "route": "/zillionaire/blocked-content",
     "file": "src/routes/zillionaire.blocked-content.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/channels",
+    "file": "src/routes/zillionaire.channels.tsx",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,
