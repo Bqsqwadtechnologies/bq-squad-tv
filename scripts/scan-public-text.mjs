@@ -62,7 +62,8 @@ function isOwnerZillionaireException(file, term) {
   const relative = path.relative(root, file).split(path.sep).join("/");
   return (
     /^src\/routes\/zillionaire(?:\.|\/)/.test(relative) ||
-    relative === "src/routes/zillionaire.index.tsx"
+    relative === "src/routes/zillionaire.index.tsx" ||
+    relative === "src/components/ConsolePageGuard.tsx"
   );
 }
 

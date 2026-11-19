@@ -37,6 +37,7 @@ export type PlatformAccess = {
   roles: PlatformRole[];
   isZillionaireOwner: boolean;
   needsOwnerVerification: boolean;
+  legacySecretWarning?: boolean;
   zillionaireModules: ZillionaireModule[];
   adminModules: ZillionaireModule[]; // Backward-compat alias
   producerPlanActive: boolean;
@@ -75,9 +76,22 @@ export const ZILLIONAIRE_MODULES: ZillionaireModule[] = [
 // Backward-compatible constant alias
 export const ADMIN_MODULES = ZILLIONAIRE_MODULES;
 
+export type OwnerEmailConfig = {
+  email: string;
+  isLegacySecret: boolean;
+};
+
+export function getOwnerEmailConfig(): OwnerEmailConfig {
+  const zillionaireEmail = (process.env["ZILLIONAIRE_EMAIL"] || "").trim().toLowerCase();
+  const legacyAdminEmail = (process.env["ADMIN_EMAIL"] || "").trim().toLowerCase();
+  return {
+    email: zillionaireEmail,
+    isLegacySecret: Boolean(!zillionaireEmail && legacyAdminEmail),
+  };
+}
+
 export function getConfiguredOwnerEmail(): string {
-  // Strictly ZILLIONAIRE_EMAIL only. No fallback to ADMIN_EMAIL under any circumstances.
-  return (process.env["ZILLIONAIRE_EMAIL"] || "").trim().toLowerCase();
+  return getOwnerEmailConfig().email;
 }
 
 function stringArray(value: unknown): string[] {
@@ -156,7 +170,8 @@ export async function resolvePlatformAccess(
 
   // Zillionaire owner resolution
   // Strictly requires configured ZILLIONAIRE_EMAIL and verified email address
-  const configuredOwnerEmail = getConfiguredOwnerEmail();
+  const ownerConfig = getOwnerEmailConfig();
+  const configuredOwnerEmail = ownerConfig.email;
   const normalizedUserEmail = (effectiveEmail || "").trim().toLowerCase();
   const isOwnerCandidate = Boolean(
     configuredOwnerEmail && normalizedUserEmail === configuredOwnerEmail,
@@ -186,6 +201,7 @@ export async function resolvePlatformAccess(
   return {
     roles,
     isZillionaireOwner,
+    legacySecretWarning: isZillionaireOwner && ownerConfig.isLegacySecret,
     needsOwnerVerification,
     zillionaireModules: activeModules,
     adminModules: activeModules, // Backward-compat alias
@@ -197,7 +213,8 @@ export async function resolvePlatformAccess(
 
 export function isProtectedZillionaire(email: string | null): boolean {
   if (!email) return false;
-  const configuredOwnerEmail = getConfiguredOwnerEmail();
+  const ownerConfig = getOwnerEmailConfig();
+  const configuredOwnerEmail = ownerConfig.email;
   if (!configuredOwnerEmail) return false;
   return email.trim().toLowerCase() === configuredOwnerEmail;
 }

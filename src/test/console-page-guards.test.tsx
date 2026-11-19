@@ -78,6 +78,20 @@ describe("Batch 08: Console Page Guards", () => {
         });
       }
 
+      if (urlString.includes("/api/public/v1/zillionaire/access/status")) {
+        return new Response(
+          JSON.stringify({
+            configured: true,
+            unlocked: true,
+            lockedOut: false,
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
       // Default mock response for other console endpoints
       return new Response(JSON.stringify({ ok: true, data: {} }), {
         status: 200,

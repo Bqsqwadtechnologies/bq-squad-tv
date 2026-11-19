@@ -68,7 +68,7 @@ export function classifyRoute(filePath, content) {
   }
 
   // Derive route path from createFileRoute
-  const routeMatch = content.match(/createFileRoute\(["']([^"']+)["']\)/);
+  const routeMatch = content.match(/createFileRoute\(\s*["']([^"']+)["'],?\s*\)/);
   const routePath = routeMatch ? routeMatch[1] : relPath;
 
   // Check allowlist
@@ -176,6 +176,8 @@ export function buildMatrix() {
   const apiDir = path.join(ROOT, "src/routes/api");
   const consoleFiles = [
     ...getFiles(path.join(ROOT, "src/routes")).filter((f) => {
+      const rel = path.relative(path.join(ROOT, "src/routes"), f).replace(/\\/g, "/");
+      if (rel.startsWith("api/")) return false;
       const name = path.basename(f);
       return (
         name.startsWith("zillionaire") || name.startsWith("producer") || name.startsWith("provider")
@@ -188,7 +190,7 @@ export function buildMatrix() {
   const results = [];
   for (const f of allFiles) {
     const content = fs.readFileSync(f, "utf8");
-    const routeMatch = content.match(/createFileRoute\(["']([^"']+)["']\)/);
+    const routeMatch = content.match(/createFileRoute\(\s*["']([^"']+)["'],?\s*\)/);
     const routePath = routeMatch ? routeMatch[1] : "/" + path.relative(ROOT, f).replace(/\\/g, "/");
     const classification = classifyRoute(f, content);
     results.push({

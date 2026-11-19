@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { restoreWebSession, getWebAuthHeaders } from "@/lib/firebase-web-auth";
 import { NotFoundView } from "@/components/NotFoundView";
 
-export type ConsoleRole = "admin" | "producer" | "provider";
+export type ConsoleRole = "zillionaire" | "admin" | "producer" | "provider";
 
 export type ConsoleAccount = {
   uid: string;
@@ -11,6 +11,7 @@ export type ConsoleAccount = {
   roles: string[];
   isOwner: boolean;
   needsOwnerVerification?: boolean;
+  legacySecretWarning?: boolean | undefined;
   modules: string[];
   producerPlanActive?: boolean;
   providerId?: string | null;
@@ -19,7 +20,9 @@ export type ConsoleAccount = {
 export interface ConsolePageGuardProps {
   role: ConsoleRole;
   module?: string;
-  children: ReactNode | ((props: { token: string; account: ConsoleAccount }) => ReactNode);
+  children:
+    | ReactNode
+    | ((props: { token: string; account: ConsoleAccount; onLock?: () => void }) => ReactNode);
 }
 
 function OwnerVerificationView({ token, email }: { token: string; email: string }) {
@@ -134,6 +137,153 @@ function OwnerVerificationView({ token, email }: { token: string; email: string 
   );
 }
 
+function AccessPasswordSetupView() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#070E22] px-4 text-white">
+      <div className="w-full max-w-lg rounded-3xl border border-amber-400/30 bg-[#0A1128] p-8 shadow-2xl">
+        <div className="flex justify-center mb-6">
+          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-10 w-auto" />
+        </div>
+        <div className="inline-block rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold tracking-widest text-amber-400 uppercase">
+          Setup Required — Owner Security
+        </div>
+        <h1 className="mt-3 text-2xl font-black text-white">
+          Set Your Zillionaire Access Password
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-slate-300">
+          The Zillionaire control centre is protected by a second-factor access password. To enter
+          the dashboard, configure the following secret in your environment:
+        </p>
+        <div className="mt-4 rounded-xl border border-white/10 bg-[#030718] p-4 font-mono text-sm text-cyan-300">
+          ZILLIONAIRE_ACCESS_PASSWORD=&lt;your-secure-password&gt;
+        </div>
+        <p className="mt-4 text-xs text-slate-400 leading-relaxed">
+          Once the secret is saved, refresh this page to enter your access password and unlock the
+          dashboard. The dashboard remains securely locked until this secret is configured.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function AccessPasswordUnlockView({
+  token,
+  onUnlocked,
+  initialLockedOut,
+  initialRemainingSeconds,
+}: {
+  token: string;
+  onUnlocked: () => void;
+  initialLockedOut?: boolean | undefined;
+  initialRemainingSeconds?: number | undefined;
+}) {
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [lockedOut, setLockedOut] = useState(Boolean(initialLockedOut));
+  const [remainingSec, setRemainingSec] = useState(initialRemainingSeconds || 0);
+
+  useEffect(() => {
+    if (!lockedOut || remainingSec <= 0) return;
+    const interval = setInterval(() => {
+      setRemainingSec((prev) => {
+        if (prev <= 1) {
+          setLockedOut(false);
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [lockedOut, remainingSec]);
+
+  async function handleUnlock(e: React.FormEvent) {
+    e.preventDefault();
+    if (!password.trim() || lockedOut) return;
+    setBusy(true);
+    setErrorMsg("");
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const res = await fetch("/api/public/v1/zillionaire/access/unlock", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ password: password.trim() }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        token?: string;
+        code?: string;
+        error?: string;
+        remainingLockSeconds?: number;
+      };
+
+      if (res.status === 200 && data.ok) {
+        onUnlocked();
+      } else if (res.status === 429) {
+        setLockedOut(true);
+        setRemainingSec(data.remainingLockSeconds || 900);
+        setErrorMsg("Too many failed attempts. Dashboard locked for 15 minutes.");
+      } else {
+        setErrorMsg(data.error || "Incorrect access password.");
+      }
+    } catch {
+      setErrorMsg("Network error during unlock request.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#070E22] px-4 text-white">
+      <div className="w-full max-w-md rounded-3xl border border-cyan-500/20 bg-[#0A1128] p-8 shadow-2xl">
+        <div className="flex justify-center mb-6">
+          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-10 w-auto" />
+        </div>
+        <div className="inline-block rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold tracking-widest text-cyan-300 uppercase">
+          Zillionaire Control Centre
+        </div>
+        <h1 className="mt-3 text-2xl font-black text-white">Enter your access password</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-300">
+          Enter your owner access password to unlock the Zillionaire dashboard.
+        </p>
+
+        {lockedOut ? (
+          <div className="mt-6 rounded-2xl border border-rose-500/30 bg-rose-950/40 p-4 text-rose-200 text-sm">
+            <p className="font-bold">Dashboard locked for security</p>
+            <p className="mt-1 text-xs text-rose-300">
+              5 failed attempts reached. Try again in {Math.floor(remainingSec / 60)}m{" "}
+              {remainingSec % 60}s.
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleUnlock} className="mt-6 space-y-4">
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+              Access Password
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="mt-2 w-full rounded-xl border border-white/15 bg-[#030718] px-4 py-3 text-white outline-none focus:border-cyan-400 font-mono"
+                required
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={busy || !password.trim()}
+              className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 font-extrabold text-[#030718] transition hover:brightness-110 disabled:opacity-50"
+            >
+              {busy ? "Verifying…" : "Unlock Dashboard"}
+            </button>
+            {errorMsg && <p className="text-xs text-rose-400 text-center">{errorMsg}</p>}
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ConsolePageGuard({
   role,
   module: requiredModule,
@@ -143,8 +293,17 @@ export function ConsolePageGuard({
     | { status: "checking" }
     | { status: "denied" }
     | { status: "unverified_owner"; token: string; email: string }
+    | { status: "setup_required" }
+    | {
+        status: "locked";
+        token: string;
+        lockedOut: boolean;
+        remainingLockSeconds?: number | undefined;
+      }
     | { status: "authorized"; token: string; account: ConsoleAccount }
   >({ status: "checking" });
+
+  const isZillionaireRoute = role === "admin" || role === "zillionaire";
 
   useEffect(() => {
     let active = true;
@@ -171,8 +330,35 @@ export function ConsolePageGuard({
         const account = (await response.json()) as ConsoleAccount;
         let authorized = false;
 
-        if (role === "admin") {
+        if (isZillionaireRoute) {
           if (account.isOwner) {
+            // Check password unlock status
+            const statusRes = await fetch("/api/public/v1/zillionaire/access/status", {
+              headers,
+              cache: "no-store",
+            });
+            if (statusRes.ok) {
+              const statusData = (await statusRes.json()) as {
+                configured: boolean;
+                unlocked: boolean;
+                lockedOut: boolean;
+                remainingLockSeconds?: number;
+              };
+              if (!statusData.configured) {
+                if (active) setState({ status: "setup_required" });
+                return;
+              }
+              if (!statusData.unlocked) {
+                if (active)
+                  setState({
+                    status: "locked",
+                    token,
+                    lockedOut: statusData.lockedOut,
+                    remainingLockSeconds: statusData.remainingLockSeconds,
+                  });
+                return;
+              }
+            }
             authorized = true;
           } else if (account.needsOwnerVerification) {
             if (active) setState({ status: "unverified_owner", token, email: account.email || "" });
@@ -211,9 +397,22 @@ export function ConsolePageGuard({
     return () => {
       active = false;
     };
-  }, [role, requiredModule]);
+  }, [role, requiredModule, isZillionaireRoute]);
 
-  // 1. Tiny neutral shell while checking
+  const handleLock = async () => {
+    try {
+      if (state.status === "authorized") {
+        const headers = await getWebAuthHeaders(state.token);
+        await fetch("/api/public/v1/zillionaire/access/lock", {
+          method: "POST",
+          headers,
+        });
+      }
+    } finally {
+      window.location.reload();
+    }
+  };
+
   if (state.status === "checking") {
     return (
       <div
@@ -230,15 +429,36 @@ export function ConsolePageGuard({
     return <OwnerVerificationView token={state.token} email={state.email} />;
   }
 
-  // 2. Denied: Plain "page not found" screen (same layout, status and text as an unknown address, no hint that a console exists)
+  if (state.status === "setup_required") {
+    return <AccessPasswordSetupView />;
+  }
+
+  if (state.status === "locked") {
+    return (
+      <AccessPasswordUnlockView
+        token={state.token}
+        onUnlocked={() => window.location.reload()}
+        initialLockedOut={state.lockedOut}
+        initialRemainingSeconds={state.remainingLockSeconds}
+      />
+    );
+  }
+
   if (state.status === "denied") {
     return <NotFoundView />;
   }
 
-  // 3. Authorized: render the console
-  if (typeof children === "function") {
-    return <>{children({ token: state.token, account: state.account })}</>;
-  }
-
-  return <>{children}</>;
+  return (
+    <>
+      {state.account.legacySecretWarning && (
+        <div className="bg-amber-500/20 border-b border-amber-500/30 px-4 py-2 text-center text-xs text-amber-200">
+          <strong>Security Notice:</strong> The legacy secret <code>ADMIN_EMAIL</code> is currently
+          in use. Please rename it to <code>ZILLIONAIRE_EMAIL</code> in your project settings.
+        </div>
+      )}
+      {typeof children === "function"
+        ? children({ token: state.token, account: state.account, onLock: handleLock })
+        : children}
+    </>
+  );
 }

@@ -1,3 +1,4 @@
+import { requireZillionaireUnlock } from "./zillionaire-access";
 import { ApiError, Firestore } from "./firebase-admin";
 import { requireUser } from "./api";
 import { type VerifiedUser } from "./firebase-auth";
@@ -79,7 +80,10 @@ export async function requireZillionaire(
   existingFs?: Firestore,
 ): Promise<ZillionaireContext> {
   const ctx = await requireViewer(request, existingFs);
-  await requireZillionaireModule(ctx.fs, ctx.user, module);
+  const access = await requireZillionaireModule(ctx.fs, ctx.user, module);
+  if (access.isZillionaireOwner) {
+    requireZillionaireUnlock(request, ctx.user.uid);
+  }
   return { ...ctx, module };
 }
 

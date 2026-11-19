@@ -34,6 +34,10 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   describe("requireViewer", () => {
     it("returns resolved user, fs, and platform access for authenticated viewer", async () => {
       const mockReqUser = vi.mocked(requireUser);
@@ -62,6 +66,7 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
   describe("requireZillionaire", () => {
     it("allows verified Zillionaire owner across all modules", async () => {
       vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@zillionaire.com");
+      vi.stubEnv("ZILLIONAIRE_ACCESS_PASSWORD", "SuperSecurePassword123!");
       const mockReqUser = vi.mocked(requireUser);
       mockReqUser.mockResolvedValueOnce({
         uid: "owner-1",
@@ -76,7 +81,11 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
         "users/owner-1": { email: "owner@zillionaire.com", roleTags: [] },
       });
 
-      const req = new Request("http://localhost/api/test");
+      const { createUnlockToken } = await import("@/lib/server/zillionaire-access");
+      const { token } = createUnlockToken("owner-1");
+      const req = new Request("http://localhost/api/test", {
+        headers: { "x-zillionaire-unlock": token },
+      });
       const ctx = await requireZillionaire(req, "pricing", fs);
 
       expect(ctx.access.isZillionaireOwner).toBe(true);
