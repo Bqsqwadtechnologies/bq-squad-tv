@@ -347,7 +347,7 @@ function SupportBody({ token, account }: { token: string; account: ConsoleAccoun
         action: "PROCESS_RECOVERY",
         requestId: modalTarget.id,
         recoveryAction,
-        notes: `Identity verification processed by operator. Cryptographic tokens dispatched to email.`,
+        notes: `Identity verification processed by operator. Cryptographic verification links dispatched to email.`,
         reason: modalReason.trim(),
       },
       `Account recovery challenge executed (${recoveryAction}). Operator never exposed to passwords.`,
@@ -858,7 +858,7 @@ function SupportBody({ token, account }: { token: string; account: ConsoleAccoun
               <span>
                 <strong>Zero-Password Security Standard:</strong> BQ SQWAD TV platform operators
                 never view, generate, or set plaintext user passwords. All recovery workflows
-                trigger cryptographically signed token links directly to customer email endpoints.
+                trigger cryptographically signed verification links directly to customer email endpoints.
               </span>
             </div>
 

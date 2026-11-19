@@ -1086,7 +1086,7 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
             <div className="space-y-3">
               <div className="flex items-center justify-between rounded-xl border border-white/10 bg-slate-900/60 p-3.5">
                 <div>
-                  <div className="text-xs font-bold text-white">Firebase Cloud Messaging (FCM)</div>
+                  <div className="text-xs font-bold text-white">Mobile Push Delivery (FCM)</div>
                   <div className="text-[11px] text-slate-400">Android native push & PWA Web Push</div>
                 </div>
                 <ConsoleStatusBadge status="active" label="OPERATIONAL" />

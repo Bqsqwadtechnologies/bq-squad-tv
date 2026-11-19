@@ -228,3 +228,11 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Reusable audience segments with min-spend, platform, and geographic criteria saved to Firestore `userSegments` with audience count estimates and CSV export.
 - Account recovery challenge queue at `/api/public/v1/zillionaire/support/` with identity check verification (email, billing, device fingerprint); operators never view or handle plaintext user passwords, dispatching cryptographic verification tokens.
 - Role matrix and route access matrix updated to 234 routes with all 96 test files / 2,865 tests passing.
+
+## V5-01 Batch 9 — Tests, rename sweep, push log (2026-11-19)
+- Full Vitest suite passing: 97 test files / 2,868 tests green.
+- Public-text scan (`scripts/scan-public-text.mjs`) passing with 0 findings across all routes and components.
+- Added `src/test/no-admin-strings.test.ts` to permanently enforce zero occurrences of "admin" or "administrator" in user-visible UI text, router paths, and single-owner configuration.
+- Cleaned vendor leakage (Firebase, Cloudflare, Modal, Lovable, tokens, public endpoints) in Zillionaire settings and notifications to ensure pristine brand compliance.
+- Verified 234 routes in `docs/ROUTE-ACCESS-MATRIX.md`.
+- Completed all 9 batches of V5-01 (Finish Zillionaire Control + Catch-Up).

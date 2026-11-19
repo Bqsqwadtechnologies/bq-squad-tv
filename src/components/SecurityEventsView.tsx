@@ -487,7 +487,7 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
               <option value="viewer">Viewer</option>
               <option value="producer">Producer</option>
               <option value="provider">Provider</option>
-              <option value="admin">Administrator</option>
+              <option value="admin">Platform Operator</option>
               <option value="worker">Background worker</option>
             </select>
             <ChevronDown
@@ -541,7 +541,7 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
                 type="text"
                 value={routePatternFilter}
                 onChange={(e) => setRoutePatternFilter(e.target.value)}
-                placeholder="e.g. /admin/overview or /channels"
+                placeholder="e.g. /channels/sports or /movies"
                 className="w-full rounded-xl border border-white/10 bg-[#07143d] pl-9 pr-3 py-2 text-xs text-white placeholder-blue-100/30 focus:border-cyan-300 focus:outline-none"
               />
               <Search

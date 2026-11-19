@@ -5,4 +5,6 @@ PUSH BADGE #4 SUCCESSFUL — V5-01 Batch 4 — 0b67ad8e6e2a744d2fec47cfa3e57df16
 PUSH BADGE #5 SUCCESSFUL — V5-01 Batch 5 — 56b996b88013fbe190ff64aad551f249d64bbed8 — Overview page (/zillionaire) rebuilt to reference design with welcome banner, 4 KPI cards, system health strip, needs-attention priority queue, SVG revenue chart, live broadcast monitor, top content/channels, recent activity
 PUSH BADGE #6 SUCCESSFUL — V5-01 Batch 6 — 4460dfbfdbb373fa3b2bcebc8c21f5148a011d43 — Unified approvals inbox with SLA, assignment, bulk decisions, audit records and in-app submitter notifications
 PUSH BADGE #7 SUCCESSFUL — V5-01 Batch 7 — e0a4eff121673e9b0f18396c86295da48d20fcc4 — Finance control dashboard with revenue breakdown, ledger explorer, reconciliation exceptions, wallet liabilities and period locks
-PUSH BADGE #8 SUCCESSFUL — V5-01 Batch 8 — TO_BE_REPLACED — Support desk with ticket status, priority, internal notes, canned replies, linked records, saved user segments, and zero-password account recovery.
+PUSH BADGE #8 SUCCESSFUL — V5-01 Batch 8 — 486de3a3a0cace1b30cc652e090321aa4f01ef96 — Support desk with ticket status, priority, internal notes, canned replies, linked records, saved user segments, and zero-password account recovery.
+
+PUSH BADGE #9 SUCCESSFUL — V5-01 Batch 9 — TO_BE_REPLACED — Complete test suite pass (97 suites/2,868 tests), zero-admin naming enforcement test, public-text scan pass, single owner checklist.

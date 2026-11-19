@@ -1,5 +1,5 @@
-Last batch finished: V5-01 Batch 8 (Support desk & user accounts, tickets, internal notes, canned replies, link records, segments, zero-password recovery).
-Next batch to start: V5-01 Batch 9 (Tests, rename sweep, push log, admin word sweep, single owner checklist).
-Known gaps: None in Batch 8.
-Files touched: src/routes/api/public/v1/zillionaire/support/index.ts, src/routes/zillionaire.support.tsx, src/test/zillionaire-support.test.ts, fixtures, docs.
-Tests passing: 96 test files / 2,865 tests passing cleanly; build:dev passing; 234 routes in matrix.
+Last batch finished: V5-01 Batch 9 (Complete V5-01: 97 test files / 2,868 tests green, zero-admin naming enforcement, public-text scan pass, single owner checklist).
+Next batch to start: V5-02 Batch 1 (Content pipeline, ingestion, transcode queues, and live streams).
+Known gaps: Support reset link action updates status but does not invoke outbound SMTP transport.
+Files touched: src/test/no-admin-strings.test.ts, src/components/SecurityEventsView.tsx, src/routes/zillionaire.notifications.tsx, src/routes/zillionaire.settings.tsx, src/routes/zillionaire.support.tsx, docs/*.
+Tests passing: 97 test files / 2,868 tests passing cleanly; build:dev passing; 234 routes in matrix; public-text scan green.

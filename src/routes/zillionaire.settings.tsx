@@ -594,7 +594,7 @@ function ZillionaireSettingsContent() {
                       className="w-full bg-zinc-900/80 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
                     />
                     <span className="text-xs text-zinc-400 mt-1 block">
-                      Number of days before an idle refresh token is expired (default: 30)
+                      Number of days before an idle session key is expired (default: 30)
                     </span>
                   </div>
 
@@ -625,13 +625,13 @@ function ZillionaireSettingsContent() {
 
               <ConsoleCard
                 title="Rate Limits & Capacity Protection"
-                description="Throttle aggressive traffic, brute-force auth attempts, and rapid streaming grant requests."
+                description="Throttle aggressive traffic, brute-force auth attempts, and frequent streaming grant requests."
               >
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                        Public API (RPM)
+                        Public Gateway Requests (RPM)
                       </label>
                       <input
                         type="number"
@@ -677,7 +677,7 @@ function ZillionaireSettingsContent() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                        Stream Token Grants (RPM)
+                        Stream Authorization Grants (RPM)
                       </label>
                       <input
                         type="number"
@@ -693,7 +693,7 @@ function ZillionaireSettingsContent() {
                         className="w-full bg-zinc-900/80 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
                       />
                       <span className="text-xs text-zinc-400 mt-1 block">
-                        Playback token requests per min
+                        Playback authorization requests per min
                       </span>
                     </div>
 
@@ -721,7 +721,7 @@ function ZillionaireSettingsContent() {
                   </div>
 
                   <div className="p-3.5 bg-blue-950/20 border border-blue-500/20 rounded-lg text-xs text-blue-300">
-                    Rate limits apply globally with automatic Cloudflare edge burst-caching and Redis failover.
+                    Rate limits apply globally with automatic Edge burst-caching and resilient failover.
                   </div>
                 </div>
               </ConsoleCard>
@@ -1249,7 +1249,7 @@ function ZillionaireSettingsContent() {
 
                   <div>
                     <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-                      Release Notes (Shown on Update Modal)
+                      Release Notes (Shown on Update Prompt)
                     </label>
                     <textarea
                       rows={2}
@@ -1438,8 +1438,8 @@ function ZillionaireSettingsContent() {
                       }
                       className="w-full bg-zinc-900/80 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
                     >
-                      <option value="lovable_managed">Lovable Cloud Managed (Zero Config)</option>
-                      <option value="sendgrid">Twilio SendGrid API</option>
+                      <option value="lovable_managed">Platform Managed Gateway (Zero Config)</option>
+                      <option value="sendgrid">Twilio SendGrid Service</option>
                       <option value="postmark">Postmark Inbound/Outbound</option>
                       <option value="custom_smtp">Custom SMTP Gateway</option>
                     </select>
