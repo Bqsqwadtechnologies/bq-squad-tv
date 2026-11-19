@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **239**
+Total scanned routes: **241**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **239**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 118 |
+| `zillionaire module` | 120 |
 | `producer` | 4 |
 
 ### Inventory
@@ -165,6 +165,7 @@ Total scanned routes: **239**
 | `/api/public/v1/zillionaire/content-comments/$commentId/moderate` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/content-comments/$commentId/moderate.ts` |
 | `/api/public/v1/zillionaire/errors/` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/errors/index.ts` |
 | `/api/public/v1/zillionaire/finance` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/finance.ts` |
+| `/api/public/v1/zillionaire/live-channels/` | `zillionaire module` | requireZillionaire (Module: channels) | `src/routes/api/public/v1/zillionaire/live-channels/index.ts` |
 | `/api/public/v1/zillionaire/migration/zillionaire` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/migration/zillionaire.ts` |
 | `/api/public/v1/zillionaire/moderation/` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/moderation/index.ts` |
 | `/api/public/v1/zillionaire/movies/curation/` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/movies/curation/index.ts` |
@@ -240,6 +241,7 @@ Total scanned routes: **239**
 | `/zillionaire/features` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.features.tsx` |
 | `/zillionaire/finance` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.finance.tsx` |
 | `/zillionaire/firebase-schema` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.firebase-schema.tsx` |
+| `/zillionaire/live-tv` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.live-tv.tsx` |
 | `/zillionaire/moderation` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.moderation.tsx` |
 | `/zillionaire/movies` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.movies.tsx` |
 | `/zillionaire/notifications` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.notifications.tsx` |

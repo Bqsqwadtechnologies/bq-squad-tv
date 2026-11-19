@@ -1,5 +1,5 @@
-Last batch finished: V5-02 Batch 3 (Movies library curation: shelves, hero rotation schedules, regional windows and price overrides).
-Next batch to start: V5-02 Batch 4 (Live TV listings and owner-created channels).
-Known gaps: Direct Publish and custom curation live; background transcode worker setup documented in OWNER-ACTIONS.md.
-Files touched: src/routes/zillionaire.movies.tsx, src/routes/api/public/v1/zillionaire/movies/curation/index.ts, src/test/zillionaire-movies-curation.test.ts, docs/*.
-Tests passing: 100 test files / 2,933 tests passing cleanly; dev build passing; 239 routes in matrix; public-text scan green.
+Last batch finished: V5-02 Batch 4 (Live TV console, channel creation, programme guide, approvals and live-state controls).
+Next batch to start: V5-02 Batch 5 (read its exact scope from the V5-02 specification before editing).
+Known gaps: Live playback health is unknown until a trusted monitoring source is connected; channel list is capped at 100 and live session counts at 500. Current approval controls are owner-module gated; verify provider/producer submission ownership in a dedicated workflow before enabling outside owner-managed submissions.
+Files touched: src/routes/zillionaire.live-tv.tsx, src/routes/api/public/v1/zillionaire/live-channels/index.ts, src/test/zillionaire-live-channels.test.ts, src/test/fixtures/role-matrix-routes.json, docs/ROUTE-ACCESS-MATRIX.md, docs/DECISIONS.md, docs/PUSH-LOG.md, docs/HANDOFF.md.
+Tests passing: 101 test files / 2,959 tests; focused Live TV suite 6/6; role matrix 2,412/2,412; public-text and no-admin scans passed; development build passed. Live TV health UI shows unknown when no telemetry exists. HLS URL validation is format-only, not a reachability check.

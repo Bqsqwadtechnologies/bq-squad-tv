@@ -258,3 +258,10 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Enhanced `/zillionaire/movies` with dedicated tabs for Catalogue & Takedowns, Collections & Shelves (Trending, New Releases, For You, custom rows with pin/rank), Featured Hero Rotation with start/end schedules, and Regional Geo-availability windows with Price Per Minute overrides and Free Preview minutes.
 - Wired strict content module authorization, full audit logging for all curation updates, and verified 239 routes in the route access matrix.
 - Verified zero-admin strings test, public-text scan clean, dev build passing, and full test suite passing cleanly (100 suites / 2,933 tests).
+
+
+## V5-02 Batch 4 — Live TV
+
+- Live channel inventory uses explicit live-channel records only; the console must not fill empty inventory with sample channels or synthetic viewer/health metrics. Unknown playback telemetry is displayed as unknown until a trusted monitor reports it.
+- Channel mutations require a reason and write an audit event. A pending or rejected channel cannot be started; approvals apply only to existing pending submissions.
+- HLS URLs are validated for secure playlist shape, but this does not prove stream reachability or entitlement.
