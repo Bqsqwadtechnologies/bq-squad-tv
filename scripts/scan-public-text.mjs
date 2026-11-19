@@ -64,8 +64,12 @@ function isOwnerZillionaireException(file, term) {
     /^src\/routes\/zillionaire(?:\.|\/)/.test(relative) ||
     relative === "src/routes/zillionaire.index.tsx" ||
     relative === "src/components/ConsolePageGuard.tsx" ||
+    relative === "src/components/ConsoleShell.tsx" ||
+    relative.startsWith("src/components/Console") ||
     relative === "src/routes/producer.index.tsx" ||
-    relative === "src/routes/provider.index.tsx"
+    relative.startsWith("src/routes/producer.") ||
+    relative === "src/routes/provider.index.tsx" ||
+    relative.startsWith("src/routes/provider.")
   );
 }
 

@@ -2856,6 +2856,40 @@
     }
   },
   {
+    "route": "/api/public/v1/zillionaire/team",
+    "file": "src/routes/api/public/v1/zillionaire/team.ts",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/zillionaire/team/$uid",
+    "file": "src/routes/api/public/v1/zillionaire/team/$uid.ts",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/zillionaire/users/",
     "file": "src/routes/api/public/v1/zillionaire/users/index.ts",
     "guard": "zillionaire module",

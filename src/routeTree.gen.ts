@@ -113,6 +113,7 @@ import { Route as ApiPublicV1ZillionaireChannelsRouteImport } from './routes/api
 import { Route as ApiPublicV1ZillionaireNotificationsRouteImport } from './routes/api/public/v1/zillionaire/notifications'
 import { Route as ApiPublicV1ZillionaireOverviewRouteImport } from './routes/api/public/v1/zillionaire/overview'
 import { Route as ApiPublicV1ZillionaireSecretHealthRouteImport } from './routes/api/public/v1/zillionaire/secret-health'
+import { Route as ApiPublicV1ZillionaireTeamRouteImport } from './routes/api/public/v1/zillionaire/team'
 import { Route as ApiPublicV1ZillionaireVideoJobsRouteImport } from './routes/api/public/v1/zillionaire/video-jobs'
 import { Route as ApiPublicV1ZillionaireWorkersRouteImport } from './routes/api/public/v1/zillionaire/workers'
 import { Route as ApiPublicV1AdsAdIdEventsRouteImport } from './routes/api/public/v1/ads/$adId/events'
@@ -188,6 +189,7 @@ import { Route as ApiPublicV1ZillionaireStorageReplicasRouteImport } from './rou
 import { Route as ApiPublicV1ZillionaireStorageSeedRouteImport } from './routes/api/public/v1/zillionaire/storage/seed'
 import { Route as ApiPublicV1ZillionaireStorageUsageRouteImport } from './routes/api/public/v1/zillionaire/storage/usage'
 import { Route as ApiPublicV1ZillionaireSupportMessagesRouteImport } from './routes/api/public/v1/zillionaire/support/messages'
+import { Route as ApiPublicV1ZillionaireTeamUidRouteImport } from './routes/api/public/v1/zillionaire/team/$uid'
 import { Route as ApiPublicV1ZillionaireUsersIndexRouteImport } from './routes/api/public/v1/zillionaire/users/index'
 import { Route as ApiPublicV1ZillionaireWorkersWorkerIdRouteImport } from './routes/api/public/v1/zillionaire/workers/$workerId'
 import { Route as ApiPublicV1AuthWebSessionLogoutRouteImport } from './routes/api/public/v1/auth/web/session/logout'
@@ -795,6 +797,12 @@ const ApiPublicV1ZillionaireSecretHealthRoute =
     path: '/api/public/v1/zillionaire/secret-health',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireTeamRoute =
+  ApiPublicV1ZillionaireTeamRouteImport.update({
+    id: '/api/public/v1/zillionaire/team',
+    path: '/api/public/v1/zillionaire/team',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireVideoJobsRoute =
   ApiPublicV1ZillionaireVideoJobsRouteImport.update({
     id: '/api/public/v1/zillionaire/video-jobs',
@@ -1244,6 +1252,12 @@ const ApiPublicV1ZillionaireSupportMessagesRoute =
     path: '/api/public/v1/zillionaire/support/messages',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireTeamUidRoute =
+  ApiPublicV1ZillionaireTeamUidRouteImport.update({
+    id: '/$uid',
+    path: '/$uid',
+    getParentRoute: () => ApiPublicV1ZillionaireTeamRoute,
+  } as any)
 const ApiPublicV1ZillionaireUsersIndexRoute =
   ApiPublicV1ZillionaireUsersIndexRouteImport.update({
     id: '/api/public/v1/zillionaire/users/',
@@ -1560,6 +1574,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/notifications': typeof ApiPublicV1ZillionaireNotificationsRoute
   '/api/public/v1/zillionaire/overview': typeof ApiPublicV1ZillionaireOverviewRoute
   '/api/public/v1/zillionaire/secret-health': typeof ApiPublicV1ZillionaireSecretHealthRoute
+  '/api/public/v1/zillionaire/team': typeof ApiPublicV1ZillionaireTeamRouteWithChildren
   '/api/public/v1/zillionaire/video-jobs': typeof ApiPublicV1ZillionaireVideoJobsRoute
   '/api/public/v1/zillionaire/workers': typeof ApiPublicV1ZillionaireWorkersRouteWithChildren
   '/api/public/v1/continue-watching/': typeof ApiPublicV1ContinueWatchingIndexRoute
@@ -1636,6 +1651,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/storage/seed': typeof ApiPublicV1ZillionaireStorageSeedRoute
   '/api/public/v1/zillionaire/storage/usage': typeof ApiPublicV1ZillionaireStorageUsageRoute
   '/api/public/v1/zillionaire/support/messages': typeof ApiPublicV1ZillionaireSupportMessagesRoute
+  '/api/public/v1/zillionaire/team/$uid': typeof ApiPublicV1ZillionaireTeamUidRoute
   '/api/public/v1/zillionaire/workers/$workerId': typeof ApiPublicV1ZillionaireWorkersWorkerIdRoute
   '/api/public/v1/auth/devices/': typeof ApiPublicV1AuthDevicesIndexRoute
   '/api/public/v1/zillionaire/errors/': typeof ApiPublicV1ZillionaireErrorsIndexRoute
@@ -1777,6 +1793,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/notifications': typeof ApiPublicV1ZillionaireNotificationsRoute
   '/api/public/v1/zillionaire/overview': typeof ApiPublicV1ZillionaireOverviewRoute
   '/api/public/v1/zillionaire/secret-health': typeof ApiPublicV1ZillionaireSecretHealthRoute
+  '/api/public/v1/zillionaire/team': typeof ApiPublicV1ZillionaireTeamRouteWithChildren
   '/api/public/v1/zillionaire/video-jobs': typeof ApiPublicV1ZillionaireVideoJobsRoute
   '/api/public/v1/zillionaire/workers': typeof ApiPublicV1ZillionaireWorkersRouteWithChildren
   '/api/public/v1/continue-watching': typeof ApiPublicV1ContinueWatchingIndexRoute
@@ -1853,6 +1870,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/storage/seed': typeof ApiPublicV1ZillionaireStorageSeedRoute
   '/api/public/v1/zillionaire/storage/usage': typeof ApiPublicV1ZillionaireStorageUsageRoute
   '/api/public/v1/zillionaire/support/messages': typeof ApiPublicV1ZillionaireSupportMessagesRoute
+  '/api/public/v1/zillionaire/team/$uid': typeof ApiPublicV1ZillionaireTeamUidRoute
   '/api/public/v1/zillionaire/workers/$workerId': typeof ApiPublicV1ZillionaireWorkersWorkerIdRoute
   '/api/public/v1/auth/devices': typeof ApiPublicV1AuthDevicesIndexRoute
   '/api/public/v1/zillionaire/errors': typeof ApiPublicV1ZillionaireErrorsIndexRoute
@@ -1995,6 +2013,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/notifications': typeof ApiPublicV1ZillionaireNotificationsRoute
   '/api/public/v1/zillionaire/overview': typeof ApiPublicV1ZillionaireOverviewRoute
   '/api/public/v1/zillionaire/secret-health': typeof ApiPublicV1ZillionaireSecretHealthRoute
+  '/api/public/v1/zillionaire/team': typeof ApiPublicV1ZillionaireTeamRouteWithChildren
   '/api/public/v1/zillionaire/video-jobs': typeof ApiPublicV1ZillionaireVideoJobsRoute
   '/api/public/v1/zillionaire/workers': typeof ApiPublicV1ZillionaireWorkersRouteWithChildren
   '/api/public/v1/continue-watching/': typeof ApiPublicV1ContinueWatchingIndexRoute
@@ -2071,6 +2090,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/storage/seed': typeof ApiPublicV1ZillionaireStorageSeedRoute
   '/api/public/v1/zillionaire/storage/usage': typeof ApiPublicV1ZillionaireStorageUsageRoute
   '/api/public/v1/zillionaire/support/messages': typeof ApiPublicV1ZillionaireSupportMessagesRoute
+  '/api/public/v1/zillionaire/team/$uid': typeof ApiPublicV1ZillionaireTeamUidRoute
   '/api/public/v1/zillionaire/workers/$workerId': typeof ApiPublicV1ZillionaireWorkersWorkerIdRoute
   '/api/public/v1/auth/devices/': typeof ApiPublicV1AuthDevicesIndexRoute
   '/api/public/v1/zillionaire/errors/': typeof ApiPublicV1ZillionaireErrorsIndexRoute
@@ -2214,6 +2234,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/notifications'
     | '/api/public/v1/zillionaire/overview'
     | '/api/public/v1/zillionaire/secret-health'
+    | '/api/public/v1/zillionaire/team'
     | '/api/public/v1/zillionaire/video-jobs'
     | '/api/public/v1/zillionaire/workers'
     | '/api/public/v1/continue-watching/'
@@ -2290,6 +2311,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/storage/seed'
     | '/api/public/v1/zillionaire/storage/usage'
     | '/api/public/v1/zillionaire/support/messages'
+    | '/api/public/v1/zillionaire/team/$uid'
     | '/api/public/v1/zillionaire/workers/$workerId'
     | '/api/public/v1/auth/devices/'
     | '/api/public/v1/zillionaire/errors/'
@@ -2431,6 +2453,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/notifications'
     | '/api/public/v1/zillionaire/overview'
     | '/api/public/v1/zillionaire/secret-health'
+    | '/api/public/v1/zillionaire/team'
     | '/api/public/v1/zillionaire/video-jobs'
     | '/api/public/v1/zillionaire/workers'
     | '/api/public/v1/continue-watching'
@@ -2507,6 +2530,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/storage/seed'
     | '/api/public/v1/zillionaire/storage/usage'
     | '/api/public/v1/zillionaire/support/messages'
+    | '/api/public/v1/zillionaire/team/$uid'
     | '/api/public/v1/zillionaire/workers/$workerId'
     | '/api/public/v1/auth/devices'
     | '/api/public/v1/zillionaire/errors'
@@ -2648,6 +2672,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/notifications'
     | '/api/public/v1/zillionaire/overview'
     | '/api/public/v1/zillionaire/secret-health'
+    | '/api/public/v1/zillionaire/team'
     | '/api/public/v1/zillionaire/video-jobs'
     | '/api/public/v1/zillionaire/workers'
     | '/api/public/v1/continue-watching/'
@@ -2724,6 +2749,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/storage/seed'
     | '/api/public/v1/zillionaire/storage/usage'
     | '/api/public/v1/zillionaire/support/messages'
+    | '/api/public/v1/zillionaire/team/$uid'
     | '/api/public/v1/zillionaire/workers/$workerId'
     | '/api/public/v1/auth/devices/'
     | '/api/public/v1/zillionaire/errors/'
@@ -2858,6 +2884,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireNotificationsRoute: typeof ApiPublicV1ZillionaireNotificationsRoute
   ApiPublicV1ZillionaireOverviewRoute: typeof ApiPublicV1ZillionaireOverviewRoute
   ApiPublicV1ZillionaireSecretHealthRoute: typeof ApiPublicV1ZillionaireSecretHealthRoute
+  ApiPublicV1ZillionaireTeamRoute: typeof ApiPublicV1ZillionaireTeamRouteWithChildren
   ApiPublicV1ZillionaireVideoJobsRoute: typeof ApiPublicV1ZillionaireVideoJobsRoute
   ApiPublicV1ZillionaireWorkersRoute: typeof ApiPublicV1ZillionaireWorkersRouteWithChildren
   ApiPublicV1ContinueWatchingIndexRoute: typeof ApiPublicV1ContinueWatchingIndexRoute
@@ -3687,6 +3714,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireSecretHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/team': {
+      id: '/api/public/v1/zillionaire/team'
+      path: '/api/public/v1/zillionaire/team'
+      fullPath: '/api/public/v1/zillionaire/team'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/video-jobs': {
       id: '/api/public/v1/zillionaire/video-jobs'
       path: '/api/public/v1/zillionaire/video-jobs'
@@ -4212,6 +4246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireSupportMessagesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/team/$uid': {
+      id: '/api/public/v1/zillionaire/team/$uid'
+      path: '/$uid'
+      fullPath: '/api/public/v1/zillionaire/team/$uid'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireTeamUidRouteImport
+      parentRoute: typeof ApiPublicV1ZillionaireTeamRoute
+    }
     '/api/public/v1/zillionaire/users/': {
       id: '/api/public/v1/zillionaire/users/'
       path: '/api/public/v1/zillionaire/users'
@@ -4646,6 +4687,20 @@ const ApiPublicV1ZillionaireChannelsRouteWithChildren =
     ApiPublicV1ZillionaireChannelsRouteChildren,
   )
 
+interface ApiPublicV1ZillionaireTeamRouteChildren {
+  ApiPublicV1ZillionaireTeamUidRoute: typeof ApiPublicV1ZillionaireTeamUidRoute
+}
+
+const ApiPublicV1ZillionaireTeamRouteChildren: ApiPublicV1ZillionaireTeamRouteChildren =
+  {
+    ApiPublicV1ZillionaireTeamUidRoute: ApiPublicV1ZillionaireTeamUidRoute,
+  }
+
+const ApiPublicV1ZillionaireTeamRouteWithChildren =
+  ApiPublicV1ZillionaireTeamRoute._addFileChildren(
+    ApiPublicV1ZillionaireTeamRouteChildren,
+  )
+
 interface ApiPublicV1ZillionaireWorkersRouteChildren {
   ApiPublicV1ZillionaireWorkersWorkerIdRoute: typeof ApiPublicV1ZillionaireWorkersWorkerIdRoute
 }
@@ -4791,6 +4846,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ZillionaireOverviewRoute: ApiPublicV1ZillionaireOverviewRoute,
   ApiPublicV1ZillionaireSecretHealthRoute:
     ApiPublicV1ZillionaireSecretHealthRoute,
+  ApiPublicV1ZillionaireTeamRoute: ApiPublicV1ZillionaireTeamRouteWithChildren,
   ApiPublicV1ZillionaireVideoJobsRoute: ApiPublicV1ZillionaireVideoJobsRoute,
   ApiPublicV1ZillionaireWorkersRoute:
     ApiPublicV1ZillionaireWorkersRouteWithChildren,
