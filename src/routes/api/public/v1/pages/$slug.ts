@@ -51,7 +51,7 @@ function fillPlaceholders(raw: string): string {
   });
 }
 
-export const Route = createFileRoute("/api/public/v1/pages/")({
+export const Route = createFileRoute("/api/public/v1/pages/$slug")({
   server: {
     handlers: {
       GET: async ({ params }) => {

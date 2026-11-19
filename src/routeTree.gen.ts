@@ -26,6 +26,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProducerTermsRouteImport } from './routes/producer-terms'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SeriesRouteImport } from './routes/series'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
@@ -60,20 +61,30 @@ import { Route as ApiPublicV1AdminOverviewRouteImport } from './routes/api/publi
 import { Route as ApiPublicV1AdminSecretHealthRouteImport } from './routes/api/public/v1/admin/secret-health'
 import { Route as ApiPublicV1AdminVideoJobsRouteImport } from './routes/api/public/v1/admin/video-jobs'
 import { Route as ApiPublicV1AdminWorkersRouteImport } from './routes/api/public/v1/admin/workers'
+import { Route as ApiPublicV1AdsCampaignsRouteImport } from './routes/api/public/v1/ads/campaigns'
 import { Route as ApiPublicV1AdsNextRouteImport } from './routes/api/public/v1/ads/next'
 import { Route as ApiPublicV1AdsProviderConfigRouteImport } from './routes/api/public/v1/ads/provider-config'
+import { Route as ApiPublicV1AnalyticsViewerRouteImport } from './routes/api/public/v1/analytics/viewer'
 import { Route as ApiPublicV1CatalogHomeRouteImport } from './routes/api/public/v1/catalog/home'
 import { Route as ApiPublicV1CatalogSearchRouteImport } from './routes/api/public/v1/catalog/search'
 import { Route as ApiPublicV1ChannelsChannelIdRouteImport } from './routes/api/public/v1/channels/$channelId'
 import { Route as ApiPublicV1ConfigClientRouteImport } from './routes/api/public/v1/config/client'
 import { Route as ApiPublicV1ContentAssetsAssetIdRouteImport } from './routes/api/public/v1/content-assets/$assetId'
+import { Route as ApiPublicV1ContinueWatchingIndexRouteImport } from './routes/api/public/v1/continue-watching/index'
+import { Route as ApiPublicV1ContinueWatchingPositionRouteImport } from './routes/api/public/v1/continue-watching/position'
 import { Route as ApiPublicV1DevicesIndexRouteImport } from './routes/api/public/v1/devices/index'
 import { Route as ApiPublicV1DevicesDeviceIdRouteImport } from './routes/api/public/v1/devices/$deviceId'
 import { Route as ApiPublicV1DevicesPushTokenRouteImport } from './routes/api/public/v1/devices/push-token'
+import { Route as ApiPublicV1EpgIndexRouteImport } from './routes/api/public/v1/epg/index'
+import { Route as ApiPublicV1EpgRemindRouteImport } from './routes/api/public/v1/epg/remind'
+import { Route as ApiPublicV1ErrorsBeaconRouteImport } from './routes/api/public/v1/errors/beacon'
+import { Route as ApiPublicV1ErrorsReportRouteImport } from './routes/api/public/v1/errors/report'
 import { Route as ApiPublicV1LegalAcceptanceRouteImport } from './routes/api/public/v1/legal/acceptance'
 import { Route as ApiPublicV1LegalRequiredRouteImport } from './routes/api/public/v1/legal/required'
 import { Route as ApiPublicV1LegalStatusRouteImport } from './routes/api/public/v1/legal/status'
+import { Route as ApiPublicV1NotificationsUnreadCountRouteImport } from './routes/api/public/v1/notifications/unread-count'
 import { Route as ApiPublicV1PagesSlugRouteImport } from './routes/api/public/v1/pages/$slug'
+import { Route as ApiPublicV1ProducerAnalyticsRouteImport } from './routes/api/public/v1/producer/analytics'
 import { Route as ApiPublicV1ProducerChannelsRouteImport } from './routes/api/public/v1/producer/channels'
 import { Route as ApiPublicV1ProducerEarningsRouteImport } from './routes/api/public/v1/producer/earnings'
 import { Route as ApiPublicV1ProducerMobileSummaryRouteImport } from './routes/api/public/v1/producer/mobile-summary'
@@ -82,31 +93,47 @@ import { Route as ApiPublicV1ProducerVerificationRouteImport } from './routes/ap
 import { Route as ApiPublicV1ProfileCompleteRouteImport } from './routes/api/public/v1/profile/complete'
 import { Route as ApiPublicV1ProfileCountryRouteImport } from './routes/api/public/v1/profile/country'
 import { Route as ApiPublicV1ProfilePreferencesRouteImport } from './routes/api/public/v1/profile/preferences'
+import { Route as ApiPublicV1ProfilesIndexRouteImport } from './routes/api/public/v1/profiles/index'
 import { Route as ApiPublicV1ProviderChannelsRouteImport } from './routes/api/public/v1/provider/channels'
 import { Route as ApiPublicV1ProviderContractsRouteImport } from './routes/api/public/v1/provider/contracts'
 import { Route as ApiPublicV1ProviderDashboardRouteImport } from './routes/api/public/v1/provider/dashboard'
 import { Route as ApiPublicV1ProviderDisputesRouteImport } from './routes/api/public/v1/provider/disputes'
+import { Route as ApiPublicV1ProviderRegisterRouteImport } from './routes/api/public/v1/provider/register'
 import { Route as ApiPublicV1ProviderStatementsRouteImport } from './routes/api/public/v1/provider/statements'
+import { Route as ApiPublicV1QualitySettingsRouteImport } from './routes/api/public/v1/quality/settings'
+import { Route as ApiPublicV1RecommendationsIndexRouteImport } from './routes/api/public/v1/recommendations/index'
+import { Route as ApiPublicV1SearchV2RouteImport } from './routes/api/public/v1/search/v2'
 import { Route as ApiPublicV1SessionsStartRouteImport } from './routes/api/public/v1/sessions/start'
 import { Route as ApiPublicV1StorageCompleteRouteImport } from './routes/api/public/v1/storage/complete'
 import { Route as ApiPublicV1StorageIntentRouteImport } from './routes/api/public/v1/storage/intent'
+import { Route as ApiPublicV1SupportTicketsRouteImport } from './routes/api/public/v1/support/tickets'
 import { Route as ApiPublicV1WalletHistoryRouteImport } from './routes/api/public/v1/wallet/history'
 import { Route as ApiPublicV1WalletLedgerRouteImport } from './routes/api/public/v1/wallet/ledger'
 import { Route as ApiPublicV1WalletPreferencesRouteImport } from './routes/api/public/v1/wallet/preferences'
+import { Route as ApiPublicV1WalletPurchasesRouteImport } from './routes/api/public/v1/wallet/purchases'
 import { Route as ApiPublicV1WalletSummaryRouteImport } from './routes/api/public/v1/wallet/summary'
 import { Route as ApiPublicV1WalletTopupsRouteImport } from './routes/api/public/v1/wallet/topups'
+import { Route as ApiPublicV1WatchlistIndexRouteImport } from './routes/api/public/v1/watchlist/index'
+import { Route as ApiPublicV1WatchlistTitleIdRouteImport } from './routes/api/public/v1/watchlist/$titleId'
 import { Route as ApiPublicV1AdminAdsCampaignsRouteImport } from './routes/api/public/v1/admin/ads/campaigns'
 import { Route as ApiPublicV1AdminAdsProvidersRouteImport } from './routes/api/public/v1/admin/ads/providers'
+import { Route as ApiPublicV1AdminAnalyticsOverviewRouteImport } from './routes/api/public/v1/admin/analytics/overview'
+import { Route as ApiPublicV1AdminBillingHealthRouteImport } from './routes/api/public/v1/admin/billing/health'
 import { Route as ApiPublicV1AdminConfigFlagsRouteImport } from './routes/api/public/v1/admin/config/flags'
 import { Route as ApiPublicV1AdminConfigModalSpendRouteImport } from './routes/api/public/v1/admin/config/modal-spend'
 import { Route as ApiPublicV1AdminConfigPricingRouteImport } from './routes/api/public/v1/admin/config/pricing'
+import { Route as ApiPublicV1AdminErrorsIndexRouteImport } from './routes/api/public/v1/admin/errors/index'
 import { Route as ApiPublicV1AdminMigrationZillionaireRouteImport } from './routes/api/public/v1/admin/migration/zillionaire'
 import { Route as ApiPublicV1AdminModerationIndexRouteImport } from './routes/api/public/v1/admin/moderation/index'
+import { Route as ApiPublicV1AdminOperationsLiveRouteImport } from './routes/api/public/v1/admin/operations/live'
 import { Route as ApiPublicV1AdminPagesPublishRouteImport } from './routes/api/public/v1/admin/pages/publish'
+import { Route as ApiPublicV1AdminPagesPublishDefaultsRouteImport } from './routes/api/public/v1/admin/pages/publish-defaults'
+import { Route as ApiPublicV1AdminPagesRollbackRouteImport } from './routes/api/public/v1/admin/pages/rollback'
 import { Route as ApiPublicV1AdminPagesSeedRouteImport } from './routes/api/public/v1/admin/pages/seed'
 import { Route as ApiPublicV1AdminPagesSettingsRouteImport } from './routes/api/public/v1/admin/pages/settings'
 import { Route as ApiPublicV1AdminProducersIndexRouteImport } from './routes/api/public/v1/admin/producers/index'
 import { Route as ApiPublicV1AdminProvidersIndexRouteImport } from './routes/api/public/v1/admin/providers/index'
+import { Route as ApiPublicV1AdminProvidersApprovedEmailsRouteImport } from './routes/api/public/v1/admin/providers/approved-emails'
 import { Route as ApiPublicV1AdminProvidersChannelsRouteImport } from './routes/api/public/v1/admin/providers/channels'
 import { Route as ApiPublicV1AdminProvidersTestPlaybackRouteImport } from './routes/api/public/v1/admin/providers/test-playback'
 import { Route as ApiPublicV1AdminReportsMonthlyRouteImport } from './routes/api/public/v1/admin/reports/monthly'
@@ -125,6 +152,8 @@ import { Route as ApiPublicV1AdminSupportMessagesRouteImport } from './routes/ap
 import { Route as ApiPublicV1AdminUsersIndexRouteImport } from './routes/api/public/v1/admin/users/index'
 import { Route as ApiPublicV1AdminWorkersWorkerIdRouteImport } from './routes/api/public/v1/admin/workers/$workerId'
 import { Route as ApiPublicV1AdsAdIdEventsRouteImport } from './routes/api/public/v1/ads/$adId/events'
+import { Route as ApiPublicV1AuthDevicesIndexRouteImport } from './routes/api/public/v1/auth/devices/index'
+import { Route as ApiPublicV1AuthDevicesSignoutAllRouteImport } from './routes/api/public/v1/auth/devices/signout-all'
 import { Route as ApiPublicV1AuthEmailSendCodeRouteImport } from './routes/api/public/v1/auth/email/send-code'
 import { Route as ApiPublicV1AuthEmailVerifyCodeRouteImport } from './routes/api/public/v1/auth/email/verify-code'
 import { Route as ApiPublicV1AuthSessionRevokeAllRouteImport } from './routes/api/public/v1/auth/session/revoke-all'
@@ -142,9 +171,11 @@ import { Route as ApiPublicV1ProducerVerificationUploadIntentRouteImport } from 
 import { Route as ApiPublicV1SecurityIntegrityChallengeRouteImport } from './routes/api/public/v1/security/integrity/challenge'
 import { Route as ApiPublicV1SessionsSessionIdEndRouteImport } from './routes/api/public/v1/sessions/$sessionId/end'
 import { Route as ApiPublicV1SessionsSessionIdHeartbeatRouteImport } from './routes/api/public/v1/sessions/$sessionId/heartbeat'
+import { Route as ApiPublicV1SessionsSessionIdRecoverRouteImport } from './routes/api/public/v1/sessions/$sessionId/recover'
 import { Route as ApiPublicV1SessionsSessionIdRefreshRouteImport } from './routes/api/public/v1/sessions/$sessionId/refresh'
 import { Route as ApiPublicV1StreamingHlsSplatRouteImport } from './routes/api/public/v1/streaming/hls/$'
 import { Route as ApiPublicV1StreamingKeyAssetIdRouteImport } from './routes/api/public/v1/streaming/key/$assetId'
+import { Route as ApiPublicV1TitlesTitleIdRateRouteImport } from './routes/api/public/v1/titles/$titleId/rate'
 import { Route as ApiPublicV1WalletGooglePlayProductsRouteImport } from './routes/api/public/v1/wallet/google-play/products'
 import { Route as ApiPublicV1WalletGooglePlayVerifyRouteImport } from './routes/api/public/v1/wallet/google-play/verify'
 import { Route as ApiPublicV1WalletReceiptPaymentIdRouteImport } from './routes/api/public/v1/wallet/receipt/$paymentId'
@@ -274,6 +305,11 @@ const SearchRoute = SearchRouteImport.update({
 const SeriesRoute = SeriesRouteImport.update({
   id: '/series',
   path: '/series',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -455,6 +491,11 @@ const ApiPublicV1AdminWorkersRoute = ApiPublicV1AdminWorkersRouteImport.update({
   path: '/api/public/v1/admin/workers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1AdsCampaignsRoute = ApiPublicV1AdsCampaignsRouteImport.update({
+  id: '/api/public/v1/ads/campaigns',
+  path: '/api/public/v1/ads/campaigns',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1AdsNextRoute = ApiPublicV1AdsNextRouteImport.update({
   id: '/api/public/v1/ads/next',
   path: '/api/public/v1/ads/next',
@@ -464,6 +505,12 @@ const ApiPublicV1AdsProviderConfigRoute =
   ApiPublicV1AdsProviderConfigRouteImport.update({
     id: '/api/public/v1/ads/provider-config',
     path: '/api/public/v1/ads/provider-config',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AnalyticsViewerRoute =
+  ApiPublicV1AnalyticsViewerRouteImport.update({
+    id: '/api/public/v1/analytics/viewer',
+    path: '/api/public/v1/analytics/viewer',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1CatalogHomeRoute = ApiPublicV1CatalogHomeRouteImport.update({
@@ -494,6 +541,18 @@ const ApiPublicV1ContentAssetsAssetIdRoute =
     path: '/api/public/v1/content-assets/$assetId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ContinueWatchingIndexRoute =
+  ApiPublicV1ContinueWatchingIndexRouteImport.update({
+    id: '/api/public/v1/continue-watching/',
+    path: '/api/public/v1/continue-watching/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ContinueWatchingPositionRoute =
+  ApiPublicV1ContinueWatchingPositionRouteImport.update({
+    id: '/api/public/v1/continue-watching/position',
+    path: '/api/public/v1/continue-watching/position',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1DevicesIndexRoute = ApiPublicV1DevicesIndexRouteImport.update({
   id: '/api/public/v1/devices/',
   path: '/api/public/v1/devices/',
@@ -511,6 +570,26 @@ const ApiPublicV1DevicesPushTokenRoute =
     path: '/api/public/v1/devices/push-token',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1EpgIndexRoute = ApiPublicV1EpgIndexRouteImport.update({
+  id: '/api/public/v1/epg/',
+  path: '/api/public/v1/epg/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1EpgRemindRoute = ApiPublicV1EpgRemindRouteImport.update({
+  id: '/api/public/v1/epg/remind',
+  path: '/api/public/v1/epg/remind',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1ErrorsBeaconRoute = ApiPublicV1ErrorsBeaconRouteImport.update({
+  id: '/api/public/v1/errors/beacon',
+  path: '/api/public/v1/errors/beacon',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicV1ErrorsReportRoute = ApiPublicV1ErrorsReportRouteImport.update({
+  id: '/api/public/v1/errors/report',
+  path: '/api/public/v1/errors/report',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1LegalAcceptanceRoute =
   ApiPublicV1LegalAcceptanceRouteImport.update({
     id: '/api/public/v1/legal/acceptance',
@@ -528,11 +607,23 @@ const ApiPublicV1LegalStatusRoute = ApiPublicV1LegalStatusRouteImport.update({
   path: '/api/public/v1/legal/status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1NotificationsUnreadCountRoute =
+  ApiPublicV1NotificationsUnreadCountRouteImport.update({
+    id: '/unread-count',
+    path: '/unread-count',
+    getParentRoute: () => ApiPublicV1NotificationsRoute,
+  } as any)
 const ApiPublicV1PagesSlugRoute = ApiPublicV1PagesSlugRouteImport.update({
   id: '/api/public/v1/pages/$slug',
   path: '/api/public/v1/pages/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1ProducerAnalyticsRoute =
+  ApiPublicV1ProducerAnalyticsRouteImport.update({
+    id: '/api/public/v1/producer/analytics',
+    path: '/api/public/v1/producer/analytics',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ProducerChannelsRoute =
   ApiPublicV1ProducerChannelsRouteImport.update({
     id: '/api/public/v1/producer/channels',
@@ -581,6 +672,12 @@ const ApiPublicV1ProfilePreferencesRoute =
     path: '/api/public/v1/profile/preferences',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ProfilesIndexRoute =
+  ApiPublicV1ProfilesIndexRouteImport.update({
+    id: '/api/public/v1/profiles/',
+    path: '/api/public/v1/profiles/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ProviderChannelsRoute =
   ApiPublicV1ProviderChannelsRouteImport.update({
     id: '/api/public/v1/provider/channels',
@@ -605,12 +702,35 @@ const ApiPublicV1ProviderDisputesRoute =
     path: '/api/public/v1/provider/disputes',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ProviderRegisterRoute =
+  ApiPublicV1ProviderRegisterRouteImport.update({
+    id: '/api/public/v1/provider/register',
+    path: '/api/public/v1/provider/register',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ProviderStatementsRoute =
   ApiPublicV1ProviderStatementsRouteImport.update({
     id: '/api/public/v1/provider/statements',
     path: '/api/public/v1/provider/statements',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1QualitySettingsRoute =
+  ApiPublicV1QualitySettingsRouteImport.update({
+    id: '/api/public/v1/quality/settings',
+    path: '/api/public/v1/quality/settings',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1RecommendationsIndexRoute =
+  ApiPublicV1RecommendationsIndexRouteImport.update({
+    id: '/api/public/v1/recommendations/',
+    path: '/api/public/v1/recommendations/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SearchV2Route = ApiPublicV1SearchV2RouteImport.update({
+  id: '/api/public/v1/search/v2',
+  path: '/api/public/v1/search/v2',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1SessionsStartRoute =
   ApiPublicV1SessionsStartRouteImport.update({
     id: '/api/public/v1/sessions/start',
@@ -627,6 +747,12 @@ const ApiPublicV1StorageIntentRoute =
   ApiPublicV1StorageIntentRouteImport.update({
     id: '/api/public/v1/storage/intent',
     path: '/api/public/v1/storage/intent',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SupportTicketsRoute =
+  ApiPublicV1SupportTicketsRouteImport.update({
+    id: '/api/public/v1/support/tickets',
+    path: '/api/public/v1/support/tickets',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1WalletHistoryRoute =
@@ -646,6 +772,12 @@ const ApiPublicV1WalletPreferencesRoute =
     path: '/preferences',
     getParentRoute: () => ApiPublicV1WalletRoute,
   } as any)
+const ApiPublicV1WalletPurchasesRoute =
+  ApiPublicV1WalletPurchasesRouteImport.update({
+    id: '/purchases',
+    path: '/purchases',
+    getParentRoute: () => ApiPublicV1WalletRoute,
+  } as any)
 const ApiPublicV1WalletSummaryRoute =
   ApiPublicV1WalletSummaryRouteImport.update({
     id: '/summary',
@@ -657,6 +789,18 @@ const ApiPublicV1WalletTopupsRoute = ApiPublicV1WalletTopupsRouteImport.update({
   path: '/topups',
   getParentRoute: () => ApiPublicV1WalletRoute,
 } as any)
+const ApiPublicV1WatchlistIndexRoute =
+  ApiPublicV1WatchlistIndexRouteImport.update({
+    id: '/api/public/v1/watchlist/',
+    path: '/api/public/v1/watchlist/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1WatchlistTitleIdRoute =
+  ApiPublicV1WatchlistTitleIdRouteImport.update({
+    id: '/api/public/v1/watchlist/$titleId',
+    path: '/api/public/v1/watchlist/$titleId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1AdminAdsCampaignsRoute =
   ApiPublicV1AdminAdsCampaignsRouteImport.update({
     id: '/api/public/v1/admin/ads/campaigns',
@@ -667,6 +811,18 @@ const ApiPublicV1AdminAdsProvidersRoute =
   ApiPublicV1AdminAdsProvidersRouteImport.update({
     id: '/api/public/v1/admin/ads/providers',
     path: '/api/public/v1/admin/ads/providers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminAnalyticsOverviewRoute =
+  ApiPublicV1AdminAnalyticsOverviewRouteImport.update({
+    id: '/api/public/v1/admin/analytics/overview',
+    path: '/api/public/v1/admin/analytics/overview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminBillingHealthRoute =
+  ApiPublicV1AdminBillingHealthRouteImport.update({
+    id: '/api/public/v1/admin/billing/health',
+    path: '/api/public/v1/admin/billing/health',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1AdminConfigFlagsRoute =
@@ -687,6 +843,12 @@ const ApiPublicV1AdminConfigPricingRoute =
     path: '/api/public/v1/admin/config/pricing',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1AdminErrorsIndexRoute =
+  ApiPublicV1AdminErrorsIndexRouteImport.update({
+    id: '/api/public/v1/admin/errors/',
+    path: '/api/public/v1/admin/errors/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1AdminMigrationZillionaireRoute =
   ApiPublicV1AdminMigrationZillionaireRouteImport.update({
     id: '/api/public/v1/admin/migration/zillionaire',
@@ -699,10 +861,28 @@ const ApiPublicV1AdminModerationIndexRoute =
     path: '/api/public/v1/admin/moderation/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1AdminOperationsLiveRoute =
+  ApiPublicV1AdminOperationsLiveRouteImport.update({
+    id: '/api/public/v1/admin/operations/live',
+    path: '/api/public/v1/admin/operations/live',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1AdminPagesPublishRoute =
   ApiPublicV1AdminPagesPublishRouteImport.update({
     id: '/api/public/v1/admin/pages/publish',
     path: '/api/public/v1/admin/pages/publish',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminPagesPublishDefaultsRoute =
+  ApiPublicV1AdminPagesPublishDefaultsRouteImport.update({
+    id: '/api/public/v1/admin/pages/publish-defaults',
+    path: '/api/public/v1/admin/pages/publish-defaults',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminPagesRollbackRoute =
+  ApiPublicV1AdminPagesRollbackRouteImport.update({
+    id: '/api/public/v1/admin/pages/rollback',
+    path: '/api/public/v1/admin/pages/rollback',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1AdminPagesSeedRoute =
@@ -727,6 +907,12 @@ const ApiPublicV1AdminProvidersIndexRoute =
   ApiPublicV1AdminProvidersIndexRouteImport.update({
     id: '/api/public/v1/admin/providers/',
     path: '/api/public/v1/admin/providers/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AdminProvidersApprovedEmailsRoute =
+  ApiPublicV1AdminProvidersApprovedEmailsRouteImport.update({
+    id: '/api/public/v1/admin/providers/approved-emails',
+    path: '/api/public/v1/admin/providers/approved-emails',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1AdminProvidersChannelsRoute =
@@ -837,6 +1023,18 @@ const ApiPublicV1AdsAdIdEventsRoute =
     path: '/api/public/v1/ads/$adId/events',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1AuthDevicesIndexRoute =
+  ApiPublicV1AuthDevicesIndexRouteImport.update({
+    id: '/api/public/v1/auth/devices/',
+    path: '/api/public/v1/auth/devices/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1AuthDevicesSignoutAllRoute =
+  ApiPublicV1AuthDevicesSignoutAllRouteImport.update({
+    id: '/api/public/v1/auth/devices/signout-all',
+    path: '/api/public/v1/auth/devices/signout-all',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1AuthEmailSendCodeRoute =
   ApiPublicV1AuthEmailSendCodeRouteImport.update({
     id: '/api/public/v1/auth/email/send-code',
@@ -938,6 +1136,12 @@ const ApiPublicV1SessionsSessionIdHeartbeatRoute =
     path: '/api/public/v1/sessions/$sessionId/heartbeat',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1SessionsSessionIdRecoverRoute =
+  ApiPublicV1SessionsSessionIdRecoverRouteImport.update({
+    id: '/api/public/v1/sessions/$sessionId/recover',
+    path: '/api/public/v1/sessions/$sessionId/recover',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1SessionsSessionIdRefreshRoute =
   ApiPublicV1SessionsSessionIdRefreshRouteImport.update({
     id: '/api/public/v1/sessions/$sessionId/refresh',
@@ -954,6 +1158,12 @@ const ApiPublicV1StreamingKeyAssetIdRoute =
   ApiPublicV1StreamingKeyAssetIdRouteImport.update({
     id: '/api/public/v1/streaming/key/$assetId',
     path: '/api/public/v1/streaming/key/$assetId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1TitlesTitleIdRateRoute =
+  ApiPublicV1TitlesTitleIdRateRouteImport.update({
+    id: '/api/public/v1/titles/$titleId/rate',
+    path: '/api/public/v1/titles/$titleId/rate',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1WalletGooglePlayProductsRoute =
@@ -1245,6 +1455,7 @@ export interface FileRoutesByFullPath {
   '/producer-terms': typeof ProducerTermsRoute
   '/search': typeof SearchRoute
   '/series': typeof SeriesRoute
+  '/settings': typeof SettingsRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/admin/ads': typeof AdminAdsRoute
@@ -1279,19 +1490,27 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/admin/secret-health': typeof ApiPublicV1AdminSecretHealthRoute
   '/api/public/v1/admin/video-jobs': typeof ApiPublicV1AdminVideoJobsRoute
   '/api/public/v1/admin/workers': typeof ApiPublicV1AdminWorkersRouteWithChildren
+  '/api/public/v1/ads/campaigns': typeof ApiPublicV1AdsCampaignsRoute
   '/api/public/v1/ads/next': typeof ApiPublicV1AdsNextRoute
   '/api/public/v1/ads/provider-config': typeof ApiPublicV1AdsProviderConfigRoute
+  '/api/public/v1/analytics/viewer': typeof ApiPublicV1AnalyticsViewerRoute
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
   '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
   '/api/public/v1/config/client': typeof ApiPublicV1ConfigClientRoute
   '/api/public/v1/content-assets/$assetId': typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
+  '/api/public/v1/continue-watching/position': typeof ApiPublicV1ContinueWatchingPositionRoute
   '/api/public/v1/devices/$deviceId': typeof ApiPublicV1DevicesDeviceIdRoute
   '/api/public/v1/devices/push-token': typeof ApiPublicV1DevicesPushTokenRoute
+  '/api/public/v1/epg/remind': typeof ApiPublicV1EpgRemindRoute
+  '/api/public/v1/errors/beacon': typeof ApiPublicV1ErrorsBeaconRoute
+  '/api/public/v1/errors/report': typeof ApiPublicV1ErrorsReportRoute
   '/api/public/v1/legal/acceptance': typeof ApiPublicV1LegalAcceptanceRoute
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
   '/api/public/v1/legal/status': typeof ApiPublicV1LegalStatusRoute
+  '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
+  '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
@@ -1304,25 +1523,42 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/provider/contracts': typeof ApiPublicV1ProviderContractsRoute
   '/api/public/v1/provider/dashboard': typeof ApiPublicV1ProviderDashboardRoute
   '/api/public/v1/provider/disputes': typeof ApiPublicV1ProviderDisputesRoute
+  '/api/public/v1/provider/register': typeof ApiPublicV1ProviderRegisterRoute
   '/api/public/v1/provider/statements': typeof ApiPublicV1ProviderStatementsRoute
+  '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
+  '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
   '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
+  '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
   '/api/public/v1/wallet/history': typeof ApiPublicV1WalletHistoryRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/wallet/preferences': typeof ApiPublicV1WalletPreferencesRoute
+  '/api/public/v1/wallet/purchases': typeof ApiPublicV1WalletPurchasesRoute
   '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
   '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
+  '/api/public/v1/watchlist/$titleId': typeof ApiPublicV1WatchlistTitleIdRoute
+  '/api/public/v1/continue-watching/': typeof ApiPublicV1ContinueWatchingIndexRoute
   '/api/public/v1/devices/': typeof ApiPublicV1DevicesIndexRoute
+  '/api/public/v1/epg/': typeof ApiPublicV1EpgIndexRoute
+  '/api/public/v1/profiles/': typeof ApiPublicV1ProfilesIndexRoute
+  '/api/public/v1/recommendations/': typeof ApiPublicV1RecommendationsIndexRoute
+  '/api/public/v1/watchlist/': typeof ApiPublicV1WatchlistIndexRoute
   '/api/public/v1/admin/ads/campaigns': typeof ApiPublicV1AdminAdsCampaignsRouteWithChildren
   '/api/public/v1/admin/ads/providers': typeof ApiPublicV1AdminAdsProvidersRoute
+  '/api/public/v1/admin/analytics/overview': typeof ApiPublicV1AdminAnalyticsOverviewRoute
+  '/api/public/v1/admin/billing/health': typeof ApiPublicV1AdminBillingHealthRoute
   '/api/public/v1/admin/config/flags': typeof ApiPublicV1AdminConfigFlagsRoute
   '/api/public/v1/admin/config/modal-spend': typeof ApiPublicV1AdminConfigModalSpendRoute
   '/api/public/v1/admin/config/pricing': typeof ApiPublicV1AdminConfigPricingRoute
   '/api/public/v1/admin/migration/zillionaire': typeof ApiPublicV1AdminMigrationZillionaireRoute
+  '/api/public/v1/admin/operations/live': typeof ApiPublicV1AdminOperationsLiveRoute
   '/api/public/v1/admin/pages/publish': typeof ApiPublicV1AdminPagesPublishRoute
+  '/api/public/v1/admin/pages/publish-defaults': typeof ApiPublicV1AdminPagesPublishDefaultsRoute
+  '/api/public/v1/admin/pages/rollback': typeof ApiPublicV1AdminPagesRollbackRoute
   '/api/public/v1/admin/pages/seed': typeof ApiPublicV1AdminPagesSeedRoute
   '/api/public/v1/admin/pages/settings': typeof ApiPublicV1AdminPagesSettingsRoute
+  '/api/public/v1/admin/providers/approved-emails': typeof ApiPublicV1AdminProvidersApprovedEmailsRoute
   '/api/public/v1/admin/providers/channels': typeof ApiPublicV1AdminProvidersChannelsRoute
   '/api/public/v1/admin/providers/test-playback': typeof ApiPublicV1AdminProvidersTestPlaybackRoute
   '/api/public/v1/admin/reports/monthly': typeof ApiPublicV1AdminReportsMonthlyRoute
@@ -1340,6 +1576,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/admin/support/messages': typeof ApiPublicV1AdminSupportMessagesRoute
   '/api/public/v1/admin/workers/$workerId': typeof ApiPublicV1AdminWorkersWorkerIdRoute
   '/api/public/v1/ads/$adId/events': typeof ApiPublicV1AdsAdIdEventsRoute
+  '/api/public/v1/auth/devices/signout-all': typeof ApiPublicV1AuthDevicesSignoutAllRoute
   '/api/public/v1/auth/email/send-code': typeof ApiPublicV1AuthEmailSendCodeRoute
   '/api/public/v1/auth/email/verify-code': typeof ApiPublicV1AuthEmailVerifyCodeRoute
   '/api/public/v1/auth/session/revoke-all': typeof ApiPublicV1AuthSessionRevokeAllRoute
@@ -1357,9 +1594,11 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
   '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
+  '/api/public/v1/sessions/$sessionId/recover': typeof ApiPublicV1SessionsSessionIdRecoverRoute
   '/api/public/v1/sessions/$sessionId/refresh': typeof ApiPublicV1SessionsSessionIdRefreshRoute
   '/api/public/v1/streaming/hls/$': typeof ApiPublicV1StreamingHlsSplatRoute
   '/api/public/v1/streaming/key/$assetId': typeof ApiPublicV1StreamingKeyAssetIdRoute
+  '/api/public/v1/titles/$titleId/rate': typeof ApiPublicV1TitlesTitleIdRateRoute
   '/api/public/v1/wallet/google-play/products': typeof ApiPublicV1WalletGooglePlayProductsRoute
   '/api/public/v1/wallet/google-play/verify': typeof ApiPublicV1WalletGooglePlayVerifyRoute
   '/api/public/v1/wallet/receipt/$paymentId': typeof ApiPublicV1WalletReceiptPaymentIdRoute
@@ -1371,10 +1610,12 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/worker/maintenance/run': typeof ApiPublicV1WorkerMaintenanceRunRoute
   '/api/public/v1/worker/maintenance/schedule': typeof ApiPublicV1WorkerMaintenanceScheduleRoute
   '/api/public/v1/worker/maintenance/schedule-wallet-holds': typeof ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute
+  '/api/public/v1/admin/errors/': typeof ApiPublicV1AdminErrorsIndexRoute
   '/api/public/v1/admin/moderation/': typeof ApiPublicV1AdminModerationIndexRoute
   '/api/public/v1/admin/producers/': typeof ApiPublicV1AdminProducersIndexRoute
   '/api/public/v1/admin/providers/': typeof ApiPublicV1AdminProvidersIndexRoute
   '/api/public/v1/admin/users/': typeof ApiPublicV1AdminUsersIndexRoute
+  '/api/public/v1/auth/devices/': typeof ApiPublicV1AuthDevicesIndexRoute
   '/api/public/v1/admin/ads/campaigns/$campaignId': typeof ApiPublicV1AdminAdsCampaignsCampaignIdRoute
   '/api/public/v1/admin/channels/$channelId/assets': typeof ApiPublicV1AdminChannelsChannelIdAssetsRoute
   '/api/public/v1/admin/channels/$channelId/publish': typeof ApiPublicV1AdminChannelsChannelIdPublishRoute
@@ -1428,6 +1669,7 @@ export interface FileRoutesByTo {
   '/producer-terms': typeof ProducerTermsRoute
   '/search': typeof SearchRoute
   '/series': typeof SeriesRoute
+  '/settings': typeof SettingsRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/admin/ads': typeof AdminAdsRoute
@@ -1462,19 +1704,27 @@ export interface FileRoutesByTo {
   '/api/public/v1/admin/secret-health': typeof ApiPublicV1AdminSecretHealthRoute
   '/api/public/v1/admin/video-jobs': typeof ApiPublicV1AdminVideoJobsRoute
   '/api/public/v1/admin/workers': typeof ApiPublicV1AdminWorkersRouteWithChildren
+  '/api/public/v1/ads/campaigns': typeof ApiPublicV1AdsCampaignsRoute
   '/api/public/v1/ads/next': typeof ApiPublicV1AdsNextRoute
   '/api/public/v1/ads/provider-config': typeof ApiPublicV1AdsProviderConfigRoute
+  '/api/public/v1/analytics/viewer': typeof ApiPublicV1AnalyticsViewerRoute
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
   '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
   '/api/public/v1/config/client': typeof ApiPublicV1ConfigClientRoute
   '/api/public/v1/content-assets/$assetId': typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
+  '/api/public/v1/continue-watching/position': typeof ApiPublicV1ContinueWatchingPositionRoute
   '/api/public/v1/devices/$deviceId': typeof ApiPublicV1DevicesDeviceIdRoute
   '/api/public/v1/devices/push-token': typeof ApiPublicV1DevicesPushTokenRoute
+  '/api/public/v1/epg/remind': typeof ApiPublicV1EpgRemindRoute
+  '/api/public/v1/errors/beacon': typeof ApiPublicV1ErrorsBeaconRoute
+  '/api/public/v1/errors/report': typeof ApiPublicV1ErrorsReportRoute
   '/api/public/v1/legal/acceptance': typeof ApiPublicV1LegalAcceptanceRoute
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
   '/api/public/v1/legal/status': typeof ApiPublicV1LegalStatusRoute
+  '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
+  '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
@@ -1487,25 +1737,42 @@ export interface FileRoutesByTo {
   '/api/public/v1/provider/contracts': typeof ApiPublicV1ProviderContractsRoute
   '/api/public/v1/provider/dashboard': typeof ApiPublicV1ProviderDashboardRoute
   '/api/public/v1/provider/disputes': typeof ApiPublicV1ProviderDisputesRoute
+  '/api/public/v1/provider/register': typeof ApiPublicV1ProviderRegisterRoute
   '/api/public/v1/provider/statements': typeof ApiPublicV1ProviderStatementsRoute
+  '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
+  '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
   '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
+  '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
   '/api/public/v1/wallet/history': typeof ApiPublicV1WalletHistoryRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/wallet/preferences': typeof ApiPublicV1WalletPreferencesRoute
+  '/api/public/v1/wallet/purchases': typeof ApiPublicV1WalletPurchasesRoute
   '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
   '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
+  '/api/public/v1/watchlist/$titleId': typeof ApiPublicV1WatchlistTitleIdRoute
+  '/api/public/v1/continue-watching': typeof ApiPublicV1ContinueWatchingIndexRoute
   '/api/public/v1/devices': typeof ApiPublicV1DevicesIndexRoute
+  '/api/public/v1/epg': typeof ApiPublicV1EpgIndexRoute
+  '/api/public/v1/profiles': typeof ApiPublicV1ProfilesIndexRoute
+  '/api/public/v1/recommendations': typeof ApiPublicV1RecommendationsIndexRoute
+  '/api/public/v1/watchlist': typeof ApiPublicV1WatchlistIndexRoute
   '/api/public/v1/admin/ads/campaigns': typeof ApiPublicV1AdminAdsCampaignsRouteWithChildren
   '/api/public/v1/admin/ads/providers': typeof ApiPublicV1AdminAdsProvidersRoute
+  '/api/public/v1/admin/analytics/overview': typeof ApiPublicV1AdminAnalyticsOverviewRoute
+  '/api/public/v1/admin/billing/health': typeof ApiPublicV1AdminBillingHealthRoute
   '/api/public/v1/admin/config/flags': typeof ApiPublicV1AdminConfigFlagsRoute
   '/api/public/v1/admin/config/modal-spend': typeof ApiPublicV1AdminConfigModalSpendRoute
   '/api/public/v1/admin/config/pricing': typeof ApiPublicV1AdminConfigPricingRoute
   '/api/public/v1/admin/migration/zillionaire': typeof ApiPublicV1AdminMigrationZillionaireRoute
+  '/api/public/v1/admin/operations/live': typeof ApiPublicV1AdminOperationsLiveRoute
   '/api/public/v1/admin/pages/publish': typeof ApiPublicV1AdminPagesPublishRoute
+  '/api/public/v1/admin/pages/publish-defaults': typeof ApiPublicV1AdminPagesPublishDefaultsRoute
+  '/api/public/v1/admin/pages/rollback': typeof ApiPublicV1AdminPagesRollbackRoute
   '/api/public/v1/admin/pages/seed': typeof ApiPublicV1AdminPagesSeedRoute
   '/api/public/v1/admin/pages/settings': typeof ApiPublicV1AdminPagesSettingsRoute
+  '/api/public/v1/admin/providers/approved-emails': typeof ApiPublicV1AdminProvidersApprovedEmailsRoute
   '/api/public/v1/admin/providers/channels': typeof ApiPublicV1AdminProvidersChannelsRoute
   '/api/public/v1/admin/providers/test-playback': typeof ApiPublicV1AdminProvidersTestPlaybackRoute
   '/api/public/v1/admin/reports/monthly': typeof ApiPublicV1AdminReportsMonthlyRoute
@@ -1523,6 +1790,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/admin/support/messages': typeof ApiPublicV1AdminSupportMessagesRoute
   '/api/public/v1/admin/workers/$workerId': typeof ApiPublicV1AdminWorkersWorkerIdRoute
   '/api/public/v1/ads/$adId/events': typeof ApiPublicV1AdsAdIdEventsRoute
+  '/api/public/v1/auth/devices/signout-all': typeof ApiPublicV1AuthDevicesSignoutAllRoute
   '/api/public/v1/auth/email/send-code': typeof ApiPublicV1AuthEmailSendCodeRoute
   '/api/public/v1/auth/email/verify-code': typeof ApiPublicV1AuthEmailVerifyCodeRoute
   '/api/public/v1/auth/session/revoke-all': typeof ApiPublicV1AuthSessionRevokeAllRoute
@@ -1540,9 +1808,11 @@ export interface FileRoutesByTo {
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
   '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
+  '/api/public/v1/sessions/$sessionId/recover': typeof ApiPublicV1SessionsSessionIdRecoverRoute
   '/api/public/v1/sessions/$sessionId/refresh': typeof ApiPublicV1SessionsSessionIdRefreshRoute
   '/api/public/v1/streaming/hls/$': typeof ApiPublicV1StreamingHlsSplatRoute
   '/api/public/v1/streaming/key/$assetId': typeof ApiPublicV1StreamingKeyAssetIdRoute
+  '/api/public/v1/titles/$titleId/rate': typeof ApiPublicV1TitlesTitleIdRateRoute
   '/api/public/v1/wallet/google-play/products': typeof ApiPublicV1WalletGooglePlayProductsRoute
   '/api/public/v1/wallet/google-play/verify': typeof ApiPublicV1WalletGooglePlayVerifyRoute
   '/api/public/v1/wallet/receipt/$paymentId': typeof ApiPublicV1WalletReceiptPaymentIdRoute
@@ -1554,10 +1824,12 @@ export interface FileRoutesByTo {
   '/api/public/v1/worker/maintenance/run': typeof ApiPublicV1WorkerMaintenanceRunRoute
   '/api/public/v1/worker/maintenance/schedule': typeof ApiPublicV1WorkerMaintenanceScheduleRoute
   '/api/public/v1/worker/maintenance/schedule-wallet-holds': typeof ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute
+  '/api/public/v1/admin/errors': typeof ApiPublicV1AdminErrorsIndexRoute
   '/api/public/v1/admin/moderation': typeof ApiPublicV1AdminModerationIndexRoute
   '/api/public/v1/admin/producers': typeof ApiPublicV1AdminProducersIndexRoute
   '/api/public/v1/admin/providers': typeof ApiPublicV1AdminProvidersIndexRoute
   '/api/public/v1/admin/users': typeof ApiPublicV1AdminUsersIndexRoute
+  '/api/public/v1/auth/devices': typeof ApiPublicV1AuthDevicesIndexRoute
   '/api/public/v1/admin/ads/campaigns/$campaignId': typeof ApiPublicV1AdminAdsCampaignsCampaignIdRoute
   '/api/public/v1/admin/channels/$channelId/assets': typeof ApiPublicV1AdminChannelsChannelIdAssetsRoute
   '/api/public/v1/admin/channels/$channelId/publish': typeof ApiPublicV1AdminChannelsChannelIdPublishRoute
@@ -1612,6 +1884,7 @@ export interface FileRoutesById {
   '/producer-terms': typeof ProducerTermsRoute
   '/search': typeof SearchRoute
   '/series': typeof SeriesRoute
+  '/settings': typeof SettingsRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/admin/ads': typeof AdminAdsRoute
@@ -1646,19 +1919,27 @@ export interface FileRoutesById {
   '/api/public/v1/admin/secret-health': typeof ApiPublicV1AdminSecretHealthRoute
   '/api/public/v1/admin/video-jobs': typeof ApiPublicV1AdminVideoJobsRoute
   '/api/public/v1/admin/workers': typeof ApiPublicV1AdminWorkersRouteWithChildren
+  '/api/public/v1/ads/campaigns': typeof ApiPublicV1AdsCampaignsRoute
   '/api/public/v1/ads/next': typeof ApiPublicV1AdsNextRoute
   '/api/public/v1/ads/provider-config': typeof ApiPublicV1AdsProviderConfigRoute
+  '/api/public/v1/analytics/viewer': typeof ApiPublicV1AnalyticsViewerRoute
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
   '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
   '/api/public/v1/config/client': typeof ApiPublicV1ConfigClientRoute
   '/api/public/v1/content-assets/$assetId': typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
+  '/api/public/v1/continue-watching/position': typeof ApiPublicV1ContinueWatchingPositionRoute
   '/api/public/v1/devices/$deviceId': typeof ApiPublicV1DevicesDeviceIdRoute
   '/api/public/v1/devices/push-token': typeof ApiPublicV1DevicesPushTokenRoute
+  '/api/public/v1/epg/remind': typeof ApiPublicV1EpgRemindRoute
+  '/api/public/v1/errors/beacon': typeof ApiPublicV1ErrorsBeaconRoute
+  '/api/public/v1/errors/report': typeof ApiPublicV1ErrorsReportRoute
   '/api/public/v1/legal/acceptance': typeof ApiPublicV1LegalAcceptanceRoute
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
   '/api/public/v1/legal/status': typeof ApiPublicV1LegalStatusRoute
+  '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
+  '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
@@ -1671,25 +1952,42 @@ export interface FileRoutesById {
   '/api/public/v1/provider/contracts': typeof ApiPublicV1ProviderContractsRoute
   '/api/public/v1/provider/dashboard': typeof ApiPublicV1ProviderDashboardRoute
   '/api/public/v1/provider/disputes': typeof ApiPublicV1ProviderDisputesRoute
+  '/api/public/v1/provider/register': typeof ApiPublicV1ProviderRegisterRoute
   '/api/public/v1/provider/statements': typeof ApiPublicV1ProviderStatementsRoute
+  '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
+  '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
   '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
+  '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
   '/api/public/v1/wallet/history': typeof ApiPublicV1WalletHistoryRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/wallet/preferences': typeof ApiPublicV1WalletPreferencesRoute
+  '/api/public/v1/wallet/purchases': typeof ApiPublicV1WalletPurchasesRoute
   '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
   '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
+  '/api/public/v1/watchlist/$titleId': typeof ApiPublicV1WatchlistTitleIdRoute
+  '/api/public/v1/continue-watching/': typeof ApiPublicV1ContinueWatchingIndexRoute
   '/api/public/v1/devices/': typeof ApiPublicV1DevicesIndexRoute
+  '/api/public/v1/epg/': typeof ApiPublicV1EpgIndexRoute
+  '/api/public/v1/profiles/': typeof ApiPublicV1ProfilesIndexRoute
+  '/api/public/v1/recommendations/': typeof ApiPublicV1RecommendationsIndexRoute
+  '/api/public/v1/watchlist/': typeof ApiPublicV1WatchlistIndexRoute
   '/api/public/v1/admin/ads/campaigns': typeof ApiPublicV1AdminAdsCampaignsRouteWithChildren
   '/api/public/v1/admin/ads/providers': typeof ApiPublicV1AdminAdsProvidersRoute
+  '/api/public/v1/admin/analytics/overview': typeof ApiPublicV1AdminAnalyticsOverviewRoute
+  '/api/public/v1/admin/billing/health': typeof ApiPublicV1AdminBillingHealthRoute
   '/api/public/v1/admin/config/flags': typeof ApiPublicV1AdminConfigFlagsRoute
   '/api/public/v1/admin/config/modal-spend': typeof ApiPublicV1AdminConfigModalSpendRoute
   '/api/public/v1/admin/config/pricing': typeof ApiPublicV1AdminConfigPricingRoute
   '/api/public/v1/admin/migration/zillionaire': typeof ApiPublicV1AdminMigrationZillionaireRoute
+  '/api/public/v1/admin/operations/live': typeof ApiPublicV1AdminOperationsLiveRoute
   '/api/public/v1/admin/pages/publish': typeof ApiPublicV1AdminPagesPublishRoute
+  '/api/public/v1/admin/pages/publish-defaults': typeof ApiPublicV1AdminPagesPublishDefaultsRoute
+  '/api/public/v1/admin/pages/rollback': typeof ApiPublicV1AdminPagesRollbackRoute
   '/api/public/v1/admin/pages/seed': typeof ApiPublicV1AdminPagesSeedRoute
   '/api/public/v1/admin/pages/settings': typeof ApiPublicV1AdminPagesSettingsRoute
+  '/api/public/v1/admin/providers/approved-emails': typeof ApiPublicV1AdminProvidersApprovedEmailsRoute
   '/api/public/v1/admin/providers/channels': typeof ApiPublicV1AdminProvidersChannelsRoute
   '/api/public/v1/admin/providers/test-playback': typeof ApiPublicV1AdminProvidersTestPlaybackRoute
   '/api/public/v1/admin/reports/monthly': typeof ApiPublicV1AdminReportsMonthlyRoute
@@ -1707,6 +2005,7 @@ export interface FileRoutesById {
   '/api/public/v1/admin/support/messages': typeof ApiPublicV1AdminSupportMessagesRoute
   '/api/public/v1/admin/workers/$workerId': typeof ApiPublicV1AdminWorkersWorkerIdRoute
   '/api/public/v1/ads/$adId/events': typeof ApiPublicV1AdsAdIdEventsRoute
+  '/api/public/v1/auth/devices/signout-all': typeof ApiPublicV1AuthDevicesSignoutAllRoute
   '/api/public/v1/auth/email/send-code': typeof ApiPublicV1AuthEmailSendCodeRoute
   '/api/public/v1/auth/email/verify-code': typeof ApiPublicV1AuthEmailVerifyCodeRoute
   '/api/public/v1/auth/session/revoke-all': typeof ApiPublicV1AuthSessionRevokeAllRoute
@@ -1724,9 +2023,11 @@ export interface FileRoutesById {
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
   '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
+  '/api/public/v1/sessions/$sessionId/recover': typeof ApiPublicV1SessionsSessionIdRecoverRoute
   '/api/public/v1/sessions/$sessionId/refresh': typeof ApiPublicV1SessionsSessionIdRefreshRoute
   '/api/public/v1/streaming/hls/$': typeof ApiPublicV1StreamingHlsSplatRoute
   '/api/public/v1/streaming/key/$assetId': typeof ApiPublicV1StreamingKeyAssetIdRoute
+  '/api/public/v1/titles/$titleId/rate': typeof ApiPublicV1TitlesTitleIdRateRoute
   '/api/public/v1/wallet/google-play/products': typeof ApiPublicV1WalletGooglePlayProductsRoute
   '/api/public/v1/wallet/google-play/verify': typeof ApiPublicV1WalletGooglePlayVerifyRoute
   '/api/public/v1/wallet/receipt/$paymentId': typeof ApiPublicV1WalletReceiptPaymentIdRoute
@@ -1738,10 +2039,12 @@ export interface FileRoutesById {
   '/api/public/v1/worker/maintenance/run': typeof ApiPublicV1WorkerMaintenanceRunRoute
   '/api/public/v1/worker/maintenance/schedule': typeof ApiPublicV1WorkerMaintenanceScheduleRoute
   '/api/public/v1/worker/maintenance/schedule-wallet-holds': typeof ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute
+  '/api/public/v1/admin/errors/': typeof ApiPublicV1AdminErrorsIndexRoute
   '/api/public/v1/admin/moderation/': typeof ApiPublicV1AdminModerationIndexRoute
   '/api/public/v1/admin/producers/': typeof ApiPublicV1AdminProducersIndexRoute
   '/api/public/v1/admin/providers/': typeof ApiPublicV1AdminProvidersIndexRoute
   '/api/public/v1/admin/users/': typeof ApiPublicV1AdminUsersIndexRoute
+  '/api/public/v1/auth/devices/': typeof ApiPublicV1AuthDevicesIndexRoute
   '/api/public/v1/admin/ads/campaigns/$campaignId': typeof ApiPublicV1AdminAdsCampaignsCampaignIdRoute
   '/api/public/v1/admin/channels/$channelId/assets': typeof ApiPublicV1AdminChannelsChannelIdAssetsRoute
   '/api/public/v1/admin/channels/$channelId/publish': typeof ApiPublicV1AdminChannelsChannelIdPublishRoute
@@ -1797,6 +2100,7 @@ export interface FileRouteTypes {
     | '/producer-terms'
     | '/search'
     | '/series'
+    | '/settings'
     | '/terms'
     | '/wallet'
     | '/admin/ads'
@@ -1831,19 +2135,27 @@ export interface FileRouteTypes {
     | '/api/public/v1/admin/secret-health'
     | '/api/public/v1/admin/video-jobs'
     | '/api/public/v1/admin/workers'
+    | '/api/public/v1/ads/campaigns'
     | '/api/public/v1/ads/next'
     | '/api/public/v1/ads/provider-config'
+    | '/api/public/v1/analytics/viewer'
     | '/api/public/v1/catalog/home'
     | '/api/public/v1/catalog/search'
     | '/api/public/v1/channels/$channelId'
     | '/api/public/v1/config/client'
     | '/api/public/v1/content-assets/$assetId'
+    | '/api/public/v1/continue-watching/position'
     | '/api/public/v1/devices/$deviceId'
     | '/api/public/v1/devices/push-token'
+    | '/api/public/v1/epg/remind'
+    | '/api/public/v1/errors/beacon'
+    | '/api/public/v1/errors/report'
     | '/api/public/v1/legal/acceptance'
     | '/api/public/v1/legal/required'
     | '/api/public/v1/legal/status'
+    | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
+    | '/api/public/v1/producer/analytics'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
@@ -1856,25 +2168,42 @@ export interface FileRouteTypes {
     | '/api/public/v1/provider/contracts'
     | '/api/public/v1/provider/dashboard'
     | '/api/public/v1/provider/disputes'
+    | '/api/public/v1/provider/register'
     | '/api/public/v1/provider/statements'
+    | '/api/public/v1/quality/settings'
+    | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
     | '/api/public/v1/storage/complete'
     | '/api/public/v1/storage/intent'
+    | '/api/public/v1/support/tickets'
     | '/api/public/v1/wallet/history'
     | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/wallet/preferences'
+    | '/api/public/v1/wallet/purchases'
     | '/api/public/v1/wallet/summary'
     | '/api/public/v1/wallet/topups'
+    | '/api/public/v1/watchlist/$titleId'
+    | '/api/public/v1/continue-watching/'
     | '/api/public/v1/devices/'
+    | '/api/public/v1/epg/'
+    | '/api/public/v1/profiles/'
+    | '/api/public/v1/recommendations/'
+    | '/api/public/v1/watchlist/'
     | '/api/public/v1/admin/ads/campaigns'
     | '/api/public/v1/admin/ads/providers'
+    | '/api/public/v1/admin/analytics/overview'
+    | '/api/public/v1/admin/billing/health'
     | '/api/public/v1/admin/config/flags'
     | '/api/public/v1/admin/config/modal-spend'
     | '/api/public/v1/admin/config/pricing'
     | '/api/public/v1/admin/migration/zillionaire'
+    | '/api/public/v1/admin/operations/live'
     | '/api/public/v1/admin/pages/publish'
+    | '/api/public/v1/admin/pages/publish-defaults'
+    | '/api/public/v1/admin/pages/rollback'
     | '/api/public/v1/admin/pages/seed'
     | '/api/public/v1/admin/pages/settings'
+    | '/api/public/v1/admin/providers/approved-emails'
     | '/api/public/v1/admin/providers/channels'
     | '/api/public/v1/admin/providers/test-playback'
     | '/api/public/v1/admin/reports/monthly'
@@ -1892,6 +2221,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/admin/support/messages'
     | '/api/public/v1/admin/workers/$workerId'
     | '/api/public/v1/ads/$adId/events'
+    | '/api/public/v1/auth/devices/signout-all'
     | '/api/public/v1/auth/email/send-code'
     | '/api/public/v1/auth/email/verify-code'
     | '/api/public/v1/auth/session/revoke-all'
@@ -1909,9 +2239,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
     | '/api/public/v1/sessions/$sessionId/heartbeat'
+    | '/api/public/v1/sessions/$sessionId/recover'
     | '/api/public/v1/sessions/$sessionId/refresh'
     | '/api/public/v1/streaming/hls/$'
     | '/api/public/v1/streaming/key/$assetId'
+    | '/api/public/v1/titles/$titleId/rate'
     | '/api/public/v1/wallet/google-play/products'
     | '/api/public/v1/wallet/google-play/verify'
     | '/api/public/v1/wallet/receipt/$paymentId'
@@ -1923,10 +2255,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/worker/maintenance/run'
     | '/api/public/v1/worker/maintenance/schedule'
     | '/api/public/v1/worker/maintenance/schedule-wallet-holds'
+    | '/api/public/v1/admin/errors/'
     | '/api/public/v1/admin/moderation/'
     | '/api/public/v1/admin/producers/'
     | '/api/public/v1/admin/providers/'
     | '/api/public/v1/admin/users/'
+    | '/api/public/v1/auth/devices/'
     | '/api/public/v1/admin/ads/campaigns/$campaignId'
     | '/api/public/v1/admin/channels/$channelId/assets'
     | '/api/public/v1/admin/channels/$channelId/publish'
@@ -1980,6 +2314,7 @@ export interface FileRouteTypes {
     | '/producer-terms'
     | '/search'
     | '/series'
+    | '/settings'
     | '/terms'
     | '/wallet'
     | '/admin/ads'
@@ -2014,19 +2349,27 @@ export interface FileRouteTypes {
     | '/api/public/v1/admin/secret-health'
     | '/api/public/v1/admin/video-jobs'
     | '/api/public/v1/admin/workers'
+    | '/api/public/v1/ads/campaigns'
     | '/api/public/v1/ads/next'
     | '/api/public/v1/ads/provider-config'
+    | '/api/public/v1/analytics/viewer'
     | '/api/public/v1/catalog/home'
     | '/api/public/v1/catalog/search'
     | '/api/public/v1/channels/$channelId'
     | '/api/public/v1/config/client'
     | '/api/public/v1/content-assets/$assetId'
+    | '/api/public/v1/continue-watching/position'
     | '/api/public/v1/devices/$deviceId'
     | '/api/public/v1/devices/push-token'
+    | '/api/public/v1/epg/remind'
+    | '/api/public/v1/errors/beacon'
+    | '/api/public/v1/errors/report'
     | '/api/public/v1/legal/acceptance'
     | '/api/public/v1/legal/required'
     | '/api/public/v1/legal/status'
+    | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
+    | '/api/public/v1/producer/analytics'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
@@ -2039,25 +2382,42 @@ export interface FileRouteTypes {
     | '/api/public/v1/provider/contracts'
     | '/api/public/v1/provider/dashboard'
     | '/api/public/v1/provider/disputes'
+    | '/api/public/v1/provider/register'
     | '/api/public/v1/provider/statements'
+    | '/api/public/v1/quality/settings'
+    | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
     | '/api/public/v1/storage/complete'
     | '/api/public/v1/storage/intent'
+    | '/api/public/v1/support/tickets'
     | '/api/public/v1/wallet/history'
     | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/wallet/preferences'
+    | '/api/public/v1/wallet/purchases'
     | '/api/public/v1/wallet/summary'
     | '/api/public/v1/wallet/topups'
+    | '/api/public/v1/watchlist/$titleId'
+    | '/api/public/v1/continue-watching'
     | '/api/public/v1/devices'
+    | '/api/public/v1/epg'
+    | '/api/public/v1/profiles'
+    | '/api/public/v1/recommendations'
+    | '/api/public/v1/watchlist'
     | '/api/public/v1/admin/ads/campaigns'
     | '/api/public/v1/admin/ads/providers'
+    | '/api/public/v1/admin/analytics/overview'
+    | '/api/public/v1/admin/billing/health'
     | '/api/public/v1/admin/config/flags'
     | '/api/public/v1/admin/config/modal-spend'
     | '/api/public/v1/admin/config/pricing'
     | '/api/public/v1/admin/migration/zillionaire'
+    | '/api/public/v1/admin/operations/live'
     | '/api/public/v1/admin/pages/publish'
+    | '/api/public/v1/admin/pages/publish-defaults'
+    | '/api/public/v1/admin/pages/rollback'
     | '/api/public/v1/admin/pages/seed'
     | '/api/public/v1/admin/pages/settings'
+    | '/api/public/v1/admin/providers/approved-emails'
     | '/api/public/v1/admin/providers/channels'
     | '/api/public/v1/admin/providers/test-playback'
     | '/api/public/v1/admin/reports/monthly'
@@ -2075,6 +2435,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/admin/support/messages'
     | '/api/public/v1/admin/workers/$workerId'
     | '/api/public/v1/ads/$adId/events'
+    | '/api/public/v1/auth/devices/signout-all'
     | '/api/public/v1/auth/email/send-code'
     | '/api/public/v1/auth/email/verify-code'
     | '/api/public/v1/auth/session/revoke-all'
@@ -2092,9 +2453,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
     | '/api/public/v1/sessions/$sessionId/heartbeat'
+    | '/api/public/v1/sessions/$sessionId/recover'
     | '/api/public/v1/sessions/$sessionId/refresh'
     | '/api/public/v1/streaming/hls/$'
     | '/api/public/v1/streaming/key/$assetId'
+    | '/api/public/v1/titles/$titleId/rate'
     | '/api/public/v1/wallet/google-play/products'
     | '/api/public/v1/wallet/google-play/verify'
     | '/api/public/v1/wallet/receipt/$paymentId'
@@ -2106,10 +2469,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/worker/maintenance/run'
     | '/api/public/v1/worker/maintenance/schedule'
     | '/api/public/v1/worker/maintenance/schedule-wallet-holds'
+    | '/api/public/v1/admin/errors'
     | '/api/public/v1/admin/moderation'
     | '/api/public/v1/admin/producers'
     | '/api/public/v1/admin/providers'
     | '/api/public/v1/admin/users'
+    | '/api/public/v1/auth/devices'
     | '/api/public/v1/admin/ads/campaigns/$campaignId'
     | '/api/public/v1/admin/channels/$channelId/assets'
     | '/api/public/v1/admin/channels/$channelId/publish'
@@ -2163,6 +2528,7 @@ export interface FileRouteTypes {
     | '/producer-terms'
     | '/search'
     | '/series'
+    | '/settings'
     | '/terms'
     | '/wallet'
     | '/admin/ads'
@@ -2197,19 +2563,27 @@ export interface FileRouteTypes {
     | '/api/public/v1/admin/secret-health'
     | '/api/public/v1/admin/video-jobs'
     | '/api/public/v1/admin/workers'
+    | '/api/public/v1/ads/campaigns'
     | '/api/public/v1/ads/next'
     | '/api/public/v1/ads/provider-config'
+    | '/api/public/v1/analytics/viewer'
     | '/api/public/v1/catalog/home'
     | '/api/public/v1/catalog/search'
     | '/api/public/v1/channels/$channelId'
     | '/api/public/v1/config/client'
     | '/api/public/v1/content-assets/$assetId'
+    | '/api/public/v1/continue-watching/position'
     | '/api/public/v1/devices/$deviceId'
     | '/api/public/v1/devices/push-token'
+    | '/api/public/v1/epg/remind'
+    | '/api/public/v1/errors/beacon'
+    | '/api/public/v1/errors/report'
     | '/api/public/v1/legal/acceptance'
     | '/api/public/v1/legal/required'
     | '/api/public/v1/legal/status'
+    | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
+    | '/api/public/v1/producer/analytics'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
@@ -2222,25 +2596,42 @@ export interface FileRouteTypes {
     | '/api/public/v1/provider/contracts'
     | '/api/public/v1/provider/dashboard'
     | '/api/public/v1/provider/disputes'
+    | '/api/public/v1/provider/register'
     | '/api/public/v1/provider/statements'
+    | '/api/public/v1/quality/settings'
+    | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
     | '/api/public/v1/storage/complete'
     | '/api/public/v1/storage/intent'
+    | '/api/public/v1/support/tickets'
     | '/api/public/v1/wallet/history'
     | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/wallet/preferences'
+    | '/api/public/v1/wallet/purchases'
     | '/api/public/v1/wallet/summary'
     | '/api/public/v1/wallet/topups'
+    | '/api/public/v1/watchlist/$titleId'
+    | '/api/public/v1/continue-watching/'
     | '/api/public/v1/devices/'
+    | '/api/public/v1/epg/'
+    | '/api/public/v1/profiles/'
+    | '/api/public/v1/recommendations/'
+    | '/api/public/v1/watchlist/'
     | '/api/public/v1/admin/ads/campaigns'
     | '/api/public/v1/admin/ads/providers'
+    | '/api/public/v1/admin/analytics/overview'
+    | '/api/public/v1/admin/billing/health'
     | '/api/public/v1/admin/config/flags'
     | '/api/public/v1/admin/config/modal-spend'
     | '/api/public/v1/admin/config/pricing'
     | '/api/public/v1/admin/migration/zillionaire'
+    | '/api/public/v1/admin/operations/live'
     | '/api/public/v1/admin/pages/publish'
+    | '/api/public/v1/admin/pages/publish-defaults'
+    | '/api/public/v1/admin/pages/rollback'
     | '/api/public/v1/admin/pages/seed'
     | '/api/public/v1/admin/pages/settings'
+    | '/api/public/v1/admin/providers/approved-emails'
     | '/api/public/v1/admin/providers/channels'
     | '/api/public/v1/admin/providers/test-playback'
     | '/api/public/v1/admin/reports/monthly'
@@ -2258,6 +2649,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/admin/support/messages'
     | '/api/public/v1/admin/workers/$workerId'
     | '/api/public/v1/ads/$adId/events'
+    | '/api/public/v1/auth/devices/signout-all'
     | '/api/public/v1/auth/email/send-code'
     | '/api/public/v1/auth/email/verify-code'
     | '/api/public/v1/auth/session/revoke-all'
@@ -2275,9 +2667,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
     | '/api/public/v1/sessions/$sessionId/heartbeat'
+    | '/api/public/v1/sessions/$sessionId/recover'
     | '/api/public/v1/sessions/$sessionId/refresh'
     | '/api/public/v1/streaming/hls/$'
     | '/api/public/v1/streaming/key/$assetId'
+    | '/api/public/v1/titles/$titleId/rate'
     | '/api/public/v1/wallet/google-play/products'
     | '/api/public/v1/wallet/google-play/verify'
     | '/api/public/v1/wallet/receipt/$paymentId'
@@ -2289,10 +2683,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/worker/maintenance/run'
     | '/api/public/v1/worker/maintenance/schedule'
     | '/api/public/v1/worker/maintenance/schedule-wallet-holds'
+    | '/api/public/v1/admin/errors/'
     | '/api/public/v1/admin/moderation/'
     | '/api/public/v1/admin/producers/'
     | '/api/public/v1/admin/providers/'
     | '/api/public/v1/admin/users/'
+    | '/api/public/v1/auth/devices/'
     | '/api/public/v1/admin/ads/campaigns/$campaignId'
     | '/api/public/v1/admin/channels/$channelId/assets'
     | '/api/public/v1/admin/channels/$channelId/publish'
@@ -2347,6 +2743,7 @@ export interface RootRouteChildren {
   ProducerTermsRoute: typeof ProducerTermsRoute
   SearchRoute: typeof SearchRoute
   SeriesRoute: typeof SeriesRoute
+  SettingsRoute: typeof SettingsRoute
   TermsRoute: typeof TermsRoute
   WalletRoute: typeof WalletRoute
   AdminAdsRoute: typeof AdminAdsRoute
@@ -2380,19 +2777,26 @@ export interface RootRouteChildren {
   ApiPublicV1AdminSecretHealthRoute: typeof ApiPublicV1AdminSecretHealthRoute
   ApiPublicV1AdminVideoJobsRoute: typeof ApiPublicV1AdminVideoJobsRoute
   ApiPublicV1AdminWorkersRoute: typeof ApiPublicV1AdminWorkersRouteWithChildren
+  ApiPublicV1AdsCampaignsRoute: typeof ApiPublicV1AdsCampaignsRoute
   ApiPublicV1AdsNextRoute: typeof ApiPublicV1AdsNextRoute
   ApiPublicV1AdsProviderConfigRoute: typeof ApiPublicV1AdsProviderConfigRoute
+  ApiPublicV1AnalyticsViewerRoute: typeof ApiPublicV1AnalyticsViewerRoute
   ApiPublicV1CatalogHomeRoute: typeof ApiPublicV1CatalogHomeRoute
   ApiPublicV1CatalogSearchRoute: typeof ApiPublicV1CatalogSearchRoute
   ApiPublicV1ChannelsChannelIdRoute: typeof ApiPublicV1ChannelsChannelIdRoute
   ApiPublicV1ConfigClientRoute: typeof ApiPublicV1ConfigClientRoute
   ApiPublicV1ContentAssetsAssetIdRoute: typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
+  ApiPublicV1ContinueWatchingPositionRoute: typeof ApiPublicV1ContinueWatchingPositionRoute
   ApiPublicV1DevicesDeviceIdRoute: typeof ApiPublicV1DevicesDeviceIdRoute
   ApiPublicV1DevicesPushTokenRoute: typeof ApiPublicV1DevicesPushTokenRoute
+  ApiPublicV1EpgRemindRoute: typeof ApiPublicV1EpgRemindRoute
+  ApiPublicV1ErrorsBeaconRoute: typeof ApiPublicV1ErrorsBeaconRoute
+  ApiPublicV1ErrorsReportRoute: typeof ApiPublicV1ErrorsReportRoute
   ApiPublicV1LegalAcceptanceRoute: typeof ApiPublicV1LegalAcceptanceRoute
   ApiPublicV1LegalRequiredRoute: typeof ApiPublicV1LegalRequiredRoute
   ApiPublicV1LegalStatusRoute: typeof ApiPublicV1LegalStatusRoute
   ApiPublicV1PagesSlugRoute: typeof ApiPublicV1PagesSlugRoute
+  ApiPublicV1ProducerAnalyticsRoute: typeof ApiPublicV1ProducerAnalyticsRoute
   ApiPublicV1ProducerChannelsRoute: typeof ApiPublicV1ProducerChannelsRouteWithChildren
   ApiPublicV1ProducerEarningsRoute: typeof ApiPublicV1ProducerEarningsRoute
   ApiPublicV1ProducerMobileSummaryRoute: typeof ApiPublicV1ProducerMobileSummaryRoute
@@ -2405,20 +2809,36 @@ export interface RootRouteChildren {
   ApiPublicV1ProviderContractsRoute: typeof ApiPublicV1ProviderContractsRoute
   ApiPublicV1ProviderDashboardRoute: typeof ApiPublicV1ProviderDashboardRoute
   ApiPublicV1ProviderDisputesRoute: typeof ApiPublicV1ProviderDisputesRoute
+  ApiPublicV1ProviderRegisterRoute: typeof ApiPublicV1ProviderRegisterRoute
   ApiPublicV1ProviderStatementsRoute: typeof ApiPublicV1ProviderStatementsRoute
+  ApiPublicV1QualitySettingsRoute: typeof ApiPublicV1QualitySettingsRoute
+  ApiPublicV1SearchV2Route: typeof ApiPublicV1SearchV2Route
   ApiPublicV1SessionsStartRoute: typeof ApiPublicV1SessionsStartRoute
   ApiPublicV1StorageCompleteRoute: typeof ApiPublicV1StorageCompleteRoute
   ApiPublicV1StorageIntentRoute: typeof ApiPublicV1StorageIntentRoute
+  ApiPublicV1SupportTicketsRoute: typeof ApiPublicV1SupportTicketsRoute
+  ApiPublicV1WatchlistTitleIdRoute: typeof ApiPublicV1WatchlistTitleIdRoute
+  ApiPublicV1ContinueWatchingIndexRoute: typeof ApiPublicV1ContinueWatchingIndexRoute
   ApiPublicV1DevicesIndexRoute: typeof ApiPublicV1DevicesIndexRoute
+  ApiPublicV1EpgIndexRoute: typeof ApiPublicV1EpgIndexRoute
+  ApiPublicV1ProfilesIndexRoute: typeof ApiPublicV1ProfilesIndexRoute
+  ApiPublicV1RecommendationsIndexRoute: typeof ApiPublicV1RecommendationsIndexRoute
+  ApiPublicV1WatchlistIndexRoute: typeof ApiPublicV1WatchlistIndexRoute
   ApiPublicV1AdminAdsCampaignsRoute: typeof ApiPublicV1AdminAdsCampaignsRouteWithChildren
   ApiPublicV1AdminAdsProvidersRoute: typeof ApiPublicV1AdminAdsProvidersRoute
+  ApiPublicV1AdminAnalyticsOverviewRoute: typeof ApiPublicV1AdminAnalyticsOverviewRoute
+  ApiPublicV1AdminBillingHealthRoute: typeof ApiPublicV1AdminBillingHealthRoute
   ApiPublicV1AdminConfigFlagsRoute: typeof ApiPublicV1AdminConfigFlagsRoute
   ApiPublicV1AdminConfigModalSpendRoute: typeof ApiPublicV1AdminConfigModalSpendRoute
   ApiPublicV1AdminConfigPricingRoute: typeof ApiPublicV1AdminConfigPricingRoute
   ApiPublicV1AdminMigrationZillionaireRoute: typeof ApiPublicV1AdminMigrationZillionaireRoute
+  ApiPublicV1AdminOperationsLiveRoute: typeof ApiPublicV1AdminOperationsLiveRoute
   ApiPublicV1AdminPagesPublishRoute: typeof ApiPublicV1AdminPagesPublishRoute
+  ApiPublicV1AdminPagesPublishDefaultsRoute: typeof ApiPublicV1AdminPagesPublishDefaultsRoute
+  ApiPublicV1AdminPagesRollbackRoute: typeof ApiPublicV1AdminPagesRollbackRoute
   ApiPublicV1AdminPagesSeedRoute: typeof ApiPublicV1AdminPagesSeedRoute
   ApiPublicV1AdminPagesSettingsRoute: typeof ApiPublicV1AdminPagesSettingsRoute
+  ApiPublicV1AdminProvidersApprovedEmailsRoute: typeof ApiPublicV1AdminProvidersApprovedEmailsRoute
   ApiPublicV1AdminProvidersChannelsRoute: typeof ApiPublicV1AdminProvidersChannelsRoute
   ApiPublicV1AdminProvidersTestPlaybackRoute: typeof ApiPublicV1AdminProvidersTestPlaybackRoute
   ApiPublicV1AdminReportsMonthlyRoute: typeof ApiPublicV1AdminReportsMonthlyRoute
@@ -2435,6 +2855,7 @@ export interface RootRouteChildren {
   ApiPublicV1AdminStorageUsageRoute: typeof ApiPublicV1AdminStorageUsageRoute
   ApiPublicV1AdminSupportMessagesRoute: typeof ApiPublicV1AdminSupportMessagesRoute
   ApiPublicV1AdsAdIdEventsRoute: typeof ApiPublicV1AdsAdIdEventsRoute
+  ApiPublicV1AuthDevicesSignoutAllRoute: typeof ApiPublicV1AuthDevicesSignoutAllRoute
   ApiPublicV1AuthEmailSendCodeRoute: typeof ApiPublicV1AuthEmailSendCodeRoute
   ApiPublicV1AuthEmailVerifyCodeRoute: typeof ApiPublicV1AuthEmailVerifyCodeRoute
   ApiPublicV1AuthSessionRevokeAllRoute: typeof ApiPublicV1AuthSessionRevokeAllRoute
@@ -2447,9 +2868,11 @@ export interface RootRouteChildren {
   ApiPublicV1SecurityIntegrityChallengeRoute: typeof ApiPublicV1SecurityIntegrityChallengeRoute
   ApiPublicV1SessionsSessionIdEndRoute: typeof ApiPublicV1SessionsSessionIdEndRoute
   ApiPublicV1SessionsSessionIdHeartbeatRoute: typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
+  ApiPublicV1SessionsSessionIdRecoverRoute: typeof ApiPublicV1SessionsSessionIdRecoverRoute
   ApiPublicV1SessionsSessionIdRefreshRoute: typeof ApiPublicV1SessionsSessionIdRefreshRoute
   ApiPublicV1StreamingHlsSplatRoute: typeof ApiPublicV1StreamingHlsSplatRoute
   ApiPublicV1StreamingKeyAssetIdRoute: typeof ApiPublicV1StreamingKeyAssetIdRoute
+  ApiPublicV1TitlesTitleIdRateRoute: typeof ApiPublicV1TitlesTitleIdRateRoute
   ApiPublicV1WorkerJobsClaimRoute: typeof ApiPublicV1WorkerJobsClaimRoute
   ApiPublicV1WorkerMaintenanceClaimRoute: typeof ApiPublicV1WorkerMaintenanceClaimRoute
   ApiPublicV1WorkerMaintenanceCompleteRoute: typeof ApiPublicV1WorkerMaintenanceCompleteRoute
@@ -2458,10 +2881,12 @@ export interface RootRouteChildren {
   ApiPublicV1WorkerMaintenanceRunRoute: typeof ApiPublicV1WorkerMaintenanceRunRoute
   ApiPublicV1WorkerMaintenanceScheduleRoute: typeof ApiPublicV1WorkerMaintenanceScheduleRoute
   ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute: typeof ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute
+  ApiPublicV1AdminErrorsIndexRoute: typeof ApiPublicV1AdminErrorsIndexRoute
   ApiPublicV1AdminModerationIndexRoute: typeof ApiPublicV1AdminModerationIndexRoute
   ApiPublicV1AdminProducersIndexRoute: typeof ApiPublicV1AdminProducersIndexRoute
   ApiPublicV1AdminProvidersIndexRoute: typeof ApiPublicV1AdminProvidersIndexRoute
   ApiPublicV1AdminUsersIndexRoute: typeof ApiPublicV1AdminUsersIndexRoute
+  ApiPublicV1AuthDevicesIndexRoute: typeof ApiPublicV1AuthDevicesIndexRoute
   ApiPublicV1AdminContentAssetsAssetIdApproveRoute: typeof ApiPublicV1AdminContentAssetsAssetIdApproveRoute
   ApiPublicV1AdminContentAssetsAssetIdCancelRoute: typeof ApiPublicV1AdminContentAssetsAssetIdCancelRoute
   ApiPublicV1AdminContentAssetsAssetIdFeatureRoute: typeof ApiPublicV1AdminContentAssetsAssetIdFeatureRoute
@@ -2606,6 +3031,13 @@ declare module '@tanstack/react-router' {
       path: '/series'
       fullPath: '/series'
       preLoaderRoute: typeof SeriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -2846,6 +3278,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1AdminWorkersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/ads/campaigns': {
+      id: '/api/public/v1/ads/campaigns'
+      path: '/api/public/v1/ads/campaigns'
+      fullPath: '/api/public/v1/ads/campaigns'
+      preLoaderRoute: typeof ApiPublicV1AdsCampaignsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/ads/next': {
       id: '/api/public/v1/ads/next'
       path: '/api/public/v1/ads/next'
@@ -2858,6 +3297,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/ads/provider-config'
       fullPath: '/api/public/v1/ads/provider-config'
       preLoaderRoute: typeof ApiPublicV1AdsProviderConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/analytics/viewer': {
+      id: '/api/public/v1/analytics/viewer'
+      path: '/api/public/v1/analytics/viewer'
+      fullPath: '/api/public/v1/analytics/viewer'
+      preLoaderRoute: typeof ApiPublicV1AnalyticsViewerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/catalog/home': {
@@ -2895,6 +3341,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ContentAssetsAssetIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/continue-watching/': {
+      id: '/api/public/v1/continue-watching/'
+      path: '/api/public/v1/continue-watching'
+      fullPath: '/api/public/v1/continue-watching/'
+      preLoaderRoute: typeof ApiPublicV1ContinueWatchingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/continue-watching/position': {
+      id: '/api/public/v1/continue-watching/position'
+      path: '/api/public/v1/continue-watching/position'
+      fullPath: '/api/public/v1/continue-watching/position'
+      preLoaderRoute: typeof ApiPublicV1ContinueWatchingPositionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/devices/': {
       id: '/api/public/v1/devices/'
       path: '/api/public/v1/devices'
@@ -2914,6 +3374,34 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/devices/push-token'
       fullPath: '/api/public/v1/devices/push-token'
       preLoaderRoute: typeof ApiPublicV1DevicesPushTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/epg/': {
+      id: '/api/public/v1/epg/'
+      path: '/api/public/v1/epg'
+      fullPath: '/api/public/v1/epg/'
+      preLoaderRoute: typeof ApiPublicV1EpgIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/epg/remind': {
+      id: '/api/public/v1/epg/remind'
+      path: '/api/public/v1/epg/remind'
+      fullPath: '/api/public/v1/epg/remind'
+      preLoaderRoute: typeof ApiPublicV1EpgRemindRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/errors/beacon': {
+      id: '/api/public/v1/errors/beacon'
+      path: '/api/public/v1/errors/beacon'
+      fullPath: '/api/public/v1/errors/beacon'
+      preLoaderRoute: typeof ApiPublicV1ErrorsBeaconRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/errors/report': {
+      id: '/api/public/v1/errors/report'
+      path: '/api/public/v1/errors/report'
+      fullPath: '/api/public/v1/errors/report'
+      preLoaderRoute: typeof ApiPublicV1ErrorsReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/legal/acceptance': {
@@ -2937,11 +3425,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1LegalStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/notifications/unread-count': {
+      id: '/api/public/v1/notifications/unread-count'
+      path: '/unread-count'
+      fullPath: '/api/public/v1/notifications/unread-count'
+      preLoaderRoute: typeof ApiPublicV1NotificationsUnreadCountRouteImport
+      parentRoute: typeof ApiPublicV1NotificationsRoute
+    }
     '/api/public/v1/pages/$slug': {
       id: '/api/public/v1/pages/$slug'
       path: '/api/public/v1/pages/$slug'
       fullPath: '/api/public/v1/pages/$slug'
       preLoaderRoute: typeof ApiPublicV1PagesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/analytics': {
+      id: '/api/public/v1/producer/analytics'
+      path: '/api/public/v1/producer/analytics'
+      fullPath: '/api/public/v1/producer/analytics'
+      preLoaderRoute: typeof ApiPublicV1ProducerAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/producer/channels': {
@@ -3000,6 +3502,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProfilePreferencesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/profiles/': {
+      id: '/api/public/v1/profiles/'
+      path: '/api/public/v1/profiles'
+      fullPath: '/api/public/v1/profiles/'
+      preLoaderRoute: typeof ApiPublicV1ProfilesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/provider/channels': {
       id: '/api/public/v1/provider/channels'
       path: '/api/public/v1/provider/channels'
@@ -3028,11 +3537,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProviderDisputesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/provider/register': {
+      id: '/api/public/v1/provider/register'
+      path: '/api/public/v1/provider/register'
+      fullPath: '/api/public/v1/provider/register'
+      preLoaderRoute: typeof ApiPublicV1ProviderRegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/provider/statements': {
       id: '/api/public/v1/provider/statements'
       path: '/api/public/v1/provider/statements'
       fullPath: '/api/public/v1/provider/statements'
       preLoaderRoute: typeof ApiPublicV1ProviderStatementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/quality/settings': {
+      id: '/api/public/v1/quality/settings'
+      path: '/api/public/v1/quality/settings'
+      fullPath: '/api/public/v1/quality/settings'
+      preLoaderRoute: typeof ApiPublicV1QualitySettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/recommendations/': {
+      id: '/api/public/v1/recommendations/'
+      path: '/api/public/v1/recommendations'
+      fullPath: '/api/public/v1/recommendations/'
+      preLoaderRoute: typeof ApiPublicV1RecommendationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/search/v2': {
+      id: '/api/public/v1/search/v2'
+      path: '/api/public/v1/search/v2'
+      fullPath: '/api/public/v1/search/v2'
+      preLoaderRoute: typeof ApiPublicV1SearchV2RouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/sessions/start': {
@@ -3056,6 +3593,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1StorageIntentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/support/tickets': {
+      id: '/api/public/v1/support/tickets'
+      path: '/api/public/v1/support/tickets'
+      fullPath: '/api/public/v1/support/tickets'
+      preLoaderRoute: typeof ApiPublicV1SupportTicketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/wallet/history': {
       id: '/api/public/v1/wallet/history'
       path: '/history'
@@ -3077,6 +3621,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1WalletPreferencesRouteImport
       parentRoute: typeof ApiPublicV1WalletRoute
     }
+    '/api/public/v1/wallet/purchases': {
+      id: '/api/public/v1/wallet/purchases'
+      path: '/purchases'
+      fullPath: '/api/public/v1/wallet/purchases'
+      preLoaderRoute: typeof ApiPublicV1WalletPurchasesRouteImport
+      parentRoute: typeof ApiPublicV1WalletRoute
+    }
     '/api/public/v1/wallet/summary': {
       id: '/api/public/v1/wallet/summary'
       path: '/summary'
@@ -3091,6 +3642,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1WalletTopupsRouteImport
       parentRoute: typeof ApiPublicV1WalletRoute
     }
+    '/api/public/v1/watchlist/': {
+      id: '/api/public/v1/watchlist/'
+      path: '/api/public/v1/watchlist'
+      fullPath: '/api/public/v1/watchlist/'
+      preLoaderRoute: typeof ApiPublicV1WatchlistIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/watchlist/$titleId': {
+      id: '/api/public/v1/watchlist/$titleId'
+      path: '/api/public/v1/watchlist/$titleId'
+      fullPath: '/api/public/v1/watchlist/$titleId'
+      preLoaderRoute: typeof ApiPublicV1WatchlistTitleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/admin/ads/campaigns': {
       id: '/api/public/v1/admin/ads/campaigns'
       path: '/api/public/v1/admin/ads/campaigns'
@@ -3103,6 +3668,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/admin/ads/providers'
       fullPath: '/api/public/v1/admin/ads/providers'
       preLoaderRoute: typeof ApiPublicV1AdminAdsProvidersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/analytics/overview': {
+      id: '/api/public/v1/admin/analytics/overview'
+      path: '/api/public/v1/admin/analytics/overview'
+      fullPath: '/api/public/v1/admin/analytics/overview'
+      preLoaderRoute: typeof ApiPublicV1AdminAnalyticsOverviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/billing/health': {
+      id: '/api/public/v1/admin/billing/health'
+      path: '/api/public/v1/admin/billing/health'
+      fullPath: '/api/public/v1/admin/billing/health'
+      preLoaderRoute: typeof ApiPublicV1AdminBillingHealthRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/admin/config/flags': {
@@ -3126,6 +3705,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1AdminConfigPricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/admin/errors/': {
+      id: '/api/public/v1/admin/errors/'
+      path: '/api/public/v1/admin/errors'
+      fullPath: '/api/public/v1/admin/errors/'
+      preLoaderRoute: typeof ApiPublicV1AdminErrorsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/admin/migration/zillionaire': {
       id: '/api/public/v1/admin/migration/zillionaire'
       path: '/api/public/v1/admin/migration/zillionaire'
@@ -3140,11 +3726,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1AdminModerationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/admin/operations/live': {
+      id: '/api/public/v1/admin/operations/live'
+      path: '/api/public/v1/admin/operations/live'
+      fullPath: '/api/public/v1/admin/operations/live'
+      preLoaderRoute: typeof ApiPublicV1AdminOperationsLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/admin/pages/publish': {
       id: '/api/public/v1/admin/pages/publish'
       path: '/api/public/v1/admin/pages/publish'
       fullPath: '/api/public/v1/admin/pages/publish'
       preLoaderRoute: typeof ApiPublicV1AdminPagesPublishRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/pages/publish-defaults': {
+      id: '/api/public/v1/admin/pages/publish-defaults'
+      path: '/api/public/v1/admin/pages/publish-defaults'
+      fullPath: '/api/public/v1/admin/pages/publish-defaults'
+      preLoaderRoute: typeof ApiPublicV1AdminPagesPublishDefaultsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/pages/rollback': {
+      id: '/api/public/v1/admin/pages/rollback'
+      path: '/api/public/v1/admin/pages/rollback'
+      fullPath: '/api/public/v1/admin/pages/rollback'
+      preLoaderRoute: typeof ApiPublicV1AdminPagesRollbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/admin/pages/seed': {
@@ -3173,6 +3780,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/admin/providers'
       fullPath: '/api/public/v1/admin/providers/'
       preLoaderRoute: typeof ApiPublicV1AdminProvidersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/admin/providers/approved-emails': {
+      id: '/api/public/v1/admin/providers/approved-emails'
+      path: '/api/public/v1/admin/providers/approved-emails'
+      fullPath: '/api/public/v1/admin/providers/approved-emails'
+      preLoaderRoute: typeof ApiPublicV1AdminProvidersApprovedEmailsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/admin/providers/channels': {
@@ -3301,6 +3915,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1AdsAdIdEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/auth/devices/': {
+      id: '/api/public/v1/auth/devices/'
+      path: '/api/public/v1/auth/devices'
+      fullPath: '/api/public/v1/auth/devices/'
+      preLoaderRoute: typeof ApiPublicV1AuthDevicesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/auth/devices/signout-all': {
+      id: '/api/public/v1/auth/devices/signout-all'
+      path: '/api/public/v1/auth/devices/signout-all'
+      fullPath: '/api/public/v1/auth/devices/signout-all'
+      preLoaderRoute: typeof ApiPublicV1AuthDevicesSignoutAllRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/auth/email/send-code': {
       id: '/api/public/v1/auth/email/send-code'
       path: '/api/public/v1/auth/email/send-code'
@@ -3420,6 +4048,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1SessionsSessionIdHeartbeatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/sessions/$sessionId/recover': {
+      id: '/api/public/v1/sessions/$sessionId/recover'
+      path: '/api/public/v1/sessions/$sessionId/recover'
+      fullPath: '/api/public/v1/sessions/$sessionId/recover'
+      preLoaderRoute: typeof ApiPublicV1SessionsSessionIdRecoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/sessions/$sessionId/refresh': {
       id: '/api/public/v1/sessions/$sessionId/refresh'
       path: '/api/public/v1/sessions/$sessionId/refresh'
@@ -3439,6 +4074,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/streaming/key/$assetId'
       fullPath: '/api/public/v1/streaming/key/$assetId'
       preLoaderRoute: typeof ApiPublicV1StreamingKeyAssetIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/titles/$titleId/rate': {
+      id: '/api/public/v1/titles/$titleId/rate'
+      path: '/api/public/v1/titles/$titleId/rate'
+      fullPath: '/api/public/v1/titles/$titleId/rate'
+      preLoaderRoute: typeof ApiPublicV1TitlesTitleIdRateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/wallet/google-play/products': {
@@ -3771,11 +4413,14 @@ const ProducerChannelsRouteWithChildren =
   ProducerChannelsRoute._addFileChildren(ProducerChannelsRouteChildren)
 
 interface ApiPublicV1NotificationsRouteChildren {
+  ApiPublicV1NotificationsUnreadCountRoute: typeof ApiPublicV1NotificationsUnreadCountRoute
   ApiPublicV1NotificationsNotificationIdReadRoute: typeof ApiPublicV1NotificationsNotificationIdReadRoute
 }
 
 const ApiPublicV1NotificationsRouteChildren: ApiPublicV1NotificationsRouteChildren =
   {
+    ApiPublicV1NotificationsUnreadCountRoute:
+      ApiPublicV1NotificationsUnreadCountRoute,
     ApiPublicV1NotificationsNotificationIdReadRoute:
       ApiPublicV1NotificationsNotificationIdReadRoute,
   }
@@ -3789,6 +4434,7 @@ interface ApiPublicV1WalletRouteChildren {
   ApiPublicV1WalletHistoryRoute: typeof ApiPublicV1WalletHistoryRoute
   ApiPublicV1WalletLedgerRoute: typeof ApiPublicV1WalletLedgerRoute
   ApiPublicV1WalletPreferencesRoute: typeof ApiPublicV1WalletPreferencesRoute
+  ApiPublicV1WalletPurchasesRoute: typeof ApiPublicV1WalletPurchasesRoute
   ApiPublicV1WalletSummaryRoute: typeof ApiPublicV1WalletSummaryRoute
   ApiPublicV1WalletTopupsRoute: typeof ApiPublicV1WalletTopupsRoute
   ApiPublicV1WalletGooglePlayProductsRoute: typeof ApiPublicV1WalletGooglePlayProductsRoute
@@ -3800,6 +4446,7 @@ const ApiPublicV1WalletRouteChildren: ApiPublicV1WalletRouteChildren = {
   ApiPublicV1WalletHistoryRoute: ApiPublicV1WalletHistoryRoute,
   ApiPublicV1WalletLedgerRoute: ApiPublicV1WalletLedgerRoute,
   ApiPublicV1WalletPreferencesRoute: ApiPublicV1WalletPreferencesRoute,
+  ApiPublicV1WalletPurchasesRoute: ApiPublicV1WalletPurchasesRoute,
   ApiPublicV1WalletSummaryRoute: ApiPublicV1WalletSummaryRoute,
   ApiPublicV1WalletTopupsRoute: ApiPublicV1WalletTopupsRoute,
   ApiPublicV1WalletGooglePlayProductsRoute:
@@ -3997,6 +4644,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProducerTermsRoute: ProducerTermsRoute,
   SearchRoute: SearchRoute,
   SeriesRoute: SeriesRoute,
+  SettingsRoute: SettingsRoute,
   TermsRoute: TermsRoute,
   WalletRoute: WalletRoute,
   AdminAdsRoute: AdminAdsRoute,
@@ -4030,20 +4678,28 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1AdminSecretHealthRoute: ApiPublicV1AdminSecretHealthRoute,
   ApiPublicV1AdminVideoJobsRoute: ApiPublicV1AdminVideoJobsRoute,
   ApiPublicV1AdminWorkersRoute: ApiPublicV1AdminWorkersRouteWithChildren,
+  ApiPublicV1AdsCampaignsRoute: ApiPublicV1AdsCampaignsRoute,
   ApiPublicV1AdsNextRoute: ApiPublicV1AdsNextRoute,
   ApiPublicV1AdsProviderConfigRoute: ApiPublicV1AdsProviderConfigRoute,
+  ApiPublicV1AnalyticsViewerRoute: ApiPublicV1AnalyticsViewerRoute,
   ApiPublicV1CatalogHomeRoute: ApiPublicV1CatalogHomeRoute,
   ApiPublicV1CatalogSearchRoute: ApiPublicV1CatalogSearchRoute,
   ApiPublicV1ChannelsChannelIdRoute: ApiPublicV1ChannelsChannelIdRoute,
   ApiPublicV1ConfigClientRoute: ApiPublicV1ConfigClientRoute,
   ApiPublicV1ContentAssetsAssetIdRoute:
     ApiPublicV1ContentAssetsAssetIdRouteWithChildren,
+  ApiPublicV1ContinueWatchingPositionRoute:
+    ApiPublicV1ContinueWatchingPositionRoute,
   ApiPublicV1DevicesDeviceIdRoute: ApiPublicV1DevicesDeviceIdRoute,
   ApiPublicV1DevicesPushTokenRoute: ApiPublicV1DevicesPushTokenRoute,
+  ApiPublicV1EpgRemindRoute: ApiPublicV1EpgRemindRoute,
+  ApiPublicV1ErrorsBeaconRoute: ApiPublicV1ErrorsBeaconRoute,
+  ApiPublicV1ErrorsReportRoute: ApiPublicV1ErrorsReportRoute,
   ApiPublicV1LegalAcceptanceRoute: ApiPublicV1LegalAcceptanceRoute,
   ApiPublicV1LegalRequiredRoute: ApiPublicV1LegalRequiredRoute,
   ApiPublicV1LegalStatusRoute: ApiPublicV1LegalStatusRoute,
   ApiPublicV1PagesSlugRoute: ApiPublicV1PagesSlugRoute,
+  ApiPublicV1ProducerAnalyticsRoute: ApiPublicV1ProducerAnalyticsRoute,
   ApiPublicV1ProducerChannelsRoute:
     ApiPublicV1ProducerChannelsRouteWithChildren,
   ApiPublicV1ProducerEarningsRoute: ApiPublicV1ProducerEarningsRoute,
@@ -4058,22 +4714,41 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ProviderContractsRoute: ApiPublicV1ProviderContractsRoute,
   ApiPublicV1ProviderDashboardRoute: ApiPublicV1ProviderDashboardRoute,
   ApiPublicV1ProviderDisputesRoute: ApiPublicV1ProviderDisputesRoute,
+  ApiPublicV1ProviderRegisterRoute: ApiPublicV1ProviderRegisterRoute,
   ApiPublicV1ProviderStatementsRoute: ApiPublicV1ProviderStatementsRoute,
+  ApiPublicV1QualitySettingsRoute: ApiPublicV1QualitySettingsRoute,
+  ApiPublicV1SearchV2Route: ApiPublicV1SearchV2Route,
   ApiPublicV1SessionsStartRoute: ApiPublicV1SessionsStartRoute,
   ApiPublicV1StorageCompleteRoute: ApiPublicV1StorageCompleteRoute,
   ApiPublicV1StorageIntentRoute: ApiPublicV1StorageIntentRoute,
+  ApiPublicV1SupportTicketsRoute: ApiPublicV1SupportTicketsRoute,
+  ApiPublicV1WatchlistTitleIdRoute: ApiPublicV1WatchlistTitleIdRoute,
+  ApiPublicV1ContinueWatchingIndexRoute: ApiPublicV1ContinueWatchingIndexRoute,
   ApiPublicV1DevicesIndexRoute: ApiPublicV1DevicesIndexRoute,
+  ApiPublicV1EpgIndexRoute: ApiPublicV1EpgIndexRoute,
+  ApiPublicV1ProfilesIndexRoute: ApiPublicV1ProfilesIndexRoute,
+  ApiPublicV1RecommendationsIndexRoute: ApiPublicV1RecommendationsIndexRoute,
+  ApiPublicV1WatchlistIndexRoute: ApiPublicV1WatchlistIndexRoute,
   ApiPublicV1AdminAdsCampaignsRoute:
     ApiPublicV1AdminAdsCampaignsRouteWithChildren,
   ApiPublicV1AdminAdsProvidersRoute: ApiPublicV1AdminAdsProvidersRoute,
+  ApiPublicV1AdminAnalyticsOverviewRoute:
+    ApiPublicV1AdminAnalyticsOverviewRoute,
+  ApiPublicV1AdminBillingHealthRoute: ApiPublicV1AdminBillingHealthRoute,
   ApiPublicV1AdminConfigFlagsRoute: ApiPublicV1AdminConfigFlagsRoute,
   ApiPublicV1AdminConfigModalSpendRoute: ApiPublicV1AdminConfigModalSpendRoute,
   ApiPublicV1AdminConfigPricingRoute: ApiPublicV1AdminConfigPricingRoute,
   ApiPublicV1AdminMigrationZillionaireRoute:
     ApiPublicV1AdminMigrationZillionaireRoute,
+  ApiPublicV1AdminOperationsLiveRoute: ApiPublicV1AdminOperationsLiveRoute,
   ApiPublicV1AdminPagesPublishRoute: ApiPublicV1AdminPagesPublishRoute,
+  ApiPublicV1AdminPagesPublishDefaultsRoute:
+    ApiPublicV1AdminPagesPublishDefaultsRoute,
+  ApiPublicV1AdminPagesRollbackRoute: ApiPublicV1AdminPagesRollbackRoute,
   ApiPublicV1AdminPagesSeedRoute: ApiPublicV1AdminPagesSeedRoute,
   ApiPublicV1AdminPagesSettingsRoute: ApiPublicV1AdminPagesSettingsRoute,
+  ApiPublicV1AdminProvidersApprovedEmailsRoute:
+    ApiPublicV1AdminProvidersApprovedEmailsRoute,
   ApiPublicV1AdminProvidersChannelsRoute:
     ApiPublicV1AdminProvidersChannelsRoute,
   ApiPublicV1AdminProvidersTestPlaybackRoute:
@@ -4096,6 +4771,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1AdminStorageUsageRoute: ApiPublicV1AdminStorageUsageRoute,
   ApiPublicV1AdminSupportMessagesRoute: ApiPublicV1AdminSupportMessagesRoute,
   ApiPublicV1AdsAdIdEventsRoute: ApiPublicV1AdsAdIdEventsRoute,
+  ApiPublicV1AuthDevicesSignoutAllRoute: ApiPublicV1AuthDevicesSignoutAllRoute,
   ApiPublicV1AuthEmailSendCodeRoute: ApiPublicV1AuthEmailSendCodeRoute,
   ApiPublicV1AuthEmailVerifyCodeRoute: ApiPublicV1AuthEmailVerifyCodeRoute,
   ApiPublicV1AuthSessionRevokeAllRoute: ApiPublicV1AuthSessionRevokeAllRoute,
@@ -4113,10 +4789,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1SessionsSessionIdEndRoute: ApiPublicV1SessionsSessionIdEndRoute,
   ApiPublicV1SessionsSessionIdHeartbeatRoute:
     ApiPublicV1SessionsSessionIdHeartbeatRoute,
+  ApiPublicV1SessionsSessionIdRecoverRoute:
+    ApiPublicV1SessionsSessionIdRecoverRoute,
   ApiPublicV1SessionsSessionIdRefreshRoute:
     ApiPublicV1SessionsSessionIdRefreshRoute,
   ApiPublicV1StreamingHlsSplatRoute: ApiPublicV1StreamingHlsSplatRoute,
   ApiPublicV1StreamingKeyAssetIdRoute: ApiPublicV1StreamingKeyAssetIdRoute,
+  ApiPublicV1TitlesTitleIdRateRoute: ApiPublicV1TitlesTitleIdRateRoute,
   ApiPublicV1WorkerJobsClaimRoute: ApiPublicV1WorkerJobsClaimRoute,
   ApiPublicV1WorkerMaintenanceClaimRoute:
     ApiPublicV1WorkerMaintenanceClaimRoute,
@@ -4131,10 +4810,12 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1WorkerMaintenanceScheduleRoute,
   ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute:
     ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute,
+  ApiPublicV1AdminErrorsIndexRoute: ApiPublicV1AdminErrorsIndexRoute,
   ApiPublicV1AdminModerationIndexRoute: ApiPublicV1AdminModerationIndexRoute,
   ApiPublicV1AdminProducersIndexRoute: ApiPublicV1AdminProducersIndexRoute,
   ApiPublicV1AdminProvidersIndexRoute: ApiPublicV1AdminProvidersIndexRoute,
   ApiPublicV1AdminUsersIndexRoute: ApiPublicV1AdminUsersIndexRoute,
+  ApiPublicV1AuthDevicesIndexRoute: ApiPublicV1AuthDevicesIndexRoute,
   ApiPublicV1AdminContentAssetsAssetIdApproveRoute:
     ApiPublicV1AdminContentAssetsAssetIdApproveRoute,
   ApiPublicV1AdminContentAssetsAssetIdCancelRoute:

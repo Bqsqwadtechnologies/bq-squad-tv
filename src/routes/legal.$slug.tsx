@@ -1,24 +1,24 @@
-import { useEffect, useState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 
 type Page = { slug: string; title: string; body: string; version: number; effectiveAt?: string | null };
 
 function renderLine(line: string, key: number) {
-  const text = line.replace(/
-/g, "");
+  const text = line.replace(/\r/g, "");
   if (!text.trim()) return <div key={key} className="h-2" />;
   const heading = /^(#{1,3})\s+(.+)$/.exec(text);
   if (heading) {
-    const Tag = heading[1]!.length === 1 ? "h1" : heading[1]!.length === 2 ? "h2" : "h3";
+    const level = heading[1]?.length;
+    const Tag = level === 1 ? "h1" : level === 2 ? "h2" : "h3";
     return <Tag key={key} className="mb-3 mt-7 text-xl font-bold text-foreground">{heading[2]}</Tag>;
   }
   if (text.startsWith("- ")) return <li key={key} className="ml-5 list-disc text-sm leading-7 text-foreground/85">{text.slice(2)}</li>;
-  const parts = text.split(/(\**[^*]+\**)/g);
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return <p key={key} className="text-sm leading-7 text-foreground/85">{parts.map((part, index) => part.startsWith("**") && part.endsWith("**") ? <strong key={index}>{part.slice(2, -2)}</strong> : part)}</p>;
 }
 
 function LegalPage() {
-  const { slug } = useParams({ from: "/legal/" });
+  const { slug } = useParams({ from: "/legal/$slug" });
   const [page, setPage] = useState<Page | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -62,8 +62,7 @@ function LegalPage() {
           <p className="mb-7 text-xs text-muted-foreground">
             Version {page.version}{page.effectiveAt ? " · Effective " + page.effectiveAt : ""}
           </p>
-          <article className="space-y-1">{page.body.split("
-").map(renderLine)}</article>
+          <article className="space-y-1">{page.body.split("\n").map(renderLine)}</article>
         </>
       ) : loading ? (
         <section role="status" className="rounded-2xl border border-border bg-card p-12 text-center">
@@ -105,7 +104,20 @@ function LegalPage() {
   );
 }
 
-export const Route = createFileRoute("/legal/")({
+export const Route = createFileRoute("/legal/$slug")({
   component: LegalPage,
-  head: () => ({ meta: [{ title: "Legal information | BQ SQWAD TV" }, { name: "robots", content: "index, follow" }] }),
+  head: ({ params }) => {
+    const documentName = params.slug.replace(/-/g, " ");
+    const title = `${documentName} | BQ SQWAD TV`;
+    const description = `Read the BQ SQWAD TV ${documentName} and current policy information.`;
+    return { meta: [
+      { title },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+      { name: "robots", content: "index, follow" },
+    ] };
+  },
 });
