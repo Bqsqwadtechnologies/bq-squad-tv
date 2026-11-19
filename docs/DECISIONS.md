@@ -210,3 +210,4 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
   - Route Access & Tests: Catalogued 222 routes in `ROUTE-ACCESS-MATRIX.md`, verified role-matrix expectations, passed clean public-text scan, and passed all 2,717 Vitest tests across 92 files.
 - 2026-11-19: V5-01 Batch 2 complete: Multi-channel notifications console, segmented broadcasts, templates, user previews, and quiet hours.
 - V5-01 B3: Safety centre in one tabbed screen; audit log is its own route; view-as requires reason and is client-side for now.
+- 2026-11-19: V5-01 Batch 4 complete: Settings & platform controls (/zillionaire/settings) with tabbed layout (Maintenance & Ticker, Session & Rate Limits, Geofencing & IP Blocks, Wallet & Commerce, App & Legal Gates, Communications & Sender). Shared types isolated to src/lib/platform-settings-types.ts to prevent client/server leak. Route access matrix expanded to 228 routes.

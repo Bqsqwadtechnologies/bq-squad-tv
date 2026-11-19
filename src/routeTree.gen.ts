@@ -59,6 +59,7 @@ import { Route as ZillionaireProvidersRouteImport } from './routes/zillionaire.p
 import { Route as ZillionaireReceiptsRouteImport } from './routes/zillionaire.receipts'
 import { Route as ZillionaireReportsRouteImport } from './routes/zillionaire.reports'
 import { Route as ZillionaireSecurityRouteImport } from './routes/zillionaire.security'
+import { Route as ZillionaireSettingsRouteImport } from './routes/zillionaire.settings'
 import { Route as ZillionaireStorageRouteImport } from './routes/zillionaire.storage'
 import { Route as ZillionaireSupportRouteImport } from './routes/zillionaire.support'
 import { Route as ZillionaireTeamRouteImport } from './routes/zillionaire.team'
@@ -182,6 +183,7 @@ import { Route as ApiPublicV1ZillionaireChannelsIndexRouteImport } from './route
 import { Route as ApiPublicV1ZillionaireConfigFlagsRouteImport } from './routes/api/public/v1/zillionaire/config/flags'
 import { Route as ApiPublicV1ZillionaireConfigModalSpendRouteImport } from './routes/api/public/v1/zillionaire/config/modal-spend'
 import { Route as ApiPublicV1ZillionaireConfigPricingRouteImport } from './routes/api/public/v1/zillionaire/config/pricing'
+import { Route as ApiPublicV1ZillionaireConfigSettingsRouteImport } from './routes/api/public/v1/zillionaire/config/settings'
 import { Route as ApiPublicV1ZillionaireContentAssetsIndexRouteImport } from './routes/api/public/v1/zillionaire/content-assets/index'
 import { Route as ApiPublicV1ZillionaireErrorsIndexRouteImport } from './routes/api/public/v1/zillionaire/errors/index'
 import { Route as ApiPublicV1ZillionaireMigrationZillionaireRouteImport } from './routes/api/public/v1/zillionaire/migration/zillionaire'
@@ -509,6 +511,11 @@ const ZillionaireReportsRoute = ZillionaireReportsRouteImport.update({
 const ZillionaireSecurityRoute = ZillionaireSecurityRouteImport.update({
   id: '/zillionaire/security',
   path: '/zillionaire/security',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZillionaireSettingsRoute = ZillionaireSettingsRouteImport.update({
+  id: '/zillionaire/settings',
+  path: '/zillionaire/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ZillionaireStorageRoute = ZillionaireStorageRouteImport.update({
@@ -1227,6 +1234,12 @@ const ApiPublicV1ZillionaireConfigPricingRoute =
     path: '/api/public/v1/zillionaire/config/pricing',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireConfigSettingsRoute =
+  ApiPublicV1ZillionaireConfigSettingsRouteImport.update({
+    id: '/api/public/v1/zillionaire/config/settings',
+    path: '/api/public/v1/zillionaire/config/settings',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireContentAssetsIndexRoute =
   ApiPublicV1ZillionaireContentAssetsIndexRouteImport.update({
     id: '/api/public/v1/zillionaire/content-assets/',
@@ -1726,6 +1739,7 @@ export interface FileRoutesByFullPath {
   '/zillionaire/receipts': typeof ZillionaireReceiptsRoute
   '/zillionaire/reports': typeof ZillionaireReportsRoute
   '/zillionaire/security': typeof ZillionaireSecurityRoute
+  '/zillionaire/settings': typeof ZillionaireSettingsRoute
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
@@ -1849,6 +1863,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/config/flags': typeof ApiPublicV1ZillionaireConfigFlagsRoute
   '/api/public/v1/zillionaire/config/modal-spend': typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
+  '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
   '/api/public/v1/zillionaire/pages/publish': typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -1976,6 +1991,7 @@ export interface FileRoutesByTo {
   '/zillionaire/receipts': typeof ZillionaireReceiptsRoute
   '/zillionaire/reports': typeof ZillionaireReportsRoute
   '/zillionaire/security': typeof ZillionaireSecurityRoute
+  '/zillionaire/settings': typeof ZillionaireSettingsRoute
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
@@ -2098,6 +2114,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/config/flags': typeof ApiPublicV1ZillionaireConfigFlagsRoute
   '/api/public/v1/zillionaire/config/modal-spend': typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
+  '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
   '/api/public/v1/zillionaire/pages/publish': typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -2226,6 +2243,7 @@ export interface FileRoutesById {
   '/zillionaire/receipts': typeof ZillionaireReceiptsRoute
   '/zillionaire/reports': typeof ZillionaireReportsRoute
   '/zillionaire/security': typeof ZillionaireSecurityRoute
+  '/zillionaire/settings': typeof ZillionaireSettingsRoute
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
@@ -2349,6 +2367,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/config/flags': typeof ApiPublicV1ZillionaireConfigFlagsRoute
   '/api/public/v1/zillionaire/config/modal-spend': typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
+  '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
   '/api/public/v1/zillionaire/pages/publish': typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -2478,6 +2497,7 @@ export interface FileRouteTypes {
     | '/zillionaire/receipts'
     | '/zillionaire/reports'
     | '/zillionaire/security'
+    | '/zillionaire/settings'
     | '/zillionaire/storage'
     | '/zillionaire/support'
     | '/zillionaire/team'
@@ -2601,6 +2621,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/flags'
     | '/api/public/v1/zillionaire/config/modal-spend'
     | '/api/public/v1/zillionaire/config/pricing'
+    | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
     | '/api/public/v1/zillionaire/pages/publish'
@@ -2728,6 +2749,7 @@ export interface FileRouteTypes {
     | '/zillionaire/receipts'
     | '/zillionaire/reports'
     | '/zillionaire/security'
+    | '/zillionaire/settings'
     | '/zillionaire/storage'
     | '/zillionaire/support'
     | '/zillionaire/team'
@@ -2850,6 +2872,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/flags'
     | '/api/public/v1/zillionaire/config/modal-spend'
     | '/api/public/v1/zillionaire/config/pricing'
+    | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
     | '/api/public/v1/zillionaire/pages/publish'
@@ -2977,6 +3000,7 @@ export interface FileRouteTypes {
     | '/zillionaire/receipts'
     | '/zillionaire/reports'
     | '/zillionaire/security'
+    | '/zillionaire/settings'
     | '/zillionaire/storage'
     | '/zillionaire/support'
     | '/zillionaire/team'
@@ -3100,6 +3124,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/flags'
     | '/api/public/v1/zillionaire/config/modal-spend'
     | '/api/public/v1/zillionaire/config/pricing'
+    | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
     | '/api/public/v1/zillionaire/pages/publish'
@@ -3228,6 +3253,7 @@ export interface RootRouteChildren {
   ZillionaireReceiptsRoute: typeof ZillionaireReceiptsRoute
   ZillionaireReportsRoute: typeof ZillionaireReportsRoute
   ZillionaireSecurityRoute: typeof ZillionaireSecurityRoute
+  ZillionaireSettingsRoute: typeof ZillionaireSettingsRoute
   ZillionaireStorageRoute: typeof ZillionaireStorageRoute
   ZillionaireSupportRoute: typeof ZillionaireSupportRoute
   ZillionaireTeamRoute: typeof ZillionaireTeamRoute
@@ -3335,6 +3361,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireConfigFlagsRoute: typeof ApiPublicV1ZillionaireConfigFlagsRoute
   ApiPublicV1ZillionaireConfigModalSpendRoute: typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   ApiPublicV1ZillionaireConfigPricingRoute: typeof ApiPublicV1ZillionaireConfigPricingRoute
+  ApiPublicV1ZillionaireConfigSettingsRoute: typeof ApiPublicV1ZillionaireConfigSettingsRoute
   ApiPublicV1ZillionaireMigrationZillionaireRoute: typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   ApiPublicV1ZillionaireOperationsLiveRoute: typeof ApiPublicV1ZillionaireOperationsLiveRoute
   ApiPublicV1ZillionairePagesPublishRoute: typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -3750,6 +3777,13 @@ declare module '@tanstack/react-router' {
       path: '/zillionaire/security'
       fullPath: '/zillionaire/security'
       preLoaderRoute: typeof ZillionaireSecurityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/settings': {
+      id: '/zillionaire/settings'
+      path: '/zillionaire/settings'
+      fullPath: '/zillionaire/settings'
+      preLoaderRoute: typeof ZillionaireSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/storage': {
@@ -4613,6 +4647,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireConfigPricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/config/settings': {
+      id: '/api/public/v1/zillionaire/config/settings'
+      path: '/api/public/v1/zillionaire/config/settings'
+      fullPath: '/api/public/v1/zillionaire/config/settings'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireConfigSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/content-assets/': {
       id: '/api/public/v1/zillionaire/content-assets/'
       path: '/api/public/v1/zillionaire/content-assets'
@@ -5435,6 +5476,7 @@ const rootRouteChildren: RootRouteChildren = {
   ZillionaireReceiptsRoute: ZillionaireReceiptsRoute,
   ZillionaireReportsRoute: ZillionaireReportsRoute,
   ZillionaireSecurityRoute: ZillionaireSecurityRoute,
+  ZillionaireSettingsRoute: ZillionaireSettingsRoute,
   ZillionaireStorageRoute: ZillionaireStorageRoute,
   ZillionaireSupportRoute: ZillionaireSupportRoute,
   ZillionaireTeamRoute: ZillionaireTeamRoute,
@@ -5572,6 +5614,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireConfigModalSpendRoute,
   ApiPublicV1ZillionaireConfigPricingRoute:
     ApiPublicV1ZillionaireConfigPricingRoute,
+  ApiPublicV1ZillionaireConfigSettingsRoute:
+    ApiPublicV1ZillionaireConfigSettingsRoute,
   ApiPublicV1ZillionaireMigrationZillionaireRoute:
     ApiPublicV1ZillionaireMigrationZillionaireRoute,
   ApiPublicV1ZillionaireOperationsLiveRoute:

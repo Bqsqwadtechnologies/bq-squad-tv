@@ -151,7 +151,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/config/pricing"
             action: "pricing.updated",
             targetType: "pricing",
             targetId: "config/pricing",
-            reason: "Administrator updated versioned platform pricing",
+            reason: "Platform owner updated versioned pricing",
             metadata: {
               version,
               maxConcurrentSessions: body.maxConcurrentSessions,

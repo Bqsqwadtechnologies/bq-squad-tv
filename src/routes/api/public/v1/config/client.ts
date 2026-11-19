@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { getPlatformFlags, publicFlags } from "@/lib/server/flags";
 import { currencyForCountry } from "@/lib/server/currency";
+import { getPlatformSettings } from "@/lib/server/platform-settings";
 
 function countryFromRequest(request: Request): string | null {
   const explicit = (
@@ -33,11 +34,15 @@ export const Route = createFileRoute("/api/public/v1/config/client")({
       GET: async ({ request }) => {
         try {
           const fs = await Firestore.create();
-          const [flags, legal] = await Promise.all([
+          const [flags, legal, settings] = await Promise.all([
             getPlatformFlags(fs),
             fs.getDoc("config/legalPageVersions"),
+            getPlatformSettings(fs),
           ]);
-          const currency = currencyForCountry(countryFromRequest(request));
+
+          const detectedCountry = countryFromRequest(request);
+          const currency = currencyForCountry(detectedCountry);
+
           const rawVersions = legal?.["versions"];
           const legalPageVersions =
             rawVersions && typeof rawVersions === "object" && !Array.isArray(rawVersions)
@@ -49,13 +54,58 @@ export const Route = createFileRoute("/api/public/v1/config/client")({
                       value.length <= 80,
                   ),
                 )
-              : {};
+              : {
+                  terms: settings.termsVersion,
+                  privacy: settings.privacyVersion,
+                  producerTerms: settings.producerTermsVersion,
+                };
+
+          const pFlags = publicFlags(flags);
+          if (settings.maintenanceMode) {
+            pFlags.maintenanceMode = true;
+          }
+
           return Response.json(
             {
-              flags: publicFlags(flags),
+              flags: pFlags,
               legalPageVersions,
               currency,
               currencySymbol: currencySymbol(currency),
+              maintenance: {
+                active: settings.maintenanceMode,
+                message: settings.maintenanceMessage,
+                endsAt: settings.maintenanceEndsAt,
+              },
+              announcement: settings.announcementEnabled
+                ? {
+                    enabled: true,
+                    text: settings.announcementText,
+                    type: settings.announcementType,
+                    link: settings.announcementLink,
+                    linkLabel: settings.announcementLinkLabel,
+                    dismissible: settings.announcementDismissible,
+                  }
+                : {
+                    enabled: false,
+                    text: "",
+                    type: "info",
+                    link: "",
+                    linkLabel: "",
+                    dismissible: true,
+                  },
+              appVersion: {
+                minAndroidVersionCode: settings.minAndroidVersionCode,
+                latestAndroidVersionCode: settings.latestAndroidVersionCode,
+                versionName: settings.androidVersionName,
+                forceUpdateAndroid: settings.forceUpdateAndroid,
+                androidUpdateUrl: settings.androidUpdateUrl,
+              },
+              commerce: {
+                defaultCurrency: settings.defaultCurrency,
+                supportedCurrencies: settings.supportedCurrencies,
+                defaultRatePerMinuteMinor: settings.defaultRatePerMinuteMinor,
+                minimumSessionBalanceMinor: settings.minimumSessionBalanceMinor,
+              },
             },
             { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=30" } },
           );
@@ -73,6 +123,25 @@ export const Route = createFileRoute("/api/public/v1/config/client")({
               legalPageVersions: {},
               currency: "USD",
               currencySymbol: "$",
+              maintenance: {
+                active: true,
+                message: "Scheduled maintenance in progress.",
+                endsAt: null,
+              },
+              announcement: { enabled: false, text: "", type: "info", link: "", linkLabel: "", dismissible: true },
+              appVersion: {
+                minAndroidVersionCode: 1,
+                latestAndroidVersionCode: 1,
+                versionName: "1.0.0",
+                forceUpdateAndroid: false,
+                androidUpdateUrl: "",
+              },
+              commerce: {
+                defaultCurrency: "USD",
+                supportedCurrencies: ["USD"],
+                defaultRatePerMinuteMinor: 500,
+                minimumSessionBalanceMinor: 2500,
+              },
             },
             { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=30" } },
           );
