@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **206**
+Total scanned routes: **209**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **206**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 86 |
+| `zillionaire module` | 89 |
 | `producer` | 4 |
 
 ### Inventory
@@ -145,6 +145,8 @@ Total scanned routes: **206**
 | `/api/public/v1/zillionaire/config/flags` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/config/flags.ts` |
 | `/api/public/v1/zillionaire/config/modal-spend` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/config/modal-spend.ts` |
 | `/api/public/v1/zillionaire/config/pricing` | `zillionaire module` | requireZillionaire (Module: pricing) | `src/routes/api/public/v1/zillionaire/config/pricing.ts` |
+| `/api/public/v1/zillionaire/content-assets/` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/index.ts` |
+| `/api/public/v1/zillionaire/content-assets/$assetId/actions` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/actions.ts` |
 | `/api/public/v1/zillionaire/content-assets/$assetId/approve` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/approve.ts` |
 | `/api/public/v1/zillionaire/content-assets/$assetId/cancel` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/cancel.ts` |
 | `/api/public/v1/zillionaire/content-assets/$assetId/feature` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/feature.ts` |
@@ -216,6 +218,7 @@ Total scanned routes: **206**
 | `/zillionaire/errors` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.errors.tsx` |
 | `/zillionaire/features` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.features.tsx` |
 | `/zillionaire/firebase-schema` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.firebase-schema.tsx` |
+| `/zillionaire/movies` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.movies.tsx` |
 | `/zillionaire/pricing` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.pricing.tsx` |
 | `/zillionaire/producers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.producers.tsx` |
 | `/zillionaire/providers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.providers.tsx` |

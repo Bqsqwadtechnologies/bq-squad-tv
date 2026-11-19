@@ -181,3 +181,6 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 
 ## Batch V4-02 Batch 02 — Receipts and Money Documents Registry
 - 2026-11-19 — Implemented sequential receipts engine (`BQ-REC-...`, `BQ-PAY-...`, `BQ-REF-...`) with Firestore atomic sequence generator, Zillionaire receipts console (`zillionaire.receipts.tsx`), PDF/printable document generation endpoint, resend email capability with audit logging, and customer lifetime spend aggregation.
+
+## Batch V4-02 Batch 03 — Content Control (Veto Power)
+- 2026-11-19 — Implemented Movies & series veto control screen (`zillionaire.movies.tsx`) with instant playback block, 30-day soft delete, in-console master playlist preview player, copyright complaint takedown workflow, reprocess job queuing, metadata editing, and multi-asset bulk actions.
