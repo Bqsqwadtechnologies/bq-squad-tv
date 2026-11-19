@@ -194,3 +194,10 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
   - Payouts: Full lifecycle management (approve, reject, hold, unhold, and mark paid / settle with settlement reference and audit logging) with live split & net calculator.
   - Payments: Comprehensive transaction filtering (by status, gateway, reference, UID, date range), gateway reconciliation status tracking, and two-step confirmation reversal modal requiring typed safety confirmation (`REVERSE`) and audit tracking.
   - Role isolation: Maintained strict `payouts` and `payments` module requirements under `requireZillionaireModule` with 219 routes catalogued in route-access matrix and 2,687 passing tests.
+
+## Batch V4-02 Batch 07 — Producers Verification & Channels, and Providers Allowlist & Licence Vault
+- 2026-11-19 — Implemented Producers Directory & Governance, and Providers Licence Vault & Allowlist:
+  - Producers (`/zillionaire/producers` & `/api/public/v1/zillionaire/producers/*`): Producer verification review with signed evidence inspection, approve/reject/request evidence actions, instant creator suspension/unsuspension, view assigned channels and balance/lifetime earnings, and verified audit-trailed payout bank account editing (`update_payout_account`).
+  - Providers (`/zillionaire/providers` & `/api/public/v1/zillionaire/providers/*`): Approved email allowlist management (add email, Verify, Grant, Revoke, Suspend) with immediate active session invalidation on Revoke. Licence and contract vault for binding agreements and valid date windows, monthly settlement statement review, dispute resolution portal, and non-metered test playback verification for linear FAST channels.
+  - Sign-up Gating: Provider Console sign-up strictly limited to approved emails (returning exact message `Access denied. Contact tv@bqsqwad.com`), while Producer Console sign-up remains open.
+  - Route Access & Quality: 220 routes catalogued in `ROUTE-ACCESS-MATRIX.md` with full role-matrix validation, clean public-text scan, and 2,697 passing Vitest tests.

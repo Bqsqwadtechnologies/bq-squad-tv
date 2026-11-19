@@ -1,30 +1,107 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 import {
-  ArrowLeft,
+  ConsoleShell,
+  ConsoleWelcomeBanner,
+  ConsoleKpiCard,
+  ConsoleCard,
+  ConsoleStatusBadge,
+} from "@/components/ConsoleShell";
+import {
   Tv2,
-  Radio,
-  Plus,
-  CheckCircle2,
-  AlertTriangle,
+  MailCheck,
+  FileCheck2,
+  AlertCircle,
   Play,
-  LoaderCircle,
+  Plus,
+  Ban,
+  CheckCircle2,
+  ShieldCheck,
   ShieldAlert,
+  LoaderCircle,
   FileText,
-  Send,
+  DollarSign,
+  Radio,
+  Search,
+  Filter,
+  X,
+  MessageSquare,
 } from "lucide-react";
-import { restoreWebSession } from "@/lib/firebase-web-auth";
+import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
+import { formatMinorCurrency as formatMoney } from "@/lib/format-money";
 
-type Provider = {
+export const Route = createFileRoute("/zillionaire/providers")({
+  component: ZillionaireProvidersRoute,
+  head: () => ({
+    meta: [
+      { title: "Providers, Licence Vault & Live TV | Zillionaire Control" },
+      { name: "robots", content: "noindex, nofollow, noarchive" },
+    ],
+  }),
+});
+
+interface ProviderItem {
   id: string;
   name: string;
   contactEmail: string;
   settlementCurrency: string;
   providerShareBps: number;
   status: string;
-};
+  createdAt: string | null;
+}
 
-type LiveChannel = {
+interface ApprovedEmailItem {
+  email: string;
+  status: string;
+  addedAt: string | null;
+  verifiedAt: string | null;
+  grantedAt: string | null;
+  grantedBy: string | null;
+  notes: string;
+}
+
+interface ContractItem {
+  id: string;
+  providerId: string;
+  agreementReference: string;
+  territories: string[];
+  platforms: string[];
+  revenueModel: string;
+  providerShareBps: number;
+  settlementCurrency: string;
+  validFrom: string | null;
+  validUntil: string | null;
+  version: number;
+  status: string;
+}
+
+interface StatementItem {
+  id: string;
+  providerId: string;
+  period: string;
+  status: string;
+  currency: string;
+  grossRevenueMinor: number;
+  grossProfitMinor: number;
+  providerEarningsMinor: number;
+  platformShareMinor: number;
+  paidAt: string | null;
+}
+
+interface DisputeItem {
+  id: string;
+  providerId: string;
+  subject: string;
+  statementId: string | null;
+  channelId: string | null;
+  status: string;
+  createdAt: string | null;
+  updatedAt: string | null;
+  messagesCount: number;
+}
+
+interface LiveChannel {
   id: string;
   providerId: string;
   name: string;
@@ -36,503 +113,851 @@ type LiveChannel = {
   streamUrl: string;
   licenceExpiresAt: string | null;
   playbackTestPassed: boolean;
-};
+}
 
-export const Route = createFileRoute("/zillionaire/providers")({
-  component: AdminProvidersPage,
-  head: () => ({
-    meta: [
-      { title: "Providers & Live Channels | Dashboard" },
-      { name: "robots", content: "noindex, nofollow, noarchive" },
-    ],
-  }),
-});
+function ZillionaireProvidersRoute() {
+  return (
+    <ConsolePageGuard role="zillionaire" module="providers">
+      {({ token, account, onLock }) => (
+        <ZillionaireProvidersContent token={token} account={account} onLock={onLock} />
+      )}
+    </ConsolePageGuard>
+  );
+}
 
-function AdminProvidersPage() {
-  const [providers, setProviders] = useState<Provider[]>([]);
-  const [channels, setChannels] = useState<LiveChannel[]>([]);
-  const [busy, setBusy] = useState(true);
+function ZillionaireProvidersContent({
+  token,
+  account,
+  onLock,
+}: {
+  token: string;
+  account: { email: string | null; isOwner: boolean; modules: string[] };
+  onLock?: () => void;
+}) {
+  const [activeTab, setActiveTab] = useState<
+    "approved_emails" | "vault" | "statements" | "disputes" | "channels"
+  >("approved_emails");
+
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [token, setToken] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // New provider modal state
-  const [showNewProvider, setShowNewProvider] = useState(false);
-  const [pName, setPName] = useState("");
-  const [pEmail, setPEmail] = useState("");
-  const [pCurrency, setPCurrency] = useState("NGN");
-  const [pShareBps, setPShareBps] = useState(2500);
+  const [providers, setProviders] = useState<ProviderItem[]>([]);
+  const [approvedEmails, setApprovedEmails] = useState<ApprovedEmailItem[]>([]);
+  const [contracts, setContracts] = useState<ContractItem[]>([]);
+  const [statements, setStatements] = useState<StatementItem[]>([]);
+  const [disputes, setDisputes] = useState<DisputeItem[]>([]);
+  const [channels, setChannels] = useState<LiveChannel[]>([]);
 
-  // New channel modal state
-  const [showNewChannel, setShowNewChannel] = useState(false);
+  // Approved Email Actions
+  const [newEmail, setNewEmail] = useState("");
+  const [newEmailNotes, setNewEmailNotes] = useState("");
+  const [emailActionBusy, setEmailActionBusy] = useState(false);
+
+  // Contract Modal
+  const [showNewContract, setShowNewContract] = useState(false);
   const [cProviderId, setCProviderId] = useState("");
-  const [cName, setCName] = useState("");
-  const [cStreamUrl, setCStreamUrl] = useState("");
-  const [cCategory, setCCategory] = useState("Sports");
-  const [cExpiry, setCExpiry] = useState("");
+  const [cRef, setCRef] = useState("");
+  const [cValidFrom, setCValidFrom] = useState("");
+  const [cValidUntil, setCValidUntil] = useState("");
+  const [cShareBps, setCShareBps] = useState(2500);
 
-  // Testing playback
+  // Playback testing
   const [testingId, setTestingId] = useState<string | null>(null);
 
-  async function loadData(idToken: string) {
+  // Dispute resolution modal
+  const [resolvingDispute, setResolvingDispute] = useState<DisputeItem | null>(null);
+  const [resolutionNotes, setResolutionNotes] = useState("");
+  const [resolveBusy, setResolveBusy] = useState(false);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError("");
     try {
-      const [resP, resC] = await Promise.all([
-        fetch("/api/public/v1/zillionaire/providers/", {
-          headers: { Authorization: `Bearer ${idToken}` },
-        }),
-        fetch("/api/public/v1/zillionaire/providers/channels", {
-          headers: { Authorization: `Bearer ${idToken}` },
-        }),
+      const headers = await getWebAuthHeaders(token);
+      const [resMain, resEmails, resChannels] = await Promise.all([
+        fetch("/api/public/v1/zillionaire/providers/", { headers }),
+        fetch("/api/public/v1/zillionaire/providers/approved-emails", { headers }),
+        fetch("/api/public/v1/zillionaire/providers/channels", { headers }),
       ]);
-      if (resP.ok) {
-        const dataP = (await resP.json()) as { providers: Provider[] };
-        setProviders(dataP.providers || []);
+
+      if (resMain.ok) {
+        const data = await resMain.json();
+        setProviders(data.providers || []);
+        setContracts(data.contracts || []);
+        setStatements(data.statements || []);
+        setDisputes(data.disputes || []);
       }
-      if (resC.ok) {
-        const dataC = (await resC.json()) as { channels: LiveChannel[] };
-        setChannels(dataC.channels || []);
+      if (resEmails.ok) {
+        const data = await resEmails.json();
+        setApprovedEmails(data.approvedEmails || []);
+      }
+      if (resChannels.ok) {
+        const data = await resChannels.json();
+        setChannels(data.channels || []);
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Network error");
+      setError(err instanceof Error ? err.message : "Error loading provider data");
     } finally {
-      setBusy(false);
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    let active = true;
-    void (async () => {
-      const tokenStr = await restoreWebSession();
-      if (!active) return;
-      if (tokenStr) {
-        setToken(tokenStr);
-        void loadData(tokenStr);
-      } else {
-        setError("Sign in with owner credentials required.");
-        setBusy(false);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
+    void loadData();
+  }, [token]);
 
-  async function handleAddProvider(e: FormEvent) {
-    e.preventDefault();
-    if (!token) return;
+  const handleEmailAction = async (
+    action: "add" | "verify" | "grant" | "revoke" | "suspend",
+    emailTarget?: string,
+  ) => {
+    const emailToUse = emailTarget || newEmail.trim().toLowerCase();
+    if (!emailToUse || !emailToUse.includes("@")) {
+      alert("A valid email is required.");
+      return;
+    }
+
+    let reason = "Console administrator action";
+    if (action === "revoke") {
+      const confirmed = confirm(
+        `Are you sure you want to REVOKE access for ${emailToUse}? This terminates all active provider sessions immediately.`,
+      );
+      if (!confirmed) return;
+      reason = prompt("Provide audit reason for revoking provider email access:") || "Revocation by admin";
+    }
+
+    setEmailActionBusy(true);
     try {
+      const headers = await getWebAuthHeaders(token);
+      headers.set("Content-Type", "application/json");
+      const res = await fetch("/api/public/v1/zillionaire/providers/approved-emails", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          action,
+          email: emailToUse,
+          notes: newEmailNotes,
+          reason,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Email approval action failed");
+
+      setSuccessMessage(`Email ${emailToUse} status updated to ${action.toUpperCase()}.`);
+      if (!emailTarget) {
+        setNewEmail("");
+        setNewEmailNotes("");
+      }
+      void loadData();
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Action failed");
+    } finally {
+      setEmailActionBusy(false);
+    }
+  };
+
+  const handleCreateContract = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!cProviderId || !cRef.trim()) {
+      alert("Please choose a provider and enter an agreement reference.");
+      return;
+    }
+
+    try {
+      const headers = await getWebAuthHeaders(token);
+      headers.set("Content-Type", "application/json");
       const res = await fetch("/api/public/v1/zillionaire/providers/", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers,
         body: JSON.stringify({
-          name: pName,
-          contactEmail: pEmail,
-          settlementCurrency: pCurrency,
-          providerShareBps: pShareBps,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to register provider");
-      setShowNewProvider(false);
-      setPName("");
-      setPEmail("");
-      await loadData(token);
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Error adding provider");
-    }
-  }
-
-  async function handleAddChannel(e: FormEvent) {
-    e.preventDefault();
-    if (!token) return;
-    try {
-      const res = await fetch("/api/public/v1/zillionaire/providers/channels", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
+          action: "create_contract",
           providerId: cProviderId,
-          name: cName,
-          streamUrl: cStreamUrl,
-          categories: [cCategory],
-          licenceExpiresAt: cExpiry ? new Date(cExpiry).toISOString() : null,
+          agreementReference: cRef.trim(),
+          validFrom: cValidFrom ? new Date(cValidFrom).toISOString() : new Date().toISOString(),
+          validUntil: cValidUntil ? new Date(cValidUntil).toISOString() : null,
+          providerShareBps: cShareBps,
         }),
       });
-      if (!res.ok) throw new Error("Failed to create live channel");
-      setShowNewChannel(false);
-      setCName("");
-      setCStreamUrl("");
-      await loadData(token);
-    } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Error adding channel");
-    }
-  }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create contract");
 
-  async function runPlaybackTest(channelId: string) {
-    if (!token) return;
+      setSuccessMessage("Licence contract registered in vault.");
+      setShowNewContract(false);
+      setCRef("");
+      void loadData();
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error creating contract");
+    }
+  };
+
+  const handleResolveDispute = async () => {
+    if (!resolvingDispute) return;
+    setResolveBusy(true);
+    try {
+      const headers = await getWebAuthHeaders(token);
+      headers.set("Content-Type", "application/json");
+      const res = await fetch("/api/public/v1/zillionaire/providers/", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          action: "resolve_dispute",
+          disputeId: resolvingDispute.id,
+          resolutionNotes: resolutionNotes.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to resolve dispute");
+
+      setSuccessMessage(`Dispute ${resolvingDispute.id} marked as resolved.`);
+      setResolvingDispute(null);
+      setResolutionNotes("");
+      void loadData();
+      setTimeout(() => setSuccessMessage(""), 5000);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Error resolving dispute");
+    } finally {
+      setResolveBusy(false);
+    }
+  };
+
+  const handleRunPlaybackTest = async (channelId: string) => {
     setTestingId(channelId);
     try {
+      const headers = await getWebAuthHeaders(token);
+      headers.set("Content-Type", "application/json");
       const res = await fetch("/api/public/v1/zillionaire/providers/test-playback", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers,
         body: JSON.stringify({ channelId }),
       });
-      const data = (await res.json()) as { ok: boolean; message: string };
-      alert(data.message);
-      await loadData(token);
+      const data = await res.json();
+      alert(data.message || "Playback test executed.");
+      void loadData();
     } catch (err: unknown) {
-      alert(err instanceof Error ? err.message : "Test failed");
+      alert(err instanceof Error ? err.message : "Playback test failed");
     } finally {
       setTestingId(null);
     }
-  }
+  };
+
+  const kpis = useMemo(() => {
+    const grantedEmails = approvedEmails.filter((e) => e.status === "granted").length;
+    const totalContracts = contracts.length;
+    const openDisputes = disputes.filter((d) => d.status === "open").length;
+    const activeChannels = channels.filter((c) => c.status === "published").length;
+    return { grantedEmails, totalContracts, openDisputes, activeChannels };
+  }, [approvedEmails, contracts, disputes, channels]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
-      <header className="border-b border-slate-800 bg-slate-900/60 backdrop-blur sticky top-0 z-20">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              to="/zillionaire"
-              className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
-              aria-label="Back to administration dashboard"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </Link>
-            <h1 className="font-bold text-lg text-white">Providers & Live TV Management</h1>
-          </div>
-          <Link to="/zillionaire" className="text-xs text-cyan-400 hover:underline">
-            Back to Dashboard
-          </Link>
+    <ConsoleShell
+      consoleType="zillionaire"
+      title="Providers, Contracts & Broadcast"
+      tagline="Approved partner allowlist, licence vault, statements, disputes, and live broadcast verification"
+      activePath="/zillionaire/providers"
+      account={{
+        email: account.email || undefined,
+        isOwner: account.isOwner,
+        modules: account.modules,
+      }}
+      onLock={onLock}
+      onRefresh={loadData}
+      isRefreshing={loading}
+    >
+      {successMessage && (
+        <div className="p-3 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-200 text-xs font-semibold flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          <span>{successMessage}</span>
         </div>
-      </header>
+      )}
+      {error && (
+        <div className="p-3 rounded-xl bg-rose-950/80 border border-rose-500/40 text-rose-200 text-xs font-semibold flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 text-rose-400 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
-      <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full space-y-8">
-        {busy ? (
-          <div className="py-24 text-center">
-            <LoaderCircle className="w-8 h-8 text-cyan-400 animate-spin mx-auto mb-3" />
-            <p className="text-sm text-slate-400">Loading channels and providers...</p>
+      <ConsoleWelcomeBanner
+        title="Channel Partner Governance & Live Ingest"
+        description="Provider Console sign-up is strictly gated by the approved email allowlist. Revoking any email instantly terminates active sessions."
+        badgeText="Partner Allowlist Active"
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <ConsoleKpiCard
+          title="Approved Partner Emails"
+          value={kpis.grantedEmails}
+          subtitle="Authorized provider signups"
+          variant="blue"
+          icon={MailCheck}
+        />
+        <ConsoleKpiCard
+          title="Licence Contracts in Vault"
+          value={kpis.totalContracts}
+          subtitle="Signed broadcast agreements"
+          variant="green"
+          icon={FileCheck2}
+        />
+        <ConsoleKpiCard
+          title="Active Disputes"
+          value={kpis.openDisputes}
+          subtitle="Partner settlement queries"
+          variant="gold"
+          icon={AlertCircle}
+        />
+        <ConsoleKpiCard
+          title="Live Broadcast Channels"
+          value={kpis.activeChannels}
+          subtitle="Verified linear FAST streams"
+          variant="purple"
+          icon={Tv2}
+        />
+      </div>
+
+      {/* Tab Navigation */}
+      <div className="flex border-b border-slate-800 gap-2 text-xs">
+        {[
+          { key: "approved_emails", label: "Approved Emails Allowlist", icon: MailCheck },
+          { key: "vault", label: "Licence & Contract Vault", icon: FileCheck2 },
+          { key: "statements", label: "Statements & Settlements", icon: DollarSign },
+          { key: "disputes", label: "Disputes & Inquiries", icon: MessageSquare },
+          { key: "channels", label: "Live Channels & Test Playback", icon: Tv2 },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.key;
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as typeof activeTab)}
+              className={`flex items-center gap-2 px-4 py-2.5 font-bold transition border-b-2 -mb-px ${
+                isActive
+                  ? "border-purple-500 text-white bg-purple-500/10 rounded-t-lg"
+                  : "border-transparent text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tab 1: Approved Emails */}
+      {activeTab === "approved_emails" && (
+        <ConsoleCard
+          title="Provider Sign-up Allowlist"
+          description="Only representatives with approved emails in 'granted' status can sign in to the Channel Partner Console. Revoking instantly invalidates active sessions."
+        >
+          {/* Add email box */}
+          <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 mb-6 space-y-3">
+            <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+              <Plus className="h-3.5 w-3.5 text-purple-400" />
+              Add Partner Representative Email
+            </h4>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="email"
+                placeholder="partner.rep@broadcaster.com"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                className="flex-1 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500"
+              />
+              <input
+                type="text"
+                placeholder="Optional notes or partner organisation..."
+                value={newEmailNotes}
+                onChange={(e) => setNewEmailNotes(e.target.value)}
+                className="flex-1 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white placeholder-slate-500 outline-none focus:border-purple-500"
+              />
+              <button
+                type="button"
+                onClick={() => handleEmailAction("add")}
+                disabled={emailActionBusy}
+                className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition disabled:opacity-50"
+              >
+                Add Pending
+              </button>
+            </div>
           </div>
-        ) : error ? (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-            {error}
-          </div>
-        ) : (
-          <>
-            {/* Providers Section */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-white">Licensed Content Providers</h2>
-                  <p className="text-xs text-slate-400">
-                    Channel organisations operating under gross profit share agreements.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowNewProvider(true)}
-                  className="px-3.5 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-medium text-xs flex items-center gap-1.5"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  Add Provider
-                </button>
-              </div>
 
-              {showNewProvider && (
-                <form
-                  onSubmit={handleAddProvider}
-                  className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3"
-                >
-                  <h3 className="text-sm font-bold text-white">
-                    Register Channel Provider Organisation
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                    <div>
-                      <label className="block text-[11px] text-slate-400 mb-1">
-                        Company / Brand Name
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={pName}
-                        onChange={(e) => setPName(e.target.value)}
-                        placeholder="e.g. Apex Sports Network"
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-slate-400 mb-1">
-                        Representative Email
-                      </label>
-                      <input
-                        type="email"
-                        required
-                        value={pEmail}
-                        onChange={(e) => setPEmail(e.target.value)}
-                        placeholder="rep@provider.com"
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-slate-400 mb-1">
-                        Settlement Currency
-                      </label>
-                      <select
-                        value={pCurrency}
-                        onChange={(e) => setPCurrency(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white"
-                      >
-                        <option value="NGN">NGN (Naira)</option>
-                        <option value="USD">USD (Dollar)</option>
-                        <option value="GBP">GBP (Pound)</option>
-                        <option value="EUR">EUR (Euro)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-slate-400 mb-1">
-                        Gross Profit Share (BPS)
-                      </label>
-                      <input
-                        type="number"
-                        value={pShareBps}
-                        onChange={(e) => setPShareBps(Number(e.target.value))}
-                        placeholder="2500 (25%)"
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <button
-                      type="submit"
-                      className="px-3.5 py-1.5 rounded-lg bg-cyan-600 text-white text-xs font-medium"
-                    >
-                      Save Provider
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowNewProvider(false)}
-                      className="px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {providers.map((p) => (
-                  <div key={p.id} className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                    <div className="flex items-start justify-between">
-                      <h4 className="font-semibold text-sm text-white">{p.name}</h4>
-                      <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 font-medium">
-                        {p.status}
-                      </span>
-                    </div>
-                    <div className="mt-2 text-xs text-slate-400 space-y-1">
-                      <div>
-                        Contact: <span className="text-slate-300">{p.contactEmail}</span>
-                      </div>
-                      <div>
-                        Share:{" "}
-                        <span className="text-cyan-400 font-semibold">
-                          {(p.providerShareBps / 100).toFixed(1)}%
-                        </span>{" "}
-                        of Net Gross Profit
-                      </div>
-                      <div>
-                        Currency: <span className="text-slate-200">{p.settlementCurrency}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {providers.length === 0 && (
-                  <div className="col-span-3 p-8 text-center rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-400">
-                    No providers registered yet. Tap "Add Provider" above to create one.
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Live Channels Section */}
-            <section className="space-y-4 pt-4 border-t border-slate-800">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-white">Broadcast Channels</h2>
-                  <p className="text-xs text-slate-400">
-                    Channels must pass a test playback before being published to viewers.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowNewChannel(true)}
-                  disabled={providers.length === 0}
-                  className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  New Live Channel
-                </button>
-              </div>
-
-              {showNewChannel && (
-                <form
-                  onSubmit={handleAddChannel}
-                  className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3"
-                >
-                  <h3 className="text-sm font-bold text-white">Create New Live Stream Channel</h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                    <div>
-                      <label className="block text-[11px] text-slate-400 mb-1">
-                        Provider Organisation
-                      </label>
-                      <select
-                        required
-                        value={cProviderId}
-                        onChange={(e) => setCProviderId(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white"
-                      >
-                        <option value="">Select Provider...</option>
-                        {providers.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-slate-400 mb-1">Channel Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={cName}
-                        onChange={(e) => setCName(e.target.value)}
-                        placeholder="e.g. BQ Sports 1"
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-slate-400 mb-1">Category</label>
-                      <select
-                        value={cCategory}
-                        onChange={(e) => setCCategory(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white"
-                      >
-                        <option value="Sports">Sports</option>
-                        <option value="News">News</option>
-                        <option value="Movies">Movies</option>
-                        <option value="Kids">Kids</option>
-                        <option value="General">General</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] text-slate-400 mb-1">
-                        Licence Expiration Date
-                      </label>
-                      <input
-                        type="date"
-                        value={cExpiry}
-                        onChange={(e) => setCExpiry(e.target.value)}
-                        className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">
-                      Provider Stream URL (HLS / Manifest)
-                    </label>
-                    <input
-                      type="url"
-                      required
-                      value={cStreamUrl}
-                      onChange={(e) => setCStreamUrl(e.target.value)}
-                      placeholder="https://provider-stream.example.com/live/channel.m3u8"
-                      className="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white font-mono"
-                    />
-                  </div>
-                  <div className="flex gap-2 pt-2">
-                    <button
-                      type="submit"
-                      className="px-3.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium"
-                    >
-                      Create Channel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowNewChannel(false)}
-                      className="px-3.5 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {channels.map((c) => (
-                  <div
-                    key={c.id}
-                    className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-semibold text-sm text-white">{c.name}</h4>
-                        <span className="text-[11px] text-slate-400">
-                          {c.categories.join(", ")} • {c.language.toUpperCase()}
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                  <th className="py-2.5 px-3">Authorized Email</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3">Notes</th>
+                  <th className="py-2.5 px-3">Added Date</th>
+                  <th className="py-2.5 px-3 text-right">Allowlist Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {approvedEmails.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-6 text-center text-slate-500">
+                      No approved provider emails recorded.
+                    </td>
+                  </tr>
+                ) : (
+                  approvedEmails.map((item) => (
+                    <tr key={item.email} className="hover:bg-slate-900/40 transition">
+                      <td className="py-2.5 px-3 font-mono font-bold text-white">{item.email}</td>
+                      <td className="py-2.5 px-3">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            item.status === "granted"
+                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                              : item.status === "verified"
+                                ? "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                                : item.status === "revoked"
+                                  ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                                  : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                          }`}
+                        >
+                          {item.status}
                         </span>
-                      </div>
-                      <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-medium uppercase ${
-                          c.status === "published"
-                            ? "bg-emerald-500/10 text-emerald-400"
-                            : "bg-amber-500/10 text-amber-400"
-                        }`}
-                      >
-                        {c.status}
-                      </span>
-                    </div>
-
-                    <div className="text-xs space-y-1.5 py-2 border-y border-slate-800 text-slate-400">
-                      <div className="truncate">
-                        Stream:{" "}
-                        <span className="font-mono text-slate-300 text-[11px]">{c.streamUrl}</span>
-                      </div>
-                      {c.licenceExpiresAt && (
-                        <div>
-                          Licence Expires:{" "}
-                          <span className="text-slate-300">
-                            {new Date(c.licenceExpiresAt).toLocaleDateString()}
-                          </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400">{item.notes || "—"}</td>
+                      <td className="py-2.5 px-3 text-slate-500 font-mono text-[11px]">
+                        {item.addedAt ? new Date(item.addedAt).toLocaleDateString() : "—"}
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {item.status !== "verified" && item.status !== "granted" && (
+                            <button
+                              onClick={() => handleEmailAction("verify", item.email)}
+                              className="px-2 py-1 rounded bg-blue-500/10 border border-blue-500/30 text-blue-300 font-bold text-[11px] hover:bg-blue-500/20 transition"
+                            >
+                              Verify
+                            </button>
+                          )}
+                          {item.status !== "granted" && (
+                            <button
+                              onClick={() => handleEmailAction("grant", item.email)}
+                              className="px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-[11px] hover:bg-emerald-500/20 transition"
+                            >
+                              Grant
+                            </button>
+                          )}
+                          {item.status !== "suspended" && (
+                            <button
+                              onClick={() => handleEmailAction("suspend", item.email)}
+                              className="px-2 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-[11px] hover:bg-amber-500/20 transition"
+                            >
+                              Suspend
+                            </button>
+                          )}
+                          {item.status !== "revoked" && (
+                            <button
+                              onClick={() => handleEmailAction("revoke", item.email)}
+                              className="px-2 py-1 rounded bg-rose-500/10 border border-rose-500/30 text-rose-300 font-bold text-[11px] hover:bg-rose-500/20 transition"
+                              title="Immediately revokes sessions"
+                            >
+                              Revoke
+                            </button>
+                          )}
                         </div>
-                      )}
-                      <div className="flex items-center gap-1.5">
-                        <span>Playback Test:</span>
-                        {c.playbackTestPassed ? (
-                          <span className="text-emerald-400 flex items-center gap-1 text-[11px]">
-                            <CheckCircle2 className="w-3 h-3" /> Passed & Verified
-                          </span>
-                        ) : (
-                          <span className="text-amber-400 flex items-center gap-1 text-[11px]">
-                            <AlertTriangle className="w-3 h-3" /> Pending Test Verification
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </ConsoleCard>
+      )}
 
-                    <div className="flex items-center justify-between pt-1">
-                      <button
-                        onClick={() => runPlaybackTest(c.id)}
-                        disabled={testingId === c.id}
-                        className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-medium flex items-center gap-1.5"
-                      >
-                        {testingId === c.id ? (
-                          <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Play className="w-3.5 h-3.5" />
-                        )}
-                        Run Playback Test (No Billing)
-                      </button>
-                    </div>
-                  </div>
-                ))}
+      {/* Tab 2: Licence & Contract Vault */}
+      {activeTab === "vault" && (
+        <ConsoleCard
+          title="Licence & Broadcast Contract Vault"
+          description="Legally binding agreements defining FAST revenue sharing models, permitted broadcast territories, and expiration windows."
+        >
+          <div className="flex justify-between items-center mb-4">
+            <span className="text-xs text-slate-400">Total Contracts: {contracts.length}</span>
+            <button
+              onClick={() => setShowNewContract(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New Agreement
+            </button>
+          </div>
+
+          {showNewContract && (
+            <form
+              onSubmit={handleCreateContract}
+              className="p-4 rounded-xl bg-slate-900 border border-slate-800 mb-6 space-y-3"
+            >
+              <h4 className="text-xs font-bold text-white">Register Vault Contract</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                  <label className="block text-slate-400 mb-1">Provider Entity *</label>
+                  <select
+                    required
+                    value={cProviderId}
+                    onChange={(e) => setCProviderId(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-white"
+                  >
+                    <option value="">Select Provider...</option>
+                    {providers.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">Agreement Reference *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. BQ-FAST-2026-001"
+                    value={cRef}
+                    onChange={(e) => setCRef(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-white font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">Valid From</label>
+                  <input
+                    type="date"
+                    value={cValidFrom}
+                    onChange={(e) => setCValidFrom(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">Valid Until (Expiry)</label>
+                  <input
+                    type="date"
+                    value={cValidUntil}
+                    onChange={(e) => setCValidUntil(e.target.value)}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-white"
+                  />
+                </div>
               </div>
-            </section>
-          </>
-        )}
-      </main>
-    </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNewContract(false)}
+                  className="px-3 py-1.5 rounded-lg border border-slate-800 text-slate-300 text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-lg bg-purple-600 text-white font-bold text-xs"
+                >
+                  Save Contract
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                  <th className="py-2.5 px-3">Agreement Ref</th>
+                  <th className="py-2.5 px-3">Provider ID</th>
+                  <th className="py-2.5 px-3">Gross Share</th>
+                  <th className="py-2.5 px-3">Territories</th>
+                  <th className="py-2.5 px-3">Valid Window</th>
+                  <th className="py-2.5 px-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {contracts.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-6 text-center text-slate-500">
+                      No contracts registered in vault.
+                    </td>
+                  </tr>
+                ) : (
+                  contracts.map((c) => (
+                    <tr key={c.id} className="hover:bg-slate-900/40 transition">
+                      <td className="py-2.5 px-3 font-mono font-bold text-purple-300">{c.agreementReference}</td>
+                      <td className="py-2.5 px-3 text-slate-300">{c.providerId}</td>
+                      <td className="py-2.5 px-3 font-bold text-white">
+                        {(c.providerShareBps / 100).toFixed(1)}%
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400">{c.territories.join(", ")}</td>
+                      <td className="py-2.5 px-3 text-[11px] text-slate-400">
+                        {c.validFrom ? new Date(c.validFrom).toLocaleDateString() : "—"} to{" "}
+                        {c.validUntil ? new Date(c.validUntil).toLocaleDateString() : "Indefinite"}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-500/20 text-emerald-300">
+                          {c.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </ConsoleCard>
+      )}
+
+      {/* Tab 3: Statements & Settlements */}
+      {activeTab === "statements" && (
+        <ConsoleCard
+          title="Provider Monthly Settlement Statements"
+          description="Audited gross revenue, deductible infrastructure costs, and calculated partner earnings."
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                  <th className="py-2.5 px-3">Statement Ref</th>
+                  <th className="py-2.5 px-3">Provider ID</th>
+                  <th className="py-2.5 px-3">Period</th>
+                  <th className="py-2.5 px-3">Gross Revenue</th>
+                  <th className="py-2.5 px-3">Net Profit</th>
+                  <th className="py-2.5 px-3">Provider Earnings</th>
+                  <th className="py-2.5 px-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {statements.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-6 text-center text-slate-500">
+                      No settlement statements generated yet.
+                    </td>
+                  </tr>
+                ) : (
+                  statements.map((s) => (
+                    <tr key={s.id} className="hover:bg-slate-900/40 transition">
+                      <td className="py-2.5 px-3 font-mono text-purple-300 font-bold">{s.id}</td>
+                      <td className="py-2.5 px-3 text-slate-300">{s.providerId}</td>
+                      <td className="py-2.5 px-3 text-slate-400">{s.period}</td>
+                      <td className="py-2.5 px-3 font-mono text-white">
+                        {formatMoney(s.grossRevenueMinor, s.currency)}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-blue-300">
+                        {formatMoney(s.grossProfitMinor, s.currency)}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-emerald-400 font-bold">
+                        {formatMoney(s.providerEarningsMinor, s.currency)}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            s.status === "closed" || s.paidAt
+                              ? "bg-emerald-500/20 text-emerald-300"
+                              : "bg-amber-500/20 text-amber-300"
+                          }`}
+                        >
+                          {s.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </ConsoleCard>
+      )}
+
+      {/* Tab 4: Disputes */}
+      {activeTab === "disputes" && (
+        <ConsoleCard
+          title="Channel Partner Disputes & Queries"
+          description="Resolution portal for billing discrepancies, stream quality challenges, or metric inquiries."
+        >
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                  <th className="py-2.5 px-3">Dispute ID</th>
+                  <th className="py-2.5 px-3">Provider ID</th>
+                  <th className="py-2.5 px-3">Subject</th>
+                  <th className="py-2.5 px-3">Messages</th>
+                  <th className="py-2.5 px-3">Status</th>
+                  <th className="py-2.5 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/60">
+                {disputes.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-6 text-center text-slate-500">
+                      No active or historical disputes found.
+                    </td>
+                  </tr>
+                ) : (
+                  disputes.map((d) => (
+                    <tr key={d.id} className="hover:bg-slate-900/40 transition">
+                      <td className="py-2.5 px-3 font-mono text-purple-300 font-bold">{d.id}</td>
+                      <td className="py-2.5 px-3 text-slate-300">{d.providerId}</td>
+                      <td className="py-2.5 px-3 font-semibold text-white">{d.subject}</td>
+                      <td className="py-2.5 px-3 text-slate-400">{d.messagesCount} message(s)</td>
+                      <td className="py-2.5 px-3">
+                        <span
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                            d.status === "resolved"
+                              ? "bg-emerald-500/20 text-emerald-300"
+                              : "bg-rose-500/20 text-rose-300"
+                          }`}
+                        >
+                          {d.status}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        {d.status !== "resolved" && (
+                          <button
+                            onClick={() => {
+                              setResolvingDispute(d);
+                              setResolutionNotes("");
+                            }}
+                            className="px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold text-xs hover:bg-emerald-500/20 transition"
+                          >
+                            Resolve
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </ConsoleCard>
+      )}
+
+      {/* Tab 5: Live Broadcast Channels & Test Playback */}
+      {activeTab === "channels" && (
+        <ConsoleCard
+          title="Live FAST Channels & Zero-Billing Test Playback"
+          description="Run non-metered validation checks on provider HLS manifests to verify segment health prior to publishing."
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {channels.map((c) => (
+              <div
+                key={c.id}
+                className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="font-semibold text-sm text-white">{c.name}</h4>
+                    <span className="text-[11px] text-slate-400">
+                      {c.categories.join(", ")} • Provider: {c.providerId}
+                    </span>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                      c.status === "published"
+                        ? "bg-emerald-500/20 text-emerald-400"
+                        : "bg-amber-500/20 text-amber-400"
+                    }`}
+                  >
+                    {c.status}
+                  </span>
+                </div>
+
+                <div className="text-xs space-y-1.5 py-2 border-y border-slate-800 text-slate-400">
+                  <div className="truncate">
+                    Stream: <span className="font-mono text-slate-300 text-[11px]">{c.streamUrl}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span>Playback Health:</span>
+                    {c.playbackTestPassed ? (
+                      <span className="text-emerald-400 flex items-center gap-1 text-[11px] font-bold">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Passed & Ready
+                      </span>
+                    ) : (
+                      <span className="text-amber-400 flex items-center gap-1 text-[11px] font-bold">
+                        <AlertCircle className="w-3.5 h-3.5" /> Untested
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    onClick={() => handleRunPlaybackTest(c.id)}
+                    disabled={testingId === c.id}
+                    className="w-full px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-bold flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                  >
+                    {testingId === c.id ? (
+                      <LoaderCircle className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Play className="w-3.5 h-3.5" />
+                    )}
+                    Run Test Playback (No Billing)
+                  </button>
+                </div>
+              </div>
+            ))}
+            {channels.length === 0 && (
+              <div className="col-span-3 py-8 text-center text-slate-500">
+                No linear broadcast channels found.
+              </div>
+            )}
+          </div>
+        </ConsoleCard>
+      )}
+
+      {/* Resolve Dispute Modal */}
+      {resolvingDispute && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-[#091126] p-6 shadow-2xl text-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                <h3 className="text-base font-bold text-white">Resolve Partner Dispute</h3>
+              </div>
+              <button
+                onClick={() => setResolvingDispute(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <p className="text-slate-300">
+                Resolving dispute <strong className="text-white font-mono">{resolvingDispute.id}</strong>:{" "}
+                <span className="text-slate-400">{resolvingDispute.subject}</span>
+              </p>
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-semibold">
+                  Resolution Notes & Audit Summary *
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="Record resolution outcome, credit adjustments, or agreement terms..."
+                  value={resolutionNotes}
+                  onChange={(e) => setResolutionNotes(e.target.value)}
+                  className="w-full rounded-xl border border-slate-700 bg-black/50 p-2.5 text-white outline-none focus:border-emerald-500 text-xs"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-white/10 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setResolvingDispute(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-white/5 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResolveDispute}
+                  disabled={resolveBusy}
+                  className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition shadow-lg shadow-emerald-600/30 disabled:opacity-50"
+                >
+                  {resolveBusy ? "Resolving..." : "Confirm Resolution"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </ConsoleShell>
   );
 }

@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **219**
+Total scanned routes: **220**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **219**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 99 |
+| `zillionaire module` | 100 |
 | `producer` | 4 |
 
 ### Inventory
@@ -176,6 +176,7 @@ Total scanned routes: **219**
 | `/api/public/v1/zillionaire/payouts/$payoutId/review` | `zillionaire module` | requireZillionaire (Module: payouts) | `src/routes/api/public/v1/zillionaire/payouts/$payoutId/review.ts` |
 | `/api/public/v1/zillionaire/payouts/$payoutId/settle` | `zillionaire module` | requireZillionaire (Module: payouts) | `src/routes/api/public/v1/zillionaire/payouts/$payoutId/settle.ts` |
 | `/api/public/v1/zillionaire/producers/` | `zillionaire module` | requireZillionaire (Module: producers) | `src/routes/api/public/v1/zillionaire/producers/index.ts` |
+| `/api/public/v1/zillionaire/producers/$uid/actions` | `zillionaire module` | requireZillionaire (Module: producers) | `src/routes/api/public/v1/zillionaire/producers/$uid/actions.ts` |
 | `/api/public/v1/zillionaire/producers/$uid/verification` | `zillionaire module` | requireZillionaire (Module: producers) | `src/routes/api/public/v1/zillionaire/producers/$uid/verification.ts` |
 | `/api/public/v1/zillionaire/providers/` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/zillionaire/providers/index.ts` |
 | `/api/public/v1/zillionaire/providers/approved-emails` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/zillionaire/providers/approved-emails.ts` |

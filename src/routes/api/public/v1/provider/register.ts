@@ -49,7 +49,7 @@ export const Route = createFileRoute("/api/public/v1/provider/register")({
               return Response.json(
                 {
                   code: "PROVIDER_ACCESS_DENIED",
-                  message: "Access denied. Contact tv@bqsqwad.com to request provider access.",
+                  message: "Access denied. Contact tv@bqsqwad.com",
                 },
                 { status: 403 },
               );

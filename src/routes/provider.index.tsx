@@ -102,7 +102,7 @@ function ProviderConsoleIndex({
         headers: { Authorization: `Bearer ${idToken}` },
       });
       if (res.status === 403) {
-        setError("Your account is not registered as an active channel provider representative.");
+        setError("Access denied. Contact tv@bqsqwad.com");
         setProvider(null);
         setMetrics(null);
         return;

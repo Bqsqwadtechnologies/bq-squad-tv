@@ -12,18 +12,53 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/producers/")({
           const fs = await Firestore.create();
           await requireZillionaireModule(fs, user, "producers");
 
+          const url = new URL(request.url);
+          const q = url.searchParams.get("q")?.toLowerCase().trim();
+          const status = url.searchParams.get("status")?.toUpperCase().trim();
+
           const producers = await fs.query("producers", { limit: 100 });
-          return Response.json({
-            producers: producers.map((p) => ({
-              id: p.__id || p["id"] || p["uid"],
-              displayName: p["displayName"] || "Producer",
-              companyName: p["companyName"] || "",
-              planStatus: p["planStatus"] || "PENDING",
-              verificationStatus: p["verificationStatus"] || "PENDING",
+
+          let mapped = producers.map((p) => {
+            const uid = String(p.__id || p["id"] || p["uid"] || "");
+            return {
+              id: uid,
+              displayName: String(p["displayName"] || p["legalName"] || "Producer"),
+              companyName: String(p["companyName"] || p["businessName"] || ""),
+              legalName: String(p["legalName"] || ""),
+              countryCode: String(p["countryCode"] || "NG"),
+              entityType: String(p["entityType"] || "individual"),
+              planStatus: String(p["planStatus"] || "ACTIVE"),
+              verificationStatus: String(p["verificationStatus"] || "PENDING"),
               verificationEvidenceUrl: p["verificationEvidenceUrl"] || null,
-              submittedAt: p["submittedAt"] || null,
+              hasEvidence: Array.isArray(p["evidencePaths"]) && p["evidencePaths"].length > 0,
+              suspended: Boolean(p["suspended"]),
+              suspendedAt: p["suspendedAt"] || null,
+              suspendReason: p["suspendReason"] || null,
+              payoutAccount: p["payoutAccount"] || null,
+              submittedAt: p["verificationSubmittedAt"] || p["submittedAt"] || null,
               verifiedAt: p["verifiedAt"] || null,
-            })),
+            };
+          });
+
+          if (status && status !== "ALL") {
+            if (status === "SUSPENDED") {
+              mapped = mapped.filter((p) => p.suspended);
+            } else {
+              mapped = mapped.filter((p) => p.verificationStatus === status);
+            }
+          }
+
+          if (q) {
+            mapped = mapped.filter(
+              (p) =>
+                p.displayName.toLowerCase().includes(q) ||
+                p.companyName.toLowerCase().includes(q) ||
+                p.id.toLowerCase().includes(q),
+            );
+          }
+
+          return Response.json({
+            producers: mapped,
           });
         } catch (err: unknown) {
           return errorBody(err);
