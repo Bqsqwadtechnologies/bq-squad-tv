@@ -1,6 +1,6 @@
 # Handoff
-- Last finished: V5-01 Batch 1 (Numbers screen).
-- Next: V5-01 Batch 2 (Notifications).
-- Gaps: per-video completion/revenue/ratings and producer/provider-scoped numbers not yet; "admin" rename sweep pending.
-- Files: src/routes/zillionaire.analytics.tsx, analytics/overview.ts, ConsoleShell.tsx, role-matrix fixture.
-- Tests: see push log.
+- Last finished: V5-01 Batch 2 (Notifications & communication).
+- Next: V5-01 Batch 3 (Safety centre: security events, audit log, error centre, secret health).
+- Gaps: Safety centre audit log and secret health viewer to build next.
+- Files: src/routes/zillionaire.notifications.tsx, notifications API, role matrix fixture.
+- Tests: 2,738 passing across 92 files.

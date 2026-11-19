@@ -16,4 +16,9 @@ describe("notification delivery status", () => {
       "failed",
     );
   });
+
+  it("handles empty and edge delivery payloads correctly", () => {
+    expect(notificationDeliveryStatus({ sentCount: 10, failedCount: 0, deviceCount: 10 })).toBe("sent");
+    expect(notificationDeliveryStatus({ sentCount: 5, failedCount: 5, deviceCount: 10 })).toBe("partial");
+  });
 });

@@ -208,3 +208,4 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
   - Viewer Reporting & Gating (`/api/public/v1/content-reports/`): Viewers submit reports on comments, assets, channels or users with rate-limiting. Comments endpoint enforces `commentsOpen !== false`, bans, shadow-bans, and keyword checks. Rating endpoint detects high-velocity and 1-star brigading anomalies.
   - Android & Web Client Integrity: Verified web player comments & rating integration and updated Android `CatalogApi` and `CatalogRepository` with complete data models and methods.
   - Route Access & Tests: Catalogued 222 routes in `ROUTE-ACCESS-MATRIX.md`, verified role-matrix expectations, passed clean public-text scan, and passed all 2,717 Vitest tests across 92 files.
+- 2026-11-19: V5-01 Batch 2 complete: Multi-channel notifications console, segmented broadcasts, templates, user previews, and quiet hours.

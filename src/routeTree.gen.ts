@@ -49,6 +49,7 @@ import { Route as ZillionaireFeaturesRouteImport } from './routes/zillionaire.fe
 import { Route as ZillionaireFirebaseSchemaRouteImport } from './routes/zillionaire.firebase-schema'
 import { Route as ZillionaireModerationRouteImport } from './routes/zillionaire.moderation'
 import { Route as ZillionaireMoviesRouteImport } from './routes/zillionaire.movies'
+import { Route as ZillionaireNotificationsRouteImport } from './routes/zillionaire.notifications'
 import { Route as ZillionairePaymentsRouteImport } from './routes/zillionaire.payments'
 import { Route as ZillionairePayoutsRouteImport } from './routes/zillionaire.payouts'
 import { Route as ZillionairePricingRouteImport } from './routes/zillionaire.pricing'
@@ -457,6 +458,12 @@ const ZillionaireMoviesRoute = ZillionaireMoviesRouteImport.update({
   path: '/zillionaire/movies',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZillionaireNotificationsRoute =
+  ZillionaireNotificationsRouteImport.update({
+    id: '/zillionaire/notifications',
+    path: '/zillionaire/notifications',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ZillionairePaymentsRoute = ZillionairePaymentsRouteImport.update({
   id: '/zillionaire/payments',
   path: '/zillionaire/payments',
@@ -1696,6 +1703,7 @@ export interface FileRoutesByFullPath {
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
   '/zillionaire/movies': typeof ZillionaireMoviesRoute
+  '/zillionaire/notifications': typeof ZillionaireNotificationsRoute
   '/zillionaire/payments': typeof ZillionairePaymentsRoute
   '/zillionaire/payouts': typeof ZillionairePayoutsRoute
   '/zillionaire/pricing': typeof ZillionairePricingRoute
@@ -1943,6 +1951,7 @@ export interface FileRoutesByTo {
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
   '/zillionaire/movies': typeof ZillionaireMoviesRoute
+  '/zillionaire/notifications': typeof ZillionaireNotificationsRoute
   '/zillionaire/payments': typeof ZillionairePaymentsRoute
   '/zillionaire/payouts': typeof ZillionairePayoutsRoute
   '/zillionaire/pricing': typeof ZillionairePricingRoute
@@ -2190,6 +2199,7 @@ export interface FileRoutesById {
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
   '/zillionaire/movies': typeof ZillionaireMoviesRoute
+  '/zillionaire/notifications': typeof ZillionaireNotificationsRoute
   '/zillionaire/payments': typeof ZillionairePaymentsRoute
   '/zillionaire/payouts': typeof ZillionairePayoutsRoute
   '/zillionaire/pricing': typeof ZillionairePricingRoute
@@ -2439,6 +2449,7 @@ export interface FileRouteTypes {
     | '/zillionaire/firebase-schema'
     | '/zillionaire/moderation'
     | '/zillionaire/movies'
+    | '/zillionaire/notifications'
     | '/zillionaire/payments'
     | '/zillionaire/payouts'
     | '/zillionaire/pricing'
@@ -2686,6 +2697,7 @@ export interface FileRouteTypes {
     | '/zillionaire/firebase-schema'
     | '/zillionaire/moderation'
     | '/zillionaire/movies'
+    | '/zillionaire/notifications'
     | '/zillionaire/payments'
     | '/zillionaire/payouts'
     | '/zillionaire/pricing'
@@ -2932,6 +2944,7 @@ export interface FileRouteTypes {
     | '/zillionaire/firebase-schema'
     | '/zillionaire/moderation'
     | '/zillionaire/movies'
+    | '/zillionaire/notifications'
     | '/zillionaire/payments'
     | '/zillionaire/payouts'
     | '/zillionaire/pricing'
@@ -3180,6 +3193,7 @@ export interface RootRouteChildren {
   ZillionaireFirebaseSchemaRoute: typeof ZillionaireFirebaseSchemaRoute
   ZillionaireModerationRoute: typeof ZillionaireModerationRoute
   ZillionaireMoviesRoute: typeof ZillionaireMoviesRoute
+  ZillionaireNotificationsRoute: typeof ZillionaireNotificationsRoute
   ZillionairePaymentsRoute: typeof ZillionairePaymentsRoute
   ZillionairePayoutsRoute: typeof ZillionairePayoutsRoute
   ZillionairePricingRoute: typeof ZillionairePricingRoute
@@ -3639,6 +3653,13 @@ declare module '@tanstack/react-router' {
       path: '/zillionaire/movies'
       fullPath: '/zillionaire/movies'
       preLoaderRoute: typeof ZillionaireMoviesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/notifications': {
+      id: '/zillionaire/notifications'
+      path: '/zillionaire/notifications'
+      fullPath: '/zillionaire/notifications'
+      preLoaderRoute: typeof ZillionaireNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/payments': {
@@ -5363,6 +5384,7 @@ const rootRouteChildren: RootRouteChildren = {
   ZillionaireFirebaseSchemaRoute: ZillionaireFirebaseSchemaRoute,
   ZillionaireModerationRoute: ZillionaireModerationRoute,
   ZillionaireMoviesRoute: ZillionaireMoviesRoute,
+  ZillionaireNotificationsRoute: ZillionaireNotificationsRoute,
   ZillionairePaymentsRoute: ZillionairePaymentsRoute,
   ZillionairePayoutsRoute: ZillionairePayoutsRoute,
   ZillionairePricingRoute: ZillionairePricingRoute,
