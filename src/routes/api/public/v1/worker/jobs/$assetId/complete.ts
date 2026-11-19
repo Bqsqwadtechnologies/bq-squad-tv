@@ -495,7 +495,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
                 await fs.setDoc("users/" + ownerUid + "/notifications/" + notificationId, {
                   title: "A video is ready for review",
                   body: "A processed video has passed its file checks and is waiting for your review.",
-                  deepLink: "/admin/video-studio",
+                  deepLink: "/zillionaire/video-studio",
                   read: false,
                   deliveryStatus: "pending",
                   createdAt: now,
@@ -504,7 +504,7 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
                   notificationId,
                   title: "A video is ready for review",
                   body: "A processed video is waiting for your review.",
-                  deepLink: "/admin/video-studio",
+                  deepLink: "/zillionaire/video-studio",
                 }).catch(() => undefined);
               }
             }

@@ -63,7 +63,9 @@ function isOwnerZillionaireException(file, term) {
   return (
     /^src\/routes\/zillionaire(?:\.|\/)/.test(relative) ||
     relative === "src/routes/zillionaire.index.tsx" ||
-    relative === "src/components/ConsolePageGuard.tsx"
+    relative === "src/components/ConsolePageGuard.tsx" ||
+    relative === "src/routes/producer.index.tsx" ||
+    relative === "src/routes/provider.index.tsx"
   );
 }
 

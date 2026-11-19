@@ -222,10 +222,10 @@ function ProducerConsole({
               </span>
             </div>
             <a
-              href="/admin"
+              href="/zillionaire"
               className="rounded-xl border border-cyan-300/40 bg-cyan-400/10 px-4 py-2 font-bold text-cyan-200 hover:bg-cyan-400/20 transition"
             >
-              Open Management Console →
+              Open Zillionaire Dashboard →
             </a>
           </div>
         )}

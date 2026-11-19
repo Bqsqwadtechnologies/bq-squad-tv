@@ -125,6 +125,7 @@ function RootComponent() {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const showLegalFooter =
     !pathname.startsWith("/admin") &&
+    !pathname.startsWith("/zillionaire") &&
     !pathname.startsWith("/producer") &&
     !pathname.startsWith("/provider");
 

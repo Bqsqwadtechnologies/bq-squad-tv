@@ -231,10 +231,10 @@ function ProviderConsoleIndex({
               </span>
             </div>
             <a
-              href="/admin"
+              href="/zillionaire"
               className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 font-bold text-cyan-300 hover:bg-cyan-500/20 transition"
             >
-              Open Management Console →
+              Open Zillionaire Dashboard →
             </a>
           </div>
         )}
