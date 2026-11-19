@@ -230,8 +230,15 @@ export function ConsoleShell({
           },
           {
             id: "movies",
-            label: "Movies and series",
+            label: "Movies",
             href: "/zillionaire/movies",
+            icon: Film,
+            module: "catalog",
+          },
+          {
+            id: "series",
+            label: "Series & seasons",
+            href: "/zillionaire/series",
             icon: Film,
             module: "catalog",
           },

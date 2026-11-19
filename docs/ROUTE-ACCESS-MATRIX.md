@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **236**
+Total scanned routes: **238**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **236**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 115 |
+| `zillionaire module` | 117 |
 | `producer` | 4 |
 
 ### Inventory
@@ -194,6 +194,7 @@ Total scanned routes: **236**
 | `/api/public/v1/zillionaire/secret-health` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/secret-health.ts` |
 | `/api/public/v1/zillionaire/security/events` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/security/events.ts` |
 | `/api/public/v1/zillionaire/security/lookup-actor` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/security/lookup-actor.ts` |
+| `/api/public/v1/zillionaire/series/` | `zillionaire module` | requireZillionaire (Zillionaire Owner / Scope Check) | `src/routes/api/public/v1/zillionaire/series/index.ts` |
 | `/api/public/v1/zillionaire/storage/backups/restore` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/storage/backups/restore.ts` |
 | `/api/public/v1/zillionaire/storage/destinations` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/storage/destinations.ts` |
 | `/api/public/v1/zillionaire/storage/discover` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/storage/discover.ts` |
@@ -249,6 +250,7 @@ Total scanned routes: **236**
 | `/zillionaire/receipts` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.receipts.tsx` |
 | `/zillionaire/reports` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.reports.tsx` |
 | `/zillionaire/security` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.security.tsx` |
+| `/zillionaire/series` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.series.tsx` |
 | `/zillionaire/settings` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.settings.tsx` |
 | `/zillionaire/storage` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.storage.tsx` |
 | `/zillionaire/support` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.support.tsx` |

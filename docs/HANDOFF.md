@@ -1,5 +1,5 @@
-Last batch finished: V5-02 Batch 1 (Upload Studio with chunked resumable uploads, direct publish, transcode fallback, and sanity checks).
-Next batch to start: V5-02 Batch 2 (Series, seasons, episodes management and bulk upload).
-Known gaps: Background transcode worker requires deployment by owner (documented in OWNER-ACTIONS.md section 13); Direct Publish provides instant streaming.
-Files touched: src/routes/zillionaire.upload-studio.tsx, src/routes/api/public/v1/zillionaire/upload/index.ts, src/routes/api/public/v1/sessions/start.ts, src/components/ConsoleShell.tsx, src/test/zillionaire-upload-studio.test.ts, docs/*.
-Tests passing: 98 test files / 2,893 tests passing cleanly; dev build passing; 236 routes in matrix; public-text scan green.
+Last batch finished: V5-02 Batch 2 (Series, seasons and episodes pipeline with reordering, bulk auto-numbering, skip markers and release schedules).
+Next batch to start: V5-02 Batch 3 (Live streaming infrastructure, DVR windows, stream keys and failover).
+Known gaps: Transcode worker setup remains documented in OWNER-ACTIONS.md; video assets can be linked directly or staged.
+Files touched: src/routes/zillionaire.series.tsx, src/routes/api/public/v1/zillionaire/series/index.ts, src/components/ConsoleShell.tsx, src/test/zillionaire-series.test.ts, docs/*.
+Tests passing: 99 test files / 2,918 tests passing cleanly; dev build passing; 238 routes in matrix; public-text scan green.
