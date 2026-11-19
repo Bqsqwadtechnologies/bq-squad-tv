@@ -236,3 +236,11 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Cleaned vendor leakage (Firebase, Cloudflare, Modal, Lovable, tokens, public endpoints) in Zillionaire settings and notifications to ensure pristine brand compliance.
 - Verified 234 routes in `docs/ROUTE-ACCESS-MATRIX.md`.
 - Completed all 9 batches of V5-01 (Finish Zillionaire Control + Catch-Up).
+
+### V5-02 Batch 1: Upload Studio & Ingestion Pipeline
+- Built `/zillionaire/upload-studio` and `/api/public/v1/zillionaire/upload/` providing multi-format uploads (Movie, Series, Episode, Trailer, Live recording).
+- Integrated chunked resumable upload mechanics with progress tracking, pause/resume, retry, and Direct Publish mode for instantaneous MP4/HLS availability without blocking on worker transcoding.
+- Wired automated fallback to background transcode queues with status tracking: Uploading, Verifying, Processing, Needs Review, Ready, Published, Failed.
+- Added file sanity checks: type validation, size limits (up to 5GB), SHA-256 duplicate detection, codec checking, and owner access verification.
+- Documented single-owner worker deployment instructions in `docs/OWNER-ACTIONS.md` section 13.
+- Maintained strict zero-admin naming and brand guidelines, verified public-text scan clean, and passed all 98 Vitest suites (2,893 tests).

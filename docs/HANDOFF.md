@@ -1,5 +1,5 @@
-Last batch finished: V5-01 Batch 9 (Complete V5-01: 97 test files / 2,868 tests green, zero-admin naming enforcement, public-text scan pass, single owner checklist).
-Next batch to start: V5-02 Batch 1 (Content pipeline, ingestion, transcode queues, and live streams).
-Known gaps: Support reset link action updates status but does not invoke outbound SMTP transport.
-Files touched: src/test/no-admin-strings.test.ts, src/components/SecurityEventsView.tsx, src/routes/zillionaire.notifications.tsx, src/routes/zillionaire.settings.tsx, src/routes/zillionaire.support.tsx, docs/*.
-Tests passing: 97 test files / 2,868 tests passing cleanly; build:dev passing; 234 routes in matrix; public-text scan green.
+Last batch finished: V5-02 Batch 1 (Upload Studio with chunked resumable uploads, direct publish, transcode fallback, and sanity checks).
+Next batch to start: V5-02 Batch 2 (Series, seasons, episodes management and bulk upload).
+Known gaps: Background transcode worker requires deployment by owner (documented in OWNER-ACTIONS.md section 13); Direct Publish provides instant streaming.
+Files touched: src/routes/zillionaire.upload-studio.tsx, src/routes/api/public/v1/zillionaire/upload/index.ts, src/routes/api/public/v1/sessions/start.ts, src/components/ConsoleShell.tsx, src/test/zillionaire-upload-studio.test.ts, docs/*.
+Tests passing: 98 test files / 2,893 tests passing cleanly; dev build passing; 236 routes in matrix; public-text scan green.

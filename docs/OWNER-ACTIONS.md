@@ -180,3 +180,18 @@ To migrate existing user accounts and staff access permissions from legacy `admi
 2. Invoke the authenticated owner migration endpoint: `POST /api/public/v1/zillionaire/migration/zillionaire`.
 3. The endpoint scans users with legacy permissions, copies them to `zillionaireModules`, marks `adminModulesRetired: true`, logs the action to the tamper-evident audit log, and returns the total migrated count.
 4. During the migration window, the platform resolves both fields automatically. Once all user records have been updated, the legacy field is retired completely.
+
+## 13. Deploying the Video Processing Host (Modal / Cloud GPU Worker) from Mobile or Terminal
+
+To deploy or activate the multi-bitrate video transcoding host (240p to 1080p HLS ladder encoding):
+
+1. **Modal Account**: Go to [modal.com](https://modal.com) from any phone browser or workstation and log in.
+2. **Generate Credentials**: Under Account Settings → API Tokens, tap **Create Token**. Note the `MODAL_TOKEN_ID` and `MODAL_TOKEN_SECRET`.
+3. **Configure Secrets**: Store both values in the project environment or backend secret manager. The platform automatically detects these tokens to enable GPU worker wakeups.
+4. **Deploy Command (Terminal or Cloud Shell)**:
+   ```bash
+   pip install modal
+   modal token set --token-id $MODAL_TOKEN_ID --token-secret $MODAL_TOKEN_SECRET
+   modal deploy workers/video_worker.py
+   ```
+5. **Direct Publish Fallback**: Until the worker is deployed, the Upload Studio operates in **Direct Publish** mode, streaming H.264/AAC MP4 and HLS files directly to Web and Mobile viewers with token authentication and per-minute billing enabled.

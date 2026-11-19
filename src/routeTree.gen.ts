@@ -65,6 +65,7 @@ import { Route as ZillionaireSettingsRouteImport } from './routes/zillionaire.se
 import { Route as ZillionaireStorageRouteImport } from './routes/zillionaire.storage'
 import { Route as ZillionaireSupportRouteImport } from './routes/zillionaire.support'
 import { Route as ZillionaireTeamRouteImport } from './routes/zillionaire.team'
+import { Route as ZillionaireUploadStudioRouteImport } from './routes/zillionaire.upload-studio'
 import { Route as ZillionaireVideoStudioRouteImport } from './routes/zillionaire.video-studio'
 import { Route as ZillionaireViewersRouteImport } from './routes/zillionaire.viewers'
 import { Route as ZillionaireWalletsRouteImport } from './routes/zillionaire.wallets'
@@ -222,6 +223,7 @@ import { Route as ApiPublicV1ZillionaireStorageUsageRouteImport } from './routes
 import { Route as ApiPublicV1ZillionaireSupportIndexRouteImport } from './routes/api/public/v1/zillionaire/support/index'
 import { Route as ApiPublicV1ZillionaireSupportMessagesRouteImport } from './routes/api/public/v1/zillionaire/support/messages'
 import { Route as ApiPublicV1ZillionaireTeamUidRouteImport } from './routes/api/public/v1/zillionaire/team/$uid'
+import { Route as ApiPublicV1ZillionaireUploadIndexRouteImport } from './routes/api/public/v1/zillionaire/upload/index'
 import { Route as ApiPublicV1ZillionaireUsersIndexRouteImport } from './routes/api/public/v1/zillionaire/users/index'
 import { Route as ApiPublicV1ZillionaireWorkersWorkerIdRouteImport } from './routes/api/public/v1/zillionaire/workers/$workerId'
 import { Route as ApiPublicV1AuthWebSessionLogoutRouteImport } from './routes/api/public/v1/auth/web/session/logout'
@@ -547,6 +549,11 @@ const ZillionaireSupportRoute = ZillionaireSupportRouteImport.update({
 const ZillionaireTeamRoute = ZillionaireTeamRouteImport.update({
   id: '/zillionaire/team',
   path: '/zillionaire/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZillionaireUploadStudioRoute = ZillionaireUploadStudioRouteImport.update({
+  id: '/zillionaire/upload-studio',
+  path: '/zillionaire/upload-studio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ZillionaireVideoStudioRoute = ZillionaireVideoStudioRouteImport.update({
@@ -1471,6 +1478,12 @@ const ApiPublicV1ZillionaireTeamUidRoute =
     path: '/$uid',
     getParentRoute: () => ApiPublicV1ZillionaireTeamRoute,
   } as any)
+const ApiPublicV1ZillionaireUploadIndexRoute =
+  ApiPublicV1ZillionaireUploadIndexRouteImport.update({
+    id: '/api/public/v1/zillionaire/upload/',
+    path: '/api/public/v1/zillionaire/upload/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireUsersIndexRoute =
   ApiPublicV1ZillionaireUsersIndexRouteImport.update({
     id: '/api/public/v1/zillionaire/users/',
@@ -1784,6 +1797,7 @@ export interface FileRoutesByFullPath {
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
+  '/zillionaire/upload-studio': typeof ZillionaireUploadStudioRoute
   '/zillionaire/video-studio': typeof ZillionaireVideoStudioRoute
   '/zillionaire/viewers': typeof ZillionaireViewersRoute
   '/zillionaire/wallets': typeof ZillionaireWalletsRoute
@@ -1945,6 +1959,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/providers/': typeof ApiPublicV1ZillionaireProvidersIndexRoute
   '/api/public/v1/zillionaire/receipts/': typeof ApiPublicV1ZillionaireReceiptsIndexRoute
   '/api/public/v1/zillionaire/support/': typeof ApiPublicV1ZillionaireSupportIndexRoute
+  '/api/public/v1/zillionaire/upload/': typeof ApiPublicV1ZillionaireUploadIndexRoute
   '/api/public/v1/zillionaire/users/': typeof ApiPublicV1ZillionaireUsersIndexRoute
   '/api/public/v1/auth/web/session/logout': typeof ApiPublicV1AuthWebSessionLogoutRoute
   '/api/public/v1/auth/web/session/refresh': typeof ApiPublicV1AuthWebSessionRefreshRoute
@@ -2042,6 +2057,7 @@ export interface FileRoutesByTo {
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
+  '/zillionaire/upload-studio': typeof ZillionaireUploadStudioRoute
   '/zillionaire/video-studio': typeof ZillionaireVideoStudioRoute
   '/zillionaire/viewers': typeof ZillionaireViewersRoute
   '/zillionaire/wallets': typeof ZillionaireWalletsRoute
@@ -2202,6 +2218,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/providers': typeof ApiPublicV1ZillionaireProvidersIndexRoute
   '/api/public/v1/zillionaire/receipts': typeof ApiPublicV1ZillionaireReceiptsIndexRoute
   '/api/public/v1/zillionaire/support': typeof ApiPublicV1ZillionaireSupportIndexRoute
+  '/api/public/v1/zillionaire/upload': typeof ApiPublicV1ZillionaireUploadIndexRoute
   '/api/public/v1/zillionaire/users': typeof ApiPublicV1ZillionaireUsersIndexRoute
   '/api/public/v1/auth/web/session/logout': typeof ApiPublicV1AuthWebSessionLogoutRoute
   '/api/public/v1/auth/web/session/refresh': typeof ApiPublicV1AuthWebSessionRefreshRoute
@@ -2300,6 +2317,7 @@ export interface FileRoutesById {
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
+  '/zillionaire/upload-studio': typeof ZillionaireUploadStudioRoute
   '/zillionaire/video-studio': typeof ZillionaireVideoStudioRoute
   '/zillionaire/viewers': typeof ZillionaireViewersRoute
   '/zillionaire/wallets': typeof ZillionaireWalletsRoute
@@ -2461,6 +2479,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/providers/': typeof ApiPublicV1ZillionaireProvidersIndexRoute
   '/api/public/v1/zillionaire/receipts/': typeof ApiPublicV1ZillionaireReceiptsIndexRoute
   '/api/public/v1/zillionaire/support/': typeof ApiPublicV1ZillionaireSupportIndexRoute
+  '/api/public/v1/zillionaire/upload/': typeof ApiPublicV1ZillionaireUploadIndexRoute
   '/api/public/v1/zillionaire/users/': typeof ApiPublicV1ZillionaireUsersIndexRoute
   '/api/public/v1/auth/web/session/logout': typeof ApiPublicV1AuthWebSessionLogoutRoute
   '/api/public/v1/auth/web/session/refresh': typeof ApiPublicV1AuthWebSessionRefreshRoute
@@ -2560,6 +2579,7 @@ export interface FileRouteTypes {
     | '/zillionaire/storage'
     | '/zillionaire/support'
     | '/zillionaire/team'
+    | '/zillionaire/upload-studio'
     | '/zillionaire/video-studio'
     | '/zillionaire/viewers'
     | '/zillionaire/wallets'
@@ -2721,6 +2741,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/providers/'
     | '/api/public/v1/zillionaire/receipts/'
     | '/api/public/v1/zillionaire/support/'
+    | '/api/public/v1/zillionaire/upload/'
     | '/api/public/v1/zillionaire/users/'
     | '/api/public/v1/auth/web/session/logout'
     | '/api/public/v1/auth/web/session/refresh'
@@ -2818,6 +2839,7 @@ export interface FileRouteTypes {
     | '/zillionaire/storage'
     | '/zillionaire/support'
     | '/zillionaire/team'
+    | '/zillionaire/upload-studio'
     | '/zillionaire/video-studio'
     | '/zillionaire/viewers'
     | '/zillionaire/wallets'
@@ -2978,6 +3000,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/providers'
     | '/api/public/v1/zillionaire/receipts'
     | '/api/public/v1/zillionaire/support'
+    | '/api/public/v1/zillionaire/upload'
     | '/api/public/v1/zillionaire/users'
     | '/api/public/v1/auth/web/session/logout'
     | '/api/public/v1/auth/web/session/refresh'
@@ -3075,6 +3098,7 @@ export interface FileRouteTypes {
     | '/zillionaire/storage'
     | '/zillionaire/support'
     | '/zillionaire/team'
+    | '/zillionaire/upload-studio'
     | '/zillionaire/video-studio'
     | '/zillionaire/viewers'
     | '/zillionaire/wallets'
@@ -3236,6 +3260,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/providers/'
     | '/api/public/v1/zillionaire/receipts/'
     | '/api/public/v1/zillionaire/support/'
+    | '/api/public/v1/zillionaire/upload/'
     | '/api/public/v1/zillionaire/users/'
     | '/api/public/v1/auth/web/session/logout'
     | '/api/public/v1/auth/web/session/refresh'
@@ -3334,6 +3359,7 @@ export interface RootRouteChildren {
   ZillionaireStorageRoute: typeof ZillionaireStorageRoute
   ZillionaireSupportRoute: typeof ZillionaireSupportRoute
   ZillionaireTeamRoute: typeof ZillionaireTeamRoute
+  ZillionaireUploadStudioRoute: typeof ZillionaireUploadStudioRoute
   ZillionaireVideoStudioRoute: typeof ZillionaireVideoStudioRoute
   ZillionaireViewersRoute: typeof ZillionaireViewersRoute
   ZillionaireWalletsRoute: typeof ZillionaireWalletsRoute
@@ -3476,6 +3502,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireProvidersIndexRoute: typeof ApiPublicV1ZillionaireProvidersIndexRoute
   ApiPublicV1ZillionaireReceiptsIndexRoute: typeof ApiPublicV1ZillionaireReceiptsIndexRoute
   ApiPublicV1ZillionaireSupportIndexRoute: typeof ApiPublicV1ZillionaireSupportIndexRoute
+  ApiPublicV1ZillionaireUploadIndexRoute: typeof ApiPublicV1ZillionaireUploadIndexRoute
   ApiPublicV1ZillionaireUsersIndexRoute: typeof ApiPublicV1ZillionaireUsersIndexRoute
   ApiPublicV1SessionsSessionIdReplicaNextRoute: typeof ApiPublicV1SessionsSessionIdReplicaNextRoute
   ApiPublicV1WorkerJobsAssetIdCompleteRoute: typeof ApiPublicV1WorkerJobsAssetIdCompleteRoute
@@ -3900,6 +3927,13 @@ declare module '@tanstack/react-router' {
       path: '/zillionaire/team'
       fullPath: '/zillionaire/team'
       preLoaderRoute: typeof ZillionaireTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/upload-studio': {
+      id: '/zillionaire/upload-studio'
+      path: '/zillionaire/upload-studio'
+      fullPath: '/zillionaire/upload-studio'
+      preLoaderRoute: typeof ZillionaireUploadStudioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/video-studio': {
@@ -5001,6 +5035,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireTeamUidRouteImport
       parentRoute: typeof ApiPublicV1ZillionaireTeamRoute
     }
+    '/api/public/v1/zillionaire/upload/': {
+      id: '/api/public/v1/zillionaire/upload/'
+      path: '/api/public/v1/zillionaire/upload'
+      fullPath: '/api/public/v1/zillionaire/upload/'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireUploadIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/users/': {
       id: '/api/public/v1/zillionaire/users/'
       path: '/api/public/v1/zillionaire/users'
@@ -5605,6 +5646,7 @@ const rootRouteChildren: RootRouteChildren = {
   ZillionaireStorageRoute: ZillionaireStorageRoute,
   ZillionaireSupportRoute: ZillionaireSupportRoute,
   ZillionaireTeamRoute: ZillionaireTeamRoute,
+  ZillionaireUploadStudioRoute: ZillionaireUploadStudioRoute,
   ZillionaireVideoStudioRoute: ZillionaireVideoStudioRoute,
   ZillionaireViewersRoute: ZillionaireViewersRoute,
   ZillionaireWalletsRoute: ZillionaireWalletsRoute,
@@ -5810,6 +5852,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireReceiptsIndexRoute,
   ApiPublicV1ZillionaireSupportIndexRoute:
     ApiPublicV1ZillionaireSupportIndexRoute,
+  ApiPublicV1ZillionaireUploadIndexRoute:
+    ApiPublicV1ZillionaireUploadIndexRoute,
   ApiPublicV1ZillionaireUsersIndexRoute: ApiPublicV1ZillionaireUsersIndexRoute,
   ApiPublicV1SessionsSessionIdReplicaNextRoute:
     ApiPublicV1SessionsSessionIdReplicaNextRoute,

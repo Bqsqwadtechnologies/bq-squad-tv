@@ -229,10 +229,14 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             );
           }
           const storagePath = asset["storagePath"];
+          const isDirectMp4 =
+            typeof storagePath === "string" && storagePath.toLowerCase().endsWith(".mp4");
+          const isHlsManifest =
+            typeof storagePath === "string" && storagePath.toLowerCase().endsWith(".m3u8");
           if (
             typeof storagePath !== "string" ||
             !isSafeStoragePath(storagePath) ||
-            !storagePath.toLowerCase().endsWith(".m3u8")
+            !(isHlsManifest || isDirectMp4)
           ) {
             throw new ApiError(
               503,
