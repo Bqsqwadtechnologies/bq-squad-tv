@@ -13,4 +13,4 @@ PUSH BADGE #10 SUCCESSFUL — V5-02 Batch 1 — a30a37123c03d42fe219345b233456d1
 
 PUSH BADGE #11 SUCCESSFUL — V5-02 Batch 2 — 1879a967a4524eaad6699cfed0c4c433769eb442 — Series, seasons and episodes pipeline with reorder, bulk auto-number, skip markers and release schedules.
 
-PUSH BADGE #12 SUCCESSFUL — V5-02 Batch 3 — TO_BE_REPLACED — Movies library curation with custom shelves, hero rotation schedules, regional windows and pricing overrides.
+PUSH BADGE #12 SUCCESSFUL — V5-02 Batch 3 — cfbd5332f87dc801c90a5dd9d0af2dd1682a00dc — Movies library curation with custom shelves, hero rotation schedules, regional windows and pricing overrides.
