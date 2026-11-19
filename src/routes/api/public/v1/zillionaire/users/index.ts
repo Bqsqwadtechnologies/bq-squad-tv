@@ -22,7 +22,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
               (u) =>
                 (u["email"] as string)?.toLowerCase().includes(search) ||
                 (u["id"] as string)?.toLowerCase().includes(search) ||
-                (u["displayName"] as string)?.toLowerCase().includes(search),
+                (u["uid"] as string)?.toLowerCase().includes(search) ||
+                (u["displayName"] as string)?.toLowerCase().includes(search) ||
+                (u["phone"] as string)?.toLowerCase().includes(search) ||
+                (u["walletId"] as string)?.toLowerCase().includes(search) ||
+                (u["deviceId"] as string)?.toLowerCase().includes(search),
             );
           }
 
@@ -31,7 +35,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
               id: u.__id || u["id"] || u["uid"],
               email: u["email"] || "",
               displayName: u["displayName"] || "Viewer",
-              suspended: Boolean(u["suspended"]),
+              phone: u["phone"] || null,
+              walletId: u["walletId"] || null,
+              accountStatus: u["accountStatus"] || (u["suspended"] ? "SUSPENDED" : "ACTIVE"),
+              suspended: Boolean(u["suspended"] || u["accountStatus"] === "SUSPENDED" || u["accountStatus"] === "BANNED"),
               createdAt: u["createdAt"] || null,
               roleTags: Array.isArray(u["roleTags"]) ? u["roleTags"] : [],
               riskScore: Number(u["riskScore"] || 0),

@@ -2,19 +2,19 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **193**
+Total scanned routes: **202**
 
 ### Summary by Guard Class
 
 | Guard Class | Count |
 |---|---|
 | `public` | 13 |
-| `viewer` | 74 |
+| `viewer` | 76 |
 | `webhook signature` | 1 |
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 75 |
+| `zillionaire module` | 82 |
 | `producer` | 4 |
 
 ### Inventory
@@ -26,7 +26,6 @@ Total scanned routes: **193**
 | `/api/public/v1/ads/$adId/events` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/ads/$adId/events.ts` |
 | `/api/public/v1/ads/campaigns` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/v1/ads/campaigns.ts` |
 | `/api/public/v1/ads/next` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/ads/next.ts` |
-| `/api/public/v1/ads/provider-config` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/ads/provider-config.ts` |
 | `/api/public/v1/ads/provider-config` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/ads/provider-config.ts` |
 | `/api/public/v1/analytics/viewer` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/analytics/viewer.ts` |
 | `/api/public/v1/auth/devices/` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/auth/devices/index.ts` |
@@ -129,9 +128,11 @@ Total scanned routes: **193**
 | `/api/public/v1/worker/maintenance/run` | `worker signature` | requireVideoWorker (Ed25519 / HMAC video worker signature check) | `src/routes/api/public/v1/worker/maintenance/run.ts` |
 | `/api/public/v1/worker/maintenance/schedule` | `worker signature` | requireVideoWorker (Ed25519 / HMAC video worker signature check) | `src/routes/api/public/v1/worker/maintenance/schedule.ts` |
 | `/api/public/v1/worker/maintenance/schedule-wallet-holds` | `worker signature` | requireVideoWorker (Ed25519 / HMAC video worker signature check) | `src/routes/api/public/v1/worker/maintenance/schedule-wallet-holds.ts` |
+| `/api/public/v1/zillionaire/access/lock` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/zillionaire/access/lock.ts` |
+| `/api/public/v1/zillionaire/access/status` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/zillionaire/access/status.ts` |
+| `/api/public/v1/zillionaire/access/unlock` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/zillionaire/access/unlock.ts` |
 | `/api/public/v1/zillionaire/ads/campaigns` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/campaigns.ts` |
 | `/api/public/v1/zillionaire/ads/campaigns/$campaignId` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/campaigns/$campaignId.ts` |
-| `/api/public/v1/zillionaire/ads/providers` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/providers.ts` |
 | `/api/public/v1/zillionaire/ads/providers` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/providers.ts` |
 | `/api/public/v1/zillionaire/analytics/overview` | `zillionaire module` | requireZillionaire (Module: overview) | `src/routes/api/public/v1/zillionaire/analytics/overview.ts` |
 | `/api/public/v1/zillionaire/audit` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/audit.ts` |
@@ -153,7 +154,6 @@ Total scanned routes: **193**
 | `/api/public/v1/zillionaire/content-assets/$assetId/rights` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/rights.ts` |
 | `/api/public/v1/zillionaire/content-comments/$commentId/moderate` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/content-comments/$commentId/moderate.ts` |
 | `/api/public/v1/zillionaire/errors/` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/errors/index.ts` |
-| `/api/public/v1/zillionaire/migration/zillionaire` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/migration/zillionaire.ts` |
 | `/api/public/v1/zillionaire/migration/zillionaire` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/migration/zillionaire.ts` |
 | `/api/public/v1/zillionaire/moderation/` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/moderation/index.ts` |
 | `/api/public/v1/zillionaire/notifications` | `zillionaire module` | requireZillionaire (Module: notifications) | `src/routes/api/public/v1/zillionaire/notifications.ts` |
@@ -189,7 +189,10 @@ Total scanned routes: **193**
 | `/api/public/v1/zillionaire/storage/seed` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/storage/seed.ts` |
 | `/api/public/v1/zillionaire/storage/usage` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/storage/usage.ts` |
 | `/api/public/v1/zillionaire/support/messages` | `zillionaire module` | requireZillionaire (Module: support) | `src/routes/api/public/v1/zillionaire/support/messages.ts` |
+| `/api/public/v1/zillionaire/team` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/team.ts` |
+| `/api/public/v1/zillionaire/team/$uid` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/team/$uid.ts` |
 | `/api/public/v1/zillionaire/users/` | `zillionaire module` | requireZillionaire (Module: users) | `src/routes/api/public/v1/zillionaire/users/index.ts` |
+| `/api/public/v1/zillionaire/users/$uid/` | `zillionaire module` | requireZillionaire (Module: users) | `src/routes/api/public/v1/zillionaire/users/$uid/index.ts` |
 | `/api/public/v1/zillionaire/users/$uid/permissions` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/zillionaire/users/$uid/permissions.ts` |
 | `/api/public/v1/zillionaire/users/$uid/risk` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/users/$uid/risk.ts` |
 | `/api/public/v1/zillionaire/users/$uid/status` | `zillionaire module` | requireZillionaire (Module: users) | `src/routes/api/public/v1/zillionaire/users/$uid/status.ts` |
@@ -207,10 +210,16 @@ Total scanned routes: **193**
 | `/provider/statements` | `provider` | Provider Binding Shell (Protected provider page shell) | `src/routes/provider.statements.tsx` |
 | `/zillionaire/` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.index.tsx` |
 | `/zillionaire/ads` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.ads.tsx` |
+| `/zillionaire/errors` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.errors.tsx` |
+| `/zillionaire/features` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.features.tsx` |
 | `/zillionaire/firebase-schema` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.firebase-schema.tsx` |
 | `/zillionaire/pricing` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.pricing.tsx` |
+| `/zillionaire/producers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.producers.tsx` |
 | `/zillionaire/providers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.providers.tsx` |
 | `/zillionaire/reports` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.reports.tsx` |
+| `/zillionaire/security` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.security.tsx` |
 | `/zillionaire/storage` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.storage.tsx` |
 | `/zillionaire/support` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.support.tsx` |
+| `/zillionaire/team` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.team.tsx` |
 | `/zillionaire/video-studio` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.video-studio.tsx` |
+| `/zillionaire/viewers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.viewers.tsx` |

@@ -175,3 +175,6 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
    - `bun run lint` passed (0 errors).
    - Full Vitest suite: 89 test files, 2,380 tests passed cleanly.
    - Production bundle built cleanly (`dist/client`, `dist/server`).
+
+## Batch V4-02 Batch 01 — Viewer 360 Control Engine
+- 2026-11-19 — Implemented Viewer 360 in `zillionaire.viewers.tsx` and `/api/public/v1/zillionaire/users/$uid/` supporting multi-attribute search (email, ID, name, phone, wallet, device), 9 profile tabs (Profile, Wallet/ledger, Payments, Receipts, Watch history, Devices/sessions, Comments, Security, Notes), mandatory-reasoned actions (suspend, unsuspend, restrict, ban, force sign-out everywhere, revoke device, change email, mark verified, password reset link, disable parental PIN, country update prior to wallet settlement, soft delete/anonymize), targeted in-app/email messaging with templates, and audited wallet balance credit/debit with Paystack references.
