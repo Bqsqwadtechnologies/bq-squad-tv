@@ -78,22 +78,22 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/approved-em
 
           if (action === "add") {
             newStatus = "pending";
-            updates.addedAt = existing["addedAt"] || now;
-            updates.status = "pending";
+            updates["addedAt"] = existing["addedAt"] || now;
+            updates["status"] = "pending";
           } else if (action === "verify") {
             newStatus = "verified";
-            updates.verifiedAt = now;
-            updates.status = "verified";
+            updates["verifiedAt"] = now;
+            updates["status"] = "verified";
           } else if (action === "grant") {
             newStatus = "granted";
-            updates.grantedAt = now;
-            updates.grantedBy = user.uid;
-            updates.status = "granted";
+            updates["grantedAt"] = now;
+            updates["grantedBy"] = user.uid;
+            updates["status"] = "granted";
           } else if (action === "revoke") {
             newStatus = "revoked";
-            updates.revokedAt = now;
-            updates.revokedBy = user.uid;
-            updates.status = "revoked";
+            updates["revokedAt"] = now;
+            updates["revokedBy"] = user.uid;
+            updates["status"] = "revoked";
 
             // Immediate revocation: kill any active provider sessions associated with this email
             const matchedUsers = await fs.query("users", {
@@ -120,8 +120,8 @@ export const Route = createFileRoute("/api/public/v1/admin/providers/approved-em
             }
           } else if (action === "suspend") {
             newStatus = "suspended";
-            updates.suspendedAt = now;
-            updates.status = "suspended";
+            updates["suspendedAt"] = now;
+            updates["status"] = "suspended";
           }
 
           await fs.setDoc(docPath, updates);

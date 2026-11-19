@@ -64,7 +64,7 @@ export const Route = createFileRoute("/api/public/v1/analytics/viewer")({
               recentHistory.push({
                 id: s.__id || String(s["sessionId"] || Math.random()),
                 title,
-                channelId: channelId || undefined,
+                ...(channelId ? { channelId } : {}),
                 minutes,
                 watchedAt,
               });

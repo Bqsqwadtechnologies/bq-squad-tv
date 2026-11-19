@@ -48,7 +48,7 @@ export const Route = createFileRoute("/api/public/v1/admin/analytics/overview")(
           // Per-channel aggregates
           const channelMap: Record<string, { channelId: string; name: string; currentViewers: number; totalWatchMinutes: number; grossRevenueMinor: number; status: string }> = {};
           for (const ch of channelsList) {
-            const id = ch.__id || ch["id"] || ch["channelId"] || "unknown";
+            const id = String(ch.__id || ch["id"] || ch["channelId"] || "unknown");
             const viewers = Number(ch["currentViewers"] || 0);
             liveWatchersNow += viewers;
             channelMap[id] = {
@@ -64,7 +64,7 @@ export const Route = createFileRoute("/api/public/v1/admin/analytics/overview")(
           // Per-video aggregates
           const videoMap: Record<string, { assetId: string; title: string; channelId: string; totalWatchMinutes: number; viewsCount: number; uniqueViewers: Set<string> }> = {};
           for (const vid of videoAssetsList) {
-            const id = vid.__id || vid["assetId"] || vid["id"] || "unknown";
+            const id = String(vid.__id || vid["assetId"] || vid["id"] || "unknown");
             videoMap[id] = {
               assetId: id,
               title: String(vid["title"] || id),
