@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **202**
+Total scanned routes: **206**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **202**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 82 |
+| `zillionaire module` | 86 |
 | `producer` | 4 |
 
 ### Inventory
@@ -173,6 +173,9 @@ Total scanned routes: **202**
 | `/api/public/v1/zillionaire/providers/approved-emails` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/zillionaire/providers/approved-emails.ts` |
 | `/api/public/v1/zillionaire/providers/channels` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/zillionaire/providers/channels.ts` |
 | `/api/public/v1/zillionaire/providers/test-playback` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/zillionaire/providers/test-playback.ts` |
+| `/api/public/v1/zillionaire/receipts/` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/receipts/index.ts` |
+| `/api/public/v1/zillionaire/receipts/$receiptId/pdf` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/receipts/$receiptId/pdf.ts` |
+| `/api/public/v1/zillionaire/receipts/$receiptId/resend` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/receipts/$receiptId/resend.ts` |
 | `/api/public/v1/zillionaire/reports/monthly` | `zillionaire module` | requireZillionaire (Module: overview) | `src/routes/api/public/v1/zillionaire/reports/monthly.ts` |
 | `/api/public/v1/zillionaire/secret-health` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/secret-health.ts` |
 | `/api/public/v1/zillionaire/security/events` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/security/events.ts` |
@@ -216,6 +219,7 @@ Total scanned routes: **202**
 | `/zillionaire/pricing` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.pricing.tsx` |
 | `/zillionaire/producers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.producers.tsx` |
 | `/zillionaire/providers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.providers.tsx` |
+| `/zillionaire/receipts` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.receipts.tsx` |
 | `/zillionaire/reports` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.reports.tsx` |
 | `/zillionaire/security` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.security.tsx` |
 | `/zillionaire/storage` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.storage.tsx` |

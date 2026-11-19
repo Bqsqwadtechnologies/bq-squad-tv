@@ -178,3 +178,6 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 
 ## Batch V4-02 Batch 01 — Viewer 360 Control Engine
 - 2026-11-19 — Implemented Viewer 360 in `zillionaire.viewers.tsx` and `/api/public/v1/zillionaire/users/$uid/` supporting multi-attribute search (email, ID, name, phone, wallet, device), 9 profile tabs (Profile, Wallet/ledger, Payments, Receipts, Watch history, Devices/sessions, Comments, Security, Notes), mandatory-reasoned actions (suspend, unsuspend, restrict, ban, force sign-out everywhere, revoke device, change email, mark verified, password reset link, disable parental PIN, country update prior to wallet settlement, soft delete/anonymize), targeted in-app/email messaging with templates, and audited wallet balance credit/debit with Paystack references.
+
+## Batch V4-02 Batch 02 — Receipts and Money Documents Registry
+- 2026-11-19 — Implemented sequential receipts engine (`BQ-REC-...`, `BQ-PAY-...`, `BQ-REF-...`) with Firestore atomic sequence generator, Zillionaire receipts console (`zillionaire.receipts.tsx`), PDF/printable document generation endpoint, resend email capability with audit logging, and customer lifetime spend aggregation.
