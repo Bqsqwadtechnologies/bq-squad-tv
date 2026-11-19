@@ -11,4 +11,4 @@ PUSH BADGE #9 SUCCESSFUL — V5-01 Batch 9 — 00f313e224044ad7bae49ba164351df6c
 
 PUSH BADGE #10 SUCCESSFUL — V5-02 Batch 1 — a30a37123c03d42fe219345b233456d1f0fefa25 — Upload studio with chunked resumable upload and direct publish.
 
-PUSH BADGE #11 SUCCESSFUL — V5-02 Batch 2 — TO_BE_REPLACED — Series, seasons and episodes pipeline with reorder, bulk auto-number, skip markers and release schedules.
+PUSH BADGE #11 SUCCESSFUL — V5-02 Batch 2 — 1879a967a4524eaad6699cfed0c4c433769eb442 — Series, seasons and episodes pipeline with reorder, bulk auto-number, skip markers and release schedules.
