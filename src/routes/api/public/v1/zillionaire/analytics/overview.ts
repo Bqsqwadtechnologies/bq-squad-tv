@@ -12,7 +12,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/analytics/overv
           const fs = await Firestore.create();
           await requireZillionaireModule(fs, user, "overview");
 
+          const url = new URL(request.url);
+          const range = url.searchParams.get("range") || "30d";
+          const rangeDays = range === "24h" ? 1 : range === "7d" ? 7 : range === "all" ? 365 : 30;
           const now = Date.now();
+          const rangeStart = new Date(now - rangeDays * 86400000).toISOString();
+          const prevStart = new Date(now - 2 * rangeDays * 86400000).toISOString();
           const oneDayAgo = new Date(now - 24 * 60 * 60 * 1000).toISOString();
           const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
           const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -175,6 +180,29 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/analytics/overv
             }
           }
 
+          const series: Record<string, { date: string; views: number; watchMinutes: number; revenueMinor: number }> = {};
+          for (let i = Math.min(rangeDays, 30) - 1; i >= 0; i--) {
+            const d = new Date(now - i * 86400000).toISOString().slice(0, 10);
+            series[d] = { date: d, views: 0, watchMinutes: 0, revenueMinor: 0 };
+          }
+          const cur = { views: 0, sec: 0, rev: 0 };
+          const prev = { views: 0, sec: 0, rev: 0 };
+          const countries: Record<string, number> = {};
+          for (const s of sessionsList) {
+            const at = typeof s["createdAt"] === "string" ? s["createdAt"] : "";
+            const sec = typeof s["acceptedSeconds"] === "number" ? s["acceptedSeconds"] : 0;
+            const rev = typeof s["chargedAmountMinor"] === "number" ? s["chargedAmountMinor"] : 0;
+            if (at >= rangeStart) {
+              cur.views++; cur.sec += sec; cur.rev += rev;
+              const c = typeof s["country"] === "string" && s["country"] ? s["country"].toUpperCase() : "NG";
+              countries[c] = (countries[c] || 0) + 1;
+              const row = series[at.slice(0, 10)];
+              if (row) { row.views++; row.watchMinutes += Math.round(sec / 60); row.revenueMinor += rev; }
+            } else if (at >= prevStart) {
+              prev.views++; prev.sec += sec; prev.rev += rev;
+            }
+          }
+          const pct = (a: number, b: number) => (b === 0 ? (a > 0 ? 100 : 0) : Math.round(((a - b) / b) * 100));
           const totalWatchMinutes = Math.round(totalWatchSeconds / 60);
           const totalWatchHours = Math.round((totalWatchMinutes / 60) * 10) / 10;
 
@@ -219,6 +247,20 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/analytics/overv
                 payoutsSettledMinor,
                 currency: "NGN",
               },
+              range,
+              period: {
+                views: cur.views,
+                watchMinutes: Math.round(cur.sec / 60),
+                revenueMinor: cur.rev,
+                viewsChangePct: pct(cur.views, prev.views),
+                watchChangePct: pct(cur.sec, prev.sec),
+                revenueChangePct: pct(cur.rev, prev.rev),
+              },
+              timeSeries: Object.values(series),
+              topCountries: Object.entries(countries)
+                .map(([code, views]) => ({ code, views }))
+                .sort((a, b) => b.views - a.views)
+                .slice(0, 6),
               channels: channelsArray,
               videos: videosArray,
             },

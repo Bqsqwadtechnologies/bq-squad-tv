@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **222**
+Total scanned routes: **223**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **222**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 101 |
+| `zillionaire module` | 102 |
 | `producer` | 4 |
 
 ### Inventory
@@ -223,6 +223,7 @@ Total scanned routes: **222**
 | `/provider/statements` | `provider` | Provider Binding Shell (Protected provider page shell) | `src/routes/provider.statements.tsx` |
 | `/zillionaire/` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.index.tsx` |
 | `/zillionaire/ads` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.ads.tsx` |
+| `/zillionaire/analytics` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.analytics.tsx` |
 | `/zillionaire/blocked-content` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.blocked-content.tsx` |
 | `/zillionaire/channels` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.channels.tsx` |
 | `/zillionaire/errors` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.errors.tsx` |

@@ -200,6 +200,13 @@ export function ConsoleShell({
         title: "Catalogue",
         items: [
           {
+            id: "analytics",
+            label: "Numbers",
+            href: "/zillionaire/analytics",
+            icon: BarChart3,
+            module: "overview",
+          },
+          {
             id: "channels",
             label: "Channels",
             href: "/zillionaire/channels",
