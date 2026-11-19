@@ -28,18 +28,22 @@ async function firebaseAuthRequest(
     `https://identitytoolkit.googleapis.com/v1/accounts:${operation}?key=${firebaseApiKey}`,
     {
       method: "POST",
-      headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
+      headers: { "content-type": "application/json", ...(await getWebAppCheckHeaders()) },
       body: JSON.stringify({ email: email.trim(), password, returnSecureToken: true }),
     },
   );
-  const result = await response.json() as FirebaseAuthResponse;
+  const result = (await response.json()) as FirebaseAuthResponse;
   if (!response.ok || !result.idToken || !result.refreshToken) {
     const message = result.error?.message;
     if (message === "OPERATION_NOT_ALLOWED") {
       throw new Error("Email and password sign-in is not enabled for this Firebase project.");
     }
     if (message === "EMAIL_EXISTS") throw new Error("An account already exists for this email.");
-    if (message === "INVALID_PASSWORD" || message === "EMAIL_NOT_FOUND" || message === "INVALID_LOGIN_CREDENTIALS") {
+    if (
+      message === "INVALID_PASSWORD" ||
+      message === "EMAIL_NOT_FOUND" ||
+      message === "INVALID_LOGIN_CREDENTIALS"
+    ) {
       throw new Error("Sign-in failed. Check your email and password.");
     }
     if (message === "WEAK_PASSWORD") throw new Error("Choose a stronger password.");
@@ -52,22 +56,20 @@ async function firebaseAuthRequest(
   };
 }
 
-async function establishWebSession(
-  idToken: string,
-  refreshToken: string,
-): Promise<string> {
+async function establishWebSession(idToken: string, refreshToken: string): Promise<string> {
   const response = await fetch("/api/public/v1/auth/web/session", {
     method: "POST",
     credentials: "same-origin",
-    headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
+    headers: { "content-type": "application/json", ...(await getWebAppCheckHeaders()) },
     body: JSON.stringify({ idToken, refreshToken }),
   });
-  const result = await response.json() as WebSessionResponse;
+  const result = (await response.json()) as WebSessionResponse;
   if (!response.ok || !result.idToken) {
     throw new Error(result.error ?? "Could not establish a secure website session.");
   }
   activeIdToken = result.idToken;
-  activeIdTokenExpiresAt = Date.now() + Math.max(60, result.expiresInSeconds ?? 3600) * 1000 - 60_000;
+  activeIdTokenExpiresAt =
+    Date.now() + Math.max(60, result.expiresInSeconds ?? 3600) * 1000 - 60_000;
   return result.idToken;
 }
 
@@ -95,17 +97,18 @@ export async function restoreWebSession(): Promise<string | null> {
     const response = await fetch("/api/public/v1/auth/web/session/refresh", {
       method: "POST",
       credentials: "same-origin",
-      headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
+      headers: { "content-type": "application/json", ...(await getWebAppCheckHeaders()) },
       body: "{}",
     });
-    const result = await response.json() as WebSessionResponse;
+    const result = (await response.json()) as WebSessionResponse;
     if (!response.ok || !result.idToken) {
       activeIdToken = null;
       activeIdTokenExpiresAt = 0;
       return null;
     }
     activeIdToken = result.idToken;
-    activeIdTokenExpiresAt = Date.now() + Math.max(60, result.expiresInSeconds ?? 3600) * 1000 - 60_000;
+    activeIdTokenExpiresAt =
+      Date.now() + Math.max(60, result.expiresInSeconds ?? 3600) * 1000 - 60_000;
     return activeIdToken;
   } catch {
     activeIdToken = null;
@@ -119,14 +122,21 @@ export async function getActiveWebIdToken(): Promise<string | null> {
   return restoreWebSession();
 }
 
-export async function sendEmailVerificationCode(): Promise<{ sent: boolean; alreadyVerified: boolean }> {
+export async function sendEmailVerificationCode(): Promise<{
+  sent: boolean;
+  alreadyVerified: boolean;
+}> {
   const idToken = await getActiveWebIdToken();
   if (!idToken) throw new Error("Sign in again to verify your email.");
   const response = await fetch("/api/public/v1/auth/email/send-code", {
     method: "POST",
-    headers: { authorization: `Bearer ${idToken}`, ...await getWebAppCheckHeaders() },
+    headers: { authorization: `Bearer ${idToken}`, ...(await getWebAppCheckHeaders()) },
   });
-  const result = await response.json() as { sent?: boolean; alreadyVerified?: boolean; error?: string };
+  const result = (await response.json()) as {
+    sent?: boolean;
+    alreadyVerified?: boolean;
+    error?: string;
+  };
   if (!response.ok) throw new Error(result.error ?? "Could not send the verification code.");
   return { sent: result.sent === true, alreadyVerified: result.alreadyVerified === true };
 }
@@ -140,11 +150,11 @@ export async function verifyEmailCode(code: string): Promise<boolean> {
     headers: {
       authorization: `Bearer ${idToken}`,
       "content-type": "application/json",
-      ...await getWebAppCheckHeaders(),
+      ...(await getWebAppCheckHeaders()),
     },
     body: JSON.stringify({ code }),
   });
-  const result = await response.json() as { verified?: boolean; error?: string };
+  const result = (await response.json()) as { verified?: boolean; error?: string };
   if (!response.ok) throw new Error(result.error ?? "Email verification failed.");
   return result.verified === true;
 }
@@ -154,13 +164,13 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
     `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseApiKey}`,
     {
       method: "POST",
-      headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
+      headers: { "content-type": "application/json", ...(await getWebAppCheckHeaders()) },
       body: JSON.stringify({ requestType: "PASSWORD_RESET", email: email.trim() }),
     },
   );
   if (!response.ok) {
     // Do not reveal whether an email address is registered.
-    const result = await response.json() as { error?: { message?: string } };
+    const result = (await response.json()) as { error?: { message?: string } };
     if (result.error?.message === "OPERATION_NOT_ALLOWED") {
       throw new Error("Password recovery is not enabled for this Firebase project.");
     }
@@ -178,7 +188,7 @@ export async function signInWithGoogleCredential(
     `https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=${firebaseApiKey}`,
     {
       method: "POST",
-      headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
+      headers: { "content-type": "application/json", ...(await getWebAppCheckHeaders()) },
       body: JSON.stringify({
         postBody,
         requestUri: window.location.origin,
@@ -187,9 +197,11 @@ export async function signInWithGoogleCredential(
       }),
     },
   );
-  const result = await response.json() as FirebaseAuthResponse;
+  const result = (await response.json()) as FirebaseAuthResponse;
   if (!response.ok || !result.idToken || !result.refreshToken) {
-    throw new Error("Google sign-in could not be completed. Check that Google is enabled in Firebase Authentication.");
+    throw new Error(
+      "Google sign-in could not be completed. Check that Google is enabled in Firebase Authentication.",
+    );
   }
   const idToken = await establishWebSession(result.idToken, result.refreshToken);
   return { idToken, email: result.email ?? "" };
@@ -198,7 +210,7 @@ export async function signInWithGoogleCredential(
 export async function getWebAuthHeaders(idToken: string): Promise<Record<string, string>> {
   return {
     authorization: `Bearer ${idToken}`,
-    ...await getWebAppCheckHeaders(),
+    ...(await getWebAppCheckHeaders()),
   };
 }
 
@@ -210,7 +222,7 @@ export async function getWebAccount(): Promise<{
   const idToken = await getActiveWebIdToken();
   if (!idToken) return null;
   const response = await fetch("/api/public/v1/auth/web/me", {
-    headers: { authorization: `Bearer ${idToken}`, ...await getWebAppCheckHeaders() },
+    headers: { authorization: `Bearer ${idToken}`, ...(await getWebAppCheckHeaders()) },
     cache: "no-store",
   });
   if (!response.ok) return null;
@@ -227,10 +239,10 @@ export async function revokeAllWebSessions(): Promise<void> {
   const response = await fetch("/api/public/v1/auth/session/revoke-all", {
     method: "POST",
     credentials: "same-origin",
-    headers: { authorization: `Bearer ${idToken}`, ...await getWebAppCheckHeaders() },
+    headers: { authorization: `Bearer ${idToken}`, ...(await getWebAppCheckHeaders()) },
     cache: "no-store",
   });
-  const result = await response.json() as { revoked?: boolean; error?: string };
+  const result = (await response.json()) as { revoked?: boolean; error?: string };
   if (!response.ok || result.revoked !== true) {
     throw new Error(result.error ?? "Could not revoke your other sessions.");
   }
@@ -242,7 +254,7 @@ export async function signOutWeb(): Promise<void> {
     await fetch("/api/public/v1/auth/web/session/logout", {
       method: "POST",
       credentials: "same-origin",
-      headers: { "content-type": "application/json", ...await getWebAppCheckHeaders() },
+      headers: { "content-type": "application/json", ...(await getWebAppCheckHeaders()) },
       body: "{}",
     });
   } finally {

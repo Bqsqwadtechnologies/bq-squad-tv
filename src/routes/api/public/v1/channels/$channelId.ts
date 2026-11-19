@@ -22,8 +22,15 @@ export const Route = createFileRoute("/api/public/v1/channels/$channelId")({
           // Age, rights and publication checks run before any channel data is returned.
           requireAdultForContent(profile, channel["adultOnly"]);
 
-          const schedule = await fs.query(`channels/${channelId}/schedule`, { orderByField: "startsAt", limit: 50 });
-          const replays = await fs.query(`channels/${channelId}/replays`, { orderByField: "createdAt", descending: true, limit: 20 });
+          const schedule = await fs.query(`channels/${channelId}/schedule`, {
+            orderByField: "startsAt",
+            limit: 50,
+          });
+          const replays = await fs.query(`channels/${channelId}/replays`, {
+            orderByField: "createdAt",
+            descending: true,
+            limit: 20,
+          });
 
           return Response.json({
             channel: toChannelSummary({ ...channel, __id: channelId }),
@@ -32,7 +39,8 @@ export const Route = createFileRoute("/api/public/v1/channels/$channelId")({
               title: typeof programme["title"] === "string" ? programme["title"] : "Programme",
               startsAt: typeof programme["startsAt"] === "string" ? programme["startsAt"] : "",
               endsAt: typeof programme["endsAt"] === "string" ? programme["endsAt"] : "",
-              description: typeof programme["description"] === "string" ? programme["description"] : null,
+              description:
+                typeof programme["description"] === "string" ? programme["description"] : null,
             })),
             replays: replays.map((replay) =>
               toChannelSummary({ ...replay, __id: replay.__id, category: "Replay", isLive: false }),

@@ -18,8 +18,11 @@ describe("Python and TypeScript worker signature compatibility", () => {
       false,
       ["sign"],
     );
-    const signature = Array.from(new Uint8Array(await webcrypto.subtle.sign("HMAC", key, new TextEncoder().encode(message))))
-      .map(value => value.toString(16).padStart(2, "0")).join("");
+    const signature = Array.from(
+      new Uint8Array(await webcrypto.subtle.sign("HMAC", key, new TextEncoder().encode(message))),
+    )
+      .map((value) => value.toString(16).padStart(2, "0"))
+      .join("");
     expect(signature).toBe("97912dd55a4cb7b448da4c8bb30d9873ca76e6af398c861cd50a9eb1b4597cf6");
   });
 });

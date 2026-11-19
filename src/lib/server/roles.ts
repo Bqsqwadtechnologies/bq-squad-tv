@@ -4,11 +4,31 @@ import { recordAccessDenial } from "./access-denials";
 export type PlatformRole = "viewer" | "producer" | "provider";
 
 export type ZillionaireModule =
-  | "overview" | "users" | "roles" | "producers" | "channels" | "content"
-  | "video" | "storage" | "delivery" | "pricing" | "wallets" | "payments"
-  | "payouts" | "ads" | "notifications" | "moderation" | "security" | "reports"
-  | "settings" | "system" | "providers" | "support" | "pages"
-  | "finance" | "catalog";
+  | "overview"
+  | "users"
+  | "roles"
+  | "producers"
+  | "channels"
+  | "content"
+  | "video"
+  | "storage"
+  | "delivery"
+  | "pricing"
+  | "wallets"
+  | "payments"
+  | "payouts"
+  | "ads"
+  | "notifications"
+  | "moderation"
+  | "security"
+  | "reports"
+  | "settings"
+  | "system"
+  | "providers"
+  | "support"
+  | "pages"
+  | "finance"
+  | "catalog";
 
 // Backward-compatible type alias during migration
 export type AdminModule = ZillionaireModule;
@@ -25,11 +45,31 @@ export type PlatformAccess = {
 };
 
 export const ZILLIONAIRE_MODULES: ZillionaireModule[] = [
-  "overview", "users", "roles", "producers", "channels", "content",
-  "video", "storage", "delivery", "pricing", "wallets", "payments",
-  "payouts", "ads", "notifications", "moderation", "security", "reports",
-  "settings", "system", "providers", "support", "pages",
-  "finance", "catalog",
+  "overview",
+  "users",
+  "roles",
+  "producers",
+  "channels",
+  "content",
+  "video",
+  "storage",
+  "delivery",
+  "pricing",
+  "wallets",
+  "payments",
+  "payouts",
+  "ads",
+  "notifications",
+  "moderation",
+  "security",
+  "reports",
+  "settings",
+  "system",
+  "providers",
+  "support",
+  "pages",
+  "finance",
+  "catalog",
 ];
 
 // Backward-compatible constant alias
@@ -41,7 +81,9 @@ export function getConfiguredOwnerEmail(): string {
 }
 
 function stringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
+  return Array.isArray(value)
+    ? value.filter((entry): entry is string => typeof entry === "string")
+    : [];
 }
 
 export function hasModuleAccess(
@@ -50,10 +92,18 @@ export function hasModuleAccess(
 ): boolean {
   if (activeModules.includes(required)) return true;
   // Module family aliases: finance covers payments, payouts, wallets; catalog covers content
-  if ((required === "payments" || required === "payouts" || required === "wallets") && activeModules.includes("finance")) {
+  if (
+    (required === "payments" || required === "payouts" || required === "wallets") &&
+    activeModules.includes("finance")
+  ) {
     return true;
   }
-  if (required === "finance" && (activeModules.includes("payments") || activeModules.includes("payouts") || activeModules.includes("wallets"))) {
+  if (
+    required === "finance" &&
+    (activeModules.includes("payments") ||
+      activeModules.includes("payouts") ||
+      activeModules.includes("wallets"))
+  ) {
     return true;
   }
   if (required === "content" && activeModules.includes("catalog")) return true;
@@ -74,12 +124,12 @@ export async function resolvePlatformAccess(
   const effectiveEmail = email || userDocEmail;
 
   // Verify email status from Firebase Auth claim or verified OTP proof recorded on user doc
-  const isEmailVerified = emailVerified || (
-    Boolean(user?.["appEmailVerified"]) &&
-    typeof user?.["email"] === "string" &&
-    typeof effectiveEmail === "string" &&
-    user["email"].trim().toLowerCase() === effectiveEmail.trim().toLowerCase()
-  );
+  const isEmailVerified =
+    emailVerified ||
+    (Boolean(user?.["appEmailVerified"]) &&
+      typeof user?.["email"] === "string" &&
+      typeof effectiveEmail === "string" &&
+      user["email"].trim().toLowerCase() === effectiveEmail.trim().toLowerCase());
 
   // Producer role resolution
   const storedRoles = stringArray(user?.["roleTags"]);
@@ -95,7 +145,11 @@ export async function resolvePlatformAccess(
   // Provider representative resolution
   const providerRep = await fs.getDoc("providerUsers/" + uid);
   let providerId: string | undefined;
-  if (providerRep && providerRep["status"] === "ACTIVE" && typeof providerRep["providerId"] === "string") {
+  if (
+    providerRep &&
+    providerRep["status"] === "ACTIVE" &&
+    typeof providerRep["providerId"] === "string"
+  ) {
     roles.push("provider");
     providerId = providerRep["providerId"];
   }
@@ -105,8 +159,7 @@ export async function resolvePlatformAccess(
   const configuredOwnerEmail = getConfiguredOwnerEmail();
   const normalizedUserEmail = (effectiveEmail || "").trim().toLowerCase();
   const isOwnerCandidate = Boolean(
-    configuredOwnerEmail &&
-    normalizedUserEmail === configuredOwnerEmail
+    configuredOwnerEmail && normalizedUserEmail === configuredOwnerEmail,
   );
   const isZillionaireOwner = isOwnerCandidate && isEmailVerified;
   const needsOwnerVerification = isOwnerCandidate && !isEmailVerified;
@@ -120,11 +173,14 @@ export async function resolvePlatformAccess(
   if (!rawModules.length && Array.isArray(user?.["adminModules"])) {
     rawModules = stringArray(user?.["adminModules"]);
     if (rawModules.length > 0) {
-      console.warn(`[LEGACY_ADMIN_MODULES] User ${uid} used legacy adminModules; migration recommended.`);
+      console.warn(
+        `[LEGACY_ADMIN_MODULES] User ${uid} used legacy adminModules; migration recommended.`,
+      );
     }
   }
-  const configuredScopes = rawModules
-    .filter((scope): scope is ZillionaireModule => ZILLIONAIRE_MODULES.includes(scope as ZillionaireModule));
+  const configuredScopes = rawModules.filter((scope): scope is ZillionaireModule =>
+    ZILLIONAIRE_MODULES.includes(scope as ZillionaireModule),
+  );
   const activeModules = isZillionaireOwner ? ZILLIONAIRE_MODULES : [...new Set(configuredScopes)];
 
   return {
@@ -148,13 +204,22 @@ export function isProtectedZillionaire(email: string | null): boolean {
 
 export function assertNotProtectedZillionaire(email: string | null, action: string): void {
   if (isProtectedZillionaire(email)) {
-    throw new ApiError(403, "OWNER_ACCOUNT_PROTECTED", `The protected platform-owner account cannot be ${action.endsWith("e") ? action + "d" : action + "ed"}.`);
+    throw new ApiError(
+      403,
+      "OWNER_ACCOUNT_PROTECTED",
+      `The protected platform-owner account cannot be ${action.endsWith("e") ? action + "d" : action + "ed"}.`,
+    );
   }
 }
 
 export async function requirePlatformRole(
   fs: Firestore,
-  user: { uid: string; email: string | null; emailVerified?: boolean; customClaims?: Record<string, unknown> },
+  user: {
+    uid: string;
+    email: string | null;
+    emailVerified?: boolean;
+    customClaims?: Record<string, unknown>;
+  },
   role: PlatformRole,
 ): Promise<PlatformAccess> {
   const access = await resolvePlatformAccess(
@@ -170,7 +235,11 @@ export async function requirePlatformRole(
   if (!access.roles.includes(role)) {
     await recordAccessDenial(fs, {
       actorUid: user.uid,
-      actorRoleClass: access.roles.includes("producer") ? "producer" : access.roles.includes("provider") ? "provider" : "viewer",
+      actorRoleClass: access.roles.includes("producer")
+        ? "producer"
+        : access.roles.includes("provider")
+          ? "provider"
+          : "viewer",
       requiredRole: role,
       resourceKind: "platform_role",
       reasonCode: "CROSS_ROLE_DENIED",
@@ -182,7 +251,12 @@ export async function requirePlatformRole(
 
 export async function requireZillionaireModule(
   fs: Firestore,
-  user: { uid: string; email: string | null; emailVerified?: boolean; customClaims?: Record<string, unknown> },
+  user: {
+    uid: string;
+    email: string | null;
+    emailVerified?: boolean;
+    customClaims?: Record<string, unknown>;
+  },
   module: ZillionaireModule,
 ): Promise<PlatformAccess> {
   const access = await resolvePlatformAccess(
@@ -195,12 +269,20 @@ export async function requireZillionaireModule(
   if (!access.isZillionaireOwner && !hasModuleAccess(access.zillionaireModules, module)) {
     await recordAccessDenial(fs, {
       actorUid: user.uid,
-      actorRoleClass: access.roles.includes("producer") ? "producer" : access.roles.includes("provider") ? "provider" : "viewer",
+      actorRoleClass: access.roles.includes("producer")
+        ? "producer"
+        : access.roles.includes("provider")
+          ? "provider"
+          : "viewer",
       requiredRole: `module:${module}`,
       resourceKind: "zillionaire_module",
       reasonCode: "MISSING_MODULE",
     }).catch(() => undefined);
-    throw new ApiError(403, "ZILLIONAIRE_SCOPE_REQUIRED", `Zillionaire module permission '${module}' is required for this action.`);
+    throw new ApiError(
+      403,
+      "ZILLIONAIRE_SCOPE_REQUIRED",
+      `Zillionaire module permission '${module}' is required for this action.`,
+    );
   }
   return access;
 }
@@ -210,7 +292,12 @@ export const requireAdminModule = requireZillionaireModule;
 
 export async function requireProviderAccess(
   fs: Firestore,
-  user: { uid: string; email: string | null; emailVerified?: boolean; customClaims?: Record<string, unknown> },
+  user: {
+    uid: string;
+    email: string | null;
+    emailVerified?: boolean;
+    customClaims?: Record<string, unknown>;
+  },
   targetProviderId?: string,
 ): Promise<PlatformAccess & { providerId: string }> {
   const access = await resolvePlatformAccess(
@@ -232,7 +319,11 @@ export async function requireProviderAccess(
       resourceKind: "provider_tenant",
       reasonCode: "CROSS_ROLE_DENIED",
     }).catch(() => undefined);
-    throw new ApiError(403, "PROVIDER_ROLE_REQUIRED", "This account is not associated with an active channel provider.");
+    throw new ApiError(
+      403,
+      "PROVIDER_ROLE_REQUIRED",
+      "This account is not associated with an active channel provider.",
+    );
   }
 
   if (targetProviderId && access.providerId !== targetProviderId) {
@@ -244,7 +335,11 @@ export async function requireProviderAccess(
       targetId: targetProviderId,
       reasonCode: "CROSS_TENANT_DENIED",
     }).catch(() => undefined);
-    throw new ApiError(403, "PROVIDER_ISOLATION_VIOLATION", "You do not have permission to access resources belonging to another provider.");
+    throw new ApiError(
+      403,
+      "PROVIDER_ISOLATION_VIOLATION",
+      "You do not have permission to access resources belonging to another provider.",
+    );
   }
 
   return { ...access, providerId: access.providerId };

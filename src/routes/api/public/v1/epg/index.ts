@@ -13,7 +13,9 @@ export const Route = createFileRoute("/api/public/v1/epg/")({
           const now = new Date();
 
           const channels = await fs.query("channels");
-          const activeChannels = channels.filter((c: Record<string, unknown>) => c["status"] === "published");
+          const activeChannels = channels.filter(
+            (c: Record<string, unknown>) => c["status"] === "published",
+          );
 
           const scheduleItems = await fs.query("epgSchedule");
 
@@ -23,7 +25,7 @@ export const Route = createFileRoute("/api/public/v1/epg/")({
               const channelPrograms = scheduleItems
                 .filter((p: Record<string, unknown>) => p["channelId"] === channel["id"])
                 .sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
-                  String(a["startTime"] ?? "").localeCompare(String(b["startTime"] ?? ""))
+                  String(a["startTime"] ?? "").localeCompare(String(b["startTime"] ?? "")),
                 );
 
               const nowProgram =

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, decodeFields, type Firestore, type FirestoreWrite } from "@/lib/server/firebase-admin";
+import {
+  ApiError,
+  decodeFields,
+  type Firestore,
+  type FirestoreWrite,
+} from "@/lib/server/firebase-admin";
 import {
   assertWebRefreshSessionActive,
   clearWebRefreshCookie,
@@ -10,7 +15,6 @@ import {
   webRefreshCookie,
 } from "@/lib/server/web-session";
 
-
 function memoryFirestore(): { fs: Firestore; documents: Map<string, Record<string, unknown>> } {
   const documents = new Map<string, Record<string, unknown>>();
   const fs = {
@@ -18,10 +22,12 @@ function memoryFirestore(): { fs: Firestore; documents: Map<string, Record<strin
     getDoc: async (path: string) => documents.get(path) ?? null,
     transact: async <T>(
       paths: string[],
-      callback: (docs: Array<Record<string, unknown> | null>) =>
+      callback: (
+        docs: Array<Record<string, unknown> | null>,
+      ) =>
         Promise<{ result: T; writes: FirestoreWrite[] }> | { result: T; writes: FirestoreWrite[] },
     ): Promise<T> => {
-      const snapshots = paths.map(path => documents.get(path) ?? null);
+      const snapshots = paths.map((path) => documents.get(path) ?? null);
       const outcome = await callback(snapshots);
       for (const write of outcome.writes) {
         if ("update" in write) {
@@ -70,11 +76,12 @@ describe("secure website session cookies", () => {
     expect(clearCookie).toContain("Secure");
   });
 
-
   it("rotates refresh tokens and tombstones the previous token", async () => {
     const { fs } = memoryFirestore();
     await rotateWebRefreshSession(fs, "legacy-refresh-token", "next-refresh-token", "uid-1");
-    await expect(assertWebRefreshSessionActive(fs, "legacy-refresh-token")).rejects.toThrow(ApiError);
+    await expect(assertWebRefreshSessionActive(fs, "legacy-refresh-token")).rejects.toThrow(
+      ApiError,
+    );
     await expect(assertWebRefreshSessionActive(fs, "next-refresh-token")).resolves.toBeUndefined();
   });
 

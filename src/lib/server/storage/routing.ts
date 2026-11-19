@@ -31,21 +31,32 @@ export function pickDestination(
   purpose: string,
   cursor: number,
 ): DestinationPick | null {
-  if (!Number.isSafeInteger(incomingBytes) || incomingBytes < 0 || candidates.length === 0) return null;
+  if (!Number.isSafeInteger(incomingBytes) || incomingBytes < 0 || candidates.length === 0)
+    return null;
 
-  const eligible = candidates.filter(candidate => {
-    if (candidate.purpose !== purpose || candidate.mode !== "active" ||
-      candidate.healthStatus !== "healthy" || !candidate.configured ||
-      candidate.usageBytes === null || !Number.isSafeInteger(candidate.usageBytes) ||
-      candidate.usageBytes < 0 || !Number.isSafeInteger(candidate.softCapBytes) ||
+  const eligible = candidates.filter((candidate) => {
+    if (
+      candidate.purpose !== purpose ||
+      candidate.mode !== "active" ||
+      candidate.healthStatus !== "healthy" ||
+      !candidate.configured ||
+      candidate.usageBytes === null ||
+      !Number.isSafeInteger(candidate.usageBytes) ||
+      candidate.usageBytes < 0 ||
+      !Number.isSafeInteger(candidate.softCapBytes) ||
       candidate.usageBytes + incomingBytes > candidate.softCapBytes ||
       !Number.isSafeInteger(candidate.accountGroupUsedBytes) ||
       !Number.isSafeInteger(candidate.accountGroupCapBytes) ||
-      candidate.accountGroupUsedBytes + incomingBytes > candidate.accountGroupCapBytes) return false;
+      candidate.accountGroupUsedBytes + incomingBytes > candidate.accountGroupCapBytes
+    )
+      return false;
 
     if (purpose === "hls_streaming") {
-      if (candidate.egressHeadroomBytes === null ||
-        !Number.isSafeInteger(candidate.egressHeadroomBytes)) return false;
+      if (
+        candidate.egressHeadroomBytes === null ||
+        !Number.isSafeInteger(candidate.egressHeadroomBytes)
+      )
+        return false;
       const breaker = candidate.egressCircuitBreakerBytes ?? 0;
       if (candidate.egressHeadroomBytes < breaker) return false;
     }
@@ -53,9 +64,11 @@ export function pickDestination(
   });
 
   if (eligible.length === 0) return null;
-  const priorities = [...new Set(eligible.map(item => item.priority))].sort((a, b) => a - b);
+  const priorities = [...new Set(eligible.map((item) => item.priority))].sort((a, b) => a - b);
   for (const priority of priorities) {
-    const group = eligible.filter(item => item.priority === priority).sort((a, b) => a.id.localeCompare(b.id));
+    const group = eligible
+      .filter((item) => item.priority === priority)
+      .sort((a, b) => a.id.localeCompare(b.id));
     if (group.length === 0) continue;
     const start = ((Math.trunc(cursor) % group.length) + group.length) % group.length;
     const chosen = group[start];
@@ -65,8 +78,12 @@ export function pickDestination(
 }
 
 export function estimateReservedBytes(sourceBytes: number, profileFactor: number): number {
-  if (!Number.isSafeInteger(sourceBytes) || sourceBytes < 1 ||
-      !Number.isFinite(profileFactor) || profileFactor <= 0) {
+  if (
+    !Number.isSafeInteger(sourceBytes) ||
+    sourceBytes < 1 ||
+    !Number.isFinite(profileFactor) ||
+    profileFactor <= 0
+  ) {
     throw new RangeError("Invalid storage estimate.");
   }
   const estimate = Math.ceil(sourceBytes * profileFactor * 1.1);
@@ -81,9 +98,16 @@ export function calculateB2FreeEgressBudget(averageStoredBytes: number): number 
   return Math.floor(averageStoredBytes * 3 * 0.8);
 }
 
-export function calculateEgressState(usedBytes: number, budgetBytes: number): "normal" | "warn" | "throttle" | "blocked" {
-  if (!Number.isSafeInteger(usedBytes) || usedBytes < 0 ||
-      !Number.isSafeInteger(budgetBytes) || budgetBytes < 0) {
+export function calculateEgressState(
+  usedBytes: number,
+  budgetBytes: number,
+): "normal" | "warn" | "throttle" | "blocked" {
+  if (
+    !Number.isSafeInteger(usedBytes) ||
+    usedBytes < 0 ||
+    !Number.isSafeInteger(budgetBytes) ||
+    budgetBytes < 0
+  ) {
     throw new RangeError("Invalid egress counters.");
   }
   if (budgetBytes === 0 || usedBytes >= budgetBytes * 0.95) return "blocked";

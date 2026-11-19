@@ -10,8 +10,12 @@ describe("wallet ledger cursors", () => {
   it("rejects malformed, oversized and unsafe cursors", () => {
     expect(() => decodeLedgerCursor("not-a-cursor")).toThrow();
     expect(() => decodeLedgerCursor("x".repeat(513))).toThrow();
-    expect(() => decodeLedgerCursor(encodeLedgerCursor({ createdAt: "invalid", id: "entry" }))).toThrow();
-    expect(() => decodeLedgerCursor(encodeLedgerCursor({ createdAt: "2026-11-10T12:30:00Z", id: "../users" }))).toThrow();
+    expect(() =>
+      decodeLedgerCursor(encodeLedgerCursor({ createdAt: "invalid", id: "entry" })),
+    ).toThrow();
+    expect(() =>
+      decodeLedgerCursor(encodeLedgerCursor({ createdAt: "2026-11-10T12:30:00Z", id: "../users" })),
+    ).toThrow();
   });
 
   it("returns null when no cursor is supplied", () => {

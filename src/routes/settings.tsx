@@ -2,9 +2,20 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/BrandLogo";
 import {
-  Bell, ChevronRight, Eye, Globe, Lock, LogOut,
-  Moon, Shield, Sliders, Smartphone, Volume2, Wifi,
-  AlertTriangle, Check
+  Bell,
+  ChevronRight,
+  Eye,
+  Globe,
+  Lock,
+  LogOut,
+  Moon,
+  Shield,
+  Sliders,
+  Smartphone,
+  Volume2,
+  Wifi,
+  AlertTriangle,
+  Check,
 } from "lucide-react";
 import { getWebAccount, signOutWeb } from "@/lib/firebase-web-auth";
 
@@ -13,7 +24,10 @@ export const Route = createFileRoute("/settings")({
   head: () => ({
     meta: [
       { title: "Settings — BQ SQWAD TV" },
-      { name: "description", content: "Manage playback quality, notifications, security and preferences." },
+      {
+        name: "description",
+        content: "Manage playback quality, notifications, security and preferences.",
+      },
     ],
   }),
 });
@@ -41,7 +55,9 @@ function SettingsPage() {
 
       const savedParental = localStorage.getItem("bq-sqwad-parental");
       if (savedParental !== null) setParentalControlsActive(savedParental === "true");
-    } catch (_err) { void _err; }
+    } catch (_err) {
+      void _err;
+    }
   }, []);
 
   function triggerSaveToast() {
@@ -112,7 +128,9 @@ function SettingsPage() {
 
         {/* Group 1: Preferences & Playback */}
         <section className="mt-6 rounded-2xl border border-white/10 bg-[#0C1738]/80 p-5 backdrop-blur-md">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#00D8F5]">Playback & Network</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-[#00D8F5]">
+            Playback & Network
+          </h2>
           <div className="mt-4 divide-y divide-white/10">
             <div className="flex items-center justify-between py-3.5">
               <div className="flex items-center gap-3">
@@ -184,7 +202,9 @@ function SettingsPage() {
 
         {/* Group 2: Security & Parental Controls */}
         <section className="mt-6 rounded-2xl border border-white/10 bg-[#0C1738]/80 p-5 backdrop-blur-md">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#00D8F5]">Security & Access</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-[#00D8F5]">
+            Security & Access
+          </h2>
           <div className="mt-4 divide-y divide-white/10">
             <div className="flex items-center justify-between py-3.5">
               <div className="flex items-center gap-3">
@@ -211,8 +231,12 @@ function SettingsPage() {
               <div className="flex items-center gap-3">
                 <Lock size={20} className="text-[#00D8F5]" />
                 <div>
-                  <p className="text-sm font-semibold group-hover:text-[#00D8F5]">Account Security</p>
-                  <p className="text-xs text-slate-400">Sessions, sign-out all devices and password</p>
+                  <p className="text-sm font-semibold group-hover:text-[#00D8F5]">
+                    Account Security
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Sessions, sign-out all devices and password
+                  </p>
                 </div>
               </div>
               <ChevronRight size={18} className="text-slate-400" />
@@ -222,23 +246,33 @@ function SettingsPage() {
 
         {/* Group 3: Legal & Support */}
         <section className="mt-6 rounded-2xl border border-white/10 bg-[#0C1738]/80 p-5 backdrop-blur-md">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-[#00D8F5]">Legal & Company</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-[#00D8F5]">
+            Legal & Company
+          </h2>
           <div className="mt-4 divide-y divide-white/10">
             <Link to="/terms" className="flex items-center justify-between py-3 group">
-              <span className="text-sm font-medium text-slate-200 group-hover:text-[#00D8F5]">Terms & Conditions</span>
+              <span className="text-sm font-medium text-slate-200 group-hover:text-[#00D8F5]">
+                Terms & Conditions
+              </span>
               <ChevronRight size={18} className="text-slate-400" />
             </Link>
             <Link to="/privacy" className="flex items-center justify-between py-3 group">
-              <span className="text-sm font-medium text-slate-200 group-hover:text-[#00D8F5]">Privacy Policy</span>
+              <span className="text-sm font-medium text-slate-200 group-hover:text-[#00D8F5]">
+                Privacy Policy
+              </span>
               <ChevronRight size={18} className="text-slate-400" />
             </Link>
             <Link to="/contact" className="flex items-center justify-between py-3 group">
-              <span className="text-sm font-medium text-slate-200 group-hover:text-[#00D8F5]">Contact Us</span>
+              <span className="text-sm font-medium text-slate-200 group-hover:text-[#00D8F5]">
+                Contact Us
+              </span>
               <ChevronRight size={18} className="text-slate-400" />
             </Link>
             <Link to="/about" className="flex items-center justify-between py-3 group">
               <div>
-                <p className="text-sm font-medium text-slate-200 group-hover:text-[#00D8F5]">About BQ SQWAD TV</p>
+                <p className="text-sm font-medium text-slate-200 group-hover:text-[#00D8F5]">
+                  About BQ SQWAD TV
+                </p>
                 <p className="text-xs text-slate-400">Version 3.0.0 (Build 2026)</p>
               </div>
               <ChevronRight size={18} className="text-slate-400" />

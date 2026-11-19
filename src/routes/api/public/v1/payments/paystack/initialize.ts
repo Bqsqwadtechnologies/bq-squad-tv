@@ -27,56 +27,118 @@ async function markPaymentStatus(
     const fields = { status, updatedAt: new Date().toISOString() };
     return {
       result: undefined,
-      writes: [{
-        update: { name: fs.docName(path), fields: encodeFields(fields) },
-        updateMask: { fieldPaths: ["status", "updatedAt"] },
-      }],
+      writes: [
+        {
+          update: { name: fs.docName(path), fields: encodeFields(fields) },
+          updateMask: { fieldPaths: ["status", "updatedAt"] },
+        },
+      ],
     };
   });
 }
 
-
 export const Route = createFileRoute("/api/public/v1/payments/paystack/initialize")({
-  server: { handlers: { POST: async ({ request }) => {
-    try {
-      const user = await requireUser(request);
-      if (!user.emailVerified) throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email before making a wallet payment.");
-      if (!user.email) throw new ApiError(400, "EMAIL_REQUIRED", "Add an email address before making a website payment.");
-      const { packageId } = await parseBody(request, schema);
-      const fs = await Firestore.create();
-      await enforceRateLimit(fs, "paystack-init:" + user.uid, { limit: 5, windowMs: 60_000 });
-      await assertRiskStepUp(fs, user.uid, user.authTime);
-      const wallet = await getWallet(fs, user.uid);
-      const currency = wallet.currency;
-      const pricing = await getPricingConfig(fs);
-      const offer = getPaystackTopup(pricing, packageId, currency);
-      const reference = "BQTV_" + crypto.randomUUID().replace(/-/g, "");
-      const secret = process.env["PAYSTACK_SECRET_KEY"];
-      if (!secret) throw new ApiError(503, "PAYSTACK_NOT_CONFIGURED", "Website payments are not configured.");
-      await fs.setDoc("payments/paystack_" + reference, {
-        uid: user.uid, email: user.email, reference, packageId,
-        amountMinor: offer.amountMinor, creditMinor: offer.creditMinor,
-        currency, provider: "paystack", status: "initializing",
-        createdAt: new Date().toISOString(),
-      }, { mustNotExist: true });
-      await recordRiskSignal(fs, user.uid, "topup");
-      const response = await fetch("https://api.paystack.co/transaction/initialize", {
-        method: "POST",
-        headers: { authorization: "Bearer " + secret, "content-type": "application/json" },
-        body: JSON.stringify({
-          email: user.email, amount: offer.amountMinor, currency, reference,
-          callback_url: process.env["PAYSTACK_CALLBACK_URL"] || new URL("/wallet", request.url).toString(),
-          metadata: { uid: user.uid, packageId, creditMinor: offer.creditMinor, platform: "website" },
-        }),
-      });
-      const result = await response.json() as { status?: boolean; message?: string; data?: { authorization_url?: string; access_code?: string; reference?: string } };
-      if (!response.ok || result.status !== true || !result.data?.authorization_url) {
-        await markPaymentStatus(fs, "payments/paystack_" + reference, user.uid, "initialize_failed");
-        await recordRiskSignal(fs, user.uid, "failed_payment");
-        throw new ApiError(502, "PAYSTACK_INITIALIZE_FAILED", "The payment provider could not start checkout.");
-      }
-      await markPaymentStatus(fs, "payments/paystack_" + reference, user.uid, "pending");
-      return Response.json({ authorizationUrl: result.data.authorization_url, reference, amountMinor: offer.amountMinor, currency }, { status: 201 });
-    } catch (error) { return errorBody(error); }
-  } } },
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        try {
+          const user = await requireUser(request);
+          if (!user.emailVerified)
+            throw new ApiError(
+              403,
+              "EMAIL_VERIFICATION_REQUIRED",
+              "Verify your email before making a wallet payment.",
+            );
+          if (!user.email)
+            throw new ApiError(
+              400,
+              "EMAIL_REQUIRED",
+              "Add an email address before making a website payment.",
+            );
+          const { packageId } = await parseBody(request, schema);
+          const fs = await Firestore.create();
+          await enforceRateLimit(fs, "paystack-init:" + user.uid, { limit: 5, windowMs: 60_000 });
+          await assertRiskStepUp(fs, user.uid, user.authTime);
+          const wallet = await getWallet(fs, user.uid);
+          const currency = wallet.currency;
+          const pricing = await getPricingConfig(fs);
+          const offer = getPaystackTopup(pricing, packageId, currency);
+          const reference = "BQTV_" + crypto.randomUUID().replace(/-/g, "");
+          const secret = process.env["PAYSTACK_SECRET_KEY"];
+          if (!secret)
+            throw new ApiError(
+              503,
+              "PAYSTACK_NOT_CONFIGURED",
+              "Website payments are not configured.",
+            );
+          await fs.setDoc(
+            "payments/paystack_" + reference,
+            {
+              uid: user.uid,
+              email: user.email,
+              reference,
+              packageId,
+              amountMinor: offer.amountMinor,
+              creditMinor: offer.creditMinor,
+              currency,
+              provider: "paystack",
+              status: "initializing",
+              createdAt: new Date().toISOString(),
+            },
+            { mustNotExist: true },
+          );
+          await recordRiskSignal(fs, user.uid, "topup");
+          const response = await fetch("https://api.paystack.co/transaction/initialize", {
+            method: "POST",
+            headers: { authorization: "Bearer " + secret, "content-type": "application/json" },
+            body: JSON.stringify({
+              email: user.email,
+              amount: offer.amountMinor,
+              currency,
+              reference,
+              callback_url:
+                process.env["PAYSTACK_CALLBACK_URL"] || new URL("/wallet", request.url).toString(),
+              metadata: {
+                uid: user.uid,
+                packageId,
+                creditMinor: offer.creditMinor,
+                platform: "website",
+              },
+            }),
+          });
+          const result = (await response.json()) as {
+            status?: boolean;
+            message?: string;
+            data?: { authorization_url?: string; access_code?: string; reference?: string };
+          };
+          if (!response.ok || result.status !== true || !result.data?.authorization_url) {
+            await markPaymentStatus(
+              fs,
+              "payments/paystack_" + reference,
+              user.uid,
+              "initialize_failed",
+            );
+            await recordRiskSignal(fs, user.uid, "failed_payment");
+            throw new ApiError(
+              502,
+              "PAYSTACK_INITIALIZE_FAILED",
+              "The payment provider could not start checkout.",
+            );
+          }
+          await markPaymentStatus(fs, "payments/paystack_" + reference, user.uid, "pending");
+          return Response.json(
+            {
+              authorizationUrl: result.data.authorization_url,
+              reference,
+              amountMinor: offer.amountMinor,
+              currency,
+            },
+            { status: 201 },
+          );
+        } catch (error) {
+          return errorBody(error);
+        }
+      },
+    },
+  },
 });

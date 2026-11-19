@@ -32,7 +32,9 @@ export function ErrorCenterView() {
   async function fetchErrors(ref?: string) {
     setLoading(true);
     try {
-      const url = ref ? `/api/public/v1/admin/errors?ref=${encodeURIComponent(ref)}` : `/api/public/v1/admin/errors`;
+      const url = ref
+        ? `/api/public/v1/zillionaire/errors?ref=${encodeURIComponent(ref)}`
+        : `/api/public/v1/zillionaire/errors`;
       const res = await fetch(url, {
         headers: {
           authorization: `Bearer ${localStorage.getItem("token") || ""}`,
@@ -161,10 +163,17 @@ ${item.topStackFrames.join("\n") || "No stack frames captured"}
                     {item.count} {item.count === 1 ? "hit" : "hits"}
                   </span>
                 </div>
-                <div className="text-sm font-semibold text-zinc-200 truncate">{item.routePattern}</div>
+                <div className="text-sm font-semibold text-zinc-200 truncate">
+                  {item.routePattern}
+                </div>
                 <div className="flex items-center justify-between text-xs text-zinc-500 mt-2">
                   <span className="capitalize">{item.causeCategory}</span>
-                  <span>{new Date(item.lastSeen).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span>
+                    {new Date(item.lastSeen).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
                 </div>
               </button>
             ))}
@@ -184,7 +193,9 @@ ${item.topStackFrames.join("\n") || "No stack frames captured"}
                       {selected.causeCategory}
                     </span>
                   </div>
-                  <p className="text-xs text-zinc-400 font-mono mt-1">Fingerprint: {selected.fingerprint}</p>
+                  <p className="text-xs text-zinc-400 font-mono mt-1">
+                    Fingerprint: {selected.fingerprint}
+                  </p>
                 </div>
                 <button
                   onClick={() => copyDiagnostic(selected)}
@@ -195,21 +206,27 @@ ${item.topStackFrames.join("\n") || "No stack frames captured"}
               </div>
 
               <div>
-                <h3 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">Route Pattern</h3>
+                <h3 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">
+                  Route Pattern
+                </h3>
                 <p className="font-mono text-sm text-zinc-300 mt-1 bg-zinc-950 p-2.5 rounded-lg border border-zinc-800">
                   {selected.routePattern}
                 </p>
               </div>
 
               <div>
-                <h3 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">Redacted Technical Message</h3>
+                <h3 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">
+                  Redacted Technical Message
+                </h3>
                 <p className="text-sm text-zinc-300 mt-1 bg-zinc-950 p-3 rounded-lg border border-zinc-800 font-mono">
                   {selected.redactedTechnicalMessage}
                 </p>
               </div>
 
               <div>
-                <h3 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">Likely Cause & Recommended Fix</h3>
+                <h3 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">
+                  Likely Cause & Recommended Fix
+                </h3>
                 <p className="text-sm text-emerald-400 mt-1 bg-emerald-950/20 p-3 rounded-lg border border-emerald-900/30">
                   {getFixSuggestion(selected.causeCategory, selected.code)}
                 </p>
@@ -221,7 +238,10 @@ ${item.topStackFrames.join("\n") || "No stack frames captured"}
                 </h3>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {selected.recentRefs.map((r) => (
-                    <span key={r} className="px-2.5 py-1 text-xs font-mono rounded bg-zinc-800 text-zinc-300 border border-zinc-700">
+                    <span
+                      key={r}
+                      className="px-2.5 py-1 text-xs font-mono rounded bg-zinc-800 text-zinc-300 border border-zinc-700"
+                    >
                       {r}
                     </span>
                   ))}
@@ -230,7 +250,9 @@ ${item.topStackFrames.join("\n") || "No stack frames captured"}
 
               {selected.topStackFrames.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">Safe Top Stack Frames</h3>
+                  <h3 className="text-xs font-semibold uppercase text-zinc-500 tracking-wider">
+                    Safe Top Stack Frames
+                  </h3>
                   <pre className="text-xs font-mono text-zinc-400 mt-1 bg-zinc-950 p-3 rounded-lg border border-zinc-800 overflow-x-auto">
                     {selected.topStackFrames.join("\n")}
                   </pre>

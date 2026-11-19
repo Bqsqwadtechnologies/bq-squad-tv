@@ -77,7 +77,7 @@ export const Route = createFileRoute("/api/public/v1/pages/$slug")({
                   effectiveAt: page["effectiveAt"] ?? new Date().toISOString(),
                   audience: page["audience"] ?? "public",
                 },
-                { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=300" } }
+                { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=300" } },
               );
             }
           } catch {
@@ -86,7 +86,7 @@ export const Route = createFileRoute("/api/public/v1/pages/$slug")({
 
           // Fall back to bundled default
           const bundled = defaultPages.find(
-            (p: { slug: string }) => p.slug === slug || SLUG_ALIASES[p.slug] === slug
+            (p: { slug: string }) => p.slug === slug || SLUG_ALIASES[p.slug] === slug,
           );
 
           if (bundled) {
@@ -96,10 +96,11 @@ export const Route = createFileRoute("/api/public/v1/pages/$slug")({
                 title: bundled.title,
                 body: fillPlaceholders(bundled.body),
                 version: 0,
-                effectiveAt: (bundled as Record<string, unknown>)["effectiveAt"] ?? "2026-01-01T00:00:00.000Z",
+                effectiveAt:
+                  (bundled as Record<string, unknown>)["effectiveAt"] ?? "2026-01-01T00:00:00.000Z",
                 audience: bundled.audience ?? "public",
               },
-              { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=300" } }
+              { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=300" } },
             );
           }
 

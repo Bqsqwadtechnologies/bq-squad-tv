@@ -10,8 +10,15 @@ import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
 
 const bodySchema = z.object({
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "dateOfBirth must be YYYY-MM-DD"),
-  parentalPin: z.string().regex(/^\d{4,8}$/, "parentalPin must be 4-8 digits").nullable().optional(),
-  countryCode: z.string().regex(/^[A-Za-z]{2}$/).optional(),
+  parentalPin: z
+    .string()
+    .regex(/^\d{4,8}$/, "parentalPin must be 4-8 digits")
+    .nullable()
+    .optional(),
+  countryCode: z
+    .string()
+    .regex(/^[A-Za-z]{2}$/)
+    .optional(),
 });
 
 export const Route = createFileRoute("/api/public/v1/profile/complete")({
@@ -28,44 +35,90 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           const existingWallet = await fs.getDoc("wallets/" + user.uid);
           const requestedCountry = body.countryCode ? normalizeCountryCode(body.countryCode) : null;
           if (body.countryCode && !requestedCountry) {
-            throw new ApiError(400, "COUNTRY_CODE_INVALID", "Choose a valid two-letter country code.");
+            throw new ApiError(
+              400,
+              "COUNTRY_CODE_INVALID",
+              "Choose a valid two-letter country code.",
+            );
           }
           const currentCountry = normalizeCountryCode(existingProfile?.["countryCode"]);
           const nextCountry = requestedCountry ?? currentCountry;
-          const existingCurrency = typeof existingWallet?.["currency"] === "string"
-            ? existingWallet["currency"] as string
-            : existingWallet ? "NGN" : null;
-          const nextCurrency = nextCountry ? currencyForCountry(nextCountry) : existingCurrency ?? "USD";
-          const currencyChanging = Boolean(existingWallet && existingCurrency && nextCurrency !== existingCurrency);
+          const existingCurrency =
+            typeof existingWallet?.["currency"] === "string"
+              ? (existingWallet["currency"] as string)
+              : existingWallet
+                ? "NGN"
+                : null;
+          const nextCurrency = nextCountry
+            ? currencyForCountry(nextCountry)
+            : (existingCurrency ?? "USD");
+          const currencyChanging = Boolean(
+            existingWallet && existingCurrency && nextCurrency !== existingCurrency,
+          );
           if (currencyChanging) {
-            const balance = typeof existingWallet?.["balanceMinor"] === "number" ? existingWallet["balanceMinor"] as number : 0;
-            const held = ["heldMinor", "heldBalanceMinor", "holdsMinor"].reduce((sum, key) =>
-              sum + (typeof existingWallet?.[key] === "number" && Number.isSafeInteger(existingWallet[key]) ? existingWallet[key] as number : 0), 0);
+            const balance =
+              typeof existingWallet?.["balanceMinor"] === "number"
+                ? (existingWallet["balanceMinor"] as number)
+                : 0;
+            const held = ["heldMinor", "heldBalanceMinor", "holdsMinor"].reduce(
+              (sum, key) =>
+                sum +
+                (typeof existingWallet?.[key] === "number" &&
+                Number.isSafeInteger(existingWallet[key])
+                  ? (existingWallet[key] as number)
+                  : 0),
+              0,
+            );
             const activeSessions = await fs.getDoc("activeSessions/" + user.uid);
-            const activeSessionIds = Object.keys(liveSessionLeases(activeSessions?.["sessions"], Date.now()));
+            const activeSessionIds = Object.keys(
+              liveSessionLeases(activeSessions?.["sessions"], Date.now()),
+            );
             if (balance !== 0 || held !== 0 || activeSessionIds.length > 0) {
-              throw new ApiError(409, "WALLET_CURRENCY_LOCKED", "Your wallet currency can change only when your balance is zero and no viewing sessions or held funds remain. Learn more in Wallet help.");
+              throw new ApiError(
+                409,
+                "WALLET_CURRENCY_LOCKED",
+                "Your wallet currency can change only when your balance is zero and no viewing sessions or held funds remain. Learn more in Wallet help.",
+              );
             }
-            await fs.patchDoc("wallets/" + user.uid, { currency: nextCurrency, updatedAt: new Date().toISOString() });
+            await fs.patchDoc("wallets/" + user.uid, {
+              currency: nextCurrency,
+              updatedAt: new Date().toISOString(),
+            });
             await writeAuditLog(fs, {
-              actorUid: user.uid, action: "wallet.currency.changed",
-              targetType: "wallet", targetId: user.uid,
-              reason: "Viewer changed account country while the wallet had no balance, holds or active sessions",
+              actorUid: user.uid,
+              action: "wallet.currency.changed",
+              targetType: "wallet",
+              targetId: user.uid,
+              reason:
+                "Viewer changed account country while the wallet had no balance, holds or active sessions",
               metadata: { fromCurrency: existingCurrency, toCurrency: nextCurrency },
             });
           }
           if (!existingWallet) {
-            await fs.setDoc("wallets/" + user.uid, {
-              balanceMinor: 0, currency: nextCurrency, dailySpendLimitMinor: null,
-              spentTodayMinor: 0, updatedAt: new Date().toISOString(),
-            }, { mustNotExist: true }).catch(async error => {
-              if (!(error instanceof ApiError) || error.status !== 409) throw error;
-            });
+            await fs
+              .setDoc(
+                "wallets/" + user.uid,
+                {
+                  balanceMinor: 0,
+                  currency: nextCurrency,
+                  dailySpendLimitMinor: null,
+                  spentTodayMinor: 0,
+                  updatedAt: new Date().toISOString(),
+                },
+                { mustNotExist: true },
+              )
+              .catch(async (error) => {
+                if (!(error instanceof ApiError) || error.status !== 409) throw error;
+              });
           }
           const sameVerifiedDateOfBirth = existingProfile?.["dateOfBirth"] === body.dateOfBirth;
-          const adultAgeVerified = adultEligible && sameVerifiedDateOfBirth &&
+          const adultAgeVerified =
+            adultEligible &&
+            sameVerifiedDateOfBirth &&
             existingProfile?.["adultAgeVerified"] === true;
-          const adultIdentityVerified = adultEligible && sameVerifiedDateOfBirth &&
+          const adultIdentityVerified =
+            adultEligible &&
+            sameVerifiedDateOfBirth &&
             existingProfile?.["adultIdentityVerified"] === true;
           const verifiedAdultEligible = adultEligible && adultAgeVerified && adultIdentityVerified;
           const fields: Record<string, unknown> = {
@@ -95,7 +148,9 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
             profileComplete: true,
             adultEligible: verifiedAdultEligible,
             parentalPinEnabled: typeof body.parentalPin === "string",
-            ...(nextCountry ? { countryCode: nextCountry, currency: nextCurrency } : { currency: existingCurrency ?? "USD" }),
+            ...(nextCountry
+              ? { countryCode: nextCountry, currency: nextCurrency }
+              : { currency: existingCurrency ?? "USD" }),
           });
         } catch (error) {
           return errorBody(error);

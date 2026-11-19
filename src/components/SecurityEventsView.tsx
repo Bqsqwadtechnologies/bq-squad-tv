@@ -189,7 +189,7 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
       }
 
       const headers = await getWebAuthHeaders(token);
-      const res = await fetch(`/api/public/v1/admin/security/events?${params.toString()}`, {
+      const res = await fetch(`/api/public/v1/zillionaire/security/events?${params.toString()}`, {
         headers,
         cache: "no-store",
       });
@@ -271,7 +271,7 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
       }
 
       const headers = await getWebAuthHeaders(token);
-      const res = await fetch("/api/public/v1/admin/security/lookup-actor", {
+      const res = await fetch("/api/public/v1/zillionaire/security/lookup-actor", {
         method: "POST",
         headers: {
           ...headers,

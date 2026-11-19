@@ -151,7 +151,8 @@ type ExpectedRouteCase = ExpectedRoute & { caller: Caller; expectedStatus: numbe
 // the test. A new/changed route fails until its caller expectations are reviewed.
 import expectedCases from "./fixtures/role-matrix-routes.json";
 
-const routeKey = (route: Pick<MatrixRoute, "route" | "file">) => `${route.route}\u0000${route.file}`;
+const routeKey = (route: Pick<MatrixRoute, "route" | "file">) =>
+  `${route.route}\u0000${route.file}`;
 const discovered = buildMatrix() as MatrixRoute[];
 const matrix = [...new Map(discovered.map((route) => [routeKey(route), route])).values()];
 const expectedRoutes = expectedCases as ExpectedRoute[];

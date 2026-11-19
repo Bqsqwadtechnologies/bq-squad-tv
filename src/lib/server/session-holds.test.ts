@@ -19,33 +19,39 @@ describe("pay-as-you-go session wallet holds", () => {
   });
 
   it("settles a debit, replenishes the current hold only from unreserved balance", () => {
-    expect(settleSessionHold({
-      balanceMinor: 10_000,
-      heldBalanceMinor: 6_000,
-      ownHoldMinor: 2_000,
-      chargeMinor: 500,
-      targetHoldMinor: 2_000,
-      keepActive: true,
-    })).toEqual({ holdMinor: 2_000, heldBalanceMinor: 6_000 });
-    expect(settleSessionHold({
-      balanceMinor: 6_000,
-      heldBalanceMinor: 6_000,
-      ownHoldMinor: 2_000,
-      chargeMinor: 1_500,
-      targetHoldMinor: 2_000,
-      keepActive: true,
-    })).toEqual({ holdMinor: 500, heldBalanceMinor: 4_500 });
+    expect(
+      settleSessionHold({
+        balanceMinor: 10_000,
+        heldBalanceMinor: 6_000,
+        ownHoldMinor: 2_000,
+        chargeMinor: 500,
+        targetHoldMinor: 2_000,
+        keepActive: true,
+      }),
+    ).toEqual({ holdMinor: 2_000, heldBalanceMinor: 6_000 });
+    expect(
+      settleSessionHold({
+        balanceMinor: 6_000,
+        heldBalanceMinor: 6_000,
+        ownHoldMinor: 2_000,
+        chargeMinor: 1_500,
+        targetHoldMinor: 2_000,
+        keepActive: true,
+      }),
+    ).toEqual({ holdMinor: 500, heldBalanceMinor: 4_500 });
   });
 
   it("releases this session's hold when playback ends", () => {
-    expect(settleSessionHold({
-      balanceMinor: 5_000,
-      heldBalanceMinor: 3_000,
-      ownHoldMinor: 1_000,
-      chargeMinor: 250,
-      targetHoldMinor: 1_000,
-      keepActive: false,
-    })).toEqual({ holdMinor: 0, heldBalanceMinor: 2_000 });
+    expect(
+      settleSessionHold({
+        balanceMinor: 5_000,
+        heldBalanceMinor: 3_000,
+        ownHoldMinor: 1_000,
+        chargeMinor: 250,
+        targetHoldMinor: 1_000,
+        keepActive: false,
+      }),
+    ).toEqual({ holdMinor: 0, heldBalanceMinor: 2_000 });
   });
 
   it("rejects inconsistent hold totals and negative amounts", () => {

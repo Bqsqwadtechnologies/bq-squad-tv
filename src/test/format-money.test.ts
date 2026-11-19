@@ -2,11 +2,14 @@ import { describe, expect, it } from "vitest";
 import { formatMinorCurrency } from "@/lib/format-money";
 
 describe("formatMinorCurrency", () => {
-  it.each(["NGN", "USD", "GBP", "GHS", "KES", "ZAR"])("formats %s from integer minor units", currency => {
-    const value = formatMinorCurrency(12345, currency);
-    expect(value).toMatch(/123[.,]45/);
-    expect(value).not.toContain("NaN");
-  });
+  it.each(["NGN", "USD", "GBP", "GHS", "KES", "ZAR"])(
+    "formats %s from integer minor units",
+    (currency) => {
+      const value = formatMinorCurrency(12345, currency);
+      expect(value).toMatch(/123[.,]45/);
+      expect(value).not.toContain("NaN");
+    },
+  );
 
   it("respects zero-decimal currencies such as JPY", () => {
     const value = formatMinorCurrency(12345, "JPY");

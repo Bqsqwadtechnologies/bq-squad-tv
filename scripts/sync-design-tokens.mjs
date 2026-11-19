@@ -1,18 +1,18 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, '..');
-const tokensPath = path.join(rootDir, 'design', 'tokens.json');
-const isCheckMode = process.argv.includes('--check');
+const rootDir = path.resolve(__dirname, "..");
+const tokensPath = path.join(rootDir, "design", "tokens.json");
+const isCheckMode = process.argv.includes("--check");
 
-const tokens = JSON.parse(fs.readFileSync(tokensPath, 'utf8'));
+const tokens = JSON.parse(fs.readFileSync(tokensPath, "utf8"));
 
 // 1. Android Color.kt
 const androidColorPath = path.join(
   rootDir,
-  'android/app/src/main/java/com/bqsqwad/tv/ui/theme/Color.kt'
+  "android/app/src/main/java/com/bqsqwad/tv/ui/theme/Color.kt",
 );
 
 const darkAndroid = tokens.themes.dark.androidHex;
@@ -48,7 +48,7 @@ val LightBorder = Color(0xFFE2E8F0)
 // 2. Android Theme.kt
 const androidThemePath = path.join(
   rootDir,
-  'android/app/src/main/java/com/bqsqwad/tv/ui/theme/Theme.kt'
+  "android/app/src/main/java/com/bqsqwad/tv/ui/theme/Theme.kt",
 );
 
 const androidThemeContent = `package com.bqsqwad.tv.ui.theme
@@ -103,14 +103,14 @@ function handleFile(targetPath, content) {
       console.error(`Check failed: ${targetPath} does not exist`);
       process.exit(1);
     }
-    const existing = fs.readFileSync(targetPath, 'utf8');
+    const existing = fs.readFileSync(targetPath, "utf8");
     if (existing !== content) {
       console.error(`Check failed: ${targetPath} differs from design tokens`);
       process.exit(1);
     }
   } else {
     fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-    fs.writeFileSync(targetPath, content, 'utf8');
+    fs.writeFileSync(targetPath, content, "utf8");
     console.log(`Synced: ${path.relative(rootDir, targetPath)}`);
   }
 }
@@ -121,13 +121,16 @@ handleFile(androidThemePath, androidThemeContent);
 // Update ThemePreferences.kt default to "dark"
 const themePrefPath = path.join(
   rootDir,
-  'android/app/src/main/java/com/bqsqwad/tv/data/preferences/ThemePreferences.kt'
+  "android/app/src/main/java/com/bqsqwad/tv/data/preferences/ThemePreferences.kt",
 );
 if (fs.existsSync(themePrefPath) && !isCheckMode) {
-  let content = fs.readFileSync(themePrefPath, 'utf8');
-  content = content.replace('?.takeIf { it == "system" || it == "light" || it == "dark" }\n            ?: "system"', '?.takeIf { it == "system" || it == "light" || it == "dark" }\n            ?: "dark"');
-  fs.writeFileSync(themePrefPath, content, 'utf8');
+  let content = fs.readFileSync(themePrefPath, "utf8");
+  content = content.replace(
+    '?.takeIf { it == "system" || it == "light" || it == "dark" }\n            ?: "system"',
+    '?.takeIf { it == "system" || it == "light" || it == "dark" }\n            ?: "dark"',
+  );
+  fs.writeFileSync(themePrefPath, content, "utf8");
   console.log(`Updated default theme to dark in ThemePreferences.kt`);
 }
 
-console.log('Design tokens sync complete!');
+console.log("Design tokens sync complete!");

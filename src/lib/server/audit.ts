@@ -11,54 +11,88 @@ export type AuditInput = {
   metadata?: Record<string, unknown>;
 };
 
-export type AuditChainResult = { valid: boolean; checked: number; brokenEntryId: string | null; reason: string | null };
+export type AuditChainResult = {
+  valid: boolean;
+  checked: number;
+  brokenEntryId: string | null;
+  reason: string | null;
+};
 
 function canonical(value: unknown): string {
   if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
   if (value && typeof value === "object") {
-    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) => a.localeCompare(b));
-    return "{" + entries.map(([key, item]) => JSON.stringify(key) + ":" + canonical(item)).join(",") + "}";
+    const entries = Object.entries(value as Record<string, unknown>).sort(([a], [b]) =>
+      a.localeCompare(b),
+    );
+    return (
+      "{" +
+      entries.map(([key, item]) => JSON.stringify(key) + ":" + canonical(item)).join(",") +
+      "}"
+    );
   }
   return JSON.stringify(value) ?? "null";
 }
 
 export async function auditEntryHash(entry: Record<string, unknown>): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonical(entry)));
-  return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 export async function writeAuditLog(fs: Firestore, input: AuditInput): Promise<string> {
   const reason = input.reason.trim();
   if (reason.length < 3 || reason.length > 1000) {
-    throw new ApiError(400, "AUDIT_REASON_REQUIRED", "A reason of 3 to 1000 characters is required.");
+    throw new ApiError(
+      400,
+      "AUDIT_REASON_REQUIRED",
+      "A reason of 3 to 1000 characters is required.",
+    );
   }
   if (!input.actorUid || !input.action || !input.targetType || !input.targetId) {
-    throw new ApiError(400, "AUDIT_FIELDS_REQUIRED", "Audit actor, action and target are required.");
+    throw new ApiError(
+      400,
+      "AUDIT_FIELDS_REQUIRED",
+      "Audit actor, action and target are required.",
+    );
   }
   const id = crypto.randomUUID();
   const entryPath = "auditLog/" + id;
   const headPath = "auditChain/head";
   const createdAt = new Date().toISOString();
-  await fs.transact([headPath, entryPath], docs => {
+  await fs.transact([headPath, entryPath], (docs) => {
     const head = docs[0] ?? {};
     const previousHash = typeof head["hash"] === "string" ? head["hash"] : "GENESIS";
-    const sequence = typeof head["sequence"] === "number" && Number.isSafeInteger(head["sequence"])
-      ? (head["sequence"] as number) + 1 : 1;
+    const sequence =
+      typeof head["sequence"] === "number" && Number.isSafeInteger(head["sequence"])
+        ? (head["sequence"] as number) + 1
+        : 1;
     const entry = {
-      actorUid: input.actorUid, action: input.action, targetType: input.targetType,
-      targetId: input.targetId, reason,
+      actorUid: input.actorUid,
+      action: input.action,
+      targetType: input.targetType,
+      targetId: input.targetId,
+      reason,
       ...(input.before === undefined ? {} : { before: input.before }),
       ...(input.after === undefined ? {} : { after: input.after }),
       ...(input.metadata ? { metadata: input.metadata } : {}),
-      sequence, previousHash, createdAt,
+      sequence,
+      previousHash,
+      createdAt,
     };
     return (async () => {
       const hash = await auditEntryHash(entry);
       return {
         result: undefined,
         writes: [
-          { update: { name: fs.docName(entryPath), fields: encodeFields({ ...entry, hash }) }, currentDocument: { exists: false } },
-          { update: { name: fs.docName(headPath), fields: encodeFields({ sequence, hash, updatedAt: createdAt }) } },
+          {
+            update: { name: fs.docName(entryPath), fields: encodeFields({ ...entry, hash }) },
+            currentDocument: { exists: false },
+          },
+          {
+            update: {
+              name: fs.docName(headPath),
+              fields: encodeFields({ sequence, hash, updatedAt: createdAt }),
+            },
+          },
         ],
       };
     })();
@@ -68,7 +102,11 @@ export async function writeAuditLog(fs: Firestore, input: AuditInput): Promise<s
 
 export async function verifyAuditChain(fs: Firestore, pageSize = 500): Promise<AuditChainResult> {
   if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 500) {
-    throw new ApiError(400, "AUDIT_VERIFY_LIMIT_INVALID", "The audit verification page size is invalid.");
+    throw new ApiError(
+      400,
+      "AUDIT_VERIFY_LIMIT_INVALID",
+      "The audit verification page size is invalid.",
+    );
   }
   let previousHash = "GENESIS";
   let expectedSequence = 1;
@@ -83,7 +121,11 @@ export async function verifyAuditChain(fs: Firestore, pageSize = 500): Promise<A
     });
     for (const row of rows) {
       const storedHash = row["hash"];
-      if (row["previousHash"] !== previousHash || row["sequence"] !== expectedSequence || typeof storedHash !== "string") {
+      if (
+        row["previousHash"] !== previousHash ||
+        row["sequence"] !== expectedSequence ||
+        typeof storedHash !== "string"
+      ) {
         return { valid: false, checked, brokenEntryId: row.__id, reason: "chain_link_invalid" };
       }
       const { __id: _id, hash: _hash, ...entry } = row;
@@ -98,7 +140,12 @@ export async function verifyAuditChain(fs: Firestore, pageSize = 500): Promise<A
     if (rows.length < pageSize) break;
     const last = rows[rows.length - 1];
     if (!last || typeof last["sequence"] !== "number") {
-      return { valid: false, checked, brokenEntryId: last?.__id ?? null, reason: "chain_cursor_invalid" };
+      return {
+        valid: false,
+        checked,
+        brokenEntryId: last?.__id ?? null,
+        reason: "chain_cursor_invalid",
+      };
     }
     cursor = { fieldValue: last["sequence"], documentId: last.__id };
   }

@@ -20,11 +20,13 @@ export const Route = createFileRoute("/api/public/v1/auth/web/me")({
               modules: access.adminModules,
               producerPlanActive: access.producerPlanActive,
               providerId: access.providerId ?? null,
-              ...(access.isZillionaireOwner ? {
-                diagnostics: {
-                  ownerSecretConfigured: Boolean(getConfiguredOwnerEmail()),
-                },
-              } : {}),
+              ...(access.isZillionaireOwner
+                ? {
+                    diagnostics: {
+                      ownerSecretConfigured: Boolean(getConfiguredOwnerEmail()),
+                    },
+                  }
+                : {}),
             },
             { headers: { "cache-control": "no-store", pragma: "no-cache" } },
           );

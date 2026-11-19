@@ -13,17 +13,30 @@ import { calculateB2DailyFreeEgressBudget, calculateB2MonthlyFreeEgressBudget } 
 function fakeFirestore() {
   const docs = new Map<string, Record<string, unknown>>();
   const fs = {
-    async getDoc(path: string) { return docs.get(path) ?? null; },
-    async setDoc(path: string, fields: Record<string, unknown>) { docs.set(path, fields); },
-    docName(path: string) { return "projects/test/databases/(default)/documents/" + path; },
-    async transact(paths: string[], callback: (values: Array<Record<string, unknown> | null>) => unknown) {
-      const result = await callback(paths.map(path => docs.get(path) ?? null)) as {
-        result: unknown; writes: Array<Record<string, unknown>>;
+    async getDoc(path: string) {
+      return docs.get(path) ?? null;
+    },
+    async setDoc(path: string, fields: Record<string, unknown>) {
+      docs.set(path, fields);
+    },
+    docName(path: string) {
+      return "projects/test/databases/(default)/documents/" + path;
+    },
+    async transact(
+      paths: string[],
+      callback: (values: Array<Record<string, unknown> | null>) => unknown,
+    ) {
+      const result = (await callback(paths.map((path) => docs.get(path) ?? null))) as {
+        result: unknown;
+        writes: Array<Record<string, unknown>>;
       };
       for (const write of result.writes) {
         const update = write["update"] as { name: string; fields: Record<string, never> };
         const path = update.name.split("/documents/").pop()!;
-        if ((write["currentDocument"] as { exists?: boolean } | undefined)?.exists === false && docs.has(path)) {
+        if (
+          (write["currentDocument"] as { exists?: boolean } | undefined)?.exists === false &&
+          docs.has(path)
+        ) {
           throw new ApiError(409, "CONFLICT", "Already exists.");
         }
         const fields = decodeFields(update.fields as never);
@@ -41,8 +54,10 @@ function fakeFirestore() {
 }
 
 const metadata = {
-  destinationId: "b2-egress-01", accountGroup: "b2:egress-account",
-  freeEgressBudgetBytes: 100, dailyEgressCapBytes: 100,
+  destinationId: "b2-egress-01",
+  accountGroup: "b2:egress-account",
+  freeEgressBudgetBytes: 100,
+  dailyEgressCapBytes: 100,
   paidEgressEnabled: false,
 } as StorageDestinationMetadata;
 
@@ -68,9 +83,12 @@ describe("expected playback egress", () => {
     const second = await reserveExpectedStorageEgress(fs, metadata, "egress-session-02", 15);
     expect(second.level).toBe("throttle");
     expect(second.qualityCap).toBe(480);
-    await expect(reserveExpectedStorageEgress(fs, metadata, "egress-session-03", 10))
-      .rejects.toMatchObject({ code: "STORAGE_EGRESS_LIMIT_REACHED" });
-    expect([...docs.values()].some(value => value["reasonCode"] === "STORAGE_EGRESS_BLOCKED")).toBe(true);
+    await expect(
+      reserveExpectedStorageEgress(fs, metadata, "egress-session-03", 10),
+    ).rejects.toMatchObject({ code: "STORAGE_EGRESS_LIMIT_REACHED" });
+    expect(
+      [...docs.values()].some((value) => value["reasonCode"] === "STORAGE_EGRESS_BLOCKED"),
+    ).toBe(true);
   });
 
   it("uses the monthly budget as the daily ceiling when no provider daily cap exists", async () => {
@@ -90,11 +108,17 @@ describe("expected playback egress", () => {
   it("rejects different monthly or daily budgets inside one shared account group", async () => {
     const { fs } = fakeFirestore();
     await reserveExpectedStorageEgress(fs, metadata, "egress-budget-01", 10);
-    await expect(reserveExpectedStorageEgress(fs, {
-      ...metadata,
-      freeEgressBudgetBytes: 200,
-    } as StorageDestinationMetadata, "egress-budget-02", 10))
-      .rejects.toMatchObject({ code: "EGRESS_ACCOUNT_CONFIGURATION_MISMATCH" });
+    await expect(
+      reserveExpectedStorageEgress(
+        fs,
+        {
+          ...metadata,
+          freeEgressBudgetBytes: 200,
+        } as StorageDestinationMetadata,
+        "egress-budget-02",
+        10,
+      ),
+    ).rejects.toMatchObject({ code: "EGRESS_ACCOUNT_CONFIGURATION_MISMATCH" });
   });
 
   it("tracks heartbeat progress in the reserved window and adds extra expected bytes after it", async () => {

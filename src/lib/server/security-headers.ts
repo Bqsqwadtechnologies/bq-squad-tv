@@ -4,8 +4,10 @@ const SECURITY_HEADERS: Readonly<Record<string, string>> = {
   "x-frame-options": "DENY",
   "referrer-policy": "strict-origin-when-cross-origin",
   "permissions-policy": "camera=(), microphone=(), geolocation=()",
-  "content-security-policy-report-only": "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
-  "content-security-policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src 'self' https: blob:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; object-src 'none';",
+  "content-security-policy-report-only":
+    "default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
+  "content-security-policy":
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; media-src 'self' https: blob:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; object-src 'none';",
 };
 
 export function applySecurityHeaders(response: Response): Response {

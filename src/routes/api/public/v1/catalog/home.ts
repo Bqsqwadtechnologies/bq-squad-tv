@@ -12,11 +12,14 @@ export const Route = createFileRoute("/api/public/v1/catalog/home")({
           const fs = await Firestore.create();
           const profile = await getUserProfile(fs, user.uid);
           const channels = visibleChannels(
-            await fs.query("channels", { filters: [{ field: "published", op: "EQUAL", value: true }], limit: 200 }),
+            await fs.query("channels", {
+              filters: [{ field: "published", op: "EQUAL", value: true }],
+              limit: 200,
+            }),
             profile.adultEligible,
           );
           const summaries = channels.map(toChannelSummary);
-          const visibleChannelIds = new Set(channels.map(channel => channel.__id));
+          const visibleChannelIds = new Set(channels.map((channel) => channel.__id));
           const featuredAssets = await fs.query("contentAssets", {
             filters: [
               { field: "featured", op: "EQUAL", value: true },
@@ -27,28 +30,42 @@ export const Route = createFileRoute("/api/public/v1/catalog/home")({
             limit: 50,
           });
           const featuredContent = featuredAssets
-            .filter(asset => typeof asset["channelId"] === "string" && visibleChannelIds.has(asset["channelId"] as string))
+            .filter(
+              (asset) =>
+                typeof asset["channelId"] === "string" &&
+                visibleChannelIds.has(asset["channelId"] as string),
+            )
             .sort((left, right) => {
-              const leftRank = typeof left["featureRank"] === "number" ? left["featureRank"] as number : 10_000;
-              const rightRank = typeof right["featureRank"] === "number" ? right["featureRank"] as number : 10_000;
+              const leftRank =
+                typeof left["featureRank"] === "number" ? (left["featureRank"] as number) : 10_000;
+              const rightRank =
+                typeof right["featureRank"] === "number"
+                  ? (right["featureRank"] as number)
+                  : 10_000;
               return leftRank - rightRank;
             })
-            .map(asset => {
+            .map((asset) => {
               const channelId = asset["channelId"] as string;
-              const channel = channels.find(item => item.__id === channelId);
+              const channel = channels.find((item) => item.__id === channelId);
               return {
                 id: asset.__id,
                 channelId,
                 channelTitle: typeof channel?.["title"] === "string" ? channel["title"] : "Channel",
                 title: typeof asset["title"] === "string" ? asset["title"] : "Untitled",
                 category: typeof asset["category"] === "string" ? asset["category"] : "Movie",
-                genre: typeof asset["genre"] === "string"
-                  ? asset["genre"]
-                  : Array.isArray(asset["genres"]) ? asset["genres"].filter((value): value is string => typeof value === "string").join(", ") : "",
+                genre:
+                  typeof asset["genre"] === "string"
+                    ? asset["genre"]
+                    : Array.isArray(asset["genres"])
+                      ? asset["genres"]
+                          .filter((value): value is string => typeof value === "string")
+                          .join(", ")
+                      : "",
                 posterUrl: typeof asset["posterUrl"] === "string" ? asset["posterUrl"] : null,
                 averageStars: typeof asset["averageStars"] === "number" ? asset["averageStars"] : 0,
                 ratingCount: typeof asset["ratingCount"] === "number" ? asset["ratingCount"] : 0,
-                featureRank: typeof asset["featureRank"] === "number" ? asset["featureRank"] : 10_000,
+                featureRank:
+                  typeof asset["featureRank"] === "number" ? asset["featureRank"] : 10_000,
               };
             });
           const now = Date.now();
@@ -57,12 +74,17 @@ export const Route = createFileRoute("/api/public/v1/catalog/home")({
             liveNow: summaries.filter((channel) => channel.isLive),
             startingSoon: channels
               .filter((channel) => {
-                const startsAt = typeof channel["nextProgrammeStartsAt"] === "string" ? Date.parse(channel["nextProgrammeStartsAt"] as string) : null;
+                const startsAt =
+                  typeof channel["nextProgrammeStartsAt"] === "string"
+                    ? Date.parse(channel["nextProgrammeStartsAt"] as string)
+                    : null;
                 return startsAt !== null && startsAt > now && startsAt <= inTwoHours;
               })
               .map(toChannelSummary),
             channels: summaries,
-            replays: channels.filter((channel) => channel["hasReplays"] === true).map(toChannelSummary),
+            replays: channels
+              .filter((channel) => channel["hasReplays"] === true)
+              .map(toChannelSummary),
             continueWatching: [],
             trending: summaries.slice(0, 10),
             featuredContent,

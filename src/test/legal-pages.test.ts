@@ -31,7 +31,7 @@ const LINKED_FOOTER_AND_NAV_SLUGS = [
 
 describe("default legal page drafts", () => {
   it("contains all 12 required unique audiences and slugs", () => {
-    const presentSlugs = pages.map(p => p.slug).sort();
+    const presentSlugs = pages.map((p) => p.slug).sort();
     expect(presentSlugs).toEqual(REQUIRED_SLUGS);
     expect(new Set(presentSlugs).size).toBe(12);
   });
@@ -41,25 +41,28 @@ describe("default legal page drafts", () => {
       expect(page.body.startsWith("# ")).toBe(true);
       expect(page.body).not.toMatch(/<\/?script/i);
     }
-    expect(pages.find(page => page.slug === "privacy-policy")?.audience).toBe("public");
-    expect(pages.find(page => page.slug === "cookie")?.audience).toBe("public");
-    expect(pages.find(page => page.slug === "producer-terms")?.audience).toBe("producer");
-    expect(pages.find(page => page.slug === "provider-terms")?.audience).toBe("provider");
+    expect(pages.find((page) => page.slug === "privacy-policy")?.audience).toBe("public");
+    expect(pages.find((page) => page.slug === "cookie")?.audience).toBe("public");
+    expect(pages.find((page) => page.slug === "producer-terms")?.audience).toBe("producer");
+    expect(pages.find((page) => page.slug === "provider-terms")?.audience).toBe("provider");
   });
 
   it("every linked footer, account, and Android slug resolves to an available bundled page", () => {
-    const availableSlugs = new Set(pages.map(p => p.slug));
+    const availableSlugs = new Set(pages.map((p) => p.slug));
     for (const slug of LINKED_FOOTER_AND_NAV_SLUGS) {
       expect(availableSlugs.has(slug)).toBe(true);
     }
   });
 
   it("detects every unfilled placeholder and allows completed copy", () => {
-    expect(findUnfilledLegalPlaceholders("{{effective_date}} and {{minimum_age}}")).toEqual(["effective_date", "minimum_age"]);
+    expect(findUnfilledLegalPlaceholders("{{effective_date}} and {{minimum_age}}")).toEqual([
+      "effective_date",
+      "minimum_age",
+    ]);
     expect(findUnfilledLegalPlaceholders("Effective date: 2026-11-17")).toEqual([]);
   });
 
   it("never seeds a published document", () => {
-    expect(pages.every(page => !("status" in page))).toBe(true);
+    expect(pages.every((page) => !("status" in page))).toBe(true);
   });
 });

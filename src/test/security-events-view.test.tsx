@@ -33,7 +33,7 @@ describe("Batch 10: SecurityEventsView React Component", () => {
         time: "2026-11-18T14:15:00.000Z",
         actorHash: "abcd1111222233334444555566667777888899990000aaaabbbbccccddddeeee",
         actorRoleClass: "viewer",
-        routePattern: "/api/public/v1/admin/overview",
+        routePattern: "/api/public/v1/zillionaire/overview",
         method: "GET",
         requiredRole: "admin",
         resourceKind: "admin_module",
@@ -69,7 +69,7 @@ describe("Batch 10: SecurityEventsView React Component", () => {
     // Table renders the event row
     await waitFor(() => {
       expect(screen.getAllByText(/Cross-role restricted/i).length).toBeGreaterThanOrEqual(1);
-      expect(screen.getByText("/api/public/v1/admin/overview")).toBeDefined();
+      expect(screen.getByText("/api/public/v1/zillionaire/overview")).toBeDefined();
     });
 
     // When isOwner is false, "Owner only" badge is shown
@@ -84,7 +84,7 @@ describe("Batch 10: SecurityEventsView React Component", () => {
         time: "2026-11-18T15:00:00.000Z",
         actorHash: mockHash,
         actorRoleClass: "producer",
-        routePattern: "/api/public/v1/admin/pricing",
+        routePattern: "/api/public/v1/zillionaire/pricing",
         method: "POST",
         requiredRole: "admin",
         resourceKind: "pricing",
@@ -97,7 +97,7 @@ describe("Batch 10: SecurityEventsView React Component", () => {
 
     globalThis.fetch = vi.fn().mockImplementation((url: string | URL, opts?: RequestInit) => {
       const urlStr = url.toString();
-      if (urlStr.includes("/api/public/v1/admin/security/events")) {
+      if (urlStr.includes("/api/public/v1/zillionaire/security/events")) {
         return Promise.resolve({
           ok: true,
           json: async () => ({
@@ -107,7 +107,7 @@ describe("Batch 10: SecurityEventsView React Component", () => {
           }),
         } as unknown as Response);
       }
-      if (urlStr.includes("/api/public/v1/admin/security/lookup-actor")) {
+      if (urlStr.includes("/api/public/v1/zillionaire/security/lookup-actor")) {
         return Promise.resolve({
           ok: true,
           json: async () => ({

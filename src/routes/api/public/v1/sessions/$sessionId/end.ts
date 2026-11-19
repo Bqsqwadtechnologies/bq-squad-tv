@@ -1,5 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ApiError, Firestore, encodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
+import {
+  ApiError,
+  Firestore,
+  encodeFields,
+  type FirestoreWrite,
+} from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { releaseSessionLease } from "@/lib/server/session-limits";
 import { sessionSpendableBalance, settleSessionHold } from "@/lib/server/session-holds";
@@ -33,11 +38,24 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
           const sessionPath = "sessions/" + sessionId;
           const walletPath = "wallets/" + user.uid;
           const holdPath = "walletHolds/" + sessionId;
-          const initialSession = requireSessionOwned(await fs.getDoc(sessionPath), sessionId, user.uid);
-          const producerUid = typeof initialSession["producerUid"] === "string" ? initialSession["producerUid"] as string : null;
+          const initialSession = requireSessionOwned(
+            await fs.getDoc(sessionPath),
+            sessionId,
+            user.uid,
+          );
+          const producerUid =
+            typeof initialSession["producerUid"] === "string"
+              ? (initialSession["producerUid"] as string)
+              : null;
           const producerPath = producerUid ? "producers/" + producerUid : null;
           const activeSessionsPath = "activeSessions/" + user.uid;
-          const readPaths = [sessionPath, walletPath, activeSessionsPath, holdPath, ...(producerPath ? [producerPath] : [])];
+          const readPaths = [
+            sessionPath,
+            walletPath,
+            activeSessionsPath,
+            holdPath,
+            ...(producerPath ? [producerPath] : []),
+          ];
 
           const snapshot = await fs.transact(readPaths, (docs) => {
             const session = requireSessionOwned(docs[0] ?? null, sessionId, user.uid);
@@ -47,27 +65,51 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
             const producer = producerPath ? docs[4] : null;
             const balance = integer(wallet["balanceMinor"]);
             const heldBalance = integer(wallet["heldBalanceMinor"]);
-            const ownHold = walletHold["uid"] === user.uid && walletHold["sessionId"] === sessionId
-              ? integer(walletHold["amountMinor"]) : 0;
+            const ownHold =
+              walletHold["uid"] === user.uid && walletHold["sessionId"] === sessionId
+                ? integer(walletHold["amountMinor"])
+                : 0;
             if (session["active"] !== true) {
-              if (ownHold <= 0) return { result: toSessionSnapshot(sessionId, session, balance, null), writes: [] };
+              if (ownHold <= 0)
+                return { result: toSessionSnapshot(sessionId, session, balance, null), writes: [] };
               const releasedHold = settleSessionHold({
-                balanceMinor: balance, heldBalanceMinor: heldBalance, ownHoldMinor: ownHold,
-                chargeMinor: 0, targetHoldMinor: 0, keepActive: false,
+                balanceMinor: balance,
+                heldBalanceMinor: heldBalance,
+                ownHoldMinor: ownHold,
+                chargeMinor: 0,
+                targetHoldMinor: 0,
+                keepActive: false,
               });
               return {
                 result: toSessionSnapshot(sessionId, session, balance, null),
                 writes: [
                   {
-                    update: { name: fs.docName(walletPath), fields: encodeFields({ heldBalanceMinor: releasedHold.heldBalanceMinor, updatedAt: nowIso }) },
+                    update: {
+                      name: fs.docName(walletPath),
+                      fields: encodeFields({
+                        heldBalanceMinor: releasedHold.heldBalanceMinor,
+                        updatedAt: nowIso,
+                      }),
+                    },
                     updateMask: { fieldPaths: ["heldBalanceMinor", "updatedAt"] },
                   },
                   {
-                    update: { name: fs.docName(sessionPath), fields: encodeFields({ walletHoldMinor: 0, updatedAt: nowIso }) },
+                    update: {
+                      name: fs.docName(sessionPath),
+                      fields: encodeFields({ walletHoldMinor: 0, updatedAt: nowIso }),
+                    },
                     updateMask: { fieldPaths: ["walletHoldMinor", "updatedAt"] },
                   },
                   {
-                    update: { name: fs.docName(holdPath), fields: encodeFields({ amountMinor: 0, status: "released", expiresAt: null, updatedAt: nowIso }) },
+                    update: {
+                      name: fs.docName(holdPath),
+                      fields: encodeFields({
+                        amountMinor: 0,
+                        status: "released",
+                        expiresAt: null,
+                        updatedAt: nowIso,
+                      }),
+                    },
                     updateMask: { fieldPaths: ["amountMinor", "status", "expiresAt", "updatedAt"] },
                     ...(docs[3] ? {} : { currentDocument: { exists: false } }),
                   },
@@ -75,39 +117,73 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
               };
             }
             if (producerPath && !producer) {
-              throw new ApiError(503, "PRODUCER_ACCOUNT_MISSING", "The channel producer account is not available for settlement.");
+              throw new ApiError(
+                503,
+                "PRODUCER_ACCOUNT_MISSING",
+                "The channel producer account is not available for settlement.",
+              );
             }
             if (session["producerUid"] !== producerUid) {
-              throw new ApiError(409, "SESSION_CHANGED", "The session changed while settlement was being processed.");
+              throw new ApiError(
+                409,
+                "SESSION_CHANGED",
+                "The session changed while settlement was being processed.",
+              );
             }
-            const currency = typeof session["currency"] === "string" ? session["currency"] as string :
-              typeof wallet["currency"] === "string" ? wallet["currency"] as string : "NGN";
+            const currency =
+              typeof session["currency"] === "string"
+                ? (session["currency"] as string)
+                : typeof wallet["currency"] === "string"
+                  ? (wallet["currency"] as string)
+                  : "NGN";
             if (typeof wallet["currency"] === "string" && wallet["currency"] !== currency) {
-              throw new ApiError(409, "WALLET_CURRENCY_MISMATCH", "The wallet currency changed during this playback session.");
+              throw new ApiError(
+                409,
+                "WALLET_CURRENCY_MISMATCH",
+                "The wallet currency changed during this playback session.",
+              );
             }
             // The final interval has no second player sample to corroborate progress.
             // Do not charge it; only completed heartbeat intervals are billable.
             const rate = integer(session["ratePerMinuteMinor"]);
             const previouslyBilledSeconds = integer(session["billedSeconds"]);
             const today = nowIso.slice(0, 10);
-            const spentToday = wallet["spentDate"] === today ? integer(wallet["spentTodayMinor"]) : 0;
+            const spentToday =
+              wallet["spentDate"] === today ? integer(wallet["spentTodayMinor"]) : 0;
             const dailyLimit = Object.prototype.hasOwnProperty.call(session, "dailySpendLimitMinor")
               ? session["dailySpendLimitMinor"]
               : wallet["dailySpendLimitMinor"];
-            const dailyRemaining = typeof dailyLimit === "number" && Number.isSafeInteger(dailyLimit)
-              ? Math.max(0, dailyLimit - spentToday)
-              : Number.MAX_SAFE_INTEGER;
+            const dailyRemaining =
+              typeof dailyLimit === "number" && Number.isSafeInteger(dailyLimit)
+                ? Math.max(0, dailyLimit - spentToday)
+                : Number.MAX_SAFE_INTEGER;
             const spendableBalance = sessionSpendableBalance(balance, heldBalance, ownHold);
-            const affordableSeconds = maxAffordableSeconds(previouslyBilledSeconds, 0, rate, Math.min(spendableBalance, dailyRemaining));
-            const charge = incrementalSessionCharge(previouslyBilledSeconds, affordableSeconds, rate);
+            const affordableSeconds = maxAffordableSeconds(
+              previouslyBilledSeconds,
+              0,
+              rate,
+              Math.min(spendableBalance, dailyRemaining),
+            );
+            const charge = incrementalSessionCharge(
+              previouslyBilledSeconds,
+              affordableSeconds,
+              rate,
+            );
             const newBalance = balance - charge.chargeMinor;
             const releasedHold = settleSessionHold({
-              balanceMinor: balance, heldBalanceMinor: heldBalance, ownHoldMinor: ownHold,
-              chargeMinor: charge.chargeMinor, targetHoldMinor: 0, keepActive: false,
+              balanceMinor: balance,
+              heldBalanceMinor: heldBalance,
+              ownHoldMinor: ownHold,
+              chargeMinor: charge.chargeMinor,
+              targetHoldMinor: 0,
+              keepActive: false,
             });
             const newSession = {
               billedSeconds: charge.billedSeconds,
-              sessionTotalMinor: safeAddMinor(integer(session["sessionTotalMinor"]), charge.chargeMinor),
+              sessionTotalMinor: safeAddMinor(
+                integer(session["sessionTotalMinor"]),
+                charge.chargeMinor,
+              ),
               walletHoldMinor: 0,
               active: false,
               endedAt: nowIso,
@@ -123,7 +199,12 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
               {
                 update: {
                   name: fs.docName(holdPath),
-                  fields: encodeFields({ amountMinor: 0, status: "released", expiresAt: null, updatedAt: nowIso }),
+                  fields: encodeFields({
+                    amountMinor: 0,
+                    status: "released",
+                    expiresAt: null,
+                    updatedAt: nowIso,
+                  }),
                 },
                 updateMask: { fieldPaths: ["amountMinor", "status", "expiresAt", "updatedAt"] },
                 ...(docs[3] ? {} : { currentDocument: { exists: false } }),
@@ -136,11 +217,24 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                 update: {
                   name: fs.docName(walletPath),
                   fields: encodeFields({
-                    balanceMinor: newBalance, heldBalanceMinor: releasedHold.heldBalanceMinor,
-                    spentDate: today, spentTodayMinor: safeAddMinor(spentToday, charge.chargeMinor), currency, updatedAt: nowIso,
+                    balanceMinor: newBalance,
+                    heldBalanceMinor: releasedHold.heldBalanceMinor,
+                    spentDate: today,
+                    spentTodayMinor: safeAddMinor(spentToday, charge.chargeMinor),
+                    currency,
+                    updatedAt: nowIso,
                   }),
                 },
-                updateMask: { fieldPaths: ["balanceMinor", "heldBalanceMinor", "spentDate", "spentTodayMinor", "currency", "updatedAt"] },
+                updateMask: {
+                  fieldPaths: [
+                    "balanceMinor",
+                    "heldBalanceMinor",
+                    "spentDate",
+                    "spentTodayMinor",
+                    "currency",
+                    "updatedAt",
+                  ],
+                },
               },
               {
                 update: {
@@ -155,16 +249,23 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                 update: {
                   name: fs.docName("ledger/" + crypto.randomUUID()),
                   fields: encodeFields({
-                    uid: user.uid, sessionId, kind: "watch_charge", description: "Channel viewing",
-                    amountMinor: -charge.chargeMinor, currency, createdAt: nowIso, idempotencyKey: sessionId + ":end",
+                    uid: user.uid,
+                    sessionId,
+                    kind: "watch_charge",
+                    description: "Channel viewing",
+                    amountMinor: -charge.chargeMinor,
+                    currency,
+                    createdAt: nowIso,
+                    idempotencyKey: sessionId + ":end",
                   }),
                 },
                 currentDocument: { exists: false },
               });
             }
-            const shareBps = producerPath && producer
-              ? Math.min(10_000, Math.max(0, integer(session["producerShareBps"])))
-              : 0;
+            const shareBps =
+              producerPath && producer
+                ? Math.min(10_000, Math.max(0, integer(session["producerShareBps"])))
+                : 0;
             const revenueSplit = splitRevenueMinor(charge.chargeMinor, shareBps);
             const platformShare = revenueSplit.platformMinor;
             if (platformShare > 0) {
@@ -176,7 +277,8 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                     sessionId,
                     kind: "platform_earning",
                     description: "Platform share of channel viewing",
-                    amountMinor: platformShare, currency,
+                    amountMinor: platformShare,
+                    currency,
                     createdAt: nowIso,
                     idempotencyKey: sessionId + ":end:platform",
                   }),
@@ -187,26 +289,46 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
             if (producerPath && producer && charge.chargeMinor > 0) {
               const producerShare = revenueSplit.producerMinor;
               if (producerShare > 0) {
-                const currentBalances = producer["earningsBalanceByCurrency"] && typeof producer["earningsBalanceByCurrency"] === "object"
-                  ? producer["earningsBalanceByCurrency"] as Record<string, unknown> : {};
-                const currentLifetime = producer["earningsLifetimeByCurrency"] && typeof producer["earningsLifetimeByCurrency"] === "object"
-                  ? producer["earningsLifetimeByCurrency"] as Record<string, unknown> : {};
-                const currentCurrencyBalance = typeof currentBalances[currency] === "number"
-                  ? integer(currentBalances[currency])
-                  : currency === "NGN" ? integer(producer["earningsBalanceMinor"]) : 0;
-                const currentCurrencyLifetime = typeof currentLifetime[currency] === "number"
-                  ? integer(currentLifetime[currency])
-                  : currency === "NGN" ? integer(producer["earningsLifetimeMinor"]) : 0;
-                const nextBalances = { ...currentBalances, [currency]: safeAddMinor(currentCurrencyBalance, producerShare) };
-                const nextLifetime = { ...currentLifetime, [currency]: safeAddMinor(currentCurrencyLifetime, producerShare) };
+                const currentBalances =
+                  producer["earningsBalanceByCurrency"] &&
+                  typeof producer["earningsBalanceByCurrency"] === "object"
+                    ? (producer["earningsBalanceByCurrency"] as Record<string, unknown>)
+                    : {};
+                const currentLifetime =
+                  producer["earningsLifetimeByCurrency"] &&
+                  typeof producer["earningsLifetimeByCurrency"] === "object"
+                    ? (producer["earningsLifetimeByCurrency"] as Record<string, unknown>)
+                    : {};
+                const currentCurrencyBalance =
+                  typeof currentBalances[currency] === "number"
+                    ? integer(currentBalances[currency])
+                    : currency === "NGN"
+                      ? integer(producer["earningsBalanceMinor"])
+                      : 0;
+                const currentCurrencyLifetime =
+                  typeof currentLifetime[currency] === "number"
+                    ? integer(currentLifetime[currency])
+                    : currency === "NGN"
+                      ? integer(producer["earningsLifetimeMinor"])
+                      : 0;
+                const nextBalances = {
+                  ...currentBalances,
+                  [currency]: safeAddMinor(currentCurrencyBalance, producerShare),
+                };
+                const nextLifetime = {
+                  ...currentLifetime,
+                  [currency]: safeAddMinor(currentCurrencyLifetime, producerShare),
+                };
                 const producerEarningsFields: Record<string, unknown> = {
                   earningsBalanceByCurrency: nextBalances,
                   earningsLifetimeByCurrency: nextLifetime,
                   updatedAt: nowIso,
-                  ...(currency === "NGN" ? {
-                    earningsBalanceMinor: nextBalances["NGN"],
-                    earningsLifetimeMinor: nextLifetime["NGN"],
-                  } : {}),
+                  ...(currency === "NGN"
+                    ? {
+                        earningsBalanceMinor: nextBalances["NGN"],
+                        earningsLifetimeMinor: nextLifetime["NGN"],
+                      }
+                    : {}),
                 };
                 writes.push({
                   update: {
@@ -219,8 +341,14 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/end")({
                   update: {
                     name: fs.docName("ledger/" + crypto.randomUUID()),
                     fields: encodeFields({
-                      uid: producerUid, sessionId, kind: "producer_earning", description: "Channel viewing revenue",
-                      amountMinor: producerShare, currency, createdAt: nowIso, idempotencyKey: sessionId + ":end:producer",
+                      uid: producerUid,
+                      sessionId,
+                      kind: "producer_earning",
+                      description: "Channel viewing revenue",
+                      amountMinor: producerShare,
+                      currency,
+                      createdAt: nowIso,
+                      idempotencyKey: sessionId + ":end:producer",
                     }),
                   },
                   currentDocument: { exists: false },

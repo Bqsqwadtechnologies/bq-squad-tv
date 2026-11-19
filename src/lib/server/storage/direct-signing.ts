@@ -15,19 +15,28 @@ export async function signHlsObjectsDirectly(input: {
   now?: Date;
 }): Promise<Map<string, string>> {
   if (input.objectPaths.length > 20_000) {
-    throw new ApiError(413, "HLS_SIGNING_LIMIT_EXCEEDED", "This playlist contains too many media files.");
+    throw new ApiError(
+      413,
+      "HLS_SIGNING_LIMIT_EXCEEDED",
+      "This playlist contains too many media files.",
+    );
   }
   const paths = [...new Set(input.objectPaths)];
   if (input.configuration.metadata.providerType === "backblaze_b2") {
-    const signed = await Promise.all(paths.map(async objectKey => [
-      objectKey,
-      await presignBackblazeHlsGet({
-        configuration: input.configuration,
-        objectKey,
-        expiresInSeconds: input.expiresInSeconds,
-        ...(input.now ? { now: input.now } : {}),
-      }),
-    ] as const));
+    const signed = await Promise.all(
+      paths.map(
+        async (objectKey) =>
+          [
+            objectKey,
+            await presignBackblazeHlsGet({
+              configuration: input.configuration,
+              objectKey,
+              expiresInSeconds: input.expiresInSeconds,
+              ...(input.now ? { now: input.now } : {}),
+            }),
+          ] as const,
+      ),
+    );
     return new Map(signed);
   }
   if (input.configuration.metadata.providerType === "lovable_storage") {
@@ -37,9 +46,15 @@ export async function signHlsObjectsDirectly(input: {
       expiresInSeconds: input.expiresInSeconds,
       batchSize: 400,
     });
-    return new Map(results.flatMap(result =>
-      result.signedUrl ? [[result.objectKey, result.signedUrl] as const] : [],
-    ));
+    return new Map(
+      results.flatMap((result) =>
+        result.signedUrl ? [[result.objectKey, result.signedUrl] as const] : [],
+      ),
+    );
   }
-  throw new ApiError(503, "HLS_SIGNING_PROVIDER_UNSUPPORTED", "This storage location does not support direct signed playback.");
+  throw new ApiError(
+    503,
+    "HLS_SIGNING_PROVIDER_UNSUPPORTED",
+    "This storage location does not support direct signed playback.",
+  );
 }

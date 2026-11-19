@@ -38,10 +38,14 @@ describe("hybrid streaming provider registry", () => {
     registry.register("bq_hosted", hosted);
 
     expect(registry.resolve(asset())).toBe(external);
-    expect(registry.resolve(asset({
-      deliveryMode: "bq_hosted",
-      providerId: "bq_origin",
-    }))).toBe(hosted);
+    expect(
+      registry.resolve(
+        asset({
+          deliveryMode: "bq_hosted",
+          providerId: "bq_origin",
+        }),
+      ),
+    ).toBe(hosted);
     expect(registry.list()).toEqual([
       { providerId: "bq_origin", deliveryMode: "bq_hosted" },
       { providerId: "licensed_provider", deliveryMode: "external" },
@@ -57,6 +61,8 @@ describe("hybrid streaming provider registry", () => {
   it("does not allow duplicate provider registrations for the same mode", () => {
     const registry = new StreamingProviderRegistry();
     registry.register("external", adapter("licensed_provider"));
-    expect(() => registry.register("external", adapter("licensed_provider"))).toThrow(/already registered/);
+    expect(() => registry.register("external", adapter("licensed_provider"))).toThrow(
+      /already registered/,
+    );
   });
 });

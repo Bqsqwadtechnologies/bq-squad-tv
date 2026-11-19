@@ -76,7 +76,7 @@ function GoogleSignInButton({
       try {
         window.google.accounts.id.initialize({
           client_id: clientId,
-          callback: response => onCredentialRef.current(response.credential),
+          callback: (response) => onCredentialRef.current(response.credential),
         });
         window.google.accounts.id.renderButton(element, {
           theme: "filled_blue",
@@ -89,7 +89,10 @@ function GoogleSignInButton({
         void fetch("/api/public/v1/monitoring/client-errors", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ message: "Google GSI render error: " + String(err), context: "google-auth-button" }),
+          body: JSON.stringify({
+            message: "Google GSI render error: " + String(err),
+            context: "google-auth-button",
+          }),
         }).catch(() => undefined);
       }
     };
@@ -99,16 +102,23 @@ function GoogleSignInButton({
       renderButton();
     } else if (script) {
       script.addEventListener("load", renderButton, { once: true });
-      script.addEventListener("error", () => {
-        if (!cancelled) {
-          setLoadError(true);
-          void fetch("/api/public/v1/monitoring/client-errors", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ message: "Google GSI script load failure", context: "google-auth-script" }),
-          }).catch(() => undefined);
-        }
-      }, { once: true });
+      script.addEventListener(
+        "error",
+        () => {
+          if (!cancelled) {
+            setLoadError(true);
+            void fetch("/api/public/v1/monitoring/client-errors", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                message: "Google GSI script load failure",
+                context: "google-auth-script",
+              }),
+            }).catch(() => undefined);
+          }
+        },
+        { once: true },
+      );
     } else {
       script = document.createElement("script");
       script.src = "https://accounts.google.com/gsi/client";
@@ -116,16 +126,23 @@ function GoogleSignInButton({
       script.defer = true;
       script.dataset["googleIdentity"] = "true";
       script.addEventListener("load", renderButton, { once: true });
-      script.addEventListener("error", () => {
-        if (!cancelled) {
-          setLoadError(true);
-          void fetch("/api/public/v1/monitoring/client-errors", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ message: "Google GSI script load failure", context: "google-auth-script" }),
-          }).catch(() => undefined);
-        }
-      }, { once: true });
+      script.addEventListener(
+        "error",
+        () => {
+          if (!cancelled) {
+            setLoadError(true);
+            void fetch("/api/public/v1/monitoring/client-errors", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                message: "Google GSI script load failure",
+                context: "google-auth-script",
+              }),
+            }).catch(() => undefined);
+          }
+        },
+        { once: true },
+      );
       document.head.appendChild(script);
     }
 
@@ -143,16 +160,31 @@ function GoogleSignInButton({
           className="flex h-11 w-full max-w-[320px] items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 text-sm font-semibold text-white/50 cursor-not-allowed"
         >
           <svg className="h-4 w-4 opacity-50" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-            <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            <path
+              fill="currentColor"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="currentColor"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="currentColor"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+            />
+            <path
+              fill="currentColor"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+            />
           </svg>
           Continue with Google
         </button>
         <button
           type="button"
-          onClick={() => { setLoadError(false); window.location.reload(); }}
+          onClick={() => {
+            setLoadError(false);
+            window.location.reload();
+          }}
           className="text-xs text-cyan-200 underline hover:text-white"
         >
           Google sign-in unavailable. Tap to retry.
@@ -179,19 +211,45 @@ function AccountPage() {
   const [countryCode, setCountryCode] = useState("US");
   const [walletCurrency, setWalletCurrency] = useState("USD");
   const [walletBalanceMinor, setWalletBalanceMinor] = useState<number | null>(null);
-  const [viewerAnalytics, setViewerAnalytics] = useState<{
-    summary: { totalMinutesWatched: number; totalHoursWatched: number; totalSessionsCount: number; totalSpentMinor: number };
-    channels: Array<{ channelId: string; title: string; minutesWatched: number; lastWatchedAt: string }>;
-    videos: Array<{ assetId: string; title: string; minutesWatched: number; lastWatchedAt: string }>;
-    recentHistory: Array<{ id: string; title: string; channelId?: string; minutes: number; watchedAt: string }>;
-  } | null>(null);
+  type ViewerAnalyticsData = {
+    summary: {
+      totalMinutesWatched: number;
+      totalHoursWatched: number;
+      totalSessionsCount: number;
+      totalSpentMinor: number;
+    };
+    channels: Array<{
+      channelId: string;
+      title: string;
+      minutesWatched: number;
+      lastWatchedAt: string;
+    }>;
+    videos: Array<{
+      assetId: string;
+      title: string;
+      minutesWatched: number;
+      lastWatchedAt: string;
+    }>;
+    recentHistory: Array<{
+      id: string;
+      title: string;
+      channelId?: string;
+      minutes: number;
+      watchedAt: string;
+    }>;
+  };
+
+  const [viewerAnalytics, setViewerAnalytics] = useState<ViewerAnalyticsData | null>(null);
+
   const [showSettingsView, setShowSettingsView] = useState(false);
   const [countryReady, setCountryReady] = useState(false);
   const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
   const [legalConsentAccepted, setLegalConsentAccepted] = useState(false);
   const [legalAcceptanceRequired, setLegalAcceptanceRequired] = useState(false);
   const [legalAcceptanceBusy, setLegalAcceptanceBusy] = useState(false);
-  const [legalPages, setLegalPages] = useState<Array<{ slug: string; title: string; version: number; accepted: boolean }>>([]);
+  const [legalPages, setLegalPages] = useState<
+    Array<{ slug: string; title: string; version: number; accepted: boolean }>
+  >([]);
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("bq-sqwad-theme");
@@ -204,8 +262,8 @@ function AccountPage() {
       setGoogleClientId(cachedGoogleClientId);
     } else {
       void fetch("/api/public/v1/auth/web/config", { cache: "no-store" })
-        .then(response => response.json() as Promise<{ googleClientId?: string }>)
-        .then(config => {
+        .then((response) => response.json() as Promise<{ googleClientId?: string }>)
+        .then((config) => {
           cachedGoogleClientId = config.googleClientId ?? "";
           if (active) setGoogleClientId(cachedGoogleClientId);
         })
@@ -227,7 +285,7 @@ function AccountPage() {
           cache: "no-store",
         });
         if (preferenceResponse.ok) {
-          const preference = await preferenceResponse.json() as { themeMode?: string };
+          const preference = (await preferenceResponse.json()) as { themeMode?: string };
           if (preference.themeMode === "light" || preference.themeMode === "dark") {
             setThemeMode(preference.themeMode);
             localStorage.setItem("bq-sqwad-theme", preference.themeMode);
@@ -243,9 +301,14 @@ function AccountPage() {
       if (account.emailVerified) {
         try {
           const needsAcceptance = await loadLegalStatus();
-          if (needsAcceptance) setMessage("Please review and accept the updated service terms before continuing.");
+          if (needsAcceptance)
+            setMessage("Please review and accept the updated service terms before continuing.");
         } catch (error) {
-          setMessage(error instanceof Error ? error.message : "The current legal pages could not be checked.");
+          setMessage(
+            error instanceof Error
+              ? error.message
+              : "The current legal pages could not be checked.",
+          );
         }
       } else {
         setMessage("Verify your email with the six-digit code sent to your inbox.");
@@ -269,9 +332,14 @@ function AccountPage() {
         headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
         body: JSON.stringify({ themeMode: next }),
       });
-      if (!response.ok) setMessage("Your appearance is saved on this device. Account sync is temporarily unavailable.");
+      if (!response.ok)
+        setMessage(
+          "Your appearance is saved on this device. Account sync is temporarily unavailable.",
+        );
     } catch {
-      setMessage("Your appearance is saved on this device. Account sync is temporarily unavailable.");
+      setMessage(
+        "Your appearance is saved on this device. Account sync is temporarily unavailable.",
+      );
     }
   }
 
@@ -283,7 +351,11 @@ function AccountPage() {
       cache: "no-store",
     });
     if (response.ok) {
-      const data = await response.json() as { countryCode?: string | null; currency?: string; walletCurrencyLocked?: boolean };
+      const data = (await response.json()) as {
+        countryCode?: string | null;
+        currency?: string;
+        walletCurrencyLocked?: boolean;
+      };
       setCountryReady(true);
       if (data.countryCode) {
         setCountryCode(data.countryCode);
@@ -304,7 +376,7 @@ function AccountPage() {
         cache: "no-store",
       });
       if (walletRes.ok) {
-        const wdata = await walletRes.json() as { balanceMinor?: number; currency?: string };
+        const wdata = (await walletRes.json()) as { balanceMinor?: number; currency?: string };
         if (typeof wdata.balanceMinor === "number") setWalletBalanceMinor(wdata.balanceMinor);
         if (wdata.currency) setWalletCurrency(wdata.currency);
       }
@@ -317,7 +389,7 @@ function AccountPage() {
         cache: "no-store",
       });
       if (analyticsRes.ok) {
-        const vdata = await analyticsRes.json() as any;
+        const vdata = (await analyticsRes.json()) as ViewerAnalyticsData;
         setViewerAnalytics(vdata);
       }
     } catch {
@@ -326,7 +398,7 @@ function AccountPage() {
   }
 
   async function saveAccountCountry(nextCountry: string, token?: string, showStatus = true) {
-    const idToken = token ?? await getActiveWebIdToken();
+    const idToken = token ?? (await getActiveWebIdToken());
     if (!idToken) return;
     setCountryReady(false);
     const response = await fetch("/api/public/v1/profile/country", {
@@ -337,7 +409,7 @@ function AccountPage() {
       },
       body: JSON.stringify({ countryCode: nextCountry }),
     });
-    const result = await response.json() as { currency?: string; error?: string };
+    const result = (await response.json()) as { currency?: string; error?: string };
     if (!response.ok) {
       if (showStatus) setMessage(result.error ?? "Could not update your country.");
       return;
@@ -345,17 +417,24 @@ function AccountPage() {
     setCountryCode(nextCountry);
     setWalletCurrency(result.currency ?? "USD");
     setCountryReady(true);
-    if (showStatus) setMessage("Country saved. Your wallet uses " + (result.currency ?? "USD") + ".");
+    if (showStatus)
+      setMessage("Country saved. Your wallet uses " + (result.currency ?? "USD") + ".");
   }
 
   async function loadLegalStatus() {
     const token = await getActiveWebIdToken();
     if (!token) throw new Error("Sign in again to review the current service terms.");
     const response = await fetch("/api/public/v1/legal/status?audience=public", {
-      headers: await getWebAuthHeaders(token), cache: "no-store",
+      headers: await getWebAuthHeaders(token),
+      cache: "no-store",
     });
-    const result = await response.json() as { pages?: Array<{ slug: string; title: string; version: number; accepted: boolean }>; acceptanceRequired?: boolean; error?: string };
-    if (!response.ok || !result.pages) throw new Error(result.error ?? "The current legal pages could not be checked.");
+    const result = (await response.json()) as {
+      pages?: Array<{ slug: string; title: string; version: number; accepted: boolean }>;
+      acceptanceRequired?: boolean;
+      error?: string;
+    };
+    if (!response.ok || !result.pages)
+      throw new Error(result.error ?? "The current legal pages could not be checked.");
     setLegalPages(result.pages);
     setLegalAcceptanceRequired(result.acceptanceRequired === true);
     return result.acceptanceRequired === true;
@@ -369,14 +448,21 @@ function AccountPage() {
       const response = await fetch("/api/public/v1/legal/acceptance", {
         method: "POST",
         headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
-        body: JSON.stringify({ audience: "public", acceptedSlugs: legalPages.map(page => page.slug) }),
+        body: JSON.stringify({
+          audience: "public",
+          acceptedSlugs: legalPages.map((page) => page.slug),
+        }),
       });
-      const result = await response.json() as { accepted?: boolean; error?: string };
-      if (!response.ok || !result.accepted) throw new Error(result.error ?? "Your acceptance could not be saved.");
+      const result = (await response.json()) as { accepted?: boolean; error?: string };
+      if (!response.ok || !result.accepted)
+        throw new Error(result.error ?? "Your acceptance could not be saved.");
       setLegalAcceptanceRequired(false);
       setMessage("Your acceptance has been saved. You can continue.");
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Your acceptance could not be saved."); }
-    finally { setLegalAcceptanceBusy(false); }
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Your acceptance could not be saved.");
+    } finally {
+      setLegalAcceptanceBusy(false);
+    }
   }
 
   const continueWithEmailAccount = useCallback(async (accountEmailValue: string) => {
@@ -388,7 +474,11 @@ function AccountPage() {
       setSignedIn(true);
       setVerificationPending(false);
       const needsAcceptance = await loadLegalStatus();
-      setMessage(needsAcceptance ? "Please review and accept the updated service terms before continuing." : "You're signed in to BQ SQWAD TV.");
+      setMessage(
+        needsAcceptance
+          ? "Please review and accept the updated service terms before continuing."
+          : "You're signed in to BQ SQWAD TV.",
+      );
       return;
     }
     const sent = await sendEmailVerificationCode();
@@ -396,12 +486,18 @@ function AccountPage() {
       setSignedIn(true);
       setVerificationPending(false);
       const needsAcceptance = await loadLegalStatus();
-      setMessage(needsAcceptance ? "Please review and accept the updated service terms before continuing." : "You're signed in to BQ SQWAD TV.");
+      setMessage(
+        needsAcceptance
+          ? "Please review and accept the updated service terms before continuing."
+          : "You're signed in to BQ SQWAD TV.",
+      );
     } else {
       setVerificationPending(true);
-      setMessage(sent.sent
-        ? "A six-digit verification code has been sent to your email."
-        : "Request a new verification code to continue.");
+      setMessage(
+        sent.sent
+          ? "A six-digit verification code has been sent to your email."
+          : "Request a new verification code to continue.",
+      );
     }
   }, []);
 
@@ -411,28 +507,43 @@ function AccountPage() {
     setMessage("");
     try {
       if (createAccount) {
-        if (!legalConsentAccepted) throw new Error("Read and accept the Terms and Privacy Policy before creating your account.");
-        if (!dateOfBirth) throw new Error("Enter your date of birth to finish creating your account.");
+        if (!legalConsentAccepted)
+          throw new Error(
+            "Read and accept the Terms and Privacy Policy before creating your account.",
+          );
+        if (!dateOfBirth)
+          throw new Error("Enter your date of birth to finish creating your account.");
         for (const slug of ["terms", "privacy-policy"]) {
           const legalResponse = await fetch("/api/public/v1/pages/" + slug, { cache: "no-store" });
-          if (!legalResponse.ok) throw new Error("Account creation is temporarily unavailable until our Terms and Privacy Policy are published.");
+          if (!legalResponse.ok)
+            throw new Error(
+              "Account creation is temporarily unavailable until our Terms and Privacy Policy are published.",
+            );
         }
       }
       const result = createAccount
         ? await createAccountWithEmailPassword(email, password)
         : await signInWithEmailPassword(email, password);
       if (createAccount) {
-        if (!dateOfBirth) throw new Error("Enter your date of birth to finish creating your account.");
+        if (!dateOfBirth)
+          throw new Error("Enter your date of birth to finish creating your account.");
         const idToken = await getActiveWebIdToken();
-        if (!idToken) throw new Error("Your account was created, but its profile could not be completed. Sign in again to continue.");
+        if (!idToken)
+          throw new Error(
+            "Your account was created, but its profile could not be completed. Sign in again to continue.",
+          );
         const region = new Intl.Locale(navigator.language).region;
         const acceptanceResponse = await fetch("/api/public/v1/legal/acceptance", {
           method: "POST",
           headers: { ...(await getWebAuthHeaders(idToken)), "content-type": "application/json" },
           body: JSON.stringify({ audience: "public", acceptedSlugs: ["terms", "privacy-policy"] }),
         });
-        const acceptanceResult = await acceptanceResponse.json() as { accepted?: boolean; error?: string };
-        if (!acceptanceResponse.ok || !acceptanceResult.accepted) throw new Error(acceptanceResult.error ?? "Your acceptance could not be saved.");
+        const acceptanceResult = (await acceptanceResponse.json()) as {
+          accepted?: boolean;
+          error?: string;
+        };
+        if (!acceptanceResponse.ok || !acceptanceResult.accepted)
+          throw new Error(acceptanceResult.error ?? "Your acceptance could not be saved.");
         const profileResponse = await fetch("/api/public/v1/profile/complete", {
           method: "POST",
           headers: { ...(await getWebAuthHeaders(idToken)), "content-type": "application/json" },
@@ -442,8 +553,9 @@ function AccountPage() {
             ...(region && /^[A-Z]{2}$/.test(region) ? { countryCode: region } : {}),
           }),
         });
-        const profileResult = await profileResponse.json() as { error?: string };
-        if (!profileResponse.ok) throw new Error(profileResult.error ?? "Your account profile could not be completed.");
+        const profileResult = (await profileResponse.json()) as { error?: string };
+        if (!profileResponse.ok)
+          throw new Error(profileResult.error ?? "Your account profile could not be completed.");
       }
       await continueWithEmailAccount(result.email);
     } catch (error) {
@@ -453,18 +565,21 @@ function AccountPage() {
     }
   }
 
-  const handleGoogleCredential = useCallback(async (credential: string) => {
-    setBusy(true);
-    setMessage("");
-    try {
-      const result = await signInWithGoogleCredential(credential);
-      await continueWithEmailAccount(result.email);
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Google sign-in failed.");
-    } finally {
-      setBusy(false);
-    }
-  }, [continueWithEmailAccount]);
+  const handleGoogleCredential = useCallback(
+    async (credential: string) => {
+      setBusy(true);
+      setMessage("");
+      try {
+        const result = await signInWithGoogleCredential(credential);
+        await continueWithEmailAccount(result.email);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Google sign-in failed.");
+      } finally {
+        setBusy(false);
+      }
+    },
+    [continueWithEmailAccount],
+  );
 
   async function handleVerify(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -477,7 +592,11 @@ function AccountPage() {
       setVerificationPending(false);
       setCode("");
       const needsAcceptance = await loadLegalStatus();
-      setMessage(needsAcceptance ? "Please review and accept the updated service terms before continuing." : "Your email is verified. You're signed in.");
+      setMessage(
+        needsAcceptance
+          ? "Please review and accept the updated service terms before continuing."
+          : "Your email is verified. You're signed in.",
+      );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Email verification failed.");
     } finally {
@@ -494,9 +613,15 @@ function AccountPage() {
         setSignedIn(true);
         setVerificationPending(false);
         const needsAcceptance = await loadLegalStatus();
-        setMessage(needsAcceptance ? "Please review and accept the updated service terms before continuing." : "Your email is already verified. You're signed in.");
+        setMessage(
+          needsAcceptance
+            ? "Please review and accept the updated service terms before continuing."
+            : "Your email is already verified. You're signed in.",
+        );
       } else {
-        setMessage(result.sent ? "A new six-digit code has been sent." : "A new code could not be sent yet.");
+        setMessage(
+          result.sent ? "A new six-digit code has been sent." : "A new code could not be sent yet.",
+        );
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not resend the code.");
@@ -527,7 +652,8 @@ function AccountPage() {
     setMessage("");
     try {
       const token = await restoreWebSession();
-      if (!token) throw new Error("Your account session could not be restored. Please sign in again.");
+      if (!token)
+        throw new Error("Your account session could not be restored. Please sign in again.");
       const account = await getWebAccount();
       if (!account) throw new Error("Your account is not connected yet. Please sign in again.");
       window.location.assign("/");
@@ -580,7 +706,7 @@ function AccountPage() {
           Appearance
           <select
             value={themeMode}
-            onChange={event => void saveThemePreference(event.target.value as "light" | "dark")}
+            onChange={(event) => void saveThemePreference(event.target.value as "light" | "dark")}
             className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-3 py-3 text-white"
             aria-label="Choose appearance"
           >
@@ -591,13 +717,42 @@ function AccountPage() {
         <section className="rounded-3xl border border-cyan-200/15 bg-[#08163e] p-6 shadow-2xl shadow-blue-950/50 sm:p-8">
           {legalAcceptanceRequired ? (
             <>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Updated terms</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+                Updated terms
+              </p>
               <h1 className="mt-3 text-2xl font-black">Please review these pages</h1>
-              <p className="mt-3 text-sm leading-6 text-blue-100/70">We have updated one or more documents. Review each current version before continuing to watch.</p>
+              <p className="mt-3 text-sm leading-6 text-blue-100/70">
+                We have updated one or more documents. Review each current version before continuing
+                to watch.
+              </p>
               <ul className="mt-5 space-y-3">
-                {legalPages.map(page => <li key={page.slug} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#030b2a] p-3 text-sm"><span>{page.title} · version {page.version}</span><a className="font-bold text-cyan-200 underline" href={"/legal/" + page.slug} target="_blank" rel="noreferrer">Review</a></li>)}
+                {legalPages.map((page) => (
+                  <li
+                    key={page.slug}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#030b2a] p-3 text-sm"
+                  >
+                    <span>
+                      {page.title} · version {page.version}
+                    </span>
+                    <a
+                      className="font-bold text-cyan-200 underline"
+                      href={"/legal/" + page.slug}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Review
+                    </a>
+                  </li>
+                ))}
               </ul>
-              <button type="button" onClick={() => void acceptCurrentLegalPages()} disabled={legalAcceptanceBusy} className="mt-6 w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 font-extrabold text-[#031039] disabled:opacity-50">{legalAcceptanceBusy ? "Saving acceptance…" : "I have reviewed and accept"}</button>
+              <button
+                type="button"
+                onClick={() => void acceptCurrentLegalPages()}
+                disabled={legalAcceptanceBusy}
+                className="mt-6 w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 font-extrabold text-[#031039] disabled:opacity-50"
+              >
+                {legalAcceptanceBusy ? "Saving acceptance…" : "I have reviewed and accept"}
+              </button>
             </>
           ) : signedIn ? (
             <>
@@ -617,13 +772,23 @@ function AccountPage() {
               {/* Wallet Balance Card */}
               <div className="mt-5 rounded-2xl border border-cyan-300/20 bg-gradient-to-r from-[#0d2258] to-[#07173e] p-5 shadow-inner">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">Available Balance</span>
-                  <a href="/wallet" className="text-xs font-bold text-cyan-200 underline hover:text-white">Top Up</a>
+                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+                    Available Balance
+                  </span>
+                  <a
+                    href="/wallet"
+                    className="text-xs font-bold text-cyan-200 underline hover:text-white"
+                  >
+                    Top Up
+                  </a>
                 </div>
                 <div className="mt-2 text-2xl font-black text-white">
-                  {walletBalanceMinor !== null ? (walletBalanceMinor / 100).toFixed(2) : "0.00"} {walletCurrency}
+                  {walletBalanceMinor !== null ? (walletBalanceMinor / 100).toFixed(2) : "0.00"}{" "}
+                  {walletCurrency}
                 </div>
-                <p className="mt-1 text-[11px] text-blue-100/50">Wallet currency is tied to your account country.</p>
+                <p className="mt-1 text-[11px] text-blue-100/50">
+                  Wallet currency is tied to your account country.
+                </p>
               </div>
 
               {/* Viewer Activity & Watch Time Card */}
@@ -632,20 +797,34 @@ function AccountPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">My Watch Time &amp; Activity</span>
+                      <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+                        My Watch Time &amp; Activity
+                      </span>
                     </div>
-                    <a href="/history" className="text-xs font-bold text-cyan-200 underline hover:text-white">Full History</a>
+                    <a
+                      href="/history"
+                      className="text-xs font-bold text-cyan-200 underline hover:text-white"
+                    >
+                      Full History
+                    </a>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-3">
                     <div className="rounded-xl border border-white/10 bg-[#030b2a] p-3">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-100/60">Total Watch Time</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-100/60">
+                        Total Watch Time
+                      </span>
                       <div className="mt-1 text-xl font-black text-white">
-                        {viewerAnalytics.summary.totalMinutesWatched} <span className="text-xs font-normal text-cyan-300">mins</span>
+                        {viewerAnalytics.summary.totalMinutesWatched}{" "}
+                        <span className="text-xs font-normal text-cyan-300">mins</span>
                       </div>
-                      <p className="text-[10px] text-blue-100/50">{viewerAnalytics.summary.totalHoursWatched} hrs total</p>
+                      <p className="text-[10px] text-blue-100/50">
+                        {viewerAnalytics.summary.totalHoursWatched} hrs total
+                      </p>
                     </div>
                     <div className="rounded-xl border border-white/10 bg-[#030b2a] p-3">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-100/60">Viewing Sessions</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-100/60">
+                        Viewing Sessions
+                      </span>
                       <div className="mt-1 text-xl font-black text-white">
                         {viewerAnalytics.summary.totalSessionsCount}
                       </div>
@@ -655,12 +834,19 @@ function AccountPage() {
 
                   {viewerAnalytics.channels && viewerAnalytics.channels.length > 0 && (
                     <div className="mt-4 border-t border-white/10 pt-3">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-blue-100/70">Watch Time by Channel</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-blue-100/70">
+                        Watch Time by Channel
+                      </p>
                       <div className="mt-2 space-y-1.5">
-                        {viewerAnalytics.channels.slice(0, 3).map(ch => (
-                          <div key={ch.channelId} className="flex items-center justify-between text-xs">
+                        {viewerAnalytics.channels.slice(0, 3).map((ch) => (
+                          <div
+                            key={ch.channelId}
+                            className="flex items-center justify-between text-xs"
+                          >
                             <span className="truncate text-white font-medium">{ch.title}</span>
-                            <span className="font-bold text-cyan-300 ml-2">{ch.minutesWatched}m</span>
+                            <span className="font-bold text-cyan-300 ml-2">
+                              {ch.minutesWatched}m
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -669,12 +855,19 @@ function AccountPage() {
 
                   {viewerAnalytics.videos && viewerAnalytics.videos.length > 0 && (
                     <div className="mt-3 border-t border-white/10 pt-3">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-blue-100/70">Watch Time by Video</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-blue-100/70">
+                        Watch Time by Video
+                      </p>
                       <div className="mt-2 space-y-1.5">
-                        {viewerAnalytics.videos.slice(0, 3).map(vid => (
-                          <div key={vid.assetId} className="flex items-center justify-between text-xs">
+                        {viewerAnalytics.videos.slice(0, 3).map((vid) => (
+                          <div
+                            key={vid.assetId}
+                            className="flex items-center justify-between text-xs"
+                          >
                             <span className="truncate text-white font-medium">{vid.title}</span>
-                            <span className="font-bold text-cyan-300 ml-2">{vid.minutesWatched}m</span>
+                            <span className="font-bold text-cyan-300 ml-2">
+                              {vid.minutesWatched}m
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -685,31 +878,48 @@ function AccountPage() {
 
               {/* Account Navigation Grid */}
               <nav aria-label="Account shortcuts" className="mt-5 grid grid-cols-2 gap-3">
-                <a href="/wallet" className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition">
+                <a
+                  href="/wallet"
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition"
+                >
                   <span>My Wallet</span>
                   <span className="text-cyan-300 text-xs font-bold">›</span>
                 </a>
-                <a href="/wallet#purchases" className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition">
+                <a
+                  href="/wallet#purchases"
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition"
+                >
                   <span>My Purchases</span>
                   <span className="text-cyan-300 text-xs font-bold">›</span>
                 </a>
-                <a href="/history" className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition">
+                <a
+                  href="/history"
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition"
+                >
                   <span>Watch History</span>
                   <span className="text-cyan-300 text-xs font-bold">›</span>
                 </a>
-                <a href="/notifications" className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition">
+                <a
+                  href="/notifications"
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition"
+                >
                   <span>Notifications</span>
                   <span className="text-cyan-300 text-xs font-bold">›</span>
                 </a>
                 <button
                   type="button"
-                  onClick={() => setShowSettingsView(v => !v)}
+                  onClick={() => setShowSettingsView((v) => !v)}
                   className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition text-left"
                 >
                   <span>Settings</span>
-                  <span className="text-cyan-300 text-xs font-bold">{showSettingsView ? "▴" : "▾"}</span>
+                  <span className="text-cyan-300 text-xs font-bold">
+                    {showSettingsView ? "▴" : "▾"}
+                  </span>
                 </button>
-                <a href="/help" className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition">
+                <a
+                  href="/help"
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition"
+                >
                   <span>Help &amp; Support</span>
                   <span className="text-cyan-300 text-xs font-bold">›</span>
                 </a>
@@ -718,12 +928,14 @@ function AccountPage() {
               {/* Collapsible Settings view */}
               {showSettingsView && (
                 <div className="mt-4 rounded-xl border border-white/10 bg-[#030b2a]/80 p-4 space-y-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">Settings &amp; Preferences</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+                    Settings &amp; Preferences
+                  </p>
                   <label className="block text-xs font-semibold text-blue-100/80">
                     Account Country
                     <select
                       value={countryCode}
-                      onChange={event => void saveAccountCountry(event.target.value)}
+                      onChange={(event) => void saveAccountCountry(event.target.value)}
                       className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#030b2a] px-3 py-2 text-sm text-white"
                     >
                       <option value="US">United States — USD</option>
@@ -740,7 +952,8 @@ function AccountPage() {
                       <option value="JP">Japan — JPY</option>
                     </select>
                     <span className="mt-1 block text-[11px] text-blue-100/50">
-                      Wallet currency: {walletCurrency}. It cannot be changed after your wallet is established.
+                      Wallet currency: {walletCurrency}. It cannot be changed after your wallet is
+                      established.
                     </span>
                   </label>
                   <button
@@ -756,21 +969,27 @@ function AccountPage() {
 
               {/* Consoles Section */}
               <div className="mt-6 border-t border-white/10 pt-5">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Consoles</p>
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+                  Consoles
+                </p>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <a
                     href="/producer"
                     className="flex flex-col items-center justify-center rounded-xl border border-cyan-400/20 bg-[#030b2a] p-3 text-center text-sm font-bold text-cyan-100 hover:border-cyan-300 hover:bg-cyan-500/5 transition"
                   >
                     <span>Producer Console</span>
-                    <span className="mt-0.5 text-[10px] font-normal text-blue-100/50">Content management</span>
+                    <span className="mt-0.5 text-[10px] font-normal text-blue-100/50">
+                      Content management
+                    </span>
                   </a>
                   <a
                     href="/provider"
                     className="flex flex-col items-center justify-center rounded-xl border border-cyan-400/20 bg-[#030b2a] p-3 text-center text-sm font-bold text-cyan-100 hover:border-cyan-300 hover:bg-cyan-500/5 transition"
                   >
                     <span>Provider Console</span>
-                    <span className="mt-0.5 text-[10px] font-normal text-blue-100/50">Channel licensing</span>
+                    <span className="mt-0.5 text-[10px] font-normal text-blue-100/50">
+                      Channel licensing
+                    </span>
                   </a>
                 </div>
               </div>
@@ -784,7 +1003,11 @@ function AccountPage() {
                   aria-label="Continue to BQ SQWAD TV"
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 text-sm font-extrabold text-[#031039] transition hover:brightness-110 disabled:opacity-50"
                 >
-                  <img src="/brand/bq-sqwad-tv-logo.png" alt="" className="h-6 w-auto object-contain" />
+                  <img
+                    src="/brand/bq-sqwad-tv-logo.png"
+                    alt=""
+                    className="h-6 w-auto object-contain"
+                  />
                   <span>Continue Watching</span>
                 </button>
                 <button
@@ -796,19 +1019,23 @@ function AccountPage() {
                   {busy ? "Please wait…" : "Sign out"}
                 </button>
               </div>
-            </>) : verificationPending ? (
+            </>
+          ) : verificationPending ? (
             <>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Email verification</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+                Email verification
+              </p>
               <h1 className="mt-3 text-2xl font-black">Check your inbox</h1>
               <p className="mt-3 text-sm leading-6 text-blue-100/70">
-                Enter the six-digit code sent to {email || accountEmail}. It expires after 10 minutes.
+                Enter the six-digit code sent to {email || accountEmail}. It expires after 10
+                minutes.
               </p>
               <form onSubmit={handleVerify} className="mt-6 space-y-4">
                 <label className="block text-sm font-semibold text-blue-50">
                   Verification code
                   <input
                     value={code}
-                    onChange={event => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
+                    onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))}
                     inputMode="numeric"
                     autoComplete="one-time-code"
                     maxLength={6}
@@ -836,8 +1063,12 @@ function AccountPage() {
             </>
           ) : (
             <>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Your account</p>
-              <h1 className="mt-3 text-2xl font-black">{createAccount ? "Create your account" : "Welcome back"}</h1>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+                Your account
+              </p>
+              <h1 className="mt-3 text-2xl font-black">
+                {createAccount ? "Create your account" : "Welcome back"}
+              </h1>
               <p className="mt-3 text-sm leading-6 text-blue-100/70">
                 Sign in to continue to your BQ SQWAD TV experience.
               </p>
@@ -848,7 +1079,7 @@ function AccountPage() {
                     <input
                       type="date"
                       value={dateOfBirth}
-                      onChange={event => setDateOfBirth(event.target.value)}
+                      onChange={(event) => setDateOfBirth(event.target.value)}
                       max={new Date().toISOString().slice(0, 10)}
                       required
                       className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300"
@@ -860,7 +1091,7 @@ function AccountPage() {
                   <input
                     type="email"
                     value={email}
-                    onChange={event => setEmail(event.target.value)}
+                    onChange={(event) => setEmail(event.target.value)}
                     autoComplete="email"
                     required
                     className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 outline-none focus:border-cyan-300"
@@ -871,7 +1102,7 @@ function AccountPage() {
                   <input
                     type="password"
                     value={password}
-                    onChange={event => setPassword(event.target.value)}
+                    onChange={(event) => setPassword(event.target.value)}
                     autoComplete={createAccount ? "new-password" : "current-password"}
                     minLength={6}
                     required
@@ -879,11 +1110,19 @@ function AccountPage() {
                   />
                 </label>
                 {googleClientId ? (
-                  <GoogleSignInButton clientId={googleClientId} onCredential={handleGoogleCredential} />
+                  <GoogleSignInButton
+                    clientId={googleClientId}
+                    onCredential={handleGoogleCredential}
+                  />
                 ) : null}
                 <button
                   type="submit"
-                  disabled={busy || !email.includes("@") || password.length < 6 || (createAccount && (!dateOfBirth || !legalConsentAccepted))}
+                  disabled={
+                    busy ||
+                    !email.includes("@") ||
+                    password.length < 6 ||
+                    (createAccount && (!dateOfBirth || !legalConsentAccepted))
+                  }
                   className="w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 font-extrabold text-[#031039] disabled:opacity-50"
                 >
                   {busy ? "Please wait…" : createAccount ? "Create account" : "Sign in"}
@@ -891,8 +1130,34 @@ function AccountPage() {
               </form>
               {createAccount ? (
                 <label className="mt-3 flex items-start gap-3 text-xs leading-5 text-blue-100/70">
-                  <input type="checkbox" checked={legalConsentAccepted} onChange={event => setLegalConsentAccepted(event.target.checked)} className="mt-1 size-4 accent-cyan-300" required />
-                  <span>I have read and accept the <a href="/legal/terms" target="_blank" rel="noreferrer" className="underline underline-offset-4 text-cyan-200">Terms of service</a> and <a href="/legal/privacy-policy" target="_blank" rel="noreferrer" className="underline underline-offset-4 text-cyan-200">Privacy Policy</a>.</span>
+                  <input
+                    type="checkbox"
+                    checked={legalConsentAccepted}
+                    onChange={(event) => setLegalConsentAccepted(event.target.checked)}
+                    className="mt-1 size-4 accent-cyan-300"
+                    required
+                  />
+                  <span>
+                    I have read and accept the{" "}
+                    <a
+                      href="/legal/terms"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline underline-offset-4 text-cyan-200"
+                    >
+                      Terms of service
+                    </a>{" "}
+                    and{" "}
+                    <a
+                      href="/legal/privacy-policy"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="underline underline-offset-4 text-cyan-200"
+                    >
+                      Privacy Policy
+                    </a>
+                    .
+                  </span>
                 </label>
               ) : null}
 
@@ -900,7 +1165,7 @@ function AccountPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    setCreateAccount(value => !value);
+                    setCreateAccount((value) => !value);
                     setLegalConsentAccepted(false);
                     setMessage("");
                   }}
@@ -920,7 +1185,10 @@ function AccountPage() {
             </>
           )}
           {message && (
-            <p role="status" className="mt-5 rounded-xl border border-cyan-200/15 bg-cyan-300/5 p-3 text-sm leading-6 text-cyan-100">
+            <p
+              role="status"
+              className="mt-5 rounded-xl border border-cyan-200/15 bg-cyan-300/5 p-3 text-sm leading-6 text-cyan-100"
+            >
               {message}
             </p>
           )}

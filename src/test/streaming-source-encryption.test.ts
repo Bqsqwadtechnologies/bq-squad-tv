@@ -24,8 +24,9 @@ describe("streaming source URL encryption", () => {
     );
     expect(envelope.algorithm).toBe("A256GCM");
     expect(envelope.ciphertext).not.toContain("media.example.test");
-    await expect(decryptStreamingSourceUrl(envelope, "asset_123", key))
-      .resolves.toBe("https://media.example.test/manifest.m3u8?token=private");
+    await expect(decryptStreamingSourceUrl(envelope, "asset_123", key)).resolves.toBe(
+      "https://media.example.test/manifest.m3u8?token=private",
+    );
   });
 
   it("uses a fresh nonce for every encryption", async () => {
@@ -37,13 +38,27 @@ describe("streaming source URL encryption", () => {
   });
 
   it("binds ciphertext to its content asset and key version", async () => {
-    const envelope = await encryptStreamingSourceUrl("https://media.example.test/a.m3u8", "asset_123", "v1", key);
+    const envelope = await encryptStreamingSourceUrl(
+      "https://media.example.test/a.m3u8",
+      "asset_123",
+      "v1",
+      key,
+    );
     await expect(decryptStreamingSourceUrl(envelope, "asset_other", key)).rejects.toThrow();
   });
 
   it("rejects non-HTTPS URLs and embedded credentials", async () => {
-    await expect(encryptStreamingSourceUrl("http://media.example.test/a.m3u8", "asset_123", "v1", key)).rejects.toThrow();
-    await expect(encryptStreamingSourceUrl("https://user:pass@media.example.test/a.m3u8", "asset_123", "v1", key)).rejects.toThrow();
+    await expect(
+      encryptStreamingSourceUrl("http://media.example.test/a.m3u8", "asset_123", "v1", key),
+    ).rejects.toThrow();
+    await expect(
+      encryptStreamingSourceUrl(
+        "https://user:pass@media.example.test/a.m3u8",
+        "asset_123",
+        "v1",
+        key,
+      ),
+    ).rejects.toThrow();
   });
 
   it("encrypts each 128-bit HLS content key at rest and decrypts it only for its asset", async () => {
@@ -56,6 +71,8 @@ describe("streaming source URL encryption", () => {
   });
 
   it("rejects a key that is not exactly 256 bits", async () => {
-    await expect(encryptStreamingSourceUrl("https://media.example.test/a.m3u8", "asset_123", "v1", "AQID")).rejects.toThrow();
+    await expect(
+      encryptStreamingSourceUrl("https://media.example.test/a.m3u8", "asset_123", "v1", "AQID"),
+    ).rejects.toThrow();
   });
 });

@@ -20,7 +20,8 @@ export async function wakeModalVideoWorker(): Promise<void> {
       body: "{}",
       signal: AbortSignal.timeout(5_000),
     });
-    if (!response.ok) console.warn("Video worker wake request was not accepted.", { status: response.status });
+    if (!response.ok)
+      console.warn("Video worker wake request was not accepted.", { status: response.status });
   } catch {
     console.warn("Video worker wake request failed; the scheduled fallback remains active.");
   }

@@ -42,10 +42,18 @@ export async function verifyFirebaseAppCheckToken(token: string): Promise<void> 
       },
     );
   } catch {
-    throw new ApiError(503, "APP_CHECK_UNAVAILABLE", "Firebase App Check verification is temporarily unavailable.");
+    throw new ApiError(
+      503,
+      "APP_CHECK_UNAVAILABLE",
+      "Firebase App Check verification is temporarily unavailable.",
+    );
   }
   if (!response.ok) {
-    throw new ApiError(401, "APP_CHECK_INVALID", "The Firebase App Check token could not be verified.");
+    throw new ApiError(
+      401,
+      "APP_CHECK_INVALID",
+      "The Firebase App Check token could not be verified.",
+    );
   }
   const expiry = tokenExpiryMs(token);
   if (expiry && expiry > now + 30_000) {
@@ -62,7 +70,11 @@ export async function requireAppCheck(request: Request): Promise<void> {
   if (process.env["APP_CHECK_ENFORCED"] !== "true") return;
   const token = request.headers.get("X-Firebase-AppCheck");
   if (!token) {
-    throw new ApiError(401, "APP_CHECK_REQUIRED", "This request requires Firebase App Check attestation.");
+    throw new ApiError(
+      401,
+      "APP_CHECK_REQUIRED",
+      "This request requires Firebase App Check attestation.",
+    );
   }
   await verifyFirebaseAppCheckToken(token);
 }

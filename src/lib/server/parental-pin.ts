@@ -51,7 +51,9 @@ async function legacyPinHash(pin: string, uid: string): Promise<Uint8Array> {
   return new Uint8Array(digest);
 }
 
-export async function hashParentalPin(pin: string): Promise<ParentalPinHash & { salt: string; version: 2 }> {
+export async function hashParentalPin(
+  pin: string,
+): Promise<ParentalPinHash & { salt: string; version: 2 }> {
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const hash = await derivePinHash(pin, salt);
   return { hash: toHex(hash), salt: toHex(salt), version: HASH_VERSION };
@@ -61,7 +63,11 @@ export async function hashParentalPin(pin: string): Promise<ParentalPinHash & { 
  * Version 2 uses PBKDF2-HMAC-SHA-256 with a random per-PIN salt.
  * Missing/version 1 records remain verifiable using the legacy UID-bound SHA-256 scheme.
  */
-export async function verifyParentalPin(pin: string, uid: string, record: ParentalPinHash): Promise<boolean> {
+export async function verifyParentalPin(
+  pin: string,
+  uid: string,
+  record: ParentalPinHash,
+): Promise<boolean> {
   const expected = fromHex(record.hash);
   if (!expected) return false;
 

@@ -1,23 +1,47 @@
 import { ApiError, type Firestore } from "./firebase-admin";
 
 export type ChannelRole =
-  | "owner" | "co-owner" | "manager" | "scheduler" | "uploader"
-  | "moderator" | "analyst" | "finance";
+  "owner" | "co-owner" | "manager" | "scheduler" | "uploader" | "moderator" | "analyst" | "finance";
 
 export const CHANNEL_ROLE_TEMPLATES: Record<ChannelRole, readonly string[]> = {
   owner: [
-    "channel.settings", "team.manage", "video.upload", "video.delete", "schedule.write",
-    "schedule.publish", "analytics.read", "earnings.read", "payout.write", "ads.manage",
-    "chat.moderate", "channel.delete", "ownership.transfer",
+    "channel.settings",
+    "team.manage",
+    "video.upload",
+    "video.delete",
+    "schedule.write",
+    "schedule.publish",
+    "analytics.read",
+    "earnings.read",
+    "payout.write",
+    "ads.manage",
+    "chat.moderate",
+    "channel.delete",
+    "ownership.transfer",
   ],
   "co-owner": [
-    "channel.settings", "team.manage", "video.upload", "video.delete", "schedule.write",
-    "schedule.publish", "analytics.read", "earnings.read", "payout.write", "ads.manage",
+    "channel.settings",
+    "team.manage",
+    "video.upload",
+    "video.delete",
+    "schedule.write",
+    "schedule.publish",
+    "analytics.read",
+    "earnings.read",
+    "payout.write",
+    "ads.manage",
     "chat.moderate",
   ],
   manager: [
-    "channel.settings", "team.manage", "video.upload", "video.delete", "schedule.write",
-    "schedule.publish", "analytics.read", "ads.manage", "chat.moderate",
+    "channel.settings",
+    "team.manage",
+    "video.upload",
+    "video.delete",
+    "schedule.write",
+    "schedule.publish",
+    "analytics.read",
+    "ads.manage",
+    "chat.moderate",
   ],
   scheduler: ["schedule.write", "analytics.read"],
   uploader: ["video.upload", "analytics.read.own"],
@@ -37,7 +61,10 @@ export type ChannelAccess = {
 // They are deliberately not delegable through custom permission sets.
 const OWNER_ONLY_PERMISSIONS = new Set(["channel.delete", "ownership.transfer"]);
 
-export function hasChannelPermission(access: Pick<ChannelAccess, "role" | "permissions">, permission: string): boolean {
+export function hasChannelPermission(
+  access: Pick<ChannelAccess, "role" | "permissions">,
+  permission: string,
+): boolean {
   if (OWNER_ONLY_PERMISSIONS.has(permission)) return access.role === "owner";
   if (access.role === "owner") return true;
   return access.permissions.includes(permission);
@@ -57,7 +84,11 @@ export async function getChannelAccess(
     return { channelId, uid, role: "owner", permissions: [...CHANNEL_ROLE_TEMPLATES.owner] };
   }
   if (!member || member["status"] !== "ACTIVE") {
-    throw new ApiError(403, "CHANNEL_ACCESS_REQUIRED", "You are not an active member of this channel.");
+    throw new ApiError(
+      403,
+      "CHANNEL_ACCESS_REQUIRED",
+      "You are not an active member of this channel.",
+    );
   }
   const expiresAt = member["expiresAt"];
   if (typeof expiresAt === "string" && Date.parse(expiresAt) <= Date.now()) {
@@ -88,7 +119,11 @@ export async function requireChannelPermission(
 ): Promise<ChannelAccess> {
   const access = await getChannelAccess(fs, channelId, uid);
   if (!hasChannelPermission(access, permission)) {
-    throw new ApiError(403, "CHANNEL_PERMISSION_REQUIRED", "You do not have permission to perform this action on the channel.");
+    throw new ApiError(
+      403,
+      "CHANNEL_PERMISSION_REQUIRED",
+      "You do not have permission to perform this action on the channel.",
+    );
   }
   return access;
 }

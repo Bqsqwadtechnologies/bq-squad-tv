@@ -25,11 +25,16 @@ describe("asset storage bindings", () => {
   });
 
   it("resolves the primary, replicas and prefix from a modern asset", () => {
-    expect(resolveAssetStreamBinding({
-      streamDestinationId: "b2-001",
-      streamReplicaIds: ["b2-002", "b2-001", "invalid id", "b2-003"],
-      objectPrefix: "hls/asset-3/a4",
-    }, "asset-3")).toEqual({
+    expect(
+      resolveAssetStreamBinding(
+        {
+          streamDestinationId: "b2-001",
+          streamReplicaIds: ["b2-002", "b2-001", "invalid id", "b2-003"],
+          objectPrefix: "hls/asset-3/a4",
+        },
+        "asset-3",
+      ),
+    ).toEqual({
       streamDestinationId: "b2-001",
       streamReplicaIds: ["b2-002", "b2-003"],
       objectPrefix: "hls/asset-3/a4",
@@ -48,13 +53,18 @@ describe("asset storage bindings", () => {
   });
 
   it("resolves poster records through the same primary and replica binding", () => {
-    expect(resolveAssetMediaBinding({
-      mediaType: "poster",
-      streamDestinationId: "lov-001",
-      streamReplicaIds: ["b2-001"],
-      objectPrefix: "hls/asset-4/a1",
-      objectKey: "hls/asset-4/a1/poster.jpg",
-    }, "asset-4")).toMatchObject({
+    expect(
+      resolveAssetMediaBinding(
+        {
+          mediaType: "poster",
+          streamDestinationId: "lov-001",
+          streamReplicaIds: ["b2-001"],
+          objectPrefix: "hls/asset-4/a1",
+          objectKey: "hls/asset-4/a1/poster.jpg",
+        },
+        "asset-4",
+      ),
+    ).toMatchObject({
       streamDestinationId: "lov-001",
       streamReplicaIds: ["b2-001"],
       objectPrefix: "hls/asset-4/a1",
@@ -69,47 +79,62 @@ describe("asset storage bindings", () => {
     vi.stubEnv("STORAGE_B2_01_BUCKET_ID", "bucket-id");
     vi.stubEnv("STORAGE_B2_01_ENDPOINT", "https://s3.us-west-004.backblazeb2.com");
     const docs = new Map<string, Record<string, unknown>>([
-      ["contentAssets/asset-5", {
-        status: "processed_pending_review",
-        streamObjectPrefix: "hls/asset-5/a1",
-        hlsManifestKey: "hls/asset-5/a1/master.m3u8",
-      }],
-      ["storageDestinations/b2-001", {
-        destinationId: "b2-001",
-        providerType: "backblaze_b2",
-        accountAlias: "Test account",
-        secretPrefix: "STORAGE_B2_01",
-        bucketName: "test-bucket",
-        region: "us-west-004",
-        purpose: "hls_streaming",
-        softCapBytes: 1_000,
-        accountCapBytes: 1_000,
-        dailyEgressCapBytes: 100,
-        priority: 1,
-        enabled: true,
-        paidEgressEnabled: false,
-        freeEgressBudgetBytes: 500,
-        accountGroup: "b2:account-01",
-        mode: "active",
-        replicaOf: null,
-        usageBytes: 100,
-        usageSource: "provider_listing",
-        healthStatus: "healthy",
-      }],
-      ["storageReservations/reserve-asset-005", {
-        destinationId: "b2-001",
-        assetId: "asset-5",
-        purpose: "hls_streaming",
-        status: "committed",
-        actualBytes: 100,
-      }],
+      [
+        "contentAssets/asset-5",
+        {
+          status: "processed_pending_review",
+          streamObjectPrefix: "hls/asset-5/a1",
+          hlsManifestKey: "hls/asset-5/a1/master.m3u8",
+        },
+      ],
+      [
+        "storageDestinations/b2-001",
+        {
+          destinationId: "b2-001",
+          providerType: "backblaze_b2",
+          accountAlias: "Test account",
+          secretPrefix: "STORAGE_B2_01",
+          bucketName: "test-bucket",
+          region: "us-west-004",
+          purpose: "hls_streaming",
+          softCapBytes: 1_000,
+          accountCapBytes: 1_000,
+          dailyEgressCapBytes: 100,
+          priority: 1,
+          enabled: true,
+          paidEgressEnabled: false,
+          freeEgressBudgetBytes: 500,
+          accountGroup: "b2:account-01",
+          mode: "active",
+          replicaOf: null,
+          usageBytes: 100,
+          usageSource: "provider_listing",
+          healthStatus: "healthy",
+        },
+      ],
+      [
+        "storageReservations/reserve-asset-005",
+        {
+          destinationId: "b2-001",
+          assetId: "asset-5",
+          purpose: "hls_streaming",
+          status: "committed",
+          actualBytes: 100,
+        },
+      ],
     ]);
     const fs = {
-      docName(path: string) { return "projects/test/databases/(default)/documents/" + path; },
-      async transact(paths: string[], callback: (values: Array<Record<string, unknown> | null>) => {
-        result: unknown; writes: Array<Record<string, unknown>>;
-      }) {
-        const transaction = callback(paths.map(path => docs.get(path) ?? null));
+      docName(path: string) {
+        return "projects/test/databases/(default)/documents/" + path;
+      },
+      async transact(
+        paths: string[],
+        callback: (values: Array<Record<string, unknown> | null>) => {
+          result: unknown;
+          writes: Array<Record<string, unknown>>;
+        },
+      ) {
+        const transaction = callback(paths.map((path) => docs.get(path) ?? null));
         for (const write of transaction.writes) {
           const update = write["update"] as { name: string; fields: Record<string, never> };
           const path = update.name.split("/documents/").pop()!;
@@ -136,7 +161,9 @@ describe("asset storage bindings", () => {
       objectPrefix: "hls/asset-5/a2",
     });
     expect(docs.get("contentAssets/asset-5")?.["streamDestinationId"]).toBe("b2-001");
-    expect(docs.get("contentAssets/asset-5")?.["streamReplicaIds"]).toEqual(["legacy_lovable_streaming"]);
+    expect(docs.get("contentAssets/asset-5")?.["streamReplicaIds"]).toEqual([
+      "legacy_lovable_streaming",
+    ]);
     expect(docs.get("storageReservations/reserve-asset-005")?.["bindingStatus"]).toBe("bound");
   });
 });

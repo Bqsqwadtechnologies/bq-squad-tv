@@ -2,9 +2,21 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/BrandLogo";
 import {
-  Bell, ChevronRight, Clapperboard, Download, Film,
-  Grid2X2, Home, Search, Settings, Smile, Tv2, UserRound,
-  Play, RotateCw, X
+  Bell,
+  ChevronRight,
+  Clapperboard,
+  Download,
+  Film,
+  Grid2X2,
+  Home,
+  Search,
+  Settings,
+  Smile,
+  Tv2,
+  UserRound,
+  Play,
+  RotateCw,
+  X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -12,9 +24,15 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "BQ SQWAD TV — Watch. Stream. Enjoy." },
-      { name: "description", content: "Discover live channels, movies, series and family entertainment on BQ SQWAD TV." },
+      {
+        name: "description",
+        content: "Discover live channels, movies, series and family entertainment on BQ SQWAD TV.",
+      },
       { property: "og:title", content: "BQ SQWAD TV — Watch. Stream. Enjoy." },
-      { property: "og:description", content: "Premium entertainment without limits on BQ SQWAD TV." },
+      {
+        property: "og:description",
+        content: "Premium entertainment without limits on BQ SQWAD TV.",
+      },
       { property: "og:image", content: "/brand/og-image.png" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -105,10 +123,22 @@ function HomePage() {
             <BrandLogo variant="horizontal" className="h-8 w-auto sm:h-9" />
           </Link>
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-300 md:flex">
-            <Link to="/" className="text-[#00D8F5] transition hover:text-white">Home</Link>
-            <Link to="/channels/$channelId" params={{ channelId: "demo" }} className="transition hover:text-[#00D8F5]">Live TV</Link>
-            <Link to="/movies" className="transition hover:text-[#00D8F5]">Movies</Link>
-            <Link to="/series" className="transition hover:text-[#00D8F5]">Series</Link>
+            <Link to="/" className="text-[#00D8F5] transition hover:text-white">
+              Home
+            </Link>
+            <Link
+              to="/channels/$channelId"
+              params={{ channelId: "demo" }}
+              className="transition hover:text-[#00D8F5]"
+            >
+              Live TV
+            </Link>
+            <Link to="/movies" className="transition hover:text-[#00D8F5]">
+              Movies
+            </Link>
+            <Link to="/series" className="transition hover:text-[#00D8F5]">
+              Series
+            </Link>
           </nav>
         </div>
 
@@ -150,11 +180,13 @@ function HomePage() {
               PREMIUM ENTERTAINMENT ON BQ SQWAD TV
             </h1>
             <p className="mt-3 text-sm text-slate-300 sm:text-base">
-              Watch live channels, blockbuster movies and hit series on your terms. Pay only for the minutes you watch.
+              Watch live channels, blockbuster movies and hit series on your terms. Pay only for the
+              minutes you watch.
             </p>
             <div className="mt-6 flex items-center gap-4">
               <Link
-                to="/channels/$channelId" params={{ channelId: "demo" }}
+                to="/channels/$channelId"
+                params={{ channelId: "demo" }}
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#00D8F5] to-[#0052D4] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[#0052D4]/40 transition hover:brightness-110"
               >
                 <Play size={16} fill="currentColor" /> Watch Now
@@ -180,7 +212,9 @@ function HomePage() {
 
         {/* Quick Access Tiles */}
         <section className="mt-8 sm:mt-12">
-          <h2 className="text-base font-bold uppercase tracking-wider text-slate-400">Quick Access</h2>
+          <h2 className="text-base font-bold uppercase tracking-wider text-slate-400">
+            Quick Access
+          </h2>
           <div className="mt-4 grid grid-cols-4 gap-3 sm:gap-5">
             {quickTiles.map(({ label, icon: Icon, href }) => (
               <Link
@@ -201,7 +235,10 @@ function HomePage() {
         <section className="mt-10 sm:mt-14">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold sm:text-xl">Trending Now</h2>
-            <Link to="/movies" className="text-xs font-bold text-[#00D8F5] transition hover:underline">
+            <Link
+              to="/movies"
+              className="text-xs font-bold text-[#00D8F5] transition hover:underline"
+            >
               See All
             </Link>
           </div>
@@ -225,21 +262,50 @@ function HomePage() {
             </div>
           ) : (
             <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-              {(featuredContent.length > 0 ? featuredContent : [
-                { id: "1", title: "Midnight Echoes", category: "Movies", posterUrl: null, pricePerMinute: "0.25" },
-                { id: "2", title: "Lagos Nights", category: "Series", posterUrl: null, pricePerMinute: "0.30" },
-                { id: "3", title: "Chasing Tomorrow", category: "Movies", posterUrl: null, pricePerMinute: "0.20" },
-                { id: "4", title: "Squad Champions", category: "Live TV", posterUrl: null, pricePerMinute: "0.40" },
-              ]).map((item) => (
+              {(featuredContent.length > 0
+                ? featuredContent
+                : [
+                    {
+                      id: "1",
+                      title: "Midnight Echoes",
+                      category: "Movies",
+                      posterUrl: null,
+                      pricePerMinute: "0.25",
+                    },
+                    {
+                      id: "2",
+                      title: "Lagos Nights",
+                      category: "Series",
+                      posterUrl: null,
+                      pricePerMinute: "0.30",
+                    },
+                    {
+                      id: "3",
+                      title: "Chasing Tomorrow",
+                      category: "Movies",
+                      posterUrl: null,
+                      pricePerMinute: "0.20",
+                    },
+                    {
+                      id: "4",
+                      title: "Squad Champions",
+                      category: "Live TV",
+                      posterUrl: null,
+                      pricePerMinute: "0.40",
+                    },
+                  ]
+              ).map((item) => (
                 <Link
                   key={item.id}
-                  to="/channels/$channelId" params={{ channelId: "demo" }}
+                  to="/channels/$channelId"
+                  params={{ channelId: "demo" }}
                   className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] transition hover:border-[#00D8F5]/40 hover:shadow-lg hover:shadow-[#0052D4]/20"
                 >
                   <div className="aspect-[2/3] w-full bg-gradient-to-t from-[#030B2A] to-[#142456] flex items-end p-3">
                     <div className="w-full">
                       <span className="rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-[#00D8F5]">
-                        {currencySymbol}{item.pricePerMinute ?? "0.25"}/min
+                        {currencySymbol}
+                        {item.pricePerMinute ?? "0.25"}/min
                       </span>
                       <h3 className="mt-1 line-clamp-1 text-xs font-bold text-white group-hover:text-[#00D8F5]">
                         {item.title}
@@ -273,7 +339,8 @@ function HomePage() {
               Coming soon
             </span>
             <p className="mt-3 text-sm text-slate-300">
-              Viewing stays online only. Offline downloads will be available in a future update without additional charge.
+              Viewing stays online only. Offline downloads will be available in a future update
+              without additional charge.
             </p>
             <button
               type="button"
@@ -292,17 +359,22 @@ function HomePage() {
           to="/"
           onClick={() => setActiveNav("Home")}
           className={`flex flex-col items-center gap-1 text-[11px] font-semibold ${
-            activeNav === "Home" ? "text-[#00D8F5] drop-shadow-[0_0_8px_rgba(0,216,245,0.6)]" : "text-slate-400"
+            activeNav === "Home"
+              ? "text-[#00D8F5] drop-shadow-[0_0_8px_rgba(0,216,245,0.6)]"
+              : "text-slate-400"
           }`}
         >
           <Home size={20} />
           <span>Home</span>
         </Link>
         <Link
-          to="/channels/$channelId" params={{ channelId: "demo" }}
+          to="/channels/$channelId"
+          params={{ channelId: "demo" }}
           onClick={() => setActiveNav("Live TV")}
           className={`flex flex-col items-center gap-1 text-[11px] font-semibold ${
-            activeNav === "Live TV" ? "text-[#00D8F5] drop-shadow-[0_0_8px_rgba(0,216,245,0.6)]" : "text-slate-400"
+            activeNav === "Live TV"
+              ? "text-[#00D8F5] drop-shadow-[0_0_8px_rgba(0,216,245,0.6)]"
+              : "text-slate-400"
           }`}
         >
           <Tv2 size={20} />
@@ -312,7 +384,9 @@ function HomePage() {
           to="/movies"
           onClick={() => setActiveNav("Library")}
           className={`flex flex-col items-center gap-1 text-[11px] font-semibold ${
-            activeNav === "Library" ? "text-[#00D8F5] drop-shadow-[0_0_8px_rgba(0,216,245,0.6)]" : "text-slate-400"
+            activeNav === "Library"
+              ? "text-[#00D8F5] drop-shadow-[0_0_8px_rgba(0,216,245,0.6)]"
+              : "text-slate-400"
           }`}
         >
           <Grid2X2 size={20} />
@@ -330,7 +404,9 @@ function HomePage() {
           to="/account"
           onClick={() => setActiveNav("Settings")}
           className={`flex flex-col items-center gap-1 text-[11px] font-semibold ${
-            activeNav === "Settings" ? "text-[#00D8F5] drop-shadow-[0_0_8px_rgba(0,216,245,0.6)]" : "text-slate-400"
+            activeNav === "Settings"
+              ? "text-[#00D8F5] drop-shadow-[0_0_8px_rgba(0,216,245,0.6)]"
+              : "text-slate-400"
           }`}
         >
           <Settings size={20} />

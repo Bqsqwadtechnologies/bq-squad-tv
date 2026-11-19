@@ -5,10 +5,20 @@ const URI_ATTRIBUTE = /(URI\s*=\s*")([^"]+)(")/gi;
 
 /** Resolve a playlist reference without allowing origin changes or path traversal. */
 export function resolveHlsReference(parentPath: string, reference: string): string {
-  if (!reference || reference.length > 2048 || /^[a-z][a-z0-9+.-]*:/i.test(reference) ||
-      reference.startsWith("//") || reference.includes("\\") || reference.includes("\0") ||
-      reference.startsWith("/")) {
-    throw new ApiError(400, "HLS_REFERENCE_INVALID", "The playlist contains an unsupported media reference.");
+  if (
+    !reference ||
+    reference.length > 2048 ||
+    /^[a-z][a-z0-9+.-]*:/i.test(reference) ||
+    reference.startsWith("//") ||
+    reference.includes("\\") ||
+    reference.includes("\0") ||
+    reference.startsWith("/")
+  ) {
+    throw new ApiError(
+      400,
+      "HLS_REFERENCE_INVALID",
+      "The playlist contains an unsupported media reference.",
+    );
   }
   const clean = reference.split(/[?#]/, 1)[0] ?? "";
   const parent = parentPath.split("/");
@@ -16,14 +26,16 @@ export function resolveHlsReference(parentPath: string, reference: string): stri
   for (const part of clean.split("/")) {
     if (!part || part === ".") continue;
     if (part === "..") {
-      if (parent.length === 0) throw new ApiError(400, "HLS_PATH_INVALID", "The playlist contains an invalid media path.");
+      if (parent.length === 0)
+        throw new ApiError(400, "HLS_PATH_INVALID", "The playlist contains an invalid media path.");
       parent.pop();
     } else {
       parent.push(part);
     }
   }
   const resolved = parent.join("/");
-  if (!isSafeStoragePath(resolved)) throw new ApiError(400, "HLS_PATH_INVALID", "The playlist contains an invalid media path.");
+  if (!isSafeStoragePath(resolved))
+    throw new ApiError(400, "HLS_PATH_INVALID", "The playlist contains an invalid media path.");
   return resolved;
 }
 
@@ -37,18 +49,27 @@ export function rewriteHlsPlaylist(
   playlistPath: string,
   makeProxyUrl: (resourcePath: string) => string,
 ): string {
-  if (playlist.length > 2_000_000 || !playlist.replace(/^\uFEFF/, "").trimStart().startsWith("#EXTM3U")) {
+  if (
+    playlist.length > 2_000_000 ||
+    !playlist
+      .replace(/^\uFEFF/, "")
+      .trimStart()
+      .startsWith("#EXTM3U")
+  ) {
     throw new ApiError(415, "HLS_PLAYLIST_INVALID", "The media playlist is invalid.");
   }
-  return playlist.split(/\r?\n/).map(line => {
-    const trimmed = line.trim();
-    if (!trimmed) return line;
-    if (trimmed.startsWith("#")) {
-      return line.replace(URI_ATTRIBUTE, (_match, before: string, uri: string, after: string) => {
-        if (uri.startsWith("data:")) return before + uri + after;
-        return before + makeProxyUrl(resolveHlsReference(playlistPath, uri)) + after;
-      });
-    }
-    return makeProxyUrl(resolveHlsReference(playlistPath, trimmed));
-  }).join("\n");
+  return playlist
+    .split(/\r?\n/)
+    .map((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return line;
+      if (trimmed.startsWith("#")) {
+        return line.replace(URI_ATTRIBUTE, (_match, before: string, uri: string, after: string) => {
+          if (uri.startsWith("data:")) return before + uri + after;
+          return before + makeProxyUrl(resolveHlsReference(playlistPath, uri)) + after;
+        });
+      }
+      return makeProxyUrl(resolveHlsReference(playlistPath, trimmed));
+    })
+    .join("\n");
 }

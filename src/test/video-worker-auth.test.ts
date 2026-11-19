@@ -15,16 +15,21 @@ function fakeFirestore() {
     docName(path: string) {
       return path;
     },
-    async transact(paths: string[], callback: (docs: Array<Record<string, unknown> | null>) => {
-      result: unknown; writes: Array<{ update?: { name: string; fields: Record<string, unknown> } }>;
-    }) {
-      const result = callback(paths.map(path => documents.get(path) ?? null));
+    async transact(
+      paths: string[],
+      callback: (docs: Array<Record<string, unknown> | null>) => {
+        result: unknown;
+        writes: Array<{ update?: { name: string; fields: Record<string, unknown> } }>;
+      },
+    ) {
+      const result = callback(paths.map((path) => documents.get(path) ?? null));
       for (const write of result.writes) {
         if (!write.update) continue;
         const fields: Record<string, unknown> = {};
         for (const [key, value] of Object.entries(write.update.fields)) {
           const field = value as Record<string, unknown>;
-          fields[key] = field["stringValue"] ?? field["integerValue"] ?? field["booleanValue"] ?? null;
+          fields[key] =
+            field["stringValue"] ?? field["integerValue"] ?? field["booleanValue"] ?? null;
         }
         const path = write.update.name.split("/documents/").pop() ?? write.update.name;
         documents.set(path, fields);
@@ -39,10 +44,17 @@ async function signedRequest(timestamp: string, nonce: string) {
   const path = "/api/public/v1/worker/jobs/claim";
   const message = await createWorkerSignatureMessage(timestamp, nonce, "POST", path, body);
   const key = await webcrypto.subtle.importKey(
-    "raw", new TextEncoder().encode(workerSecret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"],
+    "raw",
+    new TextEncoder().encode(workerSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
   );
-  const signature = Array.from(new Uint8Array(await webcrypto.subtle.sign("HMAC", key, new TextEncoder().encode(message))))
-    .map(value => value.toString(16).padStart(2, "0")).join("");
+  const signature = Array.from(
+    new Uint8Array(await webcrypto.subtle.sign("HMAC", key, new TextEncoder().encode(message))),
+  )
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
   return new Request("https://tv.example.test" + path, {
     method: "POST",
     headers: {
@@ -64,10 +76,12 @@ describe("per-worker request authentication", () => {
     const timestamp = String(Math.floor(Date.now() / 1000));
     const nonce = "0123456789abcdef0123456789abcdef";
     try {
-      await expect(requireVideoWorker(await signedRequest(timestamp, nonce), fs as unknown as Firestore))
-        .resolves.toBe("worker-one");
-      await expect(requireVideoWorker(await signedRequest(timestamp, nonce), fs as unknown as Firestore))
-        .rejects.toThrow();
+      await expect(
+        requireVideoWorker(await signedRequest(timestamp, nonce), fs as unknown as Firestore),
+      ).resolves.toBe("worker-one");
+      await expect(
+        requireVideoWorker(await signedRequest(timestamp, nonce), fs as unknown as Firestore),
+      ).rejects.toThrow();
     } finally {
       if (previous === undefined) delete process.env["VIDEO_WORKER_KEYS_JSON"];
       else process.env["VIDEO_WORKER_KEYS_JSON"] = previous;

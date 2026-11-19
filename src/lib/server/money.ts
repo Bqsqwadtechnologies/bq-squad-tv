@@ -22,7 +22,11 @@ export function cumulativeCostKobo(ratePerMinuteKobo: number, billableSeconds: n
   const numerator = rate * seconds;
   const rounded = (numerator + SECONDS_PER_MINUTE / 2n) / SECONDS_PER_MINUTE;
   if (rounded > MAX_SAFE) {
-    throw new ApiError(400, "MONEY_LIMIT_EXCEEDED", "The calculated session amount exceeds the supported range.");
+    throw new ApiError(
+      400,
+      "MONEY_LIMIT_EXCEEDED",
+      "The calculated session amount exceeds the supported range.",
+    );
   }
   return Number(rounded);
 }
@@ -33,12 +37,22 @@ export function incrementalCostKobo(
   previousBillableSeconds: number,
   nextBillableSeconds: number,
 ): number {
-  if (!Number.isSafeInteger(previousBillableSeconds) || previousBillableSeconds < 0 ||
-      !Number.isSafeInteger(nextBillableSeconds) || nextBillableSeconds < previousBillableSeconds) {
-    throw new ApiError(400, "INVALID_MONEY_INPUT", "Cumulative billable seconds must be non-negative and monotonic.");
+  if (
+    !Number.isSafeInteger(previousBillableSeconds) ||
+    previousBillableSeconds < 0 ||
+    !Number.isSafeInteger(nextBillableSeconds) ||
+    nextBillableSeconds < previousBillableSeconds
+  ) {
+    throw new ApiError(
+      400,
+      "INVALID_MONEY_INPUT",
+      "Cumulative billable seconds must be non-negative and monotonic.",
+    );
   }
-  return cumulativeCostKobo(ratePerMinuteKobo, nextBillableSeconds) -
-    cumulativeCostKobo(ratePerMinuteKobo, previousBillableSeconds);
+  return (
+    cumulativeCostKobo(ratePerMinuteKobo, nextBillableSeconds) -
+    cumulativeCostKobo(ratePerMinuteKobo, previousBillableSeconds)
+  );
 }
 
 /**
@@ -61,11 +75,19 @@ export function accrueMicroKobo(
 /** Converts an exact non-negative micro-minor-unit integer to minor units using half-up rounding. */
 export function settleMicroKoboToKobo(microKobo: string): number {
   if (!/^(0|[1-9][0-9]*)$/.test(microKobo)) {
-    throw new ApiError(400, "INVALID_MONEY_INPUT", "microKobo must be a non-negative integer string.");
+    throw new ApiError(
+      400,
+      "INVALID_MONEY_INPUT",
+      "microKobo must be a non-negative integer string.",
+    );
   }
   const rounded = (BigInt(microKobo) + 500_000n) / 1_000_000n;
   if (rounded > MAX_SAFE) {
-    throw new ApiError(400, "MONEY_LIMIT_EXCEEDED", "The settled amount exceeds the supported range.");
+    throw new ApiError(
+      400,
+      "MONEY_LIMIT_EXCEEDED",
+      "The settled amount exceeds the supported range.",
+    );
   }
   return Number(rounded);
 }
@@ -73,7 +95,11 @@ export function settleMicroKoboToKobo(microKobo: string): number {
 /** Validates a persisted non-negative integer amount in a currency's minor units. */
 export function requireKoboAmount(value: unknown, fieldName = "amountKobo"): number {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) {
-    throw new ApiError(400, "INVALID_MONEY_INPUT", `${fieldName} must be a non-negative integer number of kobo.`);
+    throw new ApiError(
+      400,
+      "INVALID_MONEY_INPUT",
+      `${fieldName} must be a non-negative integer number of kobo.`,
+    );
   }
   return value;
 }
@@ -82,7 +108,6 @@ export const MONEY_UNITS = {
   defaultCurrency: "USD",
   microUnitsPerMinorUnit: 1_000_000,
 } as const;
-
 
 /** Currency-neutral names for new code; legacy kobo exports remain compatible. */
 export const cumulativeCostMinor = cumulativeCostKobo;

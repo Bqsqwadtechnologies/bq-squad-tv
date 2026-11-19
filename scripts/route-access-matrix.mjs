@@ -45,7 +45,7 @@ export function classifyRoute(filePath, content) {
   const relPath = path.relative(ROOT, filePath).replace(/\\/g, "/");
 
   // Console page routes
-  if (relPath.startsWith("src/routes/admin")) {
+  if (relPath.startsWith("src/routes/zillionaire")) {
     return {
       type: "zillionaire module",
       guard: "Zillionaire Owner / Delegated Module Shell",
@@ -99,10 +99,7 @@ export function classifyRoute(filePath, content) {
   }
 
   // Check Worker signature / auth
-  if (
-    content.includes("requireVideoWorker") ||
-    content.includes("verifyWorkerSignature")
-  ) {
+  if (content.includes("requireVideoWorker") || content.includes("verifyWorkerSignature")) {
     return {
       type: "worker signature",
       guard: "requireVideoWorker",
@@ -121,7 +118,7 @@ export function classifyRoute(filePath, content) {
 
   // Check Zillionaire module
   const zillionaireMatch = content.match(
-    /(?:requireAdminModule|requireZillionaireModule|requireZillionaire)\s*\([^,]+,[^,]+,\s*["']([^"']+)["']\)/
+    /(?:requireZillionaireModule|requireZillionaireModule|requireZillionaire)\s*\([^,]+,[^,]+,\s*["']([^"']+)["']\)/,
   );
   if (
     zillionaireMatch ||
@@ -131,7 +128,9 @@ export function classifyRoute(filePath, content) {
     return {
       type: "zillionaire module",
       guard: "requireZillionaire",
-      details: zillionaireMatch ? `Module: ${zillionaireMatch[1]}` : "Zillionaire Owner / Scope Check",
+      details: zillionaireMatch
+        ? `Module: ${zillionaireMatch[1]}`
+        : "Zillionaire Owner / Scope Check",
     };
   }
 
@@ -179,9 +178,7 @@ export function buildMatrix() {
     ...getFiles(path.join(ROOT, "src/routes")).filter((f) => {
       const name = path.basename(f);
       return (
-        name.startsWith("admin") ||
-        name.startsWith("producer") ||
-        name.startsWith("provider")
+        name.startsWith("zillionaire") || name.startsWith("producer") || name.startsWith("provider")
       );
     }),
   ];
@@ -192,9 +189,7 @@ export function buildMatrix() {
   for (const f of allFiles) {
     const content = fs.readFileSync(f, "utf8");
     const routeMatch = content.match(/createFileRoute\(["']([^"']+)["']\)/);
-    const routePath = routeMatch
-      ? routeMatch[1]
-      : "/" + path.relative(ROOT, f).replace(/\\/g, "/");
+    const routePath = routeMatch ? routeMatch[1] : "/" + path.relative(ROOT, f).replace(/\\/g, "/");
     const classification = classifyRoute(f, content);
     results.push({
       file: path.relative(ROOT, f).replace(/\\/g, "/"),

@@ -54,7 +54,10 @@ export type ChannelPermissionContext = {
 /**
  * Authenticated viewer with an active, unbanned account and a verified session.
  */
-export async function requireViewer(request: Request, existingFs?: Firestore): Promise<ViewerContext> {
+export async function requireViewer(
+  request: Request,
+  existingFs?: Firestore,
+): Promise<ViewerContext> {
   const user = await requireUser(request);
   const fs = existingFs || (await Firestore.create());
   const access = await resolvePlatformAccess(
@@ -131,7 +134,8 @@ export async function requireChannelPermission(
   existingFs?: Firestore,
 ): Promise<ChannelPermissionContext> {
   const fs = existingFs || (await Firestore.create());
-  const channel = await fs.getDoc(`channels/${channelId}`) || await fs.getDoc(`liveChannels/${channelId}`);
+  const channel =
+    (await fs.getDoc(`channels/${channelId}`)) || (await fs.getDoc(`liveChannels/${channelId}`));
 
   if (!channel) {
     throw new ApiError(404, "CHANNEL_NOT_FOUND", "This channel does not exist.");
@@ -140,7 +144,11 @@ export async function requireChannelPermission(
   // Check if public read request without auth header
   const authHeader = request.headers.get("authorization");
   if (!authHeader && (permission === "channel.read" || permission === "read")) {
-    if (channel["status"] === "PUBLISHED" || channel["active"] === true || channel["published"] === true) {
+    if (
+      channel["status"] === "PUBLISHED" ||
+      channel["active"] === true ||
+      channel["published"] === true
+    ) {
       return {
         channelId,
         uid: "public-viewer",
@@ -186,7 +194,11 @@ export async function requireChannelPermission(
   // 3. Producer / Channel team member
   const channelAccess: ChannelAccess = await getChannelAccess(fs, channelId, user.uid);
   if (!hasChannelPermission(channelAccess, permission)) {
-    throw new ApiError(403, "CHANNEL_PERMISSION_REQUIRED", "You do not have permission to perform this action on the channel.");
+    throw new ApiError(
+      403,
+      "CHANNEL_PERMISSION_REQUIRED",
+      "You do not have permission to perform this action on the channel.",
+    );
   }
 
   return {

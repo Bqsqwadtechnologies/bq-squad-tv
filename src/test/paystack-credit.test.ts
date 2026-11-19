@@ -8,9 +8,12 @@ function fakeFirestore(
 ): Firestore {
   return {
     docName: (path: string) => path,
-    transact: async (paths: string[], callback: (docs: Array<Record<string, unknown> | null>) => unknown) => {
-      const docs = paths.map(path => documents[path] ?? null);
-      const outcome = await callback(docs) as { result: unknown; writes: unknown[] };
+    transact: async (
+      paths: string[],
+      callback: (docs: Array<Record<string, unknown> | null>) => unknown,
+    ) => {
+      const docs = paths.map((path) => documents[path] ?? null);
+      const outcome = (await callback(docs)) as { result: unknown; writes: unknown[] };
       capture.writes = outcome.writes;
       return outcome.result;
     },
@@ -36,31 +39,37 @@ describe("Paystack wallet credit validation", () => {
 
   it("rejects a payment record belonging to another user", async () => {
     const capture = { writes: [] as unknown[] };
-    const fs = fakeFirestore({
-      ["payments/paystack_" + input.reference]: {
-        uid: "someone-else",
-        reference: input.reference,
-        provider: "paystack",
-        amountMinor: input.amountMinor,
-        creditMinor: input.creditMinor,
-        status: "pending",
+    const fs = fakeFirestore(
+      {
+        ["payments/paystack_" + input.reference]: {
+          uid: "someone-else",
+          reference: input.reference,
+          provider: "paystack",
+          amountMinor: input.amountMinor,
+          creditMinor: input.creditMinor,
+          status: "pending",
+        },
       },
-    }, capture);
+      capture,
+    );
     await expect(creditPaystackPayment(fs, input)).rejects.toBeInstanceOf(ApiError);
   });
 
   it("credits only the amount recorded for a pending payment", async () => {
     const capture = { writes: [] as unknown[] };
-    const fs = fakeFirestore({
-      ["payments/paystack_" + input.reference]: {
-        uid: input.uid,
-        reference: input.reference,
-        provider: "paystack",
-        amountMinor: input.amountMinor,
-        creditMinor: input.creditMinor,
-        status: "pending",
+    const fs = fakeFirestore(
+      {
+        ["payments/paystack_" + input.reference]: {
+          uid: input.uid,
+          reference: input.reference,
+          provider: "paystack",
+          amountMinor: input.amountMinor,
+          creditMinor: input.creditMinor,
+          status: "pending",
+        },
       },
-    }, capture);
+      capture,
+    );
     const result = await creditPaystackPayment(fs, input);
     expect(result).toEqual({ credited: true, balanceMinor: input.creditMinor });
     expect(capture.writes).toHaveLength(3);
@@ -68,14 +77,21 @@ describe("Paystack wallet credit validation", () => {
 
   it("does not allow a USD payment to credit an NGN wallet", async () => {
     const capture = { writes: [] as unknown[] };
-    const fs = fakeFirestore({
-      ["payments/paystack_" + input.reference]: {
-        uid: input.uid, reference: input.reference, provider: "paystack",
-        amountMinor: input.amountMinor, creditMinor: input.creditMinor,
-        currency: "USD", status: "pending",
+    const fs = fakeFirestore(
+      {
+        ["payments/paystack_" + input.reference]: {
+          uid: input.uid,
+          reference: input.reference,
+          provider: "paystack",
+          amountMinor: input.amountMinor,
+          creditMinor: input.creditMinor,
+          currency: "USD",
+          status: "pending",
+        },
+        ["wallets/" + input.uid]: { balanceMinor: 1000, currency: "NGN" },
       },
-      ["wallets/" + input.uid]: { balanceMinor: 1000, currency: "NGN" },
-    }, capture);
+      capture,
+    );
     await expect(creditPaystackPayment(fs, { ...input, currency: "USD" })).rejects.toMatchObject({
       code: "WALLET_CURRENCY_MISMATCH",
     });
@@ -90,11 +106,17 @@ describe("Paystack wallet credit validation", () => {
   });
 
   it("normalizes XOF's Paystack API subunits for wallet display", () => {
-    const config = { walletTopupsByCurrency: { XOF: { starter: { amountMinor: 10000, creditMinor: 100 } } } };
+    const config = {
+      walletTopupsByCurrency: { XOF: { starter: { amountMinor: 10000, creditMinor: 100 } } },
+    };
     expect(getPaystackTopup(config, "starter", "XOF")).toEqual({
-      amountMinor: 10000, displayAmountMinor: 100, creditMinor: 100,
+      amountMinor: 10000,
+      displayAmountMinor: 100,
+      creditMinor: 100,
     });
-    const invalid = { walletTopupsByCurrency: { XOF: { starter: { amountMinor: 10001, creditMinor: 100 } } } };
+    const invalid = {
+      walletTopupsByCurrency: { XOF: { starter: { amountMinor: 10001, creditMinor: 100 } } },
+    };
     expect(() => getPaystackTopup(invalid, "starter", "XOF")).toThrow();
   });
 
@@ -105,21 +127,28 @@ describe("Paystack wallet credit validation", () => {
         USD: { starter: { amountMinor: 499, creditMinor: 499 } },
       },
     };
-    expect(getPaystackTopup(config, "starter", "USD")).toEqual({ amountMinor: 499, displayAmountMinor: 499, creditMinor: 499 });
+    expect(getPaystackTopup(config, "starter", "USD")).toEqual({
+      amountMinor: 499,
+      displayAmountMinor: 499,
+      creditMinor: 499,
+    });
   });
 
   it("does not credit an already credited payment again", async () => {
     const capture = { writes: [] as unknown[] };
-    const fs = fakeFirestore({
-      ["payments/paystack_" + input.reference]: {
-        uid: input.uid,
-        reference: input.reference,
-        provider: "paystack",
-        amountMinor: input.amountMinor,
-        creditMinor: input.creditMinor,
-        status: "credited",
+    const fs = fakeFirestore(
+      {
+        ["payments/paystack_" + input.reference]: {
+          uid: input.uid,
+          reference: input.reference,
+          provider: "paystack",
+          amountMinor: input.amountMinor,
+          creditMinor: input.creditMinor,
+          status: "credited",
+        },
       },
-    }, capture);
+      capture,
+    );
     const result = await creditPaystackPayment(fs, input);
     expect(result.credited).toBe(false);
     expect(capture.writes).toHaveLength(0);

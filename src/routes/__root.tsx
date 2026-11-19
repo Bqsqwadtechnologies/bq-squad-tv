@@ -66,13 +66,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "BQ SQWAD TV — Watch on your terms" },
-      { name: "description", content: "Discover live channels, programmes and replays with a transparent pay-as-you-go viewing experience." },
+      {
+        name: "description",
+        content:
+          "Discover live channels, programmes and replays with a transparent pay-as-you-go viewing experience.",
+      },
       { name: "author", content: "Bq sqwad technologies" },
       { property: "og:title", content: "BQ SQWAD TV — Watch on your terms" },
-      { property: "og:description", content: "Discover channels, programmes and replays with a transparent viewing experience." },
+      {
+        property: "og:description",
+        content: "Discover channels, programmes and replays with a transparent viewing experience.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      
     ],
     links: [
       {
@@ -116,8 +122,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const pathname = useRouterState({ select: state => state.location.pathname });
-  const showLegalFooter = !pathname.startsWith("/admin") && !pathname.startsWith("/producer") && !pathname.startsWith("/provider");
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  const showLegalFooter =
+    !pathname.startsWith("/admin") &&
+    !pathname.startsWith("/producer") &&
+    !pathname.startsWith("/provider");
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -125,13 +134,28 @@ function RootComponent() {
       <Outlet />
       {showLegalFooter ? (
         <footer className="border-t border-border bg-background px-5 py-6 pb-28 sm:pb-8 text-center text-xs text-muted-foreground">
-          <nav aria-label="Legal and console links" className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3">
-            <a href="/legal/privacy-policy" className="hover:text-foreground">Privacy Policy</a>
-            <a href="/legal/terms" className="hover:text-foreground">Terms</a>
-            <a href="/legal/cookie" className="hover:text-foreground">Cookie notice</a>
-            <a href="/producer" className="font-semibold text-primary/80 hover:text-primary">Producer Console</a>
-            <a href="/provider" className="font-semibold text-primary/80 hover:text-primary">Provider Console</a>
-            <a href="mailto:tv@bqsqwad.com" className="hover:text-foreground">Contact</a>
+          <nav
+            aria-label="Legal and console links"
+            className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3"
+          >
+            <a href="/legal/privacy-policy" className="hover:text-foreground">
+              Privacy Policy
+            </a>
+            <a href="/legal/terms" className="hover:text-foreground">
+              Terms
+            </a>
+            <a href="/legal/cookie" className="hover:text-foreground">
+              Cookie notice
+            </a>
+            <a href="/producer" className="font-semibold text-primary/80 hover:text-primary">
+              Producer Console
+            </a>
+            <a href="/provider" className="font-semibold text-primary/80 hover:text-primary">
+              Provider Console
+            </a>
+            <a href="mailto:tv@bqsqwad.com" className="hover:text-foreground">
+              Contact
+            </a>
           </nav>
           <p className="mt-3">© BQ SQWAD TV</p>
         </footer>

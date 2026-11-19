@@ -10,7 +10,11 @@ import {
 } from "@/lib/server/access-denials";
 import { errorBody } from "@/lib/server/api";
 import { ApiError, type Firestore } from "@/lib/server/firebase-admin";
-import { requirePlatformRole, requireZillionaireModule, requireProviderAccess } from "@/lib/server/roles";
+import {
+  requirePlatformRole,
+  requireZillionaireModule,
+  requireProviderAccess,
+} from "@/lib/server/roles";
 import { assertFeatureFlag, type PlatformFlags } from "@/lib/server/flags";
 
 function createMemoryFirestore(): {
@@ -56,7 +60,7 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
       const event = await recordAccessDenial(fs, {
         actorUid: "usr_test12345678",
         actorRoleClass: "viewer",
-        routePattern: "/api/public/v1/admin/users/:uid",
+        routePattern: "/api/public/v1/zillionaire/users/:uid",
         method: "GET",
         requiredRole: "admin",
         resourceKind: "user",
@@ -110,7 +114,7 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
           "reasonCode": "CROSS_ROLE_DENIED",
           "requiredRole": "admin",
           "resourceKind": "user",
-          "routePattern": "/api/public/v1/admin/users/:uid",
+          "routePattern": "/api/public/v1/zillionaire/users/:uid",
           "targetHashLength": 64,
           "time": "2026-11-18T10:00:00.000Z",
         }
@@ -153,7 +157,7 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
       const req = new Request(
-        `https://tv.bqsqwad.com/api/public/v1/admin/users/${CANARY_TARGET_ID}?auth_token=${CANARY_QUERY}&email=${CANARY_EMAIL}`,
+        `https://tv.bqsqwad.com/api/public/v1/zillionaire/users/${CANARY_TARGET_ID}?auth_token=${CANARY_QUERY}&email=${CANARY_EMAIL}`,
         {
           method: "POST",
           headers: {
@@ -173,7 +177,11 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
       );
 
       // Simulate access denial
-      const denialError = new ApiError(403, "CROSS_ROLE_DENIED", "This account does not have the required platform role.");
+      const denialError = new ApiError(
+        403,
+        "CROSS_ROLE_DENIED",
+        "This account does not have the required platform role.",
+      );
       const response = errorBody(denialError);
       const responseBody = await response.json();
 
@@ -200,7 +208,9 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
         ...logSpy.mock.calls.flat(),
         ...warnSpy.mock.calls.flat(),
         ...errorSpy.mock.calls.flat(),
-      ].map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg))).join(" ");
+      ]
+        .map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
+        .join(" ");
 
       // Verify NONE of the canaries appear in stored event, response, or logs
       for (const canary of allCanaries) {
@@ -210,7 +220,7 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
       }
 
       // Assert that routePattern only has normalized token, no query string and no canary ID
-      expect(event.routePattern).toBe("/api/public/v1/admin/users/:uid");
+      expect(event.routePattern).toBe("/api/public/v1/zillionaire/users/:uid");
       expect(event.routePattern).not.toContain(CANARY_TARGET_ID);
       expect(event.routePattern).not.toContain(CANARY_QUERY);
 
@@ -223,24 +233,26 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
   describe("Route pattern normalization", () => {
     it("strips dynamic UUIDs, UIDs, and query strings from route paths", () => {
       expect(
-        normalizeRoutePattern("/api/public/v1/admin/users/c7f0b5aa-91e8-4c8d-905e-88b907db4101/risk?export=true"),
-      ).toBe("/api/public/v1/admin/users/:uid/risk");
+        normalizeRoutePattern(
+          "/api/public/v1/zillionaire/users/c7f0b5aa-91e8-4c8d-905e-88b907db4101/risk?export=true",
+        ),
+      ).toBe("/api/public/v1/zillionaire/users/:uid/risk");
 
       expect(
-        normalizeRoutePattern("/api/public/v1/producer/channels/chan_superchannel123/team?secret=abc#section"),
+        normalizeRoutePattern(
+          "/api/public/v1/producer/channels/chan_superchannel123/team?secret=abc#section",
+        ),
       ).toBe("/api/public/v1/producer/channels/:channelId/team");
 
-      expect(
-        normalizeRoutePattern("/api/public/v1/provider/disputes/disp_9876543210ab"),
-      ).toBe("/api/public/v1/provider/disputes/:disputeId");
+      expect(normalizeRoutePattern("/api/public/v1/provider/disputes/disp_9876543210ab")).toBe(
+        "/api/public/v1/provider/disputes/:disputeId",
+      );
 
       expect(
         normalizeRoutePattern("/api/public/v1/content-assets/asset_1234567890abcdef/approve"),
       ).toBe("/api/public/v1/content-assets/:assetId/approve");
 
-      expect(
-        normalizeRoutePattern("/admin?tab=security&page=2"),
-      ).toBe("/admin");
+      expect(normalizeRoutePattern("/admin?tab=security&page=2")).toBe("/admin");
     });
 
     it("handles root and empty paths safely", () => {
@@ -258,7 +270,9 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
     });
 
     it("extracts IPv6 /48 prefix without storing real host IP", () => {
-      expect(extractCoarseNetworkPrefix("2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toBe("2001:0db8:85a3::/48");
+      expect(extractCoarseNetworkPrefix("2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toBe(
+        "2001:0db8:85a3::/48",
+      );
       expect(extractCoarseNetworkPrefix("[2001:db8:abcd:0012::1]:443")).toBe("2001:db8:abcd::/48");
     });
 
@@ -271,10 +285,14 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
 
   describe("Platform class detection", () => {
     it("correctly identifies android, ios, worker and web", () => {
-      expect(detectPlatformClass(undefined, "Mozilla/5.0 (Linux; Android 14; Pixel 8)")).toBe("android");
+      expect(detectPlatformClass(undefined, "Mozilla/5.0 (Linux; Android 14; Pixel 8)")).toBe(
+        "android",
+      );
       expect(detectPlatformClass(undefined, "CFNetwork/1494.0.7 Darwin/23.4.0")).toBe("ios");
       expect(detectPlatformClass(undefined, "Modal-Worker/2.0 (VideoEngine)")).toBe("worker");
-      expect(detectPlatformClass(undefined, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)")).toBe("web");
+      expect(
+        detectPlatformClass(undefined, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"),
+      ).toBe("web");
       expect(detectPlatformClass(undefined, "")).toBe("unknown");
     });
   });
@@ -287,7 +305,7 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
       await recordAccessDenial(fs, {
         actorUid: "usr_viewer_001",
         actorRoleClass: "viewer",
-        routePattern: "/api/public/v1/admin/overview",
+        routePattern: "/api/public/v1/zillionaire/overview",
         method: "GET",
         requiredRole: "admin",
         reasonCode: "CROSS_ROLE_DENIED",
@@ -295,7 +313,9 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
       });
 
       // Verify sharded counter doc exists
-      const counterKeys = Object.keys(storedDocs).filter((k) => k.startsWith("accessDenialCounters/"));
+      const counterKeys = Object.keys(storedDocs).filter((k) =>
+        k.startsWith("accessDenialCounters/"),
+      );
       expect(counterKeys.length).toBe(1);
       const firstCounterKey = counterKeys[0]!;
       const counter = storedDocs[firstCounterKey]!;
@@ -304,7 +324,9 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
       expect(counter["expiresAt"]).toBe(new Date("2027-02-16T14:30:00.000Z").toISOString());
 
       // Verify hourly total doc exists
-      const totalKeys = Object.keys(storedDocs).filter((k) => k.startsWith("accessDenialHourlyTotals/"));
+      const totalKeys = Object.keys(storedDocs).filter((k) =>
+        k.startsWith("accessDenialHourlyTotals/"),
+      );
       expect(totalKeys.length).toBe(1);
       const firstTotalKey = totalKeys[0]!;
       expect(storedDocs[firstTotalKey]!["count"]).toBe(1);
@@ -324,7 +346,7 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
         await recordAccessDenial(fs, {
           actorUid,
           actorRoleClass: "viewer",
-          routePattern: `/api/public/v1/admin/users/:uid`,
+          routePattern: `/api/public/v1/zillionaire/users/:uid`,
           method: "GET",
           requiredRole: "admin",
           reasonCode: "CROSS_ROLE_DENIED",
@@ -340,7 +362,7 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
       await recordAccessDenial(fs, {
         actorUid,
         actorRoleClass: "viewer",
-        routePattern: `/api/public/v1/admin/users/:uid`,
+        routePattern: `/api/public/v1/zillionaire/users/:uid`,
         method: "GET",
         requiredRole: "admin",
         reasonCode: "CROSS_ROLE_DENIED",
@@ -358,9 +380,7 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
       expect(alert["hourBucket"]).toBe("2026-11-18T16");
 
       // Verify warning log fired without leaking raw UID
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining("[SECURITY_ALERT]"),
-      );
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("[SECURITY_ALERT]"));
 
       warnSpy.mockRestore();
     });
@@ -389,7 +409,11 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
       storedDocs["users/usr_delegate1"] = { zillionaireModules: ["content"] };
 
       await expect(
-        requireZillionaireModule(fs, { uid: "usr_delegate1", email: "delegate@example.com" }, "security"),
+        requireZillionaireModule(
+          fs,
+          { uid: "usr_delegate1", email: "delegate@example.com" },
+          "security",
+        ),
       ).rejects.toThrow("Zillionaire module permission 'security' is required for this action.");
 
       const denials = Object.keys(storedDocs).filter((k) => k.startsWith("accessDenials/"));
@@ -407,7 +431,9 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
 
       await expect(
         requireProviderAccess(fs, { uid: "usr_prov1", email: "prov@example.com" }, "prov_beta"),
-      ).rejects.toThrow("You do not have permission to access resources belonging to another provider.");
+      ).rejects.toThrow(
+        "You do not have permission to access resources belonging to another provider.",
+      );
 
       const denials = Object.keys(storedDocs).filter((k) => k.startsWith("accessDenials/"));
       expect(denials.length).toBe(1);
@@ -421,7 +447,10 @@ describe("Privacy-Safe Access Denial Audit Events (V3-01 Batch 09)", () => {
 
     it("throws FEATURE_FLAG_DISABLED on disabled feature flag assertion", () => {
       expect(() => {
-        assertFeatureFlag({ maintenanceMode: false, liveTv: false } as unknown as PlatformFlags, "liveTv");
+        assertFeatureFlag(
+          { maintenanceMode: false, liveTv: false } as unknown as PlatformFlags,
+          "liveTv",
+        );
       }).toThrow("Feature flag 'liveTv' is currently disabled.");
     });
   });

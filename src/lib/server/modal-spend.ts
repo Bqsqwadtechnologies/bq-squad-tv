@@ -8,12 +8,18 @@ export const MODAL_PRICING = {
   starterIncludedEgressBytes: 1_099_511_627_776,
 };
 
-export function estimateModalComputeCost(cores: number, memoryGiB: number, seconds: number): number {
+export function estimateModalComputeCost(
+  cores: number,
+  memoryGiB: number,
+  seconds: number,
+): number {
   const safeCores = Number.isFinite(cores) ? Math.max(0, cores) : 0;
   const safeMemory = Number.isFinite(memoryGiB) ? Math.max(0, memoryGiB) : 0;
   const safeSeconds = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
-  return safeCores * MODAL_PRICING.cpuUsdPerCoreSecond * safeSeconds +
-    safeMemory * MODAL_PRICING.memoryUsdPerGiBSecond * safeSeconds;
+  return (
+    safeCores * MODAL_PRICING.cpuUsdPerCoreSecond * safeSeconds +
+    safeMemory * MODAL_PRICING.memoryUsdPerGiBSecond * safeSeconds
+  );
 }
 
 export async function getModalSpendSnapshot(fs: Firestore, now = new Date()) {
@@ -26,13 +32,28 @@ export async function getModalSpendSnapshot(fs: Firestore, now = new Date()) {
       limit: 5000,
     }),
   ]);
-  const estimatedCostUsd = rows.reduce((sum, row) =>
-    sum + (typeof row["estimatedCostUsd"] === "number" && Number.isFinite(row["estimatedCostUsd"]) ? row["estimatedCostUsd"] : 0), 0);
-  const outputBytes = rows.reduce((sum, row) =>
-    sum + (typeof row["outputBytes"] === "number" && Number.isSafeInteger(row["outputBytes"]) ? row["outputBytes"] : 0), 0);
-  const monthlyLimitUsd = typeof settings?.["monthlyLimitUsd"] === "number" &&
-    Number.isFinite(settings["monthlyLimitUsd"]) && (settings["monthlyLimitUsd"] as number) > 0
-    ? settings["monthlyLimitUsd"] as number : 25;
+  const estimatedCostUsd = rows.reduce(
+    (sum, row) =>
+      sum +
+      (typeof row["estimatedCostUsd"] === "number" && Number.isFinite(row["estimatedCostUsd"])
+        ? row["estimatedCostUsd"]
+        : 0),
+    0,
+  );
+  const outputBytes = rows.reduce(
+    (sum, row) =>
+      sum +
+      (typeof row["outputBytes"] === "number" && Number.isSafeInteger(row["outputBytes"])
+        ? row["outputBytes"]
+        : 0),
+    0,
+  );
+  const monthlyLimitUsd =
+    typeof settings?.["monthlyLimitUsd"] === "number" &&
+    Number.isFinite(settings["monthlyLimitUsd"]) &&
+    (settings["monthlyLimitUsd"] as number) > 0
+      ? (settings["monthlyLimitUsd"] as number)
+      : 25;
   const override = settings?.["override"] === true;
   const guarded = flags.modalSpendGuard && !override;
   return {

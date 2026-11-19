@@ -31,12 +31,18 @@ describe("content playback rights", () => {
   });
 
   it("requires commercial and paid-streaming permission", () => {
-    expect(() => assertContentPlaybackRights({
-      ...base, license: { ...validLicense, commercialStreamingAllowed: false },
-    })).toThrow();
-    expect(() => assertContentPlaybackRights({
-      ...base, license: { ...validLicense, payPerMinuteAllowed: false },
-    })).toThrow();
+    expect(() =>
+      assertContentPlaybackRights({
+        ...base,
+        license: { ...validLicense, commercialStreamingAllowed: false },
+      }),
+    ).toThrow();
+    expect(() =>
+      assertContentPlaybackRights({
+        ...base,
+        license: { ...validLicense, payPerMinuteAllowed: false },
+      }),
+    ).toThrow();
   });
 
   it("enforces territory and platform restrictions", () => {
@@ -45,17 +51,27 @@ describe("content playback rights", () => {
   });
 
   it("enforces license start and expiry dates", () => {
-    expect(() => assertContentPlaybackRights({
-      ...base, now: new Date("2025-12-31T23:59:59.000Z"),
-    })).toThrow();
-    expect(() => assertContentPlaybackRights({
-      ...base, now: new Date("2027-01-01T00:00:00.000Z"),
-    })).toThrow();
+    expect(() =>
+      assertContentPlaybackRights({
+        ...base,
+        now: new Date("2025-12-31T23:59:59.000Z"),
+      }),
+    ).toThrow();
+    expect(() =>
+      assertContentPlaybackRights({
+        ...base,
+        now: new Date("2027-01-01T00:00:00.000Z"),
+      }),
+    ).toThrow();
   });
 
   it("does not require pay-per-minute rights for explicitly free playback", () => {
-    expect(() => assertContentPlaybackRights({
-      ...base, paidPlayback: false, license: { ...validLicense, payPerMinuteAllowed: false },
-    })).not.toThrow();
+    expect(() =>
+      assertContentPlaybackRights({
+        ...base,
+        paidPlayback: false,
+        license: { ...validLicense, payPerMinuteAllowed: false },
+      }),
+    ).not.toThrow();
   });
 });

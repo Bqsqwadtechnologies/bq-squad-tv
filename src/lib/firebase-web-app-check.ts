@@ -29,8 +29,8 @@ let cachedTokenExpiresAt = 0;
 async function getAppCheckConfig(): Promise<{ siteKey: string | null; appId: string | null }> {
   if (!appCheckConfigPromise) {
     appCheckConfigPromise = fetch("/api/public/v1/auth/web/config", { cache: "no-store" })
-      .then(response => response.json() as Promise<WebAppCheckConfig>)
-      .then(config => ({
+      .then((response) => response.json() as Promise<WebAppCheckConfig>)
+      .then((config) => ({
         siteKey: config.recaptchaSiteKey?.trim() || null,
         appId: config.firebaseWebAppId?.trim() || null,
       }))
@@ -43,10 +43,16 @@ async function loadRecaptchaEnterprise(siteKey: string): Promise<void> {
   if (window.grecaptcha?.enterprise) return;
   if (!scriptPromise) {
     scriptPromise = new Promise((resolve, reject) => {
-      const existing = document.querySelector<HTMLScriptElement>("script[data-recaptcha-enterprise='true']");
+      const existing = document.querySelector<HTMLScriptElement>(
+        "script[data-recaptcha-enterprise='true']",
+      );
       if (existing) {
         existing.addEventListener("load", () => resolve(), { once: true });
-        existing.addEventListener("error", () => reject(new Error("Could not load reCAPTCHA Enterprise.")), { once: true });
+        existing.addEventListener(
+          "error",
+          () => reject(new Error("Could not load reCAPTCHA Enterprise.")),
+          { once: true },
+        );
         return;
       }
       const script = document.createElement("script");
@@ -55,7 +61,11 @@ async function loadRecaptchaEnterprise(siteKey: string): Promise<void> {
       script.defer = true;
       script.dataset["recaptchaEnterprise"] = "true";
       script.addEventListener("load", () => resolve(), { once: true });
-      script.addEventListener("error", () => reject(new Error("Could not load reCAPTCHA Enterprise.")), { once: true });
+      script.addEventListener(
+        "error",
+        () => reject(new Error("Could not load reCAPTCHA Enterprise.")),
+        { once: true },
+      );
       document.head.appendChild(script);
     });
   }
@@ -74,7 +84,8 @@ export async function getWebAppCheckToken(): Promise<string | null> {
       return;
     }
     window.grecaptcha.enterprise.ready(() => {
-      void window.grecaptcha?.enterprise.execute(siteKey, { action: "app_check" })
+      void window.grecaptcha?.enterprise
+        .execute(siteKey, { action: "app_check" })
         .then(resolve)
         .catch(reject);
     });
@@ -88,13 +99,14 @@ export async function getWebAppCheckToken(): Promise<string | null> {
       body: JSON.stringify({ recaptchaEnterpriseToken: recaptchaToken }),
     },
   );
-  const result = await response.json() as AppCheckExchangeResponse;
+  const result = (await response.json()) as AppCheckExchangeResponse;
   if (!response.ok || !result.token) {
     throw new Error("Firebase App Check could not verify this website.");
   }
   const ttlSeconds = Number.parseInt((result.ttl ?? "3600s").replace(/s$/, ""), 10);
   cachedToken = result.token;
-  cachedTokenExpiresAt = Date.now() + Math.max(60, Number.isFinite(ttlSeconds) ? ttlSeconds : 3600) * 1000 - 60_000;
+  cachedTokenExpiresAt =
+    Date.now() + Math.max(60, Number.isFinite(ttlSeconds) ? ttlSeconds : 3600) * 1000 - 60_000;
   return cachedToken;
 }
 

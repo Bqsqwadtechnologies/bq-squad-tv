@@ -13,20 +13,30 @@ export type DeliverySimulationResult = {
   outboundStorageCalls: number;
 };
 
-export function runDeliverySimulation(input: {
-  viewers?: number;
-  durationSeconds?: number;
-  segmentsPerMinute?: number;
-  failoverEvery?: number;
-} = {}): DeliverySimulationResult {
+export function runDeliverySimulation(
+  input: {
+    viewers?: number;
+    durationSeconds?: number;
+    segmentsPerMinute?: number;
+    failoverEvery?: number;
+  } = {},
+): DeliverySimulationResult {
   const viewers = input.viewers ?? 1_000;
   const durationSeconds = input.durationSeconds ?? 600;
   const segmentsPerMinute = input.segmentsPerMinute ?? 15;
   const failoverEvery = input.failoverEvery ?? 100;
-  if (!Number.isSafeInteger(viewers) || viewers < 1 || viewers > 10_000 ||
-      !Number.isSafeInteger(durationSeconds) || durationSeconds < 1 || durationSeconds > 86_400 ||
-      !Number.isSafeInteger(segmentsPerMinute) || segmentsPerMinute < 1 ||
-      !Number.isSafeInteger(failoverEvery) || failoverEvery < 1) {
+  if (
+    !Number.isSafeInteger(viewers) ||
+    viewers < 1 ||
+    viewers > 10_000 ||
+    !Number.isSafeInteger(durationSeconds) ||
+    durationSeconds < 1 ||
+    durationSeconds > 86_400 ||
+    !Number.isSafeInteger(segmentsPerMinute) ||
+    segmentsPerMinute < 1 ||
+    !Number.isSafeInteger(failoverEvery) ||
+    failoverEvery < 1
+  ) {
     throw new Error("Simulation parameters are outside the safe test bounds.");
   }
 
@@ -47,9 +57,17 @@ export function runDeliverySimulation(input: {
   const outboundStorageCalls = storageSigningCalls + failovers * 1;
 
   return {
-    viewers, durationSeconds, segmentRequests, segmentApiReads: 0,
-    playlistGenerations, storageSigningCalls, heartbeatCount,
-    settlementTransactions, failovers, databaseReads, databaseWrites,
+    viewers,
+    durationSeconds,
+    segmentRequests,
+    segmentApiReads: 0,
+    playlistGenerations,
+    storageSigningCalls,
+    heartbeatCount,
+    settlementTransactions,
+    failovers,
+    databaseReads,
+    databaseWrites,
     outboundStorageCalls,
   };
 }

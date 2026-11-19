@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { Route as EventsRoute } from "@/routes/api/public/v1/admin/security/events";
-import { Route as LookupActorRoute } from "@/routes/api/public/v1/admin/security/lookup-actor";
+import { Route as EventsRoute } from "@/routes/api/public/v1/zillionaire/security/events";
+import { Route as LookupActorRoute } from "@/routes/api/public/v1/zillionaire/security/lookup-actor";
 import {
   hmacSha256Hex,
   getAuditHashKey,
@@ -83,7 +83,7 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
     process.env = { ...originalEnv };
   });
 
-  describe("GET /api/public/v1/admin/security/events", () => {
+  describe("GET /api/public/v1/zillionaire/security/events", () => {
     it("rejects request if caller lacks security module access", async () => {
       const { fs, storedDocs } = createMemoryFirestore();
       storedDocs["users/operator-1"] = {
@@ -101,7 +101,7 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
         customClaims: {},
       });
 
-      const req = new Request("https://tv.bqsqwad.com/api/public/v1/admin/security/events", {
+      const req = new Request("https://tv.bqsqwad.com/api/public/v1/zillionaire/security/events", {
         method: "GET",
       });
 
@@ -130,7 +130,7 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
         time: "2026-11-18T14:10:00.000Z",
         actorHash: "hash1111111111111111111111111111111111111111111111111111111111111111",
         actorRoleClass: "viewer",
-        routePattern: "/api/public/v1/admin/overview",
+        routePattern: "/api/public/v1/zillionaire/overview",
         method: "GET",
         requiredRole: "admin",
         resourceKind: "admin_module",
@@ -146,7 +146,7 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
         time: "2026-11-18T14:25:00.000Z",
         actorHash: "hash2222222222222222222222222222222222222222222222222222222222222222",
         actorRoleClass: "producer",
-        routePattern: "/api/public/v1/admin/pricing",
+        routePattern: "/api/public/v1/zillionaire/pricing",
         method: "POST",
         requiredRole: "admin",
         resourceKind: "pricing",
@@ -190,7 +190,7 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
 
       // 1. Query all without extra filter
       const reqAll = new Request(
-        "https://tv.bqsqwad.com/api/public/v1/admin/security/events?timeRange=all",
+        "https://tv.bqsqwad.com/api/public/v1/zillionaire/security/events?timeRange=all",
         {
           method: "GET",
         },
@@ -218,7 +218,7 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
 
       // 2. Filter by reason = "CROSS_ROLE_DENIED"
       const reqReason = new Request(
-        "https://tv.bqsqwad.com/api/public/v1/admin/security/events?timeRange=all&reason=CROSS_ROLE_DENIED",
+        "https://tv.bqsqwad.com/api/public/v1/zillionaire/security/events?timeRange=all&reason=CROSS_ROLE_DENIED",
         {
           method: "GET",
         },
@@ -230,7 +230,7 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
 
       // 3. Filter by role = "producer"
       const reqRole = new Request(
-        "https://tv.bqsqwad.com/api/public/v1/admin/security/events?timeRange=all&role=producer",
+        "https://tv.bqsqwad.com/api/public/v1/zillionaire/security/events?timeRange=all&role=producer",
         {
           method: "GET",
         },
@@ -242,7 +242,7 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
 
       // 4. Filter by platform = "ios"
       const reqPlatform = new Request(
-        "https://tv.bqsqwad.com/api/public/v1/admin/security/events?timeRange=all&platform=ios",
+        "https://tv.bqsqwad.com/api/public/v1/zillionaire/security/events?timeRange=all&platform=ios",
         {
           method: "GET",
         },
@@ -257,7 +257,7 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
 
       // 5. Filter by routePattern substring = "pricing"
       const reqRoute = new Request(
-        "https://tv.bqsqwad.com/api/public/v1/admin/security/events?timeRange=all&routePattern=pricing",
+        "https://tv.bqsqwad.com/api/public/v1/zillionaire/security/events?timeRange=all&routePattern=pricing",
         {
           method: "GET",
         },
@@ -269,7 +269,7 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
     });
   });
 
-  describe("POST /api/public/v1/admin/security/lookup-actor", () => {
+  describe("POST /api/public/v1/zillionaire/security/lookup-actor", () => {
     it("strictly requires Zillionaire owner and rejects delegated operators", async () => {
       const { fs, storedDocs } = createMemoryFirestore();
       storedDocs["users/operator-sec"] = {
@@ -287,15 +287,18 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
         customClaims: {},
       });
 
-      const req = new Request("https://tv.bqsqwad.com/api/public/v1/admin/security/lookup-actor", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          actorHash: "a".repeat(64),
-          reason: "Investigating security issue",
-          stepUpConfirmed: true,
-        }),
-      });
+      const req = new Request(
+        "https://tv.bqsqwad.com/api/public/v1/zillionaire/security/lookup-actor",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            actorHash: "a".repeat(64),
+            reason: "Investigating security issue",
+            stepUpConfirmed: true,
+          }),
+        },
+      );
 
       const handler = (
         LookupActorRoute.options.server as unknown as {
@@ -325,15 +328,18 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
         customClaims: {},
       });
 
-      const req = new Request("https://tv.bqsqwad.com/api/public/v1/admin/security/lookup-actor", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          actorHash: "a".repeat(64),
-          reason: "Investigating security issue",
-          stepUpConfirmed: false,
-        }),
-      });
+      const req = new Request(
+        "https://tv.bqsqwad.com/api/public/v1/zillionaire/security/lookup-actor",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            actorHash: "a".repeat(64),
+            reason: "Investigating security issue",
+            stepUpConfirmed: false,
+          }),
+        },
+      );
 
       const handler = (
         LookupActorRoute.options.server as unknown as {
@@ -363,15 +369,18 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
         customClaims: {},
       });
 
-      const req = new Request("https://tv.bqsqwad.com/api/public/v1/admin/security/lookup-actor", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          actorHash: "a".repeat(64),
-          reason: "no",
-          stepUpConfirmed: true,
-        }),
-      });
+      const req = new Request(
+        "https://tv.bqsqwad.com/api/public/v1/zillionaire/security/lookup-actor",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            actorHash: "a".repeat(64),
+            reason: "no",
+            stepUpConfirmed: true,
+          }),
+        },
+      );
 
       const handler = (
         LookupActorRoute.options.server as unknown as {
@@ -414,15 +423,18 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
         customClaims: {},
       });
 
-      const req = new Request("https://tv.bqsqwad.com/api/public/v1/admin/security/lookup-actor", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          actorHash: targetActorHash,
-          reason: "Investigating unauthorized probing of admin APIs",
-          stepUpConfirmed: true,
-        }),
-      });
+      const req = new Request(
+        "https://tv.bqsqwad.com/api/public/v1/zillionaire/security/lookup-actor",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            actorHash: targetActorHash,
+            reason: "Investigating unauthorized probing of admin APIs",
+            stepUpConfirmed: true,
+          }),
+        },
+      );
 
       const handler = (
         LookupActorRoute.options.server as unknown as {
@@ -480,15 +492,18 @@ describe("Batch 10: Security Events & Hashed Actor Lookup", () => {
         customClaims: {},
       });
 
-      const req = new Request("https://tv.bqsqwad.com/api/public/v1/admin/security/lookup-actor", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          actorHash: unknownHash,
-          reason: "Checking unidentified actor hash",
-          stepUpConfirmed: true,
-        }),
-      });
+      const req = new Request(
+        "https://tv.bqsqwad.com/api/public/v1/zillionaire/security/lookup-actor",
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            actorHash: unknownHash,
+            reason: "Checking unidentified actor hash",
+            stepUpConfirmed: true,
+          }),
+        },
+      );
 
       const handler = (
         LookupActorRoute.options.server as unknown as {

@@ -4,7 +4,10 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody } from "@/lib/server/api";
 import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 import { isVideoWorkerLeaseActive } from "@/lib/server/video-worker-policy";
-import { validateStorageDestinationMetadata, resolveStorageDestinationConfiguration } from "@/lib/server/storage/registry";
+import {
+  validateStorageDestinationMetadata,
+  resolveStorageDestinationConfiguration,
+} from "@/lib/server/storage/registry";
 import { createStorageUploadTarget } from "@/lib/server/storage/transfers";
 import { assertStorageObjectKey } from "@/lib/server/storage/ledger";
 import { isAllowedHlsOutputPath } from "@/lib/server/storage/asset-binding";
@@ -12,46 +15,117 @@ import { isAllowedHlsOutputPath } from "@/lib/server/storage/asset-binding";
 const schema = z.object({
   claimToken: z.string().regex(/^[a-f0-9]{32}$/),
   objectKey: z.string().min(1).max(1024),
-  contentType: z.enum(["application/vnd.apple.mpegurl", "video/mp2t", "video/iso.segment", "video/mp4", "text/vtt", "image/jpeg", "image/png", "image/webp", "audio/aac"]),
+  contentType: z.enum([
+    "application/vnd.apple.mpegurl",
+    "video/mp2t",
+    "video/iso.segment",
+    "video/mp4",
+    "text/vtt",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "audio/aac",
+  ]),
 });
 
 export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/target")({
-  server: { handlers: { POST: async ({ request, params }) => {
-    try {
-      const fs = await Firestore.create();
-      const workerId = await requireVideoWorker(request, fs);
-      const body = await parseBody(request, schema);
-      const assetId = params.assetId;
-      if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId)) throw new ApiError(400, "WORKER_JOB_INVALID", "The processing job identifier is invalid.");
-      const job = await fs.getDoc("videoTranscodeJobs/" + assetId);
-      if (!job || job["status"] !== "processing" || job["claimToken"] !== body.claimToken || job["workerId"] !== workerId ||
-          !isVideoWorkerLeaseActive(job["leaseExpiresAt"])) {
-        throw new ApiError(409, "WORKER_LEASE_INVALID", "The processing job lease is no longer valid.");
-      }
-      const prefix = typeof job["outputPrefix"] === "string" ? job["outputPrefix"] : "";
-      const objectKey = assertStorageObjectKey(body.objectKey);
-      const relativePath = objectKey.startsWith(prefix + "/") ? objectKey.slice(prefix.length + 1) : "";
-      const extension = relativePath.split(".").pop()?.toLowerCase() ?? "";
-      const expectedType: Record<string, string> = {
-        m3u8: "application/vnd.apple.mpegurl", ts: "video/mp2t", m4s: "video/iso.segment",
-        mp4: "video/mp4", vtt: "text/vtt", jpg: "image/jpeg", jpeg: "image/jpeg",
-        png: "image/png", webp: "image/webp", aac: "audio/aac",
-      };
-      const allowedName = isAllowedHlsOutputPath(relativePath);
-      if (!prefix || !allowedName || objectKey.length > prefix.length + 220 ||
-          expectedType[extension] !== body.contentType) {
-        throw new ApiError(400, "WORKER_OBJECT_KEY_INVALID", "The output object key is outside the assigned HLS file allow-list.");
-      }
-      const destinationId = typeof job["outputDestinationId"] === "string" ? job["outputDestinationId"] : "";
-      const raw = destinationId ? await fs.getDoc("storageDestinations/" + destinationId) : null;
-      if (!raw) throw new ApiError(503, "HLS_DESTINATION_MISSING", "The assigned HLS destination is unavailable.");
-      const metadata = validateStorageDestinationMetadata({ ...raw, destinationId });
-      const config = resolveStorageDestinationConfiguration(metadata);
-      if (config.configurationStatus !== "configured" || metadata.healthStatus !== "healthy" || !metadata.enabled || metadata.mode !== "active" || metadata.paidEgressEnabled === true) {
-        throw new ApiError(503, "HLS_DESTINATION_UNAVAILABLE", "The assigned HLS destination is not ready.");
-      }
-      const target = await createStorageUploadTarget(config, objectKey, 900);
-      return Response.json({ objectKey, method: target.method, signedUrl: target.signedUrl, ...(target.token ? { token: target.token } : {}), expiresInSeconds: target.expiresInSeconds });
-    } catch (error) { return errorBody(error); }
-  } } },
+  server: {
+    handlers: {
+      POST: async ({ request, params }) => {
+        try {
+          const fs = await Firestore.create();
+          const workerId = await requireVideoWorker(request, fs);
+          const body = await parseBody(request, schema);
+          const assetId = params.assetId;
+          if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId))
+            throw new ApiError(
+              400,
+              "WORKER_JOB_INVALID",
+              "The processing job identifier is invalid.",
+            );
+          const job = await fs.getDoc("videoTranscodeJobs/" + assetId);
+          if (
+            !job ||
+            job["status"] !== "processing" ||
+            job["claimToken"] !== body.claimToken ||
+            job["workerId"] !== workerId ||
+            !isVideoWorkerLeaseActive(job["leaseExpiresAt"])
+          ) {
+            throw new ApiError(
+              409,
+              "WORKER_LEASE_INVALID",
+              "The processing job lease is no longer valid.",
+            );
+          }
+          const prefix = typeof job["outputPrefix"] === "string" ? job["outputPrefix"] : "";
+          const objectKey = assertStorageObjectKey(body.objectKey);
+          const relativePath = objectKey.startsWith(prefix + "/")
+            ? objectKey.slice(prefix.length + 1)
+            : "";
+          const extension = relativePath.split(".").pop()?.toLowerCase() ?? "";
+          const expectedType: Record<string, string> = {
+            m3u8: "application/vnd.apple.mpegurl",
+            ts: "video/mp2t",
+            m4s: "video/iso.segment",
+            mp4: "video/mp4",
+            vtt: "text/vtt",
+            jpg: "image/jpeg",
+            jpeg: "image/jpeg",
+            png: "image/png",
+            webp: "image/webp",
+            aac: "audio/aac",
+          };
+          const allowedName = isAllowedHlsOutputPath(relativePath);
+          if (
+            !prefix ||
+            !allowedName ||
+            objectKey.length > prefix.length + 220 ||
+            expectedType[extension] !== body.contentType
+          ) {
+            throw new ApiError(
+              400,
+              "WORKER_OBJECT_KEY_INVALID",
+              "The output object key is outside the assigned HLS file allow-list.",
+            );
+          }
+          const destinationId =
+            typeof job["outputDestinationId"] === "string" ? job["outputDestinationId"] : "";
+          const raw = destinationId
+            ? await fs.getDoc("storageDestinations/" + destinationId)
+            : null;
+          if (!raw)
+            throw new ApiError(
+              503,
+              "HLS_DESTINATION_MISSING",
+              "The assigned HLS destination is unavailable.",
+            );
+          const metadata = validateStorageDestinationMetadata({ ...raw, destinationId });
+          const config = resolveStorageDestinationConfiguration(metadata);
+          if (
+            config.configurationStatus !== "configured" ||
+            metadata.healthStatus !== "healthy" ||
+            !metadata.enabled ||
+            metadata.mode !== "active" ||
+            metadata.paidEgressEnabled === true
+          ) {
+            throw new ApiError(
+              503,
+              "HLS_DESTINATION_UNAVAILABLE",
+              "The assigned HLS destination is not ready.",
+            );
+          }
+          const target = await createStorageUploadTarget(config, objectKey, 900);
+          return Response.json({
+            objectKey,
+            method: target.method,
+            signedUrl: target.signedUrl,
+            ...(target.token ? { token: target.token } : {}),
+            expiresInSeconds: target.expiresInSeconds,
+          });
+        } catch (error) {
+          return errorBody(error);
+        }
+      },
+    },
+  },
 });

@@ -32,33 +32,40 @@ export function chooseReplicaForSession(input: {
   assetId: string;
   candidates: ReplicaCandidate[];
 }): ReplicaAssignment | null {
-  if (!/^[A-Za-z0-9_-]{1,120}$/.test(input.sessionId) ||
-      !/^[A-Za-z0-9_-]{1,120}$/.test(input.assetId)) return null;
+  if (
+    !/^[A-Za-z0-9_-]{1,120}$/.test(input.sessionId) ||
+    !/^[A-Za-z0-9_-]{1,120}$/.test(input.assetId)
+  )
+    return null;
 
-  const eligible = input.candidates.filter(candidate =>
-    candidate.enabled &&
-    /^[a-z0-9][a-z0-9_-]{1,79}$/.test(candidate.destinationId) &&
-    candidate.healthStatus === "healthy" &&
-    Number.isSafeInteger(candidate.remainingEgressBytes) &&
-    candidate.remainingEgressBytes > 0 &&
-    candidate.egressLevel !== "blocked" &&
-    candidate.egressLevel !== "paid",
+  const eligible = input.candidates.filter(
+    (candidate) =>
+      candidate.enabled &&
+      /^[a-z0-9][a-z0-9_-]{1,79}$/.test(candidate.destinationId) &&
+      candidate.healthStatus === "healthy" &&
+      Number.isSafeInteger(candidate.remainingEgressBytes) &&
+      candidate.remainingEgressBytes > 0 &&
+      candidate.egressLevel !== "blocked" &&
+      candidate.egressLevel !== "paid",
   );
   if (eligible.length === 0) return null;
 
-  const normal = eligible.filter(candidate => candidate.egressLevel === "normal");
-  const pool = normal.length > 0
-    ? normal
-    : eligible.filter(candidate => candidate.egressLevel === "warn");
+  const normal = eligible.filter((candidate) => candidate.egressLevel === "normal");
+  const pool =
+    normal.length > 0 ? normal : eligible.filter((candidate) => candidate.egressLevel === "warn");
   if (pool.length === 0) return null;
 
   // Keep weights bounded while preserving relative headroom.
-  const maxHeadroom = Math.max(...pool.map(candidate => candidate.remainingEgressBytes));
-  const weighted = pool.map(candidate => ({
+  const maxHeadroom = Math.max(...pool.map((candidate) => candidate.remainingEgressBytes));
+  const weighted = pool.map((candidate) => ({
     candidate,
-    weight: Math.max(1, Math.min(1_000_000, Math.floor(
-      candidate.remainingEgressBytes / Math.max(1, maxHeadroom / 1_000_000),
-    ))),
+    weight: Math.max(
+      1,
+      Math.min(
+        1_000_000,
+        Math.floor(candidate.remainingEgressBytes / Math.max(1, maxHeadroom / 1_000_000)),
+      ),
+    ),
   }));
   const totalWeight = weighted.reduce((sum, item) => sum + item.weight, 0);
   const slot = stableHash(input.sessionId + ":" + input.assetId) % totalWeight;

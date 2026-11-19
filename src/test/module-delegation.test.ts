@@ -6,7 +6,7 @@ import {
   ZILLIONAIRE_MODULES,
   type ZillionaireModule,
 } from "@/lib/server/roles";
-import { Route as PermissionsRoute } from "@/routes/api/public/v1/admin/users/$uid/permissions";
+import { Route as PermissionsRoute } from "@/routes/api/public/v1/zillionaire/users/$uid/permissions";
 import type { Firestore } from "@/lib/server/firebase-admin";
 
 function createMockFirestore(userStore: Record<string, Record<string, unknown>>) {
@@ -14,7 +14,7 @@ function createMockFirestore(userStore: Record<string, Record<string, unknown>>)
     getDoc: vi.fn(async (path: string) => userStore[path] || null),
     docName: vi.fn((path: string) => `projects/test/databases/(default)/documents/${path}`),
     transact: vi.fn(async (paths: string[], fn: (docs: unknown[]) => { writes: unknown[] }) => {
-      const docs = paths.map(p => userStore[p] || null);
+      const docs = paths.map((p) => userStore[p] || null);
       const res = fn(docs);
       return res;
     }),
@@ -23,9 +23,22 @@ function createMockFirestore(userStore: Record<string, Record<string, unknown>>)
 
 describe("Batch 07: Fine-Grained Module Delegation for Zillionaire Operators", () => {
   const targetedModules: ZillionaireModule[] = [
-    "roles", "finance", "channels", "storage", "catalog", "support",
-    "moderation", "pricing", "providers", "producers", "users", "ads",
-    "reports", "video", "delivery", "settings",
+    "roles",
+    "finance",
+    "channels",
+    "storage",
+    "catalog",
+    "support",
+    "moderation",
+    "pricing",
+    "providers",
+    "producers",
+    "users",
+    "ads",
+    "reports",
+    "video",
+    "delivery",
+    "settings",
   ];
 
   it("all 16 targeted modules are valid Zillionaire modules in system registry", () => {
@@ -58,11 +71,10 @@ describe("Batch 07: Fine-Grained Module Delegation for Zillionaire Operators", (
 
           // Note: finance covers payments/payouts/wallets, and catalog covers content
           // between the targeted modules, they are strictly disjoint
-          await expect(requireZillionaireModule(fs, user, otherModule))
-            .rejects.toMatchObject({
-              status: 403,
-              code: "ZILLIONAIRE_SCOPE_REQUIRED",
-            });
+          await expect(requireZillionaireModule(fs, user, otherModule)).rejects.toMatchObject({
+            status: 403,
+            code: "ZILLIONAIRE_SCOPE_REQUIRED",
+          });
         }
       });
     }
@@ -84,8 +96,12 @@ describe("Batch 07: Fine-Grained Module Delegation for Zillionaire Operators", (
       await expect(requireZillionaireModule(fs, user, "wallets")).resolves.toBeTruthy();
 
       // But cannot access unrelated modules
-      await expect(requireZillionaireModule(fs, user, "channels")).rejects.toMatchObject({ status: 403 });
-      await expect(requireZillionaireModule(fs, user, "support")).rejects.toMatchObject({ status: 403 });
+      await expect(requireZillionaireModule(fs, user, "channels")).rejects.toMatchObject({
+        status: 403,
+      });
+      await expect(requireZillionaireModule(fs, user, "support")).rejects.toMatchObject({
+        status: 403,
+      });
     });
 
     it("operator with [catalog] module can access content and catalog", async () => {
@@ -101,8 +117,12 @@ describe("Batch 07: Fine-Grained Module Delegation for Zillionaire Operators", (
       await expect(requireZillionaireModule(fs, user, "content")).resolves.toBeTruthy();
 
       // But cannot access pricing, storage, etc.
-      await expect(requireZillionaireModule(fs, user, "pricing")).rejects.toMatchObject({ status: 403 });
-      await expect(requireZillionaireModule(fs, user, "storage")).rejects.toMatchObject({ status: 403 });
+      await expect(requireZillionaireModule(fs, user, "pricing")).rejects.toMatchObject({
+        status: 403,
+      });
+      await expect(requireZillionaireModule(fs, user, "storage")).rejects.toMatchObject({
+        status: 403,
+      });
     });
   });
 
@@ -119,9 +139,15 @@ describe("Batch 07: Fine-Grained Module Delegation for Zillionaire Operators", (
       await expect(requireZillionaireModule(fs, user, "channels")).resolves.toBeTruthy();
       await expect(requireZillionaireModule(fs, user, "producers")).resolves.toBeTruthy();
 
-      await expect(requireZillionaireModule(fs, user, "storage")).rejects.toMatchObject({ status: 403 });
-      await expect(requireZillionaireModule(fs, user, "pricing")).rejects.toMatchObject({ status: 403 });
-      await expect(requireZillionaireModule(fs, user, "roles")).rejects.toMatchObject({ status: 403 });
+      await expect(requireZillionaireModule(fs, user, "storage")).rejects.toMatchObject({
+        status: 403,
+      });
+      await expect(requireZillionaireModule(fs, user, "pricing")).rejects.toMatchObject({
+        status: 403,
+      });
+      await expect(requireZillionaireModule(fs, user, "roles")).rejects.toMatchObject({
+        status: 403,
+      });
     });
   });
 
@@ -184,17 +210,20 @@ describe("Batch 07: Fine-Grained Module Delegation for Zillionaire Operators", (
 
   describe("Permissions endpoint governance", () => {
     it("rejects non-owner operator from delegating permissions", async () => {
-      const mockRequest = new Request("http://localhost/api/public/v1/admin/users/target-1/permissions", {
-        method: "PUT",
-        headers: {
-          "content-type": "application/json",
-          authorization: "Bearer mock-operator-token",
+      const mockRequest = new Request(
+        "http://localhost/api/public/v1/zillionaire/users/target-1/permissions",
+        {
+          method: "PUT",
+          headers: {
+            "content-type": "application/json",
+            authorization: "Bearer mock-operator-token",
+          },
+          body: JSON.stringify({
+            modules: ["channels"],
+            reason: "Granting channel management",
+          }),
         },
-        body: JSON.stringify({
-          modules: ["channels"],
-          reason: "Granting channel management",
-        }),
-      });
+      );
 
       // The handler requires owner authority
       vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@zillionaire.tv");

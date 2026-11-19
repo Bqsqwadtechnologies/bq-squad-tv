@@ -12,20 +12,22 @@ const candidate = (destinationId: string, remainingEgressBytes = 1_000_000): Rep
 describe("chooseReplicaForSession", () => {
   it("is deterministic for the same session and asset", () => {
     const candidates = [candidate("storage_a"), candidate("storage_b")];
-    expect(chooseReplicaForSession({ sessionId: "session-1", assetId: "asset-1", candidates }))
-      .toEqual(chooseReplicaForSession({ sessionId: "session-1", assetId: "asset-1", candidates }));
+    expect(
+      chooseReplicaForSession({ sessionId: "session-1", assetId: "asset-1", candidates }),
+    ).toEqual(chooseReplicaForSession({ sessionId: "session-1", assetId: "asset-1", candidates }));
   });
 
   it("spreads independent sessions across healthy replicas", () => {
     const candidates = [candidate("storage_a"), candidate("storage_b"), candidate("storage_c")];
-    const counts = new Map(candidates.map(item => [item.destinationId, 0]));
+    const counts = new Map(candidates.map((item) => [item.destinationId, 0]));
     for (let index = 0; index < 900; index++) {
       const selected = chooseReplicaForSession({
         sessionId: "session-" + index,
         assetId: "asset-1",
         candidates,
       });
-      if (selected) counts.set(selected.destinationId, (counts.get(selected.destinationId) ?? 0) + 1);
+      if (selected)
+        counts.set(selected.destinationId, (counts.get(selected.destinationId) ?? 0) + 1);
     }
     for (const count of counts.values()) expect(count).toBeGreaterThan(150);
   });
@@ -49,8 +51,10 @@ describe("chooseReplicaForSession", () => {
       candidate("normal"),
       { ...candidate("warn"), egressLevel: "warn" },
     ];
-    expect(chooseReplicaForSession({ sessionId: "session-2", assetId: "asset-1", candidates })?.destinationId)
-      .toBe("normal");
+    expect(
+      chooseReplicaForSession({ sessionId: "session-2", assetId: "asset-1", candidates })
+        ?.destinationId,
+    ).toBe("normal");
   });
 
   it("never assigns unhealthy or blocked destinations", () => {
@@ -58,6 +62,8 @@ describe("chooseReplicaForSession", () => {
       { ...candidate("degraded"), healthStatus: "degraded" },
       { ...candidate("blocked"), egressLevel: "blocked" },
     ];
-    expect(chooseReplicaForSession({ sessionId: "session-3", assetId: "asset-1", candidates })).toBeNull();
+    expect(
+      chooseReplicaForSession({ sessionId: "session-3", assetId: "asset-1", candidates }),
+    ).toBeNull();
   });
 });

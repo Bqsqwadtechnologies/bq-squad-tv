@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Firestore } from "@/lib/server/firebase-admin";
 import {
-  requireAdminModule,
+  requireZillionaireModule,
   requirePlatformRole,
   requireProviderAccess,
   resolvePlatformAccess,
@@ -378,17 +378,17 @@ describe("Batch 12: role-isolation end-to-end boundaries", () => {
       requirePlatformRole(fs, user("viewer", "viewer@example.test"), "producer"),
     ).rejects.toMatchObject({ status: 403, code: "FORBIDDEN" });
     await expect(
-      requireAdminModule(
+      requireZillionaireModule(
         fs,
         user("delegate-no-module", "delegate-no-module@example.test"),
         "support",
       ),
     ).rejects.toMatchObject({ status: 403, code: "ZILLIONAIRE_SCOPE_REQUIRED" });
     await expect(
-      requireAdminModule(fs, user("delegate", "delegate@example.test"), "support"),
+      requireZillionaireModule(fs, user("delegate", "delegate@example.test"), "support"),
     ).resolves.toMatchObject({ zillionaireModules: expect.arrayContaining(["support"]) });
     await expect(
-      requireAdminModule(fs, user("owner", "owner@zillionaire.test"), "security"),
+      requireZillionaireModule(fs, user("owner", "owner@zillionaire.test"), "security"),
     ).resolves.toMatchObject({ isZillionaireOwner: true });
   });
 

@@ -28,13 +28,15 @@ type Statement = {
 
 function formatCurrency(minorUnits: number, currency: string) {
   try {
-    const digits = new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions().maximumFractionDigits ?? 2;
+    const digits =
+      new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions()
+        .maximumFractionDigits ?? 2;
     return new Intl.NumberFormat(undefined, {
       style: "currency",
       currency,
       minimumFractionDigits: digits,
       maximumFractionDigits: digits,
-    }).format(minorUnits / (10 ** digits));
+    }).format(minorUnits / 10 ** digits);
   } catch {
     return `${currency} ${(minorUnits / 100).toFixed(2)}`;
   }
@@ -69,7 +71,7 @@ function ProviderStatementsPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to load partner statements");
-        const data = await res.json() as { statements: Statement[] };
+        const data = (await res.json()) as { statements: Statement[] };
         if (active) setStatements(data.statements || []);
       } catch (err: unknown) {
         if (active) setError(err instanceof Error ? err.message : "Network error");
@@ -77,7 +79,9 @@ function ProviderStatementsPage() {
         if (active) setBusy(false);
       }
     })();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   function exportCSV(statement: Statement) {
@@ -86,9 +90,21 @@ function ProviderStatementsPage() {
       ["Period", statement.period, ""],
       ["Status", statement.status, ""],
       ["Gross Viewing Revenue", (statement.grossRevenueMinor / 100).toFixed(2), statement.currency],
-      ["Payment Processing Costs", (statement.deductibleCosts.paymentProcessingMinor / 100).toFixed(2), statement.currency],
-      ["Infrastructure Costs", (statement.deductibleCosts.playbackInfrastructureMinor / 100).toFixed(2), statement.currency],
-      ["Total Deductibles", (statement.deductibleCosts.totalDeductibleMinor / 100).toFixed(2), statement.currency],
+      [
+        "Payment Processing Costs",
+        (statement.deductibleCosts.paymentProcessingMinor / 100).toFixed(2),
+        statement.currency,
+      ],
+      [
+        "Infrastructure Costs",
+        (statement.deductibleCosts.playbackInfrastructureMinor / 100).toFixed(2),
+        statement.currency,
+      ],
+      [
+        "Total Deductibles",
+        (statement.deductibleCosts.totalDeductibleMinor / 100).toFixed(2),
+        statement.currency,
+      ],
       ["Net Gross Profit", (statement.grossProfitMinor / 100).toFixed(2), statement.currency],
       ["Partner Share BPS", statement.providerShareBps.toString(), "bps"],
       ["Partner Earnings", (statement.providerEarningsMinor / 100).toFixed(2), statement.currency],
@@ -96,7 +112,7 @@ function ProviderStatementsPage() {
       ["Hash Audit", statement.statementHash, ""],
     ];
 
-    const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+    const csvContent = "data:text/csv;charset=utf-8," + rows.map((e) => e.join(",")).join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -137,7 +153,10 @@ function ProviderStatementsPage() {
             <p className="text-sm text-slate-400">Loading statements...</p>
           </div>
         ) : error ? (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm" role="alert">
+          <div
+            className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
+            role="alert"
+          >
             {error}
           </div>
         ) : (
@@ -145,33 +164,47 @@ function ProviderStatementsPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
                 <h2 className="text-xl font-bold text-white">Revenue Share Statements</h2>
-                <p className="text-xs text-slate-400">Calculated strictly as contracted percentage of Net Gross Profit.</p>
+                <p className="text-xs text-slate-400">
+                  Calculated strictly as contracted percentage of Net Gross Profit.
+                </p>
               </div>
             </div>
 
             {statements.length === 0 ? (
-              <div className="p-12 text-center rounded-2xl bg-slate-900 border border-slate-800" role="status">
+              <div
+                className="p-12 text-center rounded-2xl bg-slate-900 border border-slate-800"
+                role="status"
+              >
                 <FileText className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <h3 className="text-base font-semibold text-white mb-1">No closed statements yet</h3>
+                <h3 className="text-base font-semibold text-white mb-1">
+                  No closed statements yet
+                </h3>
                 <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                  Statements are closed on the 1st of each calendar month following verified viewing ledger reconciliation.
+                  Statements are closed on the 1st of each calendar month following verified viewing
+                  ledger reconciliation.
                 </p>
               </div>
             ) : (
               <div className="space-y-4" role="region" aria-label="Provider revenue statements">
                 {statements.map((s) => (
-                  <div key={s.id} tabIndex={0} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
+                  <div
+                    key={s.id}
+                    tabIndex={0}
+                    className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-base font-bold text-white">{s.period}</h3>
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium uppercase ${
-                            s.status === "paid"
-                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                              : s.status === "approved"
-                              ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
-                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                          }`}>
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-medium uppercase ${
+                              s.status === "paid"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : s.status === "approved"
+                                  ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+                                  : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            }`}
+                          >
                             {s.status} {s.isEstimate ? "(Estimate)" : ""}
                           </span>
                         </div>
@@ -220,7 +253,9 @@ function ProviderStatementsPage() {
                         </span>
                       </div>
                       <div className="bg-cyan-950/20 p-2.5 rounded-xl border border-cyan-800/30">
-                        <span className="text-cyan-400 block mb-1 font-medium">Partner Earnings ({(s.providerShareBps / 100).toFixed(1)}%)</span>
+                        <span className="text-cyan-400 block mb-1 font-medium">
+                          Partner Earnings ({(s.providerShareBps / 100).toFixed(1)}%)
+                        </span>
                         <span className="text-base font-bold text-cyan-300">
                           {formatCurrency(s.providerEarningsMinor, s.currency)}
                         </span>
@@ -229,8 +264,13 @@ function ProviderStatementsPage() {
 
                     {s.paymentReference && (
                       <div className="pt-2 text-xs text-slate-400 flex items-center justify-between border-t border-slate-800/60">
-                        <span>Payment Reference: <span className="text-slate-200 font-mono">{s.paymentReference}</span></span>
-                        <span>Paid: {s.paidAt ? new Date(s.paidAt).toLocaleDateString() : "Settled"}</span>
+                        <span>
+                          Payment Reference:{" "}
+                          <span className="text-slate-200 font-mono">{s.paymentReference}</span>
+                        </span>
+                        <span>
+                          Paid: {s.paidAt ? new Date(s.paidAt).toLocaleDateString() : "Settled"}
+                        </span>
                       </div>
                     )}
                   </div>

@@ -15,7 +15,7 @@ export const Route = createFileRoute("/api/public/v1/wallet/purchases")({
           });
 
           ledger.sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
-            String(b["createdAt"] ?? "").localeCompare(String(a["createdAt"] ?? ""))
+            String(b["createdAt"] ?? "").localeCompare(String(a["createdAt"] ?? "")),
           );
 
           const items = ledger.map((doc: Record<string, unknown>) => ({

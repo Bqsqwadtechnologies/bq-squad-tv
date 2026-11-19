@@ -10,7 +10,11 @@ describe("website and Android payment product configuration", () => {
         invalid: { amountMinor: 1.5, creditMinor: 10 },
       },
     };
-    expect(getPaystackTopup(config, "starter")).toEqual({ amountMinor: 50000, displayAmountMinor: 50000, creditMinor: 50000 });
+    expect(getPaystackTopup(config, "starter")).toEqual({
+      amountMinor: 50000,
+      displayAmountMinor: 50000,
+      creditMinor: 50000,
+    });
     expect(() => getPaystackTopup(config, "missing")).toThrow();
     expect(() => getPaystackTopup(config, "invalid")).toThrow();
   });
@@ -18,14 +22,28 @@ describe("website and Android payment product configuration", () => {
   it("exposes only active, well-formed Google Play consumables", () => {
     const products = getGooglePlayProducts({
       googlePlayProducts: [
-        { productId: "wallet_100", title: "Wallet 100", credits: 100, creditMinor: 10000, active: true },
+        {
+          productId: "wallet_100",
+          title: "Wallet 100",
+          credits: 100,
+          creditMinor: 10000,
+          active: true,
+        },
         { productId: "disabled", title: "Disabled", credits: 10, creditMinor: 1000, active: false },
         { productId: "bad_amount", title: "Bad", credits: 10, creditMinor: 10.5, active: true },
       ],
     });
-    expect(products).toEqual([{
-      productId: "wallet_100", title: "Wallet 100", description: "", credits: 100, creditMinor: 10000, currency: "NGN", active: true,
-    }]);
+    expect(products).toEqual([
+      {
+        productId: "wallet_100",
+        title: "Wallet 100",
+        description: "",
+        credits: 100,
+        creditMinor: 10000,
+        currency: "NGN",
+        active: true,
+      },
+    ]);
   });
 
   it("returns no Play products when pricing is not configured", () => {

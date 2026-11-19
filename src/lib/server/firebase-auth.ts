@@ -12,15 +12,21 @@ export type VerifiedUser = {
   customClaims: Record<string, unknown>;
 };
 
-let cachedJwks: { keys: Array<JsonWebKey & { kid?: string; alg?: string }>; fetchedAt: number } | null = null;
+let cachedJwks: {
+  keys: Array<JsonWebKey & { kid?: string; alg?: string }>;
+  fetchedAt: number;
+} | null = null;
 
 async function getSigningKeys(): Promise<Array<JsonWebKey & { kid?: string; alg?: string }>> {
   if (cachedJwks && Date.now() - cachedJwks.fetchedAt < 30 * 60 * 1000) return cachedJwks.keys;
   const response = await fetch(
     "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com",
   );
-  if (!response.ok) throw new ApiError(502, "GOOGLE_AUTH_FAILED", "Could not load Google signing keys.");
-  const keySet = (await response.json()) as { keys?: Array<JsonWebKey & { kid?: string; alg?: string }> };
+  if (!response.ok)
+    throw new ApiError(502, "GOOGLE_AUTH_FAILED", "Could not load Google signing keys.");
+  const keySet = (await response.json()) as {
+    keys?: Array<JsonWebKey & { kid?: string; alg?: string }>;
+  };
   cachedJwks = { keys: keySet.keys ?? [], fetchedAt: Date.now() };
   return cachedJwks.keys;
 }
@@ -33,8 +39,12 @@ function decodeJwtPart(part: string): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-export async function verifyFirebaseIdToken(token: string, projectId: string): Promise<VerifiedUser> {
-  if (!token || token.length > 8192) throw new ApiError(401, "UNAUTHENTICATED", "Invalid authentication token.");
+export async function verifyFirebaseIdToken(
+  token: string,
+  projectId: string,
+): Promise<VerifiedUser> {
+  if (!token || token.length > 8192)
+    throw new ApiError(401, "UNAUTHENTICATED", "Invalid authentication token.");
   const parts = token.split(".");
   if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) {
     throw new ApiError(401, "UNAUTHENTICATED", "Invalid authentication token.");
@@ -46,7 +56,9 @@ export async function verifyFirebaseIdToken(token: string, projectId: string): P
     throw new ApiError(401, "UNAUTHENTICATED", "Invalid authentication token.");
   }
 
-  const signingKey = (await getSigningKeys()).find((key) => key.kid === header["kid"] && key.alg === "RS256");
+  const signingKey = (await getSigningKeys()).find(
+    (key) => key.kid === header["kid"] && key.alg === "RS256",
+  );
   if (!signingKey) throw new ApiError(401, "UNAUTHENTICATED", "Invalid authentication token.");
 
   const key = await crypto.subtle.importKey(
@@ -88,8 +100,12 @@ export async function verifyFirebaseIdToken(token: string, projectId: string): P
     customClaims: {
       admin: claims["admin"] === true,
       producer: claims["producer"] === true,
-      roleTags: Array.isArray(claims["roleTags"]) ? claims["roleTags"].filter((role): role is string => typeof role === "string") : [],
-      adminModules: Array.isArray(claims["adminModules"]) ? claims["adminModules"].filter((module): module is string => typeof module === "string") : [],
+      roleTags: Array.isArray(claims["roleTags"])
+        ? claims["roleTags"].filter((role): role is string => typeof role === "string")
+        : [],
+      adminModules: Array.isArray(claims["adminModules"])
+        ? claims["adminModules"].filter((module): module is string => typeof module === "string")
+        : [],
     },
   };
 }

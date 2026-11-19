@@ -9,17 +9,20 @@ describe("account status enforcement", () => {
   });
 
   it("blocks suspended accounts", () => {
-    expect(() => assertAccountActive({ accountStatus: "SUSPENDED" }))
-      .toThrow(expect.objectContaining({ status: 403, code: "ACCOUNT_SUSPENDED" }));
+    expect(() => assertAccountActive({ accountStatus: "SUSPENDED" })).toThrow(
+      expect.objectContaining({ status: 403, code: "ACCOUNT_SUSPENDED" }),
+    );
   });
 
   it("blocks accounts pending deletion", () => {
-    expect(() => assertAccountActive({ accountStatus: "DELETION_PENDING" }))
-      .toThrow(expect.objectContaining({ status: 403, code: "ACCOUNT_DELETION_PENDING" }));
+    expect(() => assertAccountActive({ accountStatus: "DELETION_PENDING" })).toThrow(
+      expect.objectContaining({ status: 403, code: "ACCOUNT_DELETION_PENDING" }),
+    );
   });
 
   it("blocks deleted accounts", () => {
-    expect(() => assertAccountActive({ accountStatus: "DELETED" }))
-      .toThrow(expect.objectContaining({ status: 403, code: "ACCOUNT_DELETED" }));
+    expect(() => assertAccountActive({ accountStatus: "DELETED" })).toThrow(
+      expect.objectContaining({ status: 403, code: "ACCOUNT_DELETED" }),
+    );
   });
 });

@@ -6,7 +6,15 @@ export function assertAuthenticationSessionActive(
   authTimeSeconds: number,
 ): void {
   const revokedAfter = profile?.["sessionsRevokedAfter"];
-  if (typeof revokedAfter === "number" && Number.isFinite(revokedAfter) && authTimeSeconds <= revokedAfter) {
-    throw new ApiError(401, "AUTH_SESSION_REVOKED", "Your sign-in session has been revoked. Sign in again.");
+  if (
+    typeof revokedAfter === "number" &&
+    Number.isFinite(revokedAfter) &&
+    authTimeSeconds <= revokedAfter
+  ) {
+    throw new ApiError(
+      401,
+      "AUTH_SESSION_REVOKED",
+      "Your sign-in session has been revoked. Sign in again.",
+    );
   }
 }

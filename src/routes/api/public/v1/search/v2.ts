@@ -20,13 +20,17 @@ export const Route = createFileRoute("/api/public/v1/search/v2")({
           const allChannels = await fs.query("channels", { limit: 50 });
 
           const titles = allTitles.filter((t: Record<string, unknown>) => {
-            const titleMatch = String(t["title"] ?? "").toLowerCase().includes(q);
+            const titleMatch = String(t["title"] ?? "")
+              .toLowerCase()
+              .includes(q);
             const catMatch = !category || t["category"] === category;
             return (titleMatch || !q) && catMatch && t["status"] === "published";
           });
 
           const channels = allChannels.filter((c: Record<string, unknown>) => {
-            const nameMatch = String(c["name"] ?? "").toLowerCase().includes(q);
+            const nameMatch = String(c["name"] ?? "")
+              .toLowerCase()
+              .includes(q);
             return (nameMatch || !q) && c["status"] === "published";
           });
 

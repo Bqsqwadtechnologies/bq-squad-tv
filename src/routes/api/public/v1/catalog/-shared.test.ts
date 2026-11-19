@@ -9,10 +9,13 @@ describe("catalogue adult visibility", () => {
   ];
 
   it("removes adult-only and unpublished channels for non-adult viewers", () => {
-    expect(visibleChannels(channels, false).map(channel => channel.__id)).toEqual(["general"]);
+    expect(visibleChannels(channels, false).map((channel) => channel.__id)).toEqual(["general"]);
   });
 
   it("still removes unpublished channels for verified adult viewers", () => {
-    expect(visibleChannels(channels, true).map(channel => channel.__id)).toEqual(["general", "adult"]);
+    expect(visibleChannels(channels, true).map((channel) => channel.__id)).toEqual([
+      "general",
+      "adult",
+    ]);
   });
 });

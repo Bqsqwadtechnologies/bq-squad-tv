@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { currencyForCountry, minorUnitDigits, normalizeCountryCode, isSupportedPaystackCurrency } from "@/lib/server/currency";
+import {
+  currencyForCountry,
+  minorUnitDigits,
+  normalizeCountryCode,
+  isSupportedPaystackCurrency,
+} from "@/lib/server/currency";
 
 describe("country currency policy", () => {
   it("uses a known country's local currency", () => {

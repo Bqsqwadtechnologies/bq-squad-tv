@@ -16,24 +16,41 @@ describe("Google Play purchase account binding", () => {
   });
 });
 
-
 describe("Google Play localized wallet products", () => {
   const config = {
-    googlePlayProducts: [{
-      active: true, productId: "wallet.starter", title: "Starter", credits: 50,
-      creditMinor: 5000,
-      creditMinorByCurrency: { USD: 499, NGN: 50000, JPY: 500 },
-    }],
+    googlePlayProducts: [
+      {
+        active: true,
+        productId: "wallet.starter",
+        title: "Starter",
+        credits: 50,
+        creditMinor: 5000,
+        creditMinorByCurrency: { USD: 499, NGN: 50000, JPY: 500 },
+      },
+    ],
   };
 
   it("returns the configured wallet value in the user's currency", () => {
-    expect(getGooglePlayProducts(config, "USD")[0]).toMatchObject({ creditMinor: 499, currency: "USD" });
-    expect(getGooglePlayProducts(config, "NGN")[0]).toMatchObject({ creditMinor: 50000, currency: "NGN" });
-    expect(getGooglePlayProducts(config, "JPY")[0]).toMatchObject({ creditMinor: 500, currency: "JPY" });
+    expect(getGooglePlayProducts(config, "USD")[0]).toMatchObject({
+      creditMinor: 499,
+      currency: "USD",
+    });
+    expect(getGooglePlayProducts(config, "NGN")[0]).toMatchObject({
+      creditMinor: 50000,
+      currency: "NGN",
+    });
+    expect(getGooglePlayProducts(config, "JPY")[0]).toMatchObject({
+      creditMinor: 500,
+      currency: "JPY",
+    });
   });
 
   it("does not reuse a legacy NGN value for USD accounts", () => {
-    const legacy = { googlePlayProducts: [{ active: true, productId: "wallet.old", title: "Old", credits: 5, creditMinor: 500 }] };
+    const legacy = {
+      googlePlayProducts: [
+        { active: true, productId: "wallet.old", title: "Old", credits: 5, creditMinor: 500 },
+      ],
+    };
     expect(getGooglePlayProducts(legacy, "USD")).toEqual([]);
     expect(getGooglePlayProducts(legacy, "NGN")).toHaveLength(1);
   });

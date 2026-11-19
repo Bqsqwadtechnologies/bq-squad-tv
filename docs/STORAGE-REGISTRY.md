@@ -39,11 +39,11 @@ Both B2 prefix conventions are accepted: `STORAGE_B2_NN01`…`STORAGE_B2_NN10` a
 
 All routes below require the verified platform owner and the `system` module.
 
-- `GET /api/public/v1/admin/storage/destinations`: list redacted destination metadata.
-- `PUT /api/public/v1/admin/storage/destinations`: create/update metadata and audit the change.
-- `POST /api/public/v1/admin/storage/seed`: seed metadata only; it does not create buckets or verify quota.
-- `POST /api/public/v1/admin/storage/health`: perform a private write/head/read/delete health check and audit the result.
-- `POST /api/public/v1/admin/storage/usage`: record an owner-attested manual usage snapshot with an audit reason. This is not automatic provider discovery.
+- `GET /api/public/v1/zillionaire/storage/destinations`: list redacted destination metadata.
+- `PUT /api/public/v1/zillionaire/storage/destinations`: create/update metadata and audit the change.
+- `POST /api/public/v1/zillionaire/storage/seed`: seed metadata only; it does not create buckets or verify quota.
+- `POST /api/public/v1/zillionaire/storage/health`: perform a private write/head/read/delete health check and audit the result.
+- `POST /api/public/v1/zillionaire/storage/usage`: record an owner-attested manual usage snapshot with an audit reason. This is not automatic provider discovery.
 
 The owner Storage Destinations page exposes metadata editing, legacy bucket seeding, provider health checks, manual usage reporting, shared capacity and shared egress configuration. A successful configuration check only means the required secret values are present and syntactically valid; the separate live health check must pass.
 

@@ -97,7 +97,8 @@ function WalletPage() {
         const reference = query.get("reference") ?? query.get("trxref");
         if (reference) {
           const currentToken = await getActiveWebIdToken();
-          if (!currentToken) throw new Error("Your session expired. Sign in again to confirm the payment.");
+          if (!currentToken)
+            throw new Error("Your session expired. Sign in again to confirm the payment.");
           const response = await fetch("/api/public/v1/payments/paystack/verify", {
             method: "POST",
             headers: {
@@ -106,14 +107,19 @@ function WalletPage() {
             },
             body: JSON.stringify({ reference }),
           });
-          const result = await response.json() as { error?: string; credited?: boolean };
+          const result = (await response.json()) as { error?: string; credited?: boolean };
           if (!response.ok) throw new Error(result.error ?? "The payment could not be confirmed.");
-          setMessage(result.credited ? "Payment confirmed. Your wallet has been credited." : "This payment was already processed.");
+          setMessage(
+            result.credited
+              ? "Payment confirmed. Your wallet has been credited."
+              : "This payment was already processed.",
+          );
           window.history.replaceState({}, "", "/wallet");
           await loadWallet(currentToken);
         }
       } catch (caught) {
-        if (active) setError(caught instanceof Error ? caught.message : "Could not load your wallet.");
+        if (active)
+          setError(caught instanceof Error ? caught.message : "Could not load your wallet.");
       } finally {
         if (active) setBusy(false);
       }
@@ -138,7 +144,7 @@ function WalletPage() {
         },
         body: JSON.stringify({ packageId }),
       });
-      const result = await response.json() as { authorizationUrl?: string; error?: string };
+      const result = (await response.json()) as { authorizationUrl?: string; error?: string };
       if (!response.ok || !result.authorizationUrl) {
         throw new Error(result.error ?? "Could not start Paystack checkout.");
       }
@@ -153,10 +159,16 @@ function WalletPage() {
     <main className="min-h-screen bg-[#030b2a] px-4 py-8 text-white sm:px-6">
       <div className="mx-auto max-w-5xl">
         <header className="flex flex-wrap items-center justify-between gap-4">
-          <a href="/" aria-label="BQ SQWAD TV home"><BrandLogo variant="horizontal" className="h-8 w-auto" /></a>
+          <a href="/" aria-label="BQ SQWAD TV home">
+            <BrandLogo variant="horizontal" className="h-8 w-auto" />
+          </a>
           <nav className="flex gap-4 text-sm text-blue-100/70">
-            <a href="/account" className="hover:text-white">Account</a>
-            <a href="/" className="hover:text-white">Home</a>
+            <a href="/account" className="hover:text-white">
+              Account
+            </a>
+            <a href="/" className="hover:text-white">
+              Home
+            </a>
           </nav>
         </header>
 
@@ -167,46 +179,80 @@ function WalletPage() {
             <p className="mt-7 text-sm text-blue-100/60">Loading your wallet…</p>
           ) : !wallet ? (
             <div className="mt-7">
-              <p className="text-sm text-blue-100/70">Sign in to view your wallet and payment history.</p>
-              <a href="/account" className="mt-4 inline-flex rounded-xl bg-cyan-300 px-5 py-3 font-bold text-[#031039]">Sign in</a>
+              <p className="text-sm text-blue-100/70">
+                Sign in to view your wallet and payment history.
+              </p>
+              <a
+                href="/account"
+                className="mt-4 inline-flex rounded-xl bg-cyan-300 px-5 py-3 font-bold text-[#031039]"
+              >
+                Sign in
+              </a>
             </div>
           ) : (
             <>
               <div className="mt-7 flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <p className="text-sm text-blue-100/60">Available balance</p>
-                  <p className="mt-2 text-4xl font-black tabular-nums">{formatMoney(wallet.balanceMinor, wallet.currency)}</p>
+                  <p className="mt-2 text-4xl font-black tabular-nums">
+                    {formatMoney(wallet.balanceMinor, wallet.currency)}
+                  </p>
                   <p className="mt-2 break-all text-xs text-blue-100/45">{email}</p>
                 </div>
-                <a href="/account" className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/5">Account settings</a>
+                <a
+                  href="/account"
+                  className="rounded-xl border border-white/15 px-4 py-2 text-sm font-semibold hover:bg-white/5"
+                >
+                  Account settings
+                </a>
               </div>
               {!verified ? (
                 <p className="mt-6 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm text-amber-100">
-                  Verify your email before purchasing wallet credits. <a href="/account" className="font-bold underline">Verify account</a>
+                  Verify your email before purchasing wallet credits.{" "}
+                  <a href="/account" className="font-bold underline">
+                    Verify account
+                  </a>
                 </p>
               ) : (
                 <div className="mt-8">
                   <h2 className="text-lg font-bold">Add wallet credits</h2>
                   {topups.length ? (
                     <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {topups.map(item => (
-                        <article key={item.packageId} className="rounded-2xl border border-white/10 bg-[#030b2a]/55 p-4">
-                          <p className="text-xs uppercase tracking-[0.14em] text-cyan-200">{item.packageId}</p>
-                          <p className="mt-2 text-xl font-extrabold">{formatMoney(item.creditMinor, item.currency)} credit</p>
-                          <p className="mt-1 text-sm text-blue-100/60">Pay {formatMoney(item.displayAmountMinor ?? item.amountMinor, item.currency)}</p>
+                      {topups.map((item) => (
+                        <article
+                          key={item.packageId}
+                          className="rounded-2xl border border-white/10 bg-[#030b2a]/55 p-4"
+                        >
+                          <p className="text-xs uppercase tracking-[0.14em] text-cyan-200">
+                            {item.packageId}
+                          </p>
+                          <p className="mt-2 text-xl font-extrabold">
+                            {formatMoney(item.creditMinor, item.currency)} credit
+                          </p>
+                          <p className="mt-1 text-sm text-blue-100/60">
+                            Pay{" "}
+                            {formatMoney(
+                              item.displayAmountMinor ?? item.amountMinor,
+                              item.currency,
+                            )}
+                          </p>
                           <button
                             type="button"
                             disabled={busyPackage !== ""}
                             onClick={() => void purchase(item.packageId)}
                             className="mt-4 w-full rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-extrabold text-[#031039] disabled:opacity-50"
                           >
-                            {busyPackage === item.packageId ? "Opening checkout…" : "Top up with Paystack"}
+                            {busyPackage === item.packageId
+                              ? "Opening checkout…"
+                              : "Top up with Paystack"}
                           </button>
                         </article>
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-3 text-sm text-blue-100/55">Wallet packages have not been configured yet.</p>
+                    <p className="mt-3 text-sm text-blue-100/55">
+                      Wallet packages have not been configured yet.
+                    </p>
                   )}
                 </div>
               )}
@@ -214,24 +260,53 @@ function WalletPage() {
           )}
         </section>
 
-        {message && <p role="status" className="mt-5 rounded-xl border border-emerald-300/15 bg-emerald-300/5 p-4 text-sm text-emerald-100">{message}</p>}
-        {error && <p role="alert" className="mt-5 rounded-xl border border-rose-300/15 bg-rose-300/5 p-4 text-sm text-rose-100">{error}</p>}
+        {message && (
+          <p
+            role="status"
+            className="mt-5 rounded-xl border border-emerald-300/15 bg-emerald-300/5 p-4 text-sm text-emerald-100"
+          >
+            {message}
+          </p>
+        )}
+        {error && (
+          <p
+            role="alert"
+            className="mt-5 rounded-xl border border-rose-300/15 bg-rose-300/5 p-4 text-sm text-rose-100"
+          >
+            {error}
+          </p>
+        )}
 
-        <section id="transactions" className="mt-8 rounded-3xl border border-white/10 bg-[#07143d] p-6 sm:p-8">
+        <section
+          id="transactions"
+          className="mt-8 rounded-3xl border border-white/10 bg-[#07143d] p-6 sm:p-8"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-xl font-bold">Recent transactions</h2>
             <span className="text-xs text-blue-100/45">Newest first · up to 25 entries</span>
           </div>
           {ledger.length ? (
             <div className="mt-5 divide-y divide-white/10">
-              {ledger.map(item => (
-                <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
+              {ledger.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-wrap items-center justify-between gap-3 py-4"
+                >
                   <div>
                     <p className="font-semibold">{item.description}</p>
-                    <p className="mt-1 text-xs text-blue-100/45">{new Date(item.createdAt).toLocaleString("en-NG")}</p>
+                    <p className="mt-1 text-xs text-blue-100/45">
+                      {new Date(item.createdAt).toLocaleString("en-NG")}
+                    </p>
                   </div>
-                  <p className={item.amountMinor >= 0 ? "font-bold tabular-nums text-emerald-200" : "font-bold tabular-nums text-blue-100"}>
-                    {item.amountMinor >= 0 ? "+" : "−"}{formatMoney(Math.abs(item.amountMinor), wallet?.currency ?? "NGN")}
+                  <p
+                    className={
+                      item.amountMinor >= 0
+                        ? "font-bold tabular-nums text-emerald-200"
+                        : "font-bold tabular-nums text-blue-100"
+                    }
+                  >
+                    {item.amountMinor >= 0 ? "+" : "−"}
+                    {formatMoney(Math.abs(item.amountMinor), wallet?.currency ?? "NGN")}
                   </p>
                 </div>
               ))}
@@ -242,11 +317,15 @@ function WalletPage() {
                 <WalletIcon size={24} />
               </div>
               <p className="mt-3 text-sm font-semibold text-white">No transactions yet</p>
-              <p className="mt-1 text-xs text-slate-400">Top up your wallet to start watching channels and movies.</p>
+              <p className="mt-1 text-xs text-slate-400">
+                Top up your wallet to start watching channels and movies.
+              </p>
             </div>
           )}
         </section>
-        <p className="mt-6 text-center text-xs text-blue-100/35">Payments are verified server-side before wallet credits are applied.</p>
+        <p className="mt-6 text-center text-xs text-blue-100/35">
+          Payments are verified server-side before wallet credits are applied.
+        </p>
       </div>
     </main>
   );

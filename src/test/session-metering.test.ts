@@ -16,10 +16,11 @@ describe("session metering", () => {
   it("caps elapsed server time to 300 seconds and rejects negative elapsed time", () => {
     const now = new Date("2026-11-11T00:05:00.000Z");
     expect(elapsedSeconds("2026-11-11T00:00:00.000Z", now)).toBe(300);
-    expect(elapsedSeconds("2026-11-11T00:00:01.000Z", new Date("2026-11-11T00:00:00.000Z"))).toBe(0);
+    expect(elapsedSeconds("2026-11-11T00:00:01.000Z", new Date("2026-11-11T00:00:00.000Z"))).toBe(
+      0,
+    );
     expect(elapsedSeconds("not-a-date", now)).toBe(0);
   });
-
 
   it("bills only consecutive playing samples with advancing media position", () => {
     expect(reportedPlaybackSeconds("playing", "playing", 10_000, 25_000, 15)).toBe(15);
@@ -62,7 +63,6 @@ describe("session metering", () => {
     expect(producerShareMinor(99, 3333)).toBe(32);
   });
 
-
   it("reconciles producer and platform shares exactly across currencies and varied block sizes", () => {
     const currencies = ["NGN", "USD", "JPY", "KWD"];
     let seed = 0x5eed;
@@ -97,10 +97,24 @@ describe("session metering", () => {
   });
 
   it("returns the stored cumulative settlement in the snapshot", () => {
-    expect(toSessionSnapshot("s1", {
-      ratePerMinuteMinor: 100, billedSeconds: 30, sessionTotalMinor: 50, active: true,
-    }, 500, "https://media.example/signed.m3u8")).toMatchObject({
-      sessionId: "s1", billedSeconds: 30, sessionTotalMinor: 50, walletBalanceMinor: 500, active: true,
+    expect(
+      toSessionSnapshot(
+        "s1",
+        {
+          ratePerMinuteMinor: 100,
+          billedSeconds: 30,
+          sessionTotalMinor: 50,
+          active: true,
+        },
+        500,
+        "https://media.example/signed.m3u8",
+      ),
+    ).toMatchObject({
+      sessionId: "s1",
+      billedSeconds: 30,
+      sessionTotalMinor: 50,
+      walletBalanceMinor: 500,
+      active: true,
     });
   });
 });

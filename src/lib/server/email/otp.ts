@@ -18,13 +18,9 @@ async function emailOtpHmacKey(): Promise<CryptoKey> {
   const pepper = process.env["FIREBASE_SERVICE_ACCOUNT_JSON"];
   if (!pepper) throw new Error("Email verification hashing is not configured.");
   const pepperDigest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pepper));
-  return crypto.subtle.importKey(
-    "raw",
-    pepperDigest,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
+  return crypto.subtle.importKey("raw", pepperDigest, { name: "HMAC", hash: "SHA-256" }, false, [
+    "sign",
+  ]);
 }
 
 async function hmacHex(value: string): Promise<string> {

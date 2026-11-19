@@ -12,17 +12,19 @@ import {
 
 describe("storage maintenance accounting", () => {
   it("sums paginated object sizes without treating unknown data as zero", () => {
-    expect(accumulateStorageUsage(100, 2, [
-      { key: "one.ts", sizeBytes: 300 },
-      { key: "two.ts", sizeBytes: 400 },
-    ])).toEqual({ usageBytes: 800, objectCount: 4 });
+    expect(
+      accumulateStorageUsage(100, 2, [
+        { key: "one.ts", sizeBytes: 300 },
+        { key: "two.ts", sizeBytes: 400 },
+      ]),
+    ).toEqual({ usageBytes: 800, objectCount: 4 });
   });
 
   it("rejects invalid sizes and counter overflow", () => {
     expect(() => accumulateStorageUsage(0, 0, [{ key: "bad", sizeBytes: -1 }])).toThrow();
-    expect(() => accumulateStorageUsage(Number.MAX_SAFE_INTEGER, 0, [
-      { key: "overflow", sizeBytes: 1 },
-    ])).toThrow();
+    expect(() =>
+      accumulateStorageUsage(Number.MAX_SAFE_INTEGER, 0, [{ key: "overflow", sizeBytes: 1 }]),
+    ).toThrow();
   });
 
   it("runs health and paginated usage through a fake provider adapter", async () => {
@@ -41,9 +43,24 @@ describe("storage maintenance accounting", () => {
     };
     expect(await checkStorageProviderHealth(fakeAdapter)).toEqual({ healthy: true });
     const first = await readStorageUsagePage(fakeAdapter, null, 0, 0);
-    const second = await readStorageUsagePage(fakeAdapter, first.nextCursor, first.usageBytes, first.objectCount);
-    expect(first).toEqual({ usageBytes: 10, objectCount: 1, nextCursor: "page-2", processedObjectCount: 1 });
-    expect(second).toEqual({ usageBytes: 30, objectCount: 2, nextCursor: null, processedObjectCount: 1 });
+    const second = await readStorageUsagePage(
+      fakeAdapter,
+      first.nextCursor,
+      first.usageBytes,
+      first.objectCount,
+    );
+    expect(first).toEqual({
+      usageBytes: 10,
+      objectCount: 1,
+      nextCursor: "page-2",
+      processedObjectCount: 1,
+    });
+    expect(second).toEqual({
+      usageBytes: 30,
+      objectCount: 2,
+      nextCursor: null,
+      processedObjectCount: 1,
+    });
     expect(calls).toEqual(["health", "first-page", "page-2"]);
   });
 
@@ -61,8 +78,12 @@ describe("storage maintenance accounting", () => {
       async getDoc(path: string) {
         return path === "storageDestinations/lov-001" ? { accountGroup: "lovable:project" } : null;
       },
-      async patchDoc(path: string, fields: Record<string, unknown>) { patches.push({ path, fields }); },
-      async setDoc(path: string, fields: Record<string, unknown>) { alerts.push({ path, fields }); },
+      async patchDoc(path: string, fields: Record<string, unknown>) {
+        patches.push({ path, fields });
+      },
+      async setDoc(path: string, fields: Record<string, unknown>) {
+        alerts.push({ path, fields });
+      },
     };
     const marked = await markStorageDestinationDegraded(
       fakeFs as never,
@@ -80,7 +101,11 @@ describe("storage maintenance accounting", () => {
   });
 
   it("uses safe error wording and does not surface provider response text", () => {
-    const error = new ApiError(429, "STORAGE_PROVIDER_RATE_LIMITED", "raw secret key must not be returned");
+    const error = new ApiError(
+      429,
+      "STORAGE_PROVIDER_RATE_LIMITED",
+      "raw secret key must not be returned",
+    );
     const code = storageFailureCode(error);
     expect(code).toBe("STORAGE_PROVIDER_RATE_LIMITED");
     expect(storageFailureMessage(code)).toBe("The storage provider temporarily limited requests.");
@@ -88,11 +113,16 @@ describe("storage maintenance accounting", () => {
   });
 });
 
-
 describe("fake provider maintenance adapter", () => {
   it("reconciles a multi-page bucket listing and sums every object once", async () => {
     const pages = [
-      { objects: [{ key: "a.mp4", sizeBytes: 100 }, { key: "b.mp4", sizeBytes: 200 }], nextCursor: "page-2" },
+      {
+        objects: [
+          { key: "a.mp4", sizeBytes: 100 },
+          { key: "b.mp4", sizeBytes: 200 },
+        ],
+        nextCursor: "page-2",
+      },
       { objects: [{ key: "c.m3u8", sizeBytes: 50 }], nextCursor: "page-3" },
       { objects: [{ key: "d.ts", sizeBytes: 150 }], nextCursor: null },
     ];
@@ -105,7 +135,10 @@ describe("fake provider maintenance adapter", () => {
       },
     };
     const { reconcileStorageUsage } = await import("./maintenance");
-    await expect(reconcileStorageUsage(adapter)).resolves.toEqual({ usageBytes: 500, objectCount: 4 });
+    await expect(reconcileStorageUsage(adapter)).resolves.toEqual({
+      usageBytes: 500,
+      objectCount: 4,
+    });
     expect(calls).toEqual([null, "page-2", "page-3"]);
   });
 
@@ -116,6 +149,8 @@ describe("fake provider maintenance adapter", () => {
       },
     };
     const { reconcileStorageUsage } = await import("./maintenance");
-    await expect(reconcileStorageUsage(adapter)).rejects.toMatchObject({ code: "STORAGE_LISTING_CURSOR_STALLED" });
+    await expect(reconcileStorageUsage(adapter)).rejects.toMatchObject({
+      code: "STORAGE_LISTING_CURSOR_STALLED",
+    });
   });
 });

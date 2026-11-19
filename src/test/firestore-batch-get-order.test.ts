@@ -23,10 +23,9 @@ describe("Firestore transactional batch reads", () => {
   it("rejects duplicate or omitted document responses", () => {
     const walletName = "projects/demo/databases/(default)/documents/wallets/u1";
     const requested = [walletName];
-    expect(() => orderBatchGetDocuments(requested, [
-      { missing: requested[0]! },
-      { missing: walletName },
-    ])).toThrow(/invalid transactional read response/i);
+    expect(() =>
+      orderBatchGetDocuments(requested, [{ missing: requested[0]! }, { missing: walletName }]),
+    ).toThrow(/invalid transactional read response/i);
     expect(() => orderBatchGetDocuments(requested, [])).toThrow(/omitted a document/i);
   });
 });

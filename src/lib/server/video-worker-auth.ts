@@ -10,12 +10,15 @@ function toBuffer(value: Uint8Array): ArrayBuffer {
   return copy.buffer;
 }
 function fromHex(value: string): Uint8Array {
-  if (!/^[a-f0-9]{64}$/i.test(value)) throw new ApiError(401, "WORKER_AUTH_INVALID", "The worker authorization is invalid.");
-  return Uint8Array.from(value.match(/.{2}/g) ?? [], pair => Number.parseInt(pair, 16));
+  if (!/^[a-f0-9]{64}$/i.test(value))
+    throw new ApiError(401, "WORKER_AUTH_INVALID", "The worker authorization is invalid.");
+  return Uint8Array.from(value.match(/.{2}/g) ?? [], (pair) => Number.parseInt(pair, 16));
 }
 async function sha256(value: string): Promise<string> {
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", toBuffer(encoder.encode(value))));
-  return Array.from(digest, byte => byte.toString(16).padStart(2, "0")).join("");
+  const digest = new Uint8Array(
+    await crypto.subtle.digest("SHA-256", toBuffer(encoder.encode(value))),
+  );
+  return Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 async function workerKey(workerId: string): Promise<CryptoKey> {
   const configured = process.env["VIDEO_WORKER_KEYS_JSON"] ?? "";
@@ -23,25 +26,52 @@ async function workerKey(workerId: string): Promise<CryptoKey> {
     let keys: Record<string, unknown>;
     try {
       const parsed = JSON.parse(configured) as unknown;
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("invalid");
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+        throw new Error("invalid");
       keys = parsed as Record<string, unknown>;
     } catch {
-      throw new ApiError(503, "WORKER_AUTH_NOT_CONFIGURED", "The processing service is not configured.");
+      throw new ApiError(
+        503,
+        "WORKER_AUTH_NOT_CONFIGURED",
+        "The processing service is not configured.",
+      );
     }
     const secret = keys[workerId];
     if (typeof secret !== "string" || secret.length < 48) {
       throw new ApiError(401, "WORKER_AUTH_INVALID", "The worker authorization is invalid.");
     }
-    return crypto.subtle.importKey("raw", toBuffer(encoder.encode(secret)), { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+    return crypto.subtle.importKey(
+      "raw",
+      toBuffer(encoder.encode(secret)),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["verify"],
+    );
   }
   const master = process.env["STREAMING_HMAC_SECRET"] ?? "";
   if (master.length < 32 || workerId !== "legacy-shared") {
-    throw new ApiError(503, "WORKER_AUTH_NOT_CONFIGURED", "The processing service is not configured.");
+    throw new ApiError(
+      503,
+      "WORKER_AUTH_NOT_CONFIGURED",
+      "The processing service is not configured.",
+    );
   }
   console.warn("Legacy shared video worker key used; configure per-worker credentials.");
-  const key = await crypto.subtle.importKey("raw", toBuffer(encoder.encode(master)), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const derived = await crypto.subtle.sign("HMAC", key, toBuffer(encoder.encode("BQ-SQWAD-TV:VIDEO-WORKER:V1")));
-  return crypto.subtle.importKey("raw", derived, { name: "HMAC", hash: "SHA-256" }, false, ["verify"]);
+  const key = await crypto.subtle.importKey(
+    "raw",
+    toBuffer(encoder.encode(master)),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const derived = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    toBuffer(encoder.encode("BQ-SQWAD-TV:VIDEO-WORKER:V1")),
+  );
+  return crypto.subtle.importKey("raw", derived, { name: "HMAC", hash: "SHA-256" }, false, [
+    "verify",
+  ]);
 }
 
 export async function createWorkerSignatureMessage(
@@ -85,10 +115,22 @@ export async function requireVideoWorker(request: Request, fs: Firestore): Promi
     throw new ApiError(401, "WORKER_AUTH_EXPIRED", "The worker authorization has expired.");
   }
   const body = await request.clone().text();
-  if (body.length > 8 * 1024 * 1024) throw new ApiError(413, "WORKER_REQUEST_TOO_LARGE", "The worker request is too large.");
+  if (body.length > 8 * 1024 * 1024)
+    throw new ApiError(413, "WORKER_REQUEST_TOO_LARGE", "The worker request is too large.");
   const url = new URL(request.url);
-  const message = await createWorkerSignatureMessage(timestamp, nonce, request.method, url.pathname, body);
-  const valid = await crypto.subtle.verify("HMAC", await workerKey(workerId), toBuffer(fromHex(signature)), toBuffer(encoder.encode(message)));
+  const message = await createWorkerSignatureMessage(
+    timestamp,
+    nonce,
+    request.method,
+    url.pathname,
+    body,
+  );
+  const valid = await crypto.subtle.verify(
+    "HMAC",
+    await workerKey(workerId),
+    toBuffer(fromHex(signature)),
+    toBuffer(encoder.encode(message)),
+  );
   if (!valid) {
     await recordAccessDenial(fs, {
       request,
@@ -101,20 +143,23 @@ export async function requireVideoWorker(request: Request, fs: Firestore): Promi
     }).catch(() => undefined);
     throw new ApiError(401, "WORKER_AUTH_INVALID", "The worker authorization is invalid.");
   }
-  await fs.transact(["videoWorkerNonces/" + workerId + "_" + nonce], docs => {
-    if (docs[0]) throw new ApiError(409, "WORKER_NONCE_REPLAYED", "The worker request has already been used.");
+  await fs.transact(["videoWorkerNonces/" + workerId + "_" + nonce], (docs) => {
+    if (docs[0])
+      throw new ApiError(409, "WORKER_NONCE_REPLAYED", "The worker request has already been used.");
     return {
       result: undefined,
-      writes: [{
-        update: {
-          name: fs.docName("videoWorkerNonces/" + workerId + "_" + nonce),
-          fields: {
-            createdAt: { stringValue: new Date().toISOString() },
-            expiresAt: { stringValue: new Date(now * 1000 + 10 * 60_000).toISOString() },
+      writes: [
+        {
+          update: {
+            name: fs.docName("videoWorkerNonces/" + workerId + "_" + nonce),
+            fields: {
+              createdAt: { stringValue: new Date().toISOString() },
+              expiresAt: { stringValue: new Date(now * 1000 + 10 * 60_000).toISOString() },
+            },
           },
-          },
-        currentDocument: { exists: false },
-      }],
+          currentDocument: { exists: false },
+        },
+      ],
     };
   });
   return workerId;

@@ -43,11 +43,20 @@ export function redactSensitiveText(input: string): string {
 
   // Redact Bearer tokens, JWTs, API keys
   text = text.replace(/Bearer\s+[A-Za-z0-9-_=.]+/gi, "Bearer [REDACTED_TOKEN]");
-  text = text.replace(/eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g, "[REDACTED_JWT]");
-  text = text.replace(/(?:key|secret|token|password|auth|sig|signature)=[^\s&"'>]+/gi, "$1=[REDACTED]");
+  text = text.replace(
+    /eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g,
+    "[REDACTED_JWT]",
+  );
+  text = text.replace(
+    /(?:key|secret|token|password|auth|sig|signature)=[^\s&"'>]+/gi,
+    "$1=[REDACTED]",
+  );
 
   // Redact phone numbers (international and local)
-  text = text.replace(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g, "[REDACTED_PHONE]");
+  text = text.replace(
+    /(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g,
+    "[REDACTED_PHONE]",
+  );
 
   // Redact credit cards
   text = text.replace(/\b(?:\d{4}[- ]?){3}\d{4}\b/g, "[REDACTED_CARD]");
@@ -60,12 +69,43 @@ export function classifyCauseCategory(error: unknown, route = ""): CauseCategory
   const stack = error instanceof Error && error.stack ? error.stack.toLowerCase() : "";
   const combined = msg + " " + stack + " " + route.toLowerCase();
 
-  if (combined.includes("paystack") || combined.includes("stripe") || combined.includes("payment")) return "payment_provider";
-  if (combined.includes("storage") || combined.includes("r2") || combined.includes("s3") || combined.includes("bucket")) return "storage";
-  if (combined.includes("firestore") || combined.includes("database") || combined.includes("collection") || combined.includes("sql")) return "database";
-  if (combined.includes("video") || combined.includes("transcode") || combined.includes("hls") || combined.includes("stream")) return "video_processing";
-  if (combined.includes("zod") || combined.includes("schema") || combined.includes("validation") || combined.includes("invalid_request")) return "validation";
-  if (combined.includes("fetch") || combined.includes("network") || combined.includes("timeout") || combined.includes("econnrefused")) return "network";
+  if (combined.includes("paystack") || combined.includes("stripe") || combined.includes("payment"))
+    return "payment_provider";
+  if (
+    combined.includes("storage") ||
+    combined.includes("r2") ||
+    combined.includes("s3") ||
+    combined.includes("bucket")
+  )
+    return "storage";
+  if (
+    combined.includes("firestore") ||
+    combined.includes("database") ||
+    combined.includes("collection") ||
+    combined.includes("sql")
+  )
+    return "database";
+  if (
+    combined.includes("video") ||
+    combined.includes("transcode") ||
+    combined.includes("hls") ||
+    combined.includes("stream")
+  )
+    return "video_processing";
+  if (
+    combined.includes("zod") ||
+    combined.includes("schema") ||
+    combined.includes("validation") ||
+    combined.includes("invalid_request")
+  )
+    return "validation";
+  if (
+    combined.includes("fetch") ||
+    combined.includes("network") ||
+    combined.includes("timeout") ||
+    combined.includes("econnrefused")
+  )
+    return "network";
 
   return "unknown";
 }
@@ -83,25 +123,28 @@ export function extractSafeStackFrames(error: unknown): string[] {
 // In-memory write rate limiter to protect Firestore during error spikes
 const writeTimestamps = new Map<string, number>();
 
-export async function logErrorEvent(fs: Firestore, {
-  code,
-  routePattern,
-  status,
-  ref,
-  error,
-  platform = "web",
-  appVersion = "3.0.0",
-  actorHash,
-}: {
-  code: string;
-  routePattern: string;
-  status: number;
-  ref: string;
-  error?: unknown;
-  platform?: PlatformClass;
-  appVersion?: string;
-  actorHash?: string;
-}): Promise<void> {
+export async function logErrorEvent(
+  fs: Firestore,
+  {
+    code,
+    routePattern,
+    status,
+    ref,
+    error,
+    platform = "web",
+    appVersion = "3.0.0",
+    actorHash,
+  }: {
+    code: string;
+    routePattern: string;
+    status: number;
+    ref: string;
+    error?: unknown;
+    platform?: PlatformClass;
+    appVersion?: string;
+    actorHash?: string;
+  },
+): Promise<void> {
   try {
     const causeCategory = classifyCauseCategory(error, routePattern);
     const fingerprintRaw = `${code}:${routePattern}:${status}:${causeCategory}`;
@@ -128,7 +171,9 @@ export async function logErrorEvent(fs: Firestore, {
 
     const existing = await fs.getDoc(docPath);
     const prevCount = Number.isSafeInteger(existing?.["count"]) ? Number(existing!["count"]) : 0;
-    const prevRefs = Array.isArray(existing?.["recentRefs"]) ? (existing!["recentRefs"] as string[]) : [];
+    const prevRefs = Array.isArray(existing?.["recentRefs"])
+      ? (existing!["recentRefs"] as string[])
+      : [];
     const updatedRefs = [ref, ...prevRefs.filter((r) => r !== ref)].slice(0, 20);
 
     const technicalMessage = error instanceof Error ? error.message : String(error ?? code);
@@ -150,7 +195,8 @@ export async function logErrorEvent(fs: Firestore, {
       affectedUserCount: Math.min(prevCount + 1, 1000),
       redactedTechnicalMessage: redactedMsg,
       topStackFrames,
-      statusState: typeof existing?.["statusState"] === "string" ? (existing["statusState"] as string) : "new",
+      statusState:
+        typeof existing?.["statusState"] === "string" ? (existing["statusState"] as string) : "new",
       expiresAt,
     });
 

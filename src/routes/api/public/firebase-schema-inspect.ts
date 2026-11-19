@@ -15,87 +15,150 @@ export const Route = createFileRoute("/api/public/firebase-schema-inspect")({
       GET: async ({ request }) => {
         const adminEmail = process.env["ZILLIONAIRE_EMAIL"]?.trim().toLowerCase();
         const authorization = request.headers.get("authorization");
-        if (!hasAdminBearerAuthorization(authorization, adminEmail) || !authorization || !adminEmail) {
-          return Response.json({ error: "Zillionaire dashboard sign-in is required." }, { status: 401 });
+        if (
+          !hasAdminBearerAuthorization(authorization, adminEmail) ||
+          !authorization ||
+          !adminEmail
+        ) {
+          return Response.json(
+            { error: "Zillionaire dashboard sign-in is required." },
+            { status: 401 },
+          );
         }
 
         const rawServiceAccount = process.env["FIREBASE_SERVICE_ACCOUNT_JSON"];
         if (!rawServiceAccount) {
-          return Response.json({ error: "The data service connection is not configured." }, { status: 503 });
+          return Response.json(
+            { error: "The data service connection is not configured." },
+            { status: 503 },
+          );
         }
 
         let serviceAccount: ServiceAccount;
         try {
           serviceAccount = JSON.parse(rawServiceAccount) as ServiceAccount;
         } catch {
-          return Response.json({ error: "The data service connection settings are invalid." }, { status: 503 });
+          return Response.json(
+            { error: "The data service connection settings are invalid." },
+            { status: 503 },
+          );
         }
 
-        if (!serviceAccount.client_email || !serviceAccount.private_key || !serviceAccount.project_id) {
-          return Response.json({ error: "The data service connection settings are incomplete." }, { status: 503 });
+        if (
+          !serviceAccount.client_email ||
+          !serviceAccount.private_key ||
+          !serviceAccount.project_id
+        ) {
+          return Response.json(
+            { error: "The data service connection settings are incomplete." },
+            { status: 503 },
+          );
         }
 
         try {
-          await verifyAdminToken(authorization.slice("Bearer ".length), serviceAccount.project_id, adminEmail);
+          await verifyAdminToken(
+            authorization.slice("Bearer ".length),
+            serviceAccount.project_id,
+            adminEmail,
+          );
         } catch {
-          return Response.json({ error: "Zillionaire dashboard sign-in could not be verified." }, { status: 401 });
+          return Response.json(
+            { error: "Zillionaire dashboard sign-in could not be verified." },
+            { status: 401 },
+          );
         }
 
         try {
           const accessToken = await getReadOnlyAccessToken(serviceAccount);
           const databaseUrl = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(serviceAccount.project_id)}/databases/(default)/documents`;
           const rootCollections = await listCollectionIds(databaseUrl, accessToken);
-          const collections = await Promise.all(rootCollections.map(async (collection) => {
-            const response = await fetch(`${databaseUrl}:runQuery`, {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-                "content-type": "application/json",
-              },
-              body: JSON.stringify({ structuredQuery: { from: [{ collectionId: collection }], limit: 3 } }),
-            });
-            const payload = await response.json() as Array<{ document?: { fields?: Record<string, FirestoreValue> } }> & { error?: { message?: string } };
-            if (!response.ok) throw new Error(payload.error?.message ?? `Could not read collection ${collection}.`);
-            const fields: Record<string, string> = {};
-            for (const result of payload) {
-              if (result.document) collectFieldTypes(result.document.fields ?? {}, fields);
-            }
-            return { name: collection, fields };
-          }));
+          const collections = await Promise.all(
+            rootCollections.map(async (collection) => {
+              const response = await fetch(`${databaseUrl}:runQuery`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  "content-type": "application/json",
+                },
+                body: JSON.stringify({
+                  structuredQuery: { from: [{ collectionId: collection }], limit: 3 },
+                }),
+              });
+              const payload = (await response.json()) as Array<{
+                document?: { fields?: Record<string, FirestoreValue> };
+              }> & { error?: { message?: string } };
+              if (!response.ok)
+                throw new Error(
+                  payload.error?.message ?? `Could not read collection ${collection}.`,
+                );
+              const fields: Record<string, string> = {};
+              for (const result of payload) {
+                if (result.document) collectFieldTypes(result.document.fields ?? {}, fields);
+              }
+              return { name: collection, fields };
+            }),
+          );
 
           return Response.json(
             { projectId: serviceAccount.project_id, collections },
-            { headers: { "cache-control": "no-store", "x-robots-tag": "noindex, nofollow, noarchive" } },
+            {
+              headers: {
+                "cache-control": "no-store",
+                "x-robots-tag": "noindex, nofollow, noarchive",
+              },
+            },
           );
         } catch (error) {
           console.error("Firestore schema inspection failed", error);
-          return Response.json({ error: "The data structure could not be loaded. Check the service connection and try again." }, { status: 502 });
+          return Response.json(
+            {
+              error:
+                "The data structure could not be loaded. Check the service connection and try again.",
+            },
+            { status: 502 },
+          );
         }
       },
     },
   },
 });
 
-async function verifyAdminToken(token: string, projectId: string, adminEmail: string): Promise<void> {
+async function verifyAdminToken(
+  token: string,
+  projectId: string,
+  adminEmail: string,
+): Promise<void> {
   if (token.length > 8192) throw new Error("Invalid dashboard sign-in.");
   const parts = token.split(".");
   if (parts.length !== 3) throw new Error("Invalid administrator token.");
   const encodedHeader = parts[0];
   const encodedClaims = parts[1];
   const encodedSignature = parts[2];
-  if (!encodedHeader || !encodedClaims || !encodedSignature) throw new Error("Invalid administrator token.");
+  if (!encodedHeader || !encodedClaims || !encodedSignature)
+    throw new Error("Invalid administrator token.");
 
   const header = decodeJwtPart(encodedHeader);
   const claims = decodeJwtPart(encodedClaims);
-  if (header["alg"] !== "RS256" || typeof header["kid"] !== "string") throw new Error("Invalid administrator token.");
+  if (header["alg"] !== "RS256" || typeof header["kid"] !== "string")
+    throw new Error("Invalid administrator token.");
 
-  const keysResponse = await fetch("https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com");
+  const keysResponse = await fetch(
+    "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com",
+  );
   if (!keysResponse.ok) throw new Error("Could not verify dashboard sign-in.");
-  const keySet = await keysResponse.json() as { keys?: Array<JsonWebKey & { kid?: string; alg?: string }> };
+  const keySet = (await keysResponse.json()) as {
+    keys?: Array<JsonWebKey & { kid?: string; alg?: string }>;
+  };
   const signingKey = keySet.keys?.find((key) => key.kid === header["kid"] && key.alg === "RS256");
   if (!signingKey) throw new Error("Invalid administrator token.");
 
-  const key = await crypto.subtle.importKey("jwk", signingKey, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["verify"]);
+  const key = await crypto.subtle.importKey(
+    "jwk",
+    signingKey,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["verify"],
+  );
   const validSignature = await crypto.subtle.verify(
     "RSASSA-PKCS1-v1_5",
     key,
@@ -110,8 +173,10 @@ async function verifyAdminToken(token: string, projectId: string, adminEmail: st
     claims["aud"] !== projectId ||
     typeof claims["sub"] !== "string" ||
     claims["sub"].length === 0 ||
-    typeof claims["exp"] !== "number" || claims["exp"] <= now ||
-    typeof claims["iat"] !== "number" || claims["iat"] > now + 300 ||
+    typeof claims["exp"] !== "number" ||
+    claims["exp"] <= now ||
+    typeof claims["iat"] !== "number" ||
+    claims["iat"] > now + 300 ||
     claims["email_verified"] !== true ||
     email !== adminEmail
   ) {
@@ -122,13 +187,14 @@ async function verifyAdminToken(token: string, projectId: string, adminEmail: st
 function decodeJwtPart(part: string): Record<string, unknown> {
   const decoded = new TextDecoder().decode(decodeBase64Url(part));
   const value = JSON.parse(decoded) as unknown;
-  if (value === null || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid administrator token.");
+  if (value === null || typeof value !== "object" || Array.isArray(value))
+    throw new Error("Invalid administrator token.");
   return value as Record<string, unknown>;
 }
 
 function decodeBase64Url(value: string): Uint8Array {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
-  const binary = atob(normalized + "=".repeat((4 - normalized.length % 4) % 4));
+  const binary = atob(normalized + "=".repeat((4 - (normalized.length % 4)) % 4));
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
@@ -140,13 +206,15 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
 
 async function getReadOnlyAccessToken(serviceAccount: ServiceAccount): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  const unsignedToken = `${base64UrlEncode(JSON.stringify({ alg: "RS256", typ: "JWT" }))}.${base64UrlEncode(JSON.stringify({
-    iss: serviceAccount.client_email,
-    scope: "https://www.googleapis.com/auth/datastore",
-    aud: "https://oauth2.googleapis.com/token",
-    iat: now,
-    exp: now + 300,
-  }))}`;
+  const unsignedToken = `${base64UrlEncode(JSON.stringify({ alg: "RS256", typ: "JWT" }))}.${base64UrlEncode(
+    JSON.stringify({
+      iss: serviceAccount.client_email,
+      scope: "https://www.googleapis.com/auth/datastore",
+      aud: "https://oauth2.googleapis.com/token",
+      iat: now,
+      exp: now + 300,
+    }),
+  )}`;
   const keyBytes = pemToBytes(serviceAccount.private_key ?? "");
   const key = await crypto.subtle.importKey(
     "pkcs8",
@@ -155,7 +223,11 @@ async function getReadOnlyAccessToken(serviceAccount: ServiceAccount): Promise<s
     false,
     ["sign"],
   );
-  const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", key, new TextEncoder().encode(unsignedToken));
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    new TextEncoder().encode(unsignedToken),
+  );
   const assertion = `${unsignedToken}.${base64UrlEncodeBytes(new Uint8Array(signature))}`;
   const response = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
@@ -165,7 +237,7 @@ async function getReadOnlyAccessToken(serviceAccount: ServiceAccount): Promise<s
       assertion,
     }),
   });
-  const payload = await response.json() as { access_token?: string };
+  const payload = (await response.json()) as { access_token?: string };
   if (!response.ok || !payload.access_token) throw new Error("Google access token request failed.");
   return payload.access_token;
 }
@@ -179,13 +251,25 @@ async function listCollectionIds(databaseUrl: string, accessToken: string): Prom
     },
     body: JSON.stringify({ pageSize: 100 }),
   });
-  const payload = await response.json() as { collectionIds?: string[]; nextPageToken?: string; error?: { message?: string } };
-  if (!response.ok) throw new Error(payload.error?.message ?? "Could not list Firestore collections.");
-  if (payload.nextPageToken) throw new Error("Firestore has more than 100 root collections; inspection stopped at the safe limit.");
+  const payload = (await response.json()) as {
+    collectionIds?: string[];
+    nextPageToken?: string;
+    error?: { message?: string };
+  };
+  if (!response.ok)
+    throw new Error(payload.error?.message ?? "Could not list Firestore collections.");
+  if (payload.nextPageToken)
+    throw new Error(
+      "Firestore has more than 100 root collections; inspection stopped at the safe limit.",
+    );
   return payload.collectionIds ?? [];
 }
 
-function collectFieldTypes(fields: Record<string, FirestoreValue>, output: Record<string, string>, prefix = ""): void {
+function collectFieldTypes(
+  fields: Record<string, FirestoreValue>,
+  output: Record<string, string>,
+  prefix = "",
+): void {
   for (const [name, value] of Object.entries(fields)) {
     const key = prefix ? `${prefix}.${name}` : name;
     const type = Object.keys(value)[0] ?? "unknown";
@@ -195,12 +279,14 @@ function collectFieldTypes(fields: Record<string, FirestoreValue>, output: Recor
       if (mapFields) collectFieldTypes(mapFields, output, key);
     }
     if (type === "arrayValue") {
-      const values = (value["arrayValue"] as { values?: FirestoreValue[] } | undefined)?.values ?? [];
+      const values =
+        (value["arrayValue"] as { values?: FirestoreValue[] } | undefined)?.values ?? [];
       for (const item of values.slice(0, 3)) {
         const itemType = Object.keys(item)[0] ?? "unknown";
         output[`${key}[]`] = itemType;
         if (itemType === "mapValue" && item["mapValue"] && typeof item["mapValue"] === "object") {
-          const mapFields = (item["mapValue"] as { fields?: Record<string, FirestoreValue> }).fields;
+          const mapFields = (item["mapValue"] as { fields?: Record<string, FirestoreValue> })
+            .fields;
           if (mapFields) collectFieldTypes(mapFields, output, `${key}[]`);
         }
       }

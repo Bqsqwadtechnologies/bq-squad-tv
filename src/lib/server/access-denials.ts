@@ -1,13 +1,7 @@
 import { type Firestore } from "./firebase-admin";
 
 export type ActorRoleClass =
-  | "anonymous"
-  | "viewer"
-  | "producer"
-  | "provider"
-  | "admin"
-  | "worker"
-  | "unknown";
+  "anonymous" | "viewer" | "producer" | "provider" | "admin" | "worker" | "unknown";
 
 export type PlatformClass = "web" | "android" | "ios" | "worker" | "unknown";
 
@@ -65,9 +59,9 @@ export async function hmacSha256Hex(key: string, data: string): Promise<string> 
     ["sign"],
   );
   const signature = await crypto.subtle.sign("HMAC", cryptoKey, enc.encode(data));
-  return Array.from(new Uint8Array(signature), (byte) =>
-    byte.toString(16).padStart(2, "0"),
-  ).join("");
+  return Array.from(new Uint8Array(signature), (byte) => byte.toString(16).padStart(2, "0")).join(
+    "",
+  );
 }
 
 /**
@@ -146,16 +140,61 @@ export function normalizeRoutePattern(rawPathOrUrl: string): string {
 }
 
 const STATIC_SEGMENTS = new Set([
-  "api", "public", "v1", "admin", "producer", "provider", "worker",
-  "content-assets", "content-comments", "video-studio", "firebase-schema",
-  "google-play", "upload-intent", "mobile-summary", "test-playback",
-  "secret-health", "rebuild-pool", "schedule-wallet-holds", "register-discovered",
-  "push-token", "send-code", "verify-code", "revoke-all", "provider-config",
-  "high-demand", "not-available", "producer-terms", "age-restriction",
-  "channels", "users", "producers", "providers", "disputes", "contracts",
-  "statements", "workers", "notifications", "devices", "payments", "payouts",
-  "sessions", "campaigns", "schedule", "pages", "legal", "storage", "reports",
-  "pricing", "ads", "moderation", "support", "config", "auth", "catalog", "wallet",
+  "api",
+  "public",
+  "v1",
+  "admin",
+  "producer",
+  "provider",
+  "worker",
+  "content-assets",
+  "content-comments",
+  "video-studio",
+  "firebase-schema",
+  "google-play",
+  "upload-intent",
+  "mobile-summary",
+  "test-playback",
+  "secret-health",
+  "rebuild-pool",
+  "schedule-wallet-holds",
+  "register-discovered",
+  "push-token",
+  "send-code",
+  "verify-code",
+  "revoke-all",
+  "provider-config",
+  "high-demand",
+  "not-available",
+  "producer-terms",
+  "age-restriction",
+  "channels",
+  "users",
+  "producers",
+  "providers",
+  "disputes",
+  "contracts",
+  "statements",
+  "workers",
+  "notifications",
+  "devices",
+  "payments",
+  "payouts",
+  "sessions",
+  "campaigns",
+  "schedule",
+  "pages",
+  "legal",
+  "storage",
+  "reports",
+  "pricing",
+  "ads",
+  "moderation",
+  "support",
+  "config",
+  "auth",
+  "catalog",
+  "wallet",
 ]);
 
 function isDynamicIdentifier(segment: string): boolean {
@@ -169,7 +208,11 @@ function isDynamicIdentifier(segment: string): boolean {
     return true;
   }
   // Prefixed IDs like chan_..., usr_..., disp_..., wrk_..., asset_...
-  if (/^(usr|chan|disp|stmt|prog|item|job|tok|sess|dev|pay|alert|notif|asset|comm|prov|grp)_[A-Za-z0-9_-]+$/i.test(segment)) {
+  if (
+    /^(usr|chan|disp|stmt|prog|item|job|tok|sess|dev|pay|alert|notif|asset|comm|prov|grp)_[A-Za-z0-9_-]+$/i.test(
+      segment,
+    )
+  ) {
     return true;
   }
   // Standard Firebase UID or random alphanumeric token (length >= 12 with at least one digit)
@@ -335,10 +378,7 @@ type CounterUpdateInput = {
   expiresAt: string;
 };
 
-async function updateHourlyDenialCounter(
-  fs: Firestore,
-  input: CounterUpdateInput,
-): Promise<void> {
+async function updateHourlyDenialCounter(fs: Firestore, input: CounterUpdateInput): Promise<void> {
   if (typeof fs?.setDoc !== "function") return;
 
   const auditKey = getAuditHashKey();

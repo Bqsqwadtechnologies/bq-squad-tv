@@ -3,11 +3,13 @@ import { z } from "zod";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody } from "@/lib/server/api";
 
-const schema = z.object({
-  ref: z.string().trim().min(3).max(20),
-  note: z.string().trim().max(1000).optional(),
-  email: z.string().trim().email().optional(),
-}).strict();
+const schema = z
+  .object({
+    ref: z.string().trim().min(3).max(20),
+    note: z.string().trim().max(1000).optional(),
+    email: z.string().trim().email().optional(),
+  })
+  .strict();
 
 export const Route = createFileRoute("/api/public/v1/errors/report")({
   server: {

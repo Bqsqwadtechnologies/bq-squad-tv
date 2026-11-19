@@ -3,14 +3,16 @@ import { redactString, sanitizePayload } from "../lib/server/security-redaction"
 
 describe("Security Redaction Canary Suite", () => {
   it("intercepts simulated PEM private key leaks", () => {
-    const raw = "Error: Failed with key -----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA0\n-----END RSA PRIVATE KEY----- in worker";
+    const raw =
+      "Error: Failed with key -----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA0\n-----END RSA PRIVATE KEY----- in worker";
     const redacted = redactString(raw);
     expect(redacted).not.toContain("BEGIN RSA PRIVATE KEY");
     expect(redacted).toContain("[REDACTED_PRIVATE_KEY]");
   });
 
   it("intercepts simulated Bearer and JWT token leaks", () => {
-    const jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNH";
+    const jwt =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNH";
     const raw = `Authorization: Bearer ${jwt}`;
     const redacted = redactString(raw);
     expect(redacted).not.toContain(jwt);

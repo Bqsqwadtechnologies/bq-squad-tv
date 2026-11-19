@@ -8,23 +8,40 @@ export function assertIntegrityChallenge(
   now = new Date(),
 ): void {
   if (!challenge) {
-    throw new ApiError(403, "INTEGRITY_CHALLENGE_INVALID", "The Play Integrity challenge does not exist.");
+    throw new ApiError(
+      403,
+      "INTEGRITY_CHALLENGE_INVALID",
+      "The Play Integrity challenge does not exist.",
+    );
   }
   if (challenge["uid"] !== uid) {
-    throw new ApiError(403, "INTEGRITY_CHALLENGE_INVALID", "The Play Integrity challenge belongs to another account.");
+    throw new ApiError(
+      403,
+      "INTEGRITY_CHALLENGE_INVALID",
+      "The Play Integrity challenge belongs to another account.",
+    );
   }
   if (challenge["used"] !== false) {
-    throw new ApiError(403, "INTEGRITY_CHALLENGE_REPLAYED", "The Play Integrity challenge has already been used.");
+    throw new ApiError(
+      403,
+      "INTEGRITY_CHALLENGE_REPLAYED",
+      "The Play Integrity challenge has already been used.",
+    );
   }
-  const createdAt = typeof challenge["createdAt"] === "string"
-    ? Date.parse(challenge["createdAt"] as string)
-    : Number.NaN;
+  const createdAt =
+    typeof challenge["createdAt"] === "string"
+      ? Date.parse(challenge["createdAt"] as string)
+      : Number.NaN;
   if (
     !Number.isFinite(createdAt) ||
     createdAt > now.getTime() + 60_000 ||
     now.getTime() - createdAt > CHALLENGE_TTL_MS
   ) {
-    throw new ApiError(403, "INTEGRITY_CHALLENGE_EXPIRED", "The Play Integrity challenge has expired.");
+    throw new ApiError(
+      403,
+      "INTEGRITY_CHALLENGE_EXPIRED",
+      "The Play Integrity challenge has expired.",
+    );
   }
 }
 
@@ -36,7 +53,11 @@ export async function consumeIntegrityChallenge(
   now = new Date(),
 ): Promise<void> {
   if (!/^[0-9a-f-]{36}$/i.test(nonce)) {
-    throw new ApiError(400, "INTEGRITY_CHALLENGE_INVALID", "The Play Integrity challenge is invalid.");
+    throw new ApiError(
+      400,
+      "INTEGRITY_CHALLENGE_INVALID",
+      "The Play Integrity challenge is invalid.",
+    );
   }
   const path = "integrityChallenges/" + nonce;
   await fs.transact([path], (docs) => {

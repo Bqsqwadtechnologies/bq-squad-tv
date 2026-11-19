@@ -51,10 +51,11 @@ export async function sendVerificationCodeEmail(input: VerificationEmailInput): 
 
   const isReset = input.purpose === "reset_password";
   const purposeText = isReset ? "password reset" : "email verification";
-  const subject = isReset ? "Your BQ SQWAD TV password reset code" : "Verify your BQ SQWAD TV email";
+  const subject = isReset
+    ? "Your BQ SQWAD TV password reset code"
+    : "Verify your BQ SQWAD TV email";
   const safeCode = escapeHtml(input.code);
-  const textContent =
-    `Your BQ SQWAD TV ${purposeText} code is ${input.code}. It expires in ${expiresInMinutes} minutes. If you did not request this, you can ignore this email.`;
+  const textContent = `Your BQ SQWAD TV ${purposeText} code is ${input.code}. It expires in ${expiresInMinutes} minutes. If you did not request this, you can ignore this email.`;
   const htmlContent = `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#142033"><h2>BQ SQWAD TV</h2><p>Use this code for ${purposeText}:</p><p style="font-size:32px;font-weight:700;letter-spacing:8px">${safeCode}</p><p>This code expires in ${expiresInMinutes} minutes and can only be used once.</p><p>If you did not request this, you can ignore this email.</p></body></html>`;
 
   let response: Response;
@@ -75,7 +76,11 @@ export async function sendVerificationCodeEmail(input: VerificationEmailInput): 
       }),
     });
   } catch {
-    throw new ApiError(502, "EMAIL_DELIVERY_FAILED", "Could not connect to the email delivery service.");
+    throw new ApiError(
+      502,
+      "EMAIL_DELIVERY_FAILED",
+      "Could not connect to the email delivery service.",
+    );
   }
 
   if (!response.ok) {
@@ -87,7 +92,6 @@ export async function sendVerificationCodeEmail(input: VerificationEmailInput): 
     );
   }
 }
-
 
 export type SupportContactEmailInput = {
   name: string;
@@ -102,8 +106,13 @@ export async function sendSupportContactEmail(input: SupportContactEmailInput): 
   const replyEmail = input.replyEmail.trim().toLowerCase();
   const subjectLine = input.subject.trim().slice(0, 120);
   const message = input.message.trim();
-  if (!name || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(replyEmail) ||
-      !subjectLine || message.length < 10 || message.length > 5000) {
+  if (
+    !name ||
+    !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(replyEmail) ||
+    !subjectLine ||
+    message.length < 10 ||
+    message.length > 5000
+  ) {
     throw new ApiError(400, "CONTACT_DETAILS_INVALID", "Check the contact form and try again.");
   }
 
@@ -141,10 +150,18 @@ export async function sendSupportContactEmail(input: SupportContactEmailInput): 
       }),
     });
   } catch {
-    throw new ApiError(502, "CONTACT_DELIVERY_FAILED", "Your message could not be sent. Please try again later.");
+    throw new ApiError(
+      502,
+      "CONTACT_DELIVERY_FAILED",
+      "Your message could not be sent. Please try again later.",
+    );
   }
 
   if (!response.ok) {
-    throw new ApiError(502, "CONTACT_DELIVERY_FAILED", "Your message could not be sent. Please try again later.");
+    throw new ApiError(
+      502,
+      "CONTACT_DELIVERY_FAILED",
+      "Your message could not be sent. Please try again later.",
+    );
   }
 }

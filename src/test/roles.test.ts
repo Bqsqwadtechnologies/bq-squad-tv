@@ -1,14 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 import {
-  requireAdminModule,
+  requireZillionaireModule,
   resolvePlatformAccess,
   isProtectedZillionaire,
 } from "@/lib/server/roles";
 import type { Firestore } from "@/lib/server/firebase-admin";
 
-function fakeFirestore(user: Record<string, unknown> | null, producer: Record<string, unknown> | null) {
+function fakeFirestore(
+  user: Record<string, unknown> | null,
+  producer: Record<string, unknown> | null,
+) {
   return {
-    getDoc: vi.fn(async (path: string) => path.startsWith("users/") ? user : producer),
+    getDoc: vi.fn(async (path: string) => (path.startsWith("users/") ? user : producer)),
   } as unknown as Firestore;
 }
 
@@ -21,7 +24,10 @@ describe("Zillionaire identity and delegated module permissions", () => {
   });
 
   it("requires an active producer plan even when a signed custom claim exists", async () => {
-    const fs = fakeFirestore({ roleTags: [] }, { planStatus: "ACTIVE", verificationStatus: "APPROVED" });
+    const fs = fakeFirestore(
+      { roleTags: [] },
+      { planStatus: "ACTIVE", verificationStatus: "APPROVED" },
+    );
     const access = await resolvePlatformAccess(fs, "u1", "p@example.com", { producer: true });
     expect(access.roles).toContain("producer");
   });
@@ -49,18 +55,32 @@ describe("Zillionaire identity and delegated module permissions", () => {
   it("does not grant Zillionaire control access until the configured email is verified", async () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
     const fs = fakeFirestore(null, null);
-    await expect(requireAdminModule(fs, {
-      uid: "owner-1", email: "owner@example.com", emailVerified: false,
-    }, "content")).rejects.toMatchObject({ status: 403 });
+    await expect(
+      requireZillionaireModule(
+        fs,
+        {
+          uid: "owner-1",
+          email: "owner@example.com",
+          emailVerified: false,
+        },
+        "content",
+      ),
+    ).rejects.toMatchObject({ status: 403 });
     vi.unstubAllEnvs();
   });
 
   it("accepts the server-recorded six-digit OTP proof when it matches the current email", async () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
     const fs = fakeFirestore({ email: "OWNER@example.com", appEmailVerified: true }, null);
-    const access = await requireAdminModule(fs, {
-      uid: "owner-1", email: "owner@example.com", emailVerified: false,
-    }, "content");
+    const access = await requireZillionaireModule(
+      fs,
+      {
+        uid: "owner-1",
+        email: "owner@example.com",
+        emailVerified: false,
+      },
+      "content",
+    );
     expect(access.isZillionaireOwner).toBe(true);
     expect(access.emailVerified).toBe(true);
     vi.unstubAllEnvs();
@@ -69,25 +89,56 @@ describe("Zillionaire identity and delegated module permissions", () => {
   it("does not accept OTP verification after the account email changes", async () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
     const fs = fakeFirestore({ email: "old@example.com", appEmailVerified: true }, null);
-    await expect(requireAdminModule(fs, {
-      uid: "owner-1", email: "owner@example.com", emailVerified: false,
-    }, "content")).rejects.toMatchObject({ status: 403 });
+    await expect(
+      requireZillionaireModule(
+        fs,
+        {
+          uid: "owner-1",
+          email: "owner@example.com",
+          emailVerified: false,
+        },
+        "content",
+      ),
+    ).rejects.toMatchObject({ status: 403 });
     vi.unstubAllEnvs();
   });
 
   it("grants only explicitly delegated modules and ignores role tags or custom claims", async () => {
     const fs = fakeFirestore({ roleTags: ["legacy-control"], adminModules: ["pricing"] }, null);
-    await expect(requireAdminModule(fs, {
-      uid: "delegated-1", email: "delegated@example.com", emailVerified: true,
-      customClaims: { legacyControl: true, adminModules: ["security", "payments"] },
-    }, "pricing")).resolves.toBeTruthy();
-    await expect(requireAdminModule(fs, {
-      uid: "delegated-1", email: "delegated@example.com", emailVerified: true,
-      customClaims: { legacyControl: true, adminModules: ["security", "payments"] },
-    }, "security")).rejects.toMatchObject({ status: 403 });
-    const access = await resolvePlatformAccess(fs, "delegated-1", "delegated@example.com", {
-      legacyControl: true, adminModules: ["security"],
-    }, true);
+    await expect(
+      requireZillionaireModule(
+        fs,
+        {
+          uid: "delegated-1",
+          email: "delegated@example.com",
+          emailVerified: true,
+          customClaims: { legacyControl: true, adminModules: ["security", "payments"] },
+        },
+        "pricing",
+      ),
+    ).resolves.toBeTruthy();
+    await expect(
+      requireZillionaireModule(
+        fs,
+        {
+          uid: "delegated-1",
+          email: "delegated@example.com",
+          emailVerified: true,
+          customClaims: { legacyControl: true, adminModules: ["security", "payments"] },
+        },
+        "security",
+      ),
+    ).rejects.toMatchObject({ status: 403 });
+    const access = await resolvePlatformAccess(
+      fs,
+      "delegated-1",
+      "delegated@example.com",
+      {
+        legacyControl: true,
+        adminModules: ["security"],
+      },
+      true,
+    );
     expect(access.roles).toEqual(["viewer"]);
     expect(access.adminModules).toEqual(["pricing"]);
   });
@@ -97,17 +148,33 @@ describe("Zillionaire identity and delegated module permissions", () => {
       { roleTags: ["producer"], adminModules: [] },
       { planStatus: "ACTIVE", verificationStatus: "APPROVED" },
     );
-    await expect(requireAdminModule(fs, {
-      uid: "producer-1", email: "producer@example.com", emailVerified: true,
-    }, "content")).rejects.toMatchObject({ status: 403 });
+    await expect(
+      requireZillionaireModule(
+        fs,
+        {
+          uid: "producer-1",
+          email: "producer@example.com",
+          emailVerified: true,
+        },
+        "content",
+      ),
+    ).rejects.toMatchObject({ status: 403 });
   });
 
   it("does not grant any control section from an legacy role metadata", async () => {
     const fs = fakeFirestore({ roleTags: ["legacy-control"] }, null);
-    await expect(requireAdminModule(fs, {
-      uid: "old-role", email: "old@example.com", emailVerified: true,
-      customClaims: { legacyControl: true },
-    }, "overview")).rejects.toMatchObject({ status: 403 });
+    await expect(
+      requireZillionaireModule(
+        fs,
+        {
+          uid: "old-role",
+          email: "old@example.com",
+          emailVerified: true,
+          customClaims: { legacyControl: true },
+        },
+        "overview",
+      ),
+    ).rejects.toMatchObject({ status: 403 });
   });
 
   it("does not protect aliases or partial email matches as the Zillionaire owner", async () => {
@@ -146,12 +213,14 @@ describe("Provider role and isolation", () => {
       }),
     } as unknown as Firestore;
     // Own provider access succeeds
-    await expect(requireProviderAccess(fs, { uid: "u1", email: "a@p.com", emailVerified: true }, "prov-alpha"))
-      .resolves.toMatchObject({ providerId: "prov-alpha" });
+    await expect(
+      requireProviderAccess(fs, { uid: "u1", email: "a@p.com", emailVerified: true }, "prov-alpha"),
+    ).resolves.toMatchObject({ providerId: "prov-alpha" });
 
     // Other provider access fails
-    await expect(requireProviderAccess(fs, { uid: "u1", email: "a@p.com", emailVerified: true }, "prov-beta"))
-      .rejects.toMatchObject({ status: 403 });
+    await expect(
+      requireProviderAccess(fs, { uid: "u1", email: "a@p.com", emailVerified: true }, "prov-beta"),
+    ).rejects.toMatchObject({ status: 403 });
   });
 });
 
@@ -159,7 +228,11 @@ describe("Zillionaire migration and owner protection", () => {
   it("reads zillionaireModules directly when set", async () => {
     const { requireZillionaireModule } = await import("@/lib/server/roles");
     const fs = fakeFirestore({ zillionaireModules: ["security", "wallets"] }, null);
-    const access = await requireZillionaireModule(fs, { uid: "u1", email: "staff@example.com", emailVerified: true }, "security");
+    const access = await requireZillionaireModule(
+      fs,
+      { uid: "u1", email: "staff@example.com", emailVerified: true },
+      "security",
+    );
     expect(access.zillionaireModules).toContain("security");
     expect(access.zillionaireModules).toContain("wallets");
   });
@@ -167,21 +240,30 @@ describe("Zillionaire migration and owner protection", () => {
   it("falls back to legacy adminModules when zillionaireModules is not yet set", async () => {
     const { requireZillionaireModule } = await import("@/lib/server/roles");
     const fs = fakeFirestore({ adminModules: ["pricing", "channels"] }, null);
-    const access = await requireZillionaireModule(fs, { uid: "u2", email: "staff2@example.com", emailVerified: true }, "pricing");
+    const access = await requireZillionaireModule(
+      fs,
+      { uid: "u2", email: "staff2@example.com", emailVerified: true },
+      "pricing",
+    );
     expect(access.zillionaireModules).toContain("pricing");
   });
 
   it("prevents demotion or suspension of protected Zillionaire owner", async () => {
     const { assertNotProtectedZillionaire } = await import("@/lib/server/roles");
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
-    expect(() => assertNotProtectedZillionaire("owner@example.com", "demote")).toThrowError(/cannot be demoted/);
-    expect(() => assertNotProtectedZillionaire("owner@example.com", "suspend")).toThrowError(/cannot be suspended/);
-    expect(() => assertNotProtectedZillionaire("owner@example.com", "delete")).toThrowError(/cannot be deleted/);
+    expect(() => assertNotProtectedZillionaire("owner@example.com", "demote")).toThrowError(
+      /cannot be demoted/,
+    );
+    expect(() => assertNotProtectedZillionaire("owner@example.com", "suspend")).toThrowError(
+      /cannot be suspended/,
+    );
+    expect(() => assertNotProtectedZillionaire("owner@example.com", "delete")).toThrowError(
+      /cannot be deleted/,
+    );
     expect(() => assertNotProtectedZillionaire("other@example.com", "demote")).not.toThrow();
     vi.unstubAllEnvs();
   });
 });
-
 
 describe("Batch 1 — Owner recognition and fallback requirements", () => {
   it("matches owner email across case and surrounding whitespace variants", async () => {

@@ -51,7 +51,7 @@ The platform stores independent configurations:
 - Android app: `adProviders/android`
 - Website: `adProviders/web`
 
-Admin configuration is written through `POST /api/public/v1/admin/ads/providers`. The public configuration endpoint is `GET /api/public/v1/ads/provider-config?platform=android` or `?platform=web`. Only public SDK identifiers and placement IDs are returned. Private provider credentials are encrypted in `adProviderSecrets/{platform}`.
+Admin configuration is written through `POST /api/public/v1/zillionaire/ads/providers`. The public configuration endpoint is `GET /api/public/v1/ads/provider-config?platform=android` or `?platform=web`. Only public SDK identifiers and placement IDs are returned. Private provider credentials are encrypted in `adProviderSecrets/{platform}`.
 
 Do not assume the Android and website use the same ad vendor or SDK. A provider-specific SDK adapter is still required for each selected vendor. The app and website should load only their own platform configuration. Campaign/event delivery through `/ads/next` and `/ads/{adId}/events` is the platform's first-party campaign path and is distinct from a vendor SDK integration.
 

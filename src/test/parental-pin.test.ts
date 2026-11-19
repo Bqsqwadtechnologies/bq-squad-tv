@@ -19,14 +19,20 @@ describe("parental PIN hashing", () => {
       "SHA-256",
       new TextEncoder().encode("bq-sqwad-tv:parental-pin:user-1:2468"),
     );
-    const hash = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    const hash = Array.from(new Uint8Array(digest), (byte) =>
+      byte.toString(16).padStart(2, "0"),
+    ).join("");
 
     await expect(verifyParentalPin("2468", "user-1", { hash })).resolves.toBe(true);
     await expect(verifyParentalPin("2468", "user-2", { hash })).resolves.toBe(false);
   });
 
   it("rejects unsupported versions and malformed salted records", async () => {
-    await expect(verifyParentalPin("2468", "user-1", { hash: "00", version: 3 })).resolves.toBe(false);
-    await expect(verifyParentalPin("2468", "user-1", { hash: "00", version: 2, salt: "bad" })).resolves.toBe(false);
+    await expect(verifyParentalPin("2468", "user-1", { hash: "00", version: 3 })).resolves.toBe(
+      false,
+    );
+    await expect(
+      verifyParentalPin("2468", "user-1", { hash: "00", version: 2, salt: "bad" }),
+    ).resolves.toBe(false);
   });
 });

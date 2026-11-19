@@ -3,10 +3,12 @@ import { z } from "zod";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 
-const schema = z.object({
-  qualityMode: z.enum(["auto", "saver", "high"]).default("auto"),
-  wifiOnly: z.boolean().default(false),
-}).strict();
+const schema = z
+  .object({
+    qualityMode: z.enum(["auto", "saver", "high"]).default("auto"),
+    wifiOnly: z.boolean().default(false),
+  })
+  .strict();
 
 export const Route = createFileRoute("/api/public/v1/quality/settings")({
   server: {

@@ -9,11 +9,15 @@ describe("response security headers", () => {
     expect(response.headers.get("x-frame-options")).toBe("DENY");
     expect(response.headers.get("referrer-policy")).toBe("strict-origin-when-cross-origin");
     expect(response.headers.get("permissions-policy")).toContain("camera=()");
-    expect(response.headers.get("content-security-policy-report-only")).toContain("frame-ancestors 'none'");
+    expect(response.headers.get("content-security-policy-report-only")).toContain(
+      "frame-ancestors 'none'",
+    );
   });
 
   it("preserves explicitly configured response headers", () => {
-    const response = applySecurityHeaders(new Response("ok", { headers: { "referrer-policy": "no-referrer" } }));
+    const response = applySecurityHeaders(
+      new Response("ok", { headers: { "referrer-policy": "no-referrer" } }),
+    );
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
   });
 });

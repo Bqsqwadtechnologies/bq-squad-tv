@@ -10,8 +10,9 @@ describe("Paystack webhook event replay key", () => {
   });
 
   it("separates distinct provider events", async () => {
-    expect(await paystackEventDocumentId("evt_12345678"))
-      .not.toBe(await paystackEventDocumentId("evt_87654321"));
+    expect(await paystackEventDocumentId("evt_12345678")).not.toBe(
+      await paystackEventDocumentId("evt_87654321"),
+    );
   });
 
   it("rejects empty or malformed event identifiers", async () => {

@@ -5,22 +5,30 @@ import { requireChannelPermission } from "@/lib/server/channel-access";
 
 function mockFirestore(docs: Record<string, unknown> = {}) {
   return {
-    getDoc: vi.fn(async (p: string) => docs[p] ? docs[p] : null),
-    query: vi.fn(async (collection: string, options?: { filters?: Array<{ field: string; op: string; value: unknown }> }) => {
-      const filters = options?.filters || [];
-      const results: Array<Record<string, unknown> & { __id: string }> = [];
-      for (const [key, val] of Object.entries(docs)) {
-        if (key.startsWith(collection + "/")) {
-          const doc: Record<string, unknown> & { __id: string } = { __id: key.replace(collection + "/", ""), ...(val as object) };
-          let match = true;
-          for (const f of filters) {
-            if (doc[f.field] !== f.value) match = false;
+    getDoc: vi.fn(async (p: string) => (docs[p] ? docs[p] : null)),
+    query: vi.fn(
+      async (
+        collection: string,
+        options?: { filters?: Array<{ field: string; op: string; value: unknown }> },
+      ) => {
+        const filters = options?.filters || [];
+        const results: Array<Record<string, unknown> & { __id: string }> = [];
+        for (const [key, val] of Object.entries(docs)) {
+          if (key.startsWith(collection + "/")) {
+            const doc: Record<string, unknown> & { __id: string } = {
+              __id: key.replace(collection + "/", ""),
+              ...(val as object),
+            };
+            let match = true;
+            for (const f of filters) {
+              if (doc[f.field] !== f.value) match = false;
+            }
+            if (match) results.push(doc);
           }
-          if (match) results.push(doc);
         }
-      }
-      return results;
-    }),
+        return results;
+      },
+    ),
   } as unknown as Firestore;
 }
 
@@ -69,14 +77,20 @@ describe("Producer Role & Channel Isolation (Batch 05)", () => {
     });
 
     it("throws 403 FORBIDDEN when user is not an active producer", async () => {
-      await expect(requirePlatformRole(fs, { uid: "viewer-1", email: "viewer@example.com" }, "producer"))
-        .rejects.toMatchObject({ status: 403, code: "FORBIDDEN" });
+      await expect(
+        requirePlatformRole(fs, { uid: "viewer-1", email: "viewer@example.com" }, "producer"),
+      ).rejects.toMatchObject({ status: 403, code: "FORBIDDEN" });
     });
   });
 
   describe("Channel ownership and team delegation boundaries", () => {
     it("allows channel owner full access including manage_team and edit_channel", async () => {
-      const access = await requireChannelPermission(fs, "ch-alpha", "prod-active", "channel.settings");
+      const access = await requireChannelPermission(
+        fs,
+        "ch-alpha",
+        "prod-active",
+        "channel.settings",
+      );
       expect(access.role).toBe("owner");
       expect(access.permissions).toContain("channel.delete");
       expect(access.permissions).toContain("ownership.transfer");
@@ -90,13 +104,15 @@ describe("Producer Role & Channel Isolation (Batch 05)", () => {
     });
 
     it("denies delegated uploader from channel.delete", async () => {
-      await expect(requireChannelPermission(fs, "ch-alpha", "uploader-uid", "channel.delete"))
-        .rejects.toMatchObject({ status: 403, code: "CHANNEL_PERMISSION_REQUIRED" });
+      await expect(
+        requireChannelPermission(fs, "ch-alpha", "uploader-uid", "channel.delete"),
+      ).rejects.toMatchObject({ status: 403, code: "CHANNEL_PERMISSION_REQUIRED" });
     });
 
     it("strictly isolates channels: producer cannot access another producer channel", async () => {
-      await expect(requireChannelPermission(fs, "ch-beta", "prod-active", "video.upload"))
-        .rejects.toMatchObject({ status: 403, code: "CHANNEL_ACCESS_REQUIRED" });
+      await expect(
+        requireChannelPermission(fs, "ch-beta", "prod-active", "video.upload"),
+      ).rejects.toMatchObject({ status: 403, code: "CHANNEL_ACCESS_REQUIRED" });
     });
   });
 });

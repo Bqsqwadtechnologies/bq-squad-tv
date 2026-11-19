@@ -11,14 +11,18 @@ afterAll(() => {
 describe("Firebase App Check enforcement switch", () => {
   it("keeps enforcement disabled until both clients are configured", async () => {
     process.env["APP_CHECK_ENFORCED"] = "false";
-    await expect(requireAppCheck(new Request("https://tv.example.test/api"))).resolves.toBeUndefined();
+    await expect(
+      requireAppCheck(new Request("https://tv.example.test/api")),
+    ).resolves.toBeUndefined();
   });
 
   it("rejects authenticated API requests without an App Check token when enforcement is enabled", async () => {
     process.env["APP_CHECK_ENFORCED"] = "true";
-    await expect(requireAppCheck(new Request("https://tv.example.test/api"))).rejects.toMatchObject({
-      code: "APP_CHECK_REQUIRED",
-      status: 401,
-    });
+    await expect(requireAppCheck(new Request("https://tv.example.test/api"))).rejects.toMatchObject(
+      {
+        code: "APP_CHECK_REQUIRED",
+        status: 401,
+      },
+    );
   });
 });

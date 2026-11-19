@@ -14,7 +14,10 @@ describe("storage rebalance crash safety", () => {
     expect(mayDeleteOldRebalanceCopy("blocked", true)).toBe(false);
   });
   it("selects least recently watched content first", () => {
-    const rows = [{ id: "new", lastWatchedAt: "2026-11-16" }, { id: "old", lastWatchedAt: "2026-01-01" }];
-    expect(chooseColdAssets(rows, 1).map(row => row.id)).toEqual(["old"]);
+    const rows = [
+      { id: "new", lastWatchedAt: "2026-11-16" },
+      { id: "old", lastWatchedAt: "2026-01-01" },
+    ];
+    expect(chooseColdAssets(rows, 1).map((row) => row.id)).toEqual(["old"]);
   });
 });

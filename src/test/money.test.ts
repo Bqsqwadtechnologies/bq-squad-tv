@@ -23,9 +23,9 @@ describe("exact PAYG money arithmetic", () => {
   it("makes incremental charges telescope to the same final total regardless of heartbeat boundaries", () => {
     const rate = 7;
     const checkpoints = [0, 7, 15, 32, 60, 61, 119, 120];
-    const debits = checkpoints.slice(1).map((seconds, index) =>
-      incrementalCostKobo(rate, checkpoints[index]!, seconds),
-    );
+    const debits = checkpoints
+      .slice(1)
+      .map((seconds, index) => incrementalCostKobo(rate, checkpoints[index]!, seconds));
     expect(debits.reduce((sum, value) => sum + value, 0)).toBe(cumulativeCostKobo(rate, 120));
   });
 

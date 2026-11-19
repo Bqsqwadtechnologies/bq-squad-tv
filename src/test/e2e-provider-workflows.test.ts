@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { requireProviderAccess, requireAdminModule, requirePlatformRole } from "@/lib/server/roles";
+import {
+  requireProviderAccess,
+  requireZillionaireModule,
+  requirePlatformRole,
+} from "@/lib/server/roles";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { createRoleIsolationStore } from "@/test/role-isolation-harness";
 import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
@@ -354,7 +358,7 @@ describe("Batch 13: Workflow End-to-End Suite (workflow-e2e)", () => {
         email: zillionaireAdmin.email,
         zillionaireModules: ["content", "channels", "moderation"],
       });
-      await requireAdminModule(fs, zillionaireAdmin, "channels");
+      await requireZillionaireModule(fs, zillionaireAdmin, "channels");
 
       await fs.patchDoc(`channels/${channelId}`, {
         status: "READY",
@@ -610,7 +614,7 @@ describe("Batch 13: Workflow End-to-End Suite (workflow-e2e)", () => {
       await fs.setDoc(`providerDisputes/${disputeId}`, initialDispute);
 
       // Support reviews and replies with adjustment
-      await requireAdminModule(fs, adminSupportUser, "support");
+      await requireZillionaireModule(fs, adminSupportUser, "support");
       const currentMessages = [...(initialDispute.messages as Array<Record<string, unknown>>)];
       currentMessages.push({
         sender: "support",

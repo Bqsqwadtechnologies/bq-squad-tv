@@ -21,7 +21,8 @@ export const Route = createFileRoute("/api/public/v1/producer/analytics")({
 
           for (const s of sessions) {
             totalSeconds += typeof s["acceptedSeconds"] === "number" ? s["acceptedSeconds"] : 0;
-            totalEarningsMinor += typeof s["producerShareMinor"] === "number" ? s["producerShareMinor"] : 0;
+            totalEarningsMinor +=
+              typeof s["producerShareMinor"] === "number" ? s["producerShareMinor"] : 0;
           }
 
           return Response.json({

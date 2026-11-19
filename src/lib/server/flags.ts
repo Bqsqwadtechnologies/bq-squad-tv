@@ -19,7 +19,9 @@ export const DEFAULT_FLAGS = {
 
 export type PlatformFlags = { -readonly [K in keyof typeof DEFAULT_FLAGS]: boolean };
 
-export function normalizePlatformFlags(value: Record<string, unknown> | null | undefined): PlatformFlags {
+export function normalizePlatformFlags(
+  value: Record<string, unknown> | null | undefined,
+): PlatformFlags {
   const flags: PlatformFlags = { ...DEFAULT_FLAGS };
   if (!value) return flags;
   for (const key of Object.keys(DEFAULT_FLAGS) as Array<keyof typeof DEFAULT_FLAGS>) {
@@ -46,13 +48,16 @@ export function publicFlags(flags: PlatformFlags) {
   };
 }
 
-
 export function assertFeatureFlag(
   flags: PlatformFlags,
   key: keyof PlatformFlags,
   message?: string,
 ): void {
   if (!flags[key]) {
-    throw new ApiError(403, "FEATURE_FLAG_DISABLED", message || `Feature flag '${key}' is currently disabled.`);
+    throw new ApiError(
+      403,
+      "FEATURE_FLAG_DISABLED",
+      message || `Feature flag '${key}' is currently disabled.`,
+    );
   }
 }

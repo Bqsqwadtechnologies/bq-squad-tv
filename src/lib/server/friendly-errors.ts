@@ -11,5 +11,10 @@ export function generateErrorRef(): string {
 
 export function getFriendlyErrorMessage(code: string, fallback?: string): string {
   const catalogue = errorCatalogue as Record<string, string>;
-  return catalogue[code] ?? fallback ?? catalogue["GENERIC_ERROR"] ?? "Something went wrong. Please try again.";
+  return (
+    catalogue[code] ??
+    fallback ??
+    catalogue["GENERIC_ERROR"] ??
+    "Something went wrong. Please try again."
+  );
 }

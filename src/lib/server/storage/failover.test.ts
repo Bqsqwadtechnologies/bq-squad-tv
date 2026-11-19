@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 import { choosePlaybackLocation, nextHealthRecoveryState } from "./failover";
 
 const location = (destinationId: string, healthStatus: string) => ({
-  destinationId, healthStatus, mode: "active", enabled: true,
+  destinationId,
+  healthStatus,
+  mode: "active",
+  enabled: true,
 });
 
 describe("storage playback failover", () => {
@@ -12,10 +15,12 @@ describe("storage playback failover", () => {
     expect(choosePlaybackLocation(primary, replicas)?.destinationId).toBe("lov-replica-1");
   });
   it("does not select disabled, draining or degraded replicas", () => {
-    expect(choosePlaybackLocation(location("b2", "unreachable"), [
-      { ...location("r1", "healthy"), mode: "drain" },
-      { ...location("r2", "degraded"), mode: "active" },
-    ])).toBeNull();
+    expect(
+      choosePlaybackLocation(location("b2", "unreachable"), [
+        { ...location("r1", "healthy"), mode: "drain" },
+        { ...location("r2", "degraded"), mode: "active" },
+      ]),
+    ).toBeNull();
   });
   it("requires three consecutive clean checks before recovery", () => {
     let state = { status: "degraded", cleanChecks: 0 };
@@ -25,6 +30,9 @@ describe("storage playback failover", () => {
     expect(state.status).toBe("degraded");
     state = nextHealthRecoveryState(state, "clean");
     expect(state.status).toBe("healthy");
-    expect(nextHealthRecoveryState(state, "failed")).toEqual({ status: "degraded", cleanChecks: 0 });
+    expect(nextHealthRecoveryState(state, "failed")).toEqual({
+      status: "degraded",
+      cleanChecks: 0,
+    });
   });
 });

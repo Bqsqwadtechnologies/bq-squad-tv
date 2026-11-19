@@ -13,16 +13,36 @@ export function requestDailyLimitChange(input: {
   coolingOffMs?: number;
 }): LimitChange {
   const { currentLimitMinor, requestedLimitMinor } = input;
-  if (![currentLimitMinor, requestedLimitMinor].every(value => Number.isSafeInteger(value) && value >= 0)) {
-    throw new ApiError(400, "DAILY_LIMIT_INVALID", "Daily limits must be whole minor currency units.");
+  if (
+    ![currentLimitMinor, requestedLimitMinor].every(
+      (value) => Number.isSafeInteger(value) && value >= 0,
+    )
+  ) {
+    throw new ApiError(
+      400,
+      "DAILY_LIMIT_INVALID",
+      "Daily limits must be whole minor currency units.",
+    );
   }
   if (requestedLimitMinor <= currentLimitMinor) {
-    return { dailyLimitMinor: requestedLimitMinor, pendingDailyLimitMinor: null, pendingEffectiveAt: null };
+    return {
+      dailyLimitMinor: requestedLimitMinor,
+      pendingDailyLimitMinor: null,
+      pendingEffectiveAt: null,
+    };
   }
   const now = input.nowMs ?? Date.now();
   const coolingOff = input.coolingOffMs ?? 24 * 60 * 60 * 1000;
-  if (!Number.isSafeInteger(now) || !Number.isSafeInteger(coolingOff) || coolingOff < 60 * 60 * 1000) {
-    throw new ApiError(400, "DAILY_LIMIT_COOLING_OFF_INVALID", "The limit-change waiting period is invalid.");
+  if (
+    !Number.isSafeInteger(now) ||
+    !Number.isSafeInteger(coolingOff) ||
+    coolingOff < 60 * 60 * 1000
+  ) {
+    throw new ApiError(
+      400,
+      "DAILY_LIMIT_COOLING_OFF_INVALID",
+      "The limit-change waiting period is invalid.",
+    );
   }
   return {
     dailyLimitMinor: currentLimitMinor,
@@ -36,9 +56,13 @@ export function monthlyBudgetStatus(input: {
   spentMinor: number;
   currency: string;
 }): { enabled: boolean; remainingMinor: number | null; crossed: boolean } {
-  if (!/^[A-Z]{3}$/.test(input.currency) ||
-      !Number.isSafeInteger(input.spentMinor) || input.spentMinor < 0 ||
-      (input.budgetMinor !== null && (!Number.isSafeInteger(input.budgetMinor) || input.budgetMinor < 0))) {
+  if (
+    !/^[A-Z]{3}$/.test(input.currency) ||
+    !Number.isSafeInteger(input.spentMinor) ||
+    input.spentMinor < 0 ||
+    (input.budgetMinor !== null &&
+      (!Number.isSafeInteger(input.budgetMinor) || input.budgetMinor < 0))
+  ) {
     throw new ApiError(400, "MONTHLY_BUDGET_INVALID", "The monthly budget details are invalid.");
   }
   if (input.budgetMinor === null) return { enabled: false, remainingMinor: null, crossed: false };

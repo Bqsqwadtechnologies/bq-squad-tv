@@ -15,12 +15,21 @@ export function errorBody(error: unknown): Response {
   const ref = generateErrorRef();
   if (error instanceof ApiError) {
     const message = getFriendlyErrorMessage(error.code, error.message);
-    return Response.json({ code: error.code, message, error: error.message, ref }, { status: error.status });
+    return Response.json(
+      { code: error.code, message, error: error.message, ref },
+      { status: error.status },
+    );
   }
   if (error instanceof z.ZodError) {
     const message = getFriendlyErrorMessage("INVALID_REQUEST", "Invalid request.");
     return Response.json(
-      { code: "INVALID_REQUEST", message, error: message, ref, issues: error.issues.map((issue) => issue.message) },
+      {
+        code: "INVALID_REQUEST",
+        message,
+        error: message,
+        ref,
+        issues: error.issues.map((issue) => issue.message),
+      },
       { status: 400 },
     );
   }
@@ -48,17 +57,24 @@ export async function requireUser(request: Request): Promise<VerifiedUser> {
 
   // Brevo OTP verification is accepted only while bound to the exact current
   // Firebase email. Firebase token signature and UID remain authoritative.
-  const storedEmail = typeof profile?.["email"] === "string"
-    ? (profile["email"] as string).trim().toLowerCase()
-    : "";
+  const storedEmail =
+    typeof profile?.["email"] === "string" ? (profile["email"] as string).trim().toLowerCase() : "";
   const verifiedEmail = typeof user.email === "string" ? user.email.trim().toLowerCase() : "";
-  if (!user.emailVerified && user.email && profile?.["appEmailVerified"] === true && storedEmail === verifiedEmail) {
+  if (
+    !user.emailVerified &&
+    user.email &&
+    profile?.["appEmailVerified"] === true &&
+    storedEmail === verifiedEmail
+  ) {
     return { ...user, emailVerified: true };
   }
   return user;
 }
 
-export async function parseBody<S extends z.ZodTypeAny>(request: Request, schema: S): Promise<z.output<S>> {
+export async function parseBody<S extends z.ZodTypeAny>(
+  request: Request,
+  schema: S,
+): Promise<z.output<S>> {
   let raw: unknown;
   try {
     raw = await request.json();
@@ -79,7 +95,11 @@ export function ageInYears(dateOfBirthIso: string, now: Date = new Date()): numb
     dob.toISOString().slice(0, 10) !== dateOfBirthIso ||
     dob.getTime() > Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
   ) {
-    throw new ApiError(400, "INVALID_REQUEST", "dateOfBirth must be a real date that is not in the future.");
+    throw new ApiError(
+      400,
+      "INVALID_REQUEST",
+      "dateOfBirth must be a real date that is not in the future.",
+    );
   }
   let age = now.getUTCFullYear() - dob.getUTCFullYear();
   const monthDelta = now.getUTCMonth() - dob.getUTCMonth();
@@ -113,7 +133,10 @@ export async function getUserProfile(fs: Firestore, uid: string): Promise<UserPr
       doc?.["adultIdentityVerified"] === true &&
       dateOfBirthVerifiedAdult,
     roleTags: Array.isArray(doc?.["roleTags"]) ? (doc["roleTags"] as string[]) : [],
-    countryCode: typeof doc?.["countryCode"] === "string" ? (doc["countryCode"] as string).trim().toUpperCase() : "",
+    countryCode:
+      typeof doc?.["countryCode"] === "string"
+        ? (doc["countryCode"] as string).trim().toUpperCase()
+        : "",
   };
 }
 
@@ -142,17 +165,36 @@ export async function getWallet(fs: Firestore, uid: string): Promise<WalletState
   const spentDate = typeof doc?.["spentDate"] === "string" ? (doc["spentDate"] as string) : null;
   return {
     balanceMinor: typeof doc?.["balanceMinor"] === "number" ? (doc["balanceMinor"] as number) : 0,
-    currency: typeof doc?.["currency"] === "string" ? (doc["currency"] as string) : doc ? "NGN" : currencyForCountry(profile?.["countryCode"]),
-    dailySpendLimitMinor: typeof doc?.["dailySpendLimitMinor"] === "number"
-      ? (doc["dailySpendLimitMinor"] as number)
-      : null,
-    spentTodayMinor: spentDate === today && typeof doc?.["spentTodayMinor"] === "number"
-      ? (doc["spentTodayMinor"] as number)
-      : 0,
+    currency:
+      typeof doc?.["currency"] === "string"
+        ? (doc["currency"] as string)
+        : doc
+          ? "NGN"
+          : currencyForCountry(profile?.["countryCode"]),
+    dailySpendLimitMinor:
+      typeof doc?.["dailySpendLimitMinor"] === "number"
+        ? (doc["dailySpendLimitMinor"] as number)
+        : null,
+    spentTodayMinor:
+      spentDate === today && typeof doc?.["spentTodayMinor"] === "number"
+        ? (doc["spentTodayMinor"] as number)
+        : 0,
     spentDate,
-    monthlyBudgetMinor: typeof doc?.["monthlyBudgetMinor"] === "number" ? doc["monthlyBudgetMinor"] as number : null,
-    lowBalanceAlertMinor: typeof doc?.["lowBalanceAlertMinor"] === "number" ? doc["lowBalanceAlertMinor"] as number : null,
-    pendingDailySpendLimitMinor: typeof doc?.["pendingDailySpendLimitMinor"] === "number" ? doc["pendingDailySpendLimitMinor"] as number : null,
-    pendingDailySpendLimitEffectiveAt: typeof doc?.["pendingDailySpendLimitEffectiveAt"] === "string" ? doc["pendingDailySpendLimitEffectiveAt"] as string : null,
+    monthlyBudgetMinor:
+      typeof doc?.["monthlyBudgetMinor"] === "number"
+        ? (doc["monthlyBudgetMinor"] as number)
+        : null,
+    lowBalanceAlertMinor:
+      typeof doc?.["lowBalanceAlertMinor"] === "number"
+        ? (doc["lowBalanceAlertMinor"] as number)
+        : null,
+    pendingDailySpendLimitMinor:
+      typeof doc?.["pendingDailySpendLimitMinor"] === "number"
+        ? (doc["pendingDailySpendLimitMinor"] as number)
+        : null,
+    pendingDailySpendLimitEffectiveAt:
+      typeof doc?.["pendingDailySpendLimitEffectiveAt"] === "string"
+        ? (doc["pendingDailySpendLimitEffectiveAt"] as string)
+        : null,
   };
 }

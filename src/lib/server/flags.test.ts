@@ -8,13 +8,15 @@ describe("platform flags", () => {
   });
 
   it("accepts only boolean values for known flags", () => {
-    expect(normalizePlatformFlags({
-      waitingRoom: false,
-      maintenanceMode: true,
-      signupsOpen: "false",
-      commentsOpen: 0,
-      unknownInternalSetting: true,
-    })).toEqual({
+    expect(
+      normalizePlatformFlags({
+        waitingRoom: false,
+        maintenanceMode: true,
+        signupsOpen: "false",
+        commentsOpen: 0,
+        unknownInternalSetting: true,
+      }),
+    ).toEqual({
       ...DEFAULT_FLAGS,
       waitingRoom: false,
       maintenanceMode: true,

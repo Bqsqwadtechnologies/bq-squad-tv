@@ -26,11 +26,12 @@ export function resolveDeliveryPolicy(input: {
   proxyFallback?: boolean;
 }): DeliveryPolicy {
   const destinationMode = input.destination.mode;
-  const requested = input.configuredMode === "direct_signed" || input.configuredMode === "api_proxy"
-    ? input.configuredMode
-    : destinationMode === "api_proxy" || destinationMode === "direct_signed"
-      ? destinationMode
-      : "direct_signed";
+  const requested =
+    input.configuredMode === "direct_signed" || input.configuredMode === "api_proxy"
+      ? input.configuredMode
+      : destinationMode === "api_proxy" || destinationMode === "direct_signed"
+        ? destinationMode
+        : "direct_signed";
 
   // The edge-token mode is intentionally unavailable until an owner enables
   // and implements a separately reviewed paid edge integration.

@@ -19,7 +19,11 @@ export const Route = createFileRoute("/api/public/v1/provider/register")({
 
           const callerEmail = (user.email || body.contactEmail || "").trim().toLowerCase();
           if (!callerEmail) {
-            throw new ApiError(400, "EMAIL_REQUIRED", "A valid email address is required to register a provider.");
+            throw new ApiError(
+              400,
+              "EMAIL_REQUIRED",
+              "A valid email address is required to register a provider.",
+            );
           }
 
           const ownerEmail = getConfiguredOwnerEmail();
@@ -28,7 +32,9 @@ export const Route = createFileRoute("/api/public/v1/provider/register")({
           // Provider pre-approval check
           if (!isOwner) {
             const approvedDoc = await fs.getDoc(`approvedProviders/${callerEmail}`);
-            const isApproved = approvedDoc && (approvedDoc["status"] === "granted" || approvedDoc["status"] === "active");
+            const isApproved =
+              approvedDoc &&
+              (approvedDoc["status"] === "granted" || approvedDoc["status"] === "active");
 
             if (!isApproved) {
               await writeAuditLog(fs, {
@@ -75,7 +81,9 @@ export const Route = createFileRoute("/api/public/v1/provider/register")({
 
           // Update user roles to include provider
           const existingUser = await fs.getDoc(`users/${user.uid}`);
-          const currentRoles = Array.isArray(existingUser?.["roles"]) ? (existingUser?.["roles"] as string[]) : ["viewer"];
+          const currentRoles = Array.isArray(existingUser?.["roles"])
+            ? (existingUser?.["roles"] as string[])
+            : ["viewer"];
           const updatedRoles = Array.from(new Set([...currentRoles, "provider"]));
           await fs.setDoc(`users/${user.uid}`, {
             ...existingUser,
@@ -89,7 +97,9 @@ export const Route = createFileRoute("/api/public/v1/provider/register")({
             actorUid: user.uid,
             targetType: "provider",
             targetId: providerId,
-            reason: isOwner ? "Registered via Zillionaire owner bypass" : "Registered via approved email whitelist",
+            reason: isOwner
+              ? "Registered via Zillionaire owner bypass"
+              : "Registered via approved email whitelist",
             metadata: { email: callerEmail, providerName, settlementCurrency },
           });
 

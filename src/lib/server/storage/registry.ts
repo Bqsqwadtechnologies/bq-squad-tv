@@ -74,7 +74,8 @@ const LOVABLE_BUNDLE_PREFIX = /^STORAGE_LOV_BUNDLE_\d{2,}$/;
 
 function requiredSecretNames(destination: StorageDestinationMetadata): string[] {
   const prefix = destination.secretPrefix;
-  if (destination.providerType === "lovable_storage" && LOVABLE_BUNDLE_PREFIX.test(prefix)) return [prefix];
+  if (destination.providerType === "lovable_storage" && LOVABLE_BUNDLE_PREFIX.test(prefix))
+    return [prefix];
   return destination.providerType === "lovable_storage"
     ? [`${prefix}_URL`, `${prefix}_SERVICE_ROLE_KEY`]
     : [`${prefix}_KEY_ID`, `${prefix}_APP_KEY`, `${prefix}_BUCKET_ID`, `${prefix}_ENDPOINT`];
@@ -84,7 +85,13 @@ function validLovableUrl(value: unknown): value is string {
   if (typeof value !== "string" || value.length > 2048) return false;
   try {
     const parsed = new URL(value);
-    return parsed.protocol === "https:" && !parsed.username && !parsed.password && !parsed.search && !parsed.hash;
+    return (
+      parsed.protocol === "https:" &&
+      !parsed.username &&
+      !parsed.password &&
+      !parsed.search &&
+      !parsed.hash
+    );
   } catch {
     return false;
   }
@@ -101,20 +108,37 @@ function resolveLovableBundle(
       const items = parsed["items"];
       if (items.length < 1 || items.length > 25) return null;
       const matches = items.filter((item): item is Record<string, unknown> =>
-        Boolean(item && typeof item === "object" && !Array.isArray(item) &&
-          item["destinationId"] === metadata.destinationId && item["bucket"] === metadata.bucketName));
+        Boolean(
+          item &&
+          typeof item === "object" &&
+          !Array.isArray(item) &&
+          item["destinationId"] === metadata.destinationId &&
+          item["bucket"] === metadata.bucketName,
+        ),
+      );
       if (matches.length !== 1) return null;
       const item = matches[0]!;
-      if (!validLovableUrl(item["url"]) || typeof item["serviceRoleKey"] !== "string" ||
-          item["serviceRoleKey"].trim().length < 1) return null;
+      if (
+        !validLovableUrl(item["url"]) ||
+        typeof item["serviceRoleKey"] !== "string" ||
+        item["serviceRoleKey"].trim().length < 1
+      )
+        return null;
       return { url: item["url"], serviceRoleKey: item["serviceRoleKey"] };
     }
     const buckets = parsed["buckets"];
-    if (!Array.isArray(buckets) || buckets.length < 1 || buckets.length > 500 ||
-        buckets.some(bucket => typeof bucket !== "string") ||
-        new Set(buckets).size !== buckets.length || !buckets.includes(metadata.bucketName) ||
-        !validLovableUrl(parsed["url"]) || typeof parsed["serviceRoleKey"] !== "string" ||
-        parsed["serviceRoleKey"].trim().length < 1) return null;
+    if (
+      !Array.isArray(buckets) ||
+      buckets.length < 1 ||
+      buckets.length > 500 ||
+      buckets.some((bucket) => typeof bucket !== "string") ||
+      new Set(buckets).size !== buckets.length ||
+      !buckets.includes(metadata.bucketName) ||
+      !validLovableUrl(parsed["url"]) ||
+      typeof parsed["serviceRoleKey"] !== "string" ||
+      parsed["serviceRoleKey"].trim().length < 1
+    )
+      return null;
     return { url: parsed["url"], serviceRoleKey: parsed["serviceRoleKey"] };
   } catch {
     return null;
@@ -123,7 +147,11 @@ function resolveLovableBundle(
 
 export function validateStorageDestinationMetadata(value: unknown): StorageDestinationMetadata {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new ApiError(400, "STORAGE_DESTINATION_INVALID", "Storage destination metadata is invalid.");
+    throw new ApiError(
+      400,
+      "STORAGE_DESTINATION_INVALID",
+      "Storage destination metadata is invalid.",
+    );
   }
   const input = value as Record<string, unknown>;
   const providerType = input["providerType"];
@@ -138,7 +166,11 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
   const dailyEgressCapBytes = input["dailyEgressCapBytes"] ?? null;
   const priority = input["priority"];
   const enabled = input["enabled"];
-  const accountGroup = input["accountGroup"] ?? (providerType === "lovable_storage" ? "lovable-default-workspace" : `b2:${String(secretPrefix ?? "")}`);
+  const accountGroup =
+    input["accountGroup"] ??
+    (providerType === "lovable_storage"
+      ? "lovable-default-workspace"
+      : `b2:${String(secretPrefix ?? "")}`);
   const mode = input["mode"] ?? (enabled === true ? "active" : "retired");
   const deliveryMode = input["deliveryMode"] ?? "direct_signed";
   const replicaOf = input["replicaOf"] ?? null;
@@ -148,43 +180,99 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
   const egressMonthBytes = input["egressMonthBytes"] ?? 0;
   const egressAccountMonthBytes = input["egressAccountMonthBytes"];
   const egressDayBytes = input["egressDayBytes"] ?? 0;
-  const freeEgressBudgetBytes = input["freeEgressBudgetBytes"] ??
+  const freeEgressBudgetBytes =
+    input["freeEgressBudgetBytes"] ??
     (providerType === "lovable_storage" && typeof softCapBytes === "number" ? softCapBytes * 2 : 0);
   const egressBudgetSource = input["egressBudgetSource"] ?? null;
   const egressBudgetCheckedAt = input["egressBudgetCheckedAt"] ?? null;
   const egressBudgetSourceUrl = input["egressBudgetSourceUrl"] ?? null;
-  const egressLevel = input["egressLevel"] === "paid" ? "blocked" : input["egressLevel"] ?? "normal";
+  const egressLevel =
+    input["egressLevel"] === "paid" ? "blocked" : (input["egressLevel"] ?? "normal");
   const lastErrorCode = input["lastErrorCode"] ?? null;
 
-  if (typeof destinationId !== "string" || !DESTINATION_ID.test(destinationId) ||
-      (providerType !== "lovable_storage" && providerType !== "backblaze_b2") ||
-      typeof accountAlias !== "string" || !/^[A-Za-z0-9][A-Za-z0-9 _.-]{1,79}$/.test(accountAlias) ||
-      typeof secretPrefix !== "string" || !SECRET_PREFIX.test(secretPrefix) ||
-      typeof bucketName !== "string" || !BUCKET_NAME.test(bucketName) ||
-      typeof region !== "string" || !/^[A-Za-z0-9-]{1,80}$/.test(region) ||
-      !["source_media", "hls_streaming", "posters", "thumbnails", "downloads", "temporary", "backup", "producer_verification"].includes(String(purpose)) ||
-      typeof accountGroup !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9:_-]{1,99}$/.test(accountGroup) ||
-      !["active", "drain", "retired"].includes(String(mode)) ||
-      !["direct_signed", "api_proxy"].includes(String(deliveryMode)) ||
-      (replicaOf !== null && (typeof replicaOf !== "string" || !DESTINATION_ID.test(replicaOf))) ||
-      typeof softCapBytes !== "number" || !Number.isSafeInteger(softCapBytes) || softCapBytes < 1 ||
-      (accountCapBytes !== null && (typeof accountCapBytes !== "number" || !Number.isSafeInteger(accountCapBytes) || accountCapBytes < 1)) ||
-      (dailyEgressCapBytes !== null && (typeof dailyEgressCapBytes !== "number" || !Number.isSafeInteger(dailyEgressCapBytes) || dailyEgressCapBytes < 1)) ||
-      typeof priority !== "number" || !Number.isInteger(priority) || priority < 0 || priority > 10000 ||
-      typeof enabled !== "boolean" ||
-      (usageBytes !== null && (typeof usageBytes !== "number" || !Number.isSafeInteger(usageBytes) || usageBytes < 0)) ||
-      (usageSource !== null && usageSource !== "ledger" && usageSource !== "provider" && usageSource !== "provider_listing" && usageSource !== "manual") ||
-      !["healthy", "degraded", "misconfigured", "unreachable", "unknown"].includes(String(healthStatus)) ||
-      typeof egressMonthBytes !== "number" || !Number.isSafeInteger(egressMonthBytes) || egressMonthBytes < 0 ||
-      (egressAccountMonthBytes !== undefined && (typeof egressAccountMonthBytes !== "number" || !Number.isSafeInteger(egressAccountMonthBytes) || egressAccountMonthBytes < 0)) ||
-      typeof egressDayBytes !== "number" || !Number.isSafeInteger(egressDayBytes) || egressDayBytes < 0 ||
-      (freeEgressBudgetBytes !== null && (typeof freeEgressBudgetBytes !== "number" || !Number.isSafeInteger(freeEgressBudgetBytes) || freeEgressBudgetBytes < 0)) ||
-      (egressBudgetSource !== null && (typeof egressBudgetSource !== "string" || egressBudgetSource.length > 500)) ||
-      (egressBudgetCheckedAt !== null && (typeof egressBudgetCheckedAt !== "string" || !Number.isFinite(Date.parse(egressBudgetCheckedAt)))) ||
-      (egressBudgetSourceUrl !== null && (typeof egressBudgetSourceUrl !== "string" || egressBudgetSourceUrl.length > 2048)) ||
-      !["normal", "warn", "throttle", "blocked"].includes(String(egressLevel)) ||
-      (lastErrorCode !== null && (typeof lastErrorCode !== "string" || !/^[A-Z0-9_]{1,80}$/.test(lastErrorCode)))) {
-    throw new ApiError(400, "STORAGE_DESTINATION_INVALID", "One or more storage destination fields are invalid.");
+  if (
+    typeof destinationId !== "string" ||
+    !DESTINATION_ID.test(destinationId) ||
+    (providerType !== "lovable_storage" && providerType !== "backblaze_b2") ||
+    typeof accountAlias !== "string" ||
+    !/^[A-Za-z0-9][A-Za-z0-9 _.-]{1,79}$/.test(accountAlias) ||
+    typeof secretPrefix !== "string" ||
+    !SECRET_PREFIX.test(secretPrefix) ||
+    typeof bucketName !== "string" ||
+    !BUCKET_NAME.test(bucketName) ||
+    typeof region !== "string" ||
+    !/^[A-Za-z0-9-]{1,80}$/.test(region) ||
+    ![
+      "source_media",
+      "hls_streaming",
+      "posters",
+      "thumbnails",
+      "downloads",
+      "temporary",
+      "backup",
+      "producer_verification",
+    ].includes(String(purpose)) ||
+    typeof accountGroup !== "string" ||
+    !/^[a-zA-Z0-9][a-zA-Z0-9:_-]{1,99}$/.test(accountGroup) ||
+    !["active", "drain", "retired"].includes(String(mode)) ||
+    !["direct_signed", "api_proxy"].includes(String(deliveryMode)) ||
+    (replicaOf !== null && (typeof replicaOf !== "string" || !DESTINATION_ID.test(replicaOf))) ||
+    typeof softCapBytes !== "number" ||
+    !Number.isSafeInteger(softCapBytes) ||
+    softCapBytes < 1 ||
+    (accountCapBytes !== null &&
+      (typeof accountCapBytes !== "number" ||
+        !Number.isSafeInteger(accountCapBytes) ||
+        accountCapBytes < 1)) ||
+    (dailyEgressCapBytes !== null &&
+      (typeof dailyEgressCapBytes !== "number" ||
+        !Number.isSafeInteger(dailyEgressCapBytes) ||
+        dailyEgressCapBytes < 1)) ||
+    typeof priority !== "number" ||
+    !Number.isInteger(priority) ||
+    priority < 0 ||
+    priority > 10000 ||
+    typeof enabled !== "boolean" ||
+    (usageBytes !== null &&
+      (typeof usageBytes !== "number" || !Number.isSafeInteger(usageBytes) || usageBytes < 0)) ||
+    (usageSource !== null &&
+      usageSource !== "ledger" &&
+      usageSource !== "provider" &&
+      usageSource !== "provider_listing" &&
+      usageSource !== "manual") ||
+    !["healthy", "degraded", "misconfigured", "unreachable", "unknown"].includes(
+      String(healthStatus),
+    ) ||
+    typeof egressMonthBytes !== "number" ||
+    !Number.isSafeInteger(egressMonthBytes) ||
+    egressMonthBytes < 0 ||
+    (egressAccountMonthBytes !== undefined &&
+      (typeof egressAccountMonthBytes !== "number" ||
+        !Number.isSafeInteger(egressAccountMonthBytes) ||
+        egressAccountMonthBytes < 0)) ||
+    typeof egressDayBytes !== "number" ||
+    !Number.isSafeInteger(egressDayBytes) ||
+    egressDayBytes < 0 ||
+    (freeEgressBudgetBytes !== null &&
+      (typeof freeEgressBudgetBytes !== "number" ||
+        !Number.isSafeInteger(freeEgressBudgetBytes) ||
+        freeEgressBudgetBytes < 0)) ||
+    (egressBudgetSource !== null &&
+      (typeof egressBudgetSource !== "string" || egressBudgetSource.length > 500)) ||
+    (egressBudgetCheckedAt !== null &&
+      (typeof egressBudgetCheckedAt !== "string" ||
+        !Number.isFinite(Date.parse(egressBudgetCheckedAt)))) ||
+    (egressBudgetSourceUrl !== null &&
+      (typeof egressBudgetSourceUrl !== "string" || egressBudgetSourceUrl.length > 2048)) ||
+    !["normal", "warn", "throttle", "blocked"].includes(String(egressLevel)) ||
+    (lastErrorCode !== null &&
+      (typeof lastErrorCode !== "string" || !/^[A-Z0-9_]{1,80}$/.test(lastErrorCode)))
+  ) {
+    throw new ApiError(
+      400,
+      "STORAGE_DESTINATION_INVALID",
+      "One or more storage destination fields are invalid.",
+    );
   }
 
   return {
@@ -209,9 +297,14 @@ export function validateStorageDestinationMetadata(value: unknown): StorageDesti
     usageCheckedAt: typeof input["usageCheckedAt"] === "string" ? input["usageCheckedAt"] : null,
     egressMonthBytes,
     ...(typeof egressAccountMonthBytes === "number" ? { egressAccountMonthBytes } : {}),
-    ...(typeof input["egressMonthKey"] === "string" && /^\d{4}-\d{2}$/.test(input["egressMonthKey"]) ? { egressMonthKey: input["egressMonthKey"] } : {}),
+    ...(typeof input["egressMonthKey"] === "string" && /^\d{4}-\d{2}$/.test(input["egressMonthKey"])
+      ? { egressMonthKey: input["egressMonthKey"] }
+      : {}),
     egressDayBytes,
-    ...(typeof input["egressDayKey"] === "string" && /^\d{4}-\d{2}-\d{2}$/.test(input["egressDayKey"]) ? { egressDayKey: input["egressDayKey"] } : {}),
+    ...(typeof input["egressDayKey"] === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(input["egressDayKey"])
+      ? { egressDayKey: input["egressDayKey"] }
+      : {}),
     freeEgressBudgetBytes: freeEgressBudgetBytes as number | null,
     paidEgressEnabled: false,
     egressBudgetSource: egressBudgetSource as string | null,
@@ -238,16 +331,20 @@ export function resolveStorageDestinationConfiguration(
   }
 
   const names = requiredSecretNames(metadata);
-  const missingSecretNames = names.filter(name => !env[name]?.trim());
+  const missingSecretNames = names.filter((name) => !env[name]?.trim());
   if (missingSecretNames.length > 0) {
     return { metadata, configurationStatus: "misconfigured", missingSecretNames };
   }
 
   if (metadata.providerType === "lovable_storage") {
     const isBundle = LOVABLE_BUNDLE_PREFIX.test(metadata.secretPrefix);
-    const bundle = isBundle ? resolveLovableBundle(env[metadata.secretPrefix] ?? "", metadata) : null;
-    const url = isBundle ? bundle?.url ?? "" : env[`${metadata.secretPrefix}_URL`] ?? "";
-    const serviceRoleKey = isBundle ? bundle?.serviceRoleKey ?? "" : env[`${metadata.secretPrefix}_SERVICE_ROLE_KEY`] ?? "";
+    const bundle = isBundle
+      ? resolveLovableBundle(env[metadata.secretPrefix] ?? "", metadata)
+      : null;
+    const url = isBundle ? (bundle?.url ?? "") : (env[`${metadata.secretPrefix}_URL`] ?? "");
+    const serviceRoleKey = isBundle
+      ? (bundle?.serviceRoleKey ?? "")
+      : (env[`${metadata.secretPrefix}_SERVICE_ROLE_KEY`] ?? "");
     if (!validLovableUrl(url) || !serviceRoleKey.trim()) {
       return {
         metadata,
@@ -268,8 +365,13 @@ export function resolveStorageDestinationConfiguration(
   const endpoint = env[`${metadata.secretPrefix}_ENDPOINT`] ?? "";
   try {
     const parsed = new URL(endpoint);
-    if (parsed.protocol !== "https:" || !parsed.hostname.endsWith(".backblazeb2.com") ||
-        parsed.username || parsed.password) throw new Error("invalid");
+    if (
+      parsed.protocol !== "https:" ||
+      !parsed.hostname.endsWith(".backblazeb2.com") ||
+      parsed.username ||
+      parsed.password
+    )
+      throw new Error("invalid");
   } catch {
     return {
       metadata,
@@ -297,15 +399,24 @@ export function isStorageDestinationEligible(
   incomingBytes = 0,
   reportedUsageBytes: number | null = null,
 ): boolean {
-  if (destination.configurationStatus !== "configured" ||
-      !destination.metadata.enabled ||
-      destination.metadata.mode !== "active" ||
-      destination.metadata.purpose !== purpose ||
-      !Number.isSafeInteger(incomingBytes) || incomingBytes < 0) return false;
+  if (
+    destination.configurationStatus !== "configured" ||
+    !destination.metadata.enabled ||
+    destination.metadata.mode !== "active" ||
+    destination.metadata.purpose !== purpose ||
+    !Number.isSafeInteger(incomingBytes) ||
+    incomingBytes < 0
+  )
+    return false;
 
   // Unknown usage is not treated as zero. Until a provider usage check is
   // available, the destination is not eligible for automatic capacity routing.
-  if (reportedUsageBytes === null || !Number.isSafeInteger(reportedUsageBytes) || reportedUsageBytes < 0) return false;
+  if (
+    reportedUsageBytes === null ||
+    !Number.isSafeInteger(reportedUsageBytes) ||
+    reportedUsageBytes < 0
+  )
+    return false;
   return reportedUsageBytes <= destination.metadata.softCapBytes - incomingBytes;
 }
 

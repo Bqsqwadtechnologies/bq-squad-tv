@@ -9,40 +9,68 @@ function amount(value: unknown): number {
 }
 
 export const Route = createFileRoute("/api/public/v1/producer/mobile-summary")({
-  server: { handlers: { GET: async ({ request }) => {
-    try {
-      const user = await requireUser(request);
-      const fs = await Firestore.create();
-      await requirePlatformRole(fs, user, "producer");
-      const [producer, profile, channels] = await Promise.all([
-        fs.getDoc("producers/" + user.uid),
-        fs.getDoc("users/" + user.uid),
-        fs.query("channels", { filters: [{ field: "ownerUid", op: "EQUAL", value: user.uid }], limit: 100 }),
-      ]);
-      const currency = currencyForCountry(profile?.["countryCode"]);
-      const earningsByCurrency = producer?.["earningsBalanceByCurrency"] && typeof producer["earningsBalanceByCurrency"] === "object"
-        ? producer["earningsBalanceByCurrency"] as Record<string, unknown> : {};
-      const earningsLifetimeByCurrency = producer?.["earningsLifetimeByCurrency"] && typeof producer["earningsLifetimeByCurrency"] === "object"
-        ? producer["earningsLifetimeByCurrency"] as Record<string, unknown> : {};
-      const earningsBalanceMinor = typeof earningsByCurrency[currency] === "number"
-        ? amount(earningsByCurrency[currency])
-        : currency === "NGN" ? amount(producer?.["earningsBalanceMinor"]) : 0;
-      return Response.json({
-        producerStatus: typeof producer?.["planStatus"] === "string" ? producer["planStatus"] : "UNKNOWN",
-        earningsBalanceMinor,
-        earningsLifetimeMinor: typeof earningsLifetimeByCurrency[currency] === "number"
-          ? amount(earningsLifetimeByCurrency[currency])
-          : currency === "NGN" ? amount(producer?.["earningsLifetimeMinor"]) : 0,
-        earningsByCurrency,
-        currency,
-        channelCount: channels.length,
-        publishedChannelCount: channels.filter(channel => channel["published"] === true).length,
-        channels: channels.slice(0, 20).map(channel => ({
-          id: channel.__id,
-          title: typeof channel["title"] === "string" ? channel["title"] : "Untitled channel",
-          status: typeof channel["status"] === "string" ? channel["status"] : (channel["published"] === true ? "PUBLISHED" : "DRAFT"),
-        })),
-      });
-    } catch (error) { return errorBody(error); }
-  } } },
+  server: {
+    handlers: {
+      GET: async ({ request }) => {
+        try {
+          const user = await requireUser(request);
+          const fs = await Firestore.create();
+          await requirePlatformRole(fs, user, "producer");
+          const [producer, profile, channels] = await Promise.all([
+            fs.getDoc("producers/" + user.uid),
+            fs.getDoc("users/" + user.uid),
+            fs.query("channels", {
+              filters: [{ field: "ownerUid", op: "EQUAL", value: user.uid }],
+              limit: 100,
+            }),
+          ]);
+          const currency = currencyForCountry(profile?.["countryCode"]);
+          const earningsByCurrency =
+            producer?.["earningsBalanceByCurrency"] &&
+            typeof producer["earningsBalanceByCurrency"] === "object"
+              ? (producer["earningsBalanceByCurrency"] as Record<string, unknown>)
+              : {};
+          const earningsLifetimeByCurrency =
+            producer?.["earningsLifetimeByCurrency"] &&
+            typeof producer["earningsLifetimeByCurrency"] === "object"
+              ? (producer["earningsLifetimeByCurrency"] as Record<string, unknown>)
+              : {};
+          const earningsBalanceMinor =
+            typeof earningsByCurrency[currency] === "number"
+              ? amount(earningsByCurrency[currency])
+              : currency === "NGN"
+                ? amount(producer?.["earningsBalanceMinor"])
+                : 0;
+          return Response.json({
+            producerStatus:
+              typeof producer?.["planStatus"] === "string" ? producer["planStatus"] : "UNKNOWN",
+            earningsBalanceMinor,
+            earningsLifetimeMinor:
+              typeof earningsLifetimeByCurrency[currency] === "number"
+                ? amount(earningsLifetimeByCurrency[currency])
+                : currency === "NGN"
+                  ? amount(producer?.["earningsLifetimeMinor"])
+                  : 0,
+            earningsByCurrency,
+            currency,
+            channelCount: channels.length,
+            publishedChannelCount: channels.filter((channel) => channel["published"] === true)
+              .length,
+            channels: channels.slice(0, 20).map((channel) => ({
+              id: channel.__id,
+              title: typeof channel["title"] === "string" ? channel["title"] : "Untitled channel",
+              status:
+                typeof channel["status"] === "string"
+                  ? channel["status"]
+                  : channel["published"] === true
+                    ? "PUBLISHED"
+                    : "DRAFT",
+            })),
+          });
+        } catch (error) {
+          return errorBody(error);
+        }
+      },
+    },
+  },
 });

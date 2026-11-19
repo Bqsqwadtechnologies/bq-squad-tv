@@ -23,9 +23,9 @@ This document describes the source-code contracts currently implemented on `main
 - `POST /api/public/v1/storage/complete` — checks upload ownership, expiry, size, and file signature before allowing processing.
 - `POST /api/public/v1/producer/channels` / `GET /api/public/v1/producer/channels` — producer channel creation and listing.
 - `POST /api/public/v1/producer/channels/$channelId/assets` — submits content metadata and claimed distribution rights.
-- `POST /api/public/v1/admin/content-assets/$assetId/rights` — administrator rights review.
-- `POST /api/public/v1/admin/content-assets/$assetId/ready` — registers a verified private HLS manifest after processing.
-- `POST /api/public/v1/admin/channels/$channelId/publish` — publishes/unpublishes approved channels.
+- `POST /api/public/v1/zillionaire/content-assets/$assetId/rights` — administrator rights review.
+- `POST /api/public/v1/zillionaire/content-assets/$assetId/ready` — registers a verified private HLS manifest after processing.
+- `POST /api/public/v1/zillionaire/channels/$channelId/publish` — publishes/unpublishes approved channels.
 
 ### Wallet and monetization
 - `POST /api/public/v1/payments/paystack/initialize`
@@ -33,7 +33,7 @@ This document describes the source-code contracts currently implemented on `main
 - `POST /api/public/v1/payments/paystack/webhook`
 - `GET /api/public/v1/wallet/google-play/products`
 - `POST /api/public/v1/wallet/google-play/verify`
-- `PUT /api/public/v1/admin/config/pricing` / `GET /api/public/v1/admin/config/pricing`
+- `PUT /api/public/v1/zillionaire/config/pricing` / `GET /api/public/v1/zillionaire/config/pricing`
 
 Paystack credits and Google Play credits are idempotent. Android and website payment rails remain separate.
 
@@ -41,7 +41,7 @@ Paystack credits and Google Play credits are idempotent. Android and website pay
 - `GET /api/public/v1/ads/next`
 - `GET /api/public/v1/ads/provider-config`
 - `POST /api/public/v1/ads/$adId/events`
-- `POST /api/public/v1/admin/ads/providers`
+- `POST /api/public/v1/zillionaire/ads/providers`
 - `POST /api/public/v1/devices/push-token`
 - `GET /api/public/v1/producer/mobile-summary`
 

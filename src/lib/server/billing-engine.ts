@@ -25,10 +25,13 @@ export function cumulativeCost(ratePerMinuteMinor: bigint, acceptedSeconds: bigi
 export function incrementalCost(
   ratePerMinuteMinor: bigint,
   prevAcceptedSeconds: bigint,
-  nextAcceptedSeconds: bigint
+  nextAcceptedSeconds: bigint,
 ): bigint {
   if (nextAcceptedSeconds <= prevAcceptedSeconds) return 0n;
-  return cumulativeCost(ratePerMinuteMinor, nextAcceptedSeconds) - cumulativeCost(ratePerMinuteMinor, prevAcceptedSeconds);
+  return (
+    cumulativeCost(ratePerMinuteMinor, nextAcceptedSeconds) -
+    cumulativeCost(ratePerMinuteMinor, prevAcceptedSeconds)
+  );
 }
 
 /**
@@ -37,7 +40,7 @@ export function incrementalCost(
 export function creditAcceptedSeconds(
   reportedDeltaSeconds: bigint,
   expectedIntervalSeconds: bigint,
-  isPlaying: boolean
+  isPlaying: boolean,
 ): bigint {
   if (!isPlaying || reportedDeltaSeconds <= 0n) return 0n;
   const maxCreditable = (expectedIntervalSeconds * 3n) / 2n; // 1.5x
@@ -50,7 +53,7 @@ export function creditAcceptedSeconds(
 export function calculateBlockBoundary(
   prevAcceptedSeconds: bigint,
   nextAcceptedSeconds: bigint,
-  blockSizeSeconds: bigint = DEFAULT_BLOCK_SIZE_SECONDS
+  blockSizeSeconds: bigint = DEFAULT_BLOCK_SIZE_SECONDS,
 ): { isBlockBoundary: boolean; blockIndex: bigint; blockBoundarySeconds: bigint } {
   const prevBlock = prevAcceptedSeconds / blockSizeSeconds;
   const nextBlock = nextAcceptedSeconds / blockSizeSeconds;
@@ -67,7 +70,7 @@ export function calculateBlockBoundary(
  */
 export function calculateHoldSize(
   ratePerMinuteMinor: bigint,
-  holdMinutes: bigint = DEFAULT_HOLD_MINUTES
+  holdMinutes: bigint = DEFAULT_HOLD_MINUTES,
 ): bigint {
   return ratePerMinuteMinor * holdMinutes;
 }
@@ -78,7 +81,7 @@ export function calculateHoldSize(
 export function projectLowBalance(
   currentBalanceMinor: bigint,
   ratePerMinuteMinor: bigint,
-  lowBalanceThresholdMinutes: bigint = 2n
+  lowBalanceThresholdMinutes: bigint = 2n,
 ): { isLowBalance: boolean; remainingSeconds: bigint } {
   if (ratePerMinuteMinor <= 0n) {
     return { isLowBalance: false, remainingSeconds: 86400n };
@@ -98,7 +101,7 @@ export function projectLowBalance(
  */
 export function calculateRevenueSplit(
   grossRevenueMinor: bigint,
-  shareBps: bigint
+  shareBps: bigint,
 ): { shareMinor: bigint; platformMinor: bigint } {
   if (grossRevenueMinor <= 0n || shareBps <= 0n) {
     return { shareMinor: 0n, platformMinor: grossRevenueMinor };

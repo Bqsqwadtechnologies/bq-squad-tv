@@ -4,14 +4,16 @@ import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody } from "@/lib/server/api";
 import { logErrorEvent } from "@/lib/server/error-events";
 
-const schema = z.object({
-  code: z.string().trim().min(1).max(64),
-  routePattern: z.string().trim().min(1).max(256),
-  status: z.number().int().min(100).max(599),
-  ref: z.string().trim().min(1).max(64),
-  platform: z.enum(["android", "web", "ios", "worker", "unknown"]).default("unknown"),
-  appVersion: z.string().trim().max(64).optional(),
-}).strict();
+const schema = z
+  .object({
+    code: z.string().trim().min(1).max(64),
+    routePattern: z.string().trim().min(1).max(256),
+    status: z.number().int().min(100).max(599),
+    ref: z.string().trim().min(1).max(64),
+    platform: z.enum(["android", "web", "ios", "worker", "unknown"]).default("unknown"),
+    appVersion: z.string().trim().max(64).optional(),
+  })
+  .strict();
 
 export const Route = createFileRoute("/api/public/v1/errors/beacon")({
   server: {

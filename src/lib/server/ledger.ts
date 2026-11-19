@@ -8,9 +8,13 @@ export function encodeLedgerCursor(cursor: LedgerCursor): string {
 
 export function decodeLedgerCursor(value: string | null): LedgerCursor | null {
   if (!value) return null;
-  if (value.length > 512) throw new ApiError(400, "INVALID_CURSOR", "The ledger cursor is invalid.");
+  if (value.length > 512)
+    throw new ApiError(400, "INVALID_CURSOR", "The ledger cursor is invalid.");
   try {
-    const decoded = JSON.parse(new TextDecoder().decode(decodeBase64Url(value))) as Record<string, unknown>;
+    const decoded = JSON.parse(new TextDecoder().decode(decodeBase64Url(value))) as Record<
+      string,
+      unknown
+    >;
     if (
       typeof decoded["createdAt"] !== "string" ||
       !Number.isFinite(Date.parse(decoded["createdAt"])) ||

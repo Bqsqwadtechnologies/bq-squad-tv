@@ -7,7 +7,10 @@ const sharedSignedObjectCache = new Map<string, CacheEntry>();
 const MAX_ENTRIES = 2_000;
 
 /** 30-minute shared playlist window, with signed objects retained until expiry. */
-export function sharedPlaylistWindow(nowMs = Date.now()): { windowStartMs: number; windowEndMs: number } {
+export function sharedPlaylistWindow(nowMs = Date.now()): {
+  windowStartMs: number;
+  windowEndMs: number;
+} {
   const windowStartMs = Math.floor(nowMs / 1_800_000) * 1_800_000;
   return { windowStartMs, windowEndMs: windowStartMs + 1_800_000 };
 }
@@ -24,8 +27,12 @@ export async function getSharedSignedObjects(input: {
   create: () => Promise<Map<string, string>>;
 }): Promise<Map<string, string>> {
   const now = input.nowMs ?? Date.now();
-  if (!input.key || input.key.length > 512 || !Number.isFinite(input.expiresAtMs) ||
-      input.expiresAtMs <= now) {
+  if (
+    !input.key ||
+    input.key.length > 512 ||
+    !Number.isFinite(input.expiresAtMs) ||
+    input.expiresAtMs <= now
+  ) {
     throw new Error("Shared playback cache key or expiry is invalid.");
   }
   for (const [key, entry] of sharedSignedObjectCache) {
@@ -44,7 +51,8 @@ export async function getSharedSignedObjects(input: {
   try {
     return await value;
   } catch (error) {
-    if (sharedSignedObjectCache.get(input.key)?.value === value) sharedSignedObjectCache.delete(input.key);
+    if (sharedSignedObjectCache.get(input.key)?.value === value)
+      sharedSignedObjectCache.delete(input.key);
     throw error;
   }
 }

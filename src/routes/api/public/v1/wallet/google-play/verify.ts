@@ -4,7 +4,12 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, getWallet, parseBody, requireUser } from "@/lib/server/api";
 import { getPricingConfig } from "@/lib/server/pricing";
 import { consumeGooglePlayProduct } from "@/lib/server/google-play";
-import { creditGooglePlayPurchase, getGooglePlayProducts, googlePlayAccountId, verifyGooglePlayProduct } from "@/lib/server/google-play";
+import {
+  creditGooglePlayPurchase,
+  getGooglePlayProducts,
+  googlePlayAccountId,
+  verifyGooglePlayProduct,
+} from "@/lib/server/google-play";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { assertRiskStepUp, recordRiskSignal } from "@/lib/server/risk-engine";
 
@@ -16,57 +21,89 @@ const schema = z.object({
 });
 
 export const Route = createFileRoute("/api/public/v1/wallet/google-play/verify")({
-  server: { handlers: { POST: async ({ request }) => {
-    try {
-      const user = await requireUser(request);
-      if (!user.emailVerified) throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email before purchasing wallet credits.");
-      const body = await parseBody(request, schema);
-      const packageName = process.env["GOOGLE_PLAY_PACKAGE_NAME"] || "com.bqsqwad.tv";
-      if (packageName !== body.packageName) throw new ApiError(400, "PLAY_PACKAGE_MISMATCH", "The Android package name does not match this app.");
-      const fs = await Firestore.create();
-      await enforceRateLimit(fs, "play-verify:" + user.uid, { limit: 10, windowMs: 60_000 });
-      await assertRiskStepUp(fs, user.uid, user.authTime);
-      const wallet = await getWallet(fs, user.uid);
-      const currency = wallet.currency;
-      const config = await getPricingConfig(fs);
-      const product = getGooglePlayProducts(config, currency).find(item => item.productId === body.productId);
-      if (!product) throw new ApiError(400, "PLAY_PRODUCT_UNAVAILABLE", "This Google Play product is not configured.");
-      let verified: Record<string, unknown>;
-      try {
-        verified = await verifyGooglePlayProduct({
-          packageName,
-          productId: body.productId,
-          purchaseToken: body.purchaseToken,
-          obfuscatedAccountId: await googlePlayAccountId(user.uid),
-        });
-      } catch (error) {
-        await recordRiskSignal(fs, user.uid, "failed_payment");
-        throw error;
-      }
-      const verifiedOrderId = typeof verified["orderId"] === "string" ? verified["orderId"] : null;
-      if (body.orderId && verifiedOrderId && body.orderId !== verifiedOrderId) {
-        throw new ApiError(402, "PLAY_ORDER_MISMATCH", "The Google Play order does not match the submitted purchase.");
-      }
-      const result = await creditGooglePlayPurchase(fs, {
-        uid: user.uid, productId: body.productId, purchaseToken: body.purchaseToken,
-        orderId: verifiedOrderId, creditMinor: product.creditMinor, currency,
-      });
-      // Wallet top-ups are consumable products. Consume only after the
-      // idempotent wallet/ledger transaction succeeds; retries can finish this
-      // step without crediting the same purchase twice.
-      if (verified["consumptionState"] !== 1) {
-        await consumeGooglePlayProduct({
-          packageName,
-          productId: body.productId,
-          purchaseToken: body.purchaseToken,
-        });
-      }
-      return Response.json({
-        ...result,
-        processed: true,
-        currency,
-        message: result.credited ? "Wallet credited." : "This purchase was already processed.",
-      });
-    } catch (error) { return errorBody(error); }
-  } } },
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        try {
+          const user = await requireUser(request);
+          if (!user.emailVerified)
+            throw new ApiError(
+              403,
+              "EMAIL_VERIFICATION_REQUIRED",
+              "Verify your email before purchasing wallet credits.",
+            );
+          const body = await parseBody(request, schema);
+          const packageName = process.env["GOOGLE_PLAY_PACKAGE_NAME"] || "com.bqsqwad.tv";
+          if (packageName !== body.packageName)
+            throw new ApiError(
+              400,
+              "PLAY_PACKAGE_MISMATCH",
+              "The Android package name does not match this app.",
+            );
+          const fs = await Firestore.create();
+          await enforceRateLimit(fs, "play-verify:" + user.uid, { limit: 10, windowMs: 60_000 });
+          await assertRiskStepUp(fs, user.uid, user.authTime);
+          const wallet = await getWallet(fs, user.uid);
+          const currency = wallet.currency;
+          const config = await getPricingConfig(fs);
+          const product = getGooglePlayProducts(config, currency).find(
+            (item) => item.productId === body.productId,
+          );
+          if (!product)
+            throw new ApiError(
+              400,
+              "PLAY_PRODUCT_UNAVAILABLE",
+              "This Google Play product is not configured.",
+            );
+          let verified: Record<string, unknown>;
+          try {
+            verified = await verifyGooglePlayProduct({
+              packageName,
+              productId: body.productId,
+              purchaseToken: body.purchaseToken,
+              obfuscatedAccountId: await googlePlayAccountId(user.uid),
+            });
+          } catch (error) {
+            await recordRiskSignal(fs, user.uid, "failed_payment");
+            throw error;
+          }
+          const verifiedOrderId =
+            typeof verified["orderId"] === "string" ? verified["orderId"] : null;
+          if (body.orderId && verifiedOrderId && body.orderId !== verifiedOrderId) {
+            throw new ApiError(
+              402,
+              "PLAY_ORDER_MISMATCH",
+              "The Google Play order does not match the submitted purchase.",
+            );
+          }
+          const result = await creditGooglePlayPurchase(fs, {
+            uid: user.uid,
+            productId: body.productId,
+            purchaseToken: body.purchaseToken,
+            orderId: verifiedOrderId,
+            creditMinor: product.creditMinor,
+            currency,
+          });
+          // Wallet top-ups are consumable products. Consume only after the
+          // idempotent wallet/ledger transaction succeeds; retries can finish this
+          // step without crediting the same purchase twice.
+          if (verified["consumptionState"] !== 1) {
+            await consumeGooglePlayProduct({
+              packageName,
+              productId: body.productId,
+              purchaseToken: body.purchaseToken,
+            });
+          }
+          return Response.json({
+            ...result,
+            processed: true,
+            currency,
+            message: result.credited ? "Wallet credited." : "This purchase was already processed.",
+          });
+        } catch (error) {
+          return errorBody(error);
+        }
+      },
+    },
+  },
 });

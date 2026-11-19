@@ -6,7 +6,7 @@ Reviewed branch: `main`
 
 ## Scope and method
 
-Reviewed the complete current Git tree for the `src/routes/api/public/v1/admin/` and `src/routes/api/public/v1/producer/` route families, the channel-team API, the protected schema-inspection endpoint, and the shared role/permission helpers. This is a source review, not a penetration test or proof of deployed behavior.
+Reviewed the complete current Git tree for the `src/routes/api/public/v1/zillionaire/` and `src/routes/api/public/v1/producer/` route families, the channel-team API, the protected schema-inspection endpoint, and the shared role/permission helpers. This is a source review, not a penetration test or proof of deployed behavior.
 
 ## Findings
 

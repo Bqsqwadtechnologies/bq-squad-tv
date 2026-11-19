@@ -8,13 +8,17 @@ describe("global authentication session revocation", () => {
   });
 
   it("allows sessions authenticated after the revocation time", () => {
-    expect(() => assertAuthenticationSessionActive({ sessionsRevokedAfter: 100 }, 101)).not.toThrow();
+    expect(() =>
+      assertAuthenticationSessionActive({ sessionsRevokedAfter: 100 }, 101),
+    ).not.toThrow();
   });
 
   it("rejects sessions authenticated at or before the revocation time", () => {
-    expect(() => assertAuthenticationSessionActive({ sessionsRevokedAfter: 100 }, 100))
-      .toThrow(expect.objectContaining({ status: 401, code: "AUTH_SESSION_REVOKED" }));
-    expect(() => assertAuthenticationSessionActive({ sessionsRevokedAfter: 100 }, 99))
-      .toThrow(expect.objectContaining({ status: 401, code: "AUTH_SESSION_REVOKED" }));
+    expect(() => assertAuthenticationSessionActive({ sessionsRevokedAfter: 100 }, 100)).toThrow(
+      expect.objectContaining({ status: 401, code: "AUTH_SESSION_REVOKED" }),
+    );
+    expect(() => assertAuthenticationSessionActive({ sessionsRevokedAfter: 100 }, 99)).toThrow(
+      expect.objectContaining({ status: 401, code: "AUTH_SESSION_REVOKED" }),
+    );
   });
 });

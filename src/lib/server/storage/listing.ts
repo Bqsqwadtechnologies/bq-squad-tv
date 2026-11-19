@@ -13,16 +13,30 @@ export async function listAllStorageObjects(
   let cursor: string | null = null;
   let pages = 0;
   do {
-    if (++pages > maxPages) throw new ApiError(503, "HLS_LISTING_LIMIT", "The HLS output contains too many storage listing pages.");
+    if (++pages > maxPages)
+      throw new ApiError(
+        503,
+        "HLS_LISTING_LIMIT",
+        "The HLS output contains too many storage listing pages.",
+      );
     const page = await adapter.listObjects(prefix, cursor);
     for (const item of page.objects) {
-      if (!item.key.startsWith(prefix.replace(/\/$/, "") + "/") ||
-          !Number.isSafeInteger(item.sizeBytes) || item.sizeBytes < 0 || seen.has(item.key)) {
-        throw new ApiError(409, "HLS_LISTING_INVALID", "The storage listing contains an invalid or duplicate object.");
+      if (
+        !item.key.startsWith(prefix.replace(/\/$/, "") + "/") ||
+        !Number.isSafeInteger(item.sizeBytes) ||
+        item.sizeBytes < 0 ||
+        seen.has(item.key)
+      ) {
+        throw new ApiError(
+          409,
+          "HLS_LISTING_INVALID",
+          "The storage listing contains an invalid or duplicate object.",
+        );
       }
       seen.add(item.key);
       objects.push(item);
-      if (objects.length > maxObjects) throw new ApiError(413, "HLS_OUTPUT_TOO_LARGE", "The HLS output contains too many files.");
+      if (objects.length > maxObjects)
+        throw new ApiError(413, "HLS_OUTPUT_TOO_LARGE", "The HLS output contains too many files.");
     }
     cursor = page.nextCursor;
   } while (cursor);

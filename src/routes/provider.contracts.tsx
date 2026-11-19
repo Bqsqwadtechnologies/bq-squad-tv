@@ -46,7 +46,7 @@ function ProviderContractsPage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Failed to load contract details");
-        const data = await res.json() as { contracts: Contract[] };
+        const data = (await res.json()) as { contracts: Contract[] };
         if (active) setContracts(data.contracts || []);
       } catch (err: unknown) {
         if (active) setError(err instanceof Error ? err.message : "Network error");
@@ -54,7 +54,9 @@ function ProviderContractsPage() {
         if (active) setBusy(false);
       }
     })();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -88,21 +90,33 @@ function ProviderContractsPage() {
             <p className="text-sm text-slate-400">Loading agreement summary...</p>
           </div>
         ) : error ? (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm" role="alert">
+          <div
+            className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm"
+            role="alert"
+          >
             {error}
           </div>
         ) : (
           <div className="space-y-6">
             <div>
               <h2 className="text-xl font-bold text-white">Channel Distribution Terms</h2>
-              <p className="text-xs text-slate-400">Executed distribution rights, revenue share terms and territory bounds.</p>
+              <p className="text-xs text-slate-400">
+                Executed distribution rights, revenue share terms and territory bounds.
+              </p>
             </div>
 
             {contracts.length === 0 ? (
-              <div tabIndex={0} className="p-8 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950" role="region" aria-label="Standard channel distribution agreement">
+              <div
+                tabIndex={0}
+                className="p-8 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                role="region"
+                aria-label="Standard channel distribution agreement"
+              >
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-base font-bold text-white">Standard Channel Distribution Agreement</h3>
+                    <h3 className="text-base font-bold text-white">
+                      Standard Channel Distribution Agreement
+                    </h3>
                     <p className="text-xs text-slate-400">Reference: AGR-ONLINE-PROV-STD</p>
                   </div>
                   <span className="px-2.5 py-0.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
@@ -113,7 +127,9 @@ function ProviderContractsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-800 text-xs">
                   <div>
                     <span className="text-slate-400 block mb-1">Revenue Model</span>
-                    <span className="text-sm font-semibold text-white">Gross Profit Share (25.0%)</span>
+                    <span className="text-sm font-semibold text-white">
+                      Gross Profit Share (25.0%)
+                    </span>
                   </div>
                   <div>
                     <span className="text-slate-400 block mb-1">Settlement Currency</span>
@@ -128,16 +144,28 @@ function ProviderContractsPage() {
                 <div className="p-4 rounded-xl bg-slate-950 border border-slate-800/80 text-xs text-slate-300 space-y-2">
                   <div className="font-semibold text-white">Key Distribution Terms:</div>
                   <ul className="list-disc pl-5 space-y-1 text-slate-400">
-                    <li>Gross profit is defined as gross viewing receipts minus direct processing and delivery costs.</li>
-                    <li>Payment settlements occur monthly within 15 business days of ledger closing.</li>
-                    <li>Channel partner warrants full licensing and transmission rights in declared territories.</li>
+                    <li>
+                      Gross profit is defined as gross viewing receipts minus direct processing and
+                      delivery costs.
+                    </li>
+                    <li>
+                      Payment settlements occur monthly within 15 business days of ledger closing.
+                    </li>
+                    <li>
+                      Channel partner warrants full licensing and transmission rights in declared
+                      territories.
+                    </li>
                   </ul>
                 </div>
               </div>
             ) : (
               <div className="space-y-4" role="region" aria-label="Active contracts and agreements">
                 {contracts.map((c) => (
-                  <div key={c.id} tabIndex={0} className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950">
+                  <div
+                    key={c.id}
+                    tabIndex={0}
+                    className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                  >
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="text-base font-bold text-white">{c.agreementReference}</h3>
@@ -157,11 +185,15 @@ function ProviderContractsPage() {
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-1">Settlement Currency</span>
-                        <span className="text-sm font-semibold text-white">{c.settlementCurrency}</span>
+                        <span className="text-sm font-semibold text-white">
+                          {c.settlementCurrency}
+                        </span>
                       </div>
                       <div>
                         <span className="text-slate-400 block mb-1">Territories</span>
-                        <span className="text-sm font-semibold text-white">{c.territories.join(", ")}</span>
+                        <span className="text-sm font-semibold text-white">
+                          {c.territories.join(", ")}
+                        </span>
                       </div>
                     </div>
                   </div>

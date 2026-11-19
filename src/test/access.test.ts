@@ -40,7 +40,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "user-1",
         email: "viewer@example.com",
-        emailVerified: true, issuedAt: 1700000000, customClaims: {},
+        emailVerified: true,
+        issuedAt: 1700000000,
+        customClaims: {},
         authTime: 123456,
       });
 
@@ -64,7 +66,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "owner-1",
         email: "owner@zillionaire.com",
-        emailVerified: true, issuedAt: 1700000000, customClaims: {},
+        emailVerified: true,
+        issuedAt: 1700000000,
+        customClaims: {},
         authTime: 123456,
       });
 
@@ -85,7 +89,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "staff-1",
         email: "staff@example.com",
-        emailVerified: true, issuedAt: 1700000000, customClaims: {},
+        emailVerified: true,
+        issuedAt: 1700000000,
+        customClaims: {},
         authTime: 123456,
       });
 
@@ -105,7 +111,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "viewer-1",
         email: "viewer@example.com",
-        emailVerified: true, issuedAt: 1700000000, customClaims: {},
+        emailVerified: true,
+        issuedAt: 1700000000,
+        customClaims: {},
         authTime: 123456,
       });
 
@@ -127,7 +135,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "prod-1",
         email: "producer@example.com",
-        emailVerified: true, issuedAt: 1700000000, customClaims: {},
+        emailVerified: true,
+        issuedAt: 1700000000,
+        customClaims: {},
         authTime: 123456,
       });
 
@@ -148,7 +158,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "viewer-1",
         email: "viewer@example.com",
-        emailVerified: true, issuedAt: 1700000000, customClaims: {},
+        emailVerified: true,
+        issuedAt: 1700000000,
+        customClaims: {},
         authTime: 123456,
       });
 
@@ -170,7 +182,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "prov-rep-1",
         email: "rep@provider.org",
-        emailVerified: true, issuedAt: 1700000000, customClaims: {},
+        emailVerified: true,
+        issuedAt: 1700000000,
+        customClaims: {},
         authTime: 123456,
       });
 
@@ -191,7 +205,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "prov-rep-1",
         email: "rep@provider.org",
-        emailVerified: true, issuedAt: 1700000000, customClaims: {},
+        emailVerified: true,
+        issuedAt: 1700000000,
+        customClaims: {},
         authTime: 123456,
       });
 
@@ -237,7 +253,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "zillionaire-channels-1",
         email: "admin@bqsqwad.tv",
-        emailVerified: true, issuedAt: 1700000000, customClaims: {},
+        emailVerified: true,
+        issuedAt: 1700000000,
+        customClaims: {},
         authTime: 123456,
       });
 
@@ -260,7 +278,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "prov-rep-1",
         email: "rep@provider.org",
-        emailVerified: true, issuedAt: 1700000000, customClaims: {},
+        emailVerified: true,
+        issuedAt: 1700000000,
+        customClaims: {},
         authTime: 123456,
       });
 
@@ -284,7 +304,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
       mockReqUser.mockResolvedValueOnce({
         uid: "producer-1",
         email: "prod@example.com",
-        emailVerified: true, issuedAt: 1700000000, customClaims: {},
+        emailVerified: true,
+        issuedAt: 1700000000,
+        customClaims: {},
         authTime: 123456,
       });
 
@@ -305,8 +327,9 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
     it("throws 404 for non-existent channel", async () => {
       const fs = mockFirestore({});
       const req = new Request("http://localhost/api/channel");
-      await expect(requireChannelPermission(req, "non-existent", "channel.read", fs))
-        .rejects.toMatchObject({ status: 404, code: "CHANNEL_NOT_FOUND" });
+      await expect(
+        requireChannelPermission(req, "non-existent", "channel.read", fs),
+      ).rejects.toMatchObject({ status: 404, code: "CHANNEL_NOT_FOUND" });
     });
   });
 });

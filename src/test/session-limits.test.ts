@@ -9,11 +9,16 @@ import {
 
 describe("concurrent playback session leases", () => {
   it("prunes expired and malformed leases", () => {
-    expect(liveSessionLeases({
-      live: 20_000,
-      expired: 9_999,
-      malformed: "later",
-    }, 10_000)).toEqual({ live: 20_000 });
+    expect(
+      liveSessionLeases(
+        {
+          live: 20_000,
+          expired: 9_999,
+          malformed: "later",
+        },
+        10_000,
+      ),
+    ).toEqual({ live: 20_000 });
   });
 
   it("atomically refuses a session when the configured limit is reached", () => {

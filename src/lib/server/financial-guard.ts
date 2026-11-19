@@ -1,6 +1,7 @@
 import { ApiError, type Firestore } from "./firebase-admin";
 
-export type FinancialApprovalStatus = "pending_second_approval" | "cooling_off" | "approved" | "cancelled";
+export type FinancialApprovalStatus =
+  "pending_second_approval" | "cooling_off" | "approved" | "cancelled";
 
 export type FinancialActionRequest = {
   id: string;
@@ -34,7 +35,7 @@ export async function requestFinancialAction(
     actorUid: string;
     isSoloOwner: boolean;
     reason: string;
-  }
+  },
 ): Promise<FinancialActionRequest> {
   const now = new Date();
   const id = `fin_${type}_${Date.now()}`;
@@ -86,7 +87,7 @@ export async function requestFinancialAction(
 export async function approveFinancialAction(
   fs: Firestore,
   actionId: string,
-  approverUid: string
+  approverUid: string,
 ): Promise<FinancialActionRequest> {
   const doc = await fs.getDoc(`financialActions/${actionId}`);
   if (!doc) throw new ApiError(404, "ACTION_NOT_FOUND", "Financial action not found.");
@@ -96,12 +97,14 @@ export async function approveFinancialAction(
   if (action.status === "cooling_off") {
     // If in cooling-off period, can execute once expired
     const now = Date.now();
-    const expireTime = action.coolingOffExpiresAt ? new Date(action.coolingOffExpiresAt).getTime() : 0;
+    const expireTime = action.coolingOffExpiresAt
+      ? new Date(action.coolingOffExpiresAt).getTime()
+      : 0;
     if (now < expireTime) {
       throw new ApiError(
         403,
         "COOLING_OFF_ACTIVE",
-        "This high-value action is in its mandatory 30-minute cooling-off period."
+        "This high-value action is in its mandatory 30-minute cooling-off period.",
       );
     }
     action.status = "approved";
@@ -114,7 +117,7 @@ export async function approveFinancialAction(
       throw new ApiError(
         403,
         "TWO_PERSON_REQUIRED",
-        "Two distinct authorized signers are required for this transaction."
+        "Two distinct authorized signers are required for this transaction.",
       );
     }
     action.secondApprovedBy = approverUid;

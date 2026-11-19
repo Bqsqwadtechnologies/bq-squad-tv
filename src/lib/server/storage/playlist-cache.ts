@@ -62,7 +62,10 @@ export async function getOrCreateSharedPlaylist(input: {
   inFlight.set(key, generation);
   try {
     const value = await generation;
-    const expiresAt = Math.max(nowMs + 1_000, input.cacheUntilMs ?? input.key.windowStartMs + WINDOW_MS);
+    const expiresAt = Math.max(
+      nowMs + 1_000,
+      input.cacheUntilMs ?? input.key.windowStartMs + WINDOW_MS,
+    );
     playlistCache.set(key, { value, expiresAt });
     return value;
   } finally {
@@ -83,10 +86,14 @@ export function sharedPlaylistSignedUrlLifetime(input: {
   maxLifetimeSeconds?: number;
 }): number {
   const nowMs = input.nowMs ?? Date.now();
-  const duration = Number.isFinite(input.filmDurationSeconds) && input.filmDurationSeconds > 0
-    ? Math.ceil(input.filmDurationSeconds) : 0;
-  const margin = Number.isFinite(input.safetyMarginSeconds) && (input.safetyMarginSeconds ?? 0) >= 0
-    ? Math.ceil(input.safetyMarginSeconds ?? 300) : 300;
+  const duration =
+    Number.isFinite(input.filmDurationSeconds) && input.filmDurationSeconds > 0
+      ? Math.ceil(input.filmDurationSeconds)
+      : 0;
+  const margin =
+    Number.isFinite(input.safetyMarginSeconds) && (input.safetyMarginSeconds ?? 0) >= 0
+      ? Math.ceil(input.safetyMarginSeconds ?? 300)
+      : 300;
   const maxLifetime = input.maxLifetimeSeconds ?? 21_600;
   const windowRemainder = Math.max(0, Math.ceil((input.windowEndMs - nowMs) / 1000));
   const filmRemainder = Math.max(0, duration);

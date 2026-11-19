@@ -37,7 +37,11 @@ function OwnerVerificationView({ token, email }: { token: string; email: string 
         method: "POST",
         headers,
       });
-      const data = await res.json() as { sent?: boolean; alreadyVerified?: boolean; error?: string };
+      const data = (await res.json()) as {
+        sent?: boolean;
+        alreadyVerified?: boolean;
+        error?: string;
+      };
       if (data.alreadyVerified) {
         window.location.reload();
       } else if (data.sent) {
@@ -64,7 +68,7 @@ function OwnerVerificationView({ token, email }: { token: string; email: string 
         headers: { ...headers, "content-type": "application/json" },
         body: JSON.stringify({ code }),
       });
-      const data = await res.json() as { verified?: boolean; error?: string };
+      const data = (await res.json()) as { verified?: boolean; error?: string };
       if (data.verified) {
         window.location.reload();
       } else {
@@ -84,11 +88,12 @@ function OwnerVerificationView({ token, email }: { token: string; email: string 
           <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-10 w-auto" />
         </div>
         <div className="inline-block rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold tracking-widest text-cyan-300 uppercase">
-          Zillionaire Security
+          Console Access Verification
         </div>
         <h1 className="mt-3 text-2xl font-black text-white">Verify your email</h1>
         <p className="mt-2 text-sm leading-6 text-blue-100/70">
-          Owner account requires verified email. Check your inbox ({email || "your account"}) for the verification code or resend it to open the Zillionaire Dashboard.
+          Owner account requires verified email. Check your inbox ({email || "your account"}) for
+          the verification code or resend it to open the console.
         </p>
         <form onSubmit={handleVerify} className="mt-6 space-y-4">
           <label className="block text-xs font-bold uppercase tracking-wider text-blue-200">
@@ -98,7 +103,7 @@ function OwnerVerificationView({ token, email }: { token: string; email: string 
               inputMode="numeric"
               maxLength={6}
               value={code}
-              onChange={e => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
               placeholder="000000"
               className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-center text-2xl font-mono tracking-[0.5em] text-white outline-none focus:border-cyan-300"
               required
@@ -129,7 +134,11 @@ function OwnerVerificationView({ token, email }: { token: string; email: string 
   );
 }
 
-export function ConsolePageGuard({ role, module: requiredModule, children }: ConsolePageGuardProps) {
+export function ConsolePageGuard({
+  role,
+  module: requiredModule,
+  children,
+}: ConsolePageGuardProps) {
   const [state, setState] = useState<
     | { status: "checking" }
     | { status: "denied" }
@@ -179,15 +188,15 @@ export function ConsolePageGuard({ role, module: requiredModule, children }: Con
           authorized = Boolean(
             account.isOwner ||
             (Array.isArray(account.roles) &&
-            account.roles.includes("producer") &&
-            account.producerPlanActive !== false)
+              account.roles.includes("producer") &&
+              account.producerPlanActive !== false),
           );
         } else if (role === "provider") {
           authorized = Boolean(
             account.isOwner ||
             (Array.isArray(account.roles) &&
-            account.roles.includes("provider") &&
-            Boolean(account.providerId))
+              account.roles.includes("provider") &&
+              Boolean(account.providerId)),
           );
         }
 

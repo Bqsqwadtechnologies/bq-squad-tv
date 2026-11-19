@@ -36,11 +36,21 @@ describe("email OTP security primitives", () => {
 
   it("binds the code hash to the user, purpose and salt", async () => {
     const hash = await hashEmailOtp("uid-1", "verify_email", "salt", "123456");
-    expect(equalOtpHashes(hash, await hashEmailOtp("uid-1", "verify_email", "salt", "123456"))).toBe(true);
-    expect(equalOtpHashes(hash, await hashEmailOtp("uid-2", "verify_email", "salt", "123456"))).toBe(false);
-    expect(equalOtpHashes(hash, await hashEmailOtp("uid-1", "reset_password", "salt", "123456"))).toBe(false);
-    expect(equalOtpHashes(hash, await hashEmailOtp("uid-1", "verify_email", "other-salt", "123456"))).toBe(false);
-    expect(equalOtpHashes(hash, await hashEmailOtp("uid-1", "verify_email", "salt", "654321"))).toBe(false);
+    expect(
+      equalOtpHashes(hash, await hashEmailOtp("uid-1", "verify_email", "salt", "123456")),
+    ).toBe(true);
+    expect(
+      equalOtpHashes(hash, await hashEmailOtp("uid-2", "verify_email", "salt", "123456")),
+    ).toBe(false);
+    expect(
+      equalOtpHashes(hash, await hashEmailOtp("uid-1", "reset_password", "salt", "123456")),
+    ).toBe(false);
+    expect(
+      equalOtpHashes(hash, await hashEmailOtp("uid-1", "verify_email", "other-salt", "123456")),
+    ).toBe(false);
+    expect(
+      equalOtpHashes(hash, await hashEmailOtp("uid-1", "verify_email", "salt", "654321")),
+    ).toBe(false);
   });
 
   it("uses bounded expiry and attempt limits", () => {

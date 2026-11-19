@@ -57,18 +57,39 @@ function SearchPage() {
       const headers = token ? await getWebAuthHeaders(token) : {};
       const response = await fetch(
         "/api/public/v1/catalog/search?q=" + encodeURIComponent(searchQuery.trim().slice(0, 100)),
-        { headers, cache: "no-store" }
+        { headers, cache: "no-store" },
       );
       if (response.ok) {
         const data = (await response.json()) as { channels?: SearchItem[] };
         setResults(Array.isArray(data.channels) ? data.channels : []);
       } else {
         // Fallback demo results for public search
-        setResults([
-          { id: "1", title: "Midnight Echoes", category: "Movies", posterUrl: null, pricePerMinute: "0.25" },
-          { id: "2", title: "Lagos Nights", category: "Series", posterUrl: null, pricePerMinute: "0.30" },
-          { id: "3", title: "BQ Sqwad Sports HD", category: "Live TV", posterUrl: null, isLive: true, pricePerMinute: "0.40" },
-        ].filter((i) => i.title.toLowerCase().includes(searchQuery.toLowerCase())));
+        setResults(
+          [
+            {
+              id: "1",
+              title: "Midnight Echoes",
+              category: "Movies",
+              posterUrl: null,
+              pricePerMinute: "0.25",
+            },
+            {
+              id: "2",
+              title: "Lagos Nights",
+              category: "Series",
+              posterUrl: null,
+              pricePerMinute: "0.30",
+            },
+            {
+              id: "3",
+              title: "BQ Sqwad Sports HD",
+              category: "Live TV",
+              posterUrl: null,
+              isLive: true,
+              pricePerMinute: "0.40",
+            },
+          ].filter((i) => i.title.toLowerCase().includes(searchQuery.toLowerCase())),
+        );
       }
     } catch {
       setResults([]);
@@ -103,7 +124,10 @@ function SearchPage() {
     <main className="min-h-screen bg-gradient-to-b from-[#030B2A] via-[#07143D] to-[#0A1A4A] px-4 py-8 text-white sm:px-8">
       <div className="mx-auto max-w-4xl">
         <div className="flex items-center justify-between pb-6 border-b border-white/10">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#00D8F5] hover:underline">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#00D8F5] hover:underline"
+          >
             <ArrowLeft size={18} /> Home
           </Link>
           <BrandLogo variant="horizontal" className="h-7 w-auto" />
@@ -191,13 +215,15 @@ function SearchPage() {
               {filteredResults.map((item) => (
                 <Link
                   key={item.id}
-                  to="/channels/$channelId" params={{ channelId: "demo" }}
+                  to="/channels/$channelId"
+                  params={{ channelId: "demo" }}
                   className="group overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] transition hover:border-[#00D8F5]/50 hover:shadow-lg"
                 >
                   <div className="aspect-[2/3] w-full bg-gradient-to-t from-[#030B2A] to-[#142456] flex items-end p-3">
                     <div className="w-full">
                       <span className="rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-[#00D8F5]">
-                        {currencySymbol}{item.pricePerMinute ?? "0.25"}/min
+                        {currencySymbol}
+                        {item.pricePerMinute ?? "0.25"}/min
                       </span>
                       <h3 className="mt-1 line-clamp-1 text-xs font-bold text-white group-hover:text-[#00D8F5]">
                         {item.title}

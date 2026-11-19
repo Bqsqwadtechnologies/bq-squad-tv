@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, decodeFields, type Firestore, type FirestoreWrite } from "@/lib/server/firebase-admin";
+import {
+  ApiError,
+  decodeFields,
+  type Firestore,
+  type FirestoreWrite,
+} from "@/lib/server/firebase-admin";
 import {
   channelScheduleSchema,
   deleteChannelSchedule,
@@ -17,16 +22,23 @@ function memoryFirestore(): Firestore {
         .filter(([path]) => path.startsWith(prefix) && !path.slice(prefix.length).includes("/"))
         .map(([path, value]) => ({ ...value, __id: path.slice(prefix.length) }));
     },
-    setDoc: async (path: string, fields: Record<string, unknown>, options?: { mustNotExist?: boolean }) => {
-      if (options?.mustNotExist && documents.has(path)) throw new ApiError(409, "CONFLICT", "Exists");
+    setDoc: async (
+      path: string,
+      fields: Record<string, unknown>,
+      options?: { mustNotExist?: boolean },
+    ) => {
+      if (options?.mustNotExist && documents.has(path))
+        throw new ApiError(409, "CONFLICT", "Exists");
       documents.set(path, fields);
     },
     transact: async <T>(
       paths: string[],
-      callback: (docs: Array<Record<string, unknown> | null>) =>
+      callback: (
+        docs: Array<Record<string, unknown> | null>,
+      ) =>
         Promise<{ result: T; writes: FirestoreWrite[] }> | { result: T; writes: FirestoreWrite[] },
     ): Promise<T> => {
-      const outcome = await callback(paths.map(path => documents.get(path) ?? null));
+      const outcome = await callback(paths.map((path) => documents.get(path) ?? null));
       for (const write of outcome.writes) {
         if ("update" in write) {
           if (write.currentDocument?.exists === false && documents.has(write.update.name)) {
@@ -93,7 +105,12 @@ describe("transactional channel scheduling", () => {
       fs,
       "channel-2",
       "producer-2",
-      programme("Updated", "2026-11-17T10:00:00.000Z", "2026-11-17T11:00:00.000Z", first.programmeId),
+      programme(
+        "Updated",
+        "2026-11-17T10:00:00.000Z",
+        "2026-11-17T11:00:00.000Z",
+        first.programmeId,
+      ),
     );
     expect(updated).toEqual({ programmeId: first.programmeId, created: false });
     await deleteChannelSchedule(fs, "channel-2", first.programmeId);

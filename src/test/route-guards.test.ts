@@ -15,23 +15,29 @@ describe("Route Access & Guard Matrix (Deny by Default)", () => {
     const unguarded = matrix.filter((r: MatrixRoute) => r.type === "unguarded");
     if (unguarded.length > 0) {
       const details = unguarded.map((u: MatrixRoute) => `  - ${u.route} (${u.file})`).join("\n");
-      throw new Error(`Found ${unguarded.length} unguarded routes:\n${details}\nEvery route must have an authenticated guard or be on the reviewed public allow-list.`);
+      throw new Error(
+        `Found ${unguarded.length} unguarded routes:\n${details}\nEvery route must have an authenticated guard or be on the reviewed public allow-list.`,
+      );
     }
     expect(unguarded).toHaveLength(0);
   });
 
   it("public routes match the reviewed public allow-list exactly", () => {
-    const publicRoutes = matrix.filter((r: MatrixRoute) => r.type === "public").map((r: MatrixRoute) => r.route);
+    const publicRoutes = matrix
+      .filter((r: MatrixRoute) => r.type === "public")
+      .map((r: MatrixRoute) => r.route);
     for (const r of publicRoutes) {
       expect(PUBLIC_ROUTE_ALLOWLIST.has(r)).toBe(true);
     }
   });
 
   it("console page routes are all guarded and never public", () => {
-    const consoleRoutes = matrix.filter((r: MatrixRoute) => 
-      r.file.startsWith("src/routes/admin") || 
-      r.file.startsWith("src/routes/producer") || 
-      r.file.startsWith("src/routes/provider")
+    const consoleRoutes = matrix.filter(
+      (r: MatrixRoute) =>
+        r.file.startsWith("src/routes/zillionaire") ||
+        r.file.startsWith("src/routes/admin") ||
+        r.file.startsWith("src/routes/producer") ||
+        r.file.startsWith("src/routes/provider"),
     );
     expect(consoleRoutes.length).toBeGreaterThanOrEqual(18);
     for (const r of consoleRoutes) {

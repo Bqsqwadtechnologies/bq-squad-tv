@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  ArrowLeft, CalendarDays, Maximize2, Minimize2,
-  Pause, PictureInPicture2, Play, Radio, RotateCcw,
-  Tv2, Volume2, VolumeX
+  ArrowLeft,
+  CalendarDays,
+  Maximize2,
+  Minimize2,
+  Pause,
+  PictureInPicture2,
+  Play,
+  Radio,
+  RotateCcw,
+  Tv2,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
@@ -124,9 +133,15 @@ function ChannelPage() {
   function toggleFullscreen() {
     if (!playerContainerRef.current) return;
     if (!document.fullscreenElement) {
-      playerContainerRef.current.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+      playerContainerRef.current
+        .requestFullscreen()
+        .then(() => setIsFullscreen(true))
+        .catch(() => {});
     } else {
-      document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+      document
+        .exitFullscreen()
+        .then(() => setIsFullscreen(false))
+        .catch(() => {});
     }
   }
 
@@ -140,14 +155,19 @@ function ChannelPage() {
           await video.requestPictureInPicture();
         }
       }
-    } catch (_err) { void _err; }
+    } catch (_err) {
+      void _err;
+    }
   }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-[#030B2A] via-[#07143D] to-[#0A1A4A] px-4 py-8 text-white sm:px-8">
       <div className="mx-auto max-w-5xl">
         <div className="flex items-center justify-between pb-6 border-b border-white/10">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[#00D8F5] hover:underline">
+          <Link
+            to="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-[#00D8F5] hover:underline"
+          >
             <ArrowLeft size={18} /> Back to Home
           </Link>
           <BrandLogo variant="horizontal" className="h-7 w-auto" />
@@ -201,7 +221,11 @@ function ChannelPage() {
                     }}
                     className="grid h-16 w-16 place-items-center rounded-full bg-[#00D8F5]/20 text-[#00D8F5] backdrop-blur-md transition hover:scale-110"
                   >
-                    {isPlaying ? <Pause size={28} /> : <Play size={28} className="translate-x-0.5" />}
+                    {isPlaying ? (
+                      <Pause size={28} />
+                    ) : (
+                      <Play size={28} className="translate-x-0.5" />
+                    )}
                   </button>
                 </div>
 
@@ -290,8 +314,15 @@ function ChannelPage() {
                     <div key={item.id} className="py-3.5">
                       <p className="text-sm font-bold text-white">{item.title}</p>
                       <p className="text-xs text-slate-400">
-                        {new Date(item.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} –{" "}
-                        {new Date(item.endsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(item.startsAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        –{" "}
+                        {new Date(item.endsAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </p>
                       {item.description ? (
                         <p className="mt-1 text-xs text-slate-300">{item.description}</p>

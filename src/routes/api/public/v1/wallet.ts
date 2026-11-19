@@ -10,13 +10,16 @@ export const Route = createFileRoute("/api/public/v1/wallet")({
           const user = await requireUser(request);
           const fs = await Firestore.create();
           const wallet = await getWallet(fs, user.uid);
-          return Response.json({
-            balanceMinor: wallet.balanceMinor,
-            countryCurrency: wallet.currency,
-            currency: wallet.currency,
-            dailySpendLimitMinor: wallet.dailySpendLimitMinor,
-            spentTodayMinor: wallet.spentTodayMinor,
-          }, { headers: { "cache-control": "no-store" } });
+          return Response.json(
+            {
+              balanceMinor: wallet.balanceMinor,
+              countryCurrency: wallet.currency,
+              currency: wallet.currency,
+              dailySpendLimitMinor: wallet.dailySpendLimitMinor,
+              spentTodayMinor: wallet.spentTodayMinor,
+            },
+            { headers: { "cache-control": "no-store" } },
+          );
         } catch (error) {
           return errorBody(error);
         }

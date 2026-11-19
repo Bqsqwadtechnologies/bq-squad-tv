@@ -31,7 +31,7 @@
 
 - Role boundary enforcement: Server-side authorization distinguishes `/admin` (Zillionaire Owner and delegated admin module scopes), `/producer` (approved producer verification + active plan), and `/provider` (licensed provider representative with active `providerUsers` binding). Each role is strictly barred from accessing another role's endpoints.
 - Provider data isolation: Provider accounts receive access only to resources (live channels, statements, contracts, dispute threads) where `providerId` strictly matches their active association. Any cross-provider query or mutation throws `PROVIDER_ISOLATION_VIOLATION` (403).
-- Dispute threads: Dispute threads are bidirectional and support operator replies via `/api/public/v1/admin/support/messages` and provider replies via `/api/public/v1/provider/disputes`. Thread isolation prevents any other provider from reading or appending to foreign dispute threads.
+- Dispute threads: Dispute threads are bidirectional and support operator replies via `/api/public/v1/zillionaire/support/messages` and provider replies via `/api/public/v1/provider/disputes`. Thread isolation prevents any other provider from reading or appending to foreign dispute threads.
 - Accessibility & navigation: All three consoles (Zillionaire Dashboard, Producer Console, Partner Portal) implement visible focus indicators (`focus-visible:ring-2 focus-visible:ring-cyan-400`), keyboard navigation (tabIndex, form submission, enter key handling), and explicit accessible labels (`aria-label`, `role="region"`, `role="status"`).
 
 
@@ -50,9 +50,9 @@
 - **Zillionaire Terminology**: Renamed administrative permission model and types to Zillionaire identity (`ZillionaireModule`, `zillionaireModules`, `requireZillionaireModule`, `isZillionaireOwner`).
 - **Owner Protection**: Hardened `assertNotProtectedZillionaire` invariant to guarantee that the primary Zillionaire owner (`ZILLIONAIRE_EMAIL`) cannot be demoted, suspended, or deleted under any circumstance.
 - **Migration & Backward Compatibility**:
-  - Maintained backward-compatible aliases (`AdminModule`, `requireAdminModule`, `ADMIN_MODULES`) across the codebase.
+  - Maintained backward-compatible aliases (`AdminModule`, `requireZillionaireModule`, `ADMIN_MODULES`) across the codebase.
   - Read path in `resolvePlatformAccess` supports both `zillionaireModules` and legacy `adminModules` with automated logging.
-  - Created idempotent owner migration endpoint `POST /api/public/v1/admin/migration/zillionaire` with tamper-evident audit trail.
+  - Created idempotent owner migration endpoint `POST /api/public/v1/zillionaire/migration/zillionaire` with tamper-evident audit trail.
   - Removed legacy `ADMIN_EMAIL` fallback in favor of strictly enforced `ZILLIONAIRE_EMAIL`.
 
 ## Batch 04: Central Access Library
@@ -96,7 +96,7 @@ V3-01 Batch 07 mandates fine-grained module access for Zillionaire operators (`r
    - `requireZillionaireModule(fs, user, module)` evaluates `hasModuleAccess(access.zillionaireModules, module)`.
    - Operators with only a single granted module fail access to every other targeted module with HTTP 403 `ZILLIONAIRE_SCOPE_REQUIRED`.
 4. **Permissions Endpoint Governance**:
-   - `PUT /api/public/v1/admin/users/$uid/permissions` validates all modules against `ZILLIONAIRE_MODULES`.
+   - `PUT /api/public/v1/zillionaire/users/$uid/permissions` validates all modules against `ZILLIONAIRE_MODULES`.
    - Writes both `zillionaireModules` and `adminModules` simultaneously for zero-downtime backward compatibility.
    - Guarded by protected Zillionaire owner requirement (`OWNER_AUTHORITY_REQUIRED`) and owner account self-protection (`OWNER_ACCOUNT_PROTECTED`).
 5. **Comprehensive Automated Verification**:
@@ -151,3 +151,27 @@ V3-01 Batch 09 requires writing structured privacy-safe audit records (`accessDe
    - Canary injection test asserts that synthetic canary secrets in headers, request bodies, query parameters, and resource IDs never leak into audit records, server logs, or error responses.
    - Validated sharded counter increments and security alert document creation when denial threshold (>10/hr) is breached.
    - Total test suite now: 82 test files, 440 tests passing.
+
+## Batch V4-01 — Zillionaire Route Migration, Access Matrix & Anti-Probing Parity
+
+### Context & Requirements
+V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` paths in favor of `/zillionaire/*` and `/api/public/v1/zillionaire/*`. Legacy admin paths must present generic 404 parity with `noindex` rather than revealing administrative presence. All module routes, access resolvers, and route tests must align with the new canonical hierarchy.
+
+### Architecture & Implementation
+1. **Route Renaming & Anti-Probing 404**:
+   - Renamed all console page routes (`src/routes/admin.*.tsx` -> `src/routes/zillionaire.*.tsx`).
+   - Renamed all API endpoints (`src/routes/api/public/v1/admin/*` -> `src/routes/api/public/v1/zillionaire/*`).
+   - Any request to retired `/admin/*` paths resolves to the generic 404 `NotFoundView` without leakage of administrative features or specialized error codes.
+2. **Access Resolvers & Module Guards**:
+   - Maintained `requireZillionaireModule` as canonical access resolver while providing backward-compatible `requireAdminModule` alias.
+   - Updated client navigation and API calls across console guards and view components to target `/api/public/v1/zillionaire/*`.
+3. **Route Matrix & Test Synchronisation**:
+   - Updated `scripts/route-access-matrix.mjs` to catalog `zillionaire` console and API routes under the `zillionaire module` guard class.
+   - Regenerated `docs/ROUTE-ACCESS-MATRIX.md` (190 routes) and updated the reviewed fixture `src/test/fixtures/role-matrix-routes.json`.
+   - Updated `src/test/route-guards.test.ts` to assert guarded isolation on all console routes.
+4. **Verification & Quality Gate**:
+   - `bun run scan:public-text` passed cleanly.
+   - `bun x tsc --noEmit` clean (0 errors).
+   - `bun run lint` passed (0 errors).
+   - Full Vitest suite: 89 test files, 2,380 tests passed cleanly.
+   - Production bundle built cleanly (`dist/client`, `dist/server`).

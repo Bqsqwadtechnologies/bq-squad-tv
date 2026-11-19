@@ -9,29 +9,46 @@ import { recordRiskSignal } from "@/lib/server/risk-engine";
 const schema = z.object({ reference: z.string().min(8).max(100) });
 
 export const Route = createFileRoute("/api/public/v1/payments/paystack/verify")({
-  server: { handlers: { POST: async ({ request }) => {
-    try {
-      const user = await requireUser(request);
-      const { reference } = await parseBody(request, schema);
-      const fs = await Firestore.create();
-      await enforceRateLimit(fs, "paystack-verify:" + user.uid, { limit: 10, windowMs: 60_000 });
-      const payment = await fs.getDoc("payments/paystack_" + reference);
-      if (!payment || payment["uid"] !== user.uid || payment["provider"] !== "paystack") {
-        throw new ApiError(404, "PAYMENT_NOT_FOUND", "This payment could not be found.");
-      }
-      const currency = typeof payment["currency"] === "string" ? payment["currency"] as string : "NGN";
-      const verified = await fetchPaystackVerification(reference);
-      if (verified["status"] !== "success" || verified["currency"] !== currency ||
-          verified["amount"] !== payment["amountMinor"] ||
-          (verified["metadata"] as Record<string, unknown> | undefined)?.["uid"] !== user.uid) {
-        await recordRiskSignal(fs, user.uid, "failed_payment");
-        throw new ApiError(402, "PAYMENT_NOT_CONFIRMED", "The payment has not been confirmed.");
-      }
-      const result = await creditPaystackPayment(fs, {
-        reference, uid: user.uid, amountMinor: payment["amountMinor"] as number,
-        creditMinor: payment["creditMinor"] as number, email: user.email, currency,
-      });
-      return Response.json({ ...result, currency });
-    } catch (error) { return errorBody(error); }
-  } } },
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        try {
+          const user = await requireUser(request);
+          const { reference } = await parseBody(request, schema);
+          const fs = await Firestore.create();
+          await enforceRateLimit(fs, "paystack-verify:" + user.uid, {
+            limit: 10,
+            windowMs: 60_000,
+          });
+          const payment = await fs.getDoc("payments/paystack_" + reference);
+          if (!payment || payment["uid"] !== user.uid || payment["provider"] !== "paystack") {
+            throw new ApiError(404, "PAYMENT_NOT_FOUND", "This payment could not be found.");
+          }
+          const currency =
+            typeof payment["currency"] === "string" ? (payment["currency"] as string) : "NGN";
+          const verified = await fetchPaystackVerification(reference);
+          if (
+            verified["status"] !== "success" ||
+            verified["currency"] !== currency ||
+            verified["amount"] !== payment["amountMinor"] ||
+            (verified["metadata"] as Record<string, unknown> | undefined)?.["uid"] !== user.uid
+          ) {
+            await recordRiskSignal(fs, user.uid, "failed_payment");
+            throw new ApiError(402, "PAYMENT_NOT_CONFIRMED", "The payment has not been confirmed.");
+          }
+          const result = await creditPaystackPayment(fs, {
+            reference,
+            uid: user.uid,
+            amountMinor: payment["amountMinor"] as number,
+            creditMinor: payment["creditMinor"] as number,
+            email: user.email,
+            currency,
+          });
+          return Response.json({ ...result, currency });
+        } catch (error) {
+          return errorBody(error);
+        }
+      },
+    },
+  },
 });

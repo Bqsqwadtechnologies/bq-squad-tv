@@ -20,10 +20,15 @@ export const Route = createFileRoute("/api/public/v1/catalog/search")({
           if (category) filters.push({ field: "category", op: "EQUAL", value: category });
           if (language) filters.push({ field: "language", op: "EQUAL", value: language });
 
-          let results = visibleChannels(await fs.query("channels", { filters, limit: 200 }), profile.adultEligible);
+          let results = visibleChannels(
+            await fs.query("channels", { filters, limit: 200 }),
+            profile.adultEligible,
+          );
           if (queryText) {
             results = results.filter((channel) =>
-              (typeof channel["title"] === "string" ? (channel["title"] as string) : "").toLowerCase().includes(queryText),
+              (typeof channel["title"] === "string" ? (channel["title"] as string) : "")
+                .toLowerCase()
+                .includes(queryText),
             );
           }
           // Adult filtering happens before any result is returned.

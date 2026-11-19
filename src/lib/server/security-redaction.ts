@@ -25,7 +25,7 @@ export function redactString(input: string): string {
   // Redact PEM format private keys
   text = text.replace(
     /-----BEGIN[ A-Z_-]*PRIVATE KEY-----[\s\S]*?-----END[ A-Z_-]*PRIVATE KEY-----/gi,
-    "[REDACTED_PRIVATE_KEY]"
+    "[REDACTED_PRIVATE_KEY]",
   );
 
   // Redact Bearer tokens
@@ -34,13 +34,13 @@ export function redactString(input: string): string {
   // Redact JWT tokens
   text = text.replace(
     /eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g,
-    "[REDACTED_JWT]"
+    "[REDACTED_JWT]",
   );
 
   // Redact query parameter secrets
   text = text.replace(
     /(?:api_?key|\bkey|secret|token|password|signature|sig)=([^\s&"'>]+)/gi,
-    "secret=[REDACTED]"
+    "secret=[REDACTED]",
   );
 
   return text;
@@ -61,7 +61,11 @@ export function sanitizePayload<T>(payload: T): T {
     const sanitized: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(payload)) {
       const lower = key.toLowerCase();
-      if (SENSITIVE_KEY_NAMES.has(lower) || lower.includes("secret") || lower.includes("private_key")) {
+      if (
+        SENSITIVE_KEY_NAMES.has(lower) ||
+        lower.includes("secret") ||
+        lower.includes("private_key")
+      ) {
         sanitized[key] = "[REDACTED]";
       } else {
         sanitized[key] = sanitizePayload(value);

@@ -6,22 +6,23 @@ import {
   validateStorageDestinationMetadata,
 } from "@/lib/server/storage/registry";
 
-const lovable = () => validateStorageDestinationMetadata({
-  destinationId: "lovable_source_01",
-  providerType: "lovable_storage",
-  accountAlias: "Lovable primary",
-  secretPrefix: "LOVABLE_STORAGE_01",
-  bucketName: "bq-sqwad-source-media",
-  region: "africa-south1",
-  purpose: "source_media",
-  softCapBytes: 9_000_000_000,
-  dailyEgressCapBytes: null,
-  priority: 10,
-  enabled: true,
-  accountGroup: "lovable-default-workspace",
-  mode: "active",
-  replicaOf: null,
-});
+const lovable = () =>
+  validateStorageDestinationMetadata({
+    destinationId: "lovable_source_01",
+    providerType: "lovable_storage",
+    accountAlias: "Lovable primary",
+    secretPrefix: "LOVABLE_STORAGE_01",
+    bucketName: "bq-sqwad-source-media",
+    region: "africa-south1",
+    purpose: "source_media",
+    softCapBytes: 9_000_000_000,
+    dailyEgressCapBytes: null,
+    priority: 10,
+    enabled: true,
+    accountGroup: "lovable-default-workspace",
+    mode: "active",
+    replicaOf: null,
+  });
 
 describe("storage destination registry", () => {
   it("keeps secret values out of the redacted destination response", () => {
@@ -63,10 +64,17 @@ describe("storage destination registry", () => {
 
   it("defaults legacy Lovable destinations into one workspace quota group", () => {
     const metadata = validateStorageDestinationMetadata({
-      destinationId: "lovable_extra_02", providerType: "lovable_storage", accountAlias: "Extra bucket",
-      secretPrefix: "LOVABLE_STORAGE_02", bucketName: "bucket-2", region: "africa-south1",
-      purpose: "source_media", softCapBytes: 5_000_000_000, dailyEgressCapBytes: null,
-      priority: 20, enabled: true,
+      destinationId: "lovable_extra_02",
+      providerType: "lovable_storage",
+      accountAlias: "Extra bucket",
+      secretPrefix: "LOVABLE_STORAGE_02",
+      bucketName: "bucket-2",
+      region: "africa-south1",
+      purpose: "source_media",
+      softCapBytes: 5_000_000_000,
+      dailyEgressCapBytes: null,
+      priority: 20,
+      enabled: true,
     });
     expect(metadata.accountGroup).toBe("lovable-default-workspace");
   });
@@ -84,6 +92,8 @@ describe("storage destination registry", () => {
       LOVABLE_STORAGE_01_URL: "https://storage.example.test",
       LOVABLE_STORAGE_01_SERVICE_ROLE_KEY: "private-service-role-key",
     });
-    expect(isStorageDestinationEligible(drainingResolved, "source_media", 100, 8_000_000_000)).toBe(false);
+    expect(isStorageDestinationEligible(drainingResolved, "source_media", 100, 8_000_000_000)).toBe(
+      false,
+    );
   });
 });

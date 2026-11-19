@@ -25,30 +25,53 @@ export const Route = createFileRoute("/api/public/v1/wallet/ledger")({
             orderByField: "createdAt",
             descending: true,
             limit: limit + 1,
-            ...(cursor ? { startAfter: { fieldValue: cursor.createdAt, documentId: cursor.id } } : {}),
+            ...(cursor
+              ? { startAfter: { fieldValue: cursor.createdAt, documentId: cursor.id } }
+              : {}),
           });
           const hasMore = rows.length > limit;
           const page = rows.slice(0, limit);
           const items = page.map((row) => ({
             id: row.__id,
-            description: typeof row["description"] === "string" ? row["description"] : "Wallet transaction",
-            amountMinor: typeof row["amountMinor"] === "number" && Number.isSafeInteger(row["amountMinor"]) ? row["amountMinor"] : 0,
+            description:
+              typeof row["description"] === "string" ? row["description"] : "Wallet transaction",
+            amountMinor:
+              typeof row["amountMinor"] === "number" && Number.isSafeInteger(row["amountMinor"])
+                ? row["amountMinor"]
+                : 0,
             createdAt: typeof row["createdAt"] === "string" ? row["createdAt"] : "",
             kind: typeof row["kind"] === "string" ? row["kind"] : "adjustment",
             currency: typeof row["currency"] === "string" ? row["currency"] : wallet.currency,
             currencyCode: typeof row["currency"] === "string" ? row["currency"] : wallet.currency,
-            minorUnitDigits: minorUnitDigits(typeof row["currency"] === "string" ? row["currency"] : wallet.currency),
-            symbol: currencySymbol(typeof row["currency"] === "string" ? row["currency"] : wallet.currency),
+            minorUnitDigits: minorUnitDigits(
+              typeof row["currency"] === "string" ? row["currency"] : wallet.currency,
+            ),
+            symbol: currencySymbol(
+              typeof row["currency"] === "string" ? row["currency"] : wallet.currency,
+            ),
             formattedAmount: formatMinorCurrency(
-              typeof row["amountMinor"] === "number" && Number.isSafeInteger(row["amountMinor"]) ? row["amountMinor"] : 0,
+              typeof row["amountMinor"] === "number" && Number.isSafeInteger(row["amountMinor"])
+                ? row["amountMinor"]
+                : 0,
               typeof row["currency"] === "string" ? row["currency"] : wallet.currency,
             ),
           }));
           const last = page.at(-1);
-          const nextCursor = hasMore && last && typeof last["createdAt"] === "string"
-            ? encodeLedgerCursor({ createdAt: last["createdAt"], id: last.__id })
-            : null;
-          return Response.json({ items, nextCursor, currency: wallet.currency, currencyCode: wallet.currency, minorUnitDigits: minorUnitDigits(wallet.currency), symbol: currencySymbol(wallet.currency) }, { headers: { "cache-control": "no-store" } });
+          const nextCursor =
+            hasMore && last && typeof last["createdAt"] === "string"
+              ? encodeLedgerCursor({ createdAt: last["createdAt"], id: last.__id })
+              : null;
+          return Response.json(
+            {
+              items,
+              nextCursor,
+              currency: wallet.currency,
+              currencyCode: wallet.currency,
+              minorUnitDigits: minorUnitDigits(wallet.currency),
+              symbol: currencySymbol(wallet.currency),
+            },
+            { headers: { "cache-control": "no-store" } },
+          );
         } catch (error) {
           return errorBody(error);
         }

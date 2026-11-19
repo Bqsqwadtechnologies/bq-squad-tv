@@ -3,13 +3,15 @@ import { z } from "zod";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 
-const schema = z.object({
-  titleId: z.string().trim().min(1).max(100),
-  title: z.string().trim().min(1).max(200),
-  positionSeconds: z.number().int().min(0),
-  durationSeconds: z.number().int().min(1),
-  posterUrl: z.string().url().optional(),
-}).strict();
+const schema = z
+  .object({
+    titleId: z.string().trim().min(1).max(100),
+    title: z.string().trim().min(1).max(200),
+    positionSeconds: z.number().int().min(0),
+    durationSeconds: z.number().int().min(1),
+    posterUrl: z.string().url().optional(),
+  })
+  .strict();
 
 export const Route = createFileRoute("/api/public/v1/continue-watching/position")({
   server: {

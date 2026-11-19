@@ -177,6 +177,6 @@ The current security-header policy enforces transport, MIME, framing, referrer a
 To migrate existing user accounts and staff access permissions from legacy `adminModules` to the updated `zillionaireModules` format:
 
 1. Sign in to the application using the verified owner account specified in `ZILLIONAIRE_EMAIL`.
-2. Invoke the authenticated owner migration endpoint: `POST /api/public/v1/admin/migration/zillionaire`.
+2. Invoke the authenticated owner migration endpoint: `POST /api/public/v1/zillionaire/migration/zillionaire`.
 3. The endpoint scans users with legacy permissions, copies them to `zillionaireModules`, marks `adminModulesRetired: true`, logs the action to the tamper-evident audit log, and returns the total migrated count.
 4. During the migration window, the platform resolves both fields automatically. Once all user records have been updated, the legacy field is retired completely.

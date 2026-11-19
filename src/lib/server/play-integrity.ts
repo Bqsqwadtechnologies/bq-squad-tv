@@ -1,9 +1,4 @@
-import {
-  ApiError,
-  base64UrlEncode,
-  base64UrlEncodeBytes,
-  toArrayBuffer,
-} from "./firebase-admin";
+import { ApiError, base64UrlEncode, base64UrlEncodeBytes, toArrayBuffer } from "./firebase-admin";
 
 type PlayIntegrityServiceAccount = {
   client_email: string;
@@ -32,16 +27,28 @@ let cachedAccessToken: { token: string; expiresAt: number } | null = null;
 function getPlayIntegrityServiceAccount(): PlayIntegrityServiceAccount {
   const raw = process.env["GOOGLE_PLAY_SERVICE_ACCOUNT_JSON"];
   if (!raw) {
-    throw new ApiError(503, "PLAY_INTEGRITY_NOT_CONFIGURED", "Google Play Integrity verification is not configured.");
+    throw new ApiError(
+      503,
+      "PLAY_INTEGRITY_NOT_CONFIGURED",
+      "Google Play Integrity verification is not configured.",
+    );
   }
   let parsed: Partial<PlayIntegrityServiceAccount>;
   try {
     parsed = JSON.parse(raw) as Partial<PlayIntegrityServiceAccount>;
   } catch {
-    throw new ApiError(503, "PLAY_INTEGRITY_NOT_CONFIGURED", "Google Play service-account configuration is invalid.");
+    throw new ApiError(
+      503,
+      "PLAY_INTEGRITY_NOT_CONFIGURED",
+      "Google Play service-account configuration is invalid.",
+    );
   }
   if (!parsed.client_email || !parsed.private_key) {
-    throw new ApiError(503, "PLAY_INTEGRITY_NOT_CONFIGURED", "Google Play service-account configuration is incomplete.");
+    throw new ApiError(
+      503,
+      "PLAY_INTEGRITY_NOT_CONFIGURED",
+      "Google Play service-account configuration is incomplete.",
+    );
   }
   return parsed as PlayIntegrityServiceAccount;
 }
@@ -61,13 +68,15 @@ async function getPlayIntegrityAccessToken(): Promise<string> {
   const unsigned =
     base64UrlEncode(JSON.stringify({ alg: "RS256", typ: "JWT" })) +
     "." +
-    base64UrlEncode(JSON.stringify({
-      iss: serviceAccount.client_email,
-      scope: "https://www.googleapis.com/auth/playintegrity",
-      aud: "https://oauth2.googleapis.com/token",
-      iat: now,
-      exp: now + 3600,
-    }));
+    base64UrlEncode(
+      JSON.stringify({
+        iss: serviceAccount.client_email,
+        scope: "https://www.googleapis.com/auth/playintegrity",
+        aud: "https://oauth2.googleapis.com/token",
+        iat: now,
+        exp: now + 3600,
+      }),
+    );
   const key = await crypto.subtle.importKey(
     "pkcs8",
     toArrayBuffer(pemBytes(serviceAccount.private_key)),
@@ -93,7 +102,11 @@ async function getPlayIntegrityAccessToken(): Promise<string> {
     expires_in?: number;
   };
   if (!response.ok || !payload.access_token) {
-    throw new ApiError(503, "PLAY_INTEGRITY_AUTH_FAILED", "Google Play Integrity authentication failed.");
+    throw new ApiError(
+      503,
+      "PLAY_INTEGRITY_AUTH_FAILED",
+      "Google Play Integrity authentication failed.",
+    );
   }
   cachedAccessToken = {
     token: payload.access_token,
@@ -118,16 +131,32 @@ export function assertPlayIntegrityPayload(
     timestamp > nowMillis + 60_000 ||
     nowMillis - timestamp > 5 * 60_000
   ) {
-    throw new ApiError(403, "PLAY_INTEGRITY_REQUEST_INVALID", "The Play Integrity request is invalid or expired.");
+    throw new ApiError(
+      403,
+      "PLAY_INTEGRITY_REQUEST_INVALID",
+      "The Play Integrity request is invalid or expired.",
+    );
   }
   if (payload.appIntegrity?.appRecognitionVerdict !== "PLAY_RECOGNIZED") {
-    throw new ApiError(403, "PLAY_INTEGRITY_APP_UNRECOGNIZED", "This app installation could not be verified by Google Play.");
+    throw new ApiError(
+      403,
+      "PLAY_INTEGRITY_APP_UNRECOGNIZED",
+      "This app installation could not be verified by Google Play.",
+    );
   }
   if (!payload.deviceIntegrity?.deviceRecognitionVerdict?.includes("MEETS_DEVICE_INTEGRITY")) {
-    throw new ApiError(403, "PLAY_INTEGRITY_DEVICE_UNTRUSTED", "This device does not meet the required integrity level.");
+    throw new ApiError(
+      403,
+      "PLAY_INTEGRITY_DEVICE_UNTRUSTED",
+      "This device does not meet the required integrity level.",
+    );
   }
   if (payload.accountDetails?.appLicensingVerdict !== "LICENSED") {
-    throw new ApiError(403, "PLAY_INTEGRITY_LICENSE_REQUIRED", "This app installation is not licensed by Google Play.");
+    throw new ApiError(
+      403,
+      "PLAY_INTEGRITY_LICENSE_REQUIRED",
+      "This app installation is not licensed by Google Play.",
+    );
   }
 }
 
@@ -137,15 +166,25 @@ export async function verifyPlayIntegrityToken(
   nowMillis = Date.now(),
 ): Promise<void> {
   if (!integrityToken || integrityToken.length > 20_000) {
-    throw new ApiError(400, "PLAY_INTEGRITY_TOKEN_INVALID", "A valid Play Integrity token is required.");
+    throw new ApiError(
+      400,
+      "PLAY_INTEGRITY_TOKEN_INVALID",
+      "A valid Play Integrity token is required.",
+    );
   }
   const packageName = process.env["GOOGLE_PLAY_PACKAGE_NAME"];
   if (!packageName) {
-    throw new ApiError(503, "PLAY_INTEGRITY_NOT_CONFIGURED", "The Google Play package name is not configured.");
+    throw new ApiError(
+      503,
+      "PLAY_INTEGRITY_NOT_CONFIGURED",
+      "The Google Play package name is not configured.",
+    );
   }
   const accessToken = await getPlayIntegrityAccessToken();
   const response = await fetch(
-    "https://playintegrity.googleapis.com/v1/" + encodeURIComponent(packageName) + ":decodeIntegrityToken",
+    "https://playintegrity.googleapis.com/v1/" +
+      encodeURIComponent(packageName) +
+      ":decodeIntegrityToken",
     {
       method: "POST",
       headers: {
@@ -159,7 +198,11 @@ export async function verifyPlayIntegrityToken(
     tokenPayloadExternal?: PlayIntegrityPayload;
   };
   if (!response.ok || !body.tokenPayloadExternal) {
-    throw new ApiError(403, "PLAY_INTEGRITY_TOKEN_INVALID", "Google could not verify this Play Integrity token.");
+    throw new ApiError(
+      403,
+      "PLAY_INTEGRITY_TOKEN_INVALID",
+      "Google could not verify this Play Integrity token.",
+    );
   }
   assertPlayIntegrityPayload(body.tokenPayloadExternal, expectedNonce, packageName, nowMillis);
 }

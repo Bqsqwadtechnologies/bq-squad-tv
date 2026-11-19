@@ -9,17 +9,28 @@ import {
 
 function candidate(id: string, extra: Partial<StorageCandidate> = {}): StorageCandidate {
   return {
-    id, priority: 1, purpose: "source_media", usageBytes: 0,
-    softCapBytes: 100, healthStatus: "healthy", mode: "active",
-    configured: true, egressHeadroomBytes: 100, egressCircuitBreakerBytes: 0,
-    accountGroup: id, accountGroupUsedBytes: 0, accountGroupCapBytes: 100,
+    id,
+    priority: 1,
+    purpose: "source_media",
+    usageBytes: 0,
+    softCapBytes: 100,
+    healthStatus: "healthy",
+    mode: "active",
+    configured: true,
+    egressHeadroomBytes: 100,
+    egressCircuitBreakerBytes: 0,
+    accountGroup: id,
+    accountGroupUsedBytes: 0,
+    accountGroupCapBytes: 100,
     ...extra,
   };
 }
 
 describe("storage destination selection", () => {
   it("rotates evenly and wraps its cursor", () => {
-    const pool = Array.from({ length: 11 }, (_, i) => candidate("b2-" + String(i + 1).padStart(2, "0")));
+    const pool = Array.from({ length: 11 }, (_, i) =>
+      candidate("b2-" + String(i + 1).padStart(2, "0")),
+    );
     let cursor = 0;
     const picks: string[] = [];
     for (let i = 0; i < 22; i++) {
@@ -27,13 +38,14 @@ describe("storage destination selection", () => {
       picks.push(result.id);
       cursor = result.nextCursor;
     }
-    expect(picks.slice(0, 11)).toEqual(pool.map(item => item.id));
-    expect(picks.slice(11)).toEqual(pool.map(item => item.id));
+    expect(picks.slice(0, 11)).toEqual(pool.map((item) => item.id));
+    expect(picks.slice(11)).toEqual(pool.map((item) => item.id));
   });
 
   it("round-robins across 400 candidates and wraps without rescanning the pool", () => {
     const pool = Array.from({ length: 400 }, (_, index) =>
-      candidate("lov-" + String(index + 1).padStart(3, "0")));
+      candidate("lov-" + String(index + 1).padStart(3, "0")),
+    );
     const first = pickDestination(pool, 1, "source_media", 0);
     expect(first?.id).toBe("lov-001");
     expect(first?.nextCursor).toBe(1);
@@ -56,25 +68,49 @@ describe("storage destination selection", () => {
 
   it("falls through priority groups and enforces shared account caps", () => {
     const pool = [
-      candidate("01", { priority: 0, accountGroup: "shared", accountGroupUsedBytes: 99, accountGroupCapBytes: 100 }),
-      candidate("02", { priority: 0, accountGroup: "shared", accountGroupUsedBytes: 99, accountGroupCapBytes: 100 }),
+      candidate("01", {
+        priority: 0,
+        accountGroup: "shared",
+        accountGroupUsedBytes: 99,
+        accountGroupCapBytes: 100,
+      }),
+      candidate("02", {
+        priority: 0,
+        accountGroup: "shared",
+        accountGroupUsedBytes: 99,
+        accountGroupCapBytes: 100,
+      }),
       candidate("03", { priority: 2 }),
     ];
     expect(pickDestination(pool, 2, "source_media", 0)?.id).toBe("03");
   });
 
   it("excludes unknown usage and requires streaming egress headroom", () => {
-    expect(pickDestination([
-      candidate("unknown", { usageBytes: null }),
-      candidate("no-egress", { purpose: "hls_streaming", egressHeadroomBytes: null }),
-    ], 1, "source_media", 0)).toBeNull();
-    expect(pickDestination([
-      candidate("zero-known-egress", { purpose: "hls_streaming", egressHeadroomBytes: 0 }),
-    ], 1, "hls_streaming", 0)?.id).toBe("zero-known-egress");
+    expect(
+      pickDestination(
+        [
+          candidate("unknown", { usageBytes: null }),
+          candidate("no-egress", { purpose: "hls_streaming", egressHeadroomBytes: null }),
+        ],
+        1,
+        "source_media",
+        0,
+      ),
+    ).toBeNull();
+    expect(
+      pickDestination(
+        [candidate("zero-known-egress", { purpose: "hls_streaming", egressHeadroomBytes: 0 })],
+        1,
+        "hls_streaming",
+        0,
+      )?.id,
+    ).toBe("zero-known-egress");
   });
 
   it("returns null when every candidate is full", () => {
-    expect(pickDestination([candidate("01", { usageBytes: 100 })], 1, "source_media", 0)).toBeNull();
+    expect(
+      pickDestination([candidate("01", { usageBytes: 100 })], 1, "source_media", 0),
+    ).toBeNull();
   });
 
   it("uses the next eligible candidate after cursor wrap", () => {
@@ -98,11 +134,11 @@ describe("storage capacity and egress math", () => {
   });
 });
 
-
 describe("large-pool round robin", () => {
   it("rotates through 400 eligible destinations before wrapping", () => {
     const pool = Array.from({ length: 400 }, (_, index) =>
-      candidate("lov-" + String(index + 1).padStart(3, "0")));
+      candidate("lov-" + String(index + 1).padStart(3, "0")),
+    );
     let cursor = 0;
     const picks: string[] = [];
     for (let index = 0; index < 800; index++) {
@@ -111,20 +147,29 @@ describe("large-pool round robin", () => {
       picks.push(selected!.id);
       cursor = selected!.nextCursor;
     }
-    expect(picks.slice(0, 400)).toEqual(pool.map(item => item.id));
-    expect(picks.slice(400)).toEqual(pool.map(item => item.id));
+    expect(picks.slice(0, 400)).toEqual(pool.map((item) => item.id));
+    expect(picks.slice(400)).toEqual(pool.map((item) => item.id));
   });
 
   it("skips a full shared group and continues to the next priority group", () => {
     const pool = [
-      candidate("lov-001", { priority: 1, accountGroup: "lovable:project-a", accountGroupUsedBytes: 100, accountGroupCapBytes: 100 }),
-      candidate("lov-002", { priority: 1, accountGroup: "lovable:project-a", accountGroupUsedBytes: 100, accountGroupCapBytes: 100 }),
+      candidate("lov-001", {
+        priority: 1,
+        accountGroup: "lovable:project-a",
+        accountGroupUsedBytes: 100,
+        accountGroupCapBytes: 100,
+      }),
+      candidate("lov-002", {
+        priority: 1,
+        accountGroup: "lovable:project-a",
+        accountGroupUsedBytes: 100,
+        accountGroupCapBytes: 100,
+      }),
       candidate("b2-001", { priority: 2, accountGroup: "b2:account-01" }),
     ];
     expect(pickDestination(pool, 1, "source_media", 0)?.id).toBe("b2-001");
   });
 });
-
 
 describe("priority-group package rotation", () => {
   it("keeps the cursor within the available priority group", () => {

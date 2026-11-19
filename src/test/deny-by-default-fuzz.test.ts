@@ -25,7 +25,12 @@ import expectedCases from "./fixtures/role-matrix-routes.json";
 
 const originalEnv = { ...process.env };
 
-function user(uid: string, email: string, emailVerified = true, authTime = Math.floor(Date.now() / 1000)) {
+function user(
+  uid: string,
+  email: string,
+  emailVerified = true,
+  authTime = Math.floor(Date.now() / 1000),
+) {
   return {
     uid,
     email,
@@ -39,9 +44,17 @@ function user(uid: string, email: string, emailVerified = true, authTime = Math.
 function seedFuzzStore() {
   return createRoleIsolationStore({
     "users/viewer": { email: "viewer@example.test", roleTags: [], accountStatus: "ACTIVE" },
-    "users/producer-a": { email: "producer-a@example.test", roleTags: ["producer"], accountStatus: "ACTIVE" },
+    "users/producer-a": {
+      email: "producer-a@example.test",
+      roleTags: ["producer"],
+      accountStatus: "ACTIVE",
+    },
     "producers/producer-a": { planStatus: "ACTIVE", verificationStatus: "APPROVED" },
-    "users/producer-b": { email: "producer-b@example.test", roleTags: ["producer"], accountStatus: "ACTIVE" },
+    "users/producer-b": {
+      email: "producer-b@example.test",
+      roleTags: ["producer"],
+      accountStatus: "ACTIVE",
+    },
     "producers/producer-b": { planStatus: "ACTIVE", verificationStatus: "APPROVED" },
     "users/provider-a": { email: "provider-a@example.test", roleTags: [], accountStatus: "ACTIVE" },
     "providerUsers/provider-a": { status: "ACTIVE", providerId: "tenant-a" },
@@ -56,17 +69,37 @@ function seedFuzzStore() {
     "users/owner": { email: "owner@zillionaire.test", roleTags: [], accountStatus: "ACTIVE" },
     "channels/channel-a": { ownerUid: "producer-a", title: "Channel A", published: true },
     "channels/channel-b": { ownerUid: "producer-b", title: "Channel B", published: true },
-    "contentAssets/asset-a": { ownerUid: "producer-a", channelId: "channel-a", status: "uploaded_pending_transcode" },
-    "contentAssets/asset-b": { ownerUid: "producer-b", channelId: "channel-b", status: "uploaded_pending_transcode" },
+    "contentAssets/asset-a": {
+      ownerUid: "producer-a",
+      channelId: "channel-a",
+      status: "uploaded_pending_transcode",
+    },
+    "contentAssets/asset-b": {
+      ownerUid: "producer-b",
+      channelId: "channel-b",
+      status: "uploaded_pending_transcode",
+    },
     "liveChannels/live-a": { providerId: "tenant-a", status: "published", title: "Live A" },
     "liveChannels/live-b": { providerId: "tenant-b", status: "published", title: "Live B" },
     "providerContracts/contract-a": { providerId: "tenant-a", agreementReference: "CONTRACT-A" },
     "providerContracts/contract-b": { providerId: "tenant-b", agreementReference: "CONTRACT-B" },
-    "providerStatements/statement-a": { providerId: "tenant-a", status: "closed", grossRevenueMinor: 1000 },
-    "providerStatements/statement-b": { providerId: "tenant-b", status: "closed", grossRevenueMinor: 2000 },
+    "providerStatements/statement-a": {
+      providerId: "tenant-a",
+      status: "closed",
+      grossRevenueMinor: 1000,
+    },
+    "providerStatements/statement-b": {
+      providerId: "tenant-b",
+      status: "closed",
+      grossRevenueMinor: 2000,
+    },
     "providerDisputes/dispute-a": { providerId: "tenant-a", subject: "Dispute A", messages: [] },
     "providerDisputes/dispute-b": { providerId: "tenant-b", subject: "Dispute B", messages: [] },
-    "users/viewer/notifications/notice-v": { title: "Viewer Notice", body: "Private", createdAt: "2026-01-01" },
+    "users/viewer/notifications/notice-v": {
+      title: "Viewer Notice",
+      body: "Private",
+      createdAt: "2026-01-01",
+    },
   });
 }
 
@@ -93,7 +126,8 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
   });
 
   describe("Section 1: Automated Route Matrix Negative Request Generation", () => {
-    const routeKey = (route: { route: string; file: string }) => `${route.route}\u0000${route.file}`;
+    const routeKey = (route: { route: string; file: string }) =>
+      `${route.route}\u0000${route.file}`;
     const discovered = buildMatrix() as Array<{ route: string; file: string; type: string }>;
     const matrix = [...new Map(discovered.map((route) => [routeKey(route), route])).values()];
     const routeCases = expectedCases as Array<{
@@ -106,9 +140,14 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
     it("verifies all discovered routes have non-200 deny expectations for unauthorized callers", () => {
       expect(matrix.length).toBe(routeCases.length);
       for (const route of routeCases) {
-        const hasDenial = Object.values(route.expected).some((status) => status === 401 || status === 403);
+        const hasDenial = Object.values(route.expected).some(
+          (status) => status === 401 || status === 403,
+        );
         if (route.guard !== "public") {
-          expect(hasDenial, `Route ${route.route} (${route.guard}) must deny at least one role`).toBe(true);
+          expect(
+            hasDenial,
+            `Route ${route.route} (${route.guard}) must deny at least one role`,
+          ).toBe(true);
         }
       }
     });
@@ -134,10 +173,14 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
         status: 403,
         code: "PROVIDER_ROLE_REQUIRED",
       });
-      await expect(requireChannelPermission(fs, "channel-a", "provider-a", "video.upload")).rejects.toMatchObject({
+      await expect(
+        requireChannelPermission(fs, "channel-a", "provider-a", "video.upload"),
+      ).rejects.toMatchObject({
         status: 403,
       });
-      await expect(requireZillionaireModule(fs, delegateUser, "pricing" as ZillionaireModule)).rejects.toMatchObject({
+      await expect(
+        requireZillionaireModule(fs, delegateUser, "pricing" as ZillionaireModule),
+      ).rejects.toMatchObject({
         status: 403,
         code: "ZILLIONAIRE_SCOPE_REQUIRED",
       });
@@ -146,10 +189,14 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
 
   describe("Section 2: Swapped Tenant IDs Fuzz (Strict Cross-Tenant Isolation)", () => {
     it("rejects swapped producer tenant IDs on channel asset manipulation", async () => {
-      vi.spyOn(apiModule, "requireUser").mockResolvedValue(user("producer-b", "producer-b@example.test"));
+      vi.spyOn(apiModule, "requireUser").mockResolvedValue(
+        user("producer-b", "producer-b@example.test"),
+      );
       const handler = (
         ProducerAssetsRoute.options.server as unknown as {
-          handlers: { POST: (ctx: { request: Request; params: { channelId: string } }) => Promise<Response> };
+          handlers: {
+            POST: (ctx: { request: Request; params: { channelId: string } }) => Promise<Response>;
+          };
         }
       ).handlers.POST;
       const swappedPayload = {
@@ -164,11 +211,14 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
         rightsEvidencePath: "producers/producer-b/channel-a/evidence.pdf",
       };
       const response = await handler({
-        request: new Request("https://tv.bqsqwad.com/api/public/v1/producer/channels/channel-a/assets", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(swappedPayload),
-        }),
+        request: new Request(
+          "https://tv.bqsqwad.com/api/public/v1/producer/channels/channel-a/assets",
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(swappedPayload),
+          },
+        ),
         params: { channelId: "channel-a" },
       });
       expect(response.status).toBe(403);
@@ -179,14 +229,18 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
     });
 
     it("rejects swapped provider tenant IDs on statements", async () => {
-      vi.spyOn(apiModule, "requireUser").mockResolvedValue(user("provider-a", "provider-a@example.test"));
+      vi.spyOn(apiModule, "requireUser").mockResolvedValue(
+        user("provider-a", "provider-a@example.test"),
+      );
       const handler = (
         ProviderStatementsRoute.options.server as unknown as {
           handlers: { GET: (ctx: { request: Request }) => Promise<Response> };
         }
       ).handlers.GET;
       const response = await handler({
-        request: new Request("https://tv.bqsqwad.com/api/public/v1/provider/statements?statementId=statement-b"),
+        request: new Request(
+          "https://tv.bqsqwad.com/api/public/v1/provider/statements?statementId=statement-b",
+        ),
       });
       expect(response.status).toBe(403);
       const body = await response.json();
@@ -199,18 +253,33 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
   describe("Section 3: Missing and Expired Credentials Fuzz", () => {
     it("rejects missing authorization header with 401 UNAUTHENTICATED", async () => {
       const handler = (
-        ExportRoute.options.server as unknown as { handlers: { GET: (ctx: { request: Request }) => Promise<Response> } }
+        ExportRoute.options.server as unknown as {
+          handlers: { GET: (ctx: { request: Request }) => Promise<Response> };
+        }
       ).handlers.GET;
-      const response = await handler({ request: new Request("https://tv.bqsqwad.com/api/public/v1/account/export") });
+      const response = await handler({
+        request: new Request("https://tv.bqsqwad.com/api/public/v1/account/export"),
+      });
       expect(response.status).toBe(401);
-      expect(await response.json()).toMatchObject({ error: "A Firebase sign-in token is required.", code: "UNAUTHENTICATED" });
+      expect(await response.json()).toMatchObject({
+        error: "A Firebase sign-in token is required.",
+        code: "UNAUTHENTICATED",
+      });
     });
 
     it("rejects malformed authorization schemes", async () => {
       const handler = (
-        ExportRoute.options.server as unknown as { handlers: { GET: (ctx: { request: Request }) => Promise<Response> } }
+        ExportRoute.options.server as unknown as {
+          handlers: { GET: (ctx: { request: Request }) => Promise<Response> };
+        }
       ).handlers.GET;
-      for (const authHeader of ["Basic dXNlcjpwYXNz", "Token 1234567890", "Bearer", "", "CustomToken abc"]) {
+      for (const authHeader of [
+        "Basic dXNlcjpwYXNz",
+        "Token 1234567890",
+        "Bearer",
+        "",
+        "CustomToken abc",
+      ]) {
         const response = await handler({
           request: new Request("https://tv.bqsqwad.com/api/public/v1/account/export", {
             headers: { authorization: authHeader },
@@ -244,14 +313,22 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
       vi.spyOn(apiModule, "requireUser").mockResolvedValue(user("viewer", "viewer@example.test"));
       const handler = (
         NotificationReadRoute.options.server as unknown as {
-          handlers: { POST: (ctx: { request: Request; params: { notificationId: string } }) => Promise<Response> };
+          handlers: {
+            POST: (ctx: {
+              request: Request;
+              params: { notificationId: string };
+            }) => Promise<Response>;
+          };
         }
       ).handlers.POST;
       for (const badId of maliciousIds) {
         const response = await handler({
-          request: new Request(`https://tv.bqsqwad.com/api/public/v1/notifications/${encodeURIComponent(badId)}/read`, {
-            method: "POST",
-          }),
+          request: new Request(
+            `https://tv.bqsqwad.com/api/public/v1/notifications/${encodeURIComponent(badId)}/read`,
+            {
+              method: "POST",
+            },
+          ),
           params: { notificationId: badId },
         });
         expect(response.status).toBeGreaterThanOrEqual(400);
@@ -267,7 +344,13 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
 
   describe("Section 5: Oversized Bodies and Corrupted JSON Fuzz", () => {
     it("handles invalid and malformed JSON payloads gracefully", async () => {
-      for (const bodyStr of ["{ unclosed json", '{"key": undefined}', "", "Not JSON at all", "{\n  \"nested\": {\n    \"deep\": [1, 2, 3,\n"]) {
+      for (const bodyStr of [
+        "{ unclosed json",
+        '{"key": undefined}',
+        "",
+        "Not JSON at all",
+        '{\n  "nested": {\n    "deep": [1, 2, 3,\n',
+      ]) {
         const req = new Request("https://tv.bqsqwad.com/api/test", {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -284,7 +367,13 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
       const apiErr = new ApiError(403, "TEST_DENIED", "You cannot do this.");
       expect(errorBody(apiErr).status).toBe(403);
       const zodErr = new z.ZodError([
-        { code: "invalid_type", expected: "string", received: "number", path: ["title"], message: "Expected string" },
+        {
+          code: "invalid_type",
+          expected: "string",
+          received: "number",
+          path: ["title"],
+          message: "Expected string",
+        },
       ]);
       expect(errorBody(zodErr).status).toBe(400);
       const spyConsole = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -312,8 +401,13 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
 
   describe("Section 7: Replayed & Invalid Worker Signatures Fuzz", () => {
     it("rejects missing worker headers", async () => {
-      const request = new Request("https://tv.bqsqwad.com/api/public/v1/worker/maintenance/run", { method: "POST" });
-      await expect(requireVideoWorker(request, fs)).rejects.toMatchObject({ status: 401, code: "WORKER_AUTH_INVALID" });
+      const request = new Request("https://tv.bqsqwad.com/api/public/v1/worker/maintenance/run", {
+        method: "POST",
+      });
+      await expect(requireVideoWorker(request, fs)).rejects.toMatchObject({
+        status: 401,
+        code: "WORKER_AUTH_INVALID",
+      });
     });
 
     it("rejects stale worker timestamps", async () => {
@@ -326,7 +420,10 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
           "x-video-worker-signature": "sha256=invalid-signature",
         },
       });
-      await expect(requireVideoWorker(request, fs)).rejects.toMatchObject({ status: 401, code: "WORKER_AUTH_INVALID" });
+      await expect(requireVideoWorker(request, fs)).rejects.toMatchObject({
+        status: 401,
+        code: "WORKER_AUTH_INVALID",
+      });
     });
 
     it("rejects forged worker signatures", async () => {
@@ -339,15 +436,22 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
           "x-video-worker-signature": `sha256=${"0".repeat(64)}`,
         },
       });
-      await expect(requireVideoWorker(request, fs)).rejects.toMatchObject({ status: 401, code: "WORKER_AUTH_INVALID" });
+      await expect(requireVideoWorker(request, fs)).rejects.toMatchObject({
+        status: 401,
+        code: "WORKER_AUTH_INVALID",
+      });
     });
   });
 
   describe("Section 8: Denial Audit Event Logging Verification", () => {
     it("records privacy-safe access denial audit events", async () => {
       const attacker = user("viewer-attacker", "attacker@example.test");
-      await expect(requirePlatformRole(fs, attacker, "producer")).rejects.toMatchObject({ status: 403 });
-      await expect(requireProviderAccess(fs, attacker, "tenant-a")).rejects.toMatchObject({ status: 403 });
+      await expect(requirePlatformRole(fs, attacker, "producer")).rejects.toMatchObject({
+        status: 403,
+      });
+      await expect(requireProviderAccess(fs, attacker, "tenant-a")).rejects.toMatchObject({
+        status: 403,
+      });
       const denialDocs = [...store.entries()].filter(([key]) => key.startsWith("accessDenials/"));
       expect(denialDocs.length).toBeGreaterThanOrEqual(1);
       for (const [, doc] of denialDocs) {

@@ -3,11 +3,13 @@ import { z } from "zod";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 
-const schema = z.object({
-  category: z.enum(["billing", "playback", "account", "content", "other"]),
-  ref: z.string().trim().max(30).optional(),
-  message: z.string().trim().min(5).max(2000),
-}).strict();
+const schema = z
+  .object({
+    category: z.enum(["billing", "playback", "account", "content", "other"]),
+    ref: z.string().trim().max(30).optional(),
+    message: z.string().trim().min(5).max(2000),
+  })
+  .strict();
 
 export const Route = createFileRoute("/api/public/v1/support/tickets")({
   server: {
@@ -20,7 +22,7 @@ export const Route = createFileRoute("/api/public/v1/support/tickets")({
             filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
           });
           tickets.sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
-            String(b["createdAt"] ?? "").localeCompare(String(a["createdAt"] ?? ""))
+            String(b["createdAt"] ?? "").localeCompare(String(a["createdAt"] ?? "")),
           );
           return Response.json({ items: tickets });
         } catch (error) {

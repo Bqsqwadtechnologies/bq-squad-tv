@@ -3,13 +3,18 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 
-const createProfileSchema = z.object({
-  name: z.string().trim().min(1).max(30),
-  avatarUrl: z.string().url().optional(),
-  isKids: z.boolean().default(false),
-  maturityRating: z.enum(["G", "PG", "13+", "16+", "18+"]).default("18+"),
-  pin: z.string().regex(/^\d{4}$/).optional(),
-}).strict();
+const createProfileSchema = z
+  .object({
+    name: z.string().trim().min(1).max(30),
+    avatarUrl: z.string().url().optional(),
+    isKids: z.boolean().default(false),
+    maturityRating: z.enum(["G", "PG", "13+", "16+", "18+"]).default("18+"),
+    pin: z
+      .string()
+      .regex(/^\d{4}$/)
+      .optional(),
+  })
+  .strict();
 
 export const Route = createFileRoute("/api/public/v1/profiles/")({
   server: {
@@ -47,7 +52,11 @@ export const Route = createFileRoute("/api/public/v1/profiles/")({
           });
 
           if (existing.length >= 5) {
-            throw new ApiError(400, "MAX_PROFILES_EXCEEDED", "Maximum of 5 profiles per account reached.");
+            throw new ApiError(
+              400,
+              "MAX_PROFILES_EXCEEDED",
+              "Maximum of 5 profiles per account reached.",
+            );
           }
 
           const profileId = `prof_${Date.now()}`;

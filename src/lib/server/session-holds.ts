@@ -2,7 +2,11 @@ import { ApiError } from "./firebase-admin";
 
 function minor(value: number, name: string): number {
   if (!Number.isSafeInteger(value) || value < 0) {
-    throw new ApiError(400, "WALLET_HOLD_AMOUNT_INVALID", name + " must be a non-negative integer in minor units.");
+    throw new ApiError(
+      400,
+      "WALLET_HOLD_AMOUNT_INVALID",
+      name + " must be a non-negative integer in minor units.",
+    );
   }
   return value;
 }
@@ -16,7 +20,11 @@ export function initialSessionHold(
   const held = minor(heldBalanceMinor, "Existing wallet holds");
   const target = minor(targetHoldMinor, "Target wallet hold");
   if (held > balance) {
-    throw new ApiError(409, "WALLET_HOLD_INVARIANT_BROKEN", "Existing wallet holds exceed the available balance.");
+    throw new ApiError(
+      409,
+      "WALLET_HOLD_INVARIANT_BROKEN",
+      "Existing wallet holds exceed the available balance.",
+    );
   }
   const holdMinor = Math.min(target, balance - held);
   return { holdMinor, heldBalanceMinor: held + holdMinor };
@@ -31,7 +39,11 @@ export function sessionSpendableBalance(
   const held = minor(heldBalanceMinor, "Existing wallet holds");
   const own = minor(ownHoldMinor, "This session's wallet hold");
   if (held > balance || own > held) {
-    throw new ApiError(409, "WALLET_HOLD_INVARIANT_BROKEN", "The wallet hold totals are inconsistent.");
+    throw new ApiError(
+      409,
+      "WALLET_HOLD_INVARIANT_BROKEN",
+      "The wallet hold totals are inconsistent.",
+    );
   }
   return Math.max(0, balance - (held - own));
 }
@@ -50,7 +62,11 @@ export function settleSessionHold(input: {
   const charge = minor(input.chargeMinor, "Session charge");
   const target = minor(input.targetHoldMinor, "Target wallet hold");
   if (held > balance || own > held || charge > balance) {
-    throw new ApiError(409, "WALLET_HOLD_INVARIANT_BROKEN", "The wallet hold totals are inconsistent.");
+    throw new ApiError(
+      409,
+      "WALLET_HOLD_INVARIANT_BROKEN",
+      "The wallet hold totals are inconsistent.",
+    );
   }
   const otherHolds = held - own;
   const balanceAfterCharge = balance - charge;

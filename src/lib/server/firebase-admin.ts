@@ -22,16 +22,28 @@ type ServiceAccount = {
 function getServiceAccount(): ServiceAccount {
   const raw = process.env["FIREBASE_SERVICE_ACCOUNT_JSON"];
   if (!raw) {
-    throw new ApiError(503, "FIREBASE_NOT_CONFIGURED", "Firebase service account is not configured.");
+    throw new ApiError(
+      503,
+      "FIREBASE_NOT_CONFIGURED",
+      "Firebase service account is not configured.",
+    );
   }
   let parsed: Partial<ServiceAccount>;
   try {
     parsed = JSON.parse(raw) as Partial<ServiceAccount>;
   } catch {
-    throw new ApiError(503, "FIREBASE_NOT_CONFIGURED", "Firebase service account configuration is invalid.");
+    throw new ApiError(
+      503,
+      "FIREBASE_NOT_CONFIGURED",
+      "Firebase service account configuration is invalid.",
+    );
   }
   if (!parsed.client_email || !parsed.private_key || !parsed.project_id) {
-    throw new ApiError(503, "FIREBASE_NOT_CONFIGURED", "Firebase service account configuration is incomplete.");
+    throw new ApiError(
+      503,
+      "FIREBASE_NOT_CONFIGURED",
+      "Firebase service account configuration is incomplete.",
+    );
   }
   return parsed as ServiceAccount;
 }
@@ -116,7 +128,11 @@ export async function getAdminAccessToken(
       assertion: `${unsigned}.${base64UrlEncodeBytes(new Uint8Array(signature))}`,
     }),
   });
-  const payload = (await response.json()) as { access_token?: string; expires_in?: number; error?: string };
+  const payload = (await response.json()) as {
+    access_token?: string;
+    expires_in?: number;
+    error?: string;
+  };
   if (!response.ok || !payload.access_token) {
     throw new ApiError(502, "GOOGLE_AUTH_FAILED", "Could not obtain a Google access token.");
   }
@@ -165,7 +181,8 @@ export function decodeValue(value: FirestoreValue): unknown {
     return values.map(decodeValue);
   }
   if ("mapValue" in value) {
-    const fields = (value["mapValue"] as { fields?: Record<string, FirestoreValue> } | undefined)?.fields ?? {};
+    const fields =
+      (value["mapValue"] as { fields?: Record<string, FirestoreValue> } | undefined)?.fields ?? {};
     return decodeFields(fields);
   }
   return null;
@@ -180,16 +197,28 @@ export function decodeFields(fields: Record<string, FirestoreValue>): Record<str
 // ---- Firestore REST client ----
 
 export type FirestoreWrite =
-  | { update: { name: string; fields: Record<string, FirestoreValue> }; updateMask?: { fieldPaths: string[] }; currentDocument?: { exists: boolean } }
+  | {
+      update: { name: string; fields: Record<string, FirestoreValue> };
+      updateMask?: { fieldPaths: string[] };
+      currentDocument?: { exists: boolean };
+    }
   | { delete: string }
   | {
       transform: {
         document: string;
-        fieldTransforms: Array<{ fieldPath: string; increment?: FirestoreValue; setToServerValue?: string }>;
+        fieldTransforms: Array<{
+          fieldPath: string;
+          increment?: FirestoreValue;
+          setToServerValue?: string;
+        }>;
       };
     };
 
-export type QueryFilter = { field: string; op: "EQUAL" | "LESS_THAN" | "GREATER_THAN" | "ARRAY_CONTAINS"; value: unknown };
+export type QueryFilter = {
+  field: string;
+  op: "EQUAL" | "LESS_THAN" | "GREATER_THAN" | "ARRAY_CONTAINS";
+  value: unknown;
+};
 
 export type FirestoreQueryTarget = { parentPath: string | null; collectionId: string };
 
@@ -206,14 +235,22 @@ export function orderBatchGetDocuments(
   for (const response of responses) {
     const name = response.found?.name ?? response.missing;
     if (!name || byName.has(name)) {
-      throw new ApiError(502, "FIRESTORE_ERROR", "Firestore returned an invalid transactional read response.");
+      throw new ApiError(
+        502,
+        "FIRESTORE_ERROR",
+        "Firestore returned an invalid transactional read response.",
+      );
     }
     byName.set(name, response);
   }
   return requestedNames.map((name) => {
     const response = byName.get(name);
     if (!response) {
-      throw new ApiError(502, "FIRESTORE_ERROR", "Firestore omitted a document from a transactional read.");
+      throw new ApiError(
+        502,
+        "FIRESTORE_ERROR",
+        "Firestore omitted a document from a transactional read.",
+      );
     }
     return response.found ? decodeFields(response.found.fields ?? {}) : null;
   });
@@ -226,14 +263,17 @@ export function resolveFirestoreQueryTarget(collectionPath: string): FirestoreQu
     segments.length % 2 !== 1 ||
     segments.some((segment) => !/^[A-Za-z0-9_-]{1,150}$/.test(segment))
   ) {
-    throw new ApiError(400, "INVALID_QUERY_PATH", "Firestore queries require a valid collection path.");
+    throw new ApiError(
+      400,
+      "INVALID_QUERY_PATH",
+      "Firestore queries require a valid collection path.",
+    );
   }
   return {
     parentPath: segments.length > 1 ? segments.slice(0, -1).join("/") : null,
     collectionId: segments[segments.length - 1] as string,
   };
 }
-
 
 export class Firestore {
   private constructor(
@@ -261,12 +301,20 @@ export class Firestore {
   async getDoc(path: string): Promise<Record<string, unknown> | null> {
     const response = await fetch(`${this.documentsUrl()}/${path}`, { headers: this.headers() });
     if (response.status === 404) return null;
-    const body = (await response.json()) as { fields?: Record<string, FirestoreValue>; error?: { message?: string } };
-    if (!response.ok) throw new ApiError(502, "FIRESTORE_ERROR", body.error?.message ?? "Firestore read failed.");
+    const body = (await response.json()) as {
+      fields?: Record<string, FirestoreValue>;
+      error?: { message?: string };
+    };
+    if (!response.ok)
+      throw new ApiError(502, "FIRESTORE_ERROR", body.error?.message ?? "Firestore read failed.");
     return decodeFields(body.fields ?? {});
   }
 
-  async setDoc(path: string, fields: Record<string, unknown>, options?: { mustNotExist?: boolean }): Promise<void> {
+  async setDoc(
+    path: string,
+    fields: Record<string, unknown>,
+    options?: { mustNotExist?: boolean },
+  ): Promise<void> {
     const write: FirestoreWrite = {
       update: { name: this.docName(path), fields: encodeFields(fields) },
       ...(options?.mustNotExist ? { currentDocument: { exists: false } } : {}),
@@ -322,7 +370,11 @@ export class Firestore {
     };
     if (options?.filters && options.filters.length > 0) {
       const filters = options.filters.map((filter) => ({
-        fieldFilter: { field: { fieldPath: filter.field }, op: filter.op, value: encodeValue(filter.value) },
+        fieldFilter: {
+          field: { fieldPath: filter.field },
+          op: filter.op,
+          value: encodeValue(filter.value),
+        },
       }));
       structuredQuery["where"] =
         filters.length === 1 ? filters[0] : { compositeFilter: { op: "AND", filters } };
@@ -353,7 +405,11 @@ export class Firestore {
       error?: { message?: string };
     }> & { error?: { message?: string } };
     if (!response.ok) {
-      throw new ApiError(502, "FIRESTORE_ERROR", (body as { error?: { message?: string } }).error?.message ?? "Firestore query failed.");
+      throw new ApiError(
+        502,
+        "FIRESTORE_ERROR",
+        (body as { error?: { message?: string } }).error?.message ?? "Firestore query failed.",
+      );
     }
     const rows: Array<Record<string, unknown> & { __id: string }> = [];
     for (const result of body) {
@@ -373,16 +429,25 @@ export class Firestore {
    */
   async transact<T>(
     readPaths: string[],
-    fn: (docs: Array<Record<string, unknown> | null>) => Promise<{ result: T; writes: FirestoreWrite[] }> | { result: T; writes: FirestoreWrite[] },
+    fn: (
+      docs: Array<Record<string, unknown> | null>,
+    ) => Promise<{ result: T; writes: FirestoreWrite[] }> | { result: T; writes: FirestoreWrite[] },
   ): Promise<T> {
     const begin = await fetch(`${this.documentsUrl()}:beginTransaction`, {
       method: "POST",
       headers: this.headers(),
       body: JSON.stringify({ options: { readWrite: {} } }),
     });
-    const beginBody = (await begin.json()) as { transaction?: string; error?: { message?: string } };
+    const beginBody = (await begin.json()) as {
+      transaction?: string;
+      error?: { message?: string };
+    };
     if (!begin.ok || !beginBody.transaction) {
-      throw new ApiError(502, "FIRESTORE_ERROR", beginBody.error?.message ?? "Could not begin a Firestore transaction.");
+      throw new ApiError(
+        502,
+        "FIRESTORE_ERROR",
+        beginBody.error?.message ?? "Could not begin a Firestore transaction.",
+      );
     }
     const transaction = beginBody.transaction;
 
@@ -391,13 +456,26 @@ export class Firestore {
       const batchGet = await fetch(`${this.documentsUrl()}:batchGet`, {
         method: "POST",
         headers: this.headers(),
-        body: JSON.stringify({ documents: readPaths.map((path) => this.docName(path)), transaction }),
+        body: JSON.stringify({
+          documents: readPaths.map((path) => this.docName(path)),
+          transaction,
+        }),
       });
-      const batchBody = (await batchGet.json()) as FirestoreBatchGetEntry[] & { error?: { message?: string } };
+      const batchBody = (await batchGet.json()) as FirestoreBatchGetEntry[] & {
+        error?: { message?: string };
+      };
       if (!batchGet.ok) {
-        throw new ApiError(502, "FIRESTORE_ERROR", (batchBody as { error?: { message?: string } }).error?.message ?? "Firestore transactional read failed.");
+        throw new ApiError(
+          502,
+          "FIRESTORE_ERROR",
+          (batchBody as { error?: { message?: string } }).error?.message ??
+            "Firestore transactional read failed.",
+        );
       }
-      docs = orderBatchGetDocuments(readPaths.map((path) => this.docName(path)), batchBody);
+      docs = orderBatchGetDocuments(
+        readPaths.map((path) => this.docName(path)),
+        batchBody,
+      );
     }
 
     const { result, writes } = await fn(docs);

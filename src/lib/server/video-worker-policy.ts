@@ -1,11 +1,16 @@
 export const MAX_VIDEO_WORKER_ATTEMPTS = 6;
 
 export function videoWorkerLeaseExpiry(now = Date.now(), leaseMinutes = 10): string {
-  const minutes = Number.isFinite(leaseMinutes) ? Math.min(30, Math.max(2, Math.floor(leaseMinutes))) : 10;
+  const minutes = Number.isFinite(leaseMinutes)
+    ? Math.min(30, Math.max(2, Math.floor(leaseMinutes)))
+    : 10;
   return new Date(now + minutes * 60_000).toISOString();
 }
 
-export function videoWorkerRetry(attempts: number, now = Date.now()): {
+export function videoWorkerRetry(
+  attempts: number,
+  now = Date.now(),
+): {
   terminal: boolean;
   nextAttemptAt: string | null;
   delayMinutes: number | null;

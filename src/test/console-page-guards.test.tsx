@@ -33,7 +33,7 @@ vi.mock("@/lib/firebase-web-auth", () => ({
 }));
 
 import { ConsolePageGuard } from "@/components/ConsolePageGuard";
-import { Route as AdminRoute } from "@/routes/admin.index";
+import { Route as AdminRoute } from "@/routes/zillionaire.index";
 import { Route as ProducerRoute } from "@/routes/producer.index";
 import { Route as ProviderRoute } from "@/routes/provider.index";
 import { restoreWebSession } from "@/lib/firebase-web-auth";

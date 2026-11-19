@@ -3,7 +3,11 @@ import { runDeliverySimulation } from "./delivery-simulation";
 
 describe("delivery simulation", () => {
   it("simulates 1000 viewers without a database read per media segment", () => {
-    const result = runDeliverySimulation({ viewers: 1_000, durationSeconds: 600, segmentsPerMinute: 15 });
+    const result = runDeliverySimulation({
+      viewers: 1_000,
+      durationSeconds: 600,
+      segmentsPerMinute: 15,
+    });
     expect(result.viewers).toBe(1_000);
     expect(result.segmentRequests).toBe(150_000);
     expect(result.segmentApiReads).toBe(0);
@@ -12,7 +16,11 @@ describe("delivery simulation", () => {
   });
 
   it("bounds playlist signing and includes replica failover work", () => {
-    const result = runDeliverySimulation({ viewers: 1_000, durationSeconds: 3_600, failoverEvery: 100 });
+    const result = runDeliverySimulation({
+      viewers: 1_000,
+      durationSeconds: 3_600,
+      failoverEvery: 100,
+    });
     expect(result.playlistGenerations).toBe(2);
     expect(result.storageSigningCalls).toBe(6);
     expect(result.failovers).toBe(10);

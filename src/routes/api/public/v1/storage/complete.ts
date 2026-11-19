@@ -5,7 +5,10 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireAuthorizedChannelUpload } from "@/lib/server/producer-upload-access";
 import { assertMediaMatchesExtension } from "@/lib/server/storage/security";
 import { writeAuditLog } from "@/lib/server/audit";
-import { loadSourceStorageConfiguration, inspectStorageObject } from "@/lib/server/storage/transfers";
+import {
+  loadSourceStorageConfiguration,
+  inspectStorageObject,
+} from "@/lib/server/storage/transfers";
 import { commitStorageReservation } from "@/lib/server/storage/reservations";
 import { wakeModalVideoWorker } from "@/lib/server/modal-wake";
 
@@ -26,70 +29,119 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             throw new ApiError(404, "UPLOAD_NOT_FOUND", "This upload does not exist.");
           }
           if (asset["status"] !== "uploading") {
-            throw new ApiError(409, "UPLOAD_NOT_PENDING", "This upload is no longer awaiting completion.");
+            throw new ApiError(
+              409,
+              "UPLOAD_NOT_PENDING",
+              "This upload is no longer awaiting completion.",
+            );
           }
-          const expiresAt = typeof asset["uploadExpiresAt"] === "string" ? Date.parse(asset["uploadExpiresAt"]) : 0;
+          const expiresAt =
+            typeof asset["uploadExpiresAt"] === "string" ? Date.parse(asset["uploadExpiresAt"]) : 0;
           if (!Number.isFinite(expiresAt) || Date.now() >= expiresAt) {
-            throw new ApiError(410, "UPLOAD_INTENT_EXPIRED", "The upload authorization has expired.");
+            throw new ApiError(
+              410,
+              "UPLOAD_INTENT_EXPIRED",
+              "The upload authorization has expired.",
+            );
           }
           const channelId = typeof asset["channelId"] === "string" ? asset["channelId"] : "";
           await requireAuthorizedChannelUpload(fs, channelId, user);
           const path = typeof asset["sourcePath"] === "string" ? asset["sourcePath"] : "";
-          const filename = typeof asset["sourceFilename"] === "string" ? asset["sourceFilename"] : "";
-          const expectedSize = typeof asset["declaredSizeBytes"] === "number" ? asset["declaredSizeBytes"] : 0;
-          if (!path.startsWith(`producers/${user.uid}/${channelId}/${assetId}/`) || !filename || expectedSize < 1) {
+          const filename =
+            typeof asset["sourceFilename"] === "string" ? asset["sourceFilename"] : "";
+          const expectedSize =
+            typeof asset["declaredSizeBytes"] === "number" ? asset["declaredSizeBytes"] : 0;
+          if (
+            !path.startsWith(`producers/${user.uid}/${channelId}/${assetId}/`) ||
+            !filename ||
+            expectedSize < 1
+          ) {
             throw new ApiError(409, "UPLOAD_METADATA_INVALID", "The upload metadata is invalid.");
           }
 
           const sourceConfiguration = await loadSourceStorageConfiguration(fs, asset);
-          const sourceObjectKey = typeof asset["sourceObjectKey"] === "string" ? asset["sourceObjectKey"] : path;
+          const sourceObjectKey =
+            typeof asset["sourceObjectKey"] === "string" ? asset["sourceObjectKey"] : path;
           const inspected = await inspectStorageObject(sourceConfiguration, sourceObjectKey);
           const actualSize = inspected.sizeBytes;
           if (actualSize !== expectedSize) {
-            throw new ApiError(400, "UPLOAD_SIZE_MISMATCH", "The uploaded file size does not match the declared size.");
+            throw new ApiError(
+              400,
+              "UPLOAD_SIZE_MISMATCH",
+              "The uploaded file size does not match the declared size.",
+            );
           }
           const mediaKind = assertMediaMatchesExtension(inspected.headerBytes, filename);
           const now = new Date().toISOString();
-          const sourceDestinationId = typeof asset["sourceDestinationId"] === "string"
-            ? asset["sourceDestinationId"] : "lovable-source-legacy";
+          const sourceDestinationId =
+            typeof asset["sourceDestinationId"] === "string"
+              ? asset["sourceDestinationId"]
+              : "lovable-source-legacy";
           const jobPath = "videoTranscodeJobs/" + assetId;
           const existingJob = await fs.getDoc(jobPath);
           if (!existingJob) {
-            await fs.setDoc(jobPath, {
-              assetId,
-              channelId,
-              ownerUid: user.uid,
-              sourceDestinationId,
-              sourceBucket: typeof asset["sourceBucket"] === "string" ? asset["sourceBucket"] : "bq-sqwad-source-media",
-              sourcePath: path,
-              sourceObjectKey,
-              sourceFilename: filename,
-              sourceSizeBytes: actualSize,
-              transcodeProfile: asset["transcodeProfile"] === "economy" || asset["transcodeProfile"] === "high"
-                ? asset["transcodeProfile"] : "standard",
-              outputDestinationId: null,
-              outputPrefix: null,
-              status: "queued",
-              workerStatus: "waiting_for_worker",
-              attempts: 0,
-              createdAt: now,
-              updatedAt: now,
-            }, { mustNotExist: true });
+            await fs.setDoc(
+              jobPath,
+              {
+                assetId,
+                channelId,
+                ownerUid: user.uid,
+                sourceDestinationId,
+                sourceBucket:
+                  typeof asset["sourceBucket"] === "string"
+                    ? asset["sourceBucket"]
+                    : "bq-sqwad-source-media",
+                sourcePath: path,
+                sourceObjectKey,
+                sourceFilename: filename,
+                sourceSizeBytes: actualSize,
+                transcodeProfile:
+                  asset["transcodeProfile"] === "economy" || asset["transcodeProfile"] === "high"
+                    ? asset["transcodeProfile"]
+                    : "standard",
+                outputDestinationId: null,
+                outputPrefix: null,
+                status: "queued",
+                workerStatus: "waiting_for_worker",
+                attempts: 0,
+                createdAt: now,
+                updatedAt: now,
+              },
+              { mustNotExist: true },
+            );
           } else {
-            if (existingJob["assetId"] !== assetId || existingJob["ownerUid"] !== user.uid ||
-                existingJob["sourceObjectKey"] !== sourceObjectKey || existingJob["sourceSizeBytes"] !== actualSize) {
-              throw new ApiError(409, "TRANSCODE_JOB_CONFLICT", "A conflicting processing job already exists for this asset.");
+            if (
+              existingJob["assetId"] !== assetId ||
+              existingJob["ownerUid"] !== user.uid ||
+              existingJob["sourceObjectKey"] !== sourceObjectKey ||
+              existingJob["sourceSizeBytes"] !== actualSize
+            ) {
+              throw new ApiError(
+                409,
+                "TRANSCODE_JOB_CONFLICT",
+                "A conflicting processing job already exists for this asset.",
+              );
             }
             if (existingJob["status"] !== "queued") {
-              throw new ApiError(409, "TRANSCODE_JOB_ALREADY_EXISTS", "This asset already has a processing history. Use the explicit reprocess action to create a new attempt.");
+              throw new ApiError(
+                409,
+                "TRANSCODE_JOB_ALREADY_EXISTS",
+                "This asset already has a processing history. Use the explicit reprocess action to create a new attempt.",
+              );
             }
           }
-          const reservationId = typeof asset["storageReservationId"] === "string" ? asset["storageReservationId"] : null;
+          const reservationId =
+            typeof asset["storageReservationId"] === "string"
+              ? asset["storageReservationId"]
+              : null;
           if (reservationId) await commitStorageReservation(fs, reservationId, actualSize);
           await fs.patchDoc("contentAssets/" + assetId, {
             sourceDestinationId,
             sourceObjectKey,
-            sourceBucket: typeof asset["sourceBucket"] === "string" ? asset["sourceBucket"] : "bq-sqwad-source-media",
+            sourceBucket:
+              typeof asset["sourceBucket"] === "string"
+                ? asset["sourceBucket"]
+                : "bq-sqwad-source-media",
             storageReservationStatus: reservationId ? "committed" : "legacy_unreserved",
           });
           await fs.patchDoc("contentAssets/" + assetId, {
@@ -103,13 +155,22 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             updatedAt: now,
           });
           await writeAuditLog(fs, {
-            actorUid: user.uid, action: "content.upload_verified",
-            targetType: "contentAsset", targetId: assetId,
+            actorUid: user.uid,
+            action: "content.upload_verified",
+            targetType: "contentAsset",
+            targetId: assetId,
             reason: "Source upload verified before transcoding",
             metadata: { channelId, mediaKind, sizeBytes: actualSize, sourceDestinationId },
           });
           await wakeModalVideoWorker();
-          return Response.json({ assetId, status: "uploaded_pending_transcode", sourceVerified: true, transcodeJobId: assetId, transcodeJobStatus: "queued", processingWorker: "waiting_for_worker" });
+          return Response.json({
+            assetId,
+            status: "uploaded_pending_transcode",
+            sourceVerified: true,
+            transcodeJobId: assetId,
+            transcodeJobStatus: "queued",
+            processingWorker: "waiting_for_worker",
+          });
         } catch (error) {
           return errorBody(error);
         }

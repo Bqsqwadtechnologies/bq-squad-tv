@@ -42,7 +42,9 @@ describe("Backblaze HLS SigV4 signing", () => {
     });
     expect(url).toContain("X-Amz-Date=20130524T000000Z");
     expect(url).toContain("X-Amz-Expires=60");
-    expect(url).toContain("X-Amz-Signature=829f5b21256acb82f6246e4d558792ae9d0e139d3931229bf2cbd3ef3d084ddc");
+    expect(url).toContain(
+      "X-Amz-Signature=829f5b21256acb82f6246e4d558792ae9d0e139d3931229bf2cbd3ef3d084ddc",
+    );
   });
 
   it("encodes path segments without changing separators", async () => {
@@ -58,15 +60,19 @@ describe("Backblaze HLS SigV4 signing", () => {
   });
 
   it("rejects source files and invalid TTLs", async () => {
-    await expect(presignBackblazeHlsGet({
-      configuration: configuration(),
-      objectKey: "producers/owner/channel/asset/source.mp4",
-      expiresInSeconds: 60,
-    })).rejects.toThrow();
-    await expect(presignBackblazeHlsGet({
-      configuration: configuration(),
-      objectKey: "hls/asset_1/a1/segment_00001.ts",
-      expiresInSeconds: 21_601,
-    })).rejects.toThrow();
+    await expect(
+      presignBackblazeHlsGet({
+        configuration: configuration(),
+        objectKey: "producers/owner/channel/asset/source.mp4",
+        expiresInSeconds: 60,
+      }),
+    ).rejects.toThrow();
+    await expect(
+      presignBackblazeHlsGet({
+        configuration: configuration(),
+        objectKey: "hls/asset_1/a1/segment_00001.ts",
+        expiresInSeconds: 21_601,
+      }),
+    ).rejects.toThrow();
   });
 });

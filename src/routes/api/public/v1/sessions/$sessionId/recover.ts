@@ -1,17 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  Firestore,
-  FirestoreWrite,
-  encodeFields,
-} from "@/lib/server/firebase-admin";
+import { Firestore, FirestoreWrite, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { releaseSessionLease } from "@/lib/server/session-limits";
 import { settleSessionHold } from "@/lib/server/session-holds";
 import { releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
-import {
-  requireSessionOwned,
-  toSessionSnapshot,
-} from "../-shared";
+import { requireSessionOwned, toSessionSnapshot } from "../-shared";
 
 function integer(value: unknown, fallback = 0): number {
   return typeof value === "number" && Number.isSafeInteger(value) ? value : fallback;
@@ -63,7 +56,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/recover
             const activeLeases = releaseSessionLease(
               activeSessionDoc["sessions"],
               sessionId,
-              Date.now()
+              Date.now(),
             );
 
             const writes: FirestoreWrite[] = [
@@ -89,12 +82,26 @@ export const Route = createFileRoute("/api/public/v1/sessions/$sessionId/recover
                     updatedAt: nowIso,
                   }),
                 },
-                updateMask: { fieldPaths: ["active", "state", "endedAt", "billedSeconds", "walletHoldMinor", "updatedAt"] },
+                updateMask: {
+                  fieldPaths: [
+                    "active",
+                    "state",
+                    "endedAt",
+                    "billedSeconds",
+                    "walletHoldMinor",
+                    "updatedAt",
+                  ],
+                },
               },
               {
                 update: {
                   name: fs.docName(holdPath),
-                  fields: encodeFields({ amountMinor: 0, status: "released", expiresAt: null, updatedAt: nowIso }),
+                  fields: encodeFields({
+                    amountMinor: 0,
+                    status: "released",
+                    expiresAt: null,
+                    updatedAt: nowIso,
+                  }),
                 },
                 updateMask: { fieldPaths: ["amountMinor", "status", "expiresAt", "updatedAt"] },
               },

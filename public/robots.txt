@@ -1,34 +1,34 @@
 User-agent: *
 Allow: /
-Disallow: /admin
+Disallow: /zillionaire
 Disallow: /api/
 Disallow: /producer
 Disallow: /provider
 
 User-agent: Googlebot
 Allow: /
-Disallow: /admin
+Disallow: /zillionaire
 Disallow: /api/
 Disallow: /producer
 Disallow: /provider
 
 User-agent: Bingbot
 Allow: /
-Disallow: /admin
+Disallow: /zillionaire
 Disallow: /api/
 Disallow: /producer
 Disallow: /provider
 
 User-agent: Twitterbot
 Allow: /
-Disallow: /admin
+Disallow: /zillionaire
 Disallow: /api/
 Disallow: /producer
 Disallow: /provider
 
 User-agent: facebookexternalhit
 Allow: /
-Disallow: /admin
+Disallow: /zillionaire
 Disallow: /api/
 Disallow: /producer
 Disallow: /provider

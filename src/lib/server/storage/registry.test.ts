@@ -74,8 +74,11 @@ describe("storage destination registry", () => {
 
   it("supports account groups, drain mode, replicas and producer verification", () => {
     const value = validateStorageDestinationMetadata({
-      ...metadata("STORAGE_B2_01"), purpose: "producer_verification",
-      accountGroup: "b2:account-01", mode: "drain", replicaOf: "b2-primary-01",
+      ...metadata("STORAGE_B2_01"),
+      purpose: "producer_verification",
+      accountGroup: "b2:account-01",
+      mode: "drain",
+      replicaOf: "b2-primary-01",
     });
     expect(value.purpose).toBe("producer_verification");
     expect(value.accountGroup).toBe("b2:account-01");
@@ -99,23 +102,45 @@ describe("storage destination registry", () => {
   });
 });
 
-
 describe("Lovable credential bundles", () => {
-  const lovableMetadata = (destinationId: string, bucketName: string) => validateStorageDestinationMetadata({
-    destinationId, providerType: "lovable_storage", accountAlias: "Lovable project",
-    secretPrefix: "STORAGE_LOV_BUNDLE_01", bucketName, region: "africa-south1",
-    purpose: "source_media", softCapBytes: 4_500_000_000, accountCapBytes: 4_500_000_000,
-    dailyEgressCapBytes: null, priority: 10, enabled: true,
-    accountGroup: "lovable:project-a", mode: "active", replicaOf: null,
-  });
+  const lovableMetadata = (destinationId: string, bucketName: string) =>
+    validateStorageDestinationMetadata({
+      destinationId,
+      providerType: "lovable_storage",
+      accountAlias: "Lovable project",
+      secretPrefix: "STORAGE_LOV_BUNDLE_01",
+      bucketName,
+      region: "africa-south1",
+      purpose: "source_media",
+      softCapBytes: 4_500_000_000,
+      accountCapBytes: 4_500_000_000,
+      dailyEgressCapBytes: null,
+      priority: 10,
+      enabled: true,
+      accountGroup: "lovable:project-a",
+      mode: "active",
+      replicaOf: null,
+    });
 
   it("resolves an item bundle by both destination id and bucket", () => {
     const key = "never-return-this-service-role-key";
     const config = resolveStorageDestinationConfiguration(lovableMetadata("lov-001", "bucket-a"), {
-      STORAGE_LOV_BUNDLE_01: JSON.stringify({ items: [
-        { destinationId: "lov-001", bucket: "bucket-a", url: "https://project-a.supabase.co", serviceRoleKey: key },
-        { destinationId: "lov-002", bucket: "bucket-b", url: "https://project-a.supabase.co", serviceRoleKey: "another-private-key" },
-      ] }),
+      STORAGE_LOV_BUNDLE_01: JSON.stringify({
+        items: [
+          {
+            destinationId: "lov-001",
+            bucket: "bucket-a",
+            url: "https://project-a.supabase.co",
+            serviceRoleKey: key,
+          },
+          {
+            destinationId: "lov-002",
+            bucket: "bucket-b",
+            url: "https://project-a.supabase.co",
+            serviceRoleKey: "another-private-key",
+          },
+        ],
+      }),
     });
     expect(config.configurationStatus).toBe("configured");
     expect(config.credentials?.serviceRoleKey).toBe(key);
@@ -126,7 +151,8 @@ describe("Lovable credential bundles", () => {
   it("resolves the shared-project bundle form for an allowed bucket", () => {
     const config = resolveStorageDestinationConfiguration(lovableMetadata("lov-002", "bucket-b"), {
       STORAGE_LOV_BUNDLE_01: JSON.stringify({
-        url: "https://project-a.supabase.co", serviceRoleKey: "private-key",
+        url: "https://project-a.supabase.co",
+        serviceRoleKey: "private-key",
         buckets: ["bucket-a", "bucket-b"],
       }),
     });
@@ -136,51 +162,90 @@ describe("Lovable credential bundles", () => {
   it("fails closed for malformed, oversized or non-matching bundles", () => {
     for (const bundle of [
       "{broken",
-      JSON.stringify({ items: Array.from({ length: 26 }, (_, i) => ({
-        destinationId: "lov-" + String(i).padStart(3, "0"), bucket: "bucket-" + i,
-        url: "https://project-a.supabase.co", serviceRoleKey: "private-key",
-      })) }),
-      JSON.stringify({ items: [{ destinationId: "other-id", bucket: "bucket-a", url: "https://project-a.supabase.co", serviceRoleKey: "private-key" }] }),
-      JSON.stringify({ url: "http://project-a.supabase.co", serviceRoleKey: "private-key", buckets: ["bucket-a"] }),
+      JSON.stringify({
+        items: Array.from({ length: 26 }, (_, i) => ({
+          destinationId: "lov-" + String(i).padStart(3, "0"),
+          bucket: "bucket-" + i,
+          url: "https://project-a.supabase.co",
+          serviceRoleKey: "private-key",
+        })),
+      }),
+      JSON.stringify({
+        items: [
+          {
+            destinationId: "other-id",
+            bucket: "bucket-a",
+            url: "https://project-a.supabase.co",
+            serviceRoleKey: "private-key",
+          },
+        ],
+      }),
+      JSON.stringify({
+        url: "http://project-a.supabase.co",
+        serviceRoleKey: "private-key",
+        buckets: ["bucket-a"],
+      }),
     ]) {
-      const config = resolveStorageDestinationConfiguration(lovableMetadata("lov-001", "bucket-a"), {
-        STORAGE_LOV_BUNDLE_01: bundle,
-      });
+      const config = resolveStorageDestinationConfiguration(
+        lovableMetadata("lov-001", "bucket-a"),
+        {
+          STORAGE_LOV_BUNDLE_01: bundle,
+        },
+      );
       expect(config.configurationStatus).toBe("misconfigured");
       expect(config.credentials).toBeUndefined();
     }
   });
 
   it("accepts a shared-project bundle containing 326 bucket names", () => {
-    const buckets = Array.from({ length: 326 }, (_, index) => "bucket-" + String(index + 1).padStart(3, "0"));
-    const config = resolveStorageDestinationConfiguration(lovableMetadata("lov-326", "bucket-326"), {
-      STORAGE_LOV_BUNDLE_01: JSON.stringify({
-        url: "https://project-a.supabase.co",
-        serviceRoleKey: "private-key",
-        buckets,
-      }),
-    });
+    const buckets = Array.from(
+      { length: 326 },
+      (_, index) => "bucket-" + String(index + 1).padStart(3, "0"),
+    );
+    const config = resolveStorageDestinationConfiguration(
+      lovableMetadata("lov-326", "bucket-326"),
+      {
+        STORAGE_LOV_BUNDLE_01: JSON.stringify({
+          url: "https://project-a.supabase.co",
+          serviceRoleKey: "private-key",
+          buckets,
+        }),
+      },
+    );
     expect(config.configurationStatus).toBe("configured");
   });
 
   it("reports a missing bundle by name without throwing or exposing values", () => {
-    const config = resolveStorageDestinationConfiguration(lovableMetadata("lov-001", "bucket-a"), {});
+    const config = resolveStorageDestinationConfiguration(
+      lovableMetadata("lov-001", "bucket-a"),
+      {},
+    );
     expect(config.configurationStatus).toBe("misconfigured");
     expect(config.missingSecretNames).toEqual(["STORAGE_LOV_BUNDLE_01"]);
   });
 });
 
-
 describe("provider listing usage state", () => {
   it("accepts provider_listing as the authoritative reconciliation source", () => {
     const metadata = validateStorageDestinationMetadata({
-      destinationId: "lov-usage-01", providerType: "lovable_storage",
-      accountAlias: "Lovable usage", secretPrefix: "STORAGE_LOV_BUNDLE_01",
-      bucketName: "bucket-usage", region: "africa-south1", purpose: "source_media",
-      softCapBytes: 4_500_000_000, accountCapBytes: 4_500_000_000,
-      dailyEgressCapBytes: null, priority: 10, enabled: true,
-      accountGroup: "lovable:project-a", mode: "active", replicaOf: null,
-      usageBytes: 1234, usageSource: "provider_listing", usageCheckedAt: "2026-11-17T00:00:00.000Z",
+      destinationId: "lov-usage-01",
+      providerType: "lovable_storage",
+      accountAlias: "Lovable usage",
+      secretPrefix: "STORAGE_LOV_BUNDLE_01",
+      bucketName: "bucket-usage",
+      region: "africa-south1",
+      purpose: "source_media",
+      softCapBytes: 4_500_000_000,
+      accountCapBytes: 4_500_000_000,
+      dailyEgressCapBytes: null,
+      priority: 10,
+      enabled: true,
+      accountGroup: "lovable:project-a",
+      mode: "active",
+      replicaOf: null,
+      usageBytes: 1234,
+      usageSource: "provider_listing",
+      usageCheckedAt: "2026-11-17T00:00:00.000Z",
     });
     expect(metadata.usageSource).toBe("provider_listing");
   });

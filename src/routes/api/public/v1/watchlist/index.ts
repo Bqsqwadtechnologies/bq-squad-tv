@@ -3,11 +3,13 @@ import { z } from "zod";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 
-const addSchema = z.object({
-  titleId: z.string().trim().min(1).max(100),
-  titleName: z.string().trim().max(200).optional(),
-  posterUrl: z.string().url().optional(),
-}).strict();
+const addSchema = z
+  .object({
+    titleId: z.string().trim().min(1).max(100),
+    titleName: z.string().trim().max(200).optional(),
+    posterUrl: z.string().url().optional(),
+  })
+  .strict();
 
 export const Route = createFileRoute("/api/public/v1/watchlist/")({
   server: {
@@ -20,7 +22,7 @@ export const Route = createFileRoute("/api/public/v1/watchlist/")({
             filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
           });
           items.sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
-            String(b["addedAt"] ?? "").localeCompare(String(a["addedAt"] ?? ""))
+            String(b["addedAt"] ?? "").localeCompare(String(a["addedAt"] ?? "")),
           );
           return Response.json({ items });
         } catch (error) {

@@ -3,9 +3,11 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 
-const schema = z.object({
-  rating: z.number().int().min(1).max(5),
-}).strict();
+const schema = z
+  .object({
+    rating: z.number().int().min(1).max(5),
+  })
+  .strict();
 
 export const Route = createFileRoute("/api/public/v1/titles/$titleId/rate")({
   server: {

@@ -14,9 +14,17 @@ describe("App routing", () => {
     const result = ts.transpileModule(source, {
       fileName: "legal-route.tsx",
       reportDiagnostics: true,
-      compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext, jsx: ts.JsxEmit.ReactJSX },
+      compilerOptions: {
+        target: ts.ScriptTarget.ESNext,
+        module: ts.ModuleKind.ESNext,
+        jsx: ts.JsxEmit.ReactJSX,
+      },
     });
-    expect(result.diagnostics?.filter(diagnostic => diagnostic.category === ts.DiagnosticCategory.Error)).toEqual([]);
+    expect(
+      result.diagnostics?.filter(
+        (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
+      ),
+    ).toEqual([]);
   });
 
   it("parses the HLS route without syntax errors that block route generation", () => {
@@ -26,7 +34,11 @@ describe("App routing", () => {
       reportDiagnostics: true,
       compilerOptions: { target: ts.ScriptTarget.ESNext, module: ts.ModuleKind.ESNext },
     });
-    expect(result.diagnostics?.filter(diagnostic => diagnostic.category === ts.DiagnosticCategory.Error)).toEqual([]);
+    expect(
+      result.diagnostics?.filter(
+        (diagnostic) => diagnostic.category === ts.DiagnosticCategory.Error,
+      ),
+    ).toEqual([]);
   });
 
   it("matches a page for / instead of falling back to not found", () => {
