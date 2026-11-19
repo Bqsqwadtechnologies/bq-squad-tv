@@ -35,20 +35,9 @@ export const ZILLIONAIRE_MODULES: ZillionaireModule[] = [
 // Backward-compatible constant alias
 export const ADMIN_MODULES = ZILLIONAIRE_MODULES;
 
-let warnedLegacyAdminSecret = false;
-
 export function getConfiguredOwnerEmail(): string {
-  const primary = (process.env["ZILLIONAIRE_EMAIL"] || "").trim().toLowerCase();
-  if (primary) return primary;
-  const fallback = (process.env["ADMIN_EMAIL"] || "").trim().toLowerCase();
-  if (fallback) {
-    if (!warnedLegacyAdminSecret) {
-      console.warn("[SECURITY_FALLBACK] ZILLIONAIRE_EMAIL is not set. Falling back to ADMIN_EMAIL. Please configure ZILLIONAIRE_EMAIL.");
-      warnedLegacyAdminSecret = true;
-    }
-    return fallback;
-  }
-  return "";
+  // Strictly ZILLIONAIRE_EMAIL only. No fallback to ADMIN_EMAIL under any circumstances.
+  return (process.env["ZILLIONAIRE_EMAIL"] || "").trim().toLowerCase();
 }
 
 function stringArray(value: unknown): string[] {
@@ -112,7 +101,7 @@ export async function resolvePlatformAccess(
   }
 
   // Zillionaire owner resolution
-  // Strictly requires configured ZILLIONAIRE_EMAIL (or fallback ADMIN_EMAIL) and verified email address
+  // Strictly requires configured ZILLIONAIRE_EMAIL and verified email address
   const configuredOwnerEmail = getConfiguredOwnerEmail();
   const normalizedUserEmail = (effectiveEmail || "").trim().toLowerCase();
   const isOwnerCandidate = Boolean(
@@ -175,6 +164,9 @@ export async function requirePlatformRole(
     user.customClaims,
     user.emailVerified === true,
   );
+  if (access.isZillionaireOwner) {
+    return access;
+  }
   if (!access.roles.includes(role)) {
     await recordAccessDenial(fs, {
       actorUid: user.uid,
@@ -229,6 +221,9 @@ export async function requireProviderAccess(
     user.emailVerified === true,
   );
 
+  if (access.isZillionaireOwner) {
+    return { ...access, providerId: access.providerId || targetProviderId || "zillionaire_owner" };
+  }
   if (!access.roles.includes("provider") || !access.providerId) {
     await recordAccessDenial(fs, {
       actorUid: user.uid,

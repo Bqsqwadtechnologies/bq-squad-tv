@@ -205,12 +205,12 @@ describe("Batch 1 — Owner recognition and fallback requirements", () => {
     vi.unstubAllEnvs();
   });
 
-  it("falls back to ADMIN_EMAIL when ZILLIONAIRE_EMAIL is empty", async () => {
+  it("strictly rejects ADMIN_EMAIL as fallback when ZILLIONAIRE_EMAIL is empty", async () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "");
     vi.stubEnv("ADMIN_EMAIL", "fallback-admin@example.com");
     const fs = fakeFirestore(null, null);
     const access = await resolvePlatformAccess(fs, "u1", "fallback-admin@example.com", {}, true);
-    expect(access.isZillionaireOwner).toBe(true);
+    expect(access.isZillionaireOwner).toBe(false);
     expect(access.needsOwnerVerification).toBe(false);
     vi.unstubAllEnvs();
   });

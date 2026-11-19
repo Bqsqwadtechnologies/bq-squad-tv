@@ -179,6 +179,12 @@ function AccountPage() {
   const [countryCode, setCountryCode] = useState("US");
   const [walletCurrency, setWalletCurrency] = useState("USD");
   const [walletBalanceMinor, setWalletBalanceMinor] = useState<number | null>(null);
+  const [viewerAnalytics, setViewerAnalytics] = useState<{
+    summary: { totalMinutesWatched: number; totalHoursWatched: number; totalSessionsCount: number; totalSpentMinor: number };
+    channels: Array<{ channelId: string; title: string; minutesWatched: number; lastWatchedAt: string }>;
+    videos: Array<{ assetId: string; title: string; minutesWatched: number; lastWatchedAt: string }>;
+    recentHistory: Array<{ id: string; title: string; channelId?: string; minutes: number; watchedAt: string }>;
+  } | null>(null);
   const [showSettingsView, setShowSettingsView] = useState(false);
   const [countryReady, setCountryReady] = useState(false);
   const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
@@ -304,6 +310,18 @@ function AccountPage() {
       }
     } catch {
       // Wallet balance optional
+    }
+    try {
+      const analyticsRes = await fetch("/api/public/v1/analytics/viewer", {
+        headers: await getWebAuthHeaders(token),
+        cache: "no-store",
+      });
+      if (analyticsRes.ok) {
+        const vdata = await analyticsRes.json() as any;
+        setViewerAnalytics(vdata);
+      }
+    } catch {
+      // Viewer analytics optional
     }
   }
 
@@ -607,6 +625,63 @@ function AccountPage() {
                 </div>
                 <p className="mt-1 text-[11px] text-blue-100/50">Wallet currency is tied to your account country.</p>
               </div>
+
+              {/* Viewer Activity & Watch Time Card */}
+              {viewerAnalytics && (
+                <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-[#0c1f4e] to-[#040f2e] p-5 shadow-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">My Watch Time &amp; Activity</span>
+                    </div>
+                    <a href="/history" className="text-xs font-bold text-cyan-200 underline hover:text-white">Full History</a>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-white/10 bg-[#030b2a] p-3">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-100/60">Total Watch Time</span>
+                      <div className="mt-1 text-xl font-black text-white">
+                        {viewerAnalytics.summary.totalMinutesWatched} <span className="text-xs font-normal text-cyan-300">mins</span>
+                      </div>
+                      <p className="text-[10px] text-blue-100/50">{viewerAnalytics.summary.totalHoursWatched} hrs total</p>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-[#030b2a] p-3">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-100/60">Viewing Sessions</span>
+                      <div className="mt-1 text-xl font-black text-white">
+                        {viewerAnalytics.summary.totalSessionsCount}
+                      </div>
+                      <p className="text-[10px] text-blue-100/50">Streams watched</p>
+                    </div>
+                  </div>
+
+                  {viewerAnalytics.channels && viewerAnalytics.channels.length > 0 && (
+                    <div className="mt-4 border-t border-white/10 pt-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-blue-100/70">Watch Time by Channel</p>
+                      <div className="mt-2 space-y-1.5">
+                        {viewerAnalytics.channels.slice(0, 3).map(ch => (
+                          <div key={ch.channelId} className="flex items-center justify-between text-xs">
+                            <span className="truncate text-white font-medium">{ch.title}</span>
+                            <span className="font-bold text-cyan-300 ml-2">{ch.minutesWatched}m</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {viewerAnalytics.videos && viewerAnalytics.videos.length > 0 && (
+                    <div className="mt-3 border-t border-white/10 pt-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-blue-100/70">Watch Time by Video</p>
+                      <div className="mt-2 space-y-1.5">
+                        {viewerAnalytics.videos.slice(0, 3).map(vid => (
+                          <div key={vid.assetId} className="flex items-center justify-between text-xs">
+                            <span className="truncate text-white font-medium">{vid.title}</span>
+                            <span className="font-bold text-cyan-300 ml-2">{vid.minutesWatched}m</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Account Navigation Grid */}
               <nav aria-label="Account shortcuts" className="mt-5 grid grid-cols-2 gap-3">

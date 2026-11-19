@@ -177,15 +177,17 @@ export function ConsolePageGuard({ role, module: requiredModule, children }: Con
           }
         } else if (role === "producer") {
           authorized = Boolean(
-            Array.isArray(account.roles) &&
+            account.isOwner ||
+            (Array.isArray(account.roles) &&
             account.roles.includes("producer") &&
-            account.producerPlanActive !== false
+            account.producerPlanActive !== false)
           );
         } else if (role === "provider") {
           authorized = Boolean(
-            Array.isArray(account.roles) &&
+            account.isOwner ||
+            (Array.isArray(account.roles) &&
             account.roles.includes("provider") &&
-            Boolean(account.providerId)
+            Boolean(account.providerId))
           );
         }
 

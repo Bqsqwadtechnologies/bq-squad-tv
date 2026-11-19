@@ -59,12 +59,12 @@ export const Route = createFileRoute("/provider/")({
 function ProviderPage() {
   return (
     <ConsolePageGuard role="provider">
-      {({ token }) => <ProviderConsoleIndex sessionToken={token} />}
+      {({ token, account }) => <ProviderConsoleIndex sessionToken={token} isOwner={Boolean(account?.isOwner)} />}
     </ConsolePageGuard>
   );
 }
 
-function ProviderConsoleIndex({ sessionToken }: { sessionToken?: string } = {}) {
+function ProviderConsoleIndex({ sessionToken, isOwner }: { sessionToken?: string; isOwner?: boolean } = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
@@ -178,6 +178,22 @@ function ProviderConsoleIndex({ sessionToken }: { sessionToken?: string } = {}) 
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
+        {isOwner && (
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-500/30 bg-gradient-to-r from-cyan-950/60 via-slate-900 to-slate-950 p-4 text-xs shadow-lg">
+            <div className="flex items-center gap-2.5">
+              <span className="rounded-full bg-cyan-400/20 px-2.5 py-0.5 font-bold uppercase tracking-wider text-cyan-300">
+                Platform Owner Access
+              </span>
+              <span className="text-slate-200 font-medium">You are signed in with Zillionaire Owner access.</span>
+            </div>
+            <a
+              href="/admin"
+              className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 font-bold text-cyan-300 hover:bg-cyan-500/20 transition"
+            >
+              Open Zillionaire Dashboard →
+            </a>
+          </div>
+        )}
         {error && !provider ? (
           <div className="max-w-md mx-auto my-12 p-6 rounded-2xl bg-slate-900 border border-slate-800 text-center">
             <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-start gap-2">

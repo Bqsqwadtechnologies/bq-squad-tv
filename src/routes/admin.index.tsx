@@ -25,6 +25,38 @@ import {
   signInWithEmailPassword,
 } from "@/lib/firebase-web-auth";
 
+type PlatformAnalytics = {
+  timestamp: string;
+  newUsers: { today: number; last7d: number; last30d: number; lifetime: number };
+  signIns: { activeSessions: number; today: number; lifetime: number };
+  liveWatchers: { current: number; peakToday: number };
+  lifetimeStats: {
+    totalWatchMinutes: number;
+    totalWatchHours: number;
+    grossRevenueMinor: number;
+    totalTopupsMinor: number;
+    payoutsPendingMinor: number;
+    payoutsSettledMinor: number;
+    currency: string;
+  };
+  channels: Array<{
+    channelId: string;
+    name: string;
+    currentViewers: number;
+    totalWatchMinutes: number;
+    grossRevenueMinor: number;
+    status: string;
+  }>;
+  videos: Array<{
+    assetId: string;
+    title: string;
+    channelId: string;
+    totalWatchMinutes: number;
+    viewsCount: number;
+    uniqueViewersCount: number;
+  }>;
+};
+
 type AdminModule =
   | "overview" | "users" | "roles" | "producers" | "channels" | "content"
   | "pricing" | "wallets" | "payments" | "payouts" | "ads" | "notifications"
@@ -110,6 +142,26 @@ function ZillionaireDashboard({ sessionToken }: { sessionToken?: string } = {}) 
   const [legalSettingsMessage, setLegalSettingsMessage] = useState("");
   const [legalSettingsError, setLegalSettingsError] = useState("");
   const [legalSettingsBusy, setLegalSettingsBusy] = useState(false);
+  const [analytics, setAnalytics] = useState<PlatformAnalytics | null>(null);
+  const [analyticsBusy, setAnalyticsBusy] = useState(false);
+
+  async function loadAnalytics(idToken: string) {
+    setAnalyticsBusy(true);
+    try {
+      const response = await fetch("/api/public/v1/admin/analytics/overview", {
+        headers: await getWebAuthHeaders(idToken),
+        cache: "no-store",
+      });
+      if (response.ok) {
+        const data = await response.json() as PlatformAnalytics;
+        setAnalytics(data);
+      }
+    } catch {
+      // Analytics load optional
+    } finally {
+      setAnalyticsBusy(false);
+    }
+  }
 
   async function loadAccess(idToken: string) {
     const response = await fetch("/api/public/v1/admin/overview", {
@@ -126,6 +178,7 @@ function ZillionaireDashboard({ sessionToken }: { sessionToken?: string } = {}) 
     setAccess(result);
     setError("");
     if (result.owner) {
+      void loadAnalytics(idToken);
       const flagsResponse = await fetch("/api/public/v1/admin/config/flags", {
         headers: await getWebAuthHeaders(idToken),
         cache: "no-store",
@@ -316,6 +369,165 @@ function ZillionaireDashboard({ sessionToken }: { sessionToken?: string } = {}) 
                 <p className="mt-1 text-xs leading-5 text-blue-100/55">Provider setup remains separate from owner controls and requires approved rights and provider credentials.</p>
               </div>
             </div>
+
+            {/* Executive Platform Oversight & Live Analytics */}
+            {access.owner && (
+              <section className="mt-10 rounded-3xl border border-cyan-400/30 bg-gradient-to-br from-[#0c1e50] via-[#07143d] to-[#030a24] p-5 sm:p-8 shadow-2xl" aria-labelledby="executive-analytics-heading">
+                <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping" />
+                      <p className="text-[11px] font-black uppercase tracking-[0.25em] text-cyan-300">Executive Platform Oversight</p>
+                    </div>
+                    <h2 id="executive-analytics-heading" className="mt-1 text-2xl sm:text-3xl font-black text-white">Live Telemetry &amp; Platform Metrics</h2>
+                    <p className="mt-1 text-xs text-blue-100/60">Real-time oversight of active streams, user registrations, logins, and total watch time.</p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={analyticsBusy}
+                    onClick={async () => {
+                      const t = sessionToken || (await restoreWebSession());
+                      if (t) void loadAnalytics(t);
+                    }}
+                    className="rounded-xl border border-cyan-300/40 bg-cyan-400/10 px-4 py-2.5 text-xs font-bold text-cyan-200 hover:bg-cyan-400/20 transition disabled:opacity-50"
+                  >
+                    {analyticsBusy ? "Refreshing…" : "↻ Refresh Live Telemetry"}
+                  </button>
+                </div>
+
+                {analytics ? (
+                  <div className="mt-6 space-y-6">
+                    {/* Top KPI Grid */}
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                      <div className="rounded-2xl border border-emerald-400/25 bg-[#030b2a]/90 p-4 shadow-inner">
+                        <div className="flex items-center justify-between text-emerald-400">
+                          <span className="text-[10px] font-bold uppercase tracking-wider">Live Watchers Now</span>
+                          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                        </div>
+                        <div className="mt-2 text-3xl font-black text-white">
+                          {analytics.liveWatchers.current}
+                        </div>
+                        <p className="mt-1 text-[11px] text-emerald-200/60">Peak today: {analytics.liveWatchers.peakToday}</p>
+                      </div>
+
+                      <div className="rounded-2xl border border-white/10 bg-[#030b2a]/90 p-4 shadow-inner">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300">New Users Today</span>
+                        <div className="mt-2 text-3xl font-black text-white">
+                          {analytics.newUsers.today}
+                        </div>
+                        <p className="mt-1 text-[11px] text-blue-100/50">7d: {analytics.newUsers.last7d} | Total: {analytics.newUsers.lifetime}</p>
+                      </div>
+
+                      <div className="rounded-2xl border border-white/10 bg-[#030b2a]/90 p-4 shadow-inner">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200">Active Sessions</span>
+                        <div className="mt-2 text-3xl font-black text-white">
+                          {analytics.signIns.activeSessions}
+                        </div>
+                        <p className="mt-1 text-[11px] text-blue-100/50">Logins today: {analytics.signIns.today}</p>
+                      </div>
+
+                      <div className="rounded-2xl border border-white/10 bg-[#030b2a]/90 p-4 shadow-inner">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300">Watch Time (Mins)</span>
+                        <div className="mt-2 text-2xl font-black text-white">
+                          {analytics.lifetimeStats.totalWatchMinutes.toLocaleString()} <span className="text-xs font-normal text-cyan-200">m</span>
+                        </div>
+                        <p className="mt-1 text-[11px] text-blue-100/50">{analytics.lifetimeStats.totalWatchHours} hrs lifetime</p>
+                      </div>
+
+                      <div className="rounded-2xl border border-white/10 bg-[#030b2a]/90 p-4 shadow-inner">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Gross Platform Revenue</span>
+                        <div className="mt-2 text-2xl font-black text-white">
+                          {(analytics.lifetimeStats.grossRevenueMinor / 100).toFixed(2)}
+                        </div>
+                        <p className="mt-1 text-[11px] text-amber-100/50">{analytics.lifetimeStats.currency} watch charges</p>
+                      </div>
+
+                      <div className="rounded-2xl border border-white/10 bg-[#030b2a]/90 p-4 shadow-inner">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300">Wallet Topups</span>
+                        <div className="mt-2 text-2xl font-black text-white">
+                          {(analytics.lifetimeStats.totalTopupsMinor / 100).toFixed(2)}
+                        </div>
+                        <p className="mt-1 text-[11px] text-purple-100/50">{analytics.lifetimeStats.currency} total deposits</p>
+                      </div>
+                    </div>
+
+                    {/* Channel Breakdown Table */}
+                    <div className="rounded-2xl border border-white/10 bg-[#030b2a]/80 p-5">
+                      <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Watch Time &amp; Viewers by Channel</h3>
+                        <span className="text-xs text-blue-100/50">{analytics.channels.length} channel(s)</span>
+                      </div>
+                      <div className="mt-3 overflow-x-auto">
+                        <table className="w-full text-left text-xs">
+                          <thead>
+                            <tr className="border-b border-white/10 text-cyan-200">
+                              <th className="py-2 pr-4 font-bold">Channel</th>
+                              <th className="py-2 pr-4 font-bold">Status</th>
+                              <th className="py-2 pr-4 font-bold">Live Watchers</th>
+                              <th className="py-2 pr-4 font-bold">Total Watch Time</th>
+                              <th className="py-2 font-bold">Gross Revenue</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5 text-blue-100/80">
+                            {analytics.channels.map(ch => (
+                              <tr key={ch.channelId} className="hover:bg-white/5 transition">
+                                <td className="py-2.5 pr-4 font-semibold text-white">{ch.name}</td>
+                                <td className="py-2.5 pr-4">
+                                  <span className="inline-block rounded-full bg-cyan-400/10 px-2 py-0.5 text-[10px] font-bold uppercase text-cyan-300">
+                                    {ch.status}
+                                  </span>
+                                </td>
+                                <td className="py-2.5 pr-4 font-mono font-bold text-emerald-400">{ch.currentViewers}</td>
+                                <td className="py-2.5 pr-4 font-mono">{ch.totalWatchMinutes} mins</td>
+                                <td className="py-2.5 font-mono text-amber-200">{(ch.grossRevenueMinor / 100).toFixed(2)} NGN</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    {/* Video Breakdown Table */}
+                    {analytics.videos && analytics.videos.length > 0 && (
+                      <div className="rounded-2xl border border-white/10 bg-[#030b2a]/80 p-5">
+                        <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Watch Time &amp; Views by Video Asset</h3>
+                          <span className="text-xs text-blue-100/50">{analytics.videos.length} asset(s)</span>
+                        </div>
+                        <div className="mt-3 overflow-x-auto">
+                          <table className="w-full text-left text-xs">
+                            <thead>
+                              <tr className="border-b border-white/10 text-cyan-200">
+                                <th className="py-2 pr-4 font-bold">Video Title</th>
+                                <th className="py-2 pr-4 font-bold">Channel</th>
+                                <th className="py-2 pr-4 font-bold">Watch Time</th>
+                                <th className="py-2 pr-4 font-bold">Total Views</th>
+                                <th className="py-2 font-bold">Unique Viewers</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5 text-blue-100/80">
+                              {analytics.videos.map(vid => (
+                                <tr key={vid.assetId} className="hover:bg-white/5 transition">
+                                  <td className="py-2.5 pr-4 font-semibold text-white">{vid.title}</td>
+                                  <td className="py-2.5 pr-4 text-blue-100/60">{vid.channelId}</td>
+                                  <td className="py-2.5 pr-4 font-mono font-bold text-cyan-300">{vid.totalWatchMinutes} mins</td>
+                                  <td className="py-2.5 pr-4 font-mono">{vid.viewsCount}</td>
+                                  <td className="py-2.5 font-mono text-purple-200">{vid.uniqueViewersCount}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mt-6 rounded-2xl border border-white/10 bg-[#030b2a]/50 p-6 text-center text-xs text-blue-100/50">
+                    {analyticsBusy ? "Aggregating platform telemetry…" : "Live telemetry is standing by. Click Refresh to load metrics."}
+                  </div>
+                )}
+              </section>
+            )}
 
             {access.owner ? (
               <section className="mt-10 rounded-3xl border border-cyan-300/20 bg-[#07143d] p-5 sm:p-7" aria-labelledby="legal-pages-heading">

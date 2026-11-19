@@ -40,12 +40,12 @@ export const Route = createFileRoute("/producer/")({
 function ProducerPage() {
   return (
     <ConsolePageGuard role="producer">
-      {({ token }) => <ProducerConsole sessionToken={token} />}
+      {({ token, account }) => <ProducerConsole sessionToken={token} isOwner={Boolean(account?.isOwner)} />}
     </ConsolePageGuard>
   );
 }
 
-function ProducerConsole({ sessionToken }: { sessionToken?: string } = {}) {
+function ProducerConsole({ sessionToken, isOwner }: { sessionToken?: string; isOwner?: boolean } = {}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
@@ -153,6 +153,22 @@ function ProducerConsole({ sessionToken }: { sessionToken?: string } = {}) {
         </div>
       </header>
       <section className="mx-auto max-w-6xl px-5 py-10 sm:py-14">
+        {isOwner && (
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-cyan-900/40 via-[#07143d] to-[#030b2a] p-4 text-xs shadow-lg">
+            <div className="flex items-center gap-2.5">
+              <span className="rounded-full bg-cyan-400/20 px-2.5 py-0.5 font-bold uppercase tracking-wider text-cyan-300">
+                Platform Owner Access
+              </span>
+              <span className="text-white font-medium">You are signed in with Zillionaire Owner access.</span>
+            </div>
+            <a
+              href="/admin"
+              className="rounded-xl border border-cyan-300/40 bg-cyan-400/10 px-4 py-2 font-bold text-cyan-200 hover:bg-cyan-400/20 transition"
+            >
+              Open Zillionaire Dashboard →
+            </a>
+          </div>
+        )}
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Creator operations</p>
         <h1 className="mt-3 text-3xl font-black sm:text-5xl">Your production workspace</h1>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-blue-100/60">Manage your channels, authorized team members, programming schedules and revenue statements. Your channel permissions and producer verification are checked by the server.</p>
