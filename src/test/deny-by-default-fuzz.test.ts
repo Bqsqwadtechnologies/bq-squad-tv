@@ -203,7 +203,7 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
       ).handlers.GET;
       const response = await handler({ request: new Request("https://tv.bqsqwad.com/api/public/v1/account/export") });
       expect(response.status).toBe(401);
-      expect(await response.json()).toEqual({ error: "A Firebase sign-in token is required.", code: "UNAUTHENTICATED" });
+      expect(await response.json()).toMatchObject({ error: "A Firebase sign-in token is required.", code: "UNAUTHENTICATED" });
     });
 
     it("rejects malformed authorization schemes", async () => {

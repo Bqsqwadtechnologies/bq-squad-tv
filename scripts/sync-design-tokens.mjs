@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 
 // Brand & Dark Theme Tokens (Default)
 val Ink = Color(0xFF070E24)
+val DarkBackground = Color(0xFF070E24)
 val Indigo = Color(0xFF0C1738)
 val IndigoRaised = Color(0xFF142456)
 val Signal = Color(0xFF00D8F5)
