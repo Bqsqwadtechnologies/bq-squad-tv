@@ -105,4 +105,12 @@ class CatalogRepository(
     ) = api.search(bearer(), query, type, category, language)
 
     suspend fun channel(id: String) = api.channel(bearer(), id)
+
+    suspend fun comments(assetId: String) = api.comments(bearer(), assetId)
+
+    suspend fun submitComment(assetId: String, body: String) =
+        api.submitComment(bearer(), assetId, SubmitCommentRequest(body))
+
+    suspend fun submitRating(assetId: String, stars: Int) =
+        api.submitRating(bearer(), assetId, SubmitRatingRequest(stars))
 }

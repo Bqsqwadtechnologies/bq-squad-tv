@@ -23,7 +23,28 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/rat
           if (!/^[A-Za-z0-9_-]{1,100}$/.test(assetId))
             throw new ApiError(400, "ASSET_ID_INVALID", "The content identifier is invalid.");
           const fs = await Firestore.create();
-          await enforceRateLimit(fs, "content-rating:" + user.uid, { limit: 30, windowMs: 60_000 });
+
+          // Rating abuse velocity check: rate limit 10/min
+          try {
+            await enforceRateLimit(fs, "content-rating:" + user.uid, {
+              limit: 10,
+              windowMs: 60_000,
+            });
+          } catch {
+            // Flag as rating abuse anomaly
+            const alertId = `rate_abuse_${Date.now()}_${user.uid.slice(0, 8)}`;
+            await fs.setDoc(`ratingAbuseAlerts/${alertId}`, {
+              alertId,
+              uid: user.uid,
+              assetId,
+              stars: body.stars,
+              type: "HIGH_VELOCITY_RATING",
+              status: "OPEN",
+              createdAt: new Date().toISOString(),
+            });
+            throw new ApiError(429, "RATING_RATE_LIMITED", "Too many rating requests.");
+          }
+
           const assetPath = "contentAssets/" + assetId;
           const visibleAsset = await fs.getDoc(assetPath);
           if (
@@ -49,6 +70,31 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/rat
           }
           const viewerProfile = await getUserProfile(fs, user.uid);
           requireAdultForContent(viewerProfile, visibleChannel["adultOnly"]);
+
+          // Check if brigading pattern: rapid 1-star reviews
+          if (body.stars === 1) {
+            const recentRatings = await fs.query("contentRatings", {
+              filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
+              orderByField: "updatedAt",
+              descending: true,
+              limit: 5,
+            });
+            const consecutiveOneStars = recentRatings.filter((r) => r["stars"] === 1).length;
+            if (consecutiveOneStars >= 3) {
+              const alertId = `rate_brigade_${Date.now()}_${user.uid.slice(0, 8)}`;
+              await fs.setDoc(`ratingAbuseAlerts/${alertId}`, {
+                alertId,
+                uid: user.uid,
+                assetId,
+                stars: 1,
+                consecutiveCount: consecutiveOneStars + 1,
+                type: "NEGATIVE_BRIGADING",
+                status: "OPEN",
+                createdAt: new Date().toISOString(),
+              });
+            }
+          }
+
           const ratingPath = "contentRatings/" + assetId + "_" + user.uid;
           const result = await fs.transact<{
             ratingCount: number;

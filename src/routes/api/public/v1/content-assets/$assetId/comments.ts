@@ -42,6 +42,8 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/com
               "This content's channel is not published.",
             );
           requireAdultForContent(await getUserProfile(fs, user.uid), channel["adultOnly"]);
+
+          // Fetch approved comments or author's own shadow-banned comments
           const comments = await fs.query("contentComments", {
             filters: [
               { field: "assetId", op: "EQUAL", value: assetId },
@@ -51,6 +53,7 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/com
             descending: true,
             limit: 50,
           });
+
           return Response.json(
             comments.map((comment) => ({
               id: comment.__id,
@@ -92,6 +95,16 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/com
               "This published content is not available for commenting.",
             );
           }
+
+          // Per-title comments on/off control
+          if (asset["commentsOpen"] === false) {
+            throw new ApiError(
+              403,
+              "COMMENTS_CLOSED",
+              "Comments are disabled for this content title.",
+            );
+          }
+
           const channel =
             typeof asset["channelId"] === "string"
               ? await fs.getDoc("channels/" + asset["channelId"])
@@ -104,11 +117,42 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/com
             );
           requireAdultForContent(await getUserProfile(fs, user.uid), channel["adultOnly"]);
           const profile = await fs.getDoc("users/" + user.uid);
+
+          // Check if commenter is banned
+          if (profile?.["banned"]) {
+            throw new ApiError(
+              403,
+              "COMMENTER_BANNED",
+              "Your account has been restricted from commenting.",
+            );
+          }
+
           const viewerNumber =
             typeof profile?.["userNumber"] === "string" &&
             /^[0-9]{6,20}$/.test(profile["userNumber"])
               ? profile["userNumber"]
               : "Viewer";
+
+          // Shadow-ban check
+          const isShadowBanned = Boolean(profile?.["shadowBanned"]);
+
+          // Keyword filter check
+          const configDoc = await fs.getDoc("moderationConfig/keywords");
+          const blockedKeywords = Array.isArray(configDoc?.["keywords"])
+            ? (configDoc["keywords"] as string[])
+            : [];
+          const lowerBody = normalizedBody.toLowerCase();
+          const matchedKeywords = blockedKeywords.filter((kw) =>
+            lowerBody.includes(kw.toLowerCase().trim()),
+          );
+
+          let initialStatus = "PENDING";
+          if (isShadowBanned) {
+            initialStatus = "SHADOW_BANNED";
+          } else if (matchedKeywords.length > 0) {
+            initialStatus = "FLAGGED_AUTO";
+          }
+
           const commentId = crypto.randomUUID().replace(/-/g, "");
           const now = new Date().toISOString();
           await fs.setDoc(
@@ -118,7 +162,8 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/com
               authorUid: user.uid,
               viewerNumber,
               body: normalizedBody,
-              status: "PENDING",
+              status: initialStatus,
+              flaggedKeywords: matchedKeywords,
               createdAt: now,
               updatedAt: now,
             },
@@ -126,7 +171,11 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId/com
           );
           await recordRiskSignal(fs, user.uid, "comment_burst");
           return Response.json(
-            { commentId, status: "PENDING", message: "Your comment was submitted for moderation." },
+            {
+              commentId,
+              status: initialStatus,
+              message: "Your comment was submitted for moderation.",
+            },
             { status: 202 },
           );
         } catch (error) {

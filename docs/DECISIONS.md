@@ -201,3 +201,10 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
   - Providers (`/zillionaire/providers` & `/api/public/v1/zillionaire/providers/*`): Approved email allowlist management (add email, Verify, Grant, Revoke, Suspend) with immediate active session invalidation on Revoke. Licence and contract vault for binding agreements and valid date windows, monthly settlement statement review, dispute resolution portal, and non-metered test playback verification for linear FAST channels.
   - Sign-up Gating: Provider Console sign-up strictly limited to approved emails (returning exact message `Access denied. Contact tv@bqsqwad.com`), while Producer Console sign-up remains open.
   - Route Access & Quality: 220 routes catalogued in `ROUTE-ACCESS-MATRIX.md` with full role-matrix validation, clean public-text scan, and 2,697 passing Vitest tests.
+
+## Batch V4-02 Batch 08 — Moderation & Community Safety
+- 2026-11-19 — Implemented Moderation & Community Safety engine:
+  - Zillionaire Moderation Console (`/zillionaire/moderation` & `/api/public/v1/zillionaire/moderation/`): Comments queue with approve, hide, delete, ban commenter, and shadow-ban actions; user reports registry with resolution notes; auto-flagging keyword dictionary filter; rating abuse & brigading detection; and per-title comments on/off control respecting `commentsOpen`.
+  - Viewer Reporting & Gating (`/api/public/v1/content-reports/`): Viewers submit reports on comments, assets, channels or users with rate-limiting. Comments endpoint enforces `commentsOpen !== false`, bans, shadow-bans, and keyword checks. Rating endpoint detects high-velocity and 1-star brigading anomalies.
+  - Android & Web Client Integrity: Verified web player comments & rating integration and updated Android `CatalogApi` and `CatalogRepository` with complete data models and methods.
+  - Route Access & Tests: Catalogued 222 routes in `ROUTE-ACCESS-MATRIX.md`, verified role-matrix expectations, passed clean public-text scan, and passed all 2,717 Vitest tests across 92 files.

@@ -2,19 +2,19 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **220**
+Total scanned routes: **222**
 
 ### Summary by Guard Class
 
 | Guard Class | Count |
 |---|---|
 | `public` | 13 |
-| `viewer` | 76 |
+| `viewer` | 77 |
 | `webhook signature` | 1 |
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 100 |
+| `zillionaire module` | 101 |
 | `producer` | 4 |
 
 ### Inventory
@@ -46,6 +46,7 @@ Total scanned routes: **220**
 | `/api/public/v1/content-assets/$assetId` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/content-assets/$assetId.ts` |
 | `/api/public/v1/content-assets/$assetId/comments` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/content-assets/$assetId/comments.ts` |
 | `/api/public/v1/content-assets/$assetId/rating` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/content-assets/$assetId/rating.ts` |
+| `/api/public/v1/content-reports/` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/content-reports/index.ts` |
 | `/api/public/v1/continue-watching/` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/continue-watching/index.ts` |
 | `/api/public/v1/continue-watching/position` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/continue-watching/position.ts` |
 | `/api/public/v1/devices/` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/devices/index.ts` |
@@ -227,6 +228,7 @@ Total scanned routes: **220**
 | `/zillionaire/errors` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.errors.tsx` |
 | `/zillionaire/features` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.features.tsx` |
 | `/zillionaire/firebase-schema` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.firebase-schema.tsx` |
+| `/zillionaire/moderation` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.moderation.tsx` |
 | `/zillionaire/movies` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.movies.tsx` |
 | `/zillionaire/payments` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.payments.tsx` |
 | `/zillionaire/payouts` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.payouts.tsx` |

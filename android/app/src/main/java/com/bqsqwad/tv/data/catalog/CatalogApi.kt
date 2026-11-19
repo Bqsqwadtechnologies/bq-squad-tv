@@ -38,6 +38,33 @@ data class SearchResponse(
     val results: List<ChannelSummary> = emptyList(),
 )
 
+data class CommentItem(
+    val id: String,
+    val body: String,
+    val viewerNumber: String = "Viewer",
+    val createdAt: String? = null,
+)
+
+data class SubmitCommentRequest(
+    val body: String,
+)
+
+data class SubmitCommentResponse(
+    val commentId: String,
+    val status: String,
+    val message: String,
+)
+
+data class SubmitRatingRequest(
+    val stars: Int,
+)
+
+data class SubmitRatingResponse(
+    val ratingCount: Int,
+    val averageStars: Double,
+    val updated: Boolean,
+)
+
 interface CatalogApi {
     @GET("v1/catalog/home")
     suspend fun home(
@@ -58,4 +85,24 @@ interface CatalogApi {
         @Header("Authorization") bearer: String,
         @Path("channelId") channelId: String,
     ): ChannelDetailResponse
+
+    @GET("v1/content-assets/{assetId}/comments")
+    suspend fun comments(
+        @Header("Authorization") bearer: String,
+        @Path("assetId") assetId: String,
+    ): List<CommentItem>
+
+    @POST("v1/content-assets/{assetId}/comments")
+    suspend fun submitComment(
+        @Header("Authorization") bearer: String,
+        @Path("assetId") assetId: String,
+        @Body request: SubmitCommentRequest,
+    ): SubmitCommentResponse
+
+    @POST("v1/content-assets/{assetId}/rating")
+    suspend fun submitRating(
+        @Header("Authorization") bearer: String,
+        @Path("assetId") assetId: String,
+        @Body request: SubmitRatingRequest,
+    ): SubmitRatingResponse
 }
