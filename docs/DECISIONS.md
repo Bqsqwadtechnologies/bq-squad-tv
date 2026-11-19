@@ -252,3 +252,9 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Supported intro/recap/outro skip markers with timestamps, binge-watch next episode triggers, coming-soon placeholders, and trailer/cast/crew metadata.
 - Enforced strict Zillionaire module authorization (`content` / `catalog`), audit logging on all lifecycle changes, and verified route access matrix coverage (238 routes).
 - Verified zero-admin strings test, public-text scan green, dev build passing, and full test suite passing cleanly (99 suites / 2,918 tests).
+
+### V5-02 Batch 3: Movies Library Management & Curation
+- Built `/api/public/v1/zillionaire/movies/curation/` for shelves, hero rotation schedules, and per-title curation overrides.
+- Enhanced `/zillionaire/movies` with dedicated tabs for Catalogue & Takedowns, Collections & Shelves (Trending, New Releases, For You, custom rows with pin/rank), Featured Hero Rotation with start/end schedules, and Regional Geo-availability windows with Price Per Minute overrides and Free Preview minutes.
+- Wired strict content module authorization, full audit logging for all curation updates, and verified 239 routes in the route access matrix.
+- Verified zero-admin strings test, public-text scan clean, dev build passing, and full test suite passing cleanly (100 suites / 2,933 tests).

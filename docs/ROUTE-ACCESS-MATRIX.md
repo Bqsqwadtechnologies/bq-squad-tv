@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **238**
+Total scanned routes: **239**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **238**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 117 |
+| `zillionaire module` | 118 |
 | `producer` | 4 |
 
 ### Inventory
@@ -167,6 +167,7 @@ Total scanned routes: **238**
 | `/api/public/v1/zillionaire/finance` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/finance.ts` |
 | `/api/public/v1/zillionaire/migration/zillionaire` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/migration/zillionaire.ts` |
 | `/api/public/v1/zillionaire/moderation/` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/moderation/index.ts` |
+| `/api/public/v1/zillionaire/movies/curation/` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/movies/curation/index.ts` |
 | `/api/public/v1/zillionaire/notifications` | `zillionaire module` | requireZillionaire (Module: notifications) | `src/routes/api/public/v1/zillionaire/notifications.ts` |
 | `/api/public/v1/zillionaire/operations/live` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/operations/live.ts` |
 | `/api/public/v1/zillionaire/overview` | `zillionaire module` | requireZillionaire (Module: overview) | `src/routes/api/public/v1/zillionaire/overview.ts` |
@@ -194,7 +195,7 @@ Total scanned routes: **238**
 | `/api/public/v1/zillionaire/secret-health` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/secret-health.ts` |
 | `/api/public/v1/zillionaire/security/events` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/security/events.ts` |
 | `/api/public/v1/zillionaire/security/lookup-actor` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/security/lookup-actor.ts` |
-| `/api/public/v1/zillionaire/series/` | `zillionaire module` | requireZillionaire (Zillionaire Owner / Scope Check) | `src/routes/api/public/v1/zillionaire/series/index.ts` |
+| `/api/public/v1/zillionaire/series/` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/series/index.ts` |
 | `/api/public/v1/zillionaire/storage/backups/restore` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/storage/backups/restore.ts` |
 | `/api/public/v1/zillionaire/storage/destinations` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/storage/destinations.ts` |
 | `/api/public/v1/zillionaire/storage/discover` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/storage/discover.ts` |

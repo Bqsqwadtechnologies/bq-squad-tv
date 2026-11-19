@@ -254,6 +254,7 @@ import { Route as ApiPublicV1ZillionaireContentAssetsAssetIdReadyRouteImport } f
 import { Route as ApiPublicV1ZillionaireContentAssetsAssetIdReprocessRouteImport } from './routes/api/public/v1/zillionaire/content-assets/$assetId/reprocess'
 import { Route as ApiPublicV1ZillionaireContentAssetsAssetIdRightsRouteImport } from './routes/api/public/v1/zillionaire/content-assets/$assetId/rights'
 import { Route as ApiPublicV1ZillionaireContentCommentsCommentIdModerateRouteImport } from './routes/api/public/v1/zillionaire/content-comments/$commentId/moderate'
+import { Route as ApiPublicV1ZillionaireMoviesCurationIndexRouteImport } from './routes/api/public/v1/zillionaire/movies/curation/index'
 import { Route as ApiPublicV1ZillionairePaymentsPaymentIdReverseRouteImport } from './routes/api/public/v1/zillionaire/payments/$paymentId/reverse'
 import { Route as ApiPublicV1ZillionairePayoutsPayoutIdReviewRouteImport } from './routes/api/public/v1/zillionaire/payouts/$payoutId/review'
 import { Route as ApiPublicV1ZillionairePayoutsPayoutIdSettleRouteImport } from './routes/api/public/v1/zillionaire/payouts/$payoutId/settle'
@@ -1665,6 +1666,12 @@ const ApiPublicV1ZillionaireContentCommentsCommentIdModerateRoute =
     path: '/api/public/v1/zillionaire/content-comments/$commentId/moderate',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireMoviesCurationIndexRoute =
+  ApiPublicV1ZillionaireMoviesCurationIndexRouteImport.update({
+    id: '/api/public/v1/zillionaire/movies/curation/',
+    path: '/api/public/v1/zillionaire/movies/curation/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionairePaymentsPaymentIdReverseRoute =
   ApiPublicV1ZillionairePaymentsPaymentIdReverseRouteImport.update({
     id: '/api/public/v1/zillionaire/payments/$paymentId/reverse',
@@ -2013,6 +2020,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/users/$uid/permissions': typeof ApiPublicV1ZillionaireUsersUidPermissionsRoute
   '/api/public/v1/zillionaire/users/$uid/risk': typeof ApiPublicV1ZillionaireUsersUidRiskRoute
   '/api/public/v1/zillionaire/users/$uid/status': typeof ApiPublicV1ZillionaireUsersUidStatusRoute
+  '/api/public/v1/zillionaire/movies/curation/': typeof ApiPublicV1ZillionaireMoviesCurationIndexRoute
   '/api/public/v1/zillionaire/users/$uid/': typeof ApiPublicV1ZillionaireUsersUidIndexRoute
   '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
   '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute
@@ -2274,6 +2282,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/users/$uid/permissions': typeof ApiPublicV1ZillionaireUsersUidPermissionsRoute
   '/api/public/v1/zillionaire/users/$uid/risk': typeof ApiPublicV1ZillionaireUsersUidRiskRoute
   '/api/public/v1/zillionaire/users/$uid/status': typeof ApiPublicV1ZillionaireUsersUidStatusRoute
+  '/api/public/v1/zillionaire/movies/curation': typeof ApiPublicV1ZillionaireMoviesCurationIndexRoute
   '/api/public/v1/zillionaire/users/$uid': typeof ApiPublicV1ZillionaireUsersUidIndexRoute
   '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
   '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute
@@ -2537,6 +2546,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/users/$uid/permissions': typeof ApiPublicV1ZillionaireUsersUidPermissionsRoute
   '/api/public/v1/zillionaire/users/$uid/risk': typeof ApiPublicV1ZillionaireUsersUidRiskRoute
   '/api/public/v1/zillionaire/users/$uid/status': typeof ApiPublicV1ZillionaireUsersUidStatusRoute
+  '/api/public/v1/zillionaire/movies/curation/': typeof ApiPublicV1ZillionaireMoviesCurationIndexRoute
   '/api/public/v1/zillionaire/users/$uid/': typeof ApiPublicV1ZillionaireUsersUidIndexRoute
   '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
   '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute
@@ -2801,6 +2811,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/users/$uid/permissions'
     | '/api/public/v1/zillionaire/users/$uid/risk'
     | '/api/public/v1/zillionaire/users/$uid/status'
+    | '/api/public/v1/zillionaire/movies/curation/'
     | '/api/public/v1/zillionaire/users/$uid/'
     | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
     | '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
@@ -3062,6 +3073,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/users/$uid/permissions'
     | '/api/public/v1/zillionaire/users/$uid/risk'
     | '/api/public/v1/zillionaire/users/$uid/status'
+    | '/api/public/v1/zillionaire/movies/curation'
     | '/api/public/v1/zillionaire/users/$uid'
     | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
     | '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
@@ -3324,6 +3336,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/users/$uid/permissions'
     | '/api/public/v1/zillionaire/users/$uid/risk'
     | '/api/public/v1/zillionaire/users/$uid/status'
+    | '/api/public/v1/zillionaire/movies/curation/'
     | '/api/public/v1/zillionaire/users/$uid/'
     | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
     | '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
@@ -3558,6 +3571,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireUsersUidPermissionsRoute: typeof ApiPublicV1ZillionaireUsersUidPermissionsRoute
   ApiPublicV1ZillionaireUsersUidRiskRoute: typeof ApiPublicV1ZillionaireUsersUidRiskRoute
   ApiPublicV1ZillionaireUsersUidStatusRoute: typeof ApiPublicV1ZillionaireUsersUidStatusRoute
+  ApiPublicV1ZillionaireMoviesCurationIndexRoute: typeof ApiPublicV1ZillionaireMoviesCurationIndexRoute
   ApiPublicV1ZillionaireUsersUidIndexRoute: typeof ApiPublicV1ZillionaireUsersUidIndexRoute
   ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute: typeof ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute
 }
@@ -5279,6 +5293,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireContentCommentsCommentIdModerateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/movies/curation/': {
+      id: '/api/public/v1/zillionaire/movies/curation/'
+      path: '/api/public/v1/zillionaire/movies/curation'
+      fullPath: '/api/public/v1/zillionaire/movies/curation/'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireMoviesCurationIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/payments/$paymentId/reverse': {
       id: '/api/public/v1/zillionaire/payments/$paymentId/reverse'
       path: '/api/public/v1/zillionaire/payments/$paymentId/reverse'
@@ -5952,6 +5973,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireUsersUidRiskRoute,
   ApiPublicV1ZillionaireUsersUidStatusRoute:
     ApiPublicV1ZillionaireUsersUidStatusRoute,
+  ApiPublicV1ZillionaireMoviesCurationIndexRoute:
+    ApiPublicV1ZillionaireMoviesCurationIndexRoute,
   ApiPublicV1ZillionaireUsersUidIndexRoute:
     ApiPublicV1ZillionaireUsersUidIndexRoute,
   ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute:
