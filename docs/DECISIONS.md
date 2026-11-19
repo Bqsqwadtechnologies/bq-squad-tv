@@ -184,3 +184,6 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 
 ## Batch V4-02 Batch 03 — Content Control (Veto Power)
 - 2026-11-19 — Implemented Movies & series veto control screen (`zillionaire.movies.tsx`) with instant playback block, 30-day soft delete, in-console master playlist preview player, copyright complaint takedown workflow, reprocess job queuing, metadata editing, and multi-asset bulk actions.
+
+## Batch V4-02 Batch 04 — Blocked Content Log
+- 2026-11-19 — Implemented dedicated Blocked Content compliance registry (`zillionaire.blocked-content.tsx`), DMCA/copyright complaint notice inspection modal, and one-click owner instant unblock route (`/api/public/v1/zillionaire/blocked-content/$assetId/unblock`).
