@@ -123,7 +123,19 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
-      {showLegalFooter ? <footer className="border-t border-border bg-background px-5 py-6 text-center text-xs text-muted-foreground"><nav aria-label="Legal and contact links" className="flex flex-wrap justify-center gap-x-5 gap-y-3"><a href="/legal/privacy-policy" className="hover:text-foreground">Privacy Policy</a><a href="/legal/terms" className="hover:text-foreground">Terms</a><a href="/legal/privacy-policy" className="hover:text-foreground">Cookie notice</a><a href="mailto:tv@bqsqwad.com" className="hover:text-foreground">Contact</a></nav><p className="mt-3">© BQ SQWAD TV</p></footer> : null}
+      {showLegalFooter ? (
+        <footer className="border-t border-border bg-background px-5 py-6 pb-28 sm:pb-8 text-center text-xs text-muted-foreground">
+          <nav aria-label="Legal and console links" className="flex flex-wrap justify-center items-center gap-x-5 gap-y-3">
+            <a href="/legal/privacy-policy" className="hover:text-foreground">Privacy Policy</a>
+            <a href="/legal/terms" className="hover:text-foreground">Terms</a>
+            <a href="/legal/cookie" className="hover:text-foreground">Cookie notice</a>
+            <a href="/producer" className="font-semibold text-primary/80 hover:text-primary">Producer Console</a>
+            <a href="/provider" className="font-semibold text-primary/80 hover:text-primary">Provider Console</a>
+            <a href="mailto:tv@bqsqwad.com" className="hover:text-foreground">Contact</a>
+          </nav>
+          <p className="mt-3">© BQ SQWAD TV</p>
+        </footer>
+      ) : null}
     </QueryClientProvider>
   );
 }

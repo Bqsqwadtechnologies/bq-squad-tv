@@ -45,31 +45,53 @@ export const Route = createFileRoute("/account")({
   }),
 });
 
+let cachedGoogleClientId: string | null = null;
+
 function GoogleSignInButton({
   clientId,
   onCredential,
+  disabled = false,
 }: {
   clientId: string;
   onCredential: (credential: string) => void;
+  disabled?: boolean;
 }) {
   const elementRef = useRef<HTMLDivElement>(null);
+  const onCredentialRef = useRef(onCredential);
+  onCredentialRef.current = onCredential;
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     const element = elementRef.current;
-    if (!clientId || !element) return;
+    if (!clientId) {
+      setLoadError(true);
+      return;
+    }
+    if (!element) return;
+
+    let cancelled = false;
 
     const renderButton = () => {
-      if (!window.google || !element.isConnected) return;
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: response => onCredential(response.credential),
-      });
-      window.google.accounts.id.renderButton(element, {
-        theme: "filled_blue",
-        size: "large",
-        shape: "pill",
-        width: Math.min(320, element.clientWidth || 320),
-      });
+      if (cancelled || !window.google || !element.isConnected) return;
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: response => onCredentialRef.current(response.credential),
+        });
+        window.google.accounts.id.renderButton(element, {
+          theme: "filled_blue",
+          size: "large",
+          shape: "pill",
+          width: Math.min(320, element.clientWidth || 320),
+        });
+      } catch (err) {
+        setLoadError(true);
+        void fetch("/api/public/v1/monitoring/client-errors", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ message: "Google GSI render error: " + String(err), context: "google-auth-button" }),
+        }).catch(() => undefined);
+      }
     };
 
     let script = document.querySelector<HTMLScriptElement>("script[data-google-identity='true']");
@@ -77,6 +99,16 @@ function GoogleSignInButton({
       renderButton();
     } else if (script) {
       script.addEventListener("load", renderButton, { once: true });
+      script.addEventListener("error", () => {
+        if (!cancelled) {
+          setLoadError(true);
+          void fetch("/api/public/v1/monitoring/client-errors", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ message: "Google GSI script load failure", context: "google-auth-script" }),
+          }).catch(() => undefined);
+        }
+      }, { once: true });
     } else {
       script = document.createElement("script");
       script.src = "https://accounts.google.com/gsi/client";
@@ -84,13 +116,50 @@ function GoogleSignInButton({
       script.defer = true;
       script.dataset["googleIdentity"] = "true";
       script.addEventListener("load", renderButton, { once: true });
+      script.addEventListener("error", () => {
+        if (!cancelled) {
+          setLoadError(true);
+          void fetch("/api/public/v1/monitoring/client-errors", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ message: "Google GSI script load failure", context: "google-auth-script" }),
+          }).catch(() => undefined);
+        }
+      }, { once: true });
       document.head.appendChild(script);
     }
 
     return () => {
-      script?.removeEventListener("load", renderButton);
+      cancelled = true;
     };
-  }, [clientId, onCredential]);
+  }, [clientId]);
+
+  if (!clientId || loadError) {
+    return (
+      <div className="mt-4 flex flex-col items-center justify-center gap-1.5">
+        <button
+          type="button"
+          disabled
+          className="flex h-11 w-full max-w-[320px] items-center justify-center gap-2 rounded-full border border-white/20 bg-white/5 px-4 text-sm font-semibold text-white/50 cursor-not-allowed"
+        >
+          <svg className="h-4 w-4 opacity-50" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          Continue with Google
+        </button>
+        <button
+          type="button"
+          onClick={() => { setLoadError(false); window.location.reload(); }}
+          className="text-xs text-cyan-200 underline hover:text-white"
+        >
+          Google sign-in unavailable. Tap to retry.
+        </button>
+      </div>
+    );
+  }
 
   return <div ref={elementRef} className="mt-4 flex min-h-11 justify-center" />;
 }
@@ -109,6 +178,8 @@ function AccountPage() {
   const [accountEmail, setAccountEmail] = useState("");
   const [countryCode, setCountryCode] = useState("US");
   const [walletCurrency, setWalletCurrency] = useState("USD");
+  const [walletBalanceMinor, setWalletBalanceMinor] = useState<number | null>(null);
+  const [showSettingsView, setShowSettingsView] = useState(false);
   const [countryReady, setCountryReady] = useState(false);
   const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
   const [legalConsentAccepted, setLegalConsentAccepted] = useState(false);
@@ -123,14 +194,19 @@ function AccountPage() {
     document.documentElement.classList.toggle("dark", initialTheme === "dark");
     document.documentElement.classList.toggle("light", initialTheme === "light");
     let active = true;
-    void fetch("/api/public/v1/auth/web/config", { cache: "no-store" })
-      .then(response => response.json() as Promise<{ googleClientId?: string }>)
-      .then(config => {
-        if (active) setGoogleClientId(config.googleClientId ?? "");
-      })
-      .catch(() => {
-        if (active) setGoogleClientId("");
-      });
+    if (cachedGoogleClientId !== null) {
+      setGoogleClientId(cachedGoogleClientId);
+    } else {
+      void fetch("/api/public/v1/auth/web/config", { cache: "no-store" })
+        .then(response => response.json() as Promise<{ googleClientId?: string }>)
+        .then(config => {
+          cachedGoogleClientId = config.googleClientId ?? "";
+          if (active) setGoogleClientId(cachedGoogleClientId);
+        })
+        .catch(() => {
+          if (active) setGoogleClientId("");
+        });
+    }
     void (async () => {
       const token = await restoreWebSession();
       if (!token || !active) return;
@@ -200,20 +276,35 @@ function AccountPage() {
       headers: await getWebAuthHeaders(token),
       cache: "no-store",
     });
-    if (!response.ok) return;
-    const data = await response.json() as { countryCode?: string | null; currency?: string; walletCurrencyLocked?: boolean };
-    setCountryReady(true);
-    if (data.countryCode) {
-      setCountryCode(data.countryCode);
-    } else if (!data.walletCurrencyLocked) {
-      const region = new Intl.Locale(navigator.language).region;
-      if (region && /^[A-Z]{2}$/.test(region)) {
-        setCountryCode(region);
-        await saveAccountCountry(region, token, false);
-        return;
+    if (response.ok) {
+      const data = await response.json() as { countryCode?: string | null; currency?: string; walletCurrencyLocked?: boolean };
+      setCountryReady(true);
+      if (data.countryCode) {
+        setCountryCode(data.countryCode);
+      } else if (!data.walletCurrencyLocked) {
+        const region = new Intl.Locale(navigator.language).region;
+        if (region && /^[A-Z]{2}$/.test(region)) {
+          setCountryCode(region);
+          await saveAccountCountry(region, token, false);
+          return;
+        }
       }
+      setWalletCurrency(data.currency ?? "USD");
     }
-    setWalletCurrency(data.currency ?? "USD");
+    // Also load wallet balance
+    try {
+      const walletRes = await fetch("/api/public/v1/wallet", {
+        headers: await getWebAuthHeaders(token),
+        cache: "no-store",
+      });
+      if (walletRes.ok) {
+        const wdata = await walletRes.json() as { balanceMinor?: number; currency?: string };
+        if (typeof wdata.balanceMinor === "number") setWalletBalanceMinor(wdata.balanceMinor);
+        if (wdata.currency) setWalletCurrency(wdata.currency);
+      }
+    } catch {
+      // Wallet balance optional
+    }
   }
 
   async function saveAccountCountry(nextCountry: string, token?: string, showStatus = true) {
@@ -492,73 +583,145 @@ function AccountPage() {
             </>
           ) : signedIn ? (
             <>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Account active</p>
-              <h1 className="mt-3 text-2xl font-black">Welcome back</h1>
-              <p className="mt-3 break-all text-sm text-blue-100/70">{accountEmail}</p>
-              <p className="mt-5 text-sm leading-6 text-blue-100/70">
-                Your account is signed in. Your wallet uses the currency assigned to your account country.
-              </p>
-              <label className="mt-5 block text-sm font-semibold text-blue-50">
-                Account country
-                <select
-                  value={countryCode}
-                  onChange={event => void saveAccountCountry(event.target.value)}
-                  className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-3 py-3 text-white"
+              <div className="flex items-center gap-4 border-b border-white/10 pb-5">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-cyan-400 to-blue-600 text-2xl font-black text-[#031039] shadow-lg shadow-cyan-500/20">
+                  {(accountEmail[0] || "V").toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="inline-block rounded-full bg-cyan-400/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-cyan-300">
+                    Viewer
+                  </span>
+                  <h1 className="mt-1 text-xl font-black truncate">{accountEmail.split("@")[0]}</h1>
+                  <p className="text-xs text-blue-100/60 truncate">{accountEmail}</p>
+                </div>
+              </div>
+
+              {/* Wallet Balance Card */}
+              <div className="mt-5 rounded-2xl border border-cyan-300/20 bg-gradient-to-r from-[#0d2258] to-[#07173e] p-5 shadow-inner">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">Available Balance</span>
+                  <a href="/wallet" className="text-xs font-bold text-cyan-200 underline hover:text-white">Top Up</a>
+                </div>
+                <div className="mt-2 text-2xl font-black text-white">
+                  {walletBalanceMinor !== null ? (walletBalanceMinor / 100).toFixed(2) : "0.00"} {walletCurrency}
+                </div>
+                <p className="mt-1 text-[11px] text-blue-100/50">Wallet currency is tied to your account country.</p>
+              </div>
+
+              {/* Account Navigation Grid */}
+              <nav aria-label="Account shortcuts" className="mt-5 grid grid-cols-2 gap-3">
+                <a href="/wallet" className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition">
+                  <span>My Wallet</span>
+                  <span className="text-cyan-300 text-xs font-bold">›</span>
+                </a>
+                <a href="/wallet#purchases" className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition">
+                  <span>My Purchases</span>
+                  <span className="text-cyan-300 text-xs font-bold">›</span>
+                </a>
+                <a href="/history" className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition">
+                  <span>Watch History</span>
+                  <span className="text-cyan-300 text-xs font-bold">›</span>
+                </a>
+                <a href="/notifications" className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition">
+                  <span>Notifications</span>
+                  <span className="text-cyan-300 text-xs font-bold">›</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setShowSettingsView(v => !v)}
+                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition text-left"
                 >
-                  <option value="US">United States — USD</option>
-                  <option value="NG">Nigeria — NGN</option>
-                  <option value="GB">United Kingdom — GBP</option>
-                  <option value="GH">Ghana — GHS</option>
-                  <option value="KE">Kenya — KES</option>
-                  <option value="ZA">South Africa — ZAR</option>
-                  <option value="CA">Canada — CAD</option>
-                  <option value="AU">Australia — AUD</option>
-                  <option value="IN">India — INR</option>
-                  <option value="DE">Germany — EUR</option>
-                  <option value="FR">France — EUR</option>
-                  <option value="JP">Japan — JPY</option>
-                </select>
-                <span className="mt-1 block text-xs text-blue-100/55">Wallet currency: {walletCurrency}. It cannot be changed after your wallet is established.</span>
-              </label>
-              <button
-                type="button"
-                disabled={!countryReady || busy}
-                onClick={() => void handleContinue()}
-                aria-label="Continue to BQ SQWAD TV"
-                className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 text-sm font-extrabold text-[#031039] transition hover:brightness-110 disabled:pointer-events-none disabled:opacity-50"
-              >
-                <img src="/brand/bq-sqwad-tv-logo.png" alt="" className="h-8 w-auto max-w-[120px] object-contain" />
-                <span>Continue</span>
-              </button>
-              <nav aria-label="Account shortcuts" className="mt-6 grid grid-cols-2 gap-3">
-                <a href="/wallet" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">My Wallet</a>
-                <a href="/wallet#transactions" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">My Purchases</a>
-                <a href="/history" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">Watch History</a>
-                <a href="/notifications" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">Notifications</a>
-                <a href="/help" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">Help &amp; Support</a>
-                <a href="/about" className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-3 text-sm font-bold text-blue-50">About BQ SQWAD TV</a>
+                  <span>Settings</span>
+                  <span className="text-cyan-300 text-xs font-bold">{showSettingsView ? "▴" : "▾"}</span>
+                </button>
+                <a href="/help" className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition">
+                  <span>Help &amp; Support</span>
+                  <span className="text-cyan-300 text-xs font-bold">›</span>
+                </a>
               </nav>
-              <details className="mt-5 rounded-xl border border-white/10 p-3">
-                <summary className="cursor-pointer text-sm font-semibold text-blue-100/70">Account security</summary>
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => void handleRevokeAllSessions()}
-                                className="mt-3 w-full rounded-xl border border-cyan-300/25 px-4 py-3 text-sm font-bold text-cyan-100 hover:bg-cyan-300/5 disabled:opacity-50"
-                              >
-                                {busy ? "Please wait…" : "Sign out on all devices"}
-                              </button>
-                              <button
-                                type="button"
-                                disabled={busy}
-                                onClick={() => void handleSignOut()}
-                                className="mt-7 w-full rounded-xl border border-white/15 px-4 py-3 text-sm font-bold hover:bg-white/5 disabled:opacity-50"
-                              >
-                                {busy ? "Please wait…" : "Sign out"}
-                              </button>
-              </details>
-            </>
-          ) : verificationPending ? (
+
+              {/* Collapsible Settings view */}
+              {showSettingsView && (
+                <div className="mt-4 rounded-xl border border-white/10 bg-[#030b2a]/80 p-4 space-y-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">Settings &amp; Preferences</p>
+                  <label className="block text-xs font-semibold text-blue-100/80">
+                    Account Country
+                    <select
+                      value={countryCode}
+                      onChange={event => void saveAccountCountry(event.target.value)}
+                      className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#030b2a] px-3 py-2 text-sm text-white"
+                    >
+                      <option value="US">United States — USD</option>
+                      <option value="NG">Nigeria — NGN</option>
+                      <option value="GB">United Kingdom — GBP</option>
+                      <option value="GH">Ghana — GHS</option>
+                      <option value="KE">Kenya — KES</option>
+                      <option value="ZA">South Africa — ZAR</option>
+                      <option value="CA">Canada — CAD</option>
+                      <option value="AU">Australia — AUD</option>
+                      <option value="IN">India — INR</option>
+                      <option value="DE">Germany — EUR</option>
+                      <option value="FR">France — EUR</option>
+                      <option value="JP">Japan — JPY</option>
+                    </select>
+                    <span className="mt-1 block text-[11px] text-blue-100/50">
+                      Wallet currency: {walletCurrency}. It cannot be changed after your wallet is established.
+                    </span>
+                  </label>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void handleRevokeAllSessions()}
+                    className="w-full rounded-lg border border-cyan-300/25 px-3 py-2 text-xs font-bold text-cyan-100 hover:bg-cyan-300/5 disabled:opacity-50"
+                  >
+                    {busy ? "Please wait…" : "Sign out on all devices"}
+                  </button>
+                </div>
+              )}
+
+              {/* Consoles Section */}
+              <div className="mt-6 border-t border-white/10 pt-5">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Consoles</p>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <a
+                    href="/producer"
+                    className="flex flex-col items-center justify-center rounded-xl border border-cyan-400/20 bg-[#030b2a] p-3 text-center text-sm font-bold text-cyan-100 hover:border-cyan-300 hover:bg-cyan-500/5 transition"
+                  >
+                    <span>Producer Console</span>
+                    <span className="mt-0.5 text-[10px] font-normal text-blue-100/50">Content management</span>
+                  </a>
+                  <a
+                    href="/provider"
+                    className="flex flex-col items-center justify-center rounded-xl border border-cyan-400/20 bg-[#030b2a] p-3 text-center text-sm font-bold text-cyan-100 hover:border-cyan-300 hover:bg-cyan-500/5 transition"
+                  >
+                    <span>Provider Console</span>
+                    <span className="mt-0.5 text-[10px] font-normal text-blue-100/50">Channel licensing</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Sign out and Continue Buttons */}
+              <div className="mt-6 space-y-3">
+                <button
+                  type="button"
+                  disabled={!countryReady || busy}
+                  onClick={() => void handleContinue()}
+                  aria-label="Continue to BQ SQWAD TV"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 text-sm font-extrabold text-[#031039] transition hover:brightness-110 disabled:opacity-50"
+                >
+                  <img src="/brand/bq-sqwad-tv-logo.png" alt="" className="h-6 w-auto object-contain" />
+                  <span>Continue Watching</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void handleSignOut()}
+                  className="w-full rounded-xl border border-white/15 px-4 py-2.5 text-xs font-bold text-blue-100/70 hover:text-white hover:bg-white/5 disabled:opacity-50"
+                >
+                  {busy ? "Please wait…" : "Sign out"}
+                </button>
+              </div>
+            </>) : verificationPending ? (
             <>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Email verification</p>
               <h1 className="mt-3 text-2xl font-black">Check your inbox</h1>

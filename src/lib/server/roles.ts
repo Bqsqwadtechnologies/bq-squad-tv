@@ -16,6 +16,7 @@ export type AdminModule = ZillionaireModule;
 export type PlatformAccess = {
   roles: PlatformRole[];
   isZillionaireOwner: boolean;
+  needsOwnerVerification: boolean;
   zillionaireModules: ZillionaireModule[];
   adminModules: ZillionaireModule[]; // Backward-compat alias
   producerPlanActive: boolean;
@@ -33,6 +34,22 @@ export const ZILLIONAIRE_MODULES: ZillionaireModule[] = [
 
 // Backward-compatible constant alias
 export const ADMIN_MODULES = ZILLIONAIRE_MODULES;
+
+let warnedLegacyAdminSecret = false;
+
+export function getConfiguredOwnerEmail(): string {
+  const primary = (process.env["ZILLIONAIRE_EMAIL"] || "").trim().toLowerCase();
+  if (primary) return primary;
+  const fallback = (process.env["ADMIN_EMAIL"] || "").trim().toLowerCase();
+  if (fallback) {
+    if (!warnedLegacyAdminSecret) {
+      console.warn("[SECURITY_FALLBACK] ZILLIONAIRE_EMAIL is not set. Falling back to ADMIN_EMAIL. Please configure ZILLIONAIRE_EMAIL.");
+      warnedLegacyAdminSecret = true;
+    }
+    return fallback;
+  }
+  return "";
+}
 
 function stringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
@@ -95,14 +112,15 @@ export async function resolvePlatformAccess(
   }
 
   // Zillionaire owner resolution
-  // Strictly requires configured ZILLIONAIRE_EMAIL and verified email address
-  const configuredOwnerEmail = (process.env["ZILLIONAIRE_EMAIL"] || "").trim().toLowerCase();
+  // Strictly requires configured ZILLIONAIRE_EMAIL (or fallback ADMIN_EMAIL) and verified email address
+  const configuredOwnerEmail = getConfiguredOwnerEmail();
   const normalizedUserEmail = (effectiveEmail || "").trim().toLowerCase();
-  const isZillionaireOwner = Boolean(
+  const isOwnerCandidate = Boolean(
     configuredOwnerEmail &&
-    normalizedUserEmail === configuredOwnerEmail &&
-    isEmailVerified,
+    normalizedUserEmail === configuredOwnerEmail
   );
+  const isZillionaireOwner = isOwnerCandidate && isEmailVerified;
+  const needsOwnerVerification = isOwnerCandidate && !isEmailVerified;
 
   // The Zillionaire identity is the only top-level control identity.
   // Delegated access is expressed as individual module permissions, not an administrator role.
@@ -123,6 +141,7 @@ export async function resolvePlatformAccess(
   return {
     roles,
     isZillionaireOwner,
+    needsOwnerVerification,
     zillionaireModules: activeModules,
     adminModules: activeModules, // Backward-compat alias
     producerPlanActive,
@@ -133,7 +152,7 @@ export async function resolvePlatformAccess(
 
 export function isProtectedZillionaire(email: string | null): boolean {
   if (!email) return false;
-  const configuredOwnerEmail = (process.env["ZILLIONAIRE_EMAIL"] || "").trim().toLowerCase();
+  const configuredOwnerEmail = getConfiguredOwnerEmail();
   if (!configuredOwnerEmail) return false;
   return email.trim().toLowerCase() === configuredOwnerEmail;
 }

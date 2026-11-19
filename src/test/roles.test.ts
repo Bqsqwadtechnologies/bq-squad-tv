@@ -181,3 +181,46 @@ describe("Zillionaire migration and owner protection", () => {
     vi.unstubAllEnvs();
   });
 });
+
+
+describe("Batch 1 — Owner recognition and fallback requirements", () => {
+  it("matches owner email across case and surrounding whitespace variants", async () => {
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "   Owner.Main@Example.com   ");
+    const fs = fakeFirestore(null, null);
+    const access1 = await resolvePlatformAccess(fs, "u1", "owner.main@example.com", {}, true);
+    expect(access1.isZillionaireOwner).toBe(true);
+    expect(access1.needsOwnerVerification).toBe(false);
+
+    const access2 = await resolvePlatformAccess(fs, "u2", "  OWNER.MAIN@EXAMPLE.COM  ", {}, true);
+    expect(access2.isZillionaireOwner).toBe(true);
+    vi.unstubAllEnvs();
+  });
+
+  it("denies owner rights when owner email is unverified and flags needsOwnerVerification", async () => {
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
+    const fs = fakeFirestore(null, null);
+    const access = await resolvePlatformAccess(fs, "u1", "owner@example.com", {}, false);
+    expect(access.isZillionaireOwner).toBe(false);
+    expect(access.needsOwnerVerification).toBe(true);
+    vi.unstubAllEnvs();
+  });
+
+  it("falls back to ADMIN_EMAIL when ZILLIONAIRE_EMAIL is empty", async () => {
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "");
+    vi.stubEnv("ADMIN_EMAIL", "fallback-admin@example.com");
+    const fs = fakeFirestore(null, null);
+    const access = await resolvePlatformAccess(fs, "u1", "fallback-admin@example.com", {}, true);
+    expect(access.isZillionaireOwner).toBe(true);
+    expect(access.needsOwnerVerification).toBe(false);
+    vi.unstubAllEnvs();
+  });
+
+  it("never grants owner rights or owner verification flags to non-owner users", async () => {
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@example.com");
+    const fs = fakeFirestore(null, null);
+    const access = await resolvePlatformAccess(fs, "u1", "stranger@example.com", {}, true);
+    expect(access.isZillionaireOwner).toBe(false);
+    expect(access.needsOwnerVerification).toBe(false);
+    vi.unstubAllEnvs();
+  });
+});

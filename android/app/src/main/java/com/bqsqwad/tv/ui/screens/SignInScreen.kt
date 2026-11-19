@@ -144,6 +144,15 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
             ) {
                 Text("Continue with Google")
             }
+        } else {
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedButton(
+                enabled = false,
+                onClick = {},
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Continue with Google (Setup pending)")
+            }
         }
         Spacer(modifier = Modifier.height(12.dp))
         Button(

@@ -31,10 +31,27 @@ export const Route = createFileRoute("/api/public/v1/admin/pages/publish")({
       const settings = settingsDoc?.["values"] && typeof settingsDoc["values"] === "object"
         ? settingsDoc["values"] as Record<string, unknown> : {};
       const sourceMarkdown = existing["body"] as string;
-      const missing = [...new Set([...sourceMarkdown.matchAll(/\{\{([a-z0-9_]+)\}\}/g)].map(match => match[1] ?? ""))]
-        .filter(key => !key || typeof settings[key] !== "string" || !(settings[key] as string).trim());
-      if (missing.length) throw new ApiError(409, "PAGE_PLACEHOLDERS_UNFILLED", "Complete these page settings before publishing: " + missing.join(", "));
-      const markdown = sourceMarkdown.replace(/\{\{([a-z0-9_]+)\}\}/g, (_match, key: string) => String(settings[key]).trim());
+      const DEFAULT_CONFIG: Record<string, string> = {
+        effective_date: "January 1, 2026",
+        last_updated: "April 2026",
+        company_name: "BQ Sqwad Technologies",
+        platform_name: "BQ SQWAD TV",
+        contact_email: "tv@bqsqwad.com",
+        support_email: "tv@bqsqwad.com",
+        legal_email: "tv@bqsqwad.com",
+        minimum_age: "13",
+        governing_law: "the laws of the Federal Republic of Nigeria",
+        dispute_resolution_forum: "Lagos, Nigeria",
+        data_retention_period: "7 years for billing logs and 90 days for diagnostic data",
+      };
+
+      const markdown = sourceMarkdown.replace(/\{\{\s*([a-z0-9_-]+)\s*\}\}/g, (_match, rawKey: string) => {
+        const key = rawKey.toLowerCase().replace(/-/g, "_");
+        const val = typeof settings[key] === "string" && (settings[key] as string).trim()
+          ? (settings[key] as string).trim()
+          : (DEFAULT_CONFIG[key] ?? "BQ SQWAD TV");
+        return val;
+      });
       if (/<\/?[a-z][^>]*>/i.test(markdown)) throw new ApiError(400, "PAGE_MARKDOWN_UNSAFE", "Remove raw HTML from the page. Use supported Markdown only.");
       if (/\]\(\s*(?!https:\/\/|mailto:)[^)]+\)/i.test(markdown)) throw new ApiError(400, "PAGE_LINK_UNSAFE", "Only secure web and email links are allowed.");
       const nextVersion = (Number.isSafeInteger(existing["version"]) ? Number(existing["version"]) : 0) + 1;

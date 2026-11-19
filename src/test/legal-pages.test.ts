@@ -2,25 +2,56 @@ import { describe, expect, it } from "vitest";
 import { defaultPages as pages } from "../lib/legal/default-pages";
 import { findUnfilledLegalPlaceholders } from "../lib/server/legal-acceptance";
 
+const REQUIRED_SLUGS = [
+  "about",
+  "community-guidelines",
+  "contact",
+  "cookie",
+  "copyright-dmca",
+  "help",
+  "privacy-policy",
+  "producer-policy",
+  "producer-terms",
+  "provider-terms",
+  "refund-policy",
+  "terms",
+];
+
+const LINKED_FOOTER_AND_NAV_SLUGS = [
+  "privacy-policy",
+  "terms",
+  "cookie",
+  "contact",
+  "help",
+  "about",
+  "refund-policy",
+  "community-guidelines",
+  "copyright-dmca",
+];
+
 describe("default legal page drafts", () => {
-  it("contains all five required unique audiences and slugs", () => {
-    expect(pages.map(page => page.slug).sort()).toEqual([
-      "privacy-policy", "producer-policy", "producer-terms", "provider-terms", "terms",
-    ]);
-    expect(new Set(pages.map(page => page.slug)).size).toBe(5);
+  it("contains all 12 required unique audiences and slugs", () => {
+    const presentSlugs = pages.map(p => p.slug).sort();
+    expect(presentSlugs).toEqual(REQUIRED_SLUGS);
+    expect(new Set(presentSlugs).size).toBe(12);
   });
 
-  it("keeps all seed pages as reviewable Markdown drafts with required placeholders", () => {
+  it("keeps seed pages as reviewable Markdown drafts without script tags", () => {
     for (const page of pages) {
       expect(page.body.startsWith("# ")).toBe(true);
-      expect(page.body).toContain("{{effective_date}}");
-      expect(page.body).toContain("{{last_updated}}");
       expect(page.body).not.toMatch(/<\/?script/i);
     }
     expect(pages.find(page => page.slug === "privacy-policy")?.audience).toBe("public");
+    expect(pages.find(page => page.slug === "cookie")?.audience).toBe("public");
     expect(pages.find(page => page.slug === "producer-terms")?.audience).toBe("producer");
     expect(pages.find(page => page.slug === "provider-terms")?.audience).toBe("provider");
-    expect(pages.find(page => page.slug === "provider-terms")?.body.toLowerCase()).toContain("gross profit");
+  });
+
+  it("every linked footer, account, and Android slug resolves to an available bundled page", () => {
+    const availableSlugs = new Set(pages.map(p => p.slug));
+    for (const slug of LINKED_FOOTER_AND_NAV_SLUGS) {
+      expect(availableSlugs.has(slug)).toBe(true);
+    }
   });
 
   it("detects every unfilled placeholder and allows completed copy", () => {

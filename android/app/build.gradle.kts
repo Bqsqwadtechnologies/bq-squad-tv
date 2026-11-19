@@ -23,6 +23,9 @@ fun quoted(
     fallback: String,
 ): String {
     val value = localProperties.getProperty(name) ?: System.getenv(name) ?: fallback
+    if (name == "GOOGLE_WEB_CLIENT_ID" && (value == fallback || value.isBlank() || value.startsWith("REPLACE"))) {
+        logger.warn("WARNING: GOOGLE_WEB_CLIENT_ID is not configured in local.properties or environment. Google Sign-In will be disabled.")
+    }
     return "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 }
 

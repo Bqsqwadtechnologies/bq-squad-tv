@@ -100,7 +100,7 @@ fun LibraryScreen(onChannel: (String) -> Unit = {}) {
                 (selected == "Movies" && channel.category.contains("movie", ignoreCase = true))
         }
 
-    Column(Modifier.fillMaxSize().padding(18.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 80.dp)) {
         Text("Library", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
         Text("Browse published channels and available programmes.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(16.dp))
@@ -256,7 +256,19 @@ fun SettingsScreen(
         ListItem(
             headlineContent = { Text("Cookie notice") },
             supportingContent = { Text("How we use necessary cookies and similar settings") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/legal/privacy-policy") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/legal/cookie") },
+        )
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Text("Consoles", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp, bottom = 4.dp))
+        ListItem(
+            headlineContent = { Text("Producer Console") },
+            supportingContent = { Text("Manage channel catalog, content and analytics") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/producer") },
+        )
+        ListItem(
+            headlineContent = { Text("Provider Console") },
+            supportingContent = { Text("Manage licensed channels and statements") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/provider") },
         )
         ListItem(
             headlineContent = { Text("Terms of service") },
@@ -278,7 +290,7 @@ fun AccountScreen(
     val user = FirebaseAuth.getInstance().currentUser
     val uriHandler = LocalUriHandler.current
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(18.dp),
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 80.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.height(18.dp))
@@ -301,7 +313,8 @@ fun AccountScreen(
         ProfileAction("My purchases", "Wallet transactions", onWallet)
         ProfileAction("Watch history", "Recent viewing sessions", onHistory)
         ProfileAction("Notifications", "Account and programme updates", onNotifications)
-        ProfileAction("Producer studio", "Manage your channels", onProducer)
+        ProfileAction("Producer Console", "Manage your channels", onProducer)
+        ProfileAction("Provider Console", "Licensed channel distribution", { uriHandler.openUri("https://bqsqwad.com/provider") })
         ProfileAction("Help & support", "Get help with your account", { uriHandler.openUri("https://bqsqwad.com/help") })
         ProfileAction("About BQ SQWAD TV", "Bq Sqwad Technologies", { uriHandler.openUri("https://bqsqwad.com/about") })
         ProfileAction("Settings", "Playback and notifications", onSettings)
