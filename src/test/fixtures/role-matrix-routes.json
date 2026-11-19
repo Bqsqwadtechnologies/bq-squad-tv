@@ -2533,8 +2533,42 @@
     }
   },
   {
+    "route": "/api/public/v1/zillionaire/payments/",
+    "file": "src/routes/api/public/v1/zillionaire/payments/index.ts",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/zillionaire/payments/$paymentId/reverse",
     "file": "src/routes/api/public/v1/zillionaire/payments/$paymentId/reverse.ts",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/zillionaire/payouts/",
+    "file": "src/routes/api/public/v1/zillionaire/payouts/index.ts",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,
@@ -3453,6 +3487,40 @@
   {
     "route": "/zillionaire/movies",
     "file": "src/routes/zillionaire.movies.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/payments",
+    "file": "src/routes/zillionaire.payments.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/payouts",
+    "file": "src/routes/zillionaire.payouts.tsx",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,

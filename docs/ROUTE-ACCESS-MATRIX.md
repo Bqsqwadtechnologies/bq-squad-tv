@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **215**
+Total scanned routes: **219**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **215**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 95 |
+| `zillionaire module` | 99 |
 | `producer` | 4 |
 
 ### Inventory
@@ -170,7 +170,9 @@ Total scanned routes: **215**
 | `/api/public/v1/zillionaire/pages/rollback` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/pages/rollback.ts` |
 | `/api/public/v1/zillionaire/pages/seed` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/pages/seed.ts` |
 | `/api/public/v1/zillionaire/pages/settings` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/pages/settings.ts` |
+| `/api/public/v1/zillionaire/payments/` | `zillionaire module` | requireZillionaire (Module: payments) | `src/routes/api/public/v1/zillionaire/payments/index.ts` |
 | `/api/public/v1/zillionaire/payments/$paymentId/reverse` | `zillionaire module` | requireZillionaire (Module: payments) | `src/routes/api/public/v1/zillionaire/payments/$paymentId/reverse.ts` |
+| `/api/public/v1/zillionaire/payouts/` | `zillionaire module` | requireZillionaire (Module: payouts) | `src/routes/api/public/v1/zillionaire/payouts/index.ts` |
 | `/api/public/v1/zillionaire/payouts/$payoutId/review` | `zillionaire module` | requireZillionaire (Module: payouts) | `src/routes/api/public/v1/zillionaire/payouts/$payoutId/review.ts` |
 | `/api/public/v1/zillionaire/payouts/$payoutId/settle` | `zillionaire module` | requireZillionaire (Module: payouts) | `src/routes/api/public/v1/zillionaire/payouts/$payoutId/settle.ts` |
 | `/api/public/v1/zillionaire/producers/` | `zillionaire module` | requireZillionaire (Module: producers) | `src/routes/api/public/v1/zillionaire/producers/index.ts` |
@@ -225,6 +227,8 @@ Total scanned routes: **215**
 | `/zillionaire/features` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.features.tsx` |
 | `/zillionaire/firebase-schema` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.firebase-schema.tsx` |
 | `/zillionaire/movies` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.movies.tsx` |
+| `/zillionaire/payments` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.payments.tsx` |
+| `/zillionaire/payouts` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.payouts.tsx` |
 | `/zillionaire/pricing` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.pricing.tsx` |
 | `/zillionaire/producers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.producers.tsx` |
 | `/zillionaire/providers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.providers.tsx` |

@@ -188,3 +188,9 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 ## Batch V4-02 Batch 04 — Blocked Content Log
 - 2026-11-19 — Implemented dedicated Blocked Content compliance registry (`zillionaire.blocked-content.tsx`), DMCA/copyright complaint notice inspection modal, and one-click owner instant unblock route (`/api/public/v1/zillionaire/blocked-content/$assetId/unblock`).
 - **v4-02-batch05**: Implemented Channels Master Control console (`/zillionaire/channels`) and API endpoints (`api/public/v1/zillionaire/channels/` & `$channelId/actions`). Supports complete channel governance across platform and provider channels: verified badge grants/revocations, instant suspension with content playback lock, featured homepage showcase, audited ownership transfer, 30-day soft deletion with restore, handle modification, live broadcast permissions, and per-channel revenue share split overrides (70/30, 80/20, 85/15, 50/50, 100/0).
+
+## Batch V4-02 Batch 06 — Revenue Share, Payouts Review & Settlement, and Payments Reversal
+- 2026-11-19 — Implemented Payouts Control Console (`/zillionaire/payouts`) and Payments Control Console (`/zillionaire/payments`) alongside `/api/public/v1/zillionaire/payouts/` and `/api/public/v1/zillionaire/payments/` endpoints.
+  - Payouts: Full lifecycle management (approve, reject, hold, unhold, and mark paid / settle with settlement reference and audit logging) with live split & net calculator.
+  - Payments: Comprehensive transaction filtering (by status, gateway, reference, UID, date range), gateway reconciliation status tracking, and two-step confirmation reversal modal requiring typed safety confirmation (`REVERSE`) and audit tracking.
+  - Role isolation: Maintained strict `payouts` and `payments` module requirements under `requireZillionaireModule` with 219 routes catalogued in route-access matrix and 2,687 passing tests.
