@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **224**
+Total scanned routes: **226**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **224**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 103 |
+| `zillionaire module` | 105 |
 | `producer` | 4 |
 
 ### Inventory
@@ -137,6 +137,7 @@ Total scanned routes: **224**
 | `/api/public/v1/zillionaire/ads/providers` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/providers.ts` |
 | `/api/public/v1/zillionaire/analytics/overview` | `zillionaire module` | requireZillionaire (Module: overview) | `src/routes/api/public/v1/zillionaire/analytics/overview.ts` |
 | `/api/public/v1/zillionaire/audit` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/audit.ts` |
+| `/api/public/v1/zillionaire/backups` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/backups.ts` |
 | `/api/public/v1/zillionaire/billing/health` | `zillionaire module` | requireZillionaire (Module: payments) | `src/routes/api/public/v1/zillionaire/billing/health.ts` |
 | `/api/public/v1/zillionaire/blocked-content/` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/blocked-content/index.ts` |
 | `/api/public/v1/zillionaire/blocked-content/$assetId/unblock` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/blocked-content/$assetId/unblock.ts` |
@@ -224,6 +225,7 @@ Total scanned routes: **224**
 | `/zillionaire/` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.index.tsx` |
 | `/zillionaire/ads` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.ads.tsx` |
 | `/zillionaire/analytics` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.analytics.tsx` |
+| `/zillionaire/audit` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.audit.tsx` |
 | `/zillionaire/blocked-content` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.blocked-content.tsx` |
 | `/zillionaire/channels` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.channels.tsx` |
 | `/zillionaire/errors` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.errors.tsx` |

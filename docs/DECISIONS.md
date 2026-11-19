@@ -209,3 +209,4 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
   - Android & Web Client Integrity: Verified web player comments & rating integration and updated Android `CatalogApi` and `CatalogRepository` with complete data models and methods.
   - Route Access & Tests: Catalogued 222 routes in `ROUTE-ACCESS-MATRIX.md`, verified role-matrix expectations, passed clean public-text scan, and passed all 2,717 Vitest tests across 92 files.
 - 2026-11-19: V5-01 Batch 2 complete: Multi-channel notifications console, segmented broadcasts, templates, user previews, and quiet hours.
+- V5-01 B3: Safety centre in one tabbed screen; audit log is its own route; view-as requires reason and is client-side for now.

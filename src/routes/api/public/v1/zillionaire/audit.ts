@@ -29,15 +29,29 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/audit")({
           const user = await requireUser(request);
           const fs = await Firestore.create();
           await requireZillionaireModule(fs, user, "security");
-          await enforceRateLimit(fs, "admin-audit-read:" + user.uid, {
-            limit: 30,
+          await enforceRateLimit(fs, "zillionaire-audit-read:" + user.uid, {
+            limit: 60,
             windowMs: 60_000,
           });
+
+          const url = new URL(request.url);
+          const actionFilter = url.searchParams.get("action");
+          const targetTypeFilter = url.searchParams.get("targetType");
+          const actorUidFilter = url.searchParams.get("actorUid");
+          const limit = Math.min(200, Math.max(10, Number(url.searchParams.get("limit") || 100)));
+
+          const filters: Array<{ field: string; op: "EQUAL"; value: unknown }> = [];
+          if (actionFilter) filters.push({ field: "action", op: "EQUAL", value: actionFilter });
+          if (targetTypeFilter) filters.push({ field: "targetType", op: "EQUAL", value: targetTypeFilter });
+          if (actorUidFilter) filters.push({ field: "actorUid", op: "EQUAL", value: actorUidFilter });
+
           const rows = await fs.query("auditLog", {
+            ...(filters.length > 0 ? { filters } : {}),
             orderByField: "createdAt",
             descending: true,
-            limit: 100,
-          });
+            limit,
+          }).catch(() => []);
+
           return Response.json(
             {
               entries: rows.map((row) => ({
@@ -48,12 +62,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/audit")({
                 targetId: typeof row["targetId"] === "string" ? row["targetId"] : null,
                 reason: typeof row["reason"] === "string" ? row["reason"].slice(0, 1000) : "",
                 metadata: safeMetadata(row["metadata"]),
-                createdAt: typeof row["createdAt"] === "string" ? row["createdAt"] : null,
+                createdAt: typeof row["createdAt"] === "string" ? row["createdAt"] : new Date().toISOString(),
               })),
-              limit: 100,
-              hasMore: rows.length === 100,
             },
-            { headers: { "cache-control": "no-store" } },
+            { headers: { "cache-control": "private, no-store" } },
           );
         } catch (error) {
           return errorBody(error);

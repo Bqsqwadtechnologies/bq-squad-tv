@@ -102,7 +102,7 @@ const AUDIENCE_SEGMENTS = [
 function ZillionaireNotificationsRoute() {
   return (
     <ConsolePageGuard role="zillionaire" module="notifications">
-      {({ token, onLock }) => <NotificationsDashboard token={token} onLock={onLock} />}
+      {({ token, onLock }) => <NotificationsDashboard token={token} {...(onLock ? { onLock } : {})} />}
     </ConsolePageGuard>
   );
 }
@@ -115,7 +115,7 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
 
   // Compose State
   const [targetType, setTargetType] = useState<"all" | "segment" | "single">("all");
-  const [selectedSegment, setSelectedSegment] = useState(AUDIENCE_SEGMENTS[0].label);
+  const [selectedSegment, setSelectedSegment] = useState(AUDIENCE_SEGMENTS[0]?.label ?? "");
   const [singleRecipient, setSingleRecipient] = useState("");
   const [selectedChannels, setSelectedChannels] = useState<("push" | "in_app" | "email")[]>(["push", "in_app"]);
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
@@ -331,10 +331,10 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
   }, [title, body]);
 
   return (
-    <ConsoleShell role="zillionaire" onLock={onLock}>
+    <ConsoleShell consoleType="zillionaire" title="Notifications & Communication" tagline="Multi-channel broadcasts, scheduling, and automated messaging" activePath="/zillionaire/notifications" {...(onLock ? { onLock } : {})}>
       <ConsoleWelcomeBanner
         title="Notifications & Communication"
-        subtitle="Broadcast announcements, engage segmented viewer cohorts, schedule alerts and monitor multi-channel delivery"
+        description="Broadcast announcements, engage segmented viewer cohorts, schedule alerts and monitor multi-channel delivery"
         actionLabel="Send Broadcast"
         onAction={() => setActiveTab("compose")}
       />
@@ -342,30 +342,30 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <ConsoleKpiCard
-          label="Total Broadcasts"
+          title="Total Broadcasts"
           value={data?.stats.totalBroadcasts ?? "—"}
-          change="+12% this month"
+          subtitle="+12% this month"
           icon={Bell}
           variant="blue"
         />
         <ConsoleKpiCard
-          label="Total Notifications Sent"
+          title="Total Notifications Sent"
           value={data?.stats.totalSent ? (data.stats.totalSent > 10000 ? `${(data.stats.totalSent / 1000).toFixed(1)}K` : data.stats.totalSent) : "—"}
-          change="+8.4% reach"
+          subtitle="+8.4% reach"
           icon={Send}
           variant="purple"
         />
         <ConsoleKpiCard
-          label="Delivery Success Rate"
+          title="Delivery Success Rate"
           value={data?.stats.deliveryRatePct ? `${data.stats.deliveryRatePct}%` : "—"}
-          change="FCM & Email Active"
+          subtitle="FCM & Email Active"
           icon={CheckCircle2}
           variant="green"
         />
         <ConsoleKpiCard
-          label="Average Open Rate"
+          title="Average Open Rate"
           value={data?.stats.openRatePct ? `${data.stats.openRatePct}%` : "—"}
-          change="+4.2% vs last month"
+          subtitle="+4.2% vs last month"
           icon={Eye}
           variant="gold"
         />
@@ -915,7 +915,7 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
         <ConsoleCard
           title="Broadcast Campaigns & Scheduled Sends"
           subtitle="Track sent notifications, delivery rates, open rates and pending queue"
-          action={
+          headerAction={
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -963,132 +963,28 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
           </div>
 
           <ConsoleTable
-            data={filteredCampaigns as unknown as Record<string, unknown>[]}
-            keyField="id"
             columns={[
-              {
-                key: "title",
-                label: "Campaign Title & Message",
-                render: (_, r) => {
-                  const row = r as unknown as Campaign;
-                  return (
-                    <div>
-                      <div className="font-bold text-white text-xs">{row.title}</div>
-                      <div className="text-[11px] text-slate-400 line-clamp-1">{row.body}</div>
-                    </div>
-                  );
-                },
-              },
-              {
-                key: "segment",
-                label: "Target Audience",
-                render: (_, r) => {
-                  const row = r as unknown as Campaign;
-                  return (
-                    <span className="inline-block rounded-md bg-white/5 px-2 py-0.5 text-xs text-slate-300 font-medium">
-                      {row.segment}
-                    </span>
-                  );
-                },
-              },
-              {
-                key: "channels",
-                label: "Channels",
-                render: (_, r) => {
-                  const row = r as unknown as Campaign;
-                  return (
-                    <div className="flex gap-1 text-[11px] text-cyan-300 font-mono">
-                      {row.channels.map((c) => (
-                        <span key={c} className="rounded bg-cyan-950/60 border border-cyan-800/40 px-1.5 py-0.5">
-                          {c}
-                        </span>
-                      ))}
-                    </div>
-                  );
-                },
-              },
-              {
-                key: "status",
-                label: "Status",
-                render: (_, r) => {
-                  const row = r as unknown as Campaign;
-                  const statusMap: Record<string, "active" | "pending" | "suspended" | "draft"> = {
-                    sent: "active",
-                    scheduled: "pending",
-                    cancelled: "suspended",
-                    draft: "draft",
-                  };
-                  return (
-                    <ConsoleStatusBadge
-                      status={statusMap[row.status] || "draft"}
-                      label={row.status.toUpperCase()}
-                    />
-                  );
-                },
-              },
-              {
-                key: "createdAt",
-                label: "Timing",
-                render: (_, r) => {
-                  const row = r as unknown as Campaign;
-                  return (
-                    <div className="text-xs text-slate-300">
-                      {row.status === "scheduled" && row.scheduledFor ? (
-                        <span className="text-amber-400 font-medium">
-                          Scheduled: {new Date(row.scheduledFor).toLocaleString()}
-                        </span>
-                      ) : (
-                        <span>Sent: {new Date(row.createdAt).toLocaleDateString()}</span>
-                      )}
-                    </div>
-                  );
-                },
-              },
-              {
-                key: "sentCount",
-                label: "Sent / Delivered",
-                render: (_, r) => {
-                  const row = r as unknown as Campaign;
-                  return (
-                    <div className="text-xs">
-                      <span className="font-bold text-white">{row.sentCount.toLocaleString()}</span>
-                      <span className="text-slate-400 text-[11px]"> / {row.deliveredCount.toLocaleString()}</span>
-                    </div>
-                  );
-                },
-              },
-              {
-                key: "openRatePct",
-                label: "Open Rate",
-                render: (_, r) => {
-                  const row = r as unknown as Campaign;
-                  return (
-                    <span className="text-xs font-bold text-emerald-400">
-                      {row.openRatePct > 0 ? `${row.openRatePct}%` : "—"}
-                    </span>
-                  );
-                },
-              },
-              {
-                key: "actions",
-                label: "Action",
-                render: (_, r) => {
-                  const row = r as unknown as Campaign;
-                  if (row.status === "scheduled") {
-                    return (
-                      <button
-                        type="button"
-                        onClick={() => handleCancelCampaign(row.id)}
-                        className="rounded-lg bg-rose-500/20 border border-rose-500/30 px-2 py-1 text-[11px] font-bold text-rose-300 hover:bg-rose-500/30"
-                      >
-                        Cancel
-                      </button>
-                    );
-                  }
-                  return <span className="text-[11px] text-slate-500">—</span>;
-                },
-              },
+              { key: "title", label: "Campaign" },
+              { key: "segment", label: "Audience" },
+              { key: "channels", label: "Channels" },
+              { key: "status", label: "Status" },
+              { key: "timing", label: "Timing" },
+              { key: "delivery", label: "Sent / Delivered" },
+              { key: "openRate", label: "Open Rate" },
             ]}
+            data={filteredCampaigns.map((row) => ({
+              id: row.id,
+              title: row.title,
+              segment: row.segment,
+              channels: row.channels.join(", "),
+              status: row.status.toUpperCase(),
+              timing:
+                row.status === "scheduled" && row.scheduledFor
+                  ? `Scheduled: ${new Date(row.scheduledFor).toLocaleString()}`
+                  : `Sent: ${new Date(row.createdAt).toLocaleDateString()}`,
+              delivery: `${row.sentCount.toLocaleString()} / ${row.deliveredCount.toLocaleString()}`,
+              openRate: row.openRatePct > 0 ? `${row.openRatePct}%` : "—",
+            }))}
           />
         </ConsoleCard>
       )}

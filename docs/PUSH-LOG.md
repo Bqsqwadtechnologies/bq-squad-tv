@@ -1,2 +1,3 @@
 PUSH BADGE #1 SUCCESSFUL — V5-01 Batch 1 — d7df84b9e15c2026a76d655792df98d00c2acb5a — Numbers screen (/zillionaire/analytics) with ranges, comparison, drill-down, CSV
-PUSH BADGE #2 SUCCESSFUL — V5-01 Batch 2 — PENDING_SHA — Notifications screen (/zillionaire/notifications) with multi-channel broadcast, segments, scheduling, templates, user preview
+PUSH BADGE #2 SUCCESSFUL — V5-01 Batch 2 — 4b5621ba64a936d2db6ac57d410544e695453fe6 — Notifications screen (/zillionaire/notifications) with multi-channel broadcast, segments, scheduling, templates, user preview
+PUSH BADGE #3 SUCCESSFUL — V5-01 Batch 3 — SEE_GIT_LOG — Safety centre: tabbed threats, secret health, backups status, read-only support view-as, audit log viewer, error centre mark-resolved; also fixed Batch 2 type errors
