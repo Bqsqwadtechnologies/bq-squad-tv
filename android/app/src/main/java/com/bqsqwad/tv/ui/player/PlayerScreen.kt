@@ -10,6 +10,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import com.bqsqwad.tv.data.catalog.CatalogRepository
+import com.bqsqwad.tv.data.catalog.LiveChatMessage
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -73,6 +80,12 @@ fun PlayerScreen(
     var localElapsed by remember { mutableLongStateOf(0L) }
     var showTopUp by remember { mutableStateOf(false) }
     var retryCount by remember(channelId) { mutableIntStateOf(0) }
+    val chatRepo = remember(context) { CatalogRepository(context) }
+    var chatEnabled by remember(channelId) { mutableStateOf(false) }
+    var chatMessages by remember(channelId) { mutableStateOf<List<LiveChatMessage>>(emptyList()) }
+    var chatDraft by remember(channelId) { mutableStateOf("") }
+    var chatNote by remember(channelId) { mutableStateOf("") }
+    var chatPosting by remember { mutableStateOf(false) }
     val player = remember {
       val loadControl = DefaultLoadControl.Builder()
           .setBufferDurationsMs(15_000, 50_000, 1_000, 3_000)
@@ -94,6 +107,17 @@ fun PlayerScreen(
         )
         player.prepare()
         player.playWhenReady = resumePlayback
+    }
+    LaunchedEffect(channelId, session?.sessionId) {
+        if (session == null) return@LaunchedEffect
+        while (isActive) {
+            runCatching { chatRepo.liveChat(channelId) }.onSuccess { result ->
+                chatEnabled = result.enabled
+                chatMessages = result.messages
+                chatNote = if (result.enabled) "" else "Live chat is turned off for this profile or channel."
+            }.onFailure { chatNote = "Live chat is unavailable right now." }
+            delay(15_000)
+        }
     }
     LaunchedEffect(channelId, retryCount) {
         runCatching { repo.start(context, channelId) }
@@ -449,6 +473,22 @@ fun PlayerScreen(
                 }, label = { Text(v) })
             }
         }
+        if (chatEnabled) {
+            Text("Live chat", style = MaterialTheme.typography.titleMedium)
+            LazyColumn(Modifier.fillMaxWidth().heightIn(max = 180.dp)) {
+                items(chatMessages, key = { it.id }) { message ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("${message.author}: ${message.body}", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+                        TextButton(onClick = { scope.launch { runCatching { chatRepo.reportLiveChat(channelId, message.id) }.onSuccess { chatNote = "Report submitted." }.onFailure { chatNote = "Could not report this message." } } }) { Text("Report") }
+                    }
+                }
+            }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                OutlinedTextField(chatDraft, { chatDraft = it.take(500) }, Modifier.weight(1f), singleLine = true, label = { Text("Message") }, keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences, imeAction = ImeAction.Send))
+                TextButton(enabled = chatDraft.isNotBlank() && !chatPosting, onClick = { scope.launch { chatPosting = true; val text = chatDraft.trim(); runCatching { chatRepo.sendLiveChat(channelId, text) }.onSuccess { chatDraft = ""; chatNote = "" }.onFailure { chatNote = "Message was not sent." }; chatPosting = false } }) { Text("Send") }
+            }
+        }
+        if (chatNote.isNotBlank()) Text(chatNote, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

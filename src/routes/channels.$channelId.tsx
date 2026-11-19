@@ -57,6 +57,11 @@ function ChannelPage() {
   const [details, setDetails] = useState<ChannelDetails | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(true);
+  const [chat, setChat] = useState<Array<{id:string;body:string;author:string;createdAt:string}>>([]);
+  const [chatEnabled, setChatEnabled] = useState(false);
+  const [chatText, setChatText] = useState("");
+  const [chatError, setChatError] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
 
   // Player state
   const [isPlaying, setIsPlaying] = useState(true);
@@ -121,6 +126,33 @@ function ChannelPage() {
       active = false;
     };
   }, [channelId]);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const token = await restoreWebSession();
+        const headers = token ? await getWebAuthHeaders(token) : {};
+        const response = await fetch(`/api/public/v1/channels/${encodeURIComponent(channelId)}/chat`, { headers, cache: "no-store" });
+        const data = await response.json();
+        if (response.ok && active) { setChatEnabled(data.enabled === true); setChat(data.messages ?? []); setChatError(""); }
+        else if (active) { setChatEnabled(false); setChatError(data.message ?? "Live chat is unavailable."); }
+      } catch { if (active) setChatError("Live chat is unavailable."); }
+    };
+    void load(); const timer = window.setInterval(load, 15000);
+    return () => { active = false; window.clearInterval(timer); };
+  }, [channelId]);
+
+  async function submitChat(action: "SEND" | "REPORT", messageId?: string) {
+    setChatBusy(true); setChatError("");
+    try {
+      const token = await restoreWebSession(); const headers = token ? await getWebAuthHeaders(token) : {};
+      const response = await fetch(`/api/public/v1/channels/${encodeURIComponent(channelId)}/chat`, { method:"POST", headers:{...headers,"Content-Type":"application/json"}, body: JSON.stringify(action === "SEND" ? {action,body:chatText} : {action,messageId,reason:"other"}) });
+      const data = await response.json(); if (!response.ok) throw new Error(data.message ?? "Chat action failed.");
+      if (action === "SEND") { setChatText(""); setChat((items) => [...items,{id:data.messageId,body:chatText,author:"You",createdAt:new Date().toISOString()}].slice(-100)); }
+    } catch (caught) { setChatError(caught instanceof Error ? caught.message : "Chat action failed."); }
+    finally { setChatBusy(false); }
+  }
 
   function handleUserInteraction() {
     setOverlayVisible(true);
@@ -302,6 +334,13 @@ function ChannelPage() {
                   </span>
                 </div>
               </div>
+
+              {chatEnabled ? <section className="mt-6 rounded-2xl border border-white/10 bg-[#081333] p-5" aria-label="Live chat">
+                <div className="flex items-center justify-between"><h2 className="text-base font-bold text-white">Live chat</h2><span className="text-xs text-slate-400">Be kind. Never share personal details.</span></div>
+                <div className="mt-3 max-h-64 space-y-2 overflow-y-auto" aria-live="polite">{chat.map((message)=><div key={message.id} className="flex items-start justify-between gap-3 rounded-lg bg-white/5 px-3 py-2"><p className="min-w-0 text-sm"><strong className="mr-2 text-cyan-300">{message.author}</strong><span className="break-words text-slate-100">{message.body}</span></p><button type="button" onClick={()=>void submitChat("REPORT",message.id)} className="shrink-0 text-xs text-slate-400 hover:text-white" aria-label="Report message">Report</button></div>)}{chat.length===0?<p className="text-sm text-slate-400">No messages yet.</p>:null}</div>
+                <form className="mt-3 flex gap-2" onSubmit={(event)=>{event.preventDefault();void submitChat("SEND");}}><input value={chatText} onChange={(event)=>setChatText(event.target.value)} maxLength={500} placeholder="Write a message" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white"/><button disabled={chatBusy||!chatText.trim()} className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50">Send</button></form>
+                {chatError?<p className="mt-2 text-sm text-rose-300" role="status">{chatError}</p>:null}
+              </section> : chatError ? <p className="mt-4 text-sm text-slate-400">Live chat is unavailable for this channel.</p> : null}
 
               {/* Schedule */}
               <div className="mt-6">

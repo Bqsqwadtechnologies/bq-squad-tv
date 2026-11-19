@@ -2,19 +2,19 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **241**
+Total scanned routes: **243**
 
 ### Summary by Guard Class
 
 | Guard Class | Count |
 |---|---|
 | `public` | 13 |
-| `viewer` | 77 |
+| `viewer` | 78 |
 | `webhook signature` | 1 |
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 120 |
+| `zillionaire module` | 121 |
 | `producer` | 4 |
 
 ### Inventory
@@ -41,6 +41,7 @@ Total scanned routes: **241**
 | `/api/public/v1/catalog/home` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/catalog/home.ts` |
 | `/api/public/v1/catalog/search` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/catalog/search.ts` |
 | `/api/public/v1/channels/$channelId` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/channels/$channelId.ts` |
+| `/api/public/v1/channels/$channelId/chat` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/channels/$channelId.chat.ts` |
 | `/api/public/v1/config/client` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/v1/config/client.ts` |
 | `/api/public/v1/contact` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/v1/contact.ts` |
 | `/api/public/v1/content-assets/$assetId` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/content-assets/$assetId.ts` |
@@ -166,6 +167,7 @@ Total scanned routes: **241**
 | `/api/public/v1/zillionaire/errors/` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/errors/index.ts` |
 | `/api/public/v1/zillionaire/finance` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/finance.ts` |
 | `/api/public/v1/zillionaire/live-channels/` | `zillionaire module` | requireZillionaire (Module: channels) | `src/routes/api/public/v1/zillionaire/live-channels/index.ts` |
+| `/api/public/v1/zillionaire/live-chat/` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/live-chat/index.ts` |
 | `/api/public/v1/zillionaire/migration/zillionaire` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/migration/zillionaire.ts` |
 | `/api/public/v1/zillionaire/moderation/` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/moderation/index.ts` |
 | `/api/public/v1/zillionaire/movies/curation/` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/movies/curation/index.ts` |

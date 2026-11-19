@@ -16,3 +16,5 @@ PUSH BADGE #11 SUCCESSFUL — V5-02 Batch 2 — 1879a967a4524eaad6699cfed0c4c433
 PUSH BADGE #12 SUCCESSFUL — V5-02 Batch 3 — cfbd5332f87dc801c90a5dd9d0af2dd1682a00dc — Movies library curation with custom shelves, hero rotation schedules, regional windows and pricing overrides.
 
 PUSH BADGE #13 SUCCESSFUL — V5-02 Batch 4 — deb2422a25e6808ac1f704eab2dff758cd3e2fd5 — Live TV owner console with live-channel creation, programme guide, submission review, expiry reminders and audited live controls; health telemetry remains unknown without a trusted monitor.
+
+PUSH BADGE #14 SUCCESSFUL — V5-02 Batch 5 — PENDING — Live TV chat for web and Android: protected send/reply/reaction/report, per-channel controls, moderation, timeouts/bans and audit records.

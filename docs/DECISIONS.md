@@ -265,3 +265,11 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Live channel inventory uses explicit live-channel records only; the console must not fill empty inventory with sample channels or synthetic viewer/health metrics. Unknown playback telemetry is displayed as unknown until a trusted monitor reports it.
 - Channel mutations require a reason and write an audit event. A pending or rejected channel cannot be started; approvals apply only to existing pending submissions.
 - HLS URLs are validated for secure playlist shape, but this does not prove stream reachability or entitlement.
+
+
+## V5-02 Batch 5 — Live chat
+
+- Chat is opt-in per published channel and is off for child profiles; account age eligibility follows the channel restriction.
+- Viewer messages are private to a channel, expose only a generic viewer label, and are never copied to any replay by default.
+- Viewer send/report/reaction actions are authenticated and rate-limited; owner moderation actions require the moderation module and a reason recorded in the audit chain.
+- Current clients poll; this is not realtime delivery. Moderator assignment and bulk-delete UI remain deferred.

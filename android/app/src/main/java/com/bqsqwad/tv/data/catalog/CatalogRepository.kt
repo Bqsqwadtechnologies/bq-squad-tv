@@ -106,6 +106,12 @@ class CatalogRepository(
 
     suspend fun channel(id: String) = api.channel(bearer(), id)
 
+    suspend fun liveChat(id: String) = api.liveChat(bearer(), id)
+
+    suspend fun sendLiveChat(id: String, body: String) = api.liveChatAction(bearer(), id, LiveChatRequest("SEND", body = body))
+
+    suspend fun reportLiveChat(id: String, messageId: String) = api.liveChatAction(bearer(), id, LiveChatRequest("REPORT", messageId = messageId, reason = "other"))
+
     suspend fun comments(assetId: String) = api.comments(bearer(), assetId)
 
     suspend fun submitComment(assetId: String, body: String) =

@@ -99,6 +99,12 @@ interface CatalogApi {
         @Body request: SubmitCommentRequest,
     ): SubmitCommentResponse
 
+    @GET("v1/channels/{channelId}/chat")
+    suspend fun liveChat(@Header("Authorization") bearer: String, @Path("channelId") channelId: String): LiveChatResponse
+
+    @POST("v1/channels/{channelId}/chat")
+    suspend fun liveChatAction(@Header("Authorization") bearer: String, @Path("channelId") channelId: String, @Body request: LiveChatRequest): Map<String, Any?>
+
     @POST("v1/content-assets/{assetId}/rating")
     suspend fun submitRating(
         @Header("Authorization") bearer: String,
@@ -106,3 +112,8 @@ interface CatalogApi {
         @Body request: SubmitRatingRequest,
     ): SubmitRatingResponse
 }
+
+
+data class LiveChatMessage(val id: String, val body: String, val author: String = "Viewer", val createdAt: String? = null)
+data class LiveChatResponse(val enabled: Boolean = false, val slowModeSeconds: Int = 0, val subscriberOnly: Boolean = false, val messages: List<LiveChatMessage> = emptyList())
+data class LiveChatRequest(val action: String, val body: String? = null, val messageId: String? = null, val reason: String? = null)
