@@ -1,5 +1,5 @@
-Last finished: V5-01 Batch 6 — Unified Approvals Inbox (/zillionaire/approvals) and decision API.
-Next: V5-01 Batch 7 Finance, then Batch 8 Support, Batch 9 final tests/rename sweep.
-Gaps: ad/legal queue records depend on collections; decision notifications are in-app only; legacy dashboard still has simulated health figures.
-Files: approvals UI/API, ConsoleShell navigation, route tree, role-matrix fixture, push log, handoff, decisions.
-Tests: build:dev passed; bun run test passed (2,815 tests / 94 files).
+Last finished: V5-01 Batch 7 — Finance Control Centre (/zillionaire/finance) and Wallets Explorer (/zillionaire/wallets).
+Next: V5-01 Batch 8 Support, then Batch 9 final tests/rename sweep.
+Gaps: Live bank statement synchronization depends on external banking connector; ledger export is client-generated CSV.
+Files: finance UI/API, wallets route, ConsoleShell navigation, route matrix fixture & doc, tests, push log, handoff, decisions.
+Tests: build:dev passed; bun run test passed (2,850 tests / 95 files).

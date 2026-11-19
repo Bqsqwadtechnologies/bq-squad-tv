@@ -214,3 +214,11 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - 2026-11-19: V5-01 Batch 5 complete: Zillionaire Overview (/zillionaire) rebuilt to reference design with ConsoleShell, ConsoleWelcomeBanner ("PLATFORM OWNER"), real-time system health strip with live sync, four gradient KPI cards with direct navigation, interactive needs-attention priority queue replacing all "Setup pending" cards, revenue area chart with period selector, live broadcast feed monitor, top content and top channels rankings, and recent activity log.
 
 - 2026-11-19: V5-01 Batch 6 adds a unified approvals queue with existing Firestore collections, SLA ordering, mandatory decision/assignment reason, auditable actions, in-app submitter notifications, and role-matrix coverage; email/push delivery is not implemented in this batch.
+
+- 2026-11-19: V5-01 Batch 7 adds Finance Control Centre (/zillionaire/finance) and Global Wallets Explorer (/zillionaire/wallets):
+  - Revenue Dashboard: Gross platform revenue, producer contractual share (70%), platform net margin (30%), live wallet reserve liability totals, daily revenue breakdown with SVG trend visualization, and channel-by-channel revenue & transaction breakdown.
+  - Ledger Explorer: Global multi-wallet transaction ledger with search (UID, description, reference), kind filter (topup, spend, refund, reversal, payout), and CSV export.
+  - Reconciliation & Chargebacks: Exceptions queue with dispute chargeback notes trail, exception resolution dialogs, and audited customer refund issuance with ledger reversal entries.
+  - Month-End Accounting Close & Payout Calendar: Immutable period locking (`financialPeriods`) requiring mandatory audit reasons, historical locked periods registry, and bi-weekly creator payout settlement calendar with cutoff and disbursement milestones.
+  - Anomaly Monitor: Automated heuristic detection of sudden top-up volume velocity surges, repeated payment card reversal bursts, and high-value debits with mandatory audit reason dismissal.
+  - Route Access & Quality: Navigation wired to ConsoleShell under Money section, dead `/zillionaire/wallets` link resolved, 233 routes catalogued in `ROUTE-ACCESS-MATRIX.md`, role-matrix expectations verified, and all 2,850 Vitest tests passing.

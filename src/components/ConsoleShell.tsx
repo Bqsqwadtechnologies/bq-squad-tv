@@ -9,6 +9,7 @@ import {
   Film,
   UploadCloud,
   MessageSquare,
+  Landmark,
   CreditCard,
   Wallet,
   ArrowUpRight,
@@ -254,6 +255,13 @@ export function ConsoleShell({
         id: "money",
         title: "Money",
         items: [
+          {
+            id: "finance",
+            label: "Finance control",
+            href: "/zillionaire/finance",
+            icon: Landmark,
+            module: "finance",
+          },
           {
             id: "payments",
             label: "Payments",
