@@ -1,4 +1,5 @@
-Last finished: V5-01 Batch 5 (Overview screen /zillionaire) rebuilt to reference design and tested.
-Next: V5-01 Batch 6 (Approvals inbox /zillionaire/approvals), then B7 Finance, B8 Support, B9 Tests/rename sweep.
-Gaps: backups status and broadcast delivery counts are simulated; view-as navigates; full "admin" rename sweep pending in B9.
-Tests: 2,795 passing across 94 files, build:dev clean.
+Last finished: V5-01 Batch 6 — Unified Approvals Inbox (/zillionaire/approvals) and decision API.
+Next: V5-01 Batch 7 Finance, then Batch 8 Support, Batch 9 final tests/rename sweep.
+Gaps: ad/legal queue records depend on collections; decision notifications are in-app only; legacy dashboard still has simulated health figures.
+Files: approvals UI/API, ConsoleShell navigation, route tree, role-matrix fixture, push log, handoff, decisions.
+Tests: build:dev passed; bun run test passed (2,815 tests / 94 files).

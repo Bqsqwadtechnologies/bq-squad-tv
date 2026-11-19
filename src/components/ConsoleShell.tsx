@@ -159,6 +159,13 @@ export function ConsoleShell({
             href: "/zillionaire",
             icon: LayoutDashboard,
           },
+          {
+            id: "approvals",
+            label: "Approvals inbox",
+            href: "/zillionaire/approvals",
+            icon: Inbox,
+            module: "moderation",
+          },
         ],
       },
       {
