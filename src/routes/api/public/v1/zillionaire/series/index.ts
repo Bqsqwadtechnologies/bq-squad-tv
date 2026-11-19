@@ -187,8 +187,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
       GET: async (event) => {
         try {
           const user = await requireUser(event.request);
-          await requireZillionaireModule(event, "content");
           const fs = await Firestore.create();
+          await requireZillionaireModule(fs, user, "content");
 
           const seriesSnap = await fs.list("series");
           const seriesList: SeriesRecord[] = [];
@@ -234,8 +234,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
       POST: async (event) => {
         try {
           const user = await requireUser(event.request);
-          await requireZillionaireModule(event, "content");
           const fs = await Firestore.create();
+          await requireZillionaireModule(fs, user, "content");
           const body = await parseBody(event.request, actionSchema);
 
           if (body.action === "CREATE_SERIES") {
