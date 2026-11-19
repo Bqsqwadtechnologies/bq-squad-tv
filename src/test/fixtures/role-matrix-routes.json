@@ -3196,6 +3196,40 @@
     }
   },
   {
+    "route": "/zillionaire/errors",
+    "file": "src/routes/zillionaire.errors.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/features",
+    "file": "src/routes/zillionaire.features.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/zillionaire/firebase-schema",
     "file": "src/routes/zillionaire.firebase-schema.tsx",
     "guard": "zillionaire module",
@@ -3215,6 +3249,23 @@
   {
     "route": "/zillionaire/pricing",
     "file": "src/routes/zillionaire.pricing.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/producers",
+    "file": "src/routes/zillionaire.producers.tsx",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,
@@ -3264,6 +3315,23 @@
     }
   },
   {
+    "route": "/zillionaire/security",
+    "file": "src/routes/zillionaire.security.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/zillionaire/storage",
     "file": "src/routes/zillionaire.storage.tsx",
     "guard": "zillionaire module",
@@ -3298,8 +3366,42 @@
     }
   },
   {
+    "route": "/zillionaire/team",
+    "file": "src/routes/zillionaire.team.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/zillionaire/video-studio",
     "file": "src/routes/zillionaire.video-studio.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/viewers",
+    "file": "src/routes/zillionaire.viewers.tsx",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,

@@ -18,7 +18,7 @@ export type ErrorEventItem = {
   statusState: "new" | "investigating" | "resolved";
 };
 
-export function ErrorCenterView() {
+export function ErrorCenterView({ sessionToken }: { sessionToken?: string } = {}) {
   const [items, setItems] = useState<ErrorEventItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchRef, setSearchRef] = useState("");
@@ -37,7 +37,7 @@ export function ErrorCenterView() {
         : `/api/public/v1/zillionaire/errors`;
       const res = await fetch(url, {
         headers: {
-          authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+          authorization: `Bearer ${sessionToken || localStorage.getItem("token") || ""}`,
         },
       });
       if (res.ok) {
