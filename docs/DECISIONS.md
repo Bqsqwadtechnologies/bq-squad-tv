@@ -337,3 +337,4 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Added dedicated `/downloads` route and Android `DownloadsScreen` presenting designed "Coming soon" state explaining online-only high-definition edge streaming.
 - Added `/live-tv` and `/library` routes to TanStack Start tree, with catalogue filters and playback links.
 - Replaced basic profile link with `ProfileAccountHub` avatar dropdown containing wallet, purchases, watch history, referrals, notifications, settings, help, and console links for Producers and Providers.
+V5-05 Batch 7: Reused verified wallet summary, ledger, and package APIs; usage figures come from recorded daily wallet spend, and empty-balance messaging links directly to configured top-ups.

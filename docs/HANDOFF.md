@@ -1,5 +1,5 @@
-Last finished batch: V5-05 Batch 6 — Social, Kids & Engagement (Watchlist, Kids Safe Mode, Parent PIN, search, notifications, referrals).
-Next batch: V5-05 Batch 7 — Wallet & Monetization (Top-up, transactions, live spending meter, low-balance alerts).
+Last finished batch: V5-05 Batch 7 — Wallet & Monetization (Paystack top-ups, transaction history, daily usage summary, empty-balance action).
+Next batch: V5-05 Batch 8 — Google sign-in and authentication polish (web and Android).
 Known gaps: Offline encrypted downloads deferred to future release; online edge streaming active.
-Files touched: src/routes/content.$assetId.tsx, src/routes/settings.tsx, src/test/viewer-kids-settings.test.tsx, docs/PUSH-LOG.md, docs/HANDOFF.md.
-Tests run: viewer-kids-settings.test.tsx (2/2 passed), viewer-player.test.tsx (4/4 passed), production build (passed), scan:public-text (passed).
+Files touched: src/routes/wallet.tsx, src/test/viewer-wallet.test.tsx, docs/DECISIONS.md, docs/HANDOFF.md, docs/PUSH-LOG.md.
+Tests run: viewer-wallet.test.tsx (1/1 passed); production build and full viewer suite to run before push.

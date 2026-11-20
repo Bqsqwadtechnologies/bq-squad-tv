@@ -206,6 +206,20 @@ function WalletPage() {
                   Account settings
                 </a>
               </div>
+              {wallet.balanceMinor <= 0 ? (
+                <div className="mt-6 rounded-2xl border border-amber-300/25 bg-amber-300/10 p-4">
+                  <p className="font-bold text-amber-100">Your balance is empty</p>
+                  <p className="mt-1 text-sm text-amber-100/75">
+                    Add wallet credits before starting a paid stream.
+                  </p>
+                  <a
+                    href="#topups"
+                    className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-cyan-300 px-4 text-sm font-extrabold text-[#031039]"
+                  >
+                    View top-up options
+                  </a>
+                </div>
+              ) : null}
               {!verified ? (
                 <p className="mt-6 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm text-amber-100">
                   Verify your email before purchasing wallet credits.{" "}
@@ -214,7 +228,7 @@ function WalletPage() {
                   </a>
                 </p>
               ) : (
-                <div className="mt-8">
+                <div id="topups" className="mt-8 scroll-mt-6">
                   <h2 className="text-lg font-bold">Add wallet credits</h2>
                   {topups.length ? (
                     <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -276,6 +290,31 @@ function WalletPage() {
             {error}
           </p>
         )}
+
+        {wallet ? (
+          <section className="mt-8 rounded-3xl border border-cyan-200/15 bg-[#07143d] p-6 sm:p-8">
+            <h2 className="text-xl font-bold">Today’s usage</h2>
+            <p className="mt-1 text-sm text-blue-100/60">
+              Based on your wallet’s recorded daily spend.
+            </p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-wider text-blue-100/55">Spent today</p>
+                <p className="mt-2 text-2xl font-black tabular-nums">
+                  {formatMoney(wallet.spentTodayMinor, wallet.currency)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-wider text-blue-100/55">Daily limit</p>
+                <p className="mt-2 text-2xl font-black tabular-nums">
+                  {wallet.dailySpendLimitMinor === null
+                    ? "No limit set"
+                    : formatMoney(wallet.dailySpendLimitMinor, wallet.currency)}
+                </p>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <section
           id="transactions"
