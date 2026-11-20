@@ -13,8 +13,8 @@ const schema = z
   .strict();
 
 const DEFAULT_CONFIG: Record<string, string> = {
-  effective_date: "January 1, 2026",
-  last_updated: "April 2026",
+  effective_date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
+  last_updated: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
   company_name: "BQ Sqwad Technologies",
   platform_name: "BQ SQWAD TV",
   contact_email: "tv@bqsqwad.com",
@@ -41,7 +41,7 @@ function fillPlaceholders(raw: string, dynamicSettings: Record<string, unknown>)
       return val;
     }
     defaultedCount++;
-    return "BQ SQWAD TV";
+    return _match;
   });
   return { text, defaultedCount };
 }
@@ -82,6 +82,23 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish-d
           const now = new Date().toISOString();
           const results = [];
           let totalDefaulted = 0;
+
+          // Preflight every document before writing any of them. Never replace
+          // unknown legal, financial or retention terms with a generic company name.
+          const incompletePages: string[] = [];
+          for (const page of defaultPages) {
+            const existing = await fs.getDoc("sitePages/" + page.slug);
+            const sourceBody = typeof existing?.["body"] === "string" ? (existing["body"] as string) : page.body;
+            const { defaultedCount } = fillPlaceholders(sourceBody, settings);
+            if (defaultedCount > 0) incompletePages.push(page.slug);
+          }
+          if (incompletePages.length > 0) {
+            throw new ApiError(
+              409,
+              "LEGAL_DEFAULTS_INCOMPLETE",
+              "No legal documents were published. Complete the unresolved policy, retention, refund, payout and jurisdiction details for: " + incompletePages.join(", ") + ".",
+            );
+          }
 
           for (const page of defaultPages) {
             const path = "sitePages/" + page.slug;
