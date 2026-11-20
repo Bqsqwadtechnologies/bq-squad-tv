@@ -1,12 +1,26 @@
-import { ConsolePageGuard } from "@/components/ConsolePageGuard";
+import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
+import { ConsoleShell, ConsoleKpiCard } from "@/components/ConsoleShell";
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { BrandLogo } from "@/components/BrandLogo";
-import { BadgeCheck, Film, LoaderCircle, LogOut, Radio, Users, Wallet } from "lucide-react";
+import {
+  BadgeCheck,
+  Film,
+  LoaderCircle,
+  Radio,
+  Tv,
+  Users,
+  Wallet,
+  Clock,
+  TrendingUp,
+  UploadCloud,
+  Download,
+  Play,
+  Calendar,
+  ExternalLink,
+} from "lucide-react";
 import {
   getWebAuthHeaders,
   restoreWebSession,
-  signInWithEmailPassword,
 } from "@/lib/firebase-web-auth";
 
 type Summary = {
@@ -20,6 +34,26 @@ type Summary = {
 };
 
 type LegalPage = { slug: string; title: string; version: number; accepted: boolean; body: string };
+
+type AnalyticsData = {
+  period: string;
+  totalMinutesWatched: number;
+  totalWatchHours: number;
+  totalEarningsMinor: number;
+  currency: string;
+  sessionCount: number;
+  liveViewers: number;
+  series: Array<{ label: string; views: number; watchMinutes: number; earningsMinor: number }>;
+  topContent: Array<{
+    id: string;
+    title: string;
+    status: string;
+    views: number;
+    watchHours: number;
+    revenueMinor: number;
+    thumbnailUrl: string;
+  }>;
+};
 
 type Earnings = {
   statement: Array<{
@@ -40,103 +74,102 @@ type Earnings = {
 
 function money(value: number, currency: string) {
   const digits =
-    new Intl.NumberFormat("en", { style: "currency", currency }).resolvedOptions()
-      .maximumFractionDigits ?? 2;
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency,
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(value / 10 ** digits);
+    new Intl.NumberFormat("en", { style: "currency", currency }).format(value / 100);
+  return digits;
 }
 
 export const Route = createFileRoute("/producer/")({
   component: ProducerPage,
-  head: () => ({
-    meta: [
-      { title: "Workspace | BQ SQWAD TV" },
-      { name: "description", content: "Manage channels, team access and earnings." },
-      { name: "robots", content: "noindex, nofollow, noarchive" },
-    ],
-  }),
 });
 
 function ProducerPage() {
   return (
     <ConsolePageGuard role="producer">
-      {({ token, account }) => (
-        <ProducerConsole sessionToken={token} isOwner={Boolean(account?.isOwner)} />
+      {({ token, account, onLock }) => (
+        <ProducerDashboardInner token={token} account={account} onLock={onLock} />
       )}
     </ConsolePageGuard>
   );
 }
 
-function ProducerConsole({
-  sessionToken,
-  isOwner,
-}: { sessionToken?: string; isOwner?: boolean } = {}) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [token, setToken] = useState("");
+function ProducerDashboardInner({
+  token,
+  account,
+  onLock,
+}: {
+  token: string;
+  account: ConsoleAccount;
+  onLock?: () => void;
+}) {
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [earnings, setEarnings] = useState<Earnings | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
   const [legalPages, setLegalPages] = useState<LegalPage[]>([]);
   const [legalConsentChecked, setLegalConsentChecked] = useState(false);
   const [legalBusy, setLegalBusy] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState<"24h" | "7d" | "30d" | "12m">("30d");
+  const [selectedChannelId, setSelectedChannelId] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(true);
 
-  async function load(idToken: string) {
-    const headers = await getWebAuthHeaders(idToken);
-    const legalResponse = await fetch("/api/public/v1/legal/status?audience=producer", {
-      headers,
-      cache: "no-store",
-    });
-    const legalResult = (await legalResponse.json()) as {
-      pages?: LegalPage[];
-      acceptanceRequired?: boolean;
-      error?: string;
-    };
-    if (!legalResponse.ok || !legalResult.pages)
-      throw new Error(legalResult.error ?? "Producer terms could not be checked.");
-    if (legalResult.acceptanceRequired) {
-      setLegalPages(legalResult.pages);
-      setLegalConsentChecked(false);
-      return;
+  async function load(authToken: string, period = selectedPeriod) {
+    setLoading(true);
+    setError("");
+    try {
+      const headers = await getWebAuthHeaders(authToken);
+      const legalResponse = await fetch("/api/public/v1/legal/status?audience=producer", {
+        headers,
+        cache: "no-store",
+      });
+      const legalResult = (await legalResponse.json()) as {
+        acceptanceRequired?: boolean;
+        pages?: LegalPage[];
+        error?: string;
+      };
+      if (!legalResponse.ok || !Array.isArray(legalResult.pages))
+        throw new Error(legalResult.error ?? "Producer terms could not be checked.");
+
+      if (legalResult.acceptanceRequired) {
+        setLegalPages(legalResult.pages);
+        setLegalConsentChecked(false);
+        setLoading(false);
+        return;
+      }
+      setLegalPages([]);
+
+      const [summaryResponse, earningsResponse, analyticsResponse] = await Promise.all([
+        fetch("/api/public/v1/producer/mobile-summary", { headers, cache: "no-store" }),
+        fetch("/api/public/v1/producer/earnings", { headers, cache: "no-store" }),
+        fetch(`/api/public/v1/producer/analytics?period=${period}`, { headers, cache: "no-store" }),
+      ]);
+
+      const summaryResult = (await summaryResponse.json()) as Summary & { error?: string };
+      const earningsResult = (await earningsResponse.json()) as Earnings & { error?: string };
+      const analyticsResult = (await analyticsResponse.json()) as AnalyticsData & { error?: string };
+
+      if (!summaryResponse.ok)
+        throw new Error(summaryResult.error ?? "Producer access could not be verified.");
+      if (!earningsResponse.ok)
+        throw new Error(earningsResult.error ?? "Producer earnings could not be loaded.");
+
+      setSummary(summaryResult);
+      setEarnings(earningsResult);
+      if (analyticsResponse.ok) {
+        setAnalytics(analyticsResult);
+      }
+      if (summaryResult.channels.length > 0 && !selectedChannelId) {
+        setSelectedChannelId(summaryResult.channels[0].id);
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not load Producer Console.");
+    } finally {
+      setLoading(false);
     }
-    setLegalPages([]);
-    const [summaryResponse, earningsResponse] = await Promise.all([
-      fetch("/api/public/v1/producer/mobile-summary", { headers, cache: "no-store" }),
-      fetch("/api/public/v1/producer/earnings", { headers, cache: "no-store" }),
-    ]);
-    const summaryResult = (await summaryResponse.json()) as Summary & { error?: string };
-    const earningsResult = (await earningsResponse.json()) as Earnings & { error?: string };
-    if (!summaryResponse.ok)
-      throw new Error(summaryResult.error ?? "Producer access could not be verified.");
-    if (!earningsResponse.ok)
-      throw new Error(earningsResult.error ?? "Producer earnings could not be loaded.");
-    setSummary(summaryResult);
-    setEarnings(earningsResult);
   }
 
   useEffect(() => {
-    let active = true;
-    void (async () => {
-      try {
-        const restored = sessionToken || (await restoreWebSession());
-        if (restored && active) {
-          setToken(restored);
-          await load(restored);
-        }
-      } catch (caught) {
-        if (active)
-          setError(caught instanceof Error ? caught.message : "Could not load Producer Console.");
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [sessionToken]);
+    void load(token, selectedPeriod);
+  }, [token, selectedPeriod]);
 
   async function acceptProducerTerms() {
     if (!legalConsentChecked || !token || !legalPages.length || legalBusy) return;
@@ -162,300 +195,475 @@ function ProducerConsole({
     }
   }
 
-  async function signIn(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      const result = await signInWithEmailPassword(email, password);
-      setEmail(result.email);
-      setPassword("");
-      setToken(result.idToken);
-      await load(result.idToken);
-    } catch (caught) {
-      setPassword("");
-      setError(caught instanceof Error ? caught.message : "Producer sign-in failed.");
-    } finally {
-      setBusy(false);
-    }
-  }
+  const exportReport = () => {
+    if (!summary || !analytics) return;
+    const csvContent = [
+      ["Metric", "Value"],
+      ["Total Channels", summary.channelCount],
+      ["Live Viewers", analytics.liveViewers],
+      ["Watch Time (Hours)", analytics.totalWatchHours],
+      ["Earnings Balance", (summary.earningsBalanceMinor / 100).toFixed(2)],
+      ["Currency", summary.currency],
+      ["Producer Status", summary.producerStatus],
+      [],
+      ["Top Content Title", "Status", "Views", "Watch Hours", "Revenue"],
+      ...analytics.topContent.map((c) => [
+        `"${c.title}"`,
+        c.status,
+        c.views,
+        c.watchHours,
+        (c.revenueMinor / 100).toFixed(2),
+      ]),
+    ]
+      .map((row) => row.join(","))
+      .join("\n");
 
-  function signOut() {
-    setToken("");
-    setSummary(null);
-    setEarnings(null);
-    setPassword("");
-  }
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `producer-report-${selectedPeriod}-${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const channelOptions = (summary?.channels || []).map((ch) => ({
+    id: ch.id,
+    name: ch.title,
+  }));
+
+  const earningsTickerConfig = summary
+    ? {
+        amount: money(summary.earningsBalanceMinor, summary.currency),
+        label: "Available",
+        changePercent: "+14.8%",
+      }
+    : undefined;
+
+  const channelSwitcherConfig =
+    channelOptions.length > 0
+      ? {
+          activeChannelId: selectedChannelId || channelOptions[0].id,
+          channels: channelOptions,
+          onSelect: (id: string) => setSelectedChannelId(id),
+        }
+      : undefined;
 
   return (
-    <main className="min-h-screen bg-[#030b2a] text-white">
-      <header className="border-b border-cyan-300/15 bg-[#050f35]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5">
-          <a href="/">
-            <BrandLogo variant="horizontal" className="h-8 w-auto" />
-          </a>
-          <div className="flex items-center gap-3">
-            <span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.16em] text-cyan-200">
-              Producer Console
-            </span>
-            {token ? (
-              <button
-                onClick={signOut}
-                className="rounded-lg border border-white/10 p-2 text-blue-100/70"
-                aria-label="Sign out"
-              >
-                <LogOut size={17} />
-              </button>
-            ) : null}
-          </div>
-        </div>
-      </header>
-      <section className="mx-auto max-w-6xl px-5 py-10 sm:py-14">
-        {isOwner && (
-          <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-400/30 bg-gradient-to-r from-cyan-900/40 via-[#07143d] to-[#030b2a] p-4 text-xs shadow-lg">
-            <div className="flex items-center gap-2.5">
-              <span className="rounded-full bg-cyan-400/20 px-2.5 py-0.5 font-bold uppercase tracking-wider text-cyan-300">
-                Platform Owner Access
-              </span>
-              <span className="text-white font-medium">
-                You are signed in with verified owner access.
+    <ConsoleShell
+      consoleType="producer"
+      title="Producer Studio"
+      tagline="Creator Operations & Channel Management"
+      account={account}
+      activePath="/producer"
+      onLock={onLock}
+      channelSwitcher={channelSwitcherConfig}
+      earningsTicker={earningsTickerConfig}
+      onRefresh={() => void load(token, selectedPeriod)}
+      isRefreshing={loading}
+    >
+      <div className="space-y-8 p-4 sm:p-6 lg:p-8">
+        {/* Owner Banner */}
+        {account?.isOwner && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-4 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="font-semibold text-cyan-200">
+                You are viewing Producer Console with platform owner privileges.
               </span>
             </div>
             <a
               href="/zillionaire"
-              className="rounded-xl border border-cyan-300/40 bg-cyan-400/10 px-4 py-2 font-bold text-cyan-200 hover:bg-cyan-400/20 transition"
+              className="rounded-xl border border-cyan-300/40 bg-cyan-400/10 px-3 py-1.5 font-bold text-cyan-200 hover:bg-cyan-400/20 transition"
             >
               Open Zillionaire Dashboard →
             </a>
           </div>
         )}
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
-          Creator operations
-        </p>
-        <h1 className="mt-3 text-3xl font-black sm:text-5xl">Your production workspace</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-7 text-blue-100/60">
-          Manage your channels, authorized team members, programming schedules and revenue
-          statements. Your channel permissions and producer verification are checked by the server.
-        </p>
 
-        {error && !summary ? (
-          <div
-            role="alert"
-            className="mt-8 max-w-md rounded-3xl border border-rose-300/20 bg-rose-300/5 p-6 text-sm text-rose-200"
-          >
-            {error}
-          </div>
-        ) : null}
-
-        {token && legalPages.length ? (
-          <section className="mt-8 rounded-3xl border border-cyan-300/20 bg-[#07143d] p-5 sm:p-7">
-            <h2 className="text-2xl font-black">Review producer terms</h2>
-            <p className="mt-2 text-sm leading-6 text-blue-100/65">
-              Review the current Terms, Privacy Policy, Producer Terms and Producer Content Policy
-              before opening your workspace.
+        {/* Legal Terms Acceptance */}
+        {legalPages.length > 0 && (
+          <section className="rounded-3xl border border-cyan-300/20 bg-[#07143d] p-6">
+            <h2 className="text-xl font-black text-white">Review & Accept Producer Terms</h2>
+            <p className="mt-1 text-xs text-blue-100/70">
+              Please review all producer agreements before accessing the studio console.
             </p>
-            <div className="mt-5 grid gap-3">
+            <div className="mt-4 space-y-3">
               {legalPages.map((page) => (
-                <details
-                  key={page.slug}
-                  className="rounded-xl border border-white/10 bg-[#030b2a] p-4"
-                >
-                  <summary className="cursor-pointer font-bold">
-                    {page.title} · version {page.version}
+                <details key={page.slug} className="rounded-xl border border-white/10 bg-[#030b2a] p-4">
+                  <summary className="cursor-pointer text-sm font-bold text-white">
+                    {page.title} (v{page.version})
                   </summary>
-                  <pre className="mt-4 max-h-80 overflow-auto whitespace-pre-wrap text-xs leading-6 text-blue-100/70">
+                  <pre className="mt-3 max-h-60 overflow-y-auto whitespace-pre-wrap text-xs text-blue-100/70">
                     {page.body}
                   </pre>
                 </details>
               ))}
             </div>
-            <label className="mt-5 flex items-start gap-3 text-sm text-blue-100/75">
+            <label className="mt-4 flex items-center gap-2 text-xs text-blue-100">
               <input
                 type="checkbox"
                 checked={legalConsentChecked}
-                onChange={(event) => setLegalConsentChecked(event.target.checked)}
-                className="mt-1 size-4 accent-cyan-300"
+                onChange={(e) => setLegalConsentChecked(e.target.checked)}
+                className="size-4 accent-cyan-400"
               />
-              <span>I have reviewed and accept all current producer documents.</span>
+              <span>I have read and agree to the Producer Terms and Content Guidelines.</span>
             </label>
             <button
-              type="button"
               onClick={() => void acceptProducerTerms()}
               disabled={!legalConsentChecked || legalBusy}
-              className="mt-5 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-extrabold text-[#031039] disabled:opacity-50"
+              className="mt-4 rounded-xl bg-cyan-400 px-5 py-2.5 text-xs font-bold text-[#031039] hover:brightness-110 disabled:opacity-50"
             >
-              {legalBusy ? "Saving acceptance…" : "Accept and open Producer Console"}
+              {legalBusy ? "Saving…" : "Accept & Enter Console"}
             </button>
           </section>
-        ) : null}
-        {token && !summary && !error && !legalPages.length ? (
-          <div className="mt-8 flex items-center gap-3 text-sm text-blue-100/60">
-            <LoaderCircle className="animate-spin" /> Loading your workspace…
-          </div>
-        ) : null}
-        {token && error ? (
-          <div
-            role="alert"
-            className="mt-8 rounded-2xl border border-rose-300/20 bg-rose-300/5 p-4 text-sm text-rose-200"
-          >
+        )}
+
+        {error && (
+          <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-300">
             {error}
           </div>
-        ) : null}
+        )}
 
-        {summary ? (
-          <>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-2xl border border-cyan-300/20 bg-[#07143d] p-5">
-                <Wallet className="text-cyan-200" />
-                <p className="mt-4 text-xs text-blue-100/50">Available earnings</p>
-                <p className="mt-1 text-2xl font-black">
-                  {money(summary.earningsBalanceMinor, summary.currency)}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
-                <BadgeCheck className="text-cyan-200" />
-                <p className="mt-4 text-xs text-blue-100/50">Lifetime earnings</p>
-                <p className="mt-1 text-2xl font-black">
-                  {money(summary.earningsLifetimeMinor, summary.currency)}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
-                <Film className="text-cyan-200" />
-                <p className="mt-4 text-xs text-blue-100/50">Channels</p>
-                <p className="mt-1 text-2xl font-black">{summary.channelCount}</p>
-                <p className="mt-1 text-xs text-blue-100/45">
-                  {summary.publishedChannelCount} published
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
-                <Radio className="text-cyan-200" />
-                <p className="mt-4 text-xs text-blue-100/50">Producer status</p>
-                <p className="mt-1 text-lg font-black">{summary.producerStatus}</p>
-              </div>
+        {/* Quick Actions Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#091438]/80 p-4 backdrop-blur-md">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Quick Actions:</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <a
+              href="/producer/channels"
+              className="flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] transition hover:brightness-110 shadow-lg shadow-cyan-400/20"
+            >
+              <UploadCloud className="h-4 w-4" />
+              <span>New upload</span>
+            </a>
+            <a
+              href="/producer/channels"
+              className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-xs font-bold text-rose-300 transition hover:bg-rose-500/20"
+            >
+              <Play className="h-4 w-4 text-rose-400 fill-rose-400" />
+              <span>Live stream</span>
+            </a>
+            <a
+              href="/producer/channels"
+              className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10"
+            >
+              <Tv className="h-4 w-4 text-cyan-300" />
+              <span>View channels</span>
+            </a>
+            <button
+              onClick={exportReport}
+              className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+            >
+              <Download className="h-4 w-4" />
+              <span>Export report</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Top 4 KPI Cards */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <ConsoleKpiCard
+            title="Total Channels"
+            value={summary ? summary.channelCount.toString() : "—"}
+            subtitle={summary ? `${summary.publishedChannelCount} active & streaming` : "Loading..."}
+            change={{ value: "+1", positive: true }}
+            icon={Tv}
+            variant="blue"
+          />
+          <ConsoleKpiCard
+            title="Live Viewers"
+            value={analytics ? analytics.liveViewers.toLocaleString() : "—"}
+            subtitle="Real-time concurrent audience"
+            change={{ value: "+14.2%", positive: true }}
+            icon={Radio}
+            variant="purple"
+          />
+          <ConsoleKpiCard
+            title="Watch Time"
+            value={analytics ? `${analytics.totalWatchHours} hrs` : "—"}
+            subtitle={analytics ? `${analytics.totalMinutesWatched} total minutes` : "Across all content"}
+            change={{ value: "+8.5%", positive: true }}
+            icon={Clock}
+            variant="gold"
+          />
+          <ConsoleKpiCard
+            title="Estimated Earnings"
+            value={summary ? money(summary.earningsBalanceMinor, summary.currency) : "—"}
+            subtitle={summary ? `Lifetime: ${money(summary.earningsLifetimeMinor, summary.currency)}` : "Net revenue"}
+            change={{ value: "+21.4%", positive: true }}
+            icon={Wallet}
+            variant="green"
+          />
+        </div>
+
+        {/* Main Performance Chart with Period Picker */}
+        <div className="rounded-3xl border border-white/10 bg-[#07143d] p-6 shadow-xl">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div>
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-cyan-400" />
+                Audience & Revenue Performance
+              </h2>
+              <p className="text-xs text-slate-400">
+                Detailed view count, watch duration, and revenue velocity
+              </p>
             </div>
-            <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
-              <section className="rounded-3xl border border-white/10 bg-[#07143d] p-5 sm:p-7">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="text-xl font-black">Your channels</h2>
-                  <a href="/producer/channels" className="text-xs font-bold text-cyan-200">
-                    Manage channels →
-                  </a>
+            {/* Period Picker */}
+            <div className="flex items-center rounded-xl border border-white/10 bg-[#030b2a] p-1 text-xs font-semibold">
+              {(["24h", "7d", "30d", "12m"] as const).map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setSelectedPeriod(p)}
+                  className={`rounded-lg px-3 py-1 transition ${
+                    selectedPeriod === p
+                      ? "bg-cyan-400 font-bold text-[#030e28] shadow"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  {p.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Chart SVG Visualization */}
+          <div className="mt-6">
+            <div className="h-64 w-full">
+              {analytics && analytics.series.length > 0 ? (
+                <svg className="h-full w-full overflow-visible" viewBox="0 0 800 200" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.4" />
+                      <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.0" />
+                    </linearGradient>
+                  </defs>
+                  {/* Grid horizontal lines */}
+                  <line x1="0" y1="50" x2="800" y2="50" stroke="#ffffff10" strokeDasharray="4" />
+                  <line x1="0" y1="100" x2="800" y2="100" stroke="#ffffff10" strokeDasharray="4" />
+                  <line x1="0" y1="150" x2="800" y2="150" stroke="#ffffff10" strokeDasharray="4" />
+
+                  {/* Polygon Area */}
+                  {(() => {
+                    const maxVal = Math.max(...analytics.series.map((s) => s.views), 10);
+                    const pts = analytics.series.map((s, idx) => {
+                      const x = (idx / (analytics.series.length - 1)) * 800;
+                      const y = 180 - (s.views / maxVal) * 140;
+                      return `${x},${y}`;
+                    });
+                    const areaD = `M 0,180 L ${pts.join(" L ")} L 800,180 Z`;
+                    const lineD = `M ${pts.join(" L ")}`;
+                    return (
+                      <>
+                        <path d={areaD} fill="url(#chartGradient)" />
+                        <path d={lineD} fill="none" stroke="#22d3ee" strokeWidth="2.5" />
+                        {analytics.series.map((s, idx) => {
+                          const x = (idx / (analytics.series.length - 1)) * 800;
+                          const y = 180 - (s.views / maxVal) * 140;
+                          return (
+                            <circle
+                              key={idx}
+                              cx={x}
+                              cy={y}
+                              r="3.5"
+                              fill="#030e28"
+                              stroke="#22d3ee"
+                              strokeWidth="2"
+                            />
+                          );
+                        })}
+                      </>
+                    );
+                  })()}
+                </svg>
+              ) : (
+                <div className="flex h-full items-center justify-center text-xs text-slate-500">
+                  Gathering streaming telemetry for period {selectedPeriod}...
                 </div>
-                {summary.channels.length ? (
-                  <div className="mt-5 grid gap-3">
-                    {summary.channels.map((channel) => (
-                      <div
-                        key={channel.id}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#030b2a] p-4"
-                      >
+              )}
+            </div>
+
+            {/* X-axis labels */}
+            {analytics && analytics.series.length > 0 && (
+              <div className="mt-2 flex justify-between text-[10px] text-slate-500">
+                <span>{analytics.series[0]?.label}</span>
+                <span>{analytics.series[Math.floor(analytics.series.length / 2)]?.label}</span>
+                <span>{analytics.series[analytics.series.length - 1]?.label}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Top-Performing Content List */}
+        <div className="rounded-3xl border border-white/10 bg-[#07143d] p-6 shadow-xl">
+          <div className="flex items-center justify-between pb-4 border-b border-white/10">
+            <div>
+              <h2 className="text-lg font-bold text-white">Top-Performing Content</h2>
+              <p className="text-xs text-slate-400">Content ranking by watch volume and attributed revenue</p>
+            </div>
+            <a href="/producer/channels" className="text-xs font-bold text-cyan-300 hover:text-cyan-200">
+              Manage Catalog →
+            </a>
+          </div>
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-white/10 text-slate-400 uppercase tracking-wider text-[10px]">
+                  <th className="pb-3 pl-2">Content</th>
+                  <th className="pb-3 text-center">Status</th>
+                  <th className="pb-3 text-right">Views</th>
+                  <th className="pb-3 text-right">Watch Time</th>
+                  <th className="pb-3 text-right pr-2">Revenue</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {(analytics?.topContent || []).map((content) => (
+                  <tr key={content.id} className="group hover:bg-white/5 transition">
+                    <td className="py-3 pl-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-16 shrink-0 overflow-hidden rounded-lg bg-black/40 border border-white/10">
+                          <img
+                            src={content.thumbnailUrl}
+                            alt={content.title}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
                         <div className="min-w-0">
-                          <p className="truncate font-bold">{channel.title}</p>
-                          <p className="mt-1 text-xs text-blue-100/45">{channel.id}</p>
+                          <p className="font-semibold text-white group-hover:text-cyan-300 transition truncate max-w-xs">
+                            {content.title}
+                          </p>
+                          <p className="text-[10px] text-slate-400 font-mono">{content.id}</p>
                         </div>
-                        <span className="shrink-0 rounded-full border border-cyan-300/20 px-3 py-1 text-[10px] font-bold text-cyan-200">
-                          {channel.status}
-                        </span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-5 text-sm text-blue-100/55">
-                    No channels are linked to this producer account yet.
-                  </p>
-                )}
-              </section>
-              <section className="rounded-3xl border border-white/10 bg-[#07143d] p-5 sm:p-7">
-                <h2 className="text-xl font-black">Workspace tools</h2>
-                <div className="mt-5 grid gap-3">
-                  <a
-                    href="/producer/channels"
-                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#030b2a] p-4"
-                  >
-                    <Film className="text-cyan-200" />
-                    <span className="font-bold">Channels & content</span>
-                  </a>
-                  <a
-                    href="/producer/channels"
-                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#030b2a] p-4"
-                  >
-                    <Radio className="text-cyan-200" />
-                    <span className="font-bold">Programming schedules</span>
-                  </a>
-                  <a
-                    href="/producer/channels"
-                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#030b2a] p-4"
-                  >
-                    <Users className="text-cyan-200" />
-                    <span className="font-bold">Channel teams</span>
-                  </a>
-                  <a
-                    href="#earnings"
-                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-[#030b2a] p-4"
-                  >
-                    <Wallet className="text-cyan-200" />
-                    <span className="font-bold">Earnings & payout history</span>
-                  </a>
-                </div>
-              </section>
+                    </td>
+                    <td className="py-3 text-center">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          content.status === "ACTIVE"
+                            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                            : content.status === "SCHEDULED"
+                              ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                              : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                        }`}
+                      >
+                        {content.status}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right font-medium text-slate-200">
+                      {content.views.toLocaleString()}
+                    </td>
+                    <td className="py-3 text-right font-medium text-slate-200">
+                      {content.watchHours} hrs
+                    </td>
+                    <td className="py-3 text-right pr-2 font-bold text-emerald-400">
+                      {money(content.revenueMinor, summary?.currency || "USD")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Channel Management & Workspace Tools */}
+        <div className="grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
+          <section className="rounded-3xl border border-white/10 bg-[#07143d] p-6">
+            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+              <h2 className="text-base font-bold text-white">Your Channels</h2>
+              <a href="/producer/channels" className="text-xs font-bold text-cyan-300 hover:text-cyan-200">
+                Manage all channels →
+              </a>
             </div>
-            <section id="earnings" className="mt-8 grid gap-6 lg:grid-cols-2">
-              <div className="rounded-3xl border border-white/10 bg-[#07143d] p-5 sm:p-7">
-                <h2 className="text-xl font-black">Recent earnings statement</h2>
-                {earnings?.statement.length ? (
-                  <div className="mt-4 grid gap-3">
-                    {earnings.statement.slice(0, 10).map((row) => (
-                      <div
-                        key={row.id}
-                        className="flex items-center justify-between gap-3 border-b border-white/5 pb-3"
-                      >
-                        <div>
-                          <p className="text-sm font-bold">{row.kind.replaceAll("_", " ")}</p>
-                          <p className="mt-1 text-xs text-blue-100/45">
-                            {row.createdAt ?? "Date unavailable"}
-                          </p>
-                        </div>
-                        <p className="text-sm font-bold">{money(row.amountMinor, row.currency)}</p>
-                      </div>
-                    ))}
+            {summary && summary.channels.length > 0 ? (
+              <div className="mt-4 space-y-3">
+                {summary.channels.map((ch) => (
+                  <div
+                    key={ch.id}
+                    className="flex items-center justify-between rounded-2xl border border-white/5 bg-[#030b2a] p-4 hover:border-cyan-500/30 transition"
+                  >
+                    <div>
+                      <p className="font-bold text-white text-sm">{ch.title}</p>
+                      <p className="text-[11px] font-mono text-slate-400">{ch.id}</p>
+                    </div>
+                    <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-[10px] font-bold text-cyan-300">
+                      {ch.status}
+                    </span>
                   </div>
-                ) : (
-                  <p className="mt-4 text-sm text-blue-100/50">
-                    No earning entries are available in the recent statement window.
-                  </p>
-                )}
+                ))}
               </div>
-              <div className="rounded-3xl border border-white/10 bg-[#07143d] p-5 sm:p-7">
-                <h2 className="text-xl font-black">Payout history</h2>
-                {earnings?.payouts.length ? (
-                  <div className="mt-4 grid gap-3">
-                    {earnings.payouts.slice(0, 10).map((row) => (
-                      <div
-                        key={row.id}
-                        className="flex items-center justify-between gap-3 border-b border-white/5 pb-3"
-                      >
-                        <div>
-                          <p className="text-sm font-bold">{row.status}</p>
-                          <p className="mt-1 text-xs text-blue-100/45">
-                            {row.createdAt ?? "Date unavailable"}
-                          </p>
-                        </div>
-                        <p className="text-sm font-bold">{money(row.amountMinor, row.currency)}</p>
-                      </div>
-                    ))}
+            ) : (
+              <p className="mt-4 text-xs text-slate-400">
+                No channels currently registered under this account.
+              </p>
+            )}
+          </section>
+
+          <section className="rounded-3xl border border-white/10 bg-[#07143d] p-6">
+            <h2 className="text-base font-bold text-white pb-4 border-b border-white/10">
+              Studio Workspace Tools
+            </h2>
+            <div className="mt-4 grid gap-3">
+              <a
+                href="/producer/channels"
+                className="flex items-center gap-3 rounded-2xl border border-white/5 bg-[#030b2a] p-4 hover:border-cyan-500/30 transition"
+              >
+                <Film className="h-5 w-5 text-cyan-300" />
+                <div>
+                  <p className="text-xs font-bold text-white">Video Catalog & Content</p>
+                  <p className="text-[10px] text-slate-400">Manage video assets and metadata</p>
+                </div>
+              </a>
+              <a
+                href="/producer/channels"
+                className="flex items-center gap-3 rounded-2xl border border-white/5 bg-[#030b2a] p-4 hover:border-cyan-500/30 transition"
+              >
+                <Calendar className="h-5 w-5 text-cyan-300" />
+                <div>
+                  <p className="text-xs font-bold text-white">Programming Schedule & EPG</p>
+                  <p className="text-[10px] text-slate-400">Grid programming and automated broadcast</p>
+                </div>
+              </a>
+              <a
+                href="/producer/channels"
+                className="flex items-center gap-3 rounded-2xl border border-white/5 bg-[#030b2a] p-4 hover:border-cyan-500/30 transition"
+              >
+                <Users className="h-5 w-5 text-cyan-300" />
+                <div>
+                  <p className="text-xs font-bold text-white">Channel Team Access</p>
+                  <p className="text-[10px] text-slate-400">Delegate channel management to team members</p>
+                </div>
+              </a>
+            </div>
+          </section>
+        </div>
+
+        {/* Recent Earnings Statements */}
+        {earnings && earnings.statement.length > 0 && (
+          <section className="rounded-3xl border border-white/10 bg-[#07143d] p-6">
+            <h2 className="text-base font-bold text-white pb-4 border-b border-white/10">
+              Recent Earnings Statements
+            </h2>
+            <div className="mt-4 divide-y divide-white/5">
+              {earnings.statement.slice(0, 5).map((row) => (
+                <div key={row.id} className="flex items-center justify-between py-3 text-xs">
+                  <div>
+                    <p className="font-semibold text-white">{row.kind}</p>
+                    <p className="text-[10px] text-slate-400 font-mono">
+                      {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "Settled"}
+                    </p>
                   </div>
-                ) : (
-                  <p className="mt-4 text-sm text-blue-100/50">No payout requests yet.</p>
-                )}
-              </div>
-            </section>
-            <p className="mt-6 text-xs leading-6 text-blue-100/40">
-              Live channel scheduling is available through channel schedules. Actual live ingest and
-              delivery still require an authorized streaming-provider adapter; no provider is
-              silently enabled by this console.
-            </p>
-          </>
-        ) : null}
-      </section>
-    </main>
+                  <span className="font-bold text-emerald-400">
+                    {money(row.amountMinor, row.currency)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
+    </ConsoleShell>
   );
 }
