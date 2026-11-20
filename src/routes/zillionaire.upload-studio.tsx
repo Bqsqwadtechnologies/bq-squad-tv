@@ -154,7 +154,7 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
   const [cast, setCast] = useState("");
   const [posterUrl, setPosterUrl] = useState("");
   const [backdropUrl, setBackdropUrl] = useState("");
-  const [directPublish, setDirectPublish] = useState(true);
+  const directPublish = false;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [subtitlesLanguage, setSubtitlesLanguage] = useState("English");
   const [subtitlesUrl, setSubtitlesUrl] = useState("");
@@ -331,7 +331,7 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
         ),
       );
 
-      setSuccessMessage(`Successfully uploaded and ${directPublish ? "direct-published" : "queued"} "${title}"!`);
+      setSuccessMessage(`Upload received for "${title}". It will remain private until processing, rights checks and approval are complete.`);
       // Reset form
       setTitle("");
       setDescription("");
@@ -342,7 +342,7 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
     }
   };
 
-  const handleAction = async (assetId: string, operation: "direct_publish" | "approve" | "retry" | "delete", reason: string) => {
+  const handleAction = async (assetId: string, operation: "retry" | "delete", reason: string) => {
     try {
       setError(null);
       const token = await restoreWebSession();
@@ -436,9 +436,9 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
             variant="success"
           />
           <ConsoleKpiCard
-            title="Direct Published"
+            title="Awaiting Approval"
             value={uploads.filter((u) => u.directPublish).length}
-            subtitle="Playable without queue"
+            subtitle="Private until approved"
             icon={Zap}
             variant="info"
           />
@@ -726,23 +726,13 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
                   </div>
                 </div>
 
-                {/* Direct Publish Selector */}
-                <div className="rounded-lg border border-amber-500/20 bg-amber-950/20 p-4">
+                <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-4">
                   <div className="flex items-start gap-3">
-                    <Zap className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                    <ShieldCheck className="h-5 w-5 text-cyan-300 shrink-0 mt-0.5" />
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-amber-200">Direct Publish Mode</span>
-                        <input
-                          type="checkbox"
-                          checked={directPublish}
-                          onChange={(e) => setDirectPublish(e.target.checked)}
-                          className="h-4 w-4 rounded border-slate-700 text-amber-500 focus:ring-amber-400"
-                        />
-                      </div>
-                      <p className="text-xs text-slate-300 mt-1">
-                        When enabled, MP4 and HLS files are published immediately to the private stream without waiting
-                        for the external GPU transcode worker. Immediate playback is guaranteed.
+                      <div className="text-sm font-semibold text-cyan-100">Approval required before publication</div>
+                      <p className="mt-1 text-xs leading-5 text-slate-300">
+                        Every upload stays private while processing and rights evidence are checked. Only the authorised review and publishing workflow can make a video available to viewers.
                       </p>
                     </div>
                   </div>
@@ -757,7 +747,7 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
                 className="flex items-center gap-2 rounded-lg bg-amber-400 px-6 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-300 transition-colors disabled:opacity-50"
               >
                 <UploadCloud className="h-4 w-4" />
-                Start Ingestion & Publish
+                Submit for Processing & Review
               </button>
             </div>
           </form>
@@ -928,21 +918,6 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {asset.displayState !== "Published" && (
-                              <button
-                                onClick={() =>
-                                  handleAction(
-                                    asset.id,
-                                    "direct_publish",
-                                    "Owner direct published asset from Upload Studio",
-                                  )
-                                }
-                                title="Publish immediately for playback"
-                                className="rounded bg-amber-400/20 px-2 py-1 text-xs font-semibold text-amber-300 hover:bg-amber-400/30 transition-colors"
-                              >
-                                Direct Publish
-                              </button>
-                            )}
                             <button
                               onClick={() => {
                                 const reason = window.prompt("Reason for deleting asset:", "Obsolete or test upload");
