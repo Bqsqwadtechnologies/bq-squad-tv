@@ -1,5 +1,5 @@
-Last finished batch: V5-03 Batch 3, pushed as `80e455db19dcec0d97ffed144a8414c0c43f6d3f`.
-Next batch: V5-03 Batch 4 (tamper-evident audit).
-Known gaps: location detection, IP-change challenge and concurrent-session limit are not implemented; passkeys and device-alert emails remain.
-Files touched: owner session validation/refresh, owner devices screen, sign-out-everywhere API, role matrix and tests.
+Last finished batch: V5-03 Batch 4, pushed as `ffb22b3b36780dc1f3ebb91003ed6970518595d5`.
+Next batch: V5-03 Batch 5 (security monitoring and incident readiness).
+Known gaps: passkeys and device-alert emails remain; country detection, IP-change challenge and concurrent-session limit are not implemented.
+Scope: owner audit-chain verification, actor/target search and checksummed export.
 Verification: 108 test files/3,117 tests, development build and public-text scan passed.
