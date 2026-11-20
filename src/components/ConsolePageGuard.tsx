@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { restoreWebSession, getWebAuthHeaders, signInWithEmailPassword, createAccountWithEmailPassword, sendPasswordResetEmail, signOutWeb } from "@/lib/firebase-web-auth";
 import { NotFoundView } from "@/components/NotFoundView";
 
-export type ConsoleRole = "zillionaire" | "admin" | "producer" | "provider";
+export type ConsoleRole = "zillionaire" | "producer" | "provider" | "admin";
 
 export type ConsoleAccount = {
   uid: string;
@@ -565,7 +565,7 @@ function ConsoleAuthPortal({
           </span>
           <h1 className="mt-3 text-2xl font-black">{consoleTitle} Access</h1>
           <p className="mt-2 text-xs text-blue-100/70">
-            Dedicated creator & partner administration. Viewer sessions cannot open management consoles.
+            Dedicated creator & partner management. Viewer sessions cannot open management consoles.
           </p>
         </div>
 

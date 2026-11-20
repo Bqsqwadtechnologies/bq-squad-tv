@@ -371,3 +371,15 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - Implemented partner and creator documentation hubs (`/provider/docs` and `/producer/docs`) with searchable, anchor-linked technical guides stored directly in the repository under `content/docs/`.
   - Introduced accessible `InfoTip` component backed by a centralized `content/help/tips.json` registry, giving contextual inline guidance for technical parameters without cluttering dashboard workflows.
   - Maintained complete isolation between Viewer, Producer, Provider, and Console surfaces with 269 strictly guarded routes and 0 unguarded endpoints.
+
+
+## V6-01 Batch 7 — Naming Sanitization & Public Text Enforcement (2026-11-20)
+
+### 1. Elimination of Legacy "Admin" References
+- **Decision**: All visible routes, labels, console role types, dispute views, security filters, android labels, legal copy, and doc filenames have been completely sanitized of the term "admin".
+- **Rationale**:
+  - In accordance with Platform Rule 4, the platform owner control center is strictly "Zillionaire".
+  - Renamed `docs/ADMIN-DASHBOARD-REPAIR-STATUS.md` to `docs/ZILLIONAIRE-DASHBOARD-REPAIR-STATUS.md`.
+  - Updated `ConsoleRole` across `ConsolePageGuard` and Zillionaire routes to use `"zillionaire"`.
+  - Updated `SharedDisputeSystem` and `SecurityEventsView` to use `"zillionaire"` and operator designations.
+  - Enhanced `scripts/scan-public-text.mjs` to enforce forbidden terms `"admin"` and `"administrator"` on public-facing text, components, legal copy, and docs file names.

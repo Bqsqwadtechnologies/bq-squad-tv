@@ -63,7 +63,7 @@ interface PayoutItem {
 function ZillionairePayoutsRoute() {
   return (
     <ConsolePageGuard
-      role="admin"
+      role="zillionaire"
       module="payouts"
       title="Payouts & Money Control"
       description="Producer and provider payouts queue, approval workflow, bank settlement verification, and revenue share live calculator."

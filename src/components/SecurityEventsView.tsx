@@ -487,7 +487,7 @@ export function SecurityEventsView({ sessionToken, isOwner = false }: SecurityEv
               <option value="viewer">Viewer</option>
               <option value="producer">Producer</option>
               <option value="provider">Provider</option>
-              <option value="admin">Platform Operator</option>
+              <option value="zillionaire">Platform Operator</option>
               <option value="worker">Background worker</option>
             </select>
             <ChevronDown

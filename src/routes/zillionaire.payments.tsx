@@ -54,7 +54,7 @@ interface PaymentItem {
 function ZillionairePaymentsRoute() {
   return (
     <ConsolePageGuard
-      role="admin"
+      role="zillionaire"
       module="payments"
       title="Payments & Reconciliation"
       description="Viewer top-up transactions, gateway reconciliation against Paystack, and audited reversal workflow with double confirmation."

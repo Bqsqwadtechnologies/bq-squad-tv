@@ -107,7 +107,7 @@ export const Route = createFileRoute("/zillionaire/live-tv")({
 function ZillionaireLiveTvRoute() {
   return (
     <ConsolePageGuard
-      role="admin"
+      role="zillionaire"
       module="channels"
       title="Live TV"
       description="Create live channels, manage programme listings, review submissions and monitor playback status."

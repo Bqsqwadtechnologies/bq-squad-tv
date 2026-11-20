@@ -60,7 +60,7 @@ export type DisputeItem = {
 };
 
 export interface SharedDisputeSystemProps {
-  mode: "producer" | "provider" | "admin";
+  mode: "producer" | "provider" | "zillionaire" | "admin";
   disputes: DisputeItem[];
   onCreateDispute: (data: {
     subject: string;
@@ -246,7 +246,7 @@ export function SharedDisputeSystem({
         </div>
 
         <div className="flex items-center gap-3">
-          {mode !== "admin" && (
+          {mode !== "admin" && mode !== "zillionaire" && (
             <button
               onClick={() => setShowNewModal(true)}
               className="flex items-center gap-1.5 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 shadow-md shadow-cyan-400/20"
@@ -431,7 +431,7 @@ export function SharedDisputeSystem({
               )}
 
               {/* Operations Decision Controls Banner */}
-              {mode === "admin" && activeDispute.status !== "resolved" && (
+              {(mode === "admin" || mode === "zillionaire") && activeDispute.status !== "resolved" && (
                 <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-1.5">

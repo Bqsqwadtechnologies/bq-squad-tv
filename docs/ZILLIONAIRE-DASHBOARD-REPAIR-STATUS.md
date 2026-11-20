@@ -1,4 +1,4 @@
-# BQ SQWAD TV — Admin, Video and Legal Publishing Repair Status
+# BQ SQWAD TV — Zillionaire, Video and Legal Publishing Repair Status
 
 **Date:** 20 November 2026  
 **Branch:** `main`  
@@ -6,7 +6,7 @@
 
 ## Scope inspected
 
-The repository tree and implementation areas inspected include Zillionaire admin routes and generated registrations, shared console navigation, admin video and upload studios, content-asset listing, producer upload intent/completion, public legal rendering, owner-only legal draft/seed/publish APIs, bundled legal drafts and their validation test.
+The repository tree and implementation areas inspected include Zillionaire zillionaire routes and generated registrations, shared console navigation, zillionaire video and upload studios, content-asset listing, producer upload intent/completion, public legal rendering, owner-only legal draft/seed/publish APIs, bundled legal drafts and their validation test.
 
 ## Changes committed
 
@@ -19,9 +19,9 @@ The repository tree and implementation areas inspected include Zillionaire admin
 
 ## Confirmed architecture findings
 
-### Admin navigation
+### Zillionaire navigation
 
-The repository contains a large set of Zillionaire page files and the generated route tree registers the main admin pages, including approvals, analytics, channels, live TV, movies, series, upload studio, moderation, finance, payments, payouts, policies, security, storage, team, video studio and wallets.
+The repository contains a large set of Zillionaire page files and the generated route tree registers the main zillionaire pages, including approvals, analytics, channels, live TV, movies, series, upload studio, moderation, finance, payments, payouts, policies, security, storage, team, video studio and wallets.
 
 Static inspection does not reproduce the reported browser 404s. A route being present in source does not prove that the deployed hosting environment serves it correctly. The deployed URL, failing path, HTTP response and server logs are still needed to isolate deployment rewrites, stale deployment output or API failures.
 
@@ -43,7 +43,7 @@ Several existing legal drafts contain business-specific placeholders, including 
 
 - Live browser reproduction of each reported admin 404.
 - Production deployment and host rewrite configuration.
-- Authenticated admin video-list request against the configured Firestore project.
+- Authenticated zillionaire video-list request against the configured Firestore project.
 - Admin test-video upload, transcode, approval and publication end-to-end.
 - Actual Paystack checkout and webhook reconciliation.
 - Google Sign-In in the deployed website and Android app.

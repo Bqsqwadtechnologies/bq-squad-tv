@@ -156,7 +156,7 @@ function formatMinor(minor: number, currency: string = "NGN"): string {
 function ZillionaireViewersRoute() {
   return (
     <ConsolePageGuard
-      role="admin"
+      role="zillionaire"
       module="users"
       title="Viewer 360"
       description="Find and manage viewers, accounts, wallets, receipts and security"
@@ -1313,7 +1313,7 @@ function ZillionaireViewersPage({
               </div>
 
               <p className="text-xs text-slate-300">
-                Every administrative write requires a clear reason and is permanently recorded in
+                Every operator write requires a clear reason and is permanently recorded in
                 the immutable audit log.
               </p>
 

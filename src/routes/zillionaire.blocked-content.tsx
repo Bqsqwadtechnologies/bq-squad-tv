@@ -60,7 +60,7 @@ interface BlockedItem {
 function ZillionaireBlockedContentRoute() {
   return (
     <ConsolePageGuard
-      role="admin"
+      role="zillionaire"
       module="moderation"
       title="Blocked Content Log"
       description="Dedicated immutable enforcement log of all blocked and takedown assets with one-click owner restore."

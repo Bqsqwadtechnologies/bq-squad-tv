@@ -60,7 +60,7 @@ function formatMinor(minor: number, currency: string = "NGN"): string {
 function ZillionaireReceiptsRoute() {
   return (
     <ConsolePageGuard
-      role="admin"
+      role="zillionaire"
       module="finance"
       title="Receipts & Financial Documents"
       description="Sequential money documents, receipts, proof of payout, and customer lifetime spend."

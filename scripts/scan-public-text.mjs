@@ -5,6 +5,8 @@ import ts from "typescript";
 
 const root = process.cwd();
 const forbiddenTerms = [
+  "admin",
+  "administrator",
   "Firebase",
   "Firestore",
   "SDK",
@@ -90,6 +92,12 @@ function isTarget(file) {
     relative.endsWith("/README.md")
   )
     return false;
+  if (relative.startsWith("docs/")) {
+    if (relative.toLowerCase().includes("admin")) {
+      return true;
+    }
+    return false;
+  }
   return (
     relative.startsWith("src/routes/") ||
     relative.startsWith("src/components/") ||
@@ -175,6 +183,7 @@ for (const top of [
   "content/legal",
   "public",
   "src",
+  "docs",
 ]) {
   for (const file of await walk(path.join(root, top))) {
     if (!isTarget(file)) continue;

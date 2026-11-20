@@ -36,10 +36,10 @@ import java.util.Locale
                 style = MaterialTheme.typography.headlineSmall,
             )
             if (data!!.roleTags.any {
-                    it.equals("Owner", true) || it.equals("Admin", true)
+                    it.equals("Owner", true) || it.equals("Zillionaire", true)
                 }
             ) {
-                Text("Owner / Admin access", color = MaterialTheme.colorScheme.secondary)
+                Text("Owner / Operator access", color = MaterialTheme.colorScheme.secondary)
             }
         }
         Spacer(Modifier.height(20.dp))

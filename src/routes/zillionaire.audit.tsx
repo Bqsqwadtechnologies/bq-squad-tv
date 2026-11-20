@@ -46,7 +46,7 @@ function ZillionaireAuditRoute() {
         <ConsoleShell
           consoleType="zillionaire"
           title="Audit Log & Governance"
-          tagline="Immutable ledger of administrative actions, policy modifications, and security events"
+          tagline="Immutable ledger of operator actions, policy modifications, and security events"
           activePath="/zillionaire/audit"
           account={{
             ...(account.email ? { email: account.email } : {}),
@@ -132,7 +132,7 @@ function AuditDashboard({ token }: { token: string }) {
     <div className="space-y-6">
       <ConsoleWelcomeBanner
         title="Tamper-Evident Audit Log"
-        description="Immutable ledger of administrative actions, policy modifications, financial approvals, and security events."
+        description="Immutable ledger of operator actions, policy modifications, financial approvals, and security events."
         badgeText="Governance & Audit"
         actionLabel="Export CSV"
         onAction={exportCsv}

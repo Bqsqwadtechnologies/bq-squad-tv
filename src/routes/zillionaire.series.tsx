@@ -98,7 +98,7 @@ interface Series {
 function ZillionaireSeriesRoute() {
   return (
     <ConsolePageGuard
-      role="admin"
+      role="zillionaire"
       module="content"
       title="Series & Episodic Studio"
       description="Manage episodic shows, seasons, skip-intro markers, bulk auto-numbering, and scheduled releases."
@@ -412,7 +412,7 @@ function ZillionaireSeriesPage({
     <ConsoleShell
       title="Series & Episodes Studio"
       subtitle="Complete episodic pipeline: seasons, bulk auto-numbering, skip markers, and releases."
-      role="admin"
+      role="zillionaire"
       activeId="series"
       user={account ? { name: account.email?.split("@")[0] || "Owner", email: account.email } : undefined}
       onLock={onLock}

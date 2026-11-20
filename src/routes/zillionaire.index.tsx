@@ -45,7 +45,7 @@ export const Route = createFileRoute("/zillionaire/")({
 
 function AdminPage() {
   return (
-    <ConsolePageGuard role="admin">
+    <ConsolePageGuard role="zillionaire">
       {({ token, account, onLock }) => (
         <ConsoleShell
           consoleType="zillionaire"

@@ -91,7 +91,7 @@ interface ContentAsset {
 function ZillionaireMoviesRoute() {
   return (
     <ConsolePageGuard
-      role="admin"
+      role="zillionaire"
       module="content"
       title="Movies & Catalogue Management"
       description="Full catalogue veto power: shelves, featured hero rotation, regional windows, price overrides, and rights reviews."

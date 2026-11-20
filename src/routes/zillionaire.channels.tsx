@@ -71,7 +71,7 @@ interface ChannelItem {
 function ZillionaireChannelsRoute() {
   return (
     <ConsolePageGuard
-      role="admin"
+      role="zillionaire"
       module="channels"
       title="Channels Master Control"
       description="Full catalogue channel management: verification badges, suspension, revenue share overrides, transfer, live permission."
