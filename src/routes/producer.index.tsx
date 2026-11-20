@@ -1,6 +1,7 @@
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
 import { ConsoleShell, ConsoleKpiCard } from "@/components/ConsoleShell";
 import { useEffect, useState, type FormEvent } from "react";
+import { StatementsSettlementView } from "@/components/StatementsSettlementView";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   BadgeCheck,
@@ -80,6 +81,13 @@ function money(value: number, currency: string) {
 
 export const Route = createFileRoute("/producer/")({
   component: ProducerPage,
+  head: () => ({
+    meta: [
+      { title: "Producer Console | BQ SQWAD TV" },
+      { name: "description", content: "Secure producer console access for BQ SQWAD TV." },
+      { name: "robots", content: "noindex, nofollow, noarchive" },
+    ],
+  }),
 });
 
 function ProducerPage() {

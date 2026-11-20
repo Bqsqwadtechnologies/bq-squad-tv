@@ -83,6 +83,13 @@ function formatCurrency(minorUnits: number, currency: string) {
 
 export const Route = createFileRoute("/provider/")({
   component: ProviderPage,
+  head: () => ({
+    meta: [
+      { title: "Provider Console | BQ SQWAD TV" },
+      { name: "description", content: "Secure provider console access for BQ SQWAD TV." },
+      { name: "robots", content: "noindex, nofollow, noarchive" },
+    ],
+  }),
 });
 
 function ProviderPage() {

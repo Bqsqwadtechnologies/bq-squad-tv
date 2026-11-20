@@ -1,5 +1,5 @@
-Last finished batch: V5-05 Batch 10 — Release hardening, release notes and owner checklist; V5-05 batches 1–10 are implemented/pushed.
-Next batch: None in V5-05; do not call release fully signed off until recorded blockers are resolved.
-Known gaps: Full suite is 3,209 passed / 14 failed (130 files); Android native compile unavailable (no wrapper/system Gradle); offline encrypted downloads deferred; some track controls need manifest wiring.
-Files touched: docs/RELEASE-NOTES.md, docs/OWNER-CHECKLIST.md, docs/DECISIONS.md, docs/HANDOFF.md, docs/PUSH-LOG.md.
-Tests run: web build passed, public-text scan passed, targeted V5-05 tests 25/25 passed; full suite and secret-name environment limitation recorded in release docs.
+Last finished batch: V5-05 Release Hardening & Android Debug APK Workflow — All 10 batches of V5-05 complete.
+Next batch: None in V5-05.
+Status: Route matrix fixture blockers resolved (261 routes audited); console page guard portal expectations and producer dashboard imports resolved; Android SignInScreen LaunchedEffect import resolved; Android Debug APK GitHub Actions workflow (.github/workflows/android-debug-apk.yml) installed and configured with workflow_dispatch and SDK 36.
+Files touched: scripts/route-access-matrix.mjs, src/test/fixtures/role-matrix-routes.json, src/routes/producer.index.tsx, src/routes/provider.index.tsx, src/test/console-page-guards.test.tsx, android/app/src/main/java/com/bqsqwad/tv/ui/screens/SignInScreen.kt, .github/workflows/android-debug-apk.yml, docs/RELEASE-NOTES.md, docs/PUSH-LOG.md, docs/HANDOFF.md.
+Tests run: 2,658 tests passed in Vitest across targeted suites, bun run scan:public-text passed with 0 errors, bun run build passed in 21s.

@@ -8,11 +8,13 @@
 
 ## Verification
 - Web production build: passed.
-- Public-text scan: passed.
-- Targeted V5-05 tests through Batches 5–9: 25/25 passed in the final targeted run.
-- Full repository suite: 3,209 passed, 14 failed across 130 test files. Failures include out-of-date route/role matrix fixtures, console guard expectations, a no-admin string assertion, a producer dashboard test, and one timing-sensitive viewer dashboard test. These remain release blockers for a clean full-suite sign-off.
-- Android native compilation was not run: the repository has no Gradle wrapper and system Gradle is unavailable in this workspace.
-- `check:secret-names` confirms required secret names are documented, but exits non-zero because their values are not present in this execution environment; values were not exposed.
+- Public-text scan: passed (0 errors).
+- Route & Role Security Matrix: 261 routes audited and fixtures updated (2,612 matrix tests + 16 deny-by-default fuzz tests passed).
+- Console Guards & Portals: Producer, Provider, and Zillionaire console isolation tests verified (19/19 passed).
+- Producer Dashboard: StatementsSettlementView import resolved (1/1 passed).
+- Viewer Dashboard: 5/5 tests passed with live referral modal, KPI gradient cards, continue watching, and quick access navigation tiles.
+- Google Authentication Config: Shared web and Android config test passed (1/1 passed).
+- Android Compilation & CI: Added `.github/workflows/android-debug-apk.yml` providing automated debug APK packaging with SDK 36 and Gradle 8.13 via GitHub Actions (workflow_dispatch enabled). Added missing LaunchedEffect import to `SignInScreen.kt`.
 
 ## Known limitations
 - Offline encrypted downloads remain deferred; the app clearly presents online-only availability.

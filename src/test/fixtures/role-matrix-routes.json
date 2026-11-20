@@ -17,6 +17,23 @@
     }
   },
   {
+    "route": "/api/public/v1/account/delete",
+    "file": "src/routes/api/public/v1/account/delete.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/account/export",
     "file": "src/routes/api/public/v1/account/export.ts",
     "guard": "viewer",
@@ -625,6 +642,23 @@
       "delegate with module": 200,
       "delegate without module": 200,
       "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/legal/consent",
+    "file": "src/routes/api/public/v1/legal/consent.ts",
+    "guard": "public",
+    "expected": {
+      "anonymous": 200,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 200,
       "owner": 200
     }
   },
@@ -2516,6 +2550,23 @@
     }
   },
   {
+    "route": "/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens",
+    "file": "src/routes/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens.ts",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/zillionaire/content-assets/$assetId/rights",
     "file": "src/routes/api/public/v1/zillionaire/content-assets/$assetId/rights.ts",
     "guard": "zillionaire module",
@@ -3147,6 +3198,23 @@
   {
     "route": "/api/public/v1/zillionaire/security/holds",
     "file": "src/routes/api/public/v1/zillionaire/security/holds.ts",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/zillionaire/security/incident-mode",
+    "file": "src/routes/api/public/v1/zillionaire/security/incident-mode.ts",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,
