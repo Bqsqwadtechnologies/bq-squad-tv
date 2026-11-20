@@ -352,67 +352,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
                 processingAvailable: false,
               });
             }
-            const directPublishRequested = false;
-            const isMp4OrHls =
-              typeof asset["sourceFilename"] === "string" &&
-              /\.(mp4|m3u8)$/i.test(asset["sourceFilename"]);
-
-
-            if (directPublishRequested && processingAvailable) {
-              // Direct publish mode
-              const streamDestinationId = "lovable-stream-legacy";
-              const storagePath =
-                typeof asset["sourcePath"] === "string" ? asset["sourcePath"] : `stream/${data.assetId}/source.mp4`;
-
-              await fs.patchDoc(`contentAssets/${data.assetId}`, {
-                status: "ready",
-                contentStatus: "published",
-                deliveryMode: "bq_hosted",
-                streamDestinationId,
-                storagePath,
-                durationSeconds: data.durationSeconds || asset["durationSeconds"] || 3600,
-                codec: data.codec || (isMp4OrHls ? "h264/aac" : "direct_stream"),
-                resolution: data.resolution || "1080p",
-                directPublished: true,
-                published: true,
-                publishedAt: now,
-                updatedAt: now,
-              });
-
-              // Ensure channel links to this asset if channel has none
-              const channelId = asset["channelId"] as string;
-              if (channelId) {
-                const channel = await fs.getDoc(`channels/${channelId}`);
-                if (channel && !channel["currentAssetId"]) {
-                  await fs.patchDoc(`channels/${channelId}`, {
-                    currentAssetId: data.assetId,
-                    updatedAt: now,
-                  });
-                }
-              }
-
-              await writeAuditLog(fs, {
-                actorUid: user.uid,
-                action: "content.direct_published",
-                targetType: "contentAsset",
-                targetId: data.assetId,
-                reason: data.reason || "Asset direct-published without external processing host",
-                metadata: {
-                  channelId,
-                  storagePath,
-                  isMp4OrHls,
-                  processingAvailable,
-                },
-              });
-
-              return Response.json({
-                assetId: data.assetId,
-                status: "ready",
-                contentStatus: "published",
-                directPublished: true,
-              });
-            } else {
-              // Queue transcode job
+            // Queue transcode job
               const jobPath = `videoTranscodeJobs/${data.assetId}`;
               await fs.setDoc(jobPath, {
                 assetId: data.assetId,
