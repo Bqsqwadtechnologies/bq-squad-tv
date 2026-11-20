@@ -1,7 +1,28 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { formatMinorCurrency as money } from "@/lib/format-money";
-import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, LoaderCircle, Play, Send, ShieldCheck, Star, Tv2 } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  ArrowLeft,
+  Check,
+  FastForward,
+  Film,
+  Globe,
+  LoaderCircle,
+  MessageSquare,
+  PictureInPicture2,
+  Play,
+  RotateCcw,
+  Send,
+  Share2,
+  ShieldCheck,
+  Sliders,
+  Sparkles,
+  Star,
+  Subtitles,
+  Tv2,
+  Volume2,
+  Wallet,
+} from "lucide-react";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 
 type Content = {
@@ -27,9 +48,9 @@ export const Route = createFileRoute("/content/$assetId")({
   head: () => ({ meta: [{ title: "Content | BQ SQWAD TV" }] }),
 });
 
-function ContentDetailsPage() {
+export function ContentDetailsPage() {
   const { assetId } = Route.useParams();
-  const [token, setToken] = useState("");
+  const [authToken, setAuthToken] = useState("");
   const [content, setContent] = useState<Content | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [stars, setStars] = useState(0);
@@ -39,6 +60,19 @@ function ContentDetailsPage() {
   const [busy, setBusy] = useState(false);
   const [sessionId, setSessionId] = useState("");
   const [playbackUrl, setPlaybackUrl] = useState("");
+
+  // Batch 5 Player Enhancements
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
+  const [selectedSubtitle, setSelectedSubtitle] = useState<string>("off");
+  const [selectedAudio, setSelectedAudio] = useState<string>("original");
+  const [selectedQuality, setSelectedQuality] = useState<string>("auto");
+  const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
+  const [savedResumeTime, setSavedResumeTime] = useState<number>(0);
+  const [hasPromptedResume, setHasPromptedResume] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [showSkipIntro, setShowSkipIntro] = useState(false);
+  const [nextEpisodeAvailable, setNextEpisodeAvailable] = useState(true);
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const sessionRef = useRef("");
   const sequenceRef = useRef(0);
@@ -47,7 +81,7 @@ function ContentDetailsPage() {
   async function api(path: string, init: RequestInit = {}) {
     const response = await fetch(path, {
       ...init,
-      headers: { ...(await getWebAuthHeaders(token)), ...(init.headers ?? {}) },
+      headers: { ...(await getWebAuthHeaders(authToken)), ...(init.headers ?? {}) },
       cache: "no-store",
     });
     const result = (await response.json()) as Record<string, unknown>;
@@ -60,8 +94,8 @@ function ContentDetailsPage() {
     return result;
   }
 
-  async function loadContent(idToken: string) {
-    const headers = await getWebAuthHeaders(idToken);
+  async function loadContent(idAuthToken: string) {
+    const headers = await getWebAuthHeaders(idAuthToken);
     const [contentResponse, commentsResponse] = await Promise.all([
       fetch("/api/public/v1/content-assets/" + encodeURIComponent(assetId), {
         headers,
@@ -87,13 +121,27 @@ function ContentDetailsPage() {
   }
 
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`bq_resume_${assetId}`);
+      if (stored) {
+        const seconds = parseFloat(stored);
+        if (!isNaN(seconds) && seconds > 5) {
+          setSavedResumeTime(seconds);
+        }
+      }
+    } catch {
+      // Ignore storage error
+    }
+  }, [assetId]);
+
+  useEffect(() => {
     let active = true;
     void (async () => {
       try {
-        const idToken = await restoreWebSession();
-        if (!idToken) throw new Error("Sign in to view content details.");
-        if (active) setToken(idToken);
-        const headers = await getWebAuthHeaders(idToken);
+        const idAuthToken = await restoreWebSession();
+        if (!idAuthToken) throw new Error("Sign in to view content details.");
+        if (active) setAuthToken(idAuthToken);
+        const headers = await getWebAuthHeaders(idAuthToken);
         const [contentResponse, commentsResponse] = await Promise.all([
           fetch("/api/public/v1/content-assets/" + encodeURIComponent(assetId), {
             headers,
@@ -127,7 +175,7 @@ function ContentDetailsPage() {
   }, [assetId]);
 
   useEffect(() => {
-    if (!sessionId || !token) return;
+    if (!sessionId || !authToken) return;
     const timer = window.setInterval(() => {
       const video = videoRef.current;
       if (!video || !sessionRef.current) return;
@@ -159,9 +207,27 @@ function ContentDetailsPage() {
         });
     }, 15000);
     return () => window.clearInterval(timer);
-  }, [sessionId, token]);
+  }, [sessionId, authToken]);
 
-  async function startPlayback() {
+  // Viewing meter ticker
+  useEffect(() => {
+    if (!sessionId) return;
+    const ticker = window.setInterval(() => {
+      if (videoRef.current && !videoRef.current.paused) {
+        setElapsedSeconds((prev) => prev + 1);
+        const curr = videoRef.current.currentTime;
+        setShowSkipIntro(curr > 0 && curr < 90);
+        try {
+          localStorage.setItem(`bq_resume_${assetId}`, String(Math.floor(curr)));
+        } catch {
+          // Ignore storage error
+        }
+      }
+    }, 1000);
+    return () => window.clearInterval(ticker);
+  }, [sessionId, assetId]);
+
+  async function startPlayback(resumeFrom?: number) {
     setBusy(true);
     setError("");
     setMessage("");
@@ -184,7 +250,16 @@ function ContentDetailsPage() {
       playbackStateRef.current = "idle";
       setSessionId(id);
       setPlaybackUrl(url);
+      setElapsedSeconds(0);
       setMessage("Playback session started. Charges are based on verified playback time.");
+
+      if (resumeFrom && resumeFrom > 0) {
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.currentTime = resumeFrom;
+          }
+        }, 500);
+      }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Playback could not be started.");
     } finally {
@@ -209,6 +284,55 @@ function ContentDetailsPage() {
     }
   }
 
+  function handleSpeedChange(rate: number) {
+    setPlaybackSpeed(rate);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = rate;
+    }
+  }
+
+  function handleSkipIntro() {
+    if (videoRef.current) {
+      videoRef.current.currentTime += 85;
+      setShowSkipIntro(false);
+    }
+  }
+
+  async function handleTogglePiP() {
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else if (videoRef.current) {
+        await videoRef.current.requestPictureInPicture();
+      }
+    } catch {
+      // Picture-in-picture not supported or prevented
+    }
+  }
+
+  async function handleShare() {
+    const shareData = {
+      title: content?.title ?? "BQ SQWAD TV",
+      text: content?.description ?? "Watch on BQ SQWAD TV",
+      url: window.location.href,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        // Share dismissed
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        setCopiedLink(true);
+        setTimeout(() => setCopiedLink(false), 2500);
+      } catch {
+        // Clipboard error
+      }
+    }
+  }
+
   async function rateContent(value: number) {
     setError("");
     try {
@@ -219,7 +343,7 @@ function ContentDetailsPage() {
       });
       setStars(value);
       setMessage("Your rating was saved.");
-      await loadContent(token);
+      await loadContent(authToken);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Rating could not be saved.");
     }
@@ -244,12 +368,33 @@ function ContentDetailsPage() {
     }
   }
 
+  const formatSeconds = (sec: number) => {
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s < 10 ? "0" : ""}${s}`;
+  };
+
+  const calculatedCostMinor = content
+    ? Math.floor((content.ratePerMinuteMinor / 60) * elapsedSeconds)
+    : 0;
+
   return (
     <main className="min-h-screen bg-[#030b2a] px-4 py-7 text-white sm:px-6">
       <div className="mx-auto max-w-5xl">
-        <a href="/" className="inline-flex items-center gap-2 text-sm font-bold text-cyan-200">
-          <ArrowLeft size={16} /> Back to BQ SQWAD TV
-        </a>
+        <div className="flex items-center justify-between">
+          <a href="/" className="inline-flex items-center gap-2 text-sm font-bold text-cyan-200">
+            <ArrowLeft size={16} /> Back to BQ SQWAD TV
+          </a>
+          <button
+            type="button"
+            onClick={handleShare}
+            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white transition"
+          >
+            {copiedLink ? <Check size={14} className="text-emerald-400" /> : <Share2 size={14} />}
+            <span>{copiedLink ? "Link Copied" : "Share"}</span>
+          </button>
+        </div>
+
         {error && (
           <p
             role="alert"
@@ -261,6 +406,7 @@ function ContentDetailsPage() {
             </a>
           </p>
         )}
+
         {content ? (
           <>
             <section className="mt-7 grid gap-7 rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b286f] to-[#07143d] p-5 sm:grid-cols-[240px_1fr] sm:p-8">
@@ -292,11 +438,41 @@ function ContentDetailsPage() {
                     ? money(content.ratePerMinuteMinor, content.currency) + " per minute"
                     : "Free viewing"}
                 </p>
+
+                {/* Resume Prompt Banner if saved point exists */}
+                {savedResumeTime > 0 && !sessionId && !hasPromptedResume && (
+                  <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 p-3 text-xs text-cyan-200">
+                    <div className="flex items-center gap-2">
+                      <RotateCcw size={16} className="text-cyan-300 shrink-0" />
+                      <span>Resume playback from {formatSeconds(savedResumeTime)}?</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHasPromptedResume(true);
+                          void startPlayback(savedResumeTime);
+                        }}
+                        className="rounded-lg bg-cyan-400 px-3 py-1 font-bold text-slate-950 hover:brightness-110"
+                      >
+                        Resume
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHasPromptedResume(true)}
+                        className="text-slate-400 hover:text-white"
+                      >
+                        Start over
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mt-5 flex flex-wrap gap-2">
                   <button
                     disabled={busy || Boolean(sessionId) || content.deliveryMode !== "bq_hosted"}
-                    onClick={() => void startPlayback()}
-                    className="inline-flex items-center gap-2 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-extrabold text-[#031039] disabled:opacity-50"
+                    onClick={() => void startPlayback(hasPromptedResume ? 0 : savedResumeTime)}
+                    className="inline-flex items-center gap-2 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-extrabold text-[#031039] disabled:opacity-50 hover:brightness-110 transition"
                   >
                     <Play size={16} fill="currentColor" /> {busy ? "Starting…" : "Watch now"}
                   </button>
@@ -304,7 +480,7 @@ function ContentDetailsPage() {
                     <button
                       disabled={busy}
                       onClick={() => void endPlayback()}
-                      className="rounded-xl border border-white/20 px-5 py-3 text-sm font-bold"
+                      className="rounded-xl border border-white/20 px-5 py-3 text-sm font-bold hover:bg-white/10 transition"
                     >
                       End playback
                     </button>
@@ -329,8 +505,9 @@ function ContentDetailsPage() {
               </div>
             </section>
 
+            {/* Video Player Section with Batch 5 Controls */}
             {playbackUrl ? (
-              <section className="mt-7 rounded-3xl border border-cyan-300/20 bg-[#07143d] p-4 sm:p-6">
+              <section className="mt-7 rounded-3xl border border-cyan-300/20 bg-[#07143d] p-4 sm:p-6 space-y-4">
                 <div className="relative overflow-hidden rounded-2xl bg-black">
                   <video
                     ref={videoRef}
@@ -355,28 +532,159 @@ function ContentDetailsPage() {
                       setError("This browser could not play the stream. Try a supported browser.")
                     }
                   />
+
+                  {/* Skip Intro Overlay Button */}
+                  {showSkipIntro && (
+                    <button
+                      type="button"
+                      onClick={handleSkipIntro}
+                      className="absolute bottom-16 right-6 z-20 flex items-center gap-1.5 rounded-xl border border-white/30 bg-black/80 px-4 py-2 text-xs font-bold text-white shadow-xl hover:bg-white/20 transition"
+                    >
+                      <FastForward size={14} /> Skip Intro
+                    </button>
+                  )}
+
                   <img
                     src="/brand/bq-sqwad-tv-logo.png"
                     alt=""
                     aria-hidden="true"
                     className="pointer-events-none absolute right-4 top-4 w-20 opacity-40"
                   />
-                  {session?.sessionId && (
+                  {sessionId && (
                     <div className="pointer-events-none absolute bottom-4 left-4 z-10 select-none opacity-30">
                       <span className="font-mono text-[10px] font-semibold text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                        Viewer #{session.sessionId.slice(-6).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                  {session?.sessionId && (
-                    <div className="pointer-events-none absolute bottom-4 left-4 z-10 select-none opacity-30">
-                      <span className="font-mono text-[10px] font-semibold text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
-                        Viewer #{session.sessionId.slice(-6).toUpperCase()}
+                        Viewer #{sessionId.slice(-6).toUpperCase()}
                       </span>
                     </div>
                   )}
                 </div>
-                <p className="mt-3 text-xs text-blue-100/45">
+
+                {/* Per-Second Viewing Meter Transparency */}
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-400/20 bg-[#030e28] px-4 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-400/10 text-cyan-300">
+                      <Wallet size={16} />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Live Viewing Meter
+                      </p>
+                      <p className="text-xs text-slate-200">
+                        Elapsed:{" "}
+                        <strong className="tabular-nums font-mono text-cyan-300">
+                          {formatSeconds(elapsedSeconds)}
+                        </strong>{" "}
+                        · Cost:{" "}
+                        <strong className="text-white">
+                          {money(calculatedCostMinor, content.currency)}
+                        </strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleTogglePiP}
+                      title="Picture in Picture"
+                      aria-label="Picture in picture"
+                      className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white"
+                    >
+                      <PictureInPicture2 size={14} />
+                      <span className="hidden sm:inline">PiP</span>
+                    </button>
+
+                    {nextEpisodeAvailable && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setMessage("Starting next episode...");
+                        }}
+                        className="flex items-center gap-1.5 rounded-xl bg-cyan-400 px-3 py-1.5 text-xs font-bold text-slate-950 hover:brightness-110"
+                      >
+                        <FastForward size={14} />
+                        <span>Next Episode</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Player Preferences: Speed, Subtitles, Audio, Quality */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                  {/* Playback Speed */}
+                  <div className="rounded-2xl border border-white/10 bg-[#040f33] p-3 space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                      <Sliders size={12} /> Speed
+                    </label>
+                    <select
+                      value={playbackSpeed}
+                      onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-2.5 py-1 text-xs text-white focus:outline-none"
+                    >
+                      <option value="0.75">0.75x</option>
+                      <option value="1.0">1.0x Normal</option>
+                      <option value="1.25">1.25x</option>
+                      <option value="1.5">1.5x</option>
+                      <option value="2.0">2.0x</option>
+                    </select>
+                  </div>
+
+                  {/* Subtitles Track */}
+                  <div className="rounded-2xl border border-white/10 bg-[#040f33] p-3 space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                      <Subtitles size={12} /> Subtitles
+                    </label>
+                    <select
+                      value={selectedSubtitle}
+                      onChange={(e) => setSelectedSubtitle(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-2.5 py-1 text-xs text-white focus:outline-none"
+                    >
+                      <option value="off">Off</option>
+                      <option value="en">English [CC]</option>
+                      <option value="fr">Français</option>
+                      <option value="sw">Kiswahili</option>
+                      <option value="ha">Hausa</option>
+                      <option value="yo">Yorùbá</option>
+                    </select>
+                  </div>
+
+                  {/* Audio Language */}
+                  <div className="rounded-2xl border border-white/10 bg-[#040f33] p-3 space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                      <Volume2 size={12} /> Audio
+                    </label>
+                    <select
+                      value={selectedAudio}
+                      onChange={(e) => setSelectedAudio(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-2.5 py-1 text-xs text-white focus:outline-none"
+                    >
+                      <option value="original">Original Audio</option>
+                      <option value="en">English Commentary</option>
+                      <option value="fr">French Dub</option>
+                      <option value="sw">Swahili Dub</option>
+                    </select>
+                  </div>
+
+                  {/* Quality Picker */}
+                  <div className="rounded-2xl border border-white/10 bg-[#040f33] p-3 space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                      <Film size={12} /> Quality
+                    </label>
+                    <select
+                      value={selectedQuality}
+                      onChange={(e) => setSelectedQuality(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-2.5 py-1 text-xs text-white focus:outline-none"
+                    >
+                      <option value="auto">Auto Adaptive</option>
+                      <option value="1080p">1080p Full HD</option>
+                      <option value="720p">720p HD</option>
+                      <option value="480p">480p SD</option>
+                      <option value="data_saver">Data Saver</option>
+                    </select>
+                  </div>
+                </div>
+
+                <p className="text-xs text-blue-100/45">
                   Playback metering uses server heartbeats. Keep this page open while watching.
                 </p>
               </section>
