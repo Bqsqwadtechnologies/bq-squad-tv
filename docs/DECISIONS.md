@@ -681,28 +681,27 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 
 ## V6-05 Batch A1: KYC Data Model, Field Encryption & Private Storage
 
-- **Status**: Implemented & Verified
+- **Status**: Partial — foundational utilities only; production integration remains required
 - **Date**: 2026-11-20
 - **Scope & Rationale**:
-  - Implemented standard KYC schema in `src/lib/server/kyc/types.ts` (`kycStatus`, `kycType`, `kycCountry`, `kycVersion`, `kycSubmittedAt`, `kycReviewedAt`, `kycReviewedBy`, `kycRejectionReason`, `kycHistory[]`).
-  - Added AES-256-GCM field-level encryption for sensitive attributes (ID numbers, tax numbers, DOB, account numbers) with configurable secret `KYC_FIELD_ENCRYPTION_KEY`.
-  - Added safe data-masking utilities for table and list representations.
-  - Implemented secure isolated vault path generator in `src/lib/server/kyc/storage.ts` ensuring no raw or guessable URLs are exposed.
-  - Added strict document validation (MIME types, 10KB min / 10MB max, magic bytes checks, SHA-256 hashing) and short-lived 60-second signed viewer URLs with forensic watermark overlay metadata.
-  - Documented secret keys in `docs/OWNER-ACTIONS.md`.
-  - Verified with dedicated unit test suite (`src/test/batch-a1-kyc-storage.test.ts`).
+  - Added typed KYC profile/history helpers in `src/lib/server/kyc/types.ts` (`kycStatus`, `kycType`, `kycCountry`, `kycVersion`, `kycSubmittedAt`, `kycReviewedAt`, `kycReviewedBy`, `kycRejectionReason`, `kycHistory[]`).
+  - Added field encryption and masking helpers, a private-path generator, file validation, and a signed-viewer request helper.
+  - These helpers are not yet connected to persistent KYC records, private object storage, or an authenticated/audited viewer endpoint; do not collect real identity data until those integrations are complete.
+  - The A1 security correction removes deterministic fallback keys. Missing deployment secrets now fail closed; exact secret names are documented in `docs/OWNER-ACTIONS.md`.
+  - Targeted utility tests pass; this does not verify production storage or access control.
 
 ## V6-05 Batch A2: Country-First KYC with Global Coverage
 
-- **Status**: Implemented & Verified
+- **Status**: Partial — country rules baseline and provider registration picker only
 - **Date**: 2026-11-20
 - **Scope & Rationale**:
   - Added a global directory with 193 countries and ISO-3166 alpha-2 codes in `src/lib/kyc-country-rules.ts`.
   - Defined tailored ID types, tax formats, company registration rules, address labels, and bank-code systems for Nigeria, UK, US, Ghana, Kenya, and South Africa.
   - Added safe generic KYC requirements for all other countries; generic rules are non-blocking and retain passport/national ID options.
-  - Integrated the full country directory into provider registration via a country selector.
+  - Integrated a searchable country picker with flag and dial-code display into provider company registration. Producer KYC selection and the shared KYC application flow are not yet wired.
   - Added reusable country format validation and automated coverage for country data, validators, tailored rules, and generic fallback.
-  - Verified country test suite (5 passed), production build, and public text scan.
+  - Country-rule editing from the Zillionaire interface is not implemented yet.
+  - Verified country-rule and picker tests; production build and public text scan pass.
 
 
 ## KYC security correction after A1

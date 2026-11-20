@@ -1,5 +1,5 @@
 import React, { useState, type FormEvent } from "react";
-import { ALL_COUNTRIES } from "../lib/kyc-country-rules";
+import { KycCountryPicker } from "@/components/KycCountryPicker";
 import {
   AlertCircle,
   Building,
@@ -33,7 +33,7 @@ export interface ProviderRegistrationFlowProps {
   onSuccess?: (providerId: string) => void;
   initialStatus?: "unregistered" | "pending_approval" | "active";
   initialSandboxCredentials?: SandboxCredentials | null;
-  submitRegistration: (formData: Record<string, any>) => Promise<{
+  submitRegistration: (formData: Record<string, unknown>) => Promise<{
     providerId: string;
     sandboxCredentials: SandboxCredentials;
     estimatedReviewTime: string;
@@ -159,8 +159,7 @@ export function ProviderRegistrationFlow({
                   Partner Registration Under Review
                 </h3>
                 <p className="text-xs text-slate-300">
-                  Estimated review duration:{" "}
-                  <strong className="text-amber-400">24-48 hours</strong>
+                  Estimated review duration: <strong className="text-amber-400">24-48 hours</strong>
                 </p>
               </div>
             </div>
@@ -209,7 +208,9 @@ export function ProviderRegistrationFlow({
                     <span>{copiedKey === "rtmp" ? "Copied" : "Copy"}</span>
                   </button>
                 </div>
-                <p className="font-mono text-xs text-cyan-300 break-all">{sandboxCreds.rtmpIngestUrl}</p>
+                <p className="font-mono text-xs text-cyan-300 break-all">
+                  {sandboxCreds.rtmpIngestUrl}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-[#030b2a] p-4 space-y-1.5">
@@ -229,7 +230,9 @@ export function ProviderRegistrationFlow({
                     <span>{copiedKey === "key" ? "Copied" : "Copy"}</span>
                   </button>
                 </div>
-                <p className="font-mono text-xs text-emerald-400 break-all">{sandboxCreds.streamKey}</p>
+                <p className="font-mono text-xs text-emerald-400 break-all">
+                  {sandboxCreds.streamKey}
+                </p>
               </div>
 
               <div className="rounded-2xl border border-white/10 bg-[#030b2a] p-4 space-y-1.5">
@@ -407,21 +410,12 @@ export function ProviderRegistrationFlow({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-slate-300 uppercase mb-1">
-                    Country of Incorporation
-                  </label>
-                  <select
-                    required
+                  <KycCountryPicker
+                    label="Country of Incorporation"
                     value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2.5 text-white"
-                  >
-                    {ALL_COUNTRIES.map((entry) => (
-                      <option key={entry.code} value={entry.name}>
-                        {entry.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setCountry}
+                    required
+                  />
                 </div>
                 <div>
                   <label className="block font-bold text-slate-300 uppercase mb-1">
@@ -549,7 +543,9 @@ export function ProviderRegistrationFlow({
                   onChange={(e) => setLegalEntityType(e.target.value)}
                   className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2.5 text-white"
                 >
-                  <option value="Limited Liability Company">Limited Liability Company (LLC / Ltd)</option>
+                  <option value="Limited Liability Company">
+                    Limited Liability Company (LLC / Ltd)
+                  </option>
                   <option value="Public Corporation">Public Corporation (PLC / Corp)</option>
                   <option value="Broadcast Broadcaster Licensee">Licensed Broadcaster</option>
                   <option value="Partnership">Partnership</option>
@@ -625,7 +621,8 @@ export function ProviderRegistrationFlow({
 
               <div>
                 <label className="block font-bold text-slate-300 uppercase mb-1">
-                  Estimated Bitrate (Mbps): <span className="text-cyan-300">{estimatedBitrateMbps} Mbps</span>
+                  Estimated Bitrate (Mbps):{" "}
+                  <span className="text-cyan-300">{estimatedBitrateMbps} Mbps</span>
                 </label>
                 <input
                   type="range"
@@ -690,9 +687,7 @@ export function ProviderRegistrationFlow({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-bold text-slate-300 uppercase mb-1">
-                    Bank Name
-                  </label>
+                  <label className="block font-bold text-slate-300 uppercase mb-1">Bank Name</label>
                   <input
                     type="text"
                     required
@@ -798,22 +793,24 @@ export function ProviderRegistrationFlow({
 
               {/* Agreement summary box */}
               <div className="max-h-48 overflow-y-auto rounded-2xl border border-white/10 bg-[#030b2a] p-4 text-[11px] text-slate-300 space-y-2 leading-relaxed">
-                <p className="font-bold text-white">MASTER CHANNEL DISTRIBUTION AGREEMENT SUMMARY</p>
+                <p className="font-bold text-white">
+                  MASTER CHANNEL DISTRIBUTION AGREEMENT SUMMARY
+                </p>
                 <p>
                   1. Revenue Settlement: Partner receives 25.0% (2,500 bps) of net profit generated
                   from live broadcast watch-time pool.
                 </p>
                 <p>
-                  2. Telemetry and Deductible Costs: CDN edge egress and transcoding costs are audited
-                  and deducted as contracted prior to profit split.
+                  2. Telemetry and Deductible Costs: CDN edge egress and transcoding costs are
+                  audited and deducted as contracted prior to profit split.
                 </p>
                 <p>
                   3. SLA & Availability: Partner guarantees 99.98% stream ingest availability.
                   Disputes are submitted through the portal and resolved under binding SLA terms.
                 </p>
                 <p>
-                  4. Intellectual Property: Partner certifies full copyright and broadcast transmission
-                  licensing for all ingested feeds.
+                  4. Intellectual Property: Partner certifies full copyright and broadcast
+                  transmission licensing for all ingested feeds.
                 </p>
               </div>
 
@@ -855,8 +852,8 @@ export function ProviderRegistrationFlow({
                   className="mt-0.5 h-4 w-4 rounded accent-cyan-400"
                 />
                 <div className="text-[11px] text-slate-200 leading-snug">
-                  I hereby confirm that I am an authorized corporate officer and legally execute this
-                  Master Channel Distribution Agreement on behalf of the registered entity.
+                  I hereby confirm that I am an authorized corporate officer and legally execute
+                  this Master Channel Distribution Agreement on behalf of the registered entity.
                 </div>
               </label>
 

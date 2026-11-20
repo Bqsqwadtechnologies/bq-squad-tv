@@ -1,5 +1,5 @@
-Last verified work: v6-05-A1 key-handling hardening; A2 baseline exists but is incomplete.
-Next batch: v6-05-A2 — searchable country-first KYC flow, then wire the country rules into the form.
-Known gaps: KYC helpers are not integrated with persistence/private storage; no protected viewer/audit endpoint; provider picker is not searchable and lacks flags/dial codes.
-Files touched: src/lib/server/kyc/types.ts, src/lib/server/kyc/storage.ts, src/test/batch-a1-kyc-storage.test.ts, docs/OWNER-ACTIONS.md, docs/DECISIONS.md, docs/HANDOFF.md.
-Checks run: batch-a1 test (5 passed), build (clean), public-text scan (clean); broader typecheck has existing errors.
+Last verified work: v6-05-A1 key hardening; v6-05-A2 country directory and provider picker enhancements are partial.
+Next batch: v6-05-A2 — finish producer country-first KYC and owner-editable country rules.
+Known gaps: no persistent KYC/private-storage/viewer integration; provider picker is now searchable but A2 flow/rules editing are incomplete.
+Files touched: src/components/KycCountryPicker.tsx, src/components/ProviderRegistrationFlow.tsx, src/test/kyc-country-picker.test.tsx, docs/DECISIONS.md, docs/HANDOFF.md, docs/PUSH-LOG.md.
+Checks run: A1 utility tests 5 passed; A2 tests 8 passed; changed-file lint clean; build and public-text scan clean; repo typecheck has pre-existing errors.
