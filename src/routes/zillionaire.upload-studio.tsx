@@ -142,7 +142,7 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState<"ingest" | "queue" | "worker">("ingest");
+  const [activeTab, setActiveTab] = useState<"ingest" | "queue" | "worker">("queue");
 
   // Ingest Form State
   const [mediaType, setMediaType] = useState<"Movie" | "Series" | "Episode" | "Trailer" | "Live recording">("Movie");
@@ -156,7 +156,6 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
   const [cast, setCast] = useState("");
   const [posterUrl, setPosterUrl] = useState("");
   const [backdropUrl, setBackdropUrl] = useState("");
-  const directPublish = false;
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [subtitlesLanguage, setSubtitlesLanguage] = useState("English");
   const [subtitlesUrl, setSubtitlesUrl] = useState("");
@@ -244,7 +243,6 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
           filename,
           sizeBytes,
           mimeType,
-          directPublish,
           subtitles: subtitlesUrl ? [{ language: subtitlesLanguage, format: "vtt", label: `${subtitlesLanguage} Subtitles`, url: subtitlesUrl }] : [],
         }),
       });
@@ -948,12 +946,9 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
               <div className="flex items-start gap-3 rounded-lg border border-slate-800 bg-slate-900/60 p-4">
                 <Info className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-slate-100">Direct Playback vs. GPU Cloud Transcoding</h4>
+                  <h4 className="font-semibold text-slate-100">Verified processing and publication</h4>
                   <p className="mt-1 text-xs text-slate-400">
-                    BQ SQWAD TV supports immediate <strong>Direct Publish</strong> for web and mobile MP4 and HLS files
-                    without any third-party infrastructure. When full multi-bitrate ladder encoding (240p, 360p, 480p,
-                    720p, 1080p) is desired, follow the steps below from any mobile browser or computer terminal to
-                    deploy the worker.
+                    Producer uploads are stored privately, verified and queued for processing. Videos remain unavailable to viewers until rights evidence has been checked, an authorised administrator approves the content, and the separate publishing step succeeds.
                   </p>
                 </div>
               </div>
@@ -973,7 +968,7 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
                   <strong className="text-slate-100">Worker Deployment:</strong> Deploy the background worker service to enable multi-bitrate ladder transcode jobs.
                 </li>
                 <li className="pl-1">
-                  <strong className="text-slate-100">Verification:</strong> When the worker is connected, incoming non-MP4 videos are transcoded automatically. Direct Publish remains available for instant playback.
+                  <strong className="text-slate-100">Verification:</strong> Every source must be verified and processed before an administrator can approve it. Direct publication is disabled.
                 </li>
               </ol>
             </div>
