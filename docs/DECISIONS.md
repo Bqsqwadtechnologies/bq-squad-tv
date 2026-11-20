@@ -668,3 +668,13 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - Verified presence of File 02 Batches 1 through 12 on `main`.
   - Verified File 03 Batch 1 status: PARTIAL (ProviderRegistrationFlow.tsx and provider.index.tsx present; providerKyb collection and approve_kyb actions absent).
   - Confirmed `bun run build`, `bun run scan:public-text`, and `bun run check:route-integrity` (346 routes) all pass with zero errors.
+
+## V6-05 Batch R1: Verification Terminology Normalization (KYC)
+
+- **Status**: Implemented & Verified
+- **Date**: 2026-11-20
+- **Scope & Rationale**:
+  - Replaced legacy verification terminology in `src/routes/zillionaire.support-macros.tsx` with standard KYC identifiers and labels.
+  - Added idempotent migration and read fallback helper in `src/lib/server/kyc-migration.ts` ensuring zero data loss if legacy provider verification documents exist.
+  - Implemented automated verification test (`src/test/no-legacy-verification-names.test.ts`) that scans `src`, `android`, `scripts`, and `docs` to prevent regressions.
+  - Verified `bun run scan:public-text` and `bun run build` pass cleanly.

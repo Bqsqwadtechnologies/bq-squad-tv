@@ -43,8 +43,8 @@ const mockMacros: SupportMacro[] = [
   },
   {
     id: "macro_kyc_01",
-    shortcut: "#kyb-docs",
-    title: "Provider KYB Documents Required",
+    shortcut: "#kyc-docs",
+    title: "Provider KYC Documents Required",
     category: "kyc",
     template: "Hello {{name}},\n\nTo complete Tier 2 broadcaster verification, please provide your Certificate of Incorporation and Tax Identification Number (TIN) via your Provider Console settings.\n\nBQ SQWAD Compliance",
     usageCount: 29,
@@ -102,7 +102,7 @@ function SupportMacrosContent({ account }: { account: ConsoleAccount }) {
         { id: "all", label: "All Macros", filter: () => true },
         { id: "billing", label: "Billing", filter: (m) => m.category === "billing" },
         { id: "copyright", label: "Copyright", filter: (m) => m.category === "copyright" },
-        { id: "kyc", label: "KYC & KYB", filter: (m) => m.category === "kyc" },
+        { id: "kyc", label: "KYC Review", filter: (m) => m.category === "kyc" },
       ]}
       actions={actions}
       detailFields={[
