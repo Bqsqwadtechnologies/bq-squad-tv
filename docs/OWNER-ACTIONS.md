@@ -203,3 +203,10 @@ Before production launch, the owner should confirm: (1) legal pages have been re
 - Sign in with the verified owner account and existing owner access password, then enroll an authenticator app and confirm a current six-digit code. Store the one-time recovery codes in a secure password manager; they are displayed once and each code is single-use.
 - Keep `ZILLIONAIRE_ACCESS_PASSWORD` configured. It remains required in addition to authenticator verification.
 - Email alerts for new devices, location changes, and failed-attempt bursts, and passkey/WebAuthn are not implemented by this batch.
+
+## Audit chain operations
+
+- `auditLog` entries carry a sequence number, previous-entry SHA-256, and entry hash; `auditChain/head` records the latest chain position.
+- The scheduled `audit_chain_verify` maintenance task checks the chain. Review open `auditChainAlerts` in the owner security centre and preserve evidence before remediation.
+- Owner exports from Safety & Security Centre → Audit Integrity include a SHA-256 checksum over the exported JSON payload. Keep the original export and checksum together.
+- Firestore client rules deny all client reads/writes by default. Server-only service-account credentials remain responsible for append-only audit behavior.

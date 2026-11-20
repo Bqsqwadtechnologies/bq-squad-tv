@@ -17,6 +17,8 @@ import {
   Clock,
   MonitorSmartphone,
   LogOut,
+  FileCheck2,
+  Download,
 } from "lucide-react";
 import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 import {
@@ -61,7 +63,7 @@ function ZillionaireSecurityRoute() {
   );
 }
 
-type TabType = "threats" | "secrets" | "backups" | "support_mode" | "sessions";
+type TabType = "threats" | "secrets" | "backups" | "support_mode" | "sessions" | "audit_integrity";
 
 function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: boolean }) {
   const [activeTab, setActiveTab] = useState<TabType>("threats");
@@ -232,6 +234,7 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
       </div>
 
       {activeTab === "sessions" && isOwner && <OwnerSessionsPanel token={token} />}
+      {activeTab === "audit_integrity" && isOwner && <AuditIntegrityPanel token={token} />}
 
       {/* TAB 1: THREAT MITIGATION (SecurityEventsView) */}
       {activeTab === "threats" && <SecurityEventsView sessionToken={token} isOwner={isOwner} />}
@@ -646,5 +649,187 @@ function OwnerSessionsPanel({ token }: { token: string }) {
         </div>
       )}
     </ConsoleCard>
+  );
+}
+
+function AuditIntegrityPanel({ token }: { token: string }) {
+  const [data, setData] = useState<{
+    integrity: {
+      valid: boolean;
+      checked: number;
+      brokenEntryId: string | null;
+      reason: string | null;
+    };
+    entries: Array<Record<string, unknown>>;
+  } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [actor, setActor] = useState("");
+  const [target, setTarget] = useState("");
+  const load = useCallback(async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const params = new URLSearchParams();
+      if (actor.trim()) params.set("actorUid", actor.trim());
+      if (target.trim()) params.set("targetId", target.trim());
+      const res = await fetch(`/api/public/v1/zillionaire/audit?${params}`, {
+        headers: { authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || "Could not load audit integrity.");
+      setData(result);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load audit records.");
+    } finally {
+      setBusy(false);
+    }
+  }, [token, actor, target]);
+  useEffect(() => {
+    void load();
+  }, [load]);
+  const exportAudit = async () => {
+    try {
+      const params = new URLSearchParams({ export: "true" });
+      if (actor.trim()) params.set("actorUid", actor.trim());
+      if (target.trim()) params.set("targetId", target.trim());
+      const response = await fetch(`/api/public/v1/zillionaire/audit?${params}`, {
+        headers: { authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Export failed.");
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "zillionaire-audit.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Export failed.");
+    }
+  };
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap gap-3">
+        <ConsoleKpiCard
+          title="Chain status"
+          value={data ? (data.integrity.valid ? "Verified" : "Mismatch") : "Checking"}
+          subtitle="SHA-256 hash chain"
+          icon={ShieldCheck}
+          variant={data?.integrity.valid ? "green" : "gold"}
+        />
+        <ConsoleKpiCard
+          title="Entries checked"
+          value={data?.integrity.checked ?? "—"}
+          subtitle="Complete audit history"
+          icon={FileCheck2}
+          variant="blue"
+        />
+      </div>
+      <ConsoleCard
+        title="Tamper-evident audit history"
+        subtitle="Integrity is checked against the stored chain head. Search by actor or target; exports include a SHA-256 checksum."
+        headerAction={
+          <button
+            type="button"
+            onClick={exportAudit}
+            className="inline-flex items-center gap-2 rounded-xl bg-cyan-500 px-3 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-400"
+          >
+            <Download className="h-4 w-4" />
+            Export records
+          </button>
+        }
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void load();
+          }}
+          className="mb-4 flex flex-col gap-2 sm:flex-row"
+        >
+          <input
+            value={actor}
+            onChange={(e) => setActor(e.target.value)}
+            placeholder="Filter by actor UID"
+            className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white"
+          />
+          <input
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+            placeholder="Filter by target ID"
+            className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white"
+          />
+          <button className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white">
+            Search
+          </button>
+          <button
+            type="button"
+            onClick={() => void load()}
+            disabled={busy}
+            className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white"
+          >
+            {busy ? "Checking…" : "Retry"}
+          </button>
+        </form>
+        {data?.integrity.valid === false && (
+          <p
+            role="alert"
+            className="mb-4 rounded-lg border border-rose-400/30 bg-rose-950/30 p-3 text-sm text-rose-200"
+          >
+            Audit chain mismatch detected: {data.integrity.reason || "unknown"}. Review the record
+            history before taking sensitive actions.
+          </p>
+        )}
+        {error && (
+          <p
+            role="alert"
+            className="mb-4 rounded-lg border border-rose-400/30 p-3 text-sm text-rose-200"
+          >
+            {error}
+          </p>
+        )}
+        {busy && !data ? (
+          <div className="p-8 text-center text-slate-400">Verifying audit chain…</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="sticky top-0 bg-slate-900 text-xs uppercase text-slate-400">
+                <tr>
+                  <th className="p-3">Time</th>
+                  <th className="p-3">Actor</th>
+                  <th className="p-3">Action</th>
+                  <th className="p-3">Target</th>
+                  <th className="p-3">Reason</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data?.entries.map((entry) => (
+                  <tr key={String(entry.id)} className="border-t border-white/5">
+                    <td className="p-3 text-xs text-slate-400">{String(entry.createdAt || "—")}</td>
+                    <td className="p-3 font-mono text-xs text-slate-300">
+                      {String(entry.actorUid || "—")}
+                    </td>
+                    <td className="p-3 text-white">{String(entry.action || "—")}</td>
+                    <td className="p-3 text-slate-300">
+                      {String(entry.targetType || "—")}: {String(entry.targetId || "—")}
+                    </td>
+                    <td className="max-w-xs p-3 text-xs text-slate-400">
+                      {String(entry.reason || "—")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!busy && data?.entries.length === 0 && (
+              <p className="p-8 text-center text-slate-400">
+                No audit entries match those filters.
+              </p>
+            )}
+          </div>
+        )}
+      </ConsoleCard>
+    </div>
   );
 }
