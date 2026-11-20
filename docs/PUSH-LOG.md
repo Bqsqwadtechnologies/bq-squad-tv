@@ -73,3 +73,4 @@ PUSH BADGE #40 SUCCESSFUL — V5-05 Batch 1 — 679d4d8af788336ee8cce11837091f16
 PUSH BADGE #41 SUCCESSFUL — V5-05 Batch 2 — e670935f93ebcb7932e13d25c339177e8f7156cc — Viewer Home dashboard with welcome banner, 4 KPI gradient cards, continue watching, live now, trending, activity feed, and interactive referral program modal.
 PUSH BADGE #42 SUCCESSFUL — V5-05 Batch 3 — a5ee0751f6d9b8d64d495729ff686f7cab07a86f — Live TV screen with channel grid, live badge, programme guide, player, low-balance stop, and reminders.
 PUSH BADGE #43 SUCCESSFUL — V5-05 Batch 4 — 6e377db0721c89b02b0672db754b53a581c7fb3d — Viewer Library screen with watchlist, continue watching, purchases, filters, sort, and empty states.
+PUSH BADGE #44 SUCCESSFUL — V5-05 Batch 5 — 25c3a60164eef84cd72d588acfd5b9b4b1280e71 — Viewer Player experience with subtitles, audio selection, speed controls, resume points, PiP, and live viewing meter.
