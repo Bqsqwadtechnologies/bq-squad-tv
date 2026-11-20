@@ -39,10 +39,11 @@ export function buildPrivateDocumentVaultPath(
   docType: string,
   extension: string
 ): string {
+  const safeTenantId = tenantId.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
   const safeDocType = docType.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
   const safeExt = extension.replace(/^\./, '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const randomSuffix = crypto.randomBytes(16).toString('hex');
-  return `kyc-vault/tenants/${tenantId}/${safeDocType}_${randomSuffix}.${safeExt || 'bin'}`;
+  return `kyc-vault/tenants/${safeTenantId}/${safeDocType}_${randomSuffix}.${safeExt || 'bin'}`;
 }
 
 /**
@@ -92,8 +93,10 @@ export function validateKycFile(
 }
 
 /**
- * Issues short-lived (60s) signed URL for owner or authorized reviewer.
- * Includes dynamic watermark configuration.
+ * Creates a 60-second signed viewer request descriptor. The serving route must
+ * independently authenticate the reviewer, authorize the KYC permission, and
+ * write an audit event before returning any document bytes. This helper alone
+ * does not grant access to private storage.
  */
 export function generateShortLivedViewerUrl(
   privateVaultPath: string,
@@ -105,7 +108,10 @@ export function generateShortLivedViewerUrl(
   const timestampIso = now.toISOString();
 
   // Create HMAC token for authenticated signed URL
-  const hmacSecret = process.env['KYC_VAULT_SIGNING_SECRET'] || 'BQ-SQWAD-TV-VAULT-SIGNING-SECRET-2026';
+  const hmacSecret = process.env['KYC_VAULT_SIGNING_SECRET'];
+  if (!hmacSecret || Buffer.byteLength(hmacSecret, 'utf8') < 32) {
+    throw new Error('KYC_VAULT_SIGNING_SECRET must be configured with at least 32 bytes.');
+  }
   const token = crypto
     .createHmac('sha256', hmacSecret)
     .update(`${privateVaultPath}:${reviewerUid}:${expiresDate.getTime()}`)

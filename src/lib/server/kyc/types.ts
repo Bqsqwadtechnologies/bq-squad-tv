@@ -89,25 +89,24 @@ export function maskDateOfBirth(dob: string): string {
 }
 
 /**
- * Field-level encryption using AES-256-GCM.
- * If KYC_FIELD_ENCRYPTION_KEY is unset, a deterministic safe dev key is used
- * and a warning flag is documented in docs/OWNER-ACTIONS.md.
+ * Decode a server-only, base64-encoded 32-byte AES key.
+ * Fail closed: there is intentionally no development or production fallback.
  */
-function getEncryptionKey(): { key: Buffer; isFallback: boolean } {
-  const envKey = process.env['KYC_FIELD_ENCRYPTION_KEY'];
-  if (envKey && envKey.length >= 32) {
-    return {
-      key: crypto.createHash('sha256').update(envKey).digest(),
-      isFallback: false,
-    };
+function getEncryptionKey(): Buffer {
+  const encodedKey = process.env['KYC_FIELD_ENCRYPTION_KEY'];
+  if (!encodedKey) {
+    throw new Error('KYC_FIELD_ENCRYPTION_KEY is required before sensitive KYC fields can be encrypted.');
   }
-  // Safe deterministic fallback when key is not yet set in production
-  const fallbackKey = crypto.createHash('sha256').update('BQ-SQWAD-TV-DEV-KYC-KEY-2026').digest();
-  return { key: fallbackKey, isFallback: true };
+
+  const key = Buffer.from(encodedKey, 'base64');
+  if (key.length !== 32 || key.toString('base64').replace(/=+$/, '') !== encodedKey.replace(/=+$/, '')) {
+    throw new Error('KYC_FIELD_ENCRYPTION_KEY must be a valid base64-encoded 32-byte key.');
+  }
+  return key;
 }
 
 export function encryptSensitiveField(plaintext: string): EncryptedField {
-  const { key } = getEncryptionKey();
+  const key = getEncryptionKey();
   const iv = crypto.randomBytes(12);
   const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
   
@@ -125,7 +124,7 @@ export function encryptSensitiveField(plaintext: string): EncryptedField {
 }
 
 export function decryptSensitiveField(field: EncryptedField): string {
-  const { key } = getEncryptionKey();
+  const key = getEncryptionKey();
   const iv = Buffer.from(field.iv, 'hex');
   const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
   decipher.setAuthTag(Buffer.from(field.tag, 'hex'));

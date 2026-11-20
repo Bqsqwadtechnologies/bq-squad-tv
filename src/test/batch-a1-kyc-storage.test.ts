@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import * as crypto from 'node:crypto';
 import {
   encryptSensitiveField,
   decryptSensitiveField,
@@ -21,8 +22,13 @@ describe('Batch A1: KYC Data Model & Private Storage', () => {
     expect(maskDateOfBirth('1990-05-24')).toBe('****-**-24');
   });
 
-  it('performs AES-256-GCM field-level encryption and decryption', () => {
+  it('fails closed without an encryption key and performs AES-256-GCM when configured', () => {
+    const previousKey = process.env['KYC_FIELD_ENCRYPTION_KEY'];
+    delete process.env['KYC_FIELD_ENCRYPTION_KEY'];
+    expect(() => encryptSensitiveField('sensitive-test-value')).toThrow('KYC_FIELD_ENCRYPTION_KEY is required');
+
     const rawId = 'NIN-99482710485';
+    process.env['KYC_FIELD_ENCRYPTION_KEY'] = crypto.randomBytes(32).toString('base64');
     const encrypted = encryptSensitiveField(rawId);
 
     expect(encrypted.algorithm).toBe('aes-256-gcm');
@@ -32,11 +38,13 @@ describe('Batch A1: KYC Data Model & Private Storage', () => {
 
     const decrypted = decryptSensitiveField(encrypted);
     expect(decrypted).toBe(rawId);
+    if (previousKey === undefined) delete process.env['KYC_FIELD_ENCRYPTION_KEY'];
+    else process.env['KYC_FIELD_ENCRYPTION_KEY'] = previousKey;
   });
 
   it('generates secure private document vault paths that do not leak raw identifiers', () => {
-    const path = buildPrivateDocumentVaultPath('user_123', 'national_id', 'pdf');
-    expect(path).toMatch(/^kyc-vault\/tenants\/user_123\/national_id_[a-f0-9]{32}\.pdf$/);
+    const path = buildPrivateDocumentVaultPath('../user/123', 'national_id', 'pdf');
+    expect(path).toMatch(/^kyc-vault\/tenants\/___user_123\/national_id_[a-f0-9]{32}\.pdf$/);
   });
 
   it('validates document size and mime types with header sanity checks', () => {
@@ -60,6 +68,10 @@ describe('Batch A1: KYC Data Model & Private Storage', () => {
   it('issues short-lived signed URLs with 60s expiration and watermark metadata', () => {
     const vaultPath = 'kyc-vault/tenants/user_123/id_abc.pdf';
     const reviewer = 'owner_zillionaire_01';
+    const previousKey = process.env['KYC_VAULT_SIGNING_SECRET'];
+    delete process.env['KYC_VAULT_SIGNING_SECRET'];
+    expect(() => generateShortLivedViewerUrl(vaultPath, reviewer)).toThrow('KYC_VAULT_SIGNING_SECRET must be configured');
+    process.env['KYC_VAULT_SIGNING_SECRET'] = crypto.randomBytes(32).toString('hex');
     const payload = generateShortLivedViewerUrl(vaultPath, reviewer, '192.168.1.1');
 
     expect(payload.durationSeconds).toBe(60);
@@ -67,5 +79,7 @@ describe('Batch A1: KYC Data Model & Private Storage', () => {
     expect(payload.signedUrl).toContain('sig=');
     expect(payload.watermark.overlayText).toContain('CONFIDENTIAL BQ SQWAD TV');
     expect(payload.watermark.reviewerUid).toBe(reviewer);
+    if (previousKey === undefined) delete process.env['KYC_VAULT_SIGNING_SECRET'];
+    else process.env['KYC_VAULT_SIGNING_SECRET'] = previousKey;
   });
 });

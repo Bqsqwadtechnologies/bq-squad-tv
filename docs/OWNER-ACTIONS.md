@@ -312,5 +312,5 @@ When deploying with an external audiovisual content matching provider (e.g. Audi
 
 ## KYC & Private Vault Secrets
 
-1. `KYC_FIELD_ENCRYPTION_KEY`: A 32-byte (256-bit) cryptographically strong secret used for AES-256-GCM field-level encryption of sensitive identity documents, tax IDs, and bank account numbers in the database. When unset, a deterministic development fallback is active.
-2. `KYC_VAULT_SIGNING_SECRET`: A high-entropy signing secret used to generate HMAC-SHA256 signatures for 60-second short-lived document viewing URLs in the Zillionaire console.
+1. `KYC_FIELD_ENCRYPTION_KEY`: Required server-only, base64-encoded 32-byte key for AES-256-GCM field encryption. Until configured in the deployment secret manager, sensitive KYC encryption fails closed; no fallback key is used.
+2. `KYC_VAULT_SIGNING_SECRET`: Required server-only high-entropy secret (at least 32 bytes) for HMAC-SHA256 KYC viewer request signatures. Until configured, viewer request signing fails closed. The viewer endpoint must also authenticate, authorize and audit each request; signing alone does not grant access.

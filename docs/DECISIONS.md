@@ -703,3 +703,11 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - Integrated the full country directory into provider registration via a country selector.
   - Added reusable country format validation and automated coverage for country data, validators, tailored rules, and generic fallback.
   - Verified country test suite (5 passed), production build, and public text scan.
+
+
+## KYC security correction after A1
+
+- **Status**: Corrected fail-open key behavior; integration remains incomplete.
+- Removed deterministic development encryption and signing fallbacks. Missing or malformed deployment secrets now cause cryptographic helpers to fail closed.
+- The viewer helper only creates a signed request descriptor; no KYC viewer endpoint currently authenticates, authorizes, or audits access. Do not treat this helper as document-access control.
+- A1 storage and KYC schema helpers are not yet connected to persistent profile records or private object storage. Complete those integrations before collecting real identity data.
