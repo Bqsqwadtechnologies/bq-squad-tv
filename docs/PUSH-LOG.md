@@ -64,3 +64,5 @@ PUSH BADGE #35 SUCCESSFUL — V5-04 Batch 6 — 0203ffa883712d6b34a469306a064cc0
 PUSH BADGE #36 SUCCESSFUL — V5-04 Batch 7 — dc60b749e255550f091d447b4bec69f6cf6506b5 — Shared statements/settlement view component (producer vs provider mode), monthly statement table with gross watch time, deductions breakdown, net payout, status badges, and detail modal with line-item breakdown & signed PDF download.
 
 PUSH BADGE #37 SUCCESSFUL — V5-04 Batch 8 — 14f2738e0844ae52415184d3efd6e0a4b485f1ff — Shared dispute management system: dispute filing form with evidence upload, filterable dispute list, chronological message threads, settlement resolution card, and operations decision controls.
+
+PUSH BADGE #38 SUCCESSFUL — V5-04 Batch 9 — bfcc74eea3c0ac124bfb042c33aad4f8d9809bc0 — Provider registration flow: 5-step stepper (Company info, Legal & tax, Ingest profile, Settlement account, Agreement e-signature), automatic approval ticket routing, onboarding checklist with 24-48h review duration, and immediate sandbox ingest credentials.
