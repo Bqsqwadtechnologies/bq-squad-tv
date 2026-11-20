@@ -101,7 +101,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
             fs.query("contentAssets", {
               orderByField: "createdAt",
               descending: true,
-              limit: 50,
+              limit: 200,
             }),
             fs.query("channels", { limit: 50 }),
           ]);
@@ -140,6 +140,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
               genre: a["genre"] || "General",
               language: a["language"] || "English",
               ageRating: a["ageRating"] || a["contentRating"] || "PG",
+              ownershipDeclaration: a["ownershipDeclaration"] === true,
+              copyrightDeclaration: a["copyrightDeclaration"] === true,
               releaseDate: a["releaseDate"] || null,
               cast: a["cast"] || "",
               posterUrl: a["posterUrl"] || null,
