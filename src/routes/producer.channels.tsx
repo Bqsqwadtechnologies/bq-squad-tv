@@ -807,7 +807,7 @@ function ProducerChannelsInner({
                   {uploadFile ? uploadFile.name : "Drag & drop your video master file here"}
                 </p>
                 <p className="text-[11px] text-slate-400 mt-1">
-                  Supported formats: MP4, MOV, MKV, WEBM (up to 10 GB)
+                  Supported formats: MP4, MOV, MKV, WEBM (up to 5 GB)
                 </p>
                 <label className="mt-4 cursor-pointer rounded-xl bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 transition">
                   Browse Files
@@ -952,6 +952,53 @@ function ProducerChannelsInner({
                     />
                     <span>Allow viewer comments</span>
                   </label>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="text-[11px] font-semibold text-slate-300">
+                    Age rating
+                    <select value={uploadAgeRating} onChange={(e) => setUploadAgeRating(e.target.value as typeof uploadAgeRating)} className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white">
+                      <option value="G">G — General</option>
+                      <option value="PG">PG — Parental guidance</option>
+                      <option value="12">12</option>
+                      <option value="15">15</option>
+                      <option value="18">18</option>
+                    </select>
+                  </label>
+                  <label className="text-[11px] font-semibold text-slate-300">
+                    Licensed countries (ISO codes)
+                    <input value={uploadTerritories} onChange={(e) => setUploadTerritories(e.target.value)} placeholder="NG, GH" className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+                  </label>
+                  <label className="text-[11px] font-semibold text-slate-300">
+                    Licence starts
+                    <input type="date" value={uploadValidFrom} onChange={(e) => setUploadValidFrom(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+                  </label>
+                  <label className="text-[11px] font-semibold text-slate-300">
+                    Licence ends
+                    <input type="date" value={uploadValidUntil} onChange={(e) => setUploadValidUntil(e.target.value)} className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+                  </label>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-[#030b2a]/60 p-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-slate-300">Permitted platforms</p>
+                  <div className="mt-2 flex flex-wrap gap-4">
+                    {(["web", "android", "android_tv"] as const).map((platform) => (
+                      <label key={platform} className="flex items-center gap-2 text-xs text-slate-300">
+                        <input type="checkbox" checked={uploadPlatforms.includes(platform)} onChange={(e) => setUploadPlatforms((current) => e.target.checked ? [...current, platform] : current.filter((value) => value !== platform))} className="accent-cyan-400" />
+                        {platform === "android_tv" ? "Android TV" : platform === "android" ? "Android" : "Web"}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2 rounded-xl border border-amber-400/20 bg-amber-400/5 p-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-amber-200">Copyright and ownership declaration</p>
+                  <label className="flex items-start gap-2 text-xs leading-5 text-slate-300">
+                    <input type="checkbox" checked={ownershipConfirmed} onChange={(e) => setOwnershipConfirmed(e.target.checked)} className="mt-1 accent-cyan-400" />
+                    I own this content or have written authority to distribute it for the countries, platforms and licence dates entered above.
+                  </label>
+                  <label className="flex items-start gap-2 text-xs leading-5 text-slate-300">
+                    <input type="checkbox" checked={copyrightConfirmed} onChange={(e) => setCopyrightConfirmed(e.target.checked)} className="mt-1 accent-cyan-400" />
+                    I confirm that the information is accurate and that I am not knowingly submitting content that infringes another party's copyright or other rights. I understand that a false declaration may result in rejection, removal or account action.
+                  </label>
+                  <p className="text-[10px] leading-4 text-slate-400">These declarations are recorded for review. They do not replace licence evidence or independent approval, and the video stays private until approved.</p>
                 </div>
               </div>
 
@@ -959,7 +1006,7 @@ function ProducerChannelsInner({
               {uploading && (
                 <div className="space-y-2">
                   <div className="flex justify-between text-xs text-slate-300">
-                    <span>Uploading master package…</span>
+                    <span>Uploading and verifying private video…</span>
                     <span className="font-mono">{uploadProgress}%</span>
                   </div>
                   <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
@@ -996,7 +1043,7 @@ function ProducerChannelsInner({
                       disabled={!uploadFile}
                       className="rounded-xl bg-cyan-400 px-5 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 disabled:opacity-50"
                     >
-                      Start Upload
+                      Upload & Submit for Review
                     </button>
                   </>
                 )}
