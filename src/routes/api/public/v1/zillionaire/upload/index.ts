@@ -31,6 +31,11 @@ const actionSchema = z.discriminatedUnion("action", [
     genre: z.string().trim().max(100).default("General"),
     language: z.string().trim().max(50).default("English"),
     ageRating: z.enum(["G", "PG", "13+", "16+", "18+"]).default("PG"),
+    contentWarnings: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
+    licenseType: z.enum(["owned", "licensed", "public_domain"]),
+    copyrightHolderName: z.string().trim().min(2).max(150),
+    productionYear: z.number().int().min(1888).max(new Date().getFullYear()),
+    rightsEvidenceUrl: z.string().url().max(2000).optional(),
     releaseDate: z.string().max(30).default(() => new Date().toISOString().slice(0, 10)),
     cast: z.string().trim().max(500).default(""),
     posterUrl: z.string().trim().max(500).optional(),
@@ -198,6 +203,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
           const now = new Date().toISOString();
 
           if (data.action === "INITIATE_UPLOAD") {
+            if (data.rightsEvidenceUrl && new URL(data.rightsEvidenceUrl).protocol !== "https:")
+              throw new ApiError(400, "RIGHTS_EVIDENCE_URL_INVALID", "Rights evidence links must use HTTPS.");
+            if (data.licenseType !== "owned" && !data.rightsEvidenceUrl)
+              throw new ApiError(400, "RIGHTS_EVIDENCE_REQUIRED", "A secure evidence link is required for licensed or public-domain content.");
             const ext = "." + (data.filename.split(".").pop() || "").toLowerCase();
             if (!allowedExtensions.test(ext)) {
               throw new ApiError(400, "FILE_EXTENSION_NOT_ALLOWED", `File extension ${ext} is not supported. Use MP4, MOV, WebM, MKV, or HLS.`);
@@ -235,6 +244,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
               language: data.language,
               ageRating: data.ageRating,
               contentRating: data.ageRating,
+              contentWarnings: data.contentWarnings,
+              licenseType: data.licenseType,
+              copyrightHolderName: data.copyrightHolderName,
+              productionYear: data.productionYear,
+              rightsEvidenceUrl: data.rightsEvidenceUrl || null,
               releaseDate: data.releaseDate,
               cast: data.cast,
               posterUrl: data.posterUrl || null,

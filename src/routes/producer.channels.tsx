@@ -154,6 +154,13 @@ function ProducerChannelsInner({
   const [uploadCategory, setUploadCategory] = useState("Entertainment");
   const [uploadDescription, setUploadDescription] = useState("");
   const [uploadAgeRating, setUploadAgeRating] = useState<"G" | "PG" | "12" | "15" | "18">("PG");
+  const [uploadWarnings, setUploadWarnings] = useState("");
+  const [uploadLanguage, setUploadLanguage] = useState("English");
+  const [uploadGenre, setUploadGenre] = useState("Drama");
+  const [uploadLicenseType, setUploadLicenseType] = useState<"owned" | "licensed" | "public_domain">("owned");
+  const [uploadCopyrightHolder, setUploadCopyrightHolder] = useState("");
+  const [uploadProductionYear, setUploadProductionYear] = useState(String(new Date().getFullYear()));
+  const [uploadEvidenceUrl, setUploadEvidenceUrl] = useState("");
   const [uploadTerritories, setUploadTerritories] = useState("NG, GH, US, GB");
   const [uploadValidFrom, setUploadValidFrom] = useState("2026-01-01");
   const [uploadValidUntil, setUploadValidUntil] = useState("2030-12-31");
@@ -365,6 +372,18 @@ function ProducerChannelsInner({
       setUploadError("Confirm that you own or are authorised to distribute this video and that the submission does not knowingly infringe another party's rights.");
       return;
     }
+    if (!uploadLanguage.trim() || !uploadGenre.trim() || !uploadCopyrightHolder.trim() || !/^\d{4}$/.test(uploadProductionYear)) {
+      setUploadError("Enter the language, genre, copyright holder and four-digit production year.");
+      return;
+    }
+    if (uploadLicenseType !== "owned" && !uploadEvidenceUrl.trim()) {
+      setUploadError("Add a secure link to the licence or clearance evidence for licensed or public-domain content.");
+      return;
+    }
+    if (uploadEvidenceUrl.trim() && !/^https:\/\//i.test(uploadEvidenceUrl.trim())) {
+      setUploadError("Rights evidence links must use HTTPS.");
+      return;
+    }
     const territories = uploadTerritories.split(",").map((value) => value.trim().toUpperCase()).filter(Boolean);
     if (!territories.length || !uploadValidFrom || !uploadValidUntil || !uploadPlatforms.length) {
       setUploadError("Enter the licensed countries, licence dates and permitted platforms.");
@@ -404,7 +423,7 @@ function ProducerChannelsInner({
       const metadataResponse = await fetch("/api/public/v1/producer/channels/" + encodeURIComponent(selectedChannelId) + "/assets", {
         method: "POST",
         headers,
-        body: JSON.stringify({ assetId: intent.assetId, title: titleText, description: uploadDescription, category: uploadCategory, contentType: uploadContentType, ageRating: uploadAgeRating, ownershipDeclaration: true, copyrightDeclaration: true, seriesTitle: isSeries ? seriesName : undefined, seasonNumber: uploadSeasonNumber, episodeNumber, episodeTitle: isSeries ? (uploadEpisodeTitle || "Episode " + episodeNumber) : undefined, commentsOpen: uploadCommentsOpen, territoryCodes: territories, platforms: uploadPlatforms, validFrom: validFrom.toISOString(), validUntil: validUntil.toISOString() }),
+        body: JSON.stringify({ assetId: intent.assetId, title: titleText, description: uploadDescription, category: uploadCategory, genre: uploadGenre.trim(), language: uploadLanguage.trim(), contentWarnings: uploadWarnings.split(",").map((item) => item.trim()).filter(Boolean), productionYear: Number(uploadProductionYear), licenseType: uploadLicenseType, copyrightHolderName: uploadCopyrightHolder.trim(), rightsEvidenceUrl: uploadEvidenceUrl.trim() || undefined, contentType: uploadContentType, ageRating: uploadAgeRating, ownershipDeclaration: true, copyrightDeclaration: true, seriesTitle: isSeries ? seriesName : undefined, seasonNumber: uploadSeasonNumber, episodeNumber, episodeTitle: isSeries ? (uploadEpisodeTitle || "Episode " + episodeNumber) : undefined, commentsOpen: uploadCommentsOpen, territoryCodes: territories, platforms: uploadPlatforms, validFrom: validFrom.toISOString(), validUntil: validUntil.toISOString() }),
       });
       const metadata = await metadataResponse.json();
       if (!metadataResponse.ok) throw new Error(metadata.error || "Video stored, but its metadata and rights declaration could not be submitted.");
@@ -958,6 +977,36 @@ function ProducerChannelsInner({
                       <option value="15">15</option>
                       <option value="18">18</option>
                     </select>
+                  </label>
+                  <label className="text-[11px] font-semibold text-slate-300">
+                    Content warnings (comma separated)
+                    <input value={uploadWarnings} onChange={(e) => setUploadWarnings(e.target.value)} placeholder="Violence, strong language" className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+                  </label>
+                  <label className="text-[11px] font-semibold text-slate-300">
+                    Primary language
+                    <input value={uploadLanguage} onChange={(e) => setUploadLanguage(e.target.value)} required maxLength={60} className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+                  </label>
+                  <label className="text-[11px] font-semibold text-slate-300">
+                    Genre
+                    <input value={uploadGenre} onChange={(e) => setUploadGenre(e.target.value)} required maxLength={60} className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+                  </label>
+                  <label className="text-[11px] font-semibold text-slate-300">
+                    Licence type
+                    <select value={uploadLicenseType} onChange={(e) => setUploadLicenseType(e.target.value as typeof uploadLicenseType)} className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white">
+                      <option value="owned">Owned</option><option value="licensed">Licensed</option><option value="public_domain">Public domain</option>
+                    </select>
+                  </label>
+                  <label className="text-[11px] font-semibold text-slate-300">
+                    Copyright holder
+                    <input value={uploadCopyrightHolder} onChange={(e) => setUploadCopyrightHolder(e.target.value)} required maxLength={150} className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+                  </label>
+                  <label className="text-[11px] font-semibold text-slate-300">
+                    Production year
+                    <input type="number" value={uploadProductionYear} onChange={(e) => setUploadProductionYear(e.target.value)} min="1888" max={new Date().getFullYear()} required className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+                  </label>
+                  <label className="col-span-2 text-[11px] font-semibold text-slate-300">
+                    Rights evidence link (HTTPS)
+                    <input type="url" value={uploadEvidenceUrl} onChange={(e) => setUploadEvidenceUrl(e.target.value)} placeholder="https://…" maxLength={2000} className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
                   </label>
                   <label className="text-[11px] font-semibold text-slate-300">
                     Licensed countries (ISO codes)

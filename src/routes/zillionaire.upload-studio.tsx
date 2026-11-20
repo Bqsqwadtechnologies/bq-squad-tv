@@ -152,6 +152,11 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
   const [genre, setGenre] = useState("Drama");
   const [language, setLanguage] = useState("English");
   const [ageRating, setAgeRating] = useState<"G" | "PG" | "13+" | "16+" | "18+">("13+");
+  const [contentWarnings, setContentWarnings] = useState("");
+  const [licenseType, setLicenseType] = useState<"owned" | "licensed" | "public_domain">("owned");
+  const [copyrightHolderName, setCopyrightHolderName] = useState("");
+  const [productionYear, setProductionYear] = useState(String(new Date().getFullYear()));
+  const [rightsEvidenceUrl, setRightsEvidenceUrl] = useState("");
   const [releaseDate, setReleaseDate] = useState(new Date().toISOString().slice(0, 10));
   const [cast, setCast] = useState("");
   const [posterUrl, setPosterUrl] = useState("");
@@ -210,6 +215,18 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
       setError("Please select a target channel.");
       return;
     }
+    if (!copyrightHolderName.trim() || !/^\d{4}$/.test(productionYear)) {
+      setError("Enter the copyright holder and four-digit production year before submitting.");
+      return;
+    }
+    if (licenseType !== "owned" && !rightsEvidenceUrl.trim()) {
+      setError("A rights evidence link is required for licensed or public-domain content.");
+      return;
+    }
+    if (rightsEvidenceUrl.trim() && !/^https:\/\//i.test(rightsEvidenceUrl.trim())) {
+      setError("Rights evidence links must use HTTPS.");
+      return;
+    }
 
     const filename = selectedFile ? selectedFile.name : `${title.toLowerCase().replace(/[^a-z0-9]/g, "_")}.mp4`;
     const sizeBytes = selectedFile ? selectedFile.size : 250_000_000; // 250MB mock if no local file selected
@@ -236,6 +253,11 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
           genre,
           language,
           ageRating,
+          contentWarnings: contentWarnings.split(",").map((item) => item.trim()).filter(Boolean),
+          licenseType,
+          copyrightHolderName: copyrightHolderName.trim(),
+          productionYear: Number(productionYear),
+          rightsEvidenceUrl: rightsEvidenceUrl.trim() || undefined,
           releaseDate,
           cast,
           posterUrl: posterUrl.trim() || undefined,
@@ -615,6 +637,26 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
                       className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
                     />
                   </div>
+                </div>
+
+                <div className="md:col-span-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <label className="text-xs font-semibold text-slate-300">Content warnings (comma separated)
+                    <input value={contentWarnings} onChange={(e) => setContentWarnings(e.target.value)} maxLength={500} placeholder="Violence, strong language" className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100" />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-300">Licence type
+                    <select value={licenseType} onChange={(e) => setLicenseType(e.target.value as typeof licenseType)} className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100">
+                      <option value="owned">Owned</option><option value="licensed">Licensed</option><option value="public_domain">Public domain</option>
+                    </select>
+                  </label>
+                  <label className="text-xs font-semibold text-slate-300">Copyright holder
+                    <input value={copyrightHolderName} onChange={(e) => setCopyrightHolderName(e.target.value)} required maxLength={150} className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100" />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-300">Production year
+                    <input type="number" value={productionYear} onChange={(e) => setProductionYear(e.target.value)} min="1888" max={new Date().getFullYear()} required className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100" />
+                  </label>
+                  <label className="text-xs font-semibold text-slate-300 sm:col-span-2">Rights evidence link (HTTPS)
+                    <input type="url" value={rightsEvidenceUrl} onChange={(e) => setRightsEvidenceUrl(e.target.value)} maxLength={2000} placeholder="https://…" className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100" />
+                  </label>
                 </div>
 
                 <div>

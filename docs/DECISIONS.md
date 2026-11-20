@@ -409,3 +409,8 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 ### 3. Versioning & Store Readiness
 - **Decision**: Added `scripts/bump-version-code.mjs` for automated build number increments; documented Google Play Store Data Safety, Content Rating (IARC), Target SDK 36, in-app account deletion, and canonical privacy URLs in `docs/OWNER-ACTIONS.md`.
 - **Sandbox Environment Note**: Documented that byte-compilation tasks requiring JDK 17 and Android SDK binaries cannot execute inside the web sandbox container, while the source build system, ProGuard rules, versioning automation, and Play Store submission specifications are verified.
+
+## V6 File 02 Batch 1 — Upload Rights Declaration (2026-11-20)
+
+- Added mandatory producer declaration metadata for age classification, warnings, language, genre, production year, copyright holder and licence type.
+- Kept licence evidence as an HTTPS reference in this first implementation; server-side validation rejects non-HTTPS evidence and requires a reference for licensed/public-domain submissions. The current form does not upload an evidence file, so file-based proof storage remains an explicit follow-up limitation rather than claiming the proof upload requirement is complete.

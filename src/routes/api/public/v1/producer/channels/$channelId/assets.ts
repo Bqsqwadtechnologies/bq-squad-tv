@@ -13,6 +13,13 @@ const schema = z.object({
   category: z.string().trim().min(2).max(60),
   contentType: z.enum(["movie", "series", "video"]).default("movie"),
   ageRating: z.enum(["G", "PG", "12", "15", "18"]),
+  genre: z.string().trim().min(2).max(60),
+  language: z.string().trim().min(2).max(60),
+  contentWarnings: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
+  productionYear: z.number().int().min(1888).max(new Date().getFullYear()),
+  licenseType: z.enum(["owned", "licensed", "public_domain"]),
+  copyrightHolderName: z.string().trim().min(2).max(150),
+  rightsEvidenceUrl: z.string().url().max(2000).optional(),
   ownershipDeclaration: z.literal(true),
   copyrightDeclaration: z.literal(true),
   seriesTitle: z.string().trim().max(150).optional(),
@@ -59,6 +66,12 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
               description: a["description"] || "",
               category: a["category"] || "General",
               ageRating: a["ageRating"] || "PG",
+              genre: a["genre"] || a["category"] || "General",
+              language: a["language"] || "",
+              contentWarnings: Array.isArray(a["contentWarnings"]) ? a["contentWarnings"] : [],
+              productionYear: a["productionYear"] || null,
+              licenseType: a["licenseType"] || null,
+              copyrightHolderName: a["copyrightHolderName"] || null,
               status: a["status"] || a["contentStatus"] || "ready",
               durationSeconds: Number(a["durationSeconds"] || 0),
               commentsOpen: a["commentsOpen"] !== false,
@@ -85,6 +98,10 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
               "LICENSE_TERM_INVALID",
               "The license end date must be after its start date.",
             );
+          if (body.rightsEvidenceUrl && new URL(body.rightsEvidenceUrl).protocol !== "https:")
+            throw new ApiError(400, "RIGHTS_EVIDENCE_URL_INVALID", "Rights evidence links must use HTTPS.");
+          if (body.licenseType !== "owned" && !body.rightsEvidenceUrl)
+            throw new ApiError(400, "RIGHTS_EVIDENCE_REQUIRED", "A secure evidence link is required for licensed or public-domain content.");
           const asset = await fs.getDoc("contentAssets/" + body.assetId);
           if (
             !asset ||
@@ -120,6 +137,9 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
             validFrom: body.validFrom,
             validUntil: body.validUntil,
             evidencePath: body.rightsEvidencePath || null,
+            evidenceUrl: body.rightsEvidenceUrl || null,
+            licenseType: body.licenseType,
+            copyrightHolderName: body.copyrightHolderName,
             submittedBy: user.uid,
             submittedAt: now,
             ownershipDeclaration: true,
@@ -129,6 +149,13 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
             title: body.title,
             description: body.description,
             category: body.category,
+            genre: body.genre,
+            language: body.language,
+            contentWarnings: body.contentWarnings,
+            productionYear: body.productionYear,
+            licenseType: body.licenseType,
+            copyrightHolderName: body.copyrightHolderName,
+            rightsEvidenceUrl: body.rightsEvidenceUrl || null,
             contentType: body.contentType,
             ageRating: body.ageRating,
             ownershipDeclaration: true,
