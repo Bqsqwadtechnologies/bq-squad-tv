@@ -777,7 +777,7 @@ function ZillionaireMoviesPage({
                             setEditTitle(a.title);
                             setEditDesc(a.description || "");
                             setEditCategory(a.category || "general");
-                            setEditAgeRating((a.ageRating as any) || "PG");
+                            setEditAgeRating(a.ageRating || "PG");
                           }}
                           title="Edit Details"
                           className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded"
@@ -1323,7 +1323,7 @@ function ZillionaireMoviesPage({
                           <label className="block font-semibold text-slate-300 mb-1">Geographic Mode:</label>
                           <select
                             value={overrideRegionMode}
-                            onChange={(e) => setOverrideRegionMode(e.target.value as any)}
+                            onChange={(e) => setOverrideRegionMode(e.target.value)}
                             className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white"
                           >
                             <option value="GLOBAL">Global (Available Everywhere)</option>
@@ -1834,7 +1834,7 @@ function ZillionaireMoviesPage({
                     const extra: Record<string, unknown> = {};
                     if (pendingAction === "feature") extra.featured = true;
                     if (pendingAction === "unfeature") extra.featured = false;
-                    if (pendingAction === "move_channel") extra.channelId = (window as any).__pendingChannelId || "platform";
+                    if (pendingAction === "move_channel") extra.channelId = (window as Window & { __pendingChannelId?: string }).__pendingChannelId || "platform";
 
                     const realAction = pendingAction === "unfeature" ? "feature" : pendingAction;
                     await executeAction(targetAssetId, {
