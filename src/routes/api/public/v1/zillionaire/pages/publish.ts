@@ -52,8 +52,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish")
               : {};
           const sourceMarkdown = existing["body"] as string;
           const DEFAULT_CONFIG: Record<string, string> = {
-            effective_date: "January 1, 2026",
-            last_updated: "April 2026",
+            effective_date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
+            last_updated: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
             company_name: "BQ Sqwad Technologies",
             platform_name: "BQ SQWAD TV",
             contact_email: "tv@bqsqwad.com",
@@ -74,11 +74,19 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish")
               const val =
                 typeof settings[key] === "string" && (settings[key] as string).trim()
                   ? (settings[key] as string).trim()
-                  : (DEFAULT_CONFIG[key] ?? "BQ SQWAD TV");
-              if (!settings[key]) defaultedCount++;
-              return val;
+                  : DEFAULT_CONFIG[key];
+              if (val) return val;
+              defaultedCount++;
+              return _match;
             },
           );
+          if (defaultedCount > 0) {
+            throw new ApiError(
+              409,
+              "LEGAL_PAGE_INCOMPLETE",
+              "This legal page still contains " + defaultedCount + " unresolved placeholder fields. Complete the legal settings or edit the document before publishing.",
+            );
+          }
           if (/<\/?[a-z][^>]*>/i.test(markdown))
             throw new ApiError(
               400,
