@@ -37,7 +37,6 @@ function fillPlaceholders(raw: string, dynamicSettings: Record<string, unknown>)
         ? (dynamicSettings[key] as string).trim()
         : DEFAULT_CONFIG[key];
     if (val) {
-      if (!dynamicSettings[key]) defaultedCount++;
       return val;
     }
     defaultedCount++;
