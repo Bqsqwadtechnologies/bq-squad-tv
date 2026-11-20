@@ -1,5 +1,5 @@
-Last finished batch: V5-03 Batch 2, pushed as `7c5e88d84de032ebe35110b0b3f0be5aab050b2f`.
-Next batch: V5-03 Batch 3 (sessions and devices).
-Known gaps: finance dual approval, daily limits, revenue-share/secrets, and export actions remain; Batch 1 passkeys and device-alert emails remain.
-Files touched: scoped step-up endpoint/helper, wallet/team/payout/reversal guards and UI prompts, access matrix, tests.
-Verification: 108 test files/3,107 tests, development build and public-text scan passed.
+Last finished batch: V5-03 Batch 3, pushed as `80e455db19dcec0d97ffed144a8414c0c43f6d3f`.
+Next batch: V5-03 Batch 4 (tamper-evident audit).
+Known gaps: location detection, IP-change challenge and concurrent-session limit are not implemented; passkeys and device-alert emails remain.
+Files touched: owner session validation/refresh, owner devices screen, sign-out-everywhere API, role matrix and tests.
+Verification: 108 test files/3,117 tests, development build and public-text scan passed.
