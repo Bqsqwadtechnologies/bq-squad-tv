@@ -12,6 +12,9 @@ const schema = z.object({
   description: z.string().trim().max(3000).default(""),
   category: z.string().trim().min(2).max(60),
   contentType: z.enum(["movie", "series", "video"]).default("movie"),
+  ageRating: z.enum(["G", "PG", "12", "15", "18"]),
+  ownershipDeclaration: z.literal(true),
+  copyrightDeclaration: z.literal(true),
   seriesTitle: z.string().trim().max(150).optional(),
   seasonNumber: z.number().int().min(1).default(1),
   episodeNumber: z.number().int().min(1).optional(),
@@ -27,7 +30,7 @@ const schema = z.object({
     .max(3),
   validFrom: z.string().datetime(),
   validUntil: z.string().datetime(),
-  rightsEvidencePath: z.string().min(1).max(1024),
+  rightsEvidencePath: z.string().min(1).max(1024).optional(),
 });
 
 export const Route = createFileRoute("/api/public/v1/producer/channels/$channelId/assets")({
@@ -55,6 +58,7 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
               episodeTitle: a["episodeTitle"] || a["title"] || "",
               description: a["description"] || "",
               category: a["category"] || "General",
+              ageRating: a["ageRating"] || "PG",
               status: a["status"] || a["contentStatus"] || "ready",
               durationSeconds: Number(a["durationSeconds"] || 0),
               commentsOpen: a["commentsOpen"] !== false,
@@ -95,8 +99,9 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
             );
           }
           if (
-            !isSafeStoragePath(body.rightsEvidencePath) ||
-            !body.rightsEvidencePath.startsWith("producers/" + user.uid + "/" + channelId + "/")
+            body.rightsEvidencePath &&
+            (!isSafeStoragePath(body.rightsEvidencePath) ||
+              !body.rightsEvidencePath.startsWith("producers/" + user.uid + "/" + channelId + "/"))
           ) {
             throw new ApiError(
               400,
@@ -108,21 +113,26 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
           const license = {
             status: "pending",
             verificationStatus: "pending",
-            commercialStreamingAllowed: true,
-            payPerMinuteAllowed: true,
+            commercialStreamingAllowed: false,
+            payPerMinuteAllowed: false,
             territoryCodes: [...new Set(body.territoryCodes)],
             platforms: [...new Set(body.platforms)],
             validFrom: body.validFrom,
             validUntil: body.validUntil,
-            evidencePath: body.rightsEvidencePath,
+            evidencePath: body.rightsEvidencePath || null,
             submittedBy: user.uid,
             submittedAt: now,
+            ownershipDeclaration: true,
+            copyrightDeclaration: true,
           };
           await fs.patchDoc("contentAssets/" + body.assetId, {
             title: body.title,
             description: body.description,
             category: body.category,
             contentType: body.contentType,
+            ageRating: body.ageRating,
+            ownershipDeclaration: true,
+            copyrightDeclaration: true,
             seriesTitle: body.seriesTitle || body.title,
             seasonNumber: body.seasonNumber,
             ...(body.episodeNumber !== undefined ? { episodeNumber: body.episodeNumber } : {}),
