@@ -322,14 +322,41 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
               throw new ApiError(404, "ASSET_NOT_FOUND", "Upload asset does not exist.");
             }
 
-            const directPublishRequested =
-              typeof data.directPublish === "boolean" ? data.directPublish : asset["directPublish"] === true;
+            const processingAvailable = Boolean(process.env.MODAL_TOKEN_ID && process.env.MODAL_TOKEN_SECRET);
+            if (!processingAvailable) {
+              await fs.patchDoc(`contentAssets/${data.assetId}`, {
+                status: "needs_review",
+                contentStatus: "draft",
+                directPublish: false,
+                transcodeJobStatus: "blocked_missing_worker",
+                durationSeconds: data.durationSeconds || asset["durationSeconds"] || null,
+                codec: data.codec || asset["codec"] || null,
+                resolution: data.resolution || asset["resolution"] || null,
+                updatedAt: now,
+              });
+              await writeAuditLog(fs, {
+                actorUid: user.uid,
+                action: "content.upload_waiting_for_processing",
+                targetType: "contentAsset",
+                targetId: data.assetId,
+                reason: "Upload completed; processing is not configured and publication requires independent approval",
+                metadata: { channelId: asset["channelId"], processingAvailable: false },
+              });
+              return Response.json({
+                assetId: data.assetId,
+                status: "needs_review",
+                contentStatus: "draft",
+                approvalRequired: true,
+                processingAvailable: false,
+              });
+            }
+            const directPublishRequested = false;
             const isMp4OrHls =
               typeof asset["sourceFilename"] === "string" &&
               /\.(mp4|m3u8)$/i.test(asset["sourceFilename"]);
             const processingAvailable = Boolean(process.env.MODAL_TOKEN_ID && process.env.MODAL_TOKEN_SECRET);
 
-            if (directPublishRequested || !processingAvailable) {
+            if (directPublishRequested && processingAvailable) {
               // Direct publish mode
               const streamDestinationId = "lovable-stream-legacy";
               const storagePath =
@@ -442,27 +469,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
             let newContentStatus = asset["contentStatus"];
 
             if (data.operation === "direct_publish" || data.operation === "approve") {
-              newStatus = "ready";
-              newContentStatus = "published";
-              const storagePath =
-                typeof asset["storagePath"] === "string"
-                  ? asset["storagePath"]
-                  : typeof asset["sourcePath"] === "string"
-                    ? asset["sourcePath"]
-                    : `stream/${data.assetId}/source.mp4`;
-
-              await fs.patchDoc(`contentAssets/${data.assetId}`, {
-                status: "ready",
-                contentStatus: "published",
-                deliveryMode: "bq_hosted",
-                streamDestinationId: asset["streamDestinationId"] || "lovable-stream-legacy",
-                storagePath,
-                directPublished: true,
-                published: true,
-                publishedAt: now,
-                updatedAt: now,
-              });
-            } else if (data.operation === "pause") {
+              throw new ApiError(403, "APPROVAL_WORKFLOW_REQUIRED", "Uploads cannot be published from this legacy action. Complete processing, rights review and the separate approval workflow first.");            } else if (data.operation === "pause") {
               await fs.patchDoc(`contentAssets/${data.assetId}`, {
                 status: "paused",
                 updatedAt: now,
