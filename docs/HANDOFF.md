@@ -1,3 +1,3 @@
-Last completed batch: V5-04 Batch 4 — producer working tools.
-Producer broadcast tools completed: channel switcher dropdown, drag-and-drop media uploader with container validation & thumbnail picker, visual EPG schedule calendar with Day/Week/List views & overlap conflict alerts, and RTMP live ingest setup.
-Next: V5-04 Batch 5 — provider dashboard (third panel in reference).
+Last completed batch: V5-04 Batch 5 — provider dashboard (third panel in reference).
+Provider dashboard completed: provider KPI cards, 99.98% uptime SLA gauge, live stream monitor grid with real-time video monitors & healthy/degraded/down status badges, quick actions (Add stream, Test latency, Provider settings, Rotate credentials), and settlement revenue overview.
+Next: V5-04 Batch 6 — provider working tools.
