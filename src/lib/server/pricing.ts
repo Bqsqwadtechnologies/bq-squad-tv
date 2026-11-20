@@ -1,12 +1,15 @@
 import { ApiError, type Firestore } from "./firebase-admin";
 
 export type RateSourceRule =
+  | "promo_window"
   | "event_window"
   | "episode_override"
   | "title_rate"
   | "series_rate"
+  | "live_stream_rate"
   | "channel_rate"
   | "category_rate"
+  | "bundle"
   | "platform_default";
 
 export type ResolvedRate = {
@@ -16,6 +19,8 @@ export type ResolvedRate = {
   effectiveFrom: string;
   effectiveUntil: string | null;
   version: number;
+  isFree: boolean;
+  promoLabel?: string;
 };
 
 export type PricingResolutionContext = {
@@ -25,7 +30,9 @@ export type PricingResolutionContext = {
   seriesId?: string | null;
   episodeId?: string | null;
   categoryId?: string | null;
+  liveStreamId?: string | null;
   platformDefaultMinor?: number;
+  currency?: string;
 };
 
 export type EventWindow = {
@@ -37,6 +44,29 @@ export type EventWindow = {
   title?: string;
 };
 
+export type PromoPricingWindow = {
+  id: string;
+  targetType: "movie" | "series" | "episode" | "channel" | "live_stream" | "category" | "global";
+  targetId?: string;
+  overrideRateMinor?: number; // Can be 0 for 100% free promo
+  discountPercent?: number; // 1-100
+  startIso: string;
+  endIso: string;
+  label: string;
+  active: boolean;
+};
+
+export type ContentBundle = {
+  id: string;
+  title: string;
+  description: string;
+  assetIds: string[];
+  priceMinor: number;
+  currency: string;
+  durationDays: number;
+  active: boolean;
+};
+
 export type PricingConfig = {
   version: number;
   defaultRatePerMinuteMinor: number;
@@ -45,9 +75,24 @@ export type PricingConfig = {
   seriesRatesPerMinuteMinor?: Record<string, number>;
   titleRatesPerMinuteMinor?: Record<string, number>;
   episodeRatesPerMinuteMinor?: Record<string, number>;
+  liveStreamRatesPerMinuteMinor?: Record<string, number>;
+  
+  // Multicurrency maps
+  channelRatesById?: Record<string, Record<string, number>>;
+  assetRatesById?: Record<string, Record<string, number>>;
+  seriesRatesById?: Record<string, Record<string, number>>;
+  episodeRatesById?: Record<string, Record<string, number>>;
+  categoryRatesById?: Record<string, Record<string, number>>;
+  liveStreamRatesById?: Record<string, Record<string, number>>;
+  defaultRatePerMinuteByCurrency?: Record<string, number>;
+  
   eventWindows?: EventWindow[];
+  promoPricingWindows?: PromoPricingWindow[];
+  bundles?: ContentBundle[];
+  
   effectiveDate?: string;
   updatedAt?: string;
+  updatedBy?: string;
 };
 
 export async function getPricingConfig(fs: Firestore): Promise<PricingConfig> {
@@ -55,7 +100,7 @@ export async function getPricingConfig(fs: Firestore): Promise<PricingConfig> {
   if (!config) {
     return {
       version: 1,
-      defaultRatePerMinuteMinor: 200, // NGN default 2.00 NGN/min (approx 120 NGN/hr)
+      defaultRatePerMinuteMinor: 200, // NGN default 2.00 NGN/min
     };
   }
   const version = typeof config["version"] === "number" ? config["version"] : 1;
@@ -72,13 +117,18 @@ export async function getPricingConfig(fs: Firestore): Promise<PricingConfig> {
 }
 
 /**
- * Pure rate resolver implementing the Prompt 3 B2 precedence hierarchy:
- * 1. Active programme/event window on channel (live) or episode override
- * 2. Title rate (VOD)
- * 3. Series rate
- * 4. Channel default rate (entered per hour -> converted to per minute)
- * 5. Category default rate
- * 6. Platform default rate
+ * Pure rate resolver implementing owner pricing hierarchy:
+ * 1. Active Promotional Pricing Window (highest priority - discount or free override)
+ * 2. Active Channel Programme / Event Window (live)
+ * 3. Episode Override
+ * 4. Title / Movie Rate (VOD)
+ * 5. Series Rate
+ * 6. Live Stream Rate
+ * 7. Channel Default Rate (hourly / 60)
+ * 8. Category Default Rate
+ * 9. Platform Default Rate
+ *
+ * Supports free playback (0 minor units) across all levels.
  */
 export function resolveRate(
   config: PricingConfig,
@@ -87,8 +137,60 @@ export function resolveRate(
   const now = context.now ?? Date.now();
   const version = config.version || 1;
   const baseEffectiveFrom = config.effectiveDate || new Date(0).toISOString();
+  const cur = context.currency ?? "NGN";
 
-  // 1a. Channel Event/Programme Time Window
+  // Helper to extract currency rate or direct rate
+  function getRate(
+    multicurrencyMap?: Record<string, Record<string, number>>,
+    directMap?: Record<string, number>,
+    key?: string | null,
+  ): number | undefined {
+    if (!key) return undefined;
+    if (multicurrencyMap?.[key]?.[cur] !== undefined) {
+      return multicurrencyMap[key][cur];
+    }
+    if (directMap?.[key] !== undefined) {
+      return directMap[key];
+    }
+    return undefined;
+  }
+
+  // 1. Promotional Window
+  if (config.promoPricingWindows && Array.isArray(config.promoPricingWindows)) {
+    const activePromo = config.promoPricingWindows.find((p) => {
+      if (!p.active) return false;
+      const startMs = Date.parse(p.startIso);
+      const endMs = Date.parse(p.endIso);
+      if (now < startMs || now >= endMs) return false;
+      
+      if (p.targetType === "global") return true;
+      if (p.targetType === "movie" && p.targetId === context.assetId) return true;
+      if (p.targetType === "episode" && p.targetId === context.episodeId) return true;
+      if (p.targetType === "series" && p.targetId === context.seriesId) return true;
+      if (p.targetType === "channel" && p.targetId === context.channelId) return true;
+      if (p.targetType === "live_stream" && p.targetId === context.liveStreamId) return true;
+      if (p.targetType === "category" && p.targetId === context.categoryId) return true;
+      return false;
+    });
+
+    if (activePromo) {
+      if (activePromo.overrideRateMinor !== undefined) {
+        const rate = Math.max(0, activePromo.overrideRateMinor);
+        return {
+          ratePerMinuteMinor: rate,
+          microPerSecond: Math.round((rate * 1_000_000) / 60),
+          sourceRule: "promo_window",
+          effectiveFrom: activePromo.startIso,
+          effectiveUntil: activePromo.endIso,
+          version,
+          isFree: rate === 0,
+          promoLabel: activePromo.label,
+        };
+      }
+    }
+  }
+
+  // 2. Channel Event/Programme Time Window
   if (context.channelId && config.eventWindows && Array.isArray(config.eventWindows)) {
     const activeWindow = config.eventWindows.find((w) => {
       if (w.channelId !== context.channelId) return false;
@@ -97,7 +199,7 @@ export function resolveRate(
       return now >= startMs && now < endMs;
     });
     if (activeWindow && typeof activeWindow.ratePerHourMinor === "number") {
-      const ratePerMinuteMinor = Math.round(activeWindow.ratePerHourMinor / 60);
+      const ratePerMinuteMinor = Math.max(0, Math.round(activeWindow.ratePerHourMinor / 60));
       const microPerSecond = Math.round((activeWindow.ratePerHourMinor * 1_000_000) / 3600);
       return {
         ratePerMinuteMinor,
@@ -106,13 +208,15 @@ export function resolveRate(
         effectiveFrom: activeWindow.startIso,
         effectiveUntil: activeWindow.endIso,
         version,
+        isFree: ratePerMinuteMinor === 0,
       };
     }
   }
 
-  // 1b. Episode Override
-  if (context.episodeId && config.episodeRatesPerMinuteMinor?.[context.episodeId] !== undefined) {
-    const rate = config.episodeRatesPerMinuteMinor[context.episodeId];
+  // 3. Episode Override
+  const epRate = getRate(config.episodeRatesById, config.episodeRatesPerMinuteMinor, context.episodeId);
+  if (epRate !== undefined) {
+    const rate = Math.max(0, epRate);
     return {
       ratePerMinuteMinor: rate,
       microPerSecond: Math.round((rate * 1_000_000) / 60),
@@ -120,12 +224,14 @@ export function resolveRate(
       effectiveFrom: baseEffectiveFrom,
       effectiveUntil: null,
       version,
+      isFree: rate === 0,
     };
   }
 
-  // 2. Title rate
-  if (context.assetId && config.titleRatesPerMinuteMinor?.[context.assetId] !== undefined) {
-    const rate = config.titleRatesPerMinuteMinor[context.assetId];
+  // 4. Title / Movie rate
+  const titleRate = getRate(config.assetRatesById, config.titleRatesPerMinuteMinor, context.assetId);
+  if (titleRate !== undefined) {
+    const rate = Math.max(0, titleRate);
     return {
       ratePerMinuteMinor: rate,
       microPerSecond: Math.round((rate * 1_000_000) / 60),
@@ -133,12 +239,14 @@ export function resolveRate(
       effectiveFrom: baseEffectiveFrom,
       effectiveUntil: null,
       version,
+      isFree: rate === 0,
     };
   }
 
-  // 3. Series rate
-  if (context.seriesId && config.seriesRatesPerMinuteMinor?.[context.seriesId] !== undefined) {
-    const rate = config.seriesRatesPerMinuteMinor[context.seriesId];
+  // 5. Series rate
+  const serRate = getRate(config.seriesRatesById, config.seriesRatesPerMinuteMinor, context.seriesId);
+  if (serRate !== undefined) {
+    const rate = Math.max(0, serRate);
     return {
       ratePerMinuteMinor: rate,
       microPerSecond: Math.round((rate * 1_000_000) / 60),
@@ -146,14 +254,30 @@ export function resolveRate(
       effectiveFrom: baseEffectiveFrom,
       effectiveUntil: null,
       version,
+      isFree: rate === 0,
     };
   }
 
-  // 4. Channel rate (entered in ratePerHourMinor)
-  if (context.channelId && config.channelRatesPerHourMinor?.[context.channelId] !== undefined) {
-    const hourly = config.channelRatesPerHourMinor[context.channelId];
-    const ratePerMinuteMinor = Math.round(hourly / 60);
-    const microPerSecond = Math.round((hourly * 1_000_000) / 3600);
+  // 6. Live Stream rate
+  const liveRate = getRate(config.liveStreamRatesById, config.liveStreamRatesPerMinuteMinor, context.liveStreamId);
+  if (liveRate !== undefined) {
+    const rate = Math.max(0, liveRate);
+    return {
+      ratePerMinuteMinor: rate,
+      microPerSecond: Math.round((rate * 1_000_000) / 60),
+      sourceRule: "live_stream_rate",
+      effectiveFrom: baseEffectiveFrom,
+      effectiveUntil: null,
+      version,
+      isFree: rate === 0,
+    };
+  }
+
+  // 7. Channel rate (hourly / 60)
+  const chanRate = getRate(config.channelRatesById, config.channelRatesPerHourMinor, context.channelId);
+  if (chanRate !== undefined) {
+    const ratePerMinuteMinor = Math.max(0, Math.round(chanRate / 60));
+    const microPerSecond = Math.round((chanRate * 1_000_000) / 3600);
     return {
       ratePerMinuteMinor,
       microPerSecond,
@@ -161,12 +285,14 @@ export function resolveRate(
       effectiveFrom: baseEffectiveFrom,
       effectiveUntil: null,
       version,
+      isFree: ratePerMinuteMinor === 0,
     };
   }
 
-  // 5. Category rate
-  if (context.categoryId && config.categoryRatesMinor?.[context.categoryId] !== undefined) {
-    const rate = config.categoryRatesMinor[context.categoryId];
+  // 8. Category rate
+  const catRate = getRate(config.categoryRatesById, config.categoryRatesMinor, context.categoryId);
+  if (catRate !== undefined) {
+    const rate = Math.max(0, catRate);
     return {
       ratePerMinuteMinor: rate,
       microPerSecond: Math.round((rate * 1_000_000) / 60),
@@ -174,12 +300,16 @@ export function resolveRate(
       effectiveFrom: baseEffectiveFrom,
       effectiveUntil: null,
       version,
+      isFree: rate === 0,
     };
   }
 
-  // 6. Platform default
-  const defaultRate =
-    context.platformDefaultMinor ?? config.defaultRatePerMinuteMinor ?? 200;
+  // 9. Platform default
+  const curDefault = config.defaultRatePerMinuteByCurrency?.[cur];
+  const defaultRate = Math.max(
+    0,
+    context.platformDefaultMinor ?? curDefault ?? config.defaultRatePerMinuteMinor ?? 200,
+  );
   return {
     ratePerMinuteMinor: defaultRate,
     microPerSecond: Math.round((defaultRate * 1_000_000) / 60),
@@ -187,6 +317,7 @@ export function resolveRate(
     effectiveFrom: baseEffectiveFrom,
     effectiveUntil: null,
     version,
+    isFree: defaultRate === 0,
   };
 }
 

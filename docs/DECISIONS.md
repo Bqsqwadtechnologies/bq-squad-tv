@@ -527,3 +527,20 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 - **Decision**: Created producer collaborations management page (`src/routes/producer.collaborations.tsx`) and API endpoint (`/api/public/v1/producer/collaborations/`) for creating split agreements, tracking confirmations, managing revisions, and raising dispute flags.
 - **Decision**: Enhanced Zillionaire finance console (`src/routes/zillionaire.finance.tsx`) with a dedicated "Splits & Collaborations" tab for auditing agreements and settlement status.
 - Batch 6 finished, continuing.
+
+## Batch 7 — Pricing control
+
+### 1. Multi-Tier Resolution Hierarchy & Free Playback
+- **Decision**: Enhanced `src/lib/server/pricing.ts` with multi-tier price resolution across promotional windows, channel live events, episode overrides, movie/title rates, series rates, live streams, channel defaults, category rates, and platform defaults.
+- **Decision**: Enabled explicit free viewing (`0` minor units / `isFree: true`) across any level (free pilots, free news category, free promo hours, free movie titles) without requiring viewer wallet balance holds.
+
+### 2. Promo Pricing Schedules & Bundles
+- **Decision**: Added support for time-bounded promotional pricing windows (`promoPricingWindows`) with ISO start/end windows, allowing percentage discounts or zero/reduced minor unit overrides.
+- **Decision**: Added content bundles schema for packaged multi-title access passes (`bundles`).
+
+### 3. Strict Producer & Provider Confidentiality
+- **Decision**: Platform take, rates per minute, and pricing margin configuration remain strictly owner-only and are completely excluded from producer and provider API payloads. Viewers see price per minute or "Free viewing" clearly on title screens prior to playback.
+
+### 4. Owner Pricing Control Console & History
+- **Decision**: Extended `src/routes/zillionaire.pricing.tsx` with dedicated tabbed sections for Defaults & Currencies, Movies/Series/Episodes, Channels & Live Streams, Categories, Promos & Bundles, and a Versioned History audit log backed by `/api/public/v1/zillionaire/config/pricing`.
+- Batch 7 finished, continuing.

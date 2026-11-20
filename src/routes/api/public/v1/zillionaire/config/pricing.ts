@@ -9,6 +9,7 @@ const topupSchema = z.object({
   amountMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   creditMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
 });
+
 const playProductSchema = z
   .object({
     productId: z.string().regex(/^[A-Za-z0-9._-]{1,150}$/),
@@ -36,8 +37,37 @@ const playProductSchema = z
       });
     }
   });
+
+const promoWindowSchema = z.object({
+  id: z.string().min(1).max(100),
+  targetType: z.enum(["movie", "series", "episode", "channel", "live_stream", "category", "global"]),
+  targetId: z.string().max(120).optional(),
+  overrideRateMinor: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER).optional(),
+  discountPercent: z.number().int().min(1).max(100).optional(),
+  startIso: z.string().datetime(),
+  endIso: z.string().datetime(),
+  label: z.string().min(1).max(120),
+  active: z.boolean().default(true),
+});
+
+const bundleSchema = z.object({
+  id: z.string().min(1).max(100),
+  title: z.string().min(1).max(120),
+  description: z.string().max(500).default(""),
+  assetIds: z.array(z.string().min(1).max(120)).min(1).max(100),
+  priceMinor: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+  currency: z.string().regex(/^[A-Z]{3}$/),
+  durationDays: z.number().int().positive().max(365),
+  active: z.boolean().default(true),
+});
+
+const rateRecordSchema = z.record(
+  z.string().regex(/^[A-Z]{3}$/),
+  z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
+);
+
 const schema = z.object({
-  defaultRatePerMinuteMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  defaultRatePerMinuteMinor: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   minimumSessionBalanceMinor: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   defaultProducerShareBps: z.number().int().min(0).max(10_000),
   maxConcurrentSessions: z.number().int().min(1).max(5).default(2),
@@ -51,7 +81,7 @@ const schema = z.object({
   defaultRatePerMinuteByCurrency: z
     .record(
       z.string().regex(/^[A-Z]{3}$/),
-      z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
     )
     .default({}),
   minimumSessionBalanceByCurrency: z
@@ -60,25 +90,45 @@ const schema = z.object({
       z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
     )
     .default({}),
-  // Owner-controlled price overrides. All amounts are integer minor currency units.
+  // Owner-controlled price overrides (all amounts in integer minor currency units, 0 = Free)
   channelRatesById: z
     .record(
       z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
-      z.record(
-        z.string().regex(/^[A-Z]{3}$/),
-        z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
-      ),
+      rateRecordSchema,
     )
     .default({}),
   assetRatesById: z
     .record(
       z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),
-      z.record(
-        z.string().regex(/^[A-Z]{3}$/),
-        z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
-      ),
+      rateRecordSchema,
     )
     .default({}),
+  seriesRatesById: z
+    .record(
+      z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),
+      rateRecordSchema,
+    )
+    .default({}),
+  episodeRatesById: z
+    .record(
+      z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),
+      rateRecordSchema,
+    )
+    .default({}),
+  categoryRatesById: z
+    .record(
+      z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
+      rateRecordSchema,
+    )
+    .default({}),
+  liveStreamRatesById: z
+    .record(
+      z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
+      rateRecordSchema,
+    )
+    .default({}),
+  promoPricingWindows: z.array(promoWindowSchema).max(50).default([]),
+  bundles: z.array(bundleSchema).max(50).default([]),
   producerShareBpsByChannel: z
     .record(z.string().regex(/^[A-Za-z0-9_-]{1,80}$/), z.number().int().min(0).max(10_000))
     .default({}),
@@ -88,7 +138,7 @@ const schema = z.object({
       z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
     )
     .default({}),
-  googlePlayProducts: z.array(playProductSchema).max(100),
+  googlePlayProducts: z.array(playProductSchema).max(100).default([]),
 });
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/config/pricing")({
@@ -99,6 +149,21 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/config/pricing"
           const user = await requireUser(request);
           const fs = await Firestore.create();
           await requireZillionaireModule(fs, user, "pricing");
+          
+          const url = new URL(request.url);
+          if (url.searchParams.get("history") === "true") {
+            const historyDocs = await fs.listDocs("pricing_history", 50);
+            return Response.json({
+              history: historyDocs.map((d) => ({
+                id: d.id,
+                version: d["version"],
+                savedAt: d["savedAt"],
+                savedBy: d["savedBy"],
+                summary: d["summary"] ?? `Pricing version ${d["version"]}`,
+              })),
+            });
+          }
+
           const config = await fs.getDoc("config/pricing");
           if (!config)
             throw new ApiError(404, "PRICING_NOT_CONFIGURED", "Pricing has not been configured.");
@@ -146,6 +211,20 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/config/pricing"
               ],
             };
           });
+
+          // Save audit snapshot to history
+          try {
+            await fs.createDoc(`pricing_history/v${version}`, {
+              version,
+              savedAt: now,
+              savedBy: user.uid,
+              summary: `Updated version ${version}: ${Object.keys(body.assetRatesById).length} titles, ${Object.keys(body.channelRatesById).length} channels, ${body.promoPricingWindows.length} promos, ${body.bundles.length} bundles.`,
+              snapshot: body,
+            });
+          } catch {
+            // Ignore snapshot write failure if doc exists
+          }
+
           await writeAuditLog(fs, {
             actorUid: user.uid,
             action: "pricing.updated",
@@ -158,6 +237,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/config/pricing"
               walletTopupCount: Object.keys(body.walletTopups ?? {}).length,
               walletTopupCurrencyCount: Object.keys(body.walletTopupsByCurrency ?? {}).length,
               googlePlayProductCount: body.googlePlayProducts.length,
+              assetRatesCount: Object.keys(body.assetRatesById).length,
+              channelRatesCount: Object.keys(body.channelRatesById).length,
+              promoCount: body.promoPricingWindows.length,
+              bundleCount: body.bundles.length,
             },
           });
           return Response.json({ saved: true, version });
