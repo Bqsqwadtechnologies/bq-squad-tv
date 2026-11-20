@@ -1016,10 +1016,10 @@ function ProducerChannelsInner({
                 )}
               </div>
             </div>
+        </div>
+        </div>
           </div>
         )}
-        </div>
-        </div>
 
         {/* TAB 3: LIVE STREAM SETUP */}
         {activeTab === "livestream" && (
