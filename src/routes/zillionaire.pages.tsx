@@ -130,7 +130,7 @@ function PagesDashboard({ token, account }: { token: string; account: ConsoleAcc
     } finally {
       setLoading(false);
     }
-  }, [account.token]);
+  }, [token]);
 
   useEffect(() => {
     loadPages();
