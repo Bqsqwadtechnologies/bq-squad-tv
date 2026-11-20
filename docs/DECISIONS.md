@@ -330,3 +330,10 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - V5-03 Batch 2 protects owner wallet adjustments, payment reversals, permanent account removals, team grants/revocations, and payout settlement with a five-minute actor/action-scoped step-up token; finance dual approval, configurable daily limits, revenue-share changes, settings/secrets changes, and data exports still need separate implementation.
 - V5-03 Batch 3 adds 15-minute server-checked owner idle timeout, 8-hour absolute session cap, per-session browser inventory and audited revoke-all; country/IP-change challenge and concurrent-session limit remain unavailable, and all consoles still use their existing separate auth paths.
 - V5-03 Batch 4 exposes audit-chain verification, actor/target lookup and checksummed JSON export to the owner; daily verification remains dependent on the existing scheduled maintenance task, and audit immutability is enforced through server-only service-account access plus deny-all client rules.
+
+## V5-05 Batch 1 — Navigation, Account Hub & Downloads Screen (2026-11-20)
+
+- Implemented unified 5-tab bottom navigation across web (`ViewerBottomNav`) and native Android (`BqSqwadTvApp.kt`) in identical order: Home, Live TV, Library, Downloads, Settings.
+- Added dedicated `/downloads` route and Android `DownloadsScreen` presenting designed "Coming soon" state explaining online-only high-definition edge streaming.
+- Added `/live-tv` and `/library` routes to TanStack Start tree, with catalogue filters and playback links.
+- Replaced basic profile link with `ProfileAccountHub` avatar dropdown containing wallet, purchases, watch history, referrals, notifications, settings, help, and console links for Producers and Providers.

@@ -261,3 +261,22 @@ export function requireSameOrigin(request: Request): void {
     );
   }
 }
+
+export async function getWebSessionUser(request: Request): Promise<{ uid: string; email?: string } | null> {
+  try {
+    const authorization = request.headers.get("authorization");
+    if (authorization?.startsWith("Bearer ")) {
+      const token = authorization.slice("Bearer ".length);
+      const user = await verifyFirebaseIdToken(token, getFirebaseProjectId());
+      return { uid: user.uid, email: user.email };
+    }
+    const refreshToken = readWebRefreshCookie(request);
+    if (refreshToken) {
+      const refreshed = await refreshFirebaseWebSession(refreshToken);
+      return { uid: refreshed.uid };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}

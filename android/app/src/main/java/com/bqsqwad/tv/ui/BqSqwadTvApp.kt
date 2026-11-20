@@ -17,6 +17,8 @@ import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -48,8 +50,8 @@ private val mainTabs =
         MainTab("home", "Home", Icons.Default.Home),
         MainTab("live", "Live TV", Icons.Default.LiveTv),
         MainTab("library", "Library", Icons.Default.VideoLibrary),
-        MainTab("search", "Search", Icons.Default.Search),
-        MainTab("account", "Profile", Icons.Default.Person),
+        MainTab("downloads", "Downloads", Icons.Default.FileDownload),
+        MainTab("settings", "Settings", Icons.Default.Settings),
     )
 
 @Composable
@@ -167,6 +169,12 @@ fun BqSqwadTvApp(
                 }
                 composable("library") {
                     LibraryScreen(onChannel = { nav.navigate("channel/$it") })
+                }
+                composable("downloads") {
+                    DownloadsScreen(
+                        onLive = { nav.navigate("live") },
+                        onHome = { nav.navigate("home") },
+                    )
                 }
                 composable("settings") {
                     SettingsScreen(

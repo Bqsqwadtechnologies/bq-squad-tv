@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/BrandLogo";
+import { ViewerBottomNav } from "@/components/ViewerBottomNav";
+import { ProfileAccountHub } from "@/components/ProfileAccountHub";
 import {
   Bell,
   ChevronRight,
@@ -126,18 +128,17 @@ function HomePage() {
             <Link to="/" className="text-[#00D8F5] transition hover:text-white">
               Home
             </Link>
-            <Link
-              to="/channels/$channelId"
-              params={{ channelId: "demo" }}
-              className="transition hover:text-[#00D8F5]"
-            >
+            <Link to="/live-tv" className="transition hover:text-[#00D8F5]">
               Live TV
             </Link>
-            <Link to="/movies" className="transition hover:text-[#00D8F5]">
-              Movies
+            <Link to="/library" className="transition hover:text-[#00D8F5]">
+              Library
             </Link>
-            <Link to="/series" className="transition hover:text-[#00D8F5]">
-              Series
+            <Link to="/downloads" className="transition hover:text-[#00D8F5]">
+              Downloads
+            </Link>
+            <Link to="/settings" className="transition hover:text-[#00D8F5]">
+              Settings
             </Link>
           </nav>
         </div>
@@ -158,13 +159,7 @@ function HomePage() {
             <Bell size={18} />
             <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-[#FF405A] ring-2 ring-[#07143D]" />
           </Link>
-          <Link
-            to="/account"
-            aria-label="Profile"
-            className="grid h-10 w-10 place-items-center rounded-full border border-[#00D8F5]/40 bg-gradient-to-tr from-[#0052D4] to-[#00D8F5] text-white shadow-sm transition hover:scale-105"
-          >
-            <UserRound size={18} />
-          </Link>
+          <ProfileAccountHub />
         </div>
       </header>
 

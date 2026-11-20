@@ -385,3 +385,53 @@ private fun ChannelListCard(
         }
     }
 }
+
+@Composable
+fun DownloadsScreen(
+    onLive: () -> Unit = {},
+    onHome: () -> Unit = {},
+) {
+    Column(
+        Modifier.fillMaxSize().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Box(
+            Modifier.size(96.dp).background(Color(0xFF0B2057), RoundedCornerShape(28.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("↓", color = Color(0xFF9BEFFF), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+        }
+        Spacer(Modifier.height(20.dp))
+        Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)) {
+            Text(
+                "ONLINE STREAMING ONLY",
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                color = MaterialTheme.colorScheme.primary,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+        Spacer(Modifier.height(14.dp))
+        Text(
+            "Offline Downloads Coming Soon",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Black,
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "BQ SQWAD TV currently streams all high-definition movies, live broadcasts, and series directly from global edge distribution nodes. Offline downloads for Android will arrive in an upcoming release.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.padding(horizontal = 16.dp),
+        )
+        Spacer(Modifier.height(24.dp))
+        Button(onClick = onLive, modifier = Modifier.fillMaxWidth(0.8f)) {
+            Text("Watch Live TV")
+        }
+        Spacer(Modifier.height(10.dp))
+        OutlinedButton(onClick = onHome, modifier = Modifier.fillMaxWidth(0.8f)) {
+            Text("Explore Catalog")
+        }
+    }
+}
