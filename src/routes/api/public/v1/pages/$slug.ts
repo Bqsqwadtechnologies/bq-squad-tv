@@ -46,18 +46,14 @@ const KNOWN_SLUGS = new Set([
 ]);
 
 const CONFIG_PLACEHOLDERS: Record<string, string> = {
-  effective_date: "January 1, 2026",
-  last_updated: "April 2026",
+  effective_date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
+  last_updated: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
   company_name: "BQ Sqwad Technologies",
   platform_name: "BQ SQWAD TV",
   contact_email: "tv@bqsqwad.com",
   support_email: "tv@bqsqwad.com",
   legal_email: "tv@bqsqwad.com",
   governing_country: "Nigeria",
-  minimum_age: "13",
-  governing_law: "the laws of the Federal Republic of Nigeria",
-  dispute_resolution_forum: "Lagos, Nigeria",
-  data_retention_period: "7 years for billing logs and 90 days for diagnostic data",
 };
 
 function fillPlaceholders(raw: string, dynamicSettings?: Record<string, unknown>): string {
@@ -67,7 +63,16 @@ function fillPlaceholders(raw: string, dynamicSettings?: Record<string, unknown>
     if (dynamicSettings && typeof dynamicSettings[normalized] === "string" && dynamicSettings[normalized].trim()) {
       return (dynamicSettings[normalized] as string).trim();
     }
-    return CONFIG_PLACEHOLDERS[normalized] ?? "BQ SQWAD TV";
+    return CONFIG_PLACEHOLDERS[normalized] ?? "To be confirmed before publication";
+  });
+}
+
+function hasUnresolvedPlaceholders(raw: string, dynamicSettings?: Record<string, unknown>): boolean {
+  const matches = [...raw.matchAll(/\{\{\s*([a-zA-Z0-9_-]+)\s*\}\}/g)];
+  return matches.some((match) => {
+    const key = (match[1] || "").toLowerCase().replace(/-/g, "_");
+    const configured = dynamicSettings?.[key];
+    return !(typeof configured === "string" && configured.trim()) && !CONFIG_PLACEHOLDERS[key];
   });
 }
 
@@ -123,7 +128,11 @@ export const Route = createFileRoute("/api/public/v1/pages/$slug")({
               typeof page["scheduledPublishAt"] === "string" &&
               page["scheduledPublishAt"] <= now;
 
-            if ((isPublished || isScheduledDue) && typeof page["body"] === "string") {
+            if (
+              (isPublished || isScheduledDue) &&
+              typeof page["body"] === "string" &&
+              !hasUnresolvedPlaceholders(page["body"], dynamicSettings)
+            ) {
               return Response.json(
                 {
                   slug,
@@ -132,6 +141,8 @@ export const Route = createFileRoute("/api/public/v1/pages/$slug")({
                   version: page["version"] ?? 1,
                   effectiveAt: page["effectiveAt"] ?? now,
                   audience: page["audience"] ?? "public",
+                  status: "published",
+                  published: true,
                 },
                 { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=300" } },
               );
@@ -151,12 +162,13 @@ export const Route = createFileRoute("/api/public/v1/pages/$slug")({
                 slug,
                 title: bundled.title,
                 body: fillPlaceholders(bundled.body, dynamicSettings),
-                version: 1,
-                effectiveAt:
-                  (bundled as Record<string, unknown>)["effectiveAt"] ?? "2026-01-01T00:00:00.000Z",
+                version: 0,
+                effectiveAt: null,
                 audience: bundled.audience ?? "public",
+                status: "draft",
+                published: false,
               },
-              { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=300" } },
+              { headers: { "cache-control": "no-store" } },
             );
           }
 
@@ -168,9 +180,11 @@ export const Route = createFileRoute("/api/public/v1/pages/$slug")({
                 slug,
                 title: fallback.title,
                 body: fallback.body,
-                version: 1,
-                effectiveAt: "2026-01-01T00:00:00.000Z",
+                version: 0,
+                effectiveAt: null,
                 audience: "public",
+                status: "draft",
+                published: false,
               },
               { headers: { "cache-control": "public, max-age=60, stale-while-revalidate=300" } },
             );
