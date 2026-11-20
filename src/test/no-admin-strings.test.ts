@@ -133,4 +133,40 @@ describe("Zero-Admin Naming Enforcement & Single Owner Checklist", () => {
     expect(rolesCode).not.toContain("process.env.ADMIN_EMAIL");
     expect(rolesCode).not.toContain("process.env['ADMIN_EMAIL']");
   });
+
+  it("ensures no revenue share percentage or platform splits leak into provider/viewer text", () => {
+    const fs = require("node:fs");
+    const path = require("node:path");
+
+    function walkSync(dir: string, fileList: string[] = []): string[] {
+      const files = fs.readdirSync(dir);
+      for (const file of files) {
+        const filePath = path.join(dir, file);
+        const stat = fs.statSync(filePath);
+        if (stat.isDirectory()) {
+          walkSync(filePath, fileList);
+        } else if (file.endsWith(".tsx") || file.endsWith(".ts")) {
+          fileList.push(filePath);
+        }
+      }
+      return fileList;
+    }
+
+    const files = walkSync("src");
+    for (const file of files) {
+      if (
+        file.includes("src/test/") ||
+        file.includes("src/routes/zillionaire.") ||
+        file.includes("src/routes/api/public/v1/zillionaire/") ||
+        file.includes("src/lib/server/roles.ts")
+      ) {
+        continue;
+      }
+      const text = fs.readFileSync(file, "utf8");
+      expect(text).not.toMatch(/providerShareBps/);
+      expect(text).not.toMatch(/sharePercent/);
+      expect(text).not.toMatch(/25% Net/i);
+    }
+  });
+
 });

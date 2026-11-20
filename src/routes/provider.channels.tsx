@@ -114,7 +114,7 @@ function ProviderChannelsInner({
   // Dispute filing modal
   const [isDisputeModalOpen, setIsDisputeModalOpen] = useState(false);
   const [disputeSubject, setDisputeSubject] = useState("");
-  const [disputeCategory, setDisputeCategory] = useState("Revenue Share Calculation");
+  const [disputeCategory, setDisputeCategory] = useState("Settlement Calculation");
   const [disputeChannelId, setDisputeChannelId] = useState("");
   const [disputeDetails, setDisputeDetails] = useState("");
   const [submittingDispute, setSubmittingDispute] = useState(false);
@@ -868,7 +868,7 @@ Authorized Signatory: Ok's Lovable / BQ SQWAD TV Global Operations`;
                     onChange={(e) => setDisputeCategory(e.target.value)}
                     className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:outline-none focus:border-cyan-400"
                   >
-                    <option value="Revenue Share Calculation">Revenue Share Calculation</option>
+                    <option value="Settlement Calculation">Settlement Calculation</option>
                     <option value="Bandwidth Deductible Discrepancy">Bandwidth Deductible Discrepancy</option>
                     <option value="SLA Outage Penalty Credit">SLA Outage Penalty Credit</option>
                     <option value="Ingest Stream Downtime">Ingest Stream Downtime</option>

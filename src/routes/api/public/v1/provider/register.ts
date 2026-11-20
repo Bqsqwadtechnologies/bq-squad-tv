@@ -142,7 +142,6 @@ export const Route = createFileRoute("/api/public/v1/provider/register")({
               signedAt: body.agreementAgreedAt || new Date().toISOString(),
             },
             settlementCurrency,
-            providerShareBps: 2500,
             status: initialStatus,
             sandboxCredentials,
             estimatedReviewHours: "24-48 hours",
