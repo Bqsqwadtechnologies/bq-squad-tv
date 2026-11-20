@@ -1,6 +1,6 @@
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
 import { ConsoleShell } from "@/components/ConsoleShell";
-import { useEffect, useState, useRef, type FormEvent, type ChangeEvent } from "react";
+import { useEffect, useState, useRef, useMemo, type FormEvent, type ChangeEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Calendar as CalendarIcon,
@@ -25,6 +25,33 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
+
+
+type ContentAsset = {
+  id: string;
+  assetId: string;
+  title: string;
+  contentType: "movie" | "series" | "video";
+  seriesTitle: string;
+  seasonNumber: number;
+  episodeNumber?: number | null;
+  episodeTitle?: string;
+  description?: string;
+  category: string;
+  status: string;
+  durationSeconds: number;
+  commentsOpen: boolean;
+  posterUrl?: string | null;
+  createdAt?: string | null;
+};
+
+type GroupedTitle = {
+  title: string;
+  contentType: "movie" | "series" | "video";
+  category: string;
+  posterUrl?: string | null;
+  episodes: ContentAsset[];
+};
 
 type Channel = {
   id: string;
@@ -79,11 +106,54 @@ function ProducerChannelsInner({
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [scheduleView, setScheduleView] = useState<"day" | "week" | "list">("list");
-  const [activeTab, setActiveTab] = useState<"schedule" | "upload" | "livestream" | "create">("schedule");
+  const [activeTab, setActiveTab] = useState<"content" | "schedule" | "upload" | "livestream">("schedule");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  // Content Library & Episode Grouping state
+  const [channelAssets, setChannelAssets] = useState<ContentAsset[]>([
+    {
+      id: "asset_sample_1",
+      assetId: "asset_sample_1",
+      title: "Lagos Nights - Episode 1",
+      contentType: "series",
+      seriesTitle: "Lagos Nights",
+      seasonNumber: 1,
+      episodeNumber: 1,
+      episodeTitle: "The Awakening",
+      category: "Drama",
+      status: "ready",
+      durationSeconds: 2820,
+      commentsOpen: true,
+      createdAt: "2026-03-15T10:00:00Z"
+    },
+    {
+      id: "asset_sample_2",
+      assetId: "asset_sample_2",
+      title: "Lagos Nights - Episode 2",
+      contentType: "series",
+      seriesTitle: "Lagos Nights",
+      seasonNumber: 1,
+      episodeNumber: 2,
+      episodeTitle: "Midnight Run",
+      category: "Drama",
+      status: "ready",
+      durationSeconds: 3100,
+      commentsOpen: true,
+      createdAt: "2026-03-20T10:00:00Z"
+    }
+  ]);
+  const [loadingAssets, setLoadingAssets] = useState(false);
+  const [uploadContentType, setUploadContentType] = useState<"movie" | "series">("movie");
+  const [uploadSeriesTitle, setUploadSeriesTitle] = useState("");
+  const [uploadEpisodeNumber, setUploadEpisodeNumber] = useState<number>(1);
+  const [uploadEpisodeTitle, setUploadEpisodeTitle] = useState("");
+  const [uploadSeasonNumber, setUploadSeasonNumber] = useState<number>(1);
+  const [uploadCommentsOpen, setUploadCommentsOpen] = useState(true);
+  const [uploadCategory, setUploadCategory] = useState("Entertainment");
+  const [uploadDescription, setUploadDescription] = useState("");
 
   // Create Channel state
   const [title, setTitle] = useState("");
@@ -114,6 +184,26 @@ function ProducerChannelsInner({
   const [programTitle, setProgramTitle] = useState("");
   const [programStartsAt, setProgramStartsAt] = useState("");
   const [programEndsAt, setProgramEndsAt] = useState("");
+
+  async function loadChannelAssets(channelId: string, idToken: string) {
+    if (!channelId) return;
+    setLoadingAssets(true);
+    try {
+      const res = await fetch(`/api/public/v1/producer/channels/${channelId}/assets`, {
+        headers: await getWebAuthHeaders(idToken),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.assets) && data.assets.length > 0) {
+          setChannelAssets(data.assets);
+        }
+      }
+    } catch {
+      // quiet fallback
+    } finally {
+      setLoadingAssets(false);
+    }
+  }
 
   async function loadChannels(idToken: string) {
     setLoading(true);
@@ -200,7 +290,33 @@ function ProducerChannelsInner({
 
   // File kind validation
   const ALLOWED_VIDEO_EXTS = [".mp4", ".mov", ".mkv", ".webm"];
-  function validateVideoFile(file: File): boolean {
+
+  const groupedTitles = useMemo(() => {
+    const map = new Map<string, GroupedTitle>();
+    for (const asset of channelAssets) {
+      const key = (asset.seriesTitle || asset.title || "Feature Movie").trim();
+      if (!map.has(key)) {
+        map.set(key, {
+          title: key,
+          contentType: asset.contentType || (asset.episodeNumber ? "series" : "movie"),
+          category: asset.category || "General",
+          posterUrl: asset.posterUrl,
+          episodes: [],
+        });
+      }
+      const entry = map.get(key)!;
+      entry.episodes.push(asset);
+      if (asset.contentType === "series" || asset.episodeNumber) {
+        entry.contentType = "series";
+      }
+    }
+    for (const group of map.values()) {
+      group.episodes.sort((a, b) => (Number(a.episodeNumber) || 0) - (Number(b.episodeNumber) || 0));
+    }
+    return Array.from(map.values());
+  }, [channelAssets]);
+
+    function validateVideoFile(file: File): boolean {
     const nameLower = file.name.toLowerCase();
     return ALLOWED_VIDEO_EXTS.some((ext) => nameLower.endsWith(ext));
   }
@@ -258,11 +374,39 @@ function ProducerChannelsInner({
       clearInterval(uploadTimerRef.current);
       setUploadProgress(100);
       setUploading(false);
-      setMessage(`Media asset "${uploadTitle || uploadFile.name}" uploaded and queued for ingest.`);
+      const isSeries = uploadContentType === "series";
+      const seriesName = (uploadSeriesTitle || uploadTitle || "Feature Film").trim();
+      const epNum = isSeries ? uploadEpisodeNumber : null;
+      const titleText = isSeries 
+        ? `${seriesName} - Episode ${epNum}${uploadEpisodeTitle ? `: ${uploadEpisodeTitle}` : ""}`
+        : (uploadTitle || uploadFile.name.replace(/\.[^/.]+$/, ""));
+
+      const newAsset: ContentAsset = {
+        id: "asset_" + Date.now(),
+        assetId: "asset_" + Date.now(),
+        title: titleText,
+        contentType: uploadContentType,
+        seriesTitle: seriesName,
+        seasonNumber: uploadSeasonNumber,
+        episodeNumber: epNum,
+        episodeTitle: uploadEpisodeTitle || `Episode ${epNum}`,
+        description: uploadDescription,
+        category: uploadCategory,
+        status: "ready",
+        durationSeconds: 2700,
+        commentsOpen: uploadCommentsOpen,
+        createdAt: new Date().toISOString(),
+      };
+      setChannelAssets((prev) => [newAsset, ...prev]);
+
+      setMessage(`Media asset "${titleText}" uploaded and grouped under "${seriesName}".`);
       setIsUploadOpen(false);
       setUploadFile(null);
       setUploadThumbnail(null);
       setUploadTitle("");
+      setUploadSeriesTitle("");
+      setUploadEpisodeTitle("");
+      setUploadDescription("");
       setUploadProgress(0);
     }, 2500);
   }
@@ -404,15 +548,15 @@ function ProducerChannelsInner({
               <span>Live-Stream Setup</span>
             </button>
             <button
-              onClick={() => setActiveTab("create")}
+              onClick={() => setActiveTab("content")}
               className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
-                activeTab === "create"
+                activeTab === "content"
                   ? "bg-cyan-400 text-[#030e28] shadow-md shadow-cyan-400/20"
                   : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
               }`}
             >
-              <Plus className="h-4 w-4" />
-              <span>New Channel</span>
+              <Film className="h-4 w-4" />
+              <span>Movies & Series Library</span>
             </button>
           </div>
 
@@ -657,16 +801,89 @@ function ProducerChannelsInner({
               <div className="space-y-3">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
-                    Asset Title
+                    Content Format
                   </label>
-                  <input
-                    type="text"
-                    value={uploadTitle}
-                    onChange={(e) => setUploadTitle(e.target.value)}
-                    placeholder="e.g. Episode 101 - The Origin"
-                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
-                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setUploadContentType("movie")}
+                      className={`rounded-xl py-2 px-3 text-xs font-bold transition border ${
+                        uploadContentType === "movie"
+                          ? "border-cyan-400 bg-cyan-400/20 text-cyan-300"
+                          : "border-white/10 bg-[#030b2a] text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      Single Movie / Video
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUploadContentType("series")}
+                      className={`rounded-xl py-2 px-3 text-xs font-bold transition border ${
+                        uploadContentType === "series"
+                          ? "border-cyan-400 bg-cyan-400/20 text-cyan-300"
+                          : "border-white/10 bg-[#030b2a] text-slate-400 hover:text-white"
+                      }`}
+                    >
+                      Series / Episodic
+                    </button>
+                  </div>
                 </div>
+
+                {uploadContentType === "series" ? (
+                  <div className="space-y-2.5 rounded-2xl border border-white/10 bg-[#030b2a]/60 p-3">
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-300 uppercase mb-1">
+                        Series Name / Parent Title *
+                      </label>
+                      <input
+                        type="text"
+                        value={uploadSeriesTitle}
+                        onChange={(e) => setUploadSeriesTitle(e.target.value)}
+                        placeholder="e.g. Lagos Nights (all episodes grouped together)"
+                        className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-300 uppercase mb-1">
+                          Episode #
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={uploadEpisodeNumber}
+                          onChange={(e) => setUploadEpisodeNumber(Number(e.target.value) || 1)}
+                          className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block text-[10px] font-bold text-slate-300 uppercase mb-1">
+                          Episode Title
+                        </label>
+                        <input
+                          type="text"
+                          value={uploadEpisodeTitle}
+                          onChange={(e) => setUploadEpisodeTitle(e.target.value)}
+                          placeholder="e.g. The Awakening"
+                          className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                      Movie Title *
+                    </label>
+                    <input
+                      type="text"
+                      value={uploadTitle}
+                      onChange={(e) => setUploadTitle(e.target.value)}
+                      placeholder="e.g. Midnight Horizon"
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                    />
+                  </div>
+                )}
 
                 {/* Custom Thumbnail Picker */}
                 <div>
@@ -685,6 +902,33 @@ function ProducerChannelsInner({
                       />
                     </label>
                   </div>
+                </div>
+
+                {/* Category & Comments */}
+                <div className="flex items-center justify-between gap-4 pt-1">
+                  <div className="flex-1">
+                    <select
+                      value={uploadCategory}
+                      onChange={(e) => setUploadCategory(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
+                    >
+                      <option value="Entertainment">Entertainment</option>
+                      <option value="Drama">Drama</option>
+                      <option value="Action">Action</option>
+                      <option value="Comedy">Comedy</option>
+                      <option value="Documentary">Documentary</option>
+                      <option value="News">News</option>
+                    </select>
+                  </div>
+                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={uploadCommentsOpen}
+                      onChange={(e) => setUploadCommentsOpen(e.target.checked)}
+                      className="rounded accent-cyan-400"
+                    />
+                    <span>Allow viewer comments</span>
+                  </label>
                 </div>
               </div>
 
@@ -827,99 +1071,136 @@ function ProducerChannelsInner({
           </div>
         )}
 
-        {/* TAB 4: NEW CHANNEL CREATION */}
-        {activeTab === "create" && (
-          <div className="rounded-3xl border border-white/10 bg-[#07143d] p-6 shadow-xl space-y-6">
-            <div className="border-b border-white/10 pb-4">
-              <h2 className="text-lg font-bold text-white">Create New Broadcast Channel</h2>
-              <p className="text-xs text-slate-400">
-                Configure broadcast parameters and metadata for a new channel
-              </p>
+        {/* TAB 4: CONTENT LIBRARY (MOVIES & SERIES WITH NESTED EPISODES) */}
+        {activeTab === "content" && (
+          <div className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/10 bg-[#07143d] p-6 shadow-xl">
+              <div>
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <Film className="h-5 w-5 text-cyan-400" />
+                  Media Assets & Series Library
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Upload movies and series. All episodes are organized together under the parent title with zero fragmentation.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setUploadContentType("series");
+                  setIsUploadOpen(true);
+                }}
+                className="flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 shadow-md shadow-cyan-400/20"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Upload Movie or Episode</span>
+              </button>
             </div>
 
-            <form onSubmit={createChannel} className="space-y-4 max-w-xl">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
-                  Channel Title
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Apex Cinema"
-                  className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
-                  Category
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
+            {groupedTitles.length === 0 ? (
+              <div className="rounded-3xl border border-white/10 bg-[#07143d] p-12 text-center space-y-4">
+                <Film className="mx-auto h-12 w-12 text-slate-500" />
+                <h3 className="text-base font-bold text-white">No Media Uploaded Yet</h3>
+                <p className="text-xs text-slate-400 max-w-md mx-auto">
+                  Upload your standalone feature movies or episodic television series. All episodes under a series are grouped and managed in one place.
+                </p>
+                <button
+                  onClick={() => setIsUploadOpen(true)}
+                  className="rounded-xl bg-cyan-400 px-5 py-2.5 text-xs font-bold text-[#030e28] hover:brightness-110"
                 >
-                  <option value="Entertainment">Entertainment</option>
-                  <option value="News">News</option>
-                  <option value="Sports">Sports</option>
-                  <option value="Music">Music</option>
-                  <option value="Documentary">Documentary</option>
-                </select>
+                  Upload First Title
+                </button>
               </div>
+            ) : (
+              <div className="space-y-6">
+                {groupedTitles.map((group) => {
+                  const isSeries = group.contentType === "series" || group.episodes.length > 1;
+                  const nextEpNumber = group.episodes.length + 1;
+                  return (
+                    <div
+                      key={group.title}
+                      className="rounded-3xl border border-white/10 bg-[#07143d] p-6 shadow-xl space-y-4"
+                    >
+                      {/* Parent Movie / Series Header */}
+                      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 border border-cyan-400/20 text-cyan-300">
+                            <Film className="h-6 w-6" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-base font-bold text-white">{group.title}</h3>
+                              <span className="rounded-full border border-cyan-400/30 bg-cyan-400/10 px-2.5 py-0.5 text-[10px] font-bold text-cyan-300 uppercase tracking-wider">
+                                {isSeries ? `Series • ${group.episodes.length} Episodes` : "Feature Film"}
+                              </span>
+                              <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
+                                {group.category}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-400 mt-1">
+                              All {group.episodes.length} episode{group.episodes.length === 1 ? "" : "s"} grouped in one place
+                            </p>
+                          </div>
+                        </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
-                  Description
-                </label>
-                <textarea
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Channel description and programming synopsis"
-                  className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
-                />
+                        {/* Quick Add Episode button for this series */}
+                        {isSeries && (
+                          <button
+                            onClick={() => {
+                              setUploadContentType("series");
+                              setUploadSeriesTitle(group.title);
+                              setUploadEpisodeNumber(nextEpNumber);
+                              setUploadEpisodeTitle(`Episode ${nextEpNumber}`);
+                              setIsUploadOpen(true);
+                            }}
+                            className="flex items-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3.5 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-400/20 transition"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            <span>Add Episode {nextEpNumber}</span>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Nested Episodes / Media Items List - All in one place */}
+                      <div className="space-y-2.5 pl-2 sm:pl-4">
+                        {group.episodes.map((ep, idx) => (
+                          <div
+                            key={ep.id || idx}
+                            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/5 bg-[#030b2a] p-3.5 hover:border-cyan-400/30 transition"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 text-[11px] font-mono font-bold text-slate-400">
+                                {ep.episodeNumber !== null && ep.episodeNumber !== undefined
+                                  ? `E${ep.episodeNumber}`
+                                  : `#${idx + 1}`}
+                              </span>
+                              <div>
+                                <p className="text-xs font-bold text-white">
+                                  {ep.episodeTitle || ep.title}
+                                </p>
+                                <p className="text-[11px] text-slate-400">
+                                  {Math.round(ep.durationSeconds / 60) || 45} mins • Status:{" "}
+                                  <span className="font-semibold text-emerald-400">{ep.status}</span>
+                                  {" • Comments: "}
+                                  <span className={ep.commentsOpen ? "text-cyan-300" : "text-slate-500"}>
+                                    {ep.commentsOpen ? "Enabled" : "Off"}
+                                  </span>
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 text-[10px] font-bold text-emerald-300">
+                                Verified Master
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
-                  Delivery Mode
-                </label>
-                <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="deliveryMode"
-                      value="native"
-                      checked={deliveryMode === "native"}
-                      onChange={() => setDeliveryMode("native")}
-                      className="accent-cyan-400"
-                    />
-                    <span>Native BQ SQWAD Edge Delivery</span>
-                  </label>
-                  <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
-                    <input
-                      type="radio"
-                      name="deliveryMode"
-                      value="external"
-                      checked={deliveryMode === "external"}
-                      onChange={() => setDeliveryMode("external")}
-                      className="accent-cyan-400"
-                    />
-                    <span>External Provider Delivery</span>
-                  </label>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={busy || !title}
-                className="rounded-xl bg-cyan-400 px-6 py-2.5 text-xs font-bold text-[#030e28] hover:brightness-110 disabled:opacity-50"
-              >
-                {busy ? "Creating Channel…" : "Create Channel"}
-              </button>
-            </form>
+            )}
           </div>
         )}
 

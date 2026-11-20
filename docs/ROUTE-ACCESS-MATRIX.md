@@ -2,19 +2,19 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **257**
+Total scanned routes: **261**
 
 ### Summary by Guard Class
 
 | Guard Class | Count |
 |---|---|
-| `public` | 13 |
-| `viewer` | 81 |
+| `public` | 14 |
+| `viewer` | 82 |
 | `webhook signature` | 1 |
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 132 |
+| `zillionaire module` | 134 |
 | `producer` | 4 |
 
 ### Inventory
@@ -22,6 +22,7 @@ Total scanned routes: **257**
 | Route | Guard Class | Specific Guard | File |
 |---|---|---|---|
 | `/api/public/firebase-schema-inspect` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/firebase-schema-inspect.ts` |
+| `/api/public/v1/account/delete` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/account/delete.ts` |
 | `/api/public/v1/account/export` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/account/export.ts` |
 | `/api/public/v1/ads/$adId/events` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/ads/$adId/events.ts` |
 | `/api/public/v1/ads/campaigns` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/v1/ads/campaigns.ts` |
@@ -58,6 +59,7 @@ Total scanned routes: **257**
 | `/api/public/v1/errors/beacon` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/v1/errors/beacon.ts` |
 | `/api/public/v1/errors/report` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/v1/errors/report.ts` |
 | `/api/public/v1/legal/acceptance` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/legal/acceptance.ts` |
+| `/api/public/v1/legal/consent` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/v1/legal/consent.ts` |
 | `/api/public/v1/legal/required` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/legal/required.ts` |
 | `/api/public/v1/legal/status` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/legal/status.ts` |
 | `/api/public/v1/notifications` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/notifications.ts` |
@@ -169,6 +171,7 @@ Total scanned routes: **257**
 | `/api/public/v1/zillionaire/content-assets/$assetId/publish` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/publish.ts` |
 | `/api/public/v1/zillionaire/content-assets/$assetId/ready` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/ready.ts` |
 | `/api/public/v1/zillionaire/content-assets/$assetId/reprocess` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/reprocess.ts` |
+| `/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens` | `zillionaire module` | requireZillionaire (Zillionaire Owner / Scope Check) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens.ts` |
 | `/api/public/v1/zillionaire/content-assets/$assetId/rights` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/rights.ts` |
 | `/api/public/v1/zillionaire/content-comments/$commentId/moderate` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/content-comments/$commentId/moderate.ts` |
 | `/api/public/v1/zillionaire/errors/` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/errors/index.ts` |
@@ -207,6 +210,7 @@ Total scanned routes: **257**
 | `/api/public/v1/zillionaire/security/abuse-settings` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/security/abuse-settings.ts` |
 | `/api/public/v1/zillionaire/security/events` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/security/events.ts` |
 | `/api/public/v1/zillionaire/security/holds` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/security/holds.ts` |
+| `/api/public/v1/zillionaire/security/incident-mode` | `zillionaire module` | requireZillionaire (Zillionaire Owner / Scope Check) | `src/routes/api/public/v1/zillionaire/security/incident-mode.ts` |
 | `/api/public/v1/zillionaire/security/lookup-actor` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/security/lookup-actor.ts` |
 | `/api/public/v1/zillionaire/security/reputation` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/security/reputation.ts` |
 | `/api/public/v1/zillionaire/series/` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/series/index.ts` |

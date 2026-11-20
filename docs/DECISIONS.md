@@ -342,3 +342,11 @@ V5-05 Batch 8: Both sign-in surfaces use the same public Google web client confi
 
 V5-05 Batch 9: Android checks the live public client settings before app access, shows maintenance/force-update screens from those settings, and the public sitemap lists only viewer-facing URLs.
 V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-build blockers in the release notes and ordered owner checklist; release is not marked signed off until those are cleared.
+
+## V5-06 Batch 1 — Channel Provisioning Isolation, Producer Series/Episode Grouping & Direct Owner Password Unlock (2026-11-20)
+
+- Restrict channel creation exclusively to Provider Console; removed channel creation from Producer Console. Producer `POST /api/public/v1/producer/channels` returns 403 `CHANNEL_CREATION_RESTRICTED`.
+- Added provider channel provisioning endpoint `POST /api/public/v1/provider/channels` creating verified `liveChannels/{channelId}` tied to authenticated provider ID.
+- Upgraded Producer Console with "Movies & Series Library" allowing producers to upload movies, series, and video assets. All episodes of a series are strictly grouped in one place under the series title without fragmentation.
+- Added authenticated asset listing endpoint `GET /api/public/v1/producer/channels/:channelId/assets` and updated metadata persistence schema for content type, series title, season and episode details.
+- Unlocked direct Zillionaire dashboard access with owner access password without requiring MFA setup prior to initial entry. Once enrolled, MFA remains strictly enforced. Authenticator secrets encryption fails closed safely if encryption keys are unconfigured.

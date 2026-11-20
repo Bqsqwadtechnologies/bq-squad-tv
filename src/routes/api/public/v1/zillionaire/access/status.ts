@@ -65,7 +65,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/status")
             isOwner: true,
             configured: true,
             mfaEnabled,
-            unlocked: verifyResult.valid && mfaEnabled,
+            unlocked: verifyResult.valid,
             expiresAt: verifyResult.expiresAt,
             lockedOut: false,
             legacySecretWarning: access.legacySecretWarning === true,

@@ -100,7 +100,8 @@ describe("Provider Working Tools (V5-04 Batch 6)", () => {
     expect(await screen.findByText("Master Distribution Contract")).toBeDefined();
     expect(screen.getByText("Signed Date")).toBeDefined();
     expect(screen.getByText("January 15, 2026")).toBeDefined();
-    expect(screen.getByText(/25.*% Net Share/i)).toBeDefined();
+    expect(screen.getByText("Settlement Terms")).toBeDefined();
+    expect(screen.getByText("Standard Partner Settlement")).toBeDefined();
     expect(screen.getByText("Download PDF Contract")).toBeDefined();
   });
 
@@ -115,6 +116,18 @@ describe("Provider Working Tools (V5-04 Batch 6)", () => {
     expect(screen.getByText("New York")).toBeDefined();
     expect(screen.getByText("Frankfurt")).toBeDefined();
     expect(screen.getByText("Ping Now")).toBeDefined();
+  });
+
+  it("renders Create New Channel button and provisions a channel", async () => {
+    const Component = Route.options.component!;
+    render(<Component />);
+
+    const createBtn = await screen.findByText("Create New Channel");
+    expect(createBtn).toBeDefined();
+
+    fireEvent.click(createBtn);
+    expect(await screen.findByText("Create New Broadcast Channel")).toBeDefined();
+    expect(screen.getByPlaceholderText(/Apex Cinema Global/i)).toBeDefined();
   });
 
   it("renders connected channels list, bandwidth cap, error logs, and dispute modal", async () => {

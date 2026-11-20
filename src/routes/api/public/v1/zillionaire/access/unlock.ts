@@ -103,17 +103,13 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/unlock")
           }
 
           const mfa = await fs.getDoc(`zillionaireMfa/${user.uid}`);
-          if (!mfa?.["enabled"] || typeof mfa["secret"] !== "string") {
-            throw new ApiError(
-              423,
-              "OWNER_MFA_REQUIRED",
-              "Complete authenticator setup before unlocking the dashboard.",
-            );
-          }
-          let verifiedFactor = false;
-          if (typeof body.code === "string") {
-            verifiedFactor = verifyTotp(decryptTotpSecret(mfa["secret"]), body.code);
-          } else if (typeof body.recoveryCode === "string") {
+          const mfaEnabled = mfa?.["enabled"] === true && typeof mfa["secret"] === "string";
+
+          if (mfaEnabled) {
+            let verifiedFactor = false;
+            if (typeof body.code === "string" && body.code.trim().length === 6) {
+              verifiedFactor = verifyTotp(decryptTotpSecret(mfa["secret"] as string), body.code.trim());
+            } else if (typeof body.recoveryCode === "string" && body.recoveryCode.trim().length > 0) {
             const codeHash = hashRecoveryCode(body.recoveryCode);
             const path = `zillionaireMfa/${user.uid}`;
             verifiedFactor = await fs.transact([path], (docs) => {
@@ -150,18 +146,19 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/unlock")
                 },
               });
           }
-          if (!verifiedFactor) {
-            const failure = recordFailure(user.uid);
-            if (failure.locked)
-              throw new ApiError(
-                429,
-                "ZILLIONAIRE_LOCKED_OUT",
-                "Too many failed attempts. Dashboard locked for 15 minutes.",
+            if (!verifiedFactor) {
+              const failure = recordFailure(user.uid);
+              if (failure.locked)
+                throw new ApiError(
+                  429,
+                  "ZILLIONAIRE_LOCKED_OUT",
+                  "Too many failed attempts. Dashboard locked for 15 minutes.",
+                );
+              await new Promise((resolve) =>
+                setTimeout(resolve, getProgressiveDelayMs(failure.attempts)),
               );
-            await new Promise((resolve) =>
-              setTimeout(resolve, getProgressiveDelayMs(failure.attempts)),
-            );
-            throw new ApiError(401, "MFA_CODE_INVALID", "Authenticator verification failed.");
+              throw new ApiError(401, "MFA_CODE_INVALID", "Authenticator verification failed.");
+            }
           }
 
           // Successful unlock

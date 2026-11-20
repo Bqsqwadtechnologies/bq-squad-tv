@@ -11,6 +11,12 @@ const schema = z.object({
   title: z.string().trim().min(2).max(150),
   description: z.string().trim().max(3000).default(""),
   category: z.string().trim().min(2).max(60),
+  contentType: z.enum(["movie", "series", "video"]).default("movie"),
+  seriesTitle: z.string().trim().max(150).optional(),
+  seasonNumber: z.number().int().min(1).default(1),
+  episodeNumber: z.number().int().min(1).optional(),
+  episodeTitle: z.string().trim().max(150).optional(),
+  commentsOpen: z.boolean().default(true),
   territoryCodes: z
     .array(z.string().regex(/^[A-Z]{2}$/))
     .min(1)
@@ -27,6 +33,39 @@ const schema = z.object({
 export const Route = createFileRoute("/api/public/v1/producer/channels/$channelId/assets")({
   server: {
     handlers: {
+      GET: async ({ request, params }) => {
+        try {
+          const user = await requireUser(request);
+          const channelId = params.channelId;
+          const fs = await Firestore.create();
+          await requireChannelPermission(fs, channelId, user.uid, "video.upload");
+          const assets = await fs.query("contentAssets", {
+            filters: [{ field: "channelId", op: "EQUAL", value: channelId }],
+            limit: 150,
+          });
+          return Response.json({
+            assets: assets.map((a) => ({
+              id: a.__id || a["id"],
+              assetId: a["assetId"] || a.__id || a["id"],
+              title: a["title"] || "Untitled",
+              contentType: a["contentType"] || (a["episodeNumber"] ? "series" : "movie"),
+              seriesTitle: a["seriesTitle"] || a["title"] || "Feature",
+              seasonNumber: Number(a["seasonNumber"] || 1),
+              episodeNumber: a["episodeNumber"] !== undefined ? Number(a["episodeNumber"]) : null,
+              episodeTitle: a["episodeTitle"] || a["title"] || "",
+              description: a["description"] || "",
+              category: a["category"] || "General",
+              status: a["status"] || a["contentStatus"] || "ready",
+              durationSeconds: Number(a["durationSeconds"] || 0),
+              commentsOpen: a["commentsOpen"] !== false,
+              posterUrl: a["posterUrl"] || null,
+              createdAt: a["createdAt"] || null,
+            })),
+          });
+        } catch (error) {
+          return errorBody(error);
+        }
+      },
       POST: async ({ request, params }) => {
         try {
           const user = await requireUser(request);
@@ -83,6 +122,12 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
             title: body.title,
             description: body.description,
             category: body.category,
+            contentType: body.contentType,
+            seriesTitle: body.seriesTitle || body.title,
+            seasonNumber: body.seasonNumber,
+            ...(body.episodeNumber !== undefined ? { episodeNumber: body.episodeNumber } : {}),
+            ...(body.episodeTitle ? { episodeTitle: body.episodeTitle } : {}),
+            commentsOpen: body.commentsOpen,
             contentStatus: "draft",
             license,
             updatedAt: now,

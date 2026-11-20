@@ -122,6 +122,31 @@ describe("Producer Working Tools (V5-04 Batch 4)", () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalled();
   });
 
+  it("groups all episodes in one place under their movie/series title with zero fragmentation and removes channel creation", async () => {
+    const Component = Route.options.component!;
+    render(<Component />);
+
+    // Verify New Channel is NOT present
+    expect(screen.queryByText("New Channel")).toBeNull();
+
+    // Verify Movies & Series Library tab is present
+    const contentTab = await screen.findByText("Movies & Series Library");
+    expect(contentTab).toBeDefined();
+
+    // Switch to Movies & Series Library tab
+    fireEvent.click(contentTab);
+
+    // Verify header and grouped series
+    expect(await screen.findByText("Media Assets & Series Library")).toBeDefined();
+    expect(screen.getByText("Lagos Nights")).toBeDefined();
+    expect(screen.getByText("Series • 2 Episodes")).toBeDefined();
+
+    // Verify all episodes are listed together under the series
+    expect(screen.getByText("The Awakening")).toBeDefined();
+    expect(screen.getByText("Midnight Run")).toBeDefined();
+    expect(screen.getByText("Add Episode 3")).toBeDefined();
+  });
+
   it("handles content upload modal with file-kind validation, progress, and cancel", async () => {
     const Component = Route.options.component!;
     render(<Component />);

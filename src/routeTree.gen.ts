@@ -42,6 +42,7 @@ import { Route as ProviderChannelsRouteImport } from './routes/provider.channels
 import { Route as ProviderContractsRouteImport } from './routes/provider.contracts'
 import { Route as ProviderDisputesRouteImport } from './routes/provider.disputes'
 import { Route as ProviderStatementsRouteImport } from './routes/provider.statements'
+import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as ZillionaireIndexRouteImport } from './routes/zillionaire.index'
 import { Route as ZillionaireAdsRouteImport } from './routes/zillionaire.ads'
 import { Route as ZillionaireAnalyticsRouteImport } from './routes/zillionaire.analytics'
@@ -459,6 +460,11 @@ const ProviderDisputesRoute = ProviderDisputesRouteImport.update({
 const ProviderStatementsRoute = ProviderStatementsRouteImport.update({
   id: '/provider/statements',
   path: '/provider/statements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapXmlRoute = SitemapXmlRouteImport.update({
+  id: '/sitemap/xml',
+  path: '/sitemap/xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ZillionaireIndexRoute = ZillionaireIndexRouteImport.update({
@@ -1963,6 +1969,7 @@ export interface FileRoutesByFullPath {
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
   '/provider/statements': typeof ProviderStatementsRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
   '/zillionaire/approvals': typeof ZillionaireApprovalsRoute
@@ -2251,6 +2258,7 @@ export interface FileRoutesByTo {
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
   '/provider/statements': typeof ProviderStatementsRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
   '/zillionaire/approvals': typeof ZillionaireApprovalsRoute
@@ -2539,6 +2547,7 @@ export interface FileRoutesById {
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
   '/provider/statements': typeof ProviderStatementsRoute
+  '/sitemap/xml': typeof SitemapXmlRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
   '/zillionaire/approvals': typeof ZillionaireApprovalsRoute
@@ -2829,6 +2838,7 @@ export interface FileRouteTypes {
     | '/provider/contracts'
     | '/provider/disputes'
     | '/provider/statements'
+    | '/sitemap/xml'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
     | '/zillionaire/approvals'
@@ -3117,6 +3127,7 @@ export interface FileRouteTypes {
     | '/provider/contracts'
     | '/provider/disputes'
     | '/provider/statements'
+    | '/sitemap/xml'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
     | '/zillionaire/approvals'
@@ -3404,6 +3415,7 @@ export interface FileRouteTypes {
     | '/provider/contracts'
     | '/provider/disputes'
     | '/provider/statements'
+    | '/sitemap/xml'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
     | '/zillionaire/approvals'
@@ -3693,6 +3705,7 @@ export interface RootRouteChildren {
   ProviderContractsRoute: typeof ProviderContractsRoute
   ProviderDisputesRoute: typeof ProviderDisputesRoute
   ProviderStatementsRoute: typeof ProviderStatementsRoute
+  SitemapXmlRoute: typeof SitemapXmlRoute
   ZillionaireAdsRoute: typeof ZillionaireAdsRoute
   ZillionaireAnalyticsRoute: typeof ZillionaireAnalyticsRoute
   ZillionaireApprovalsRoute: typeof ZillionaireApprovalsRoute
@@ -4149,6 +4162,13 @@ declare module '@tanstack/react-router' {
       path: '/provider/statements'
       fullPath: '/provider/statements'
       preLoaderRoute: typeof ProviderStatementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap/xml': {
+      id: '/sitemap/xml'
+      path: '/sitemap/xml'
+      fullPath: '/sitemap/xml'
+      preLoaderRoute: typeof SitemapXmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/': {
@@ -6218,6 +6238,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProviderContractsRoute: ProviderContractsRoute,
   ProviderDisputesRoute: ProviderDisputesRoute,
   ProviderStatementsRoute: ProviderStatementsRoute,
+  SitemapXmlRoute: SitemapXmlRoute,
   ZillionaireAdsRoute: ZillionaireAdsRoute,
   ZillionaireAnalyticsRoute: ZillionaireAnalyticsRoute,
   ZillionaireApprovalsRoute: ZillionaireApprovalsRoute,

@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Sliders,
   Tv,
+  Plus,
   Wifi,
   X,
 } from "lucide-react";
@@ -56,7 +57,6 @@ type ContractInfo = {
   id: string;
   agreementReference: string;
   signedDate: string;
-  revenueSharePercent: number;
   status: string;
   territories: string[];
 };
@@ -207,8 +207,7 @@ function ProviderChannelsInner({
           id: firstContract?.id || "agr_master_2026",
           agreementReference: firstContract?.agreementReference || "AGR-BQ-AKAMAI-2026-V1",
           signedDate: "January 15, 2026",
-          revenueSharePercent: 25.0,
-          status: "Fully Executed",
+                    status: "Fully Executed",
           territories: firstContract?.territories || ["Global", "Sub-Saharan Africa"],
         });
       } else {
@@ -216,8 +215,7 @@ function ProviderChannelsInner({
           id: "agr_master_2026",
           agreementReference: "AGR-BQ-PARTNER-2026-V1",
           signedDate: "January 15, 2026",
-          revenueSharePercent: 25.0,
-          status: "Fully Executed",
+                    status: "Fully Executed",
           territories: ["Global", "Sub-Saharan Africa"],
         });
       }
@@ -269,6 +267,49 @@ function ProviderChannelsInner({
       ]);
       setIsRefreshingLatency(false);
     }, 800);
+  }
+
+  // Create Channel state
+  const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
+  const [newChannelName, setNewChannelName] = useState("");
+  const [newChannelCategory, setNewChannelCategory] = useState("Entertainment");
+  const [newChannelLanguage, setNewChannelLanguage] = useState("en");
+  const [newChannelBandwidthCap, setNewChannelBandwidthCap] = useState(8.0);
+  const [newChannelStreamUrl, setNewChannelStreamUrl] = useState("");
+  const [newChannelDescription, setNewChannelDescription] = useState("");
+  const [creatingChannel, setCreatingChannel] = useState(false);
+
+  async function handleCreateChannel(e: FormEvent) {
+    e.preventDefault();
+    if (!newChannelName.trim()) return;
+    setCreatingChannel(true);
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const res = await fetch("/api/public/v1/provider/channels", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({
+          name: newChannelName.trim(),
+          categories: [newChannelCategory],
+          language: newChannelLanguage,
+          bandwidthCapGbps: newChannelBandwidthCap,
+          streamUrl: newChannelStreamUrl.trim() || undefined,
+          description: newChannelDescription.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create channel");
+      setMessage(`Channel "${newChannelName}" created successfully.`);
+      setIsCreateChannelOpen(false);
+      setNewChannelName("");
+      setNewChannelStreamUrl("");
+      setNewChannelDescription("");
+      await loadData(token);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create channel");
+    } finally {
+      setCreatingChannel(false);
+    }
   }
 
   async function saveBandwidthCap(channelId: string) {
@@ -323,7 +364,7 @@ function ProviderChannelsInner({
     const content = `BQ SQWAD TV — PARTNER MASTER DISTRIBUTION AGREEMENT
 Reference: ${contract?.agreementReference || "AGR-2026"}
 Signed Date: ${contract?.signedDate || "January 15, 2026"}
-Revenue Share: ${contract?.revenueSharePercent || 25.0}% Net Settlement
+Settlement Terms: Direct Verified Settlement (Standard Execution)
 Status: ${contract?.status || "Fully Executed"}
 Territories: ${(contract?.territories || ["Global"]).join(", ")}
 
@@ -390,9 +431,9 @@ Authorized Signatory: Ok's Lovable / BQ SQWAD TV Global Operations`;
                 <p className="mt-1 text-sm font-bold text-white">{contract?.signedDate || "January 15, 2026"}</p>
               </div>
               <div className="rounded-2xl border border-white/5 bg-[#030b2a] p-3.5">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Revenue Share %</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Settlement Terms</p>
                 <p className="mt-1 text-sm font-bold text-emerald-400 font-mono">
-                  {contract?.revenueSharePercent || 25.0}% Net Share
+                  Standard Partner Settlement
                 </p>
               </div>
               <div className="rounded-2xl border border-white/5 bg-[#030b2a] p-3.5">
@@ -495,14 +536,23 @@ Authorized Signatory: Ok's Lovable / BQ SQWAD TV Global Operations`;
 
         {/* Connected Channels List with Per-Channel Bandwidth Cap & Error Logs */}
         <div className="rounded-3xl border border-white/10 bg-[#07143d] p-6 shadow-xl space-y-6">
-          <div className="border-b border-white/10 pb-4">
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <Tv className="h-5 w-5 text-cyan-400" />
-              Connected Broadcast Channels
-            </h2>
-            <p className="text-xs text-slate-400">
-              Per-channel ingest controls, bandwidth cap allocations, and telemetry error logs
-            </p>
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div>
+              <h2 className="text-base font-bold text-white flex items-center gap-2">
+                <Tv className="h-5 w-5 text-cyan-400" />
+                Connected Broadcast Channels
+              </h2>
+              <p className="text-xs text-slate-400">
+                Per-channel ingest controls, bandwidth cap allocations, and telemetry error logs
+              </p>
+            </div>
+            <button
+              onClick={() => setIsCreateChannelOpen(true)}
+              className="flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 shadow-md shadow-cyan-400/20"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Create New Channel</span>
+            </button>
           </div>
 
           <div className="space-y-4">
@@ -660,6 +710,136 @@ Authorized Signatory: Ok's Lovable / BQ SQWAD TV Global Operations`;
             ))}
           </div>
         </div>
+
+        {/* Create Channel Modal */}
+        {isCreateChannelOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="w-full max-w-lg rounded-3xl border border-white/15 bg-[#07143d] p-6 shadow-2xl space-y-5">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-2">
+                  <Tv className="h-5 w-5 text-cyan-400" />
+                  <h3 className="text-base font-bold text-white">Create New Broadcast Channel</h3>
+                </div>
+                <button
+                  onClick={() => setIsCreateChannelOpen(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateChannel} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Channel Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newChannelName}
+                    onChange={(e) => setNewChannelName(e.target.value)}
+                    placeholder="e.g. Apex Cinema Global"
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={newChannelCategory}
+                      onChange={(e) => setNewChannelCategory(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
+                    >
+                      <option value="Entertainment">Entertainment</option>
+                      <option value="News">News</option>
+                      <option value="Sports">Sports</option>
+                      <option value="Music">Music</option>
+                      <option value="Documentary">Documentary</option>
+                      <option value="Movies">Movies</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                      Language
+                    </label>
+                    <select
+                      value={newChannelLanguage}
+                      onChange={(e) => setNewChannelLanguage(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
+                    >
+                      <option value="en">English (en)</option>
+                      <option value="fr">French (fr)</option>
+                      <option value="yo">Yoruba (yo)</option>
+                      <option value="ig">Igbo (ig)</option>
+                      <option value="ha">Hausa (ha)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Bandwidth Cap (Gbps)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="1"
+                    max="100"
+                    value={newChannelBandwidthCap}
+                    onChange={(e) => setNewChannelBandwidthCap(Number(e.target.value))}
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Stream / Ingest Endpoint (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={newChannelStreamUrl}
+                    onChange={(e) => setNewChannelStreamUrl(e.target.value)}
+                    placeholder="rtmp://ingest.provider.com/live/ch_key"
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={newChannelDescription}
+                    onChange={(e) => setNewChannelDescription(e.target.value)}
+                    placeholder="Channel overview and broadcast format"
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateChannelOpen(false)}
+                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creatingChannel || !newChannelName.trim()}
+                    className="rounded-xl bg-cyan-400 px-5 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 disabled:opacity-50"
+                  >
+                    {creatingChannel ? "Provisioning..." : "Create Channel"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* MODAL: DISPUTE FILING MODAL */}
         {isDisputeModalOpen && (

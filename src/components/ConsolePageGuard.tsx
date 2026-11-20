@@ -302,17 +302,20 @@ function OwnerMfaSetupView({ token }: { token: string }) {
 
 function AccessPasswordUnlockView({
   token,
+  mfaEnabled,
   onUnlocked,
   initialLockedOut,
   initialRemainingSeconds,
 }: {
   token: string;
+  mfaEnabled?: boolean;
   onUnlocked: () => void;
   initialLockedOut?: boolean | undefined;
   initialRemainingSeconds?: number | undefined;
 }) {
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
+  const [recoveryCode, setRecoveryCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [lockedOut, setLockedOut] = useState(Boolean(initialLockedOut));
@@ -345,7 +348,8 @@ function AccessPasswordUnlockView({
         headers: { ...headers, "content-type": "application/json" },
         body: JSON.stringify({
           password: password.trim(),
-          ...(recoveryCode.trim() ? { recoveryCode: recoveryCode.trim() } : { code }),
+          ...(mfaEnabled && recoveryCode.trim() ? { recoveryCode: recoveryCode.trim() } : {}),
+          ...(mfaEnabled && !recoveryCode.trim() && code.trim() ? { code: code.trim() } : {}),
         }),
       });
       const data = (await res.json()) as {
@@ -407,35 +411,39 @@ function AccessPasswordUnlockView({
                 required
               />
             </label>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
-              Authenticator Code
-              <input
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                className="mt-2 w-full rounded-xl border border-white/15 bg-[#030718] px-4 py-3 text-center font-mono text-white outline-none focus:border-cyan-400"
-                required
-              />
-            </label>
-            <details className="rounded-xl border border-white/10 p-3 text-sm text-slate-300">
-              <summary className="cursor-pointer">Use a recovery code instead</summary>
-              <input
-                aria-label="One-time recovery code"
-                autoComplete="off"
-                className="mt-3 w-full rounded-lg bg-[#030718] p-3 font-mono text-white"
-                value={recoveryCode}
-                onChange={(e) => {
-                  setRecoveryCode(e.target.value);
-                  if (e.target.value) setCode("");
-                }}
-                placeholder="Enter an unused recovery code"
-              />
-            </details>
+            {mfaEnabled && (
+              <>
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Authenticator Code
+                  <input
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="mt-2 w-full rounded-xl border border-white/15 bg-[#030718] px-4 py-3 text-center font-mono text-white outline-none focus:border-cyan-400"
+                    required
+                  />
+                </label>
+                <details className="rounded-xl border border-white/10 p-3 text-sm text-slate-300">
+                  <summary className="cursor-pointer">Use a recovery code instead</summary>
+                  <input
+                    aria-label="One-time recovery code"
+                    autoComplete="off"
+                    className="mt-3 w-full rounded-lg bg-[#030718] p-3 font-mono text-white"
+                    value={recoveryCode}
+                    onChange={(e) => {
+                      setRecoveryCode(e.target.value);
+                      if (e.target.value) setCode("");
+                    }}
+                    placeholder="Enter an unused recovery code"
+                  />
+                </details>
+              </>
+            )}
             <button
               type="submit"
-              disabled={busy || !password.trim() || (!recoveryCode.trim() && code.length !== 6)}
+              disabled={busy || !password.trim() || (Boolean(mfaEnabled) && !recoveryCode.trim() && code.length !== 6)}
               className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 font-extrabold text-[#030718] transition hover:brightness-110 disabled:opacity-50"
             >
               {busy ? "Verifying…" : "Unlock Dashboard"}
@@ -762,6 +770,7 @@ export function ConsolePageGuard({
     | {
         status: "locked";
         token: string;
+        mfaEnabled?: boolean;
         lockedOut: boolean;
         remainingLockSeconds?: number | undefined;
       }
@@ -814,15 +823,12 @@ export function ConsolePageGuard({
                 if (active) setState({ status: "setup_required" });
                 return;
               }
-              if (!statusData.mfaEnabled) {
-                if (active) setState({ status: "mfa_setup", token });
-                return;
-              }
               if (!statusData.unlocked) {
                 if (active)
                   setState({
                     status: "locked",
                     token,
+                    mfaEnabled: Boolean(statusData.mfaEnabled),
                     lockedOut: statusData.lockedOut,
                     remainingLockSeconds: statusData.remainingLockSeconds,
                   });
@@ -938,6 +944,7 @@ export function ConsolePageGuard({
     return (
       <AccessPasswordUnlockView
         token={state.token}
+        mfaEnabled={state.mfaEnabled}
         onUnlocked={() => window.location.reload()}
         initialLockedOut={state.lockedOut}
         initialRemainingSeconds={state.remainingLockSeconds}

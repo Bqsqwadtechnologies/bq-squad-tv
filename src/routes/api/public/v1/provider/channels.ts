@@ -5,6 +5,74 @@ import { requireProvider } from "@/lib/server/access";
 export const Route = createFileRoute("/api/public/v1/provider/channels")({
   server: {
     handlers: {
+            POST: async ({ request }) => {
+        try {
+          const { fs, providerId, user } = await requireProvider(request);
+          const body = (await request.json().catch(() => ({}))) as {
+            name?: string;
+            categories?: string[];
+            language?: string;
+            bandwidthCapGbps?: number;
+            logoUrl?: string;
+            description?: string;
+            streamUrl?: string;
+          };
+
+          const name = (body.name || "").trim();
+          if (!name || name.length < 2) {
+            return Response.json({ error: "Channel name is required (min 2 characters)" }, { status: 400 });
+          }
+
+          const channelId = "chan_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+          const now = new Date().toISOString();
+          const categories = Array.isArray(body.categories) && body.categories.length > 0 
+            ? body.categories 
+            : ["General"];
+          const language = (body.language || "en").trim();
+          const bandwidthCapGbps = Number(body.bandwidthCapGbps) > 0 ? Number(body.bandwidthCapGbps) : 8.0;
+
+          await fs.setDoc(`liveChannels/${channelId}`, {
+            id: channelId,
+            channelId,
+            providerId,
+            createdByUid: user.uid,
+            name,
+            categories,
+            language,
+            status: "active",
+            health: "healthy",
+            bandwidthCapGbps,
+            logoUrl: body.logoUrl || null,
+            description: body.description || "",
+            streamUrl: body.streamUrl || "",
+            currentProgramme: "Broadcast Channel Online",
+            currentViewers: 0,
+            totalWatchMinutes: 0,
+            createdAt: now,
+            updatedAt: now,
+          });
+
+          return Response.json({
+            success: true,
+            channelId,
+            channel: {
+              id: channelId,
+              name,
+              categories,
+              language,
+              status: "active",
+              health: "healthy",
+              bandwidthCapGbps,
+              currentProgramme: "Broadcast Channel Online",
+              currentViewers: 0,
+              totalWatchMinutes: 0,
+              createdAt: now,
+            }
+          }, { status: 201 });
+        } catch (err: unknown) {
+          return errorBody(err);
+        }
+      },
       PATCH: async ({ request }) => {
         try {
           const { fs, providerId } = await requireProvider(request);

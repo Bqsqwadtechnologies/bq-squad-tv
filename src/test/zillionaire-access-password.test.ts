@@ -314,6 +314,50 @@ describe("V4-01 Batch 02: Zillionaire Owner Access Password & Unlock Gate", () =
     expect(tamperedCheck.reason).toBe("INVALID_SIGNATURE");
   });
 
+  it("8. Direct unlock when MFA is not enrolled: unlocks with password alone without requiring TOTP", async () => {
+    const mockFs = createMockFs();
+    // No MFA document exists for owner
+    vi.mocked(mockFs.getDoc).mockResolvedValue(null);
+
+    vi.spyOn(accessModule, "requireViewer").mockResolvedValue({
+      user: {
+        uid: ownerUid,
+        email: ownerEmail,
+        emailVerified: true,
+        authTime: 0,
+        issuedAt: 0,
+        customClaims: {},
+      },
+      fs: mockFs,
+      access: {
+        roles: ["viewer"],
+        isZillionaireOwner: true,
+        needsOwnerVerification: false,
+        zillionaireModules: ["overview"],
+        adminModules: ["overview"],
+        producerPlanActive: false,
+        emailVerified: true,
+      },
+    });
+
+    const unlockReq = new Request("http://localhost/api/public/v1/zillionaire/access/unlock", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ password: "UltraSecretZillionairePass2026!" }),
+    });
+    const unlockHandler = (
+      UnlockRoute.options.server as unknown as {
+        handlers: { POST: (ctx: { request: Request }) => Promise<Response> };
+      }
+    ).handlers.POST;
+    const unlockRes = await unlockHandler({ request: unlockReq });
+
+    expect(unlockRes.status).toBe(200);
+    const json = await unlockRes.json();
+    expect(json.ok).toBe(true);
+    expect(typeof json.token).toBe("string");
+  });
+
   it("7. Lock endpoint: clears unlock cookie", async () => {
     vi.spyOn(accessModule, "requireViewer").mockResolvedValue({
       user: {
