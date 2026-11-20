@@ -129,11 +129,13 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
               averageStars: typeof asset["averageStars"] === "number" ? asset["averageStars"] : 0,
               ratingCount: typeof asset["ratingCount"] === "number" ? asset["ratingCount"] : 0,
               contentRating:
-                typeof asset["contentRating"] === "string"
-                  ? asset["contentRating"]
-                  : typeof channel["contentRating"] === "string"
-                    ? channel["contentRating"]
-                    : "NR",
+                typeof asset["ageRating"] === "string"
+                  ? asset["ageRating"]
+                  : typeof asset["contentRating"] === "string"
+                    ? asset["contentRating"]
+                    : typeof channel["contentRating"] === "string"
+                      ? channel["contentRating"]
+                      : "NR",
               deliveryMode:
                 typeof asset["deliveryMode"] === "string"
                   ? asset["deliveryMode"]
