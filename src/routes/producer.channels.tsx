@@ -113,38 +113,7 @@ function ProducerChannelsInner({
   const [message, setMessage] = useState("");
 
   // Content Library & Episode Grouping state
-  const [channelAssets, setChannelAssets] = useState<ContentAsset[]>([
-    {
-      id: "asset_sample_1",
-      assetId: "asset_sample_1",
-      title: "Lagos Nights - Episode 1",
-      contentType: "series",
-      seriesTitle: "Lagos Nights",
-      seasonNumber: 1,
-      episodeNumber: 1,
-      episodeTitle: "The Awakening",
-      category: "Drama",
-      status: "ready",
-      durationSeconds: 2820,
-      commentsOpen: true,
-      createdAt: "2026-03-15T10:00:00Z"
-    },
-    {
-      id: "asset_sample_2",
-      assetId: "asset_sample_2",
-      title: "Lagos Nights - Episode 2",
-      contentType: "series",
-      seriesTitle: "Lagos Nights",
-      seasonNumber: 1,
-      episodeNumber: 2,
-      episodeTitle: "Midnight Run",
-      category: "Drama",
-      status: "ready",
-      durationSeconds: 3100,
-      commentsOpen: true,
-      createdAt: "2026-03-20T10:00:00Z"
-    }
-  ]);
+  const [channelAssets, setChannelAssets] = useState<ContentAsset[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [uploadContentType, setUploadContentType] = useState<"movie" | "series">("movie");
   const [uploadSeriesTitle, setUploadSeriesTitle] = useState("");
@@ -201,9 +170,7 @@ function ProducerChannelsInner({
       });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data.assets) && data.assets.length > 0) {
-          setChannelAssets(data.assets);
-        }
+        setChannelAssets(Array.isArray(data.assets) ? data.assets : []);
       }
     } catch {
       // quiet fallback
