@@ -10,6 +10,7 @@ import {
   LogOut,
   Moon,
   Shield,
+  Sparkles,
   Sliders,
   Smartphone,
   Volume2,
@@ -37,6 +38,7 @@ function SettingsPage() {
   const [playbackQuality, setPlaybackQuality] = useState("Auto");
   const [wifiOnly, setWifiOnly] = useState(false);
   const [parentalControlsActive, setParentalControlsActive] = useState(false);
+  const [kidsModeActive, setKidsModeActive] = useState(false);
   const [parentalPin, setParentalPin] = useState("");
   const [pinPromptOpen, setPinPromptOpen] = useState(false);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
@@ -55,6 +57,9 @@ function SettingsPage() {
 
       const savedParental = localStorage.getItem("bq-sqwad-parental");
       if (savedParental !== null) setParentalControlsActive(savedParental === "true");
+
+      const savedKids = localStorage.getItem("bq-sqwad-kids-mode");
+      if (savedKids !== null) setKidsModeActive(savedKids === "true");
     } catch (_err) {
       void _err;
     }
@@ -85,12 +90,23 @@ function SettingsPage() {
     triggerSaveToast();
   }
 
+  function toggleKidsMode() {
+    const next = !kidsModeActive;
+    setKidsModeActive(next);
+    localStorage.setItem("bq-sqwad-kids-mode", String(next));
+    triggerSaveToast();
+  }
+
   function handleParentalPinSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (parentalPin.length === 4) {
       const next = !parentalControlsActive;
       setParentalControlsActive(next);
       localStorage.setItem("bq-sqwad-parental", String(next));
+      if (!next) {
+        setKidsModeActive(false);
+        localStorage.setItem("bq-sqwad-kids-mode", "false");
+      }
       setPinPromptOpen(false);
       setParentalPin("");
       triggerSaveToast();
@@ -206,6 +222,38 @@ function SettingsPage() {
             Security & Access
           </h2>
           <div className="mt-4 divide-y divide-white/10">
+            <div className="flex items-center justify-between py-3.5">
+              <div className="flex items-center gap-3">
+                <Sparkles size={20} className="text-[#00D8F5]" />
+                <div>
+                  <p className="text-sm font-semibold">Kids Safe Mode</p>
+                  <p className="text-xs text-slate-400">
+                    Lock interface to family-friendly rated content only
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                aria-label="Toggle Kids Safe Mode"
+                onClick={() => {
+                  if (!parentalControlsActive) {
+                    setPinPromptOpen(true);
+                  } else {
+                    toggleKidsMode();
+                  }
+                }}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  kidsModeActive ? "bg-[#00D8F5]" : "bg-white/20"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    kidsModeActive ? "translate-x-6" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
             <div className="flex items-center justify-between py-3.5">
               <div className="flex items-center gap-3">
                 <Shield size={20} className="text-[#00D8F5]" />

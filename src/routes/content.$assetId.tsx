@@ -3,6 +3,7 @@ import { formatMinorCurrency as money } from "@/lib/format-money";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowLeft,
+  Bookmark,
   Check,
   FastForward,
   Film,
@@ -70,6 +71,7 @@ export function ContentDetailsPage() {
   const [savedResumeTime, setSavedResumeTime] = useState<number>(0);
   const [hasPromptedResume, setHasPromptedResume] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [inWatchlist, setInWatchlist] = useState(false);
   const [showSkipIntro, setShowSkipIntro] = useState(false);
   const [nextEpisodeAvailable, setNextEpisodeAvailable] = useState(true);
 
@@ -119,6 +121,20 @@ export function ContentDetailsPage() {
     setContent(contentResult.content);
     setComments(commentsResult);
   }
+
+  useEffect(() => {
+    try {
+      const savedWatchlist = localStorage.getItem("bq_viewer_library");
+      if (savedWatchlist) {
+        const list = JSON.parse(savedWatchlist);
+        if (Array.isArray(list)) {
+          setInWatchlist(list.some((item: { id: string }) => item.id === assetId));
+        }
+      }
+    } catch {
+      // Ignore storage error
+    }
+  }, [assetId]);
 
   useEffect(() => {
     try {
@@ -310,6 +326,42 @@ export function ContentDetailsPage() {
     }
   }
 
+  function toggleWatchlist() {
+    setInWatchlist((prev) => {
+      const next = !prev;
+      try {
+        const raw = localStorage.getItem("bq_viewer_library");
+        let list: Array<{
+          id: string;
+          title: string;
+          type: string;
+          genre: string;
+          posterUrl: string;
+          addedAt: string;
+        }> = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(list)) list = [];
+        if (next && content) {
+          if (!list.some((i) => i.id === assetId)) {
+            list.unshift({
+              id: assetId,
+              title: content.title,
+              type: content.category.toLowerCase().includes("series") ? "series" : "movie",
+              genre: content.category,
+              posterUrl: content.posterUrl || "/brand/og-image.png",
+              addedAt: new Date().toISOString().split("T")[0],
+            });
+          }
+        } else {
+          list = list.filter((i) => i.id !== assetId);
+        }
+        localStorage.setItem("bq_viewer_library", JSON.stringify(list));
+      } catch {
+        // Ignore storage error
+      }
+      return next;
+    });
+  }
+
   async function handleShare() {
     const shareData = {
       title: content?.title ?? "BQ SQWAD TV",
@@ -385,14 +437,25 @@ export function ContentDetailsPage() {
           <a href="/" className="inline-flex items-center gap-2 text-sm font-bold text-cyan-200">
             <ArrowLeft size={16} /> Back to BQ SQWAD TV
           </a>
-          <button
-            type="button"
-            onClick={handleShare}
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white transition"
-          >
-            {copiedLink ? <Check size={14} className="text-emerald-400" /> : <Share2 size={14} />}
-            <span>{copiedLink ? "Link Copied" : "Share"}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleWatchlist}
+              aria-label={inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
+              className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white transition"
+            >
+              <Bookmark size={14} className={inWatchlist ? "fill-cyan-400 text-cyan-400" : ""} />
+              <span>{inWatchlist ? "In Watchlist" : "Add to Watchlist"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white transition"
+            >
+              {copiedLink ? <Check size={14} className="text-emerald-400" /> : <Share2 size={14} />}
+              <span>{copiedLink ? "Link Copied" : "Share"}</span>
+            </button>
+          </div>
         </div>
 
         {error && (
