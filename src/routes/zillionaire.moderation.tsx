@@ -56,6 +56,11 @@ interface CommentItem {
 interface UserReportItem {
   id: string;
   reporterUid: string;
+  reporterName?: string;
+  reporterEmail?: string;
+  rightsHolderName?: string;
+  rightsHolderEmail?: string;
+  rightsBasis?: string;
   targetType: string;
   targetId: string;
   reason: string;
@@ -646,6 +651,9 @@ function ZillionaireModerationContent({
                       <td className="py-2.5 px-3 max-w-xs">
                         <p className="font-semibold text-white">{r.reason}</p>
                         {r.details && <p className="text-slate-400 text-[11px] truncate">{r.details}</p>}
+                        {r.rightsBasis && <p className="text-amber-200 text-[11px]">Rights claim: {r.rightsBasis}</p>}
+                        {r.rightsHolderName && <p className="text-slate-400 text-[11px]">Rights holder: {r.rightsHolderName} · {r.rightsHolderEmail}</p>}
+                        {r.reporterName && <p className="text-slate-400 text-[11px]">Reporter: {r.reporterName} · {r.reporterEmail}</p>}
                       </td>
                       <td className="py-2.5 px-3 font-mono text-[11px] text-slate-400">{r.reporterUid}</td>
                       <td className="py-2.5 px-3">
