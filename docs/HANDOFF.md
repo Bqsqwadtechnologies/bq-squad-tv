@@ -1,3 +1,3 @@
-Last completed batch: V5-04 Batch 8 — dispute management & resolution.
-Dispute management completed: shared SharedDisputeSystem component, dispute filing form (category, statement ID, claimed amount, description, evidence file attachment), dispute list with filter (All / Open / Under Review / Resolved / Rejected), dispute thread view (chronological message history between producer/provider and platform team), resolution card (accepted amount, adjustment line on next statement, resolution notes), and decision controls (accept / reject / counter-offer).
-Next: V5-04 Batch 9 — provider registration & onboarding.
+Last completed batch: V5-04 Batch 9 — provider registration & onboarding.
+Provider registration completed: 5-step stepper (Company info, Legal & tax, Ingest technical profile, Settlement bank account, Master agreement e-signature), automatic approval ticket generation, onboarding checklist in provider portal with pending review status and estimated review time (24-48 hours), and sandbox ingest testing credentials (RTMP and SRT) issued immediately on submission.
+Next: V5-04 Batch 10 — operations integration & provider audit log.

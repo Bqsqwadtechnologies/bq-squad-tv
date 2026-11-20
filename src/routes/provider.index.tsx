@@ -27,6 +27,7 @@ import {
   Zap,
 } from "lucide-react";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
+import { ProviderRegistrationFlow, type SandboxCredentials } from "@/components/ProviderRegistrationFlow";
 
 type StreamMonitor = {
   id: string;
@@ -120,6 +121,9 @@ function ProviderDashboardInner({
   // New stream form state
   const [streamName, setStreamName] = useState("");
   const [streamResolution, setStreamResolution] = useState("1080p60");
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [sandboxCreds, setSandboxCreds] = useState<SandboxCredentials | null>(null);
+  const [partnerStatus, setPartnerStatus] = useState<string>("active");
 
   async function loadDashboard(authToken: string) {
     setLoading(true);
@@ -137,6 +141,21 @@ function ProviderDashboardInner({
       const data = (await res.json()) as { provider: ProviderInfo; metrics: ProviderMetrics };
       setProvider(data.provider);
       setMetrics(data.metrics);
+
+      // Load partner registration status and sandbox credentials
+      try {
+        const regRes = await fetch("/api/public/v1/provider/register", { headers, cache: "no-store" });
+        if (regRes.ok) {
+          const regData = (await regRes.json()) as {
+            status?: string;
+            sandboxCredentials?: SandboxCredentials | null;
+          };
+          if (regData.status) setPartnerStatus(regData.status);
+          if (regData.sandboxCredentials) setSandboxCreds(regData.sandboxCredentials);
+        }
+      } catch {
+        // Ignore registration check errors
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Network error");
     } finally {
@@ -223,6 +242,13 @@ function ProviderDashboardInner({
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
             <button
+              onClick={() => setIsOnboardingOpen(!isOnboardingOpen)}
+              className="flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-xs font-bold text-cyan-300 transition hover:bg-cyan-500/20"
+            >
+              <CheckCircle2 className="h-4 w-4 text-cyan-400" />
+              <span>{isOnboardingOpen ? "Hide Onboarding" : "Onboarding & Sandbox"}</span>
+            </button>
+            <button
               onClick={() => setIsAddStreamOpen(true)}
               className="flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] transition hover:brightness-110 shadow-lg shadow-cyan-400/20"
             >
@@ -255,6 +281,57 @@ function ProviderDashboardInner({
             </button>
           </div>
         </div>
+
+        {/* Partner Onboarding Checklist & Sandbox Flow */}
+        {(isOnboardingOpen || partnerStatus === "pending_approval") && (
+          <div className="rounded-3xl border border-cyan-500/30 bg-[#061138]/90 p-6 backdrop-blur-xl shadow-2xl space-y-6">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-cyan-400" />
+                  Provider Onboarding & Sandbox Portal
+                </h3>
+                <p className="text-xs text-slate-400">
+                  5-step registration, automated ticket routing, and sandbox credentials
+                </p>
+              </div>
+              {partnerStatus !== "pending_approval" && (
+                <button
+                  onClick={() => setIsOnboardingOpen(false)}
+                  className="rounded-xl border border-white/10 px-3 py-1.5 text-xs text-slate-400 hover:text-white"
+                >
+                  Close
+                </button>
+              )}
+            </div>
+
+            <ProviderRegistrationFlow
+              initialStatus={partnerStatus === "pending_approval" ? "pending_approval" : "unregistered"}
+              initialSandboxCredentials={sandboxCreds}
+              submitRegistration={async (formData) => {
+                const headers = await getWebAuthHeaders(token);
+                const res = await fetch("/api/public/v1/provider/register", {
+                  method: "POST",
+                  headers: { ...headers, "Content-Type": "application/json" },
+                  body: JSON.stringify(formData),
+                });
+                if (!res.ok) {
+                  const errBody = (await res.json().catch(() => ({}))) as { message?: string };
+                  throw new Error(errBody.message || "Failed to submit partner application.");
+                }
+                const result = (await res.json()) as {
+                  providerId: string;
+                  sandboxCredentials: SandboxCredentials;
+                  estimatedReviewTime: string;
+                };
+                setPartnerStatus("pending_approval");
+                setSandboxCreds(result.sandboxCredentials);
+                setMessage("Partner application submitted successfully. Operations ticket created.");
+                return result;
+              }}
+            />
+          </div>
+        )}
 
         {/* Provider KPI Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
