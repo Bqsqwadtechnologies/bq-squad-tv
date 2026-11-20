@@ -129,7 +129,7 @@ describe("Zillionaire Upload Studio API", () => {
     const body = (await goodRes.json()) as { assetId: string; totalChunks: number; directPublish: boolean };
     expect(body.assetId).toMatch(/^ast_/);
     expect(body.totalChunks).toBe(3); // 15MB / 5MB chunks = 3
-    expect(body.directPublish).toBe(true);
+    expect(body.directPublish).toBe(false);
   });
 
   it("POST UPLOAD_CHUNK tracks chunk progression and verifies last chunk", async () => {
@@ -180,7 +180,7 @@ describe("Zillionaire Upload Studio API", () => {
     expect(body2.status).toBe("verifying");
   });
 
-  it("POST COMPLETE_UPLOAD with directPublish puts asset into ready and published state", async () => {
+  it("POST COMPLETE_UPLOAD never publishes directly when processing is not configured", async () => {
     const handler = (UploadRoute.options.server as unknown as { handlers: { POST: (ctx: unknown) => Promise<Response> } }).handlers.POST;
 
     memFs.storedDocs["contentAssets/ast_direct_test"] = {
@@ -203,17 +203,19 @@ describe("Zillionaire Upload Studio API", () => {
     });
     const res = await handler({ request: compReq });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { status: string; contentStatus: string; directPublished: boolean };
-    expect(body.status).toBe("ready");
-    expect(body.contentStatus).toBe("published");
-    expect(body.directPublished).toBe(true);
+    const body = (await res.json()) as { status: string; contentStatus: string; approvalRequired: boolean; processingAvailable: boolean };
+    expect(body.status).toBe("needs_review");
+    expect(body.contentStatus).toBe("draft");
+    expect(body.approvalRequired).toBe(true);
+    expect(body.processingAvailable).toBe(false);
 
     const doc = memFs.storedDocs["contentAssets/ast_direct_test"];
-    expect(doc["status"]).toBe("ready");
-    expect(doc["contentStatus"]).toBe("published");
+    expect(doc["status"]).toBe("needs_review");
+    expect(doc["contentStatus"]).toBe("draft");
+    expect(doc["directPublish"]).toBe(false);
   });
 
-  it("POST ACTION_UPLOAD direct_publish publishes and writes audit log", async () => {
+  it("POST ACTION_UPLOAD direct_publish is rejected and cannot publish", async () => {
     const handler = (UploadRoute.options.server as unknown as { handlers: { POST: (ctx: unknown) => Promise<Response> } }).handlers.POST;
 
     memFs.storedDocs["contentAssets/ast_action_test"] = {
@@ -233,19 +235,12 @@ describe("Zillionaire Upload Studio API", () => {
       }),
     });
     const res = await handler({ request: actionReq });
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(403);
 
     const doc = memFs.storedDocs["contentAssets/ast_action_test"];
-    expect(doc["status"]).toBe("ready");
-    expect(doc["contentStatus"]).toBe("published");
-    expect(auditModule.writeAuditLog).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        action: "content.upload_direct_publish",
-        targetId: "ast_action_test",
-        reason: "Owner manual direct publish sign-off",
-      }),
-    );
+    expect(doc["status"]).toBe("needs_review");
+    expect(doc["contentStatus"]).not.toBe("published");
+    expect(auditModule.writeAuditLog).not.toHaveBeenCalled();
   });
 it("deletes only the requested asset and audits the destructive upload action", async () => {
     memFs.storedDocs["contentAssets/ast_delete_test"] = { channelId: "ch_main", status: "needs_review" };
