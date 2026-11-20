@@ -59,11 +59,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish")
             contact_email: "tv@bqsqwad.com",
             support_email: "tv@bqsqwad.com",
             legal_email: "tv@bqsqwad.com",
-            governing_country: "Nigeria",
-            minimum_age: "13",
-            governing_law: "the laws of the Federal Republic of Nigeria",
-            dispute_resolution_forum: "Lagos, Nigeria",
-            data_retention_period: "7 years for billing logs and 90 days for diagnostic data",
           };
 
           let defaultedCount = 0;
