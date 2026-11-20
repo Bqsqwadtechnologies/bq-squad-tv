@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **243**
+Total scanned routes: **245**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **243**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 121 |
+| `zillionaire module` | 123 |
 | `producer` | 4 |
 
 ### Inventory
@@ -214,6 +214,7 @@ Total scanned routes: **243**
 | `/api/public/v1/zillionaire/support/messages` | `zillionaire module` | requireZillionaire (Module: support) | `src/routes/api/public/v1/zillionaire/support/messages.ts` |
 | `/api/public/v1/zillionaire/team` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/team.ts` |
 | `/api/public/v1/zillionaire/team/$uid` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/team/$uid.ts` |
+| `/api/public/v1/zillionaire/test-lab` | `zillionaire module` | requireZillionaire (Module: video) | `src/routes/api/public/v1/zillionaire/test-lab.ts` |
 | `/api/public/v1/zillionaire/upload/` | `zillionaire module` | requireZillionaire (Module: video) | `src/routes/api/public/v1/zillionaire/upload/index.ts` |
 | `/api/public/v1/zillionaire/users/` | `zillionaire module` | requireZillionaire (Module: users) | `src/routes/api/public/v1/zillionaire/users/index.ts` |
 | `/api/public/v1/zillionaire/users/$uid/` | `zillionaire module` | requireZillionaire (Module: users) | `src/routes/api/public/v1/zillionaire/users/$uid/index.ts` |
@@ -260,6 +261,7 @@ Total scanned routes: **243**
 | `/zillionaire/storage` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.storage.tsx` |
 | `/zillionaire/support` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.support.tsx` |
 | `/zillionaire/team` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.team.tsx` |
+| `/zillionaire/test-lab` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.test-lab.tsx` |
 | `/zillionaire/upload-studio` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.upload-studio.tsx` |
 | `/zillionaire/video-studio` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.video-studio.tsx` |
 | `/zillionaire/viewers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.viewers.tsx` |

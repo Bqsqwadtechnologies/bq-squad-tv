@@ -23,6 +23,7 @@ import {
   ShieldAlert,
   Lock,
   FileCheck,
+  FlaskConical,
   AlertTriangle,
   Ban,
   FileText,
@@ -338,6 +339,13 @@ export function ConsoleShell({
             icon: Share2,
             module: "overview",
           },
+        ],
+      },
+      {
+        id: "testing",
+        title: "Testing",
+        items: [
+          { id: "test-lab", label: "Test Lab", href: "/zillionaire/test-lab", icon: FlaskConical, module: "video" },
         ],
       },
       {

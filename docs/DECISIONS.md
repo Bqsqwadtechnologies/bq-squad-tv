@@ -273,3 +273,10 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Viewer messages are private to a channel, expose only a generic viewer label, and are never copied to any replay by default.
 - Viewer send/report/reaction actions are authenticated and rate-limited; owner moderation actions require the moderation module and a reason recorded in the audit chain.
 - Current clients poll; this is not realtime delivery. Moderator assignment and bulk-delete UI remain deferred.
+
+### V5-02 Batch 6 — Test Lab
+
+- Test channels are hidden, unpublished, explicitly test-only records with an owner UID; each owner gets a separate active-lab pointer.
+- The displayed virtual wallet is informational only and is not connected to billing, payments, or revenue reporting. Do not describe it as a verified per-minute charge flow.
+- Cleanup is restricted to the caller's own active test-only channel and refuses deletion if the channel is published or ownership/type checks fail.
+- The seven-step guide is an owner-maintained checklist; test upload, processing, playback, comments and numeric instrumentation are not automatically connected or verified yet. Read-only preview records are audited and do not impersonate a real account.

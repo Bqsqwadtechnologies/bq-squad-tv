@@ -18,3 +18,5 @@ PUSH BADGE #12 SUCCESSFUL — V5-02 Batch 3 — cfbd5332f87dc801c90a5dd9d0af2dd1
 PUSH BADGE #13 SUCCESSFUL — V5-02 Batch 4 — deb2422a25e6808ac1f704eab2dff758cd3e2fd5 — Live TV owner console with live-channel creation, programme guide, submission review, expiry reminders and audited live controls; health telemetry remains unknown without a trusted monitor.
 
 PUSH BADGE #14 SUCCESSFUL — V5-02 Batch 5 — 08730461f4e6c0486414d44cbe0e1275f9c731cf — Live TV chat for web and Android: protected send/reply/reaction/report, per-channel controls, moderation, timeouts/bans and audit records.
+
+PUSH BADGE #15 SUCCESSFUL — V5-02 Batch 6 — PENDING — Owner Test Lab with isolated private test channels, a virtual test-wallet display, audited preview and safe cleanup; seven-step checklist clearly labels unconnected end-to-end actions.
