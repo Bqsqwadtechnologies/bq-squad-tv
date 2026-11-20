@@ -682,7 +682,12 @@ function AccountPage() {
   }
 
   async function handleDeleteAccount() {
-    if (!window.confirm("Are you sure you want to delete your account? This action is permanent and will delete or anonymise your personal data.")) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to delete your account? This action is permanent and will delete or anonymise your personal data.",
+      )
+    )
+      return;
     setBusy(true);
     setMessage("");
     try {
@@ -692,7 +697,7 @@ function AccountPage() {
         method: "POST",
         headers: await getWebAuthHeaders(token),
       });
-      const data = await response.json() as { message?: string; error?: string };
+      const data = (await response.json()) as { message?: string; error?: string };
       if (!response.ok) throw new Error(data.error ?? "Could not complete account deletion.");
       await revokeAllWebSessions();
       setSignedIn(false);
@@ -1142,12 +1147,11 @@ function AccountPage() {
                     className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 outline-none focus:border-cyan-300"
                   />
                 </label>
-                {googleClientId ? (
-                  <GoogleSignInButton
-                    clientId={googleClientId}
-                    onCredential={handleGoogleCredential}
-                  />
-                ) : null}
+                <GoogleSignInButton
+                  clientId={googleClientId}
+                  onCredential={handleGoogleCredential}
+                  disabled={busy}
+                />
                 <button
                   type="submit"
                   disabled={

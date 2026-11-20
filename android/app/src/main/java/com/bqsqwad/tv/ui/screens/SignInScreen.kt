@@ -20,6 +20,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,7 +37,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
-import com.bqsqwad.tv.BuildConfig
 import com.bqsqwad.tv.data.auth.AuthRepository
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -57,6 +57,22 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
     var legalConsentChecked by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+    var googleClientId by remember { mutableStateOf("") }
+    var googleConfigLoading by remember { mutableStateOf(true) }
+    var googleConfigError by remember { mutableStateOf(false) }
+
+    fun loadGoogleConfig() {
+        scope.launch {
+            googleConfigLoading = true
+            googleConfigError = false
+            runCatching { repository.googleWebClientId() }
+                .onSuccess { googleClientId = it }
+                .onFailure { googleConfigError = true; googleClientId = "" }
+            googleConfigLoading = false
+        }
+    }
+
+    LaunchedEffect(Unit) { loadGoogleConfig() }
 
     suspend fun continueAfterLegalCheck() {
         if (repository.needsLegalAcceptance()) {
@@ -111,10 +127,8 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
             modifier = Modifier.fillMaxWidth(),
             enabled = !verificationPending,
         )
-        if (BuildConfig.GOOGLE_WEB_CLIENT_ID.isNotBlank() &&
-            !BuildConfig.GOOGLE_WEB_CLIENT_ID.startsWith("REPLACE")
-        ) {
-            Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+        if (googleClientId.isNotBlank()) {
             OutlinedButton(
                 enabled = !busy && !verificationPending && (!createAccount || legalConsentChecked),
                 onClick = {
@@ -126,7 +140,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                                 require(legalConsentChecked) { "Read and accept the Terms and Privacy Policy first." }
                                 repository.ensurePublicLegalPagesPublished()
                             }
-                            googleSignIn(context, repository)
+                            googleSignIn(context, repository, googleClientId)
                             if (createAccount) {
                                 repository.acceptLegalPages()
                                 onAuthenticated()
@@ -145,13 +159,17 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                 Text("Continue with Google")
             }
         } else {
-            Spacer(modifier = Modifier.height(10.dp))
             OutlinedButton(
                 enabled = false,
                 onClick = {},
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Continue with Google (Setup pending)")
+                Text(if (googleConfigLoading) "Google sign-in loading…" else "Continue with Google")
+            }
+            if (googleConfigError || (!googleConfigLoading && googleClientId.isBlank())) {
+                TextButton(onClick = { loadGoogleConfig() }, enabled = !googleConfigLoading) {
+                    Text(if (googleConfigLoading) "Checking…" else "Google sign-in unavailable. Tap to retry.")
+                }
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
@@ -341,9 +359,11 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
 private suspend fun googleSignIn(
     context: Context,
     repository: AuthRepository,
+    clientId: String,
 ) {
+    require(clientId.isNotBlank()) { "Google sign-in is unavailable. Try again later." }
     val optionBuilder = GetGoogleIdOption.Builder()
-    optionBuilder.setServerClientId(BuildConfig.GOOGLE_WEB_CLIENT_ID)
+    optionBuilder.setServerClientId(clientId)
     optionBuilder.setFilterByAuthorizedAccounts(false)
     val option = optionBuilder.build()
     val requestBuilder = GetCredentialRequest.Builder()

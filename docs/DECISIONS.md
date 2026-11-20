@@ -338,3 +338,4 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Added `/live-tv` and `/library` routes to TanStack Start tree, with catalogue filters and playback links.
 - Replaced basic profile link with `ProfileAccountHub` avatar dropdown containing wallet, purchases, watch history, referrals, notifications, settings, help, and console links for Producers and Providers.
 V5-05 Batch 7: Reused verified wallet summary, ledger, and package APIs; usage figures come from recorded daily wallet spend, and empty-balance messaging links directly to configured top-ups.
+V5-05 Batch 8: Both sign-in surfaces use the same public Google web client configuration endpoint; Android keeps a visible disabled/retry state when the ID is missing, while the web renders its disabled/retry control as configuration resolves.

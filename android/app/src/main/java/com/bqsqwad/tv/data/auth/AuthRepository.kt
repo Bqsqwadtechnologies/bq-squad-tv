@@ -43,6 +43,8 @@ class AuthRepository(
             .create(ProfileApi::class.java)
     }
 
+    suspend fun googleWebClientId(): String = profileApi.googleAuthConfig().googleClientId.trim()
+
     private suspend fun currentBearerToken(): String {
         val user = auth.currentUser ?: error("Sign in before continuing.")
         val token = user.getIdToken(false).awaitResult().token

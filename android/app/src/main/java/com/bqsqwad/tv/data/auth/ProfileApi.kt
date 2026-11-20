@@ -81,7 +81,15 @@ data class ThemePreferenceSaveResponse(
     val themeMode: String,
 )
 
+
+data class GoogleAuthConfigResponse(
+    val googleClientId: String = "",
+)
+
 interface ProfileApi {
+    @GET("v1/auth/web/config")
+    suspend fun googleAuthConfig(): GoogleAuthConfigResponse
+
     @GET("v1/pages/{slug}")
     suspend fun publicLegalPage(@Path("slug") slug: String): PublicLegalPageResponse
 
