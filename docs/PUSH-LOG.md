@@ -78,3 +78,4 @@ PUSH BADGE #45 SUCCESSFUL — V5-05 Batch 6 — 662f573ba3d7504e3c462ce3658bb111
 PUSH BADGE #46 SUCCESSFUL — V5-05 Batch 7 — 7b72a4f14403577697dc911d09a41123fc0f35d8 — Verified wallet with configured Paystack top-ups, transaction history, recorded daily usage and low-balance top-up action.
 PUSH BADGE #47 SUCCESSFUL — V5-05 Batch 8 — 019efd3ce1c51ba2c5ec030cc11f0a0992f34132 — Web and Android now use the same dynamically served Google client config with visible retry states and existing verification/legal flows preserved.
 PUSH BADGE #48 SUCCESSFUL — V5-05 Batch 9 — 807ff94b2f851b5c6ff4c9223bcea020e384089f — Android now honors live maintenance and required-update settings; public routes have a viewer-only sitemap referenced by robots.txt.
+PUSH BADGE #49 SUCCESSFUL — V5-05 Batch 10 — 01dd51823f3913ee48778b52530b6d2ccde4173d — V5-05 release notes and an ordered owner verification checklist now record delivered work, known limitations, and the actual verification blockers.
