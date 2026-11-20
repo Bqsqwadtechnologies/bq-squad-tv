@@ -59,38 +59,54 @@ import { Route as WatchPartyPartyIdRouteImport } from './routes/watch-party.$par
 import { Route as ZillionaireIndexRouteImport } from './routes/zillionaire.index'
 import { Route as ZillionaireAdsRouteImport } from './routes/zillionaire.ads'
 import { Route as ZillionaireAnalyticsRouteImport } from './routes/zillionaire.analytics'
+import { Route as ZillionaireAnnouncementsRouteImport } from './routes/zillionaire.announcements'
 import { Route as ZillionaireApprovalsRouteImport } from './routes/zillionaire.approvals'
 import { Route as ZillionaireAuditRouteImport } from './routes/zillionaire.audit'
 import { Route as ZillionaireBlockedContentRouteImport } from './routes/zillionaire.blocked-content'
 import { Route as ZillionaireChannelsRouteImport } from './routes/zillionaire.channels'
+import { Route as ZillionaireCollaborationsRouteImport } from './routes/zillionaire.collaborations'
 import { Route as ZillionaireCommentsRouteImport } from './routes/zillionaire.comments'
+import { Route as ZillionaireContentCalendarRouteImport } from './routes/zillionaire.content-calendar'
+import { Route as ZillionaireCopyrightCasesRouteImport } from './routes/zillionaire.copyright-cases'
 import { Route as ZillionaireDeliveryRouteImport } from './routes/zillionaire.delivery'
 import { Route as ZillionaireErrorsRouteImport } from './routes/zillionaire.errors'
 import { Route as ZillionaireFeaturesRouteImport } from './routes/zillionaire.features'
 import { Route as ZillionaireFinanceRouteImport } from './routes/zillionaire.finance'
 import { Route as ZillionaireFirebaseSchemaRouteImport } from './routes/zillionaire.firebase-schema'
+import { Route as ZillionaireFraudWatchRouteImport } from './routes/zillionaire.fraud-watch'
+import { Route as ZillionaireGeoRulesRouteImport } from './routes/zillionaire.geo-rules'
 import { Route as ZillionaireLiveTvRouteImport } from './routes/zillionaire.live-tv'
 import { Route as ZillionaireModerationRouteImport } from './routes/zillionaire.moderation'
+import { Route as ZillionaireModerationWorkloadRouteImport } from './routes/zillionaire.moderation-workload'
 import { Route as ZillionaireMoviesRouteImport } from './routes/zillionaire.movies'
 import { Route as ZillionaireNotificationsRouteImport } from './routes/zillionaire.notifications'
 import { Route as ZillionairePagesRouteImport } from './routes/zillionaire.pages'
 import { Route as ZillionairePaymentsRouteImport } from './routes/zillionaire.payments'
 import { Route as ZillionairePayoutsRouteImport } from './routes/zillionaire.payouts'
 import { Route as ZillionairePricingRouteImport } from './routes/zillionaire.pricing'
+import { Route as ZillionairePrivacyRequestsRouteImport } from './routes/zillionaire.privacy-requests'
 import { Route as ZillionaireProducersRouteImport } from './routes/zillionaire.producers'
 import { Route as ZillionairePromotionsRouteImport } from './routes/zillionaire.promotions'
 import { Route as ZillionaireProvidersRouteImport } from './routes/zillionaire.providers'
 import { Route as ZillionaireReceiptsRouteImport } from './routes/zillionaire.receipts'
 import { Route as ZillionaireReferralsRouteImport } from './routes/zillionaire.referrals'
+import { Route as ZillionaireReleasesRouteImport } from './routes/zillionaire.releases'
 import { Route as ZillionaireReportsRouteImport } from './routes/zillionaire.reports'
 import { Route as ZillionaireRightsReviewRouteImport } from './routes/zillionaire.rights-review'
+import { Route as ZillionaireScheduledReportsRouteImport } from './routes/zillionaire.scheduled-reports'
+import { Route as ZillionaireSearchTuningRouteImport } from './routes/zillionaire.search-tuning'
 import { Route as ZillionaireSecurityRouteImport } from './routes/zillionaire.security'
 import { Route as ZillionaireSeriesRouteImport } from './routes/zillionaire.series'
 import { Route as ZillionaireSettingsRouteImport } from './routes/zillionaire.settings'
+import { Route as ZillionaireSplitsAuditRouteImport } from './routes/zillionaire.splits-audit'
+import { Route as ZillionaireStatusPageRouteImport } from './routes/zillionaire.status-page'
 import { Route as ZillionaireStorageRouteImport } from './routes/zillionaire.storage'
+import { Route as ZillionaireStrikesAppealsRouteImport } from './routes/zillionaire.strikes-appeals'
 import { Route as ZillionaireSupportRouteImport } from './routes/zillionaire.support'
+import { Route as ZillionaireSupportMacrosRouteImport } from './routes/zillionaire.support-macros'
 import { Route as ZillionaireTeamRouteImport } from './routes/zillionaire.team'
 import { Route as ZillionaireTestLabRouteImport } from './routes/zillionaire.test-lab'
+import { Route as ZillionaireTrendingRailsRouteImport } from './routes/zillionaire.trending-rails'
 import { Route as ZillionaireUploadStudioRouteImport } from './routes/zillionaire.upload-studio'
 import { Route as ZillionaireVideoStudioRouteImport } from './routes/zillionaire.video-studio'
 import { Route as ZillionaireViewersRouteImport } from './routes/zillionaire.viewers'
@@ -590,6 +606,12 @@ const ZillionaireAnalyticsRoute = ZillionaireAnalyticsRouteImport.update({
   path: '/zillionaire/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZillionaireAnnouncementsRoute =
+  ZillionaireAnnouncementsRouteImport.update({
+    id: '/zillionaire/announcements',
+    path: '/zillionaire/announcements',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ZillionaireApprovalsRoute = ZillionaireApprovalsRouteImport.update({
   id: '/zillionaire/approvals',
   path: '/zillionaire/approvals',
@@ -611,11 +633,29 @@ const ZillionaireChannelsRoute = ZillionaireChannelsRouteImport.update({
   path: '/zillionaire/channels',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZillionaireCollaborationsRoute =
+  ZillionaireCollaborationsRouteImport.update({
+    id: '/zillionaire/collaborations',
+    path: '/zillionaire/collaborations',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ZillionaireCommentsRoute = ZillionaireCommentsRouteImport.update({
   id: '/zillionaire/comments',
   path: '/zillionaire/comments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZillionaireContentCalendarRoute =
+  ZillionaireContentCalendarRouteImport.update({
+    id: '/zillionaire/content-calendar',
+    path: '/zillionaire/content-calendar',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ZillionaireCopyrightCasesRoute =
+  ZillionaireCopyrightCasesRouteImport.update({
+    id: '/zillionaire/copyright-cases',
+    path: '/zillionaire/copyright-cases',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ZillionaireDeliveryRoute = ZillionaireDeliveryRouteImport.update({
   id: '/zillionaire/delivery',
   path: '/zillionaire/delivery',
@@ -642,6 +682,16 @@ const ZillionaireFirebaseSchemaRoute =
     path: '/zillionaire/firebase-schema',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ZillionaireFraudWatchRoute = ZillionaireFraudWatchRouteImport.update({
+  id: '/zillionaire/fraud-watch',
+  path: '/zillionaire/fraud-watch',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZillionaireGeoRulesRoute = ZillionaireGeoRulesRouteImport.update({
+  id: '/zillionaire/geo-rules',
+  path: '/zillionaire/geo-rules',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ZillionaireLiveTvRoute = ZillionaireLiveTvRouteImport.update({
   id: '/zillionaire/live-tv',
   path: '/zillionaire/live-tv',
@@ -652,6 +702,12 @@ const ZillionaireModerationRoute = ZillionaireModerationRouteImport.update({
   path: '/zillionaire/moderation',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZillionaireModerationWorkloadRoute =
+  ZillionaireModerationWorkloadRouteImport.update({
+    id: '/zillionaire/moderation-workload',
+    path: '/zillionaire/moderation-workload',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ZillionaireMoviesRoute = ZillionaireMoviesRouteImport.update({
   id: '/zillionaire/movies',
   path: '/zillionaire/movies',
@@ -683,6 +739,12 @@ const ZillionairePricingRoute = ZillionairePricingRouteImport.update({
   path: '/zillionaire/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZillionairePrivacyRequestsRoute =
+  ZillionairePrivacyRequestsRouteImport.update({
+    id: '/zillionaire/privacy-requests',
+    path: '/zillionaire/privacy-requests',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ZillionaireProducersRoute = ZillionaireProducersRouteImport.update({
   id: '/zillionaire/producers',
   path: '/zillionaire/producers',
@@ -708,6 +770,11 @@ const ZillionaireReferralsRoute = ZillionaireReferralsRouteImport.update({
   path: '/zillionaire/referrals',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZillionaireReleasesRoute = ZillionaireReleasesRouteImport.update({
+  id: '/zillionaire/releases',
+  path: '/zillionaire/releases',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ZillionaireReportsRoute = ZillionaireReportsRouteImport.update({
   id: '/zillionaire/reports',
   path: '/zillionaire/reports',
@@ -716,6 +783,17 @@ const ZillionaireReportsRoute = ZillionaireReportsRouteImport.update({
 const ZillionaireRightsReviewRoute = ZillionaireRightsReviewRouteImport.update({
   id: '/zillionaire/rights-review',
   path: '/zillionaire/rights-review',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZillionaireScheduledReportsRoute =
+  ZillionaireScheduledReportsRouteImport.update({
+    id: '/zillionaire/scheduled-reports',
+    path: '/zillionaire/scheduled-reports',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ZillionaireSearchTuningRoute = ZillionaireSearchTuningRouteImport.update({
+  id: '/zillionaire/search-tuning',
+  path: '/zillionaire/search-tuning',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ZillionaireSecurityRoute = ZillionaireSecurityRouteImport.update({
@@ -733,16 +811,38 @@ const ZillionaireSettingsRoute = ZillionaireSettingsRouteImport.update({
   path: '/zillionaire/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZillionaireSplitsAuditRoute = ZillionaireSplitsAuditRouteImport.update({
+  id: '/zillionaire/splits-audit',
+  path: '/zillionaire/splits-audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZillionaireStatusPageRoute = ZillionaireStatusPageRouteImport.update({
+  id: '/zillionaire/status-page',
+  path: '/zillionaire/status-page',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ZillionaireStorageRoute = ZillionaireStorageRouteImport.update({
   id: '/zillionaire/storage',
   path: '/zillionaire/storage',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZillionaireStrikesAppealsRoute =
+  ZillionaireStrikesAppealsRouteImport.update({
+    id: '/zillionaire/strikes-appeals',
+    path: '/zillionaire/strikes-appeals',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ZillionaireSupportRoute = ZillionaireSupportRouteImport.update({
   id: '/zillionaire/support',
   path: '/zillionaire/support',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZillionaireSupportMacrosRoute =
+  ZillionaireSupportMacrosRouteImport.update({
+    id: '/zillionaire/support-macros',
+    path: '/zillionaire/support-macros',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ZillionaireTeamRoute = ZillionaireTeamRouteImport.update({
   id: '/zillionaire/team',
   path: '/zillionaire/team',
@@ -753,6 +853,12 @@ const ZillionaireTestLabRoute = ZillionaireTestLabRouteImport.update({
   path: '/zillionaire/test-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ZillionaireTrendingRailsRoute =
+  ZillionaireTrendingRailsRouteImport.update({
+    id: '/zillionaire/trending-rails',
+    path: '/zillionaire/trending-rails',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ZillionaireUploadStudioRoute = ZillionaireUploadStudioRouteImport.update({
   id: '/zillionaire/upload-studio',
   path: '/zillionaire/upload-studio',
@@ -2265,38 +2371,54 @@ export interface FileRoutesByFullPath {
   '/watch-party/$partyId': typeof WatchPartyPartyIdRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
+  '/zillionaire/announcements': typeof ZillionaireAnnouncementsRoute
   '/zillionaire/approvals': typeof ZillionaireApprovalsRoute
   '/zillionaire/audit': typeof ZillionaireAuditRoute
   '/zillionaire/blocked-content': typeof ZillionaireBlockedContentRoute
   '/zillionaire/channels': typeof ZillionaireChannelsRoute
+  '/zillionaire/collaborations': typeof ZillionaireCollaborationsRoute
   '/zillionaire/comments': typeof ZillionaireCommentsRoute
+  '/zillionaire/content-calendar': typeof ZillionaireContentCalendarRoute
+  '/zillionaire/copyright-cases': typeof ZillionaireCopyrightCasesRoute
   '/zillionaire/delivery': typeof ZillionaireDeliveryRoute
   '/zillionaire/errors': typeof ZillionaireErrorsRoute
   '/zillionaire/features': typeof ZillionaireFeaturesRoute
   '/zillionaire/finance': typeof ZillionaireFinanceRoute
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
+  '/zillionaire/fraud-watch': typeof ZillionaireFraudWatchRoute
+  '/zillionaire/geo-rules': typeof ZillionaireGeoRulesRoute
   '/zillionaire/live-tv': typeof ZillionaireLiveTvRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
+  '/zillionaire/moderation-workload': typeof ZillionaireModerationWorkloadRoute
   '/zillionaire/movies': typeof ZillionaireMoviesRoute
   '/zillionaire/notifications': typeof ZillionaireNotificationsRoute
   '/zillionaire/pages': typeof ZillionairePagesRoute
   '/zillionaire/payments': typeof ZillionairePaymentsRoute
   '/zillionaire/payouts': typeof ZillionairePayoutsRoute
   '/zillionaire/pricing': typeof ZillionairePricingRoute
+  '/zillionaire/privacy-requests': typeof ZillionairePrivacyRequestsRoute
   '/zillionaire/producers': typeof ZillionaireProducersRoute
   '/zillionaire/promotions': typeof ZillionairePromotionsRoute
   '/zillionaire/providers': typeof ZillionaireProvidersRoute
   '/zillionaire/receipts': typeof ZillionaireReceiptsRoute
   '/zillionaire/referrals': typeof ZillionaireReferralsRoute
+  '/zillionaire/releases': typeof ZillionaireReleasesRoute
   '/zillionaire/reports': typeof ZillionaireReportsRoute
   '/zillionaire/rights-review': typeof ZillionaireRightsReviewRoute
+  '/zillionaire/scheduled-reports': typeof ZillionaireScheduledReportsRoute
+  '/zillionaire/search-tuning': typeof ZillionaireSearchTuningRoute
   '/zillionaire/security': typeof ZillionaireSecurityRoute
   '/zillionaire/series': typeof ZillionaireSeriesRoute
   '/zillionaire/settings': typeof ZillionaireSettingsRoute
+  '/zillionaire/splits-audit': typeof ZillionaireSplitsAuditRoute
+  '/zillionaire/status-page': typeof ZillionaireStatusPageRoute
   '/zillionaire/storage': typeof ZillionaireStorageRoute
+  '/zillionaire/strikes-appeals': typeof ZillionaireStrikesAppealsRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
+  '/zillionaire/support-macros': typeof ZillionaireSupportMacrosRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
   '/zillionaire/test-lab': typeof ZillionaireTestLabRoute
+  '/zillionaire/trending-rails': typeof ZillionaireTrendingRailsRoute
   '/zillionaire/upload-studio': typeof ZillionaireUploadStudioRoute
   '/zillionaire/video-studio': typeof ZillionaireVideoStudioRoute
   '/zillionaire/viewers': typeof ZillionaireViewersRoute
@@ -2597,38 +2719,54 @@ export interface FileRoutesByTo {
   '/watch-party/$partyId': typeof WatchPartyPartyIdRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
+  '/zillionaire/announcements': typeof ZillionaireAnnouncementsRoute
   '/zillionaire/approvals': typeof ZillionaireApprovalsRoute
   '/zillionaire/audit': typeof ZillionaireAuditRoute
   '/zillionaire/blocked-content': typeof ZillionaireBlockedContentRoute
   '/zillionaire/channels': typeof ZillionaireChannelsRoute
+  '/zillionaire/collaborations': typeof ZillionaireCollaborationsRoute
   '/zillionaire/comments': typeof ZillionaireCommentsRoute
+  '/zillionaire/content-calendar': typeof ZillionaireContentCalendarRoute
+  '/zillionaire/copyright-cases': typeof ZillionaireCopyrightCasesRoute
   '/zillionaire/delivery': typeof ZillionaireDeliveryRoute
   '/zillionaire/errors': typeof ZillionaireErrorsRoute
   '/zillionaire/features': typeof ZillionaireFeaturesRoute
   '/zillionaire/finance': typeof ZillionaireFinanceRoute
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
+  '/zillionaire/fraud-watch': typeof ZillionaireFraudWatchRoute
+  '/zillionaire/geo-rules': typeof ZillionaireGeoRulesRoute
   '/zillionaire/live-tv': typeof ZillionaireLiveTvRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
+  '/zillionaire/moderation-workload': typeof ZillionaireModerationWorkloadRoute
   '/zillionaire/movies': typeof ZillionaireMoviesRoute
   '/zillionaire/notifications': typeof ZillionaireNotificationsRoute
   '/zillionaire/pages': typeof ZillionairePagesRoute
   '/zillionaire/payments': typeof ZillionairePaymentsRoute
   '/zillionaire/payouts': typeof ZillionairePayoutsRoute
   '/zillionaire/pricing': typeof ZillionairePricingRoute
+  '/zillionaire/privacy-requests': typeof ZillionairePrivacyRequestsRoute
   '/zillionaire/producers': typeof ZillionaireProducersRoute
   '/zillionaire/promotions': typeof ZillionairePromotionsRoute
   '/zillionaire/providers': typeof ZillionaireProvidersRoute
   '/zillionaire/receipts': typeof ZillionaireReceiptsRoute
   '/zillionaire/referrals': typeof ZillionaireReferralsRoute
+  '/zillionaire/releases': typeof ZillionaireReleasesRoute
   '/zillionaire/reports': typeof ZillionaireReportsRoute
   '/zillionaire/rights-review': typeof ZillionaireRightsReviewRoute
+  '/zillionaire/scheduled-reports': typeof ZillionaireScheduledReportsRoute
+  '/zillionaire/search-tuning': typeof ZillionaireSearchTuningRoute
   '/zillionaire/security': typeof ZillionaireSecurityRoute
   '/zillionaire/series': typeof ZillionaireSeriesRoute
   '/zillionaire/settings': typeof ZillionaireSettingsRoute
+  '/zillionaire/splits-audit': typeof ZillionaireSplitsAuditRoute
+  '/zillionaire/status-page': typeof ZillionaireStatusPageRoute
   '/zillionaire/storage': typeof ZillionaireStorageRoute
+  '/zillionaire/strikes-appeals': typeof ZillionaireStrikesAppealsRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
+  '/zillionaire/support-macros': typeof ZillionaireSupportMacrosRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
   '/zillionaire/test-lab': typeof ZillionaireTestLabRoute
+  '/zillionaire/trending-rails': typeof ZillionaireTrendingRailsRoute
   '/zillionaire/upload-studio': typeof ZillionaireUploadStudioRoute
   '/zillionaire/video-studio': typeof ZillionaireVideoStudioRoute
   '/zillionaire/viewers': typeof ZillionaireViewersRoute
@@ -2929,38 +3067,54 @@ export interface FileRoutesById {
   '/watch-party/$partyId': typeof WatchPartyPartyIdRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
+  '/zillionaire/announcements': typeof ZillionaireAnnouncementsRoute
   '/zillionaire/approvals': typeof ZillionaireApprovalsRoute
   '/zillionaire/audit': typeof ZillionaireAuditRoute
   '/zillionaire/blocked-content': typeof ZillionaireBlockedContentRoute
   '/zillionaire/channels': typeof ZillionaireChannelsRoute
+  '/zillionaire/collaborations': typeof ZillionaireCollaborationsRoute
   '/zillionaire/comments': typeof ZillionaireCommentsRoute
+  '/zillionaire/content-calendar': typeof ZillionaireContentCalendarRoute
+  '/zillionaire/copyright-cases': typeof ZillionaireCopyrightCasesRoute
   '/zillionaire/delivery': typeof ZillionaireDeliveryRoute
   '/zillionaire/errors': typeof ZillionaireErrorsRoute
   '/zillionaire/features': typeof ZillionaireFeaturesRoute
   '/zillionaire/finance': typeof ZillionaireFinanceRoute
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
+  '/zillionaire/fraud-watch': typeof ZillionaireFraudWatchRoute
+  '/zillionaire/geo-rules': typeof ZillionaireGeoRulesRoute
   '/zillionaire/live-tv': typeof ZillionaireLiveTvRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
+  '/zillionaire/moderation-workload': typeof ZillionaireModerationWorkloadRoute
   '/zillionaire/movies': typeof ZillionaireMoviesRoute
   '/zillionaire/notifications': typeof ZillionaireNotificationsRoute
   '/zillionaire/pages': typeof ZillionairePagesRoute
   '/zillionaire/payments': typeof ZillionairePaymentsRoute
   '/zillionaire/payouts': typeof ZillionairePayoutsRoute
   '/zillionaire/pricing': typeof ZillionairePricingRoute
+  '/zillionaire/privacy-requests': typeof ZillionairePrivacyRequestsRoute
   '/zillionaire/producers': typeof ZillionaireProducersRoute
   '/zillionaire/promotions': typeof ZillionairePromotionsRoute
   '/zillionaire/providers': typeof ZillionaireProvidersRoute
   '/zillionaire/receipts': typeof ZillionaireReceiptsRoute
   '/zillionaire/referrals': typeof ZillionaireReferralsRoute
+  '/zillionaire/releases': typeof ZillionaireReleasesRoute
   '/zillionaire/reports': typeof ZillionaireReportsRoute
   '/zillionaire/rights-review': typeof ZillionaireRightsReviewRoute
+  '/zillionaire/scheduled-reports': typeof ZillionaireScheduledReportsRoute
+  '/zillionaire/search-tuning': typeof ZillionaireSearchTuningRoute
   '/zillionaire/security': typeof ZillionaireSecurityRoute
   '/zillionaire/series': typeof ZillionaireSeriesRoute
   '/zillionaire/settings': typeof ZillionaireSettingsRoute
+  '/zillionaire/splits-audit': typeof ZillionaireSplitsAuditRoute
+  '/zillionaire/status-page': typeof ZillionaireStatusPageRoute
   '/zillionaire/storage': typeof ZillionaireStorageRoute
+  '/zillionaire/strikes-appeals': typeof ZillionaireStrikesAppealsRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
+  '/zillionaire/support-macros': typeof ZillionaireSupportMacrosRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
   '/zillionaire/test-lab': typeof ZillionaireTestLabRoute
+  '/zillionaire/trending-rails': typeof ZillionaireTrendingRailsRoute
   '/zillionaire/upload-studio': typeof ZillionaireUploadStudioRoute
   '/zillionaire/video-studio': typeof ZillionaireVideoStudioRoute
   '/zillionaire/viewers': typeof ZillionaireViewersRoute
@@ -3263,38 +3417,54 @@ export interface FileRouteTypes {
     | '/watch-party/$partyId'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
+    | '/zillionaire/announcements'
     | '/zillionaire/approvals'
     | '/zillionaire/audit'
     | '/zillionaire/blocked-content'
     | '/zillionaire/channels'
+    | '/zillionaire/collaborations'
     | '/zillionaire/comments'
+    | '/zillionaire/content-calendar'
+    | '/zillionaire/copyright-cases'
     | '/zillionaire/delivery'
     | '/zillionaire/errors'
     | '/zillionaire/features'
     | '/zillionaire/finance'
     | '/zillionaire/firebase-schema'
+    | '/zillionaire/fraud-watch'
+    | '/zillionaire/geo-rules'
     | '/zillionaire/live-tv'
     | '/zillionaire/moderation'
+    | '/zillionaire/moderation-workload'
     | '/zillionaire/movies'
     | '/zillionaire/notifications'
     | '/zillionaire/pages'
     | '/zillionaire/payments'
     | '/zillionaire/payouts'
     | '/zillionaire/pricing'
+    | '/zillionaire/privacy-requests'
     | '/zillionaire/producers'
     | '/zillionaire/promotions'
     | '/zillionaire/providers'
     | '/zillionaire/receipts'
     | '/zillionaire/referrals'
+    | '/zillionaire/releases'
     | '/zillionaire/reports'
     | '/zillionaire/rights-review'
+    | '/zillionaire/scheduled-reports'
+    | '/zillionaire/search-tuning'
     | '/zillionaire/security'
     | '/zillionaire/series'
     | '/zillionaire/settings'
+    | '/zillionaire/splits-audit'
+    | '/zillionaire/status-page'
     | '/zillionaire/storage'
+    | '/zillionaire/strikes-appeals'
     | '/zillionaire/support'
+    | '/zillionaire/support-macros'
     | '/zillionaire/team'
     | '/zillionaire/test-lab'
+    | '/zillionaire/trending-rails'
     | '/zillionaire/upload-studio'
     | '/zillionaire/video-studio'
     | '/zillionaire/viewers'
@@ -3595,38 +3765,54 @@ export interface FileRouteTypes {
     | '/watch-party/$partyId'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
+    | '/zillionaire/announcements'
     | '/zillionaire/approvals'
     | '/zillionaire/audit'
     | '/zillionaire/blocked-content'
     | '/zillionaire/channels'
+    | '/zillionaire/collaborations'
     | '/zillionaire/comments'
+    | '/zillionaire/content-calendar'
+    | '/zillionaire/copyright-cases'
     | '/zillionaire/delivery'
     | '/zillionaire/errors'
     | '/zillionaire/features'
     | '/zillionaire/finance'
     | '/zillionaire/firebase-schema'
+    | '/zillionaire/fraud-watch'
+    | '/zillionaire/geo-rules'
     | '/zillionaire/live-tv'
     | '/zillionaire/moderation'
+    | '/zillionaire/moderation-workload'
     | '/zillionaire/movies'
     | '/zillionaire/notifications'
     | '/zillionaire/pages'
     | '/zillionaire/payments'
     | '/zillionaire/payouts'
     | '/zillionaire/pricing'
+    | '/zillionaire/privacy-requests'
     | '/zillionaire/producers'
     | '/zillionaire/promotions'
     | '/zillionaire/providers'
     | '/zillionaire/receipts'
     | '/zillionaire/referrals'
+    | '/zillionaire/releases'
     | '/zillionaire/reports'
     | '/zillionaire/rights-review'
+    | '/zillionaire/scheduled-reports'
+    | '/zillionaire/search-tuning'
     | '/zillionaire/security'
     | '/zillionaire/series'
     | '/zillionaire/settings'
+    | '/zillionaire/splits-audit'
+    | '/zillionaire/status-page'
     | '/zillionaire/storage'
+    | '/zillionaire/strikes-appeals'
     | '/zillionaire/support'
+    | '/zillionaire/support-macros'
     | '/zillionaire/team'
     | '/zillionaire/test-lab'
+    | '/zillionaire/trending-rails'
     | '/zillionaire/upload-studio'
     | '/zillionaire/video-studio'
     | '/zillionaire/viewers'
@@ -3926,38 +4112,54 @@ export interface FileRouteTypes {
     | '/watch-party/$partyId'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
+    | '/zillionaire/announcements'
     | '/zillionaire/approvals'
     | '/zillionaire/audit'
     | '/zillionaire/blocked-content'
     | '/zillionaire/channels'
+    | '/zillionaire/collaborations'
     | '/zillionaire/comments'
+    | '/zillionaire/content-calendar'
+    | '/zillionaire/copyright-cases'
     | '/zillionaire/delivery'
     | '/zillionaire/errors'
     | '/zillionaire/features'
     | '/zillionaire/finance'
     | '/zillionaire/firebase-schema'
+    | '/zillionaire/fraud-watch'
+    | '/zillionaire/geo-rules'
     | '/zillionaire/live-tv'
     | '/zillionaire/moderation'
+    | '/zillionaire/moderation-workload'
     | '/zillionaire/movies'
     | '/zillionaire/notifications'
     | '/zillionaire/pages'
     | '/zillionaire/payments'
     | '/zillionaire/payouts'
     | '/zillionaire/pricing'
+    | '/zillionaire/privacy-requests'
     | '/zillionaire/producers'
     | '/zillionaire/promotions'
     | '/zillionaire/providers'
     | '/zillionaire/receipts'
     | '/zillionaire/referrals'
+    | '/zillionaire/releases'
     | '/zillionaire/reports'
     | '/zillionaire/rights-review'
+    | '/zillionaire/scheduled-reports'
+    | '/zillionaire/search-tuning'
     | '/zillionaire/security'
     | '/zillionaire/series'
     | '/zillionaire/settings'
+    | '/zillionaire/splits-audit'
+    | '/zillionaire/status-page'
     | '/zillionaire/storage'
+    | '/zillionaire/strikes-appeals'
     | '/zillionaire/support'
+    | '/zillionaire/support-macros'
     | '/zillionaire/team'
     | '/zillionaire/test-lab'
+    | '/zillionaire/trending-rails'
     | '/zillionaire/upload-studio'
     | '/zillionaire/video-studio'
     | '/zillionaire/viewers'
@@ -4259,38 +4461,54 @@ export interface RootRouteChildren {
   WatchPartyPartyIdRoute: typeof WatchPartyPartyIdRoute
   ZillionaireAdsRoute: typeof ZillionaireAdsRoute
   ZillionaireAnalyticsRoute: typeof ZillionaireAnalyticsRoute
+  ZillionaireAnnouncementsRoute: typeof ZillionaireAnnouncementsRoute
   ZillionaireApprovalsRoute: typeof ZillionaireApprovalsRoute
   ZillionaireAuditRoute: typeof ZillionaireAuditRoute
   ZillionaireBlockedContentRoute: typeof ZillionaireBlockedContentRoute
   ZillionaireChannelsRoute: typeof ZillionaireChannelsRoute
+  ZillionaireCollaborationsRoute: typeof ZillionaireCollaborationsRoute
   ZillionaireCommentsRoute: typeof ZillionaireCommentsRoute
+  ZillionaireContentCalendarRoute: typeof ZillionaireContentCalendarRoute
+  ZillionaireCopyrightCasesRoute: typeof ZillionaireCopyrightCasesRoute
   ZillionaireDeliveryRoute: typeof ZillionaireDeliveryRoute
   ZillionaireErrorsRoute: typeof ZillionaireErrorsRoute
   ZillionaireFeaturesRoute: typeof ZillionaireFeaturesRoute
   ZillionaireFinanceRoute: typeof ZillionaireFinanceRoute
   ZillionaireFirebaseSchemaRoute: typeof ZillionaireFirebaseSchemaRoute
+  ZillionaireFraudWatchRoute: typeof ZillionaireFraudWatchRoute
+  ZillionaireGeoRulesRoute: typeof ZillionaireGeoRulesRoute
   ZillionaireLiveTvRoute: typeof ZillionaireLiveTvRoute
   ZillionaireModerationRoute: typeof ZillionaireModerationRoute
+  ZillionaireModerationWorkloadRoute: typeof ZillionaireModerationWorkloadRoute
   ZillionaireMoviesRoute: typeof ZillionaireMoviesRoute
   ZillionaireNotificationsRoute: typeof ZillionaireNotificationsRoute
   ZillionairePagesRoute: typeof ZillionairePagesRoute
   ZillionairePaymentsRoute: typeof ZillionairePaymentsRoute
   ZillionairePayoutsRoute: typeof ZillionairePayoutsRoute
   ZillionairePricingRoute: typeof ZillionairePricingRoute
+  ZillionairePrivacyRequestsRoute: typeof ZillionairePrivacyRequestsRoute
   ZillionaireProducersRoute: typeof ZillionaireProducersRoute
   ZillionairePromotionsRoute: typeof ZillionairePromotionsRoute
   ZillionaireProvidersRoute: typeof ZillionaireProvidersRoute
   ZillionaireReceiptsRoute: typeof ZillionaireReceiptsRoute
   ZillionaireReferralsRoute: typeof ZillionaireReferralsRoute
+  ZillionaireReleasesRoute: typeof ZillionaireReleasesRoute
   ZillionaireReportsRoute: typeof ZillionaireReportsRoute
   ZillionaireRightsReviewRoute: typeof ZillionaireRightsReviewRoute
+  ZillionaireScheduledReportsRoute: typeof ZillionaireScheduledReportsRoute
+  ZillionaireSearchTuningRoute: typeof ZillionaireSearchTuningRoute
   ZillionaireSecurityRoute: typeof ZillionaireSecurityRoute
   ZillionaireSeriesRoute: typeof ZillionaireSeriesRoute
   ZillionaireSettingsRoute: typeof ZillionaireSettingsRoute
+  ZillionaireSplitsAuditRoute: typeof ZillionaireSplitsAuditRoute
+  ZillionaireStatusPageRoute: typeof ZillionaireStatusPageRoute
   ZillionaireStorageRoute: typeof ZillionaireStorageRoute
+  ZillionaireStrikesAppealsRoute: typeof ZillionaireStrikesAppealsRoute
   ZillionaireSupportRoute: typeof ZillionaireSupportRoute
+  ZillionaireSupportMacrosRoute: typeof ZillionaireSupportMacrosRoute
   ZillionaireTeamRoute: typeof ZillionaireTeamRoute
   ZillionaireTestLabRoute: typeof ZillionaireTestLabRoute
+  ZillionaireTrendingRailsRoute: typeof ZillionaireTrendingRailsRoute
   ZillionaireUploadStudioRoute: typeof ZillionaireUploadStudioRoute
   ZillionaireVideoStudioRoute: typeof ZillionaireVideoStudioRoute
   ZillionaireViewersRoute: typeof ZillionaireViewersRoute
@@ -4862,6 +5080,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ZillionaireAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zillionaire/announcements': {
+      id: '/zillionaire/announcements'
+      path: '/zillionaire/announcements'
+      fullPath: '/zillionaire/announcements'
+      preLoaderRoute: typeof ZillionaireAnnouncementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/zillionaire/approvals': {
       id: '/zillionaire/approvals'
       path: '/zillionaire/approvals'
@@ -4890,11 +5115,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ZillionaireChannelsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zillionaire/collaborations': {
+      id: '/zillionaire/collaborations'
+      path: '/zillionaire/collaborations'
+      fullPath: '/zillionaire/collaborations'
+      preLoaderRoute: typeof ZillionaireCollaborationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/zillionaire/comments': {
       id: '/zillionaire/comments'
       path: '/zillionaire/comments'
       fullPath: '/zillionaire/comments'
       preLoaderRoute: typeof ZillionaireCommentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/content-calendar': {
+      id: '/zillionaire/content-calendar'
+      path: '/zillionaire/content-calendar'
+      fullPath: '/zillionaire/content-calendar'
+      preLoaderRoute: typeof ZillionaireContentCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/copyright-cases': {
+      id: '/zillionaire/copyright-cases'
+      path: '/zillionaire/copyright-cases'
+      fullPath: '/zillionaire/copyright-cases'
+      preLoaderRoute: typeof ZillionaireCopyrightCasesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/delivery': {
@@ -4932,6 +5178,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ZillionaireFirebaseSchemaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zillionaire/fraud-watch': {
+      id: '/zillionaire/fraud-watch'
+      path: '/zillionaire/fraud-watch'
+      fullPath: '/zillionaire/fraud-watch'
+      preLoaderRoute: typeof ZillionaireFraudWatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/geo-rules': {
+      id: '/zillionaire/geo-rules'
+      path: '/zillionaire/geo-rules'
+      fullPath: '/zillionaire/geo-rules'
+      preLoaderRoute: typeof ZillionaireGeoRulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/zillionaire/live-tv': {
       id: '/zillionaire/live-tv'
       path: '/zillionaire/live-tv'
@@ -4944,6 +5204,13 @@ declare module '@tanstack/react-router' {
       path: '/zillionaire/moderation'
       fullPath: '/zillionaire/moderation'
       preLoaderRoute: typeof ZillionaireModerationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/moderation-workload': {
+      id: '/zillionaire/moderation-workload'
+      path: '/zillionaire/moderation-workload'
+      fullPath: '/zillionaire/moderation-workload'
+      preLoaderRoute: typeof ZillionaireModerationWorkloadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/movies': {
@@ -4988,6 +5255,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ZillionairePricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zillionaire/privacy-requests': {
+      id: '/zillionaire/privacy-requests'
+      path: '/zillionaire/privacy-requests'
+      fullPath: '/zillionaire/privacy-requests'
+      preLoaderRoute: typeof ZillionairePrivacyRequestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/zillionaire/producers': {
       id: '/zillionaire/producers'
       path: '/zillionaire/producers'
@@ -5023,6 +5297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ZillionaireReferralsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zillionaire/releases': {
+      id: '/zillionaire/releases'
+      path: '/zillionaire/releases'
+      fullPath: '/zillionaire/releases'
+      preLoaderRoute: typeof ZillionaireReleasesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/zillionaire/reports': {
       id: '/zillionaire/reports'
       path: '/zillionaire/reports'
@@ -5035,6 +5316,20 @@ declare module '@tanstack/react-router' {
       path: '/zillionaire/rights-review'
       fullPath: '/zillionaire/rights-review'
       preLoaderRoute: typeof ZillionaireRightsReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/scheduled-reports': {
+      id: '/zillionaire/scheduled-reports'
+      path: '/zillionaire/scheduled-reports'
+      fullPath: '/zillionaire/scheduled-reports'
+      preLoaderRoute: typeof ZillionaireScheduledReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/search-tuning': {
+      id: '/zillionaire/search-tuning'
+      path: '/zillionaire/search-tuning'
+      fullPath: '/zillionaire/search-tuning'
+      preLoaderRoute: typeof ZillionaireSearchTuningRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/security': {
@@ -5058,6 +5353,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ZillionaireSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zillionaire/splits-audit': {
+      id: '/zillionaire/splits-audit'
+      path: '/zillionaire/splits-audit'
+      fullPath: '/zillionaire/splits-audit'
+      preLoaderRoute: typeof ZillionaireSplitsAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/status-page': {
+      id: '/zillionaire/status-page'
+      path: '/zillionaire/status-page'
+      fullPath: '/zillionaire/status-page'
+      preLoaderRoute: typeof ZillionaireStatusPageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/zillionaire/storage': {
       id: '/zillionaire/storage'
       path: '/zillionaire/storage'
@@ -5065,11 +5374,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ZillionaireStorageRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zillionaire/strikes-appeals': {
+      id: '/zillionaire/strikes-appeals'
+      path: '/zillionaire/strikes-appeals'
+      fullPath: '/zillionaire/strikes-appeals'
+      preLoaderRoute: typeof ZillionaireStrikesAppealsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/zillionaire/support': {
       id: '/zillionaire/support'
       path: '/zillionaire/support'
       fullPath: '/zillionaire/support'
       preLoaderRoute: typeof ZillionaireSupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/support-macros': {
+      id: '/zillionaire/support-macros'
+      path: '/zillionaire/support-macros'
+      fullPath: '/zillionaire/support-macros'
+      preLoaderRoute: typeof ZillionaireSupportMacrosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/team': {
@@ -5084,6 +5407,13 @@ declare module '@tanstack/react-router' {
       path: '/zillionaire/test-lab'
       fullPath: '/zillionaire/test-lab'
       preLoaderRoute: typeof ZillionaireTestLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/trending-rails': {
+      id: '/zillionaire/trending-rails'
+      path: '/zillionaire/trending-rails'
+      fullPath: '/zillionaire/trending-rails'
+      preLoaderRoute: typeof ZillionaireTrendingRailsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/upload-studio': {
@@ -7139,38 +7469,54 @@ const rootRouteChildren: RootRouteChildren = {
   WatchPartyPartyIdRoute: WatchPartyPartyIdRoute,
   ZillionaireAdsRoute: ZillionaireAdsRoute,
   ZillionaireAnalyticsRoute: ZillionaireAnalyticsRoute,
+  ZillionaireAnnouncementsRoute: ZillionaireAnnouncementsRoute,
   ZillionaireApprovalsRoute: ZillionaireApprovalsRoute,
   ZillionaireAuditRoute: ZillionaireAuditRoute,
   ZillionaireBlockedContentRoute: ZillionaireBlockedContentRoute,
   ZillionaireChannelsRoute: ZillionaireChannelsRoute,
+  ZillionaireCollaborationsRoute: ZillionaireCollaborationsRoute,
   ZillionaireCommentsRoute: ZillionaireCommentsRoute,
+  ZillionaireContentCalendarRoute: ZillionaireContentCalendarRoute,
+  ZillionaireCopyrightCasesRoute: ZillionaireCopyrightCasesRoute,
   ZillionaireDeliveryRoute: ZillionaireDeliveryRoute,
   ZillionaireErrorsRoute: ZillionaireErrorsRoute,
   ZillionaireFeaturesRoute: ZillionaireFeaturesRoute,
   ZillionaireFinanceRoute: ZillionaireFinanceRoute,
   ZillionaireFirebaseSchemaRoute: ZillionaireFirebaseSchemaRoute,
+  ZillionaireFraudWatchRoute: ZillionaireFraudWatchRoute,
+  ZillionaireGeoRulesRoute: ZillionaireGeoRulesRoute,
   ZillionaireLiveTvRoute: ZillionaireLiveTvRoute,
   ZillionaireModerationRoute: ZillionaireModerationRoute,
+  ZillionaireModerationWorkloadRoute: ZillionaireModerationWorkloadRoute,
   ZillionaireMoviesRoute: ZillionaireMoviesRoute,
   ZillionaireNotificationsRoute: ZillionaireNotificationsRoute,
   ZillionairePagesRoute: ZillionairePagesRoute,
   ZillionairePaymentsRoute: ZillionairePaymentsRoute,
   ZillionairePayoutsRoute: ZillionairePayoutsRoute,
   ZillionairePricingRoute: ZillionairePricingRoute,
+  ZillionairePrivacyRequestsRoute: ZillionairePrivacyRequestsRoute,
   ZillionaireProducersRoute: ZillionaireProducersRoute,
   ZillionairePromotionsRoute: ZillionairePromotionsRoute,
   ZillionaireProvidersRoute: ZillionaireProvidersRoute,
   ZillionaireReceiptsRoute: ZillionaireReceiptsRoute,
   ZillionaireReferralsRoute: ZillionaireReferralsRoute,
+  ZillionaireReleasesRoute: ZillionaireReleasesRoute,
   ZillionaireReportsRoute: ZillionaireReportsRoute,
   ZillionaireRightsReviewRoute: ZillionaireRightsReviewRoute,
+  ZillionaireScheduledReportsRoute: ZillionaireScheduledReportsRoute,
+  ZillionaireSearchTuningRoute: ZillionaireSearchTuningRoute,
   ZillionaireSecurityRoute: ZillionaireSecurityRoute,
   ZillionaireSeriesRoute: ZillionaireSeriesRoute,
   ZillionaireSettingsRoute: ZillionaireSettingsRoute,
+  ZillionaireSplitsAuditRoute: ZillionaireSplitsAuditRoute,
+  ZillionaireStatusPageRoute: ZillionaireStatusPageRoute,
   ZillionaireStorageRoute: ZillionaireStorageRoute,
+  ZillionaireStrikesAppealsRoute: ZillionaireStrikesAppealsRoute,
   ZillionaireSupportRoute: ZillionaireSupportRoute,
+  ZillionaireSupportMacrosRoute: ZillionaireSupportMacrosRoute,
   ZillionaireTeamRoute: ZillionaireTeamRoute,
   ZillionaireTestLabRoute: ZillionaireTestLabRoute,
+  ZillionaireTrendingRailsRoute: ZillionaireTrendingRailsRoute,
   ZillionaireUploadStudioRoute: ZillionaireUploadStudioRoute,
   ZillionaireVideoStudioRoute: ZillionaireVideoStudioRoute,
   ZillionaireViewersRoute: ZillionaireViewersRoute,

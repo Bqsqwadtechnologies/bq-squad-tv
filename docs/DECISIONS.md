@@ -619,3 +619,30 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 - **Decision**: Added Skip Intro trigger and Next Episode countdown integration with Watchlist reminder notifications.
 - **Decision**: Built notification preferences API at `/api/public/v1/user/notification-preferences` and settings tab in `src/routes/notifications.tsx` for watchlist releases, live broadcasts, watch party invites, and billing receipts.
 - Batch 10 finished, continuing.
+
+## Batch 11: Zillionaire Control Centre Operations & Extra Governance Consoles
+
+- **Status**: Implemented
+- **Date**: 2026-11-20
+- **Scope & Rationale**:
+  - Implemented the complete set of required operational oversight and governance consoles across the Zillionaire Control Centre with role & module authorization gates (`ConsolePageGuard`).
+  - Added unified `ZillionaireEntityConsole` reusable engine supporting responsive data tables, KPI summary cards, filter tabs, field search, modal deep inspection, and governance action triggers.
+  - Implemented 16 specialized operational consoles:
+    1. `/zillionaire/copyright-cases`: DMCA and copyright claims management, counter-notices, evidence links, and resolution audit.
+    2. `/zillionaire/collaborations`: Platform-wide co-production split contracts, contributor revenue shares, and approval audits.
+    3. `/zillionaire/splits-audit`: Ledger reconciliation engine auditing BigInt fractional payout calculations against gross pool balances.
+    4. `/zillionaire/support-macros`: Response templates and canned resolutions for producer and viewer dispute desks.
+    5. `/zillionaire/announcements`: Global banner broadcast scheduler targeting viewers, producers, or providers.
+    6. `/zillionaire/geo-rules`: Country-level allow/block rule engine for content rights enforcement by ISO territory code.
+    7. `/zillionaire/content-calendar`: Scheduled release planner, premiere embargo times, and broadcast slots.
+    8. `/zillionaire/strikes-appeals`: Policy violation strike manager and appeals arbitration workflow with strike expirations.
+    9. `/zillionaire/scheduled-reports`: Automated CSV/PDF scheduled financial and operational digest emailer.
+    10. `/zillionaire/privacy-requests`: GDPR/NDPR data export and deletion compliance queue.
+    11. `/zillionaire/moderation-workload`: Real-time queue metrics, SLA breach tracking, and moderator shift assignments.
+    12. `/zillionaire/fraud-watch`: Multi-account syndication detector, chargeback patterns, and suspicious ASN/VPN alerts.
+    13. `/zillionaire/status-page`: Public system status editor with component health and outage incident publisher.
+    14. `/zillionaire/releases`: Mobile APK/AAB and TV build versioning, force-upgrade gates, and maintenance lock.
+    15. `/zillionaire/search-tuning`: Query synonyms, priority title pinning, and algorithmic discovery weights.
+    16. `/zillionaire/trending-rails`: Homepage carousel layout editor, category feed sequencing, and audience safety filters.
+  - Connected all 16 modules into `ConsoleShell.tsx` navigation tree respecting tenant and module boundaries.
+  - Validated with targeted Vitest test suite (`batch11-zillionaire-extras.test.ts`), public-text verification, and production build generation.
