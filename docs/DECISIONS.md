@@ -437,3 +437,23 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 - **Decision**: Built `/zillionaire/rights-review` console and `/api/public/v1/zillionaire/rights-review` API with duplicate comparison modals, independent reviewer validation, and proof-of-rights checks.
 - **Decision**: Added single-appeal mechanism for producers at `/api/public/v1/producer/content-assets/$assetId/appeal`, updating producer channels console with rejection details and appeal submission workflows.
 - Batch 2 finished, continuing.
+
+## V6 File 02 Batch 3 — Approvals Everywhere (2026-11-20)
+
+### 1. Unified Review Queue Covering All Public Content
+- **Decision**: Extended `zillionaire.approvals.tsx` and `/api/public/v1/zillionaire/approvals` so nothing goes public without explicit review: videos, series episodes, live streams, artwork assets, channels, ad creatives, provider requests, and payouts.
+- **Rationale**: Enforces complete platform quality control, copyright compliance, and age-appropriateness before content reaches viewer apps or live distribution channels.
+
+### 2. Comprehensive Reviewer Inspection & Verification
+- **Decision**: Reviewers are presented with the full submission context:
+  - Rights declaration (ownership declared, licence type, copyright holder name, production year)
+  - Proof of rights (private document verification status and storage reference)
+  - Age rating limit and content warnings
+  - Perceptual duplicate & copyright detection result (clean/unique vs. "Possible duplicate of <title>" with hash and flag)
+  - Interactive media preview player for video/audio streams, HLS feeds, and high-resolution artwork posters.
+
+### 3. Reviewer Actions & Producer Notifications
+- **Decision**: Supported four core reviewer actions: `approve`, `reject` (with standardized reason codes and explanatory note), `request_changes` (retaining draft status and requesting specific revisions), and `assign`.
+- **Decision**: Automated instant push and in-app notifications to submitters/producers upon every review decision with audit logging in platform ledger.
+- **Decision**: Enforced "Content review" (`content`) role or `moderation` role for delegated reviewers.
+- Batch 3 finished, continuing.

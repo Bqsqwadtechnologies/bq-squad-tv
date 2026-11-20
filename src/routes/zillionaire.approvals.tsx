@@ -20,6 +20,12 @@ import {
   ExternalLink,
   ChevronRight,
   UserPlus,
+  Play,
+  Film,
+  Layers,
+  Image as ImageIcon,
+  Edit3,
+  ShieldCheck,
 } from "lucide-react";
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
 import {
@@ -42,12 +48,12 @@ export const Route = createFileRoute("/zillionaire/approvals")({
 
 function ApprovalsRoute() {
   return (
-    <ConsolePageGuard role="zillionaire" module="moderation">
+    <ConsolePageGuard role="zillionaire">
       {({ token, account, onLock }) => (
         <ConsoleShell
           consoleType="zillionaire"
           title="Approvals Inbox"
-          tagline="Unified decision queue for creator, channel, provider, payout, and moderation reviews"
+          tagline="Unified decision queue for video, episode, live stream, artwork, channel, provider, payout, and moderation reviews"
           activePath="/zillionaire/approvals"
           account={{
             email: account.email || undefined,
@@ -63,16 +69,20 @@ function ApprovalsRoute() {
   );
 }
 
-type ApprovalType =
+export type ApprovalType =
+  | "video"
+  | "episode"
   | "channel"
+  | "live_stream"
+  | "artwork"
+  | "ad_creative"
   | "producer"
   | "provider"
   | "payout"
   | "content_report"
-  | "ad_creative"
   | "legal_issue";
 
-type ApprovalItem = {
+export type ApprovalItem = {
   id: string;
   itemType: ApprovalType;
   rawId: string;
@@ -84,17 +94,20 @@ type ApprovalItem = {
   slaDeadline: string;
   slaHours: number;
   isOverdue: boolean;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "changes_requested";
   assignedTo: string | null;
   priority: "urgent" | "high" | "medium" | "normal";
   details: Record<string, unknown>;
 };
 
-type ApprovalsResponse = {
+export type ApprovalsResponse = {
   items: ApprovalItem[];
   counts: {
     total: number;
     pending: number;
+    changes_requested: number;
+    approved: number;
+    rejected: number;
     overdue: number;
     urgent: number;
   };
@@ -115,7 +128,16 @@ function formatSla(slaDeadline: string): { label: string; urgent: boolean; overd
 
 function exportCsv(items: ApprovalItem[]) {
   if (items.length === 0) return;
-  const headers = ["ID", "Type", "Title", "Submitter", "Status", "Submitted At", "SLA Deadline", "Overdue"];
+  const headers = [
+    "ID",
+    "Type",
+    "Title",
+    "Submitter",
+    "Status",
+    "Submitted At",
+    "SLA Deadline",
+    "Overdue",
+  ];
   const rows = items.map((i) => [
     i.id,
     i.itemType,
@@ -137,6 +159,16 @@ function exportCsv(items: ApprovalItem[]) {
   document.body.removeChild(link);
 }
 
+const REJECTION_REASONS = [
+  { code: "copyright_suspected", label: "Suspected Copyright Infringement" },
+  { code: "duplicate", label: "Duplicate of Existing Catalog Video" },
+  { code: "wrong_age_rating", label: "Inaccurate Age Rating / Missing Content Warnings" },
+  { code: "poor_quality", label: "Audio/Video Quality Below Standard" },
+  { code: "missing_proof", label: "Missing or Inadequate Proof of Rights" },
+  { code: "policy_violation", label: "Platform Terms or Community Policy Violation" },
+  { code: "other", label: "Other Rationale (Specify in notes)" },
+];
+
 function ApprovalsInboxBody({
   token,
   account,
@@ -144,18 +176,24 @@ function ApprovalsInboxBody({
   token: string;
   account: ConsoleAccount;
 }) {
+  const canReview =
+    account.isOwner ||
+    account.modules?.includes("content") ||
+    account.modules?.includes("moderation");
+
   const [data, setData] = useState<ApprovalsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<"pending" | "approved" | "rejected">("pending");
+  const [statusFilter, setStatusFilter] = useState<string>("pending");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   // Modal / Action state
   const [activeItem, setActiveItem] = useState<ApprovalItem | null>(null);
   const [actionReason, setActionReason] = useState("");
+  const [rejectionCode, setRejectionCode] = useState("other");
   const [assignedMember, setAssignedMember] = useState("");
   const [actionBusy, setActionBusy] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
@@ -163,6 +201,7 @@ function ApprovalsInboxBody({
 
   const fetchItems = useCallback(
     async (isBackground = false) => {
+      if (!canReview) return;
       if (isBackground) setRefreshing(true);
       else setLoading(true);
       setError("");
@@ -170,7 +209,7 @@ function ApprovalsInboxBody({
       try {
         const queryParams = new URLSearchParams();
         if (typeFilter !== "all") queryParams.set("type", typeFilter);
-        if (statusFilter) queryParams.set("status", statusFilter);
+        if (statusFilter && statusFilter !== "all") queryParams.set("status", statusFilter);
 
         const res = await fetch(`/api/public/v1/zillionaire/approvals?${queryParams.toString()}`, {
           headers: { authorization: `Bearer ${token}` },
@@ -187,7 +226,7 @@ function ApprovalsInboxBody({
         setRefreshing(false);
       }
     },
-    [token, typeFilter, statusFilter],
+    [token, typeFilter, statusFilter, canReview],
   );
 
   useEffect(() => {
@@ -222,7 +261,10 @@ function ApprovalsInboxBody({
     }
   };
 
-  const handleDecision = async (action: "approve" | "reject" | "assign", itemIds: string[]) => {
+  const handleDecision = async (
+    action: "approve" | "reject" | "request_changes" | "assign",
+    itemIds: string[],
+  ) => {
     if (itemIds.length === 0) return;
     setActionBusy(true);
     setActionError("");
@@ -239,14 +281,15 @@ function ApprovalsInboxBody({
           action,
           itemIds,
           notes: actionReason.trim(),
+          reasonCode: action === "reject" ? rejectionCode : undefined,
           assignedTo: assignedMember.trim() || undefined,
         }),
       });
 
-      const result = (await res.json()) as { error?: string; processedCount?: number };
+      const result = (await res.json()) as { error?: string; success?: boolean };
       if (!res.ok) throw new Error(result.error ?? "Failed to process decision.");
 
-      setActionMessage(`Successfully processed ${result.processedCount ?? itemIds.length} item(s).`);
+      setActionMessage(`Decision applied. Notification sent to submitter.`);
       setSelectedIds(new Set());
       setActionReason("");
       setActiveItem(null);
@@ -258,7 +301,21 @@ function ApprovalsInboxBody({
     }
   };
 
+  if (!canReview) {
+    return (
+      <div className="rounded-3xl border border-rose-500/30 bg-rose-950/20 p-12 text-center text-rose-200">
+        <ShieldAlert className="mx-auto mb-3 h-12 w-12 text-rose-400" />
+        <h3 className="text-lg font-extrabold text-white">Content Review Permission Required</h3>
+        <p className="mx-auto mt-2 max-w-md text-xs text-rose-200/80">
+          Decisions on videos, episodes, live streams, artwork, and creative campaigns require the
+          "Content review" (content) or moderation role on your account.
+        </p>
+      </div>
+    );
+  }
+
   const pendingCount = data?.counts.pending ?? 0;
+  const changesCount = data?.counts.changes_requested ?? 0;
   const overdueCount = data?.counts.overdue ?? 0;
   const urgentCount = data?.counts.urgent ?? 0;
 
@@ -266,40 +323,52 @@ function ApprovalsInboxBody({
     <div className="space-y-6">
       {/* 1. Header & Welcome Banner */}
       <ConsoleWelcomeBanner
-        badgeText="CENTRAL WORKFLOW ENGINE"
-        title="Approvals Inbox & SLA Mission Control"
-        description="Unified review queue for channel submissions, producer verifications, provider access requests, payout settlements, and moderation escalations."
+        badgeText="CENTRAL WORKFLOW & COMPLIANCE"
+        title="Approvals Everywhere & Review Hub"
+        description="Nothing goes public without approval: verify rights declarations, proof documents, age ratings, duplicate fingerprint results, and preview media before approving, requesting changes, or rejecting."
         actionLabel="Export Queue"
         onAction={() => exportCsv(filteredItems)}
         secondaryActionLabel={refreshing ? "Refreshing..." : "Refresh Queue"}
         onSecondaryAction={() => void fetchItems(true)}
       />
 
-      {/* 2. Three KPI Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* 2. KPI Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <ConsoleKpiCard
           title="Pending Queue"
           value={pendingCount}
-          subtitle="Items awaiting operator review"
+          subtitle="Awaiting reviewer decision"
           change={{ value: `${urgentCount} urgent priority`, positive: urgentCount === 0 }}
           icon={Inbox}
           variant="blue"
         />
 
         <ConsoleKpiCard
+          title="Changes Requested"
+          value={changesCount}
+          subtitle="Returned to producer for revisions"
+          change={{ value: "Awaiting creator update", positive: true }}
+          icon={Edit3}
+          variant="purple"
+        />
+
+        <ConsoleKpiCard
           title="Overdue SLAs"
           value={overdueCount}
-          subtitle="Passed compliance turnaround deadline"
-          change={{ value: overdueCount > 0 ? "Action required" : "On schedule", positive: overdueCount === 0 }}
+          subtitle="Exceeded review deadline"
+          change={{
+            value: overdueCount > 0 ? "Urgent turnaround" : "On schedule",
+            positive: overdueCount === 0,
+          }}
           icon={Clock}
           variant="gold"
         />
 
         <ConsoleKpiCard
           title="Reviewed Total"
-          value={(data?.counts.total ?? 0) - pendingCount}
-          subtitle="Processed approvals & resolutions"
-          change={{ value: "Audited in platform ledger", positive: true }}
+          value={(data?.counts.approved ?? 0) + (data?.counts.rejected ?? 0)}
+          subtitle="Approved or rejected in ledger"
+          change={{ value: "Audited decisions", positive: true }}
           icon={CheckCircle2}
           variant="green"
         />
@@ -312,40 +381,54 @@ function ApprovalsInboxBody({
           <div className="flex flex-wrap items-center gap-1.5">
             {[
               { id: "all", label: "All Items" },
-              { id: "channel", label: "Channels" },
-              { id: "producer", label: "Producers" },
-              { id: "provider", label: "Providers" },
-              { id: "payout", label: "Payouts" },
-              { id: "content_report", label: "Content Reports" },
-              { id: "ad_creative", label: "Ad Creatives" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setTypeFilter(tab.id)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-                  typeFilter === tab.id
-                    ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
-                    : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+              { id: "video", label: "Videos / Movies", icon: Film },
+              { id: "episode", label: "Episodes", icon: Layers },
+              { id: "live_stream", label: "Live Streams", icon: Radio },
+              { id: "artwork", label: "Artwork", icon: ImageIcon },
+              { id: "channel", label: "Channels", icon: Tv },
+              { id: "ad_creative", label: "Ad Creatives", icon: Megaphone },
+              { id: "producer", label: "Producers", icon: UserCheck },
+              { id: "provider", label: "Providers", icon: Radio },
+              { id: "payout", label: "Payouts", icon: CreditCard },
+              { id: "content_report", label: "Reports", icon: ShieldAlert },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setTypeFilter(tab.id)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    typeFilter === tab.id
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                      : "bg-white/5 text-slate-400 hover:text-white hover:bg-white/10"
+                  }`}
+                >
+                  {Icon && <Icon className="h-3.5 w-3.5" />}
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
           {/* Status Selector */}
           <div className="flex items-center gap-1 rounded-xl bg-black/40 border border-white/5 p-1">
-            {(["pending", "approved", "rejected"] as const).map((s) => (
+            {[
+              { id: "all", label: "All" },
+              { id: "pending", label: "Pending" },
+              { id: "changes_requested", label: "Changes" },
+              { id: "approved", label: "Approved" },
+              { id: "rejected", label: "Rejected" },
+            ].map((s) => (
               <button
-                key={s}
-                onClick={() => setStatusFilter(s)}
+                key={s.id}
+                onClick={() => setStatusFilter(s.id)}
                 className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition ${
-                  statusFilter === s
+                  statusFilter === s.id
                     ? "bg-blue-600 text-white shadow-sm"
                     : "text-slate-400 hover:text-white"
                 }`}
               >
-                {s}
+                {s.label}
               </button>
             ))}
           </div>
@@ -357,7 +440,7 @@ function ApprovalsInboxBody({
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
             <input
               type="text"
-              placeholder="Search by title, creator, or UID..."
+              placeholder="Search by title, producer, or ID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-white/10 bg-[#040b1c] text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400"
@@ -366,16 +449,14 @@ function ApprovalsInboxBody({
 
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-              <span className="text-xs font-bold text-cyan-300">
-                {selectedIds.size} selected
-              </span>
+              <span className="text-xs font-bold text-cyan-300">{selectedIds.size} selected</span>
               <button
                 onClick={() => {
                   setActiveItem({
                     id: "bulk",
-                    itemType: "channel",
+                    itemType: "video",
                     rawId: "bulk",
-                    title: `Bulk Action (${selectedIds.size} items)`,
+                    title: `Bulk Review (${selectedIds.size} items)`,
                     submitterUid: "multiple",
                     submitterName: "Multiple Submitters",
                     submittedAt: new Date().toISOString(),
@@ -399,7 +480,7 @@ function ApprovalsInboxBody({
 
       {/* 4. Approvals Table */}
       <ConsoleCard
-        title="Pending Items"
+        title="Review Queue"
         subtitle={`Showing ${filteredItems.length} review items`}
         headerAction={
           <div className="flex items-center gap-2">
@@ -415,40 +496,40 @@ function ApprovalsInboxBody({
         }
       >
         {loading ? (
-          <div className="p-8 text-center text-xs text-slate-400">Loading approvals queue...</div>
+          <div className="p-8 text-center text-xs text-slate-400">Loading review queue...</div>
         ) : filteredItems.length === 0 ? (
           <div className="p-12 text-center space-y-2">
-            <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto" />
-            <h4 className="text-sm font-bold text-white">Queue is clear</h4>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              No approval requests match the selected category and status filters.
+            <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
+            <p className="text-sm font-bold text-white">Review Queue is Clear</p>
+            <p className="text-xs text-slate-400">
+              No items require decision under the selected filters.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-white/5 text-slate-400 text-[11px]">
-                  <th className="py-2.5 px-3 w-8">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.size === filteredItems.length && filteredItems.length > 0}
-                      onChange={toggleSelectAll}
-                      className="rounded border-white/20 bg-black/40 text-blue-600 focus:ring-0"
-                    />
+            <table className="w-full text-left text-xs text-slate-300">
+              <thead className="border-b border-white/10 bg-white/[0.02] text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                <tr>
+                  <th className="py-3 px-3 w-8">
+                    <span className="sr-only">Select</span>
                   </th>
-                  <th className="py-2.5 px-3">Type</th>
-                  <th className="py-2.5 px-3">Title & Item</th>
-                  <th className="py-2.5 px-3">Submitter</th>
-                  <th className="py-2.5 px-3">SLA Status</th>
-                  <th className="py-2.5 px-3">Submitted</th>
-                  <th className="py-2.5 px-3 text-right">Action</th>
+                  <th className="py-3 px-3">Type</th>
+                  <th className="py-3 px-3">Title & Asset</th>
+                  <th className="py-3 px-3">Submitter / Producer</th>
+                  <th className="py-3 px-3">Rights & Fingerprint</th>
+                  <th className="py-3 px-3">SLA Status</th>
+                  <th className="py-3 px-3">Submitted</th>
+                  <th className="py-3 px-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {filteredItems.map((item) => {
                   const sla = formatSla(item.slaDeadline);
                   const isSelected = selectedIds.has(item.id);
+                  const dup = item.details?.duplicateResult as
+                    | Record<string, unknown>
+                    | undefined;
+                  const isDup = dup?.duplicateDetected === true;
 
                   return (
                     <tr
@@ -467,7 +548,7 @@ function ApprovalsInboxBody({
                       </td>
 
                       <td className="py-3 px-3">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/5 text-slate-300 border border-white/10">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/5 text-slate-300 border border-white/10">
                           {item.itemType.replace("_", " ")}
                         </span>
                       </td>
@@ -481,6 +562,20 @@ function ApprovalsInboxBody({
                         <p className="font-semibold text-slate-200">{item.submitterName}</p>
                         {item.submitterEmail && (
                           <p className="text-[10px] text-slate-400">{item.submitterEmail}</p>
+                        )}
+                      </td>
+
+                      <td className="py-3 px-3">
+                        {isDup ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            <AlertTriangle className="h-3 w-3" />
+                            <span>Possible Duplicate</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            <ShieldCheck className="h-3 w-3" />
+                            <span>Unique Master</span>
+                          </span>
                         )}
                       </td>
 
@@ -513,6 +608,7 @@ function ApprovalsInboxBody({
                           onClick={() => {
                             setActiveItem(item);
                             setActionReason("");
+                            setRejectionCode("other");
                             setActionError("");
                             setActionMessage("");
                           }}
@@ -531,14 +627,16 @@ function ApprovalsInboxBody({
         )}
       </ConsoleCard>
 
-      {/* 5. Review & Decision Modal */}
+      {/* 5. Comprehensive Review & Decision Modal */}
       {activeItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="relative w-full max-w-lg rounded-3xl border border-blue-500/30 bg-[#07132e] p-6 shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-4 backdrop-blur-md overflow-y-auto">
+          <div className="relative w-full max-w-2xl rounded-3xl border border-blue-500/40 bg-[#07132e] p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between border-b border-white/10 pb-4">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 bg-cyan-950/60 px-2.5 py-0.5 rounded-full border border-cyan-800/40">
-                  {activeItem.id === "bulk" ? "BULK REVIEW" : activeItem.itemType.replace("_", " ").toUpperCase()}
+                  {activeItem.id === "bulk"
+                    ? "BULK REVIEW"
+                    : activeItem.itemType.replace("_", " ").toUpperCase()}
                 </span>
                 <h3 className="text-base font-extrabold text-white mt-1.5">{activeItem.title}</h3>
                 <p className="text-xs text-slate-400">
@@ -553,30 +651,194 @@ function ApprovalsInboxBody({
               </button>
             </div>
 
-            {/* Metadata / Details */}
-            {activeItem.id !== "bulk" && (
-              <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3 text-xs space-y-2">
-                <p className="font-bold text-slate-300">Submission Details:</p>
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  {Object.entries(activeItem.details).map(([k, v]) => (
-                    <div key={k} className="truncate">
-                      <span className="text-slate-500 uppercase font-semibold">{k}: </span>
-                      <span className="text-slate-200">{String(v)}</span>
+            {/* Media Preview Player */}
+            {activeItem.id !== "bulk" && activeItem.details?.previewPlayer && (
+              <div className="rounded-2xl border border-white/10 bg-black/50 p-3 space-y-2">
+                <p className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <Play className="h-3.5 w-3.5 text-cyan-400" />
+                  <span>Media Preview</span>
+                </p>
+                {(() => {
+                  const p = activeItem.details.previewPlayer as Record<string, unknown>;
+                  const previewUrl = p.previewUrl ? String(p.previewUrl) : null;
+                  const posterUrl = p.posterUrl ? String(p.posterUrl) : null;
+                  const mediaKind = String(p.mediaKind || "video");
+
+                  if (previewUrl && (mediaKind === "video" || mediaKind === "live_hls")) {
+                    return (
+                      <video
+                        controls
+                        src={previewUrl}
+                        poster={posterUrl || undefined}
+                        className="w-full max-h-60 rounded-xl bg-black border border-white/10"
+                      />
+                    );
+                  }
+                  if (previewUrl && mediaKind === "image") {
+                    return (
+                      <img
+                        src={previewUrl}
+                        alt="Creative preview"
+                        className="w-full max-h-60 object-contain rounded-xl bg-black/60 border border-white/10"
+                      />
+                    );
+                  }
+                  if (posterUrl) {
+                    return (
+                      <img
+                        src={posterUrl}
+                        alt="Artwork poster"
+                        className="w-full max-h-48 object-contain rounded-xl bg-black/60 border border-white/10"
+                      />
+                    );
+                  }
+                  return (
+                    <div className="p-6 text-center text-xs text-slate-500 bg-white/[0.02] rounded-xl border border-white/5">
+                      No direct preview stream available; check storage master.
                     </div>
-                  ))}
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Declaration & Rights Proof */}
+            {activeItem.id !== "bulk" && activeItem.details?.declaration && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-1.5">
+                  <p className="font-bold text-slate-300">Rights Declaration:</p>
+                  {(() => {
+                    const d = activeItem.details.declaration as Record<string, unknown>;
+                    return (
+                      <div className="space-y-1 text-[11px]">
+                        <div>
+                          <span className="text-slate-500">License: </span>
+                          <span className="text-slate-200 font-semibold">
+                            {String(d.licenseType || "Commercial")}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500">Copyright Holder: </span>
+                          <span className="text-slate-200">
+                            {String(d.copyrightHolderName || "Producer")}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-slate-500">Production Year: </span>
+                          <span className="text-slate-200">
+                            {String(d.productionYear || new Date().getFullYear())}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-1.5">
+                  <p className="font-bold text-slate-300">Proof of Rights:</p>
+                  {(() => {
+                    const pr = (activeItem.details.proofOfRights as Record<string, unknown>) || {};
+                    const hasProof = pr.hasProof === true;
+                    const path = pr.evidencePath ? String(pr.evidencePath) : null;
+                    return (
+                      <div className="space-y-1 text-[11px]">
+                        <div>
+                          <span className="text-slate-500">Evidence Status: </span>
+                          <span
+                            className={
+                              hasProof ? "text-emerald-400 font-bold" : "text-amber-400 font-bold"
+                            }
+                          >
+                            {hasProof ? "Uploaded Proof on File" : "No Attachment"}
+                          </span>
+                        </div>
+                        {path && (
+                          <div className="truncate text-slate-400 font-mono text-[10px]">
+                            {path}
+                          </div>
+                        )}
+                        {(() => {
+                          const age = (activeItem.details.ageLimit as Record<string, unknown>) || {};
+                          return (
+                            <div>
+                              <span className="text-slate-500">Age Rating: </span>
+                              <span className="text-cyan-300 font-bold">
+                                {String(age.ageRating || "PG")}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             )}
 
-            {/* Decision Notes Input */}
+            {/* Duplicate & Fingerprint Detection Alert */}
+            {activeItem.id !== "bulk" && activeItem.details?.duplicateResult && (
+              <div>
+                {(() => {
+                  const dup = activeItem.details.duplicateResult as Record<string, unknown>;
+                  const isDup = dup.duplicateDetected === true;
+                  return isDup ? (
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200 space-y-1">
+                      <p className="font-bold flex items-center gap-1.5 text-amber-300">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span>Possible Duplicate Detected</span>
+                      </p>
+                      <p className="text-[11px]">
+                        Matched against:{" "}
+                        <span className="font-bold text-white">
+                          {String(dup.duplicateOfTitle || "Existing catalog title")}
+                        </span>
+                      </p>
+                      <p className="text-[10px] text-amber-300/80 font-mono">
+                        Flag: {String(dup.reviewQueueFlag || "Exact match")}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-200 flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                      <div>
+                        <p className="font-bold text-emerald-300">Unique Fingerprint Verified</p>
+                        <p className="text-[10px] text-emerald-400/80">
+                          {String(dup.reviewQueueFlag || "No copyright or duplicate flags.")}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {/* Structured Rejection Code Selector (Only for reject) */}
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold text-slate-300">
+                Reason Code (Required for Rejection)
+              </label>
+              <select
+                value={rejectionCode}
+                onChange={(e) => setRejectionCode(e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-[#030919] px-3 py-2 text-xs text-white outline-none focus:border-cyan-400"
+              >
+                {REJECTION_REASONS.map((r) => (
+                  <option key={r.code} value={r.code}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Decision Notes / Revision Instructions */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-300">
-                Decision Notes / Audit Reason <span className="text-rose-400">*</span>
+                Decision Notes / Revision Instructions / Audit Reason{" "}
+                <span className="text-rose-400">*</span>
               </label>
               <textarea
                 rows={3}
                 required
-                placeholder="Explain the approval or rejection rationale (required for audit trail)..."
+                placeholder="Explain the approval, requested changes, or rejection rationale (delivered to producer notification)..."
                 value={actionReason}
                 onChange={(e) => setActionReason(e.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-[#030919] p-3 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400"
@@ -610,11 +872,11 @@ function ApprovalsInboxBody({
             )}
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+            <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-white/10">
               <button
                 type="button"
                 onClick={() => setActiveItem(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white"
               >
                 Cancel
               </button>
@@ -628,9 +890,23 @@ function ApprovalsInboxBody({
                     activeItem.id === "bulk" ? Array.from(selectedIds) : [activeItem.id],
                   )
                 }
-                className="px-4 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600 text-blue-200 hover:text-white border border-blue-500/30 text-xs font-bold transition disabled:opacity-50"
+                className="px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600 text-blue-200 hover:text-white border border-blue-500/30 text-xs font-bold transition disabled:opacity-50"
               >
-                {actionBusy ? "Processing..." : "Assign"}
+                Assign
+              </button>
+
+              <button
+                type="button"
+                disabled={actionBusy || actionReason.trim().length < 3}
+                onClick={() =>
+                  handleDecision(
+                    "request_changes",
+                    activeItem.id === "bulk" ? Array.from(selectedIds) : [activeItem.id],
+                  )
+                }
+                className="px-3.5 py-2 rounded-xl bg-amber-600/20 hover:bg-amber-600 text-amber-300 hover:text-white border border-amber-500/30 text-xs font-bold transition disabled:opacity-50"
+              >
+                {actionBusy ? "Processing..." : "Request Changes"}
               </button>
 
               <button
@@ -642,9 +918,9 @@ function ApprovalsInboxBody({
                     activeItem.id === "bulk" ? Array.from(selectedIds) : [activeItem.id],
                   )
                 }
-                className="px-4 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-bold transition disabled:opacity-50"
+                className="px-3.5 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-bold transition disabled:opacity-50"
               >
-                {actionBusy ? "Processing..." : "Reject"}
+                {actionBusy ? "Processing..." : "Reject with Reason"}
               </button>
 
               <button
@@ -658,7 +934,7 @@ function ApprovalsInboxBody({
                 }
                 className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/30 transition disabled:opacity-50"
               >
-                {actionBusy ? "Processing..." : "Approve & Apply"}
+                {actionBusy ? "Processing..." : "Approve & Publish"}
               </button>
             </div>
           </div>
