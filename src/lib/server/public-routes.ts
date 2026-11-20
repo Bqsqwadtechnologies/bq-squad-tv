@@ -18,6 +18,7 @@ export const PUBLIC_ROUTE_ALLOWLIST = [
   "/api/public/v1/errors/beacon",
   "/api/public/v1/errors/report",
   "/api/public/v1/search/v2",
+  "/api/public/v1/monitoring/client-errors",
 ] as const;
 
 export function isPublicRoute(routePath: string): boolean {

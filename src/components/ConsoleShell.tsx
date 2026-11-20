@@ -1,3 +1,4 @@
+import { BackButton } from "./BackButton";
 import React, { useState, useEffect, useMemo, ReactNode } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import {
@@ -270,7 +271,7 @@ export function ConsoleShell({
           {
             id: "comments",
             label: "Comments & ratings",
-            href: "/zillionaire/moderation",
+            href: "/zillionaire/comments",
             icon: MessageSquare,
             module: "moderation",
           },
@@ -338,9 +339,16 @@ export function ConsoleShell({
           {
             id: "promotions",
             label: "Promotions",
-            href: "/zillionaire/ads",
+            href: "/zillionaire/promotions",
             icon: Sparkles,
             module: "ads",
+          },
+          {
+            id: "referrals",
+            label: "Referrals",
+            href: "/zillionaire/referrals",
+            icon: Users,
+            module: "finance",
           },
           {
             id: "notifications",
@@ -420,7 +428,7 @@ export function ConsoleShell({
           {
             id: "delivery",
             label: "Delivery & HLS",
-            href: "/zillionaire/storage",
+            href: "/zillionaire/delivery",
             icon: Server,
             module: "delivery",
           },
@@ -797,6 +805,19 @@ export function ConsoleShell({
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
+              {activePath && !["/zillionaire", "/producer", "/provider"].includes(activePath) && (
+                <BackButton
+                  to={
+                    consoleType === "producer"
+                      ? "/producer"
+                      : consoleType === "provider"
+                        ? "/provider"
+                        : "/zillionaire"
+                  }
+                  label="Back"
+                  className="hidden sm:inline-flex"
+                />
+              )}
               <div>
                 <h1 className="text-base sm:text-lg font-bold tracking-tight truncate">{title}</h1>
                 <p className="text-[11px] text-slate-400 truncate hidden sm:block">{tagline}</p>

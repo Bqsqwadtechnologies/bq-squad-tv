@@ -2,20 +2,20 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **269**
+Total scanned routes: **279**
 
 ### Summary by Guard Class
 
 | Guard Class | Count |
 |---|---|
-| `public` | 14 |
+| `public` | 15 |
 | `viewer` | 84 |
 | `webhook signature` | 1 |
 | `provider` | 12 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 138 |
-| `producer` | 5 |
+| `zillionaire module` | 146 |
+| `producer` | 6 |
 
 ### Inventory
 
@@ -63,6 +63,7 @@ Total scanned routes: **269**
 | `/api/public/v1/legal/consent` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/v1/legal/consent.ts` |
 | `/api/public/v1/legal/required` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/legal/required.ts` |
 | `/api/public/v1/legal/status` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/legal/status.ts` |
+| `/api/public/v1/monitoring/client-errors` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/v1/monitoring/client-errors.ts` |
 | `/api/public/v1/notifications` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/notifications.ts` |
 | `/api/public/v1/notifications/$notificationId/read` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/notifications/$notificationId/read.ts` |
 | `/api/public/v1/notifications/unread-count` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/notifications/unread-count.ts` |
@@ -161,6 +162,7 @@ Total scanned routes: **269**
 | `/api/public/v1/zillionaire/channels/$channelId/publish` | `zillionaire module` | requireZillionaire (Module: channels) | `src/routes/api/public/v1/zillionaire/channels/$channelId/publish.ts` |
 | `/api/public/v1/zillionaire/channels/$channelId/schedule` | `zillionaire module` | requireZillionaire (Module: channels) | `src/routes/api/public/v1/zillionaire/channels/$channelId/schedule.ts` |
 | `/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId` | `zillionaire module` | requireZillionaire (Module: channels) | `src/routes/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId.ts` |
+| `/api/public/v1/zillionaire/comments/` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/comments/index.ts` |
 | `/api/public/v1/zillionaire/config/flags` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/config/flags.ts` |
 | `/api/public/v1/zillionaire/config/modal-spend` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/config/modal-spend.ts` |
 | `/api/public/v1/zillionaire/config/pricing` | `zillionaire module` | requireZillionaire (Module: pricing) | `src/routes/api/public/v1/zillionaire/config/pricing.ts` |
@@ -176,6 +178,7 @@ Total scanned routes: **269**
 | `/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens` | `zillionaire module` | requireZillionaire (Zillionaire Owner / Scope Check) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens.ts` |
 | `/api/public/v1/zillionaire/content-assets/$assetId/rights` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/rights.ts` |
 | `/api/public/v1/zillionaire/content-comments/$commentId/moderate` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/content-comments/$commentId/moderate.ts` |
+| `/api/public/v1/zillionaire/delivery/` | `zillionaire module` | requireZillionaire (Module: delivery) | `src/routes/api/public/v1/zillionaire/delivery/index.ts` |
 | `/api/public/v1/zillionaire/errors/` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/errors/index.ts` |
 | `/api/public/v1/zillionaire/finance` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/finance.ts` |
 | `/api/public/v1/zillionaire/hero-slots` | `zillionaire module` | requireZillionaire (Module: catalog) | `src/routes/api/public/v1/zillionaire/hero-slots.ts` |
@@ -201,6 +204,7 @@ Total scanned routes: **269**
 | `/api/public/v1/zillionaire/producers/` | `zillionaire module` | requireZillionaire (Module: producers) | `src/routes/api/public/v1/zillionaire/producers/index.ts` |
 | `/api/public/v1/zillionaire/producers/$uid/actions` | `zillionaire module` | requireZillionaire (Module: producers) | `src/routes/api/public/v1/zillionaire/producers/$uid/actions.ts` |
 | `/api/public/v1/zillionaire/producers/$uid/verification` | `zillionaire module` | requireZillionaire (Module: producers) | `src/routes/api/public/v1/zillionaire/producers/$uid/verification.ts` |
+| `/api/public/v1/zillionaire/promotions/` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/promotions/index.ts` |
 | `/api/public/v1/zillionaire/providers/` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/zillionaire/providers/index.ts` |
 | `/api/public/v1/zillionaire/providers/approved-emails` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/zillionaire/providers/approved-emails.ts` |
 | `/api/public/v1/zillionaire/providers/channels` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/zillionaire/providers/channels.ts` |
@@ -209,6 +213,7 @@ Total scanned routes: **269**
 | `/api/public/v1/zillionaire/receipts/` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/receipts/index.ts` |
 | `/api/public/v1/zillionaire/receipts/$receiptId/pdf` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/receipts/$receiptId/pdf.ts` |
 | `/api/public/v1/zillionaire/receipts/$receiptId/resend` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/receipts/$receiptId/resend.ts` |
+| `/api/public/v1/zillionaire/referrals/` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/referrals/index.ts` |
 | `/api/public/v1/zillionaire/reports/monthly` | `zillionaire module` | requireZillionaire (Module: overview) | `src/routes/api/public/v1/zillionaire/reports/monthly.ts` |
 | `/api/public/v1/zillionaire/secret-health` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/secret-health.ts` |
 | `/api/public/v1/zillionaire/security/abuse-settings` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/security/abuse-settings.ts` |
@@ -245,6 +250,7 @@ Total scanned routes: **269**
 | `/api/public/v1/zillionaire/video-jobs` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/video-jobs.ts` |
 | `/api/public/v1/zillionaire/workers` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/workers.ts` |
 | `/api/public/v1/zillionaire/workers/$workerId` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/workers/$workerId.ts` |
+| `/producer-privacy` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer-privacy.tsx` |
 | `/producer-terms` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer-terms.tsx` |
 | `/producer/` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer.index.tsx` |
 | `/producer/channels` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer.channels.tsx` |
@@ -263,6 +269,8 @@ Total scanned routes: **269**
 | `/zillionaire/audit` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.audit.tsx` |
 | `/zillionaire/blocked-content` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.blocked-content.tsx` |
 | `/zillionaire/channels` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.channels.tsx` |
+| `/zillionaire/comments` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.comments.tsx` |
+| `/zillionaire/delivery` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.delivery.tsx` |
 | `/zillionaire/errors` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.errors.tsx` |
 | `/zillionaire/features` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.features.tsx` |
 | `/zillionaire/finance` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.finance.tsx` |
@@ -276,8 +284,10 @@ Total scanned routes: **269**
 | `/zillionaire/payouts` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.payouts.tsx` |
 | `/zillionaire/pricing` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.pricing.tsx` |
 | `/zillionaire/producers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.producers.tsx` |
+| `/zillionaire/promotions` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.promotions.tsx` |
 | `/zillionaire/providers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.providers.tsx` |
 | `/zillionaire/receipts` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.receipts.tsx` |
+| `/zillionaire/referrals` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.referrals.tsx` |
 | `/zillionaire/reports` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.reports.tsx` |
 | `/zillionaire/security` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.security.tsx` |
 | `/zillionaire/series` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.series.tsx` |

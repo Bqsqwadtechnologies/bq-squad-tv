@@ -21,6 +21,7 @@ export const PUBLIC_ROUTE_ALLOWLIST = new Set([
   "/api/public/v1/errors/report",
   "/api/public/v1/search/v2",
   "/api/public/v1/legal/consent",
+  "/api/public/v1/monitoring/client-errors",
 ]);
 
 function getFiles(dir) {
