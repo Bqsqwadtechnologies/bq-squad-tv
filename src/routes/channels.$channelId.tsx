@@ -11,6 +11,7 @@ import {
   Radio,
   RotateCcw,
   Tv2,
+  Wallet,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -57,11 +58,16 @@ function ChannelPage() {
   const [details, setDetails] = useState<ChannelDetails | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(true);
-  const [chat, setChat] = useState<Array<{id:string;body:string;author:string;createdAt:string}>>([]);
+  const [chat, setChat] = useState<
+    Array<{ id: string; body: string; author: string; createdAt: string }>
+  >([]);
   const [chatEnabled, setChatEnabled] = useState(false);
   const [chatText, setChatText] = useState("");
   const [chatError, setChatError] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
+  const [walletBalance, setWalletBalance] = useState<number | null>(null);
+  const [sessionElapsed, setSessionElapsed] = useState(0);
+  const [reminders, setReminders] = useState<Record<string, boolean>>({});
 
   // Player state
   const [isPlaying, setIsPlaying] = useState(true);
@@ -71,6 +77,57 @@ function ChannelPage() {
   const [overlayVisible, setOverlayVisible] = useState(true);
   const overlayTimerRef = useRef<NodeJS.Timeout | null>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const token = await restoreWebSession();
+        const headers = token ? await getWebAuthHeaders(token) : {};
+        const response = await fetch("/api/public/v1/wallet", { headers, cache: "no-store" });
+        if (response.ok) {
+          const data = await response.json();
+          if (active && typeof data.balanceMinor === "number") setWalletBalance(data.balanceMinor);
+        }
+      } catch {
+        // Wallet data is optional until the signed-in wallet endpoint responds.
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const timer = window.setInterval(() => setSessionElapsed((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [isPlaying]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("bq_programme_reminders");
+      if (stored) setReminders(JSON.parse(stored));
+    } catch {
+      // Ignore localStorage errors.
+    }
+  }, []);
+
+  const formatElapsed = (seconds: number) =>
+    `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+
+  const toggleProgrammeReminder = (id: string, title: string) => {
+    setReminders((previous) => {
+      const updated = { ...previous, [id]: !previous[id] };
+      try {
+        localStorage.setItem("bq_programme_reminders", JSON.stringify(updated));
+      } catch {
+        /* Ignore storage errors. */
+      }
+      return updated;
+    });
+    window.dispatchEvent(new CustomEvent("viewer-reminder", { detail: { title } }));
+  };
 
   useEffect(() => {
     let active = true;
@@ -133,25 +190,68 @@ function ChannelPage() {
       try {
         const token = await restoreWebSession();
         const headers = token ? await getWebAuthHeaders(token) : {};
-        const response = await fetch(`/api/public/v1/channels/${encodeURIComponent(channelId)}/chat`, { headers, cache: "no-store" });
+        const response = await fetch(
+          `/api/public/v1/channels/${encodeURIComponent(channelId)}/chat`,
+          { headers, cache: "no-store" },
+        );
         const data = await response.json();
-        if (response.ok && active) { setChatEnabled(data.enabled === true); setChat(data.messages ?? []); setChatError(""); }
-        else if (active) { setChatEnabled(false); setChatError(data.message ?? "Live chat is unavailable."); }
-      } catch { if (active) setChatError("Live chat is unavailable."); }
+        if (response.ok && active) {
+          setChatEnabled(data.enabled === true);
+          setChat(data.messages ?? []);
+          setChatError("");
+        } else if (active) {
+          setChatEnabled(false);
+          setChatError(data.message ?? "Live chat is unavailable.");
+        }
+      } catch {
+        if (active) setChatError("Live chat is unavailable.");
+      }
     };
-    void load(); const timer = window.setInterval(load, 15000);
-    return () => { active = false; window.clearInterval(timer); };
+    void load();
+    const timer = window.setInterval(load, 15000);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
   }, [channelId]);
 
   async function submitChat(action: "SEND" | "REPORT", messageId?: string) {
-    setChatBusy(true); setChatError("");
+    setChatBusy(true);
+    setChatError("");
     try {
-      const token = await restoreWebSession(); const headers = token ? await getWebAuthHeaders(token) : {};
-      const response = await fetch(`/api/public/v1/channels/${encodeURIComponent(channelId)}/chat`, { method:"POST", headers:{...headers,"Content-Type":"application/json"}, body: JSON.stringify(action === "SEND" ? {action,body:chatText} : {action,messageId,reason:"other"}) });
-      const data = await response.json(); if (!response.ok) throw new Error(data.message ?? "Chat action failed.");
-      if (action === "SEND") { setChatText(""); setChat((items) => [...items,{id:data.messageId,body:chatText,author:"You",createdAt:new Date().toISOString()}].slice(-100)); }
-    } catch (caught) { setChatError(caught instanceof Error ? caught.message : "Chat action failed."); }
-    finally { setChatBusy(false); }
+      const token = await restoreWebSession();
+      const headers = token ? await getWebAuthHeaders(token) : {};
+      const response = await fetch(
+        `/api/public/v1/channels/${encodeURIComponent(channelId)}/chat`,
+        {
+          method: "POST",
+          headers: { ...headers, "Content-Type": "application/json" },
+          body: JSON.stringify(
+            action === "SEND" ? { action, body: chatText } : { action, messageId, reason: "other" },
+          ),
+        },
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message ?? "Chat action failed.");
+      if (action === "SEND") {
+        setChatText("");
+        setChat((items) =>
+          [
+            ...items,
+            {
+              id: data.messageId,
+              body: chatText,
+              author: "You",
+              createdAt: new Date().toISOString(),
+            },
+          ].slice(-100),
+        );
+      }
+    } catch (caught) {
+      setChatError(caught instanceof Error ? caught.message : "Chat action failed.");
+    } finally {
+      setChatBusy(false);
+    }
   }
 
   function handleUserInteraction() {
@@ -240,7 +340,15 @@ function ChannelPage() {
                     </span>
                     <span className="text-sm font-bold">{details.channel.title}</span>
                   </div>
-                  <span className="text-xs text-slate-300 font-medium">1080p HD</span>
+                  <span className="flex items-center gap-2 text-xs text-slate-300 font-medium">
+                    <span
+                      className="rounded-full bg-black/50 px-2 py-1 tabular-nums"
+                      aria-label="Viewing time"
+                    >
+                      {formatElapsed(sessionElapsed)}
+                    </span>
+                    1080p HD
+                  </span>
                 </div>
 
                 {/* Center play/pause touch */}
@@ -335,12 +443,101 @@ function ChannelPage() {
                 </div>
               </div>
 
-              {chatEnabled ? <section className="mt-6 rounded-2xl border border-white/10 bg-[#081333] p-5" aria-label="Live chat">
-                <div className="flex items-center justify-between"><h2 className="text-base font-bold text-white">Live chat</h2><span className="text-xs text-slate-400">Be kind. Never share personal details.</span></div>
-                <div className="mt-3 max-h-64 space-y-2 overflow-y-auto" aria-live="polite">{chat.map((message)=><div key={message.id} className="flex items-start justify-between gap-3 rounded-lg bg-white/5 px-3 py-2"><p className="min-w-0 text-sm"><strong className="mr-2 text-cyan-300">{message.author}</strong><span className="break-words text-slate-100">{message.body}</span></p><button type="button" onClick={()=>void submitChat("REPORT",message.id)} className="shrink-0 text-xs text-slate-400 hover:text-white" aria-label="Report message">Report</button></div>)}{chat.length===0?<p className="text-sm text-slate-400">No messages yet.</p>:null}</div>
-                <form className="mt-3 flex gap-2" onSubmit={(event)=>{event.preventDefault();void submitChat("SEND");}}><input value={chatText} onChange={(event)=>setChatText(event.target.value)} maxLength={500} placeholder="Write a message" className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white"/><button disabled={chatBusy||!chatText.trim()} className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50">Send</button></form>
-                {chatError?<p className="mt-2 text-sm text-rose-300" role="status">{chatError}</p>:null}
-              </section> : chatError ? <p className="mt-4 text-sm text-slate-400">Live chat is unavailable for this channel.</p> : null}
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#081333] px-4 py-3">
+                <div className="flex items-center gap-2 text-sm text-slate-300">
+                  <Radio className="h-4 w-4 text-cyan-300" />
+                  <span>Viewing meter</span>
+                  <strong className="tabular-nums text-white">
+                    {formatElapsed(sessionElapsed)}
+                  </strong>
+                  {walletBalance !== null && (
+                    <span className="text-xs text-slate-400">
+                      Wallet balance:{" "}
+                      {(walletBalance / 100).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                  )}
+                </div>
+                {walletBalance !== null && walletBalance <= 0 && (
+                  <Link
+                    to="/wallet"
+                    className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-3 py-2 text-xs font-bold text-slate-950"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    Top up to continue
+                  </Link>
+                )}
+              </div>
+
+              {chatEnabled ? (
+                <section
+                  className="mt-6 rounded-2xl border border-white/10 bg-[#081333] p-5"
+                  aria-label="Live chat"
+                >
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-base font-bold text-white">Live chat</h2>
+                    <span className="text-xs text-slate-400">
+                      Be kind. Never share personal details.
+                    </span>
+                  </div>
+                  <div className="mt-3 max-h-64 space-y-2 overflow-y-auto" aria-live="polite">
+                    {chat.map((message) => (
+                      <div
+                        key={message.id}
+                        className="flex items-start justify-between gap-3 rounded-lg bg-white/5 px-3 py-2"
+                      >
+                        <p className="min-w-0 text-sm">
+                          <strong className="mr-2 text-cyan-300">{message.author}</strong>
+                          <span className="break-words text-slate-100">{message.body}</span>
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => void submitChat("REPORT", message.id)}
+                          className="shrink-0 text-xs text-slate-400 hover:text-white"
+                          aria-label="Report message"
+                        >
+                          Report
+                        </button>
+                      </div>
+                    ))}
+                    {chat.length === 0 ? (
+                      <p className="text-sm text-slate-400">No messages yet.</p>
+                    ) : null}
+                  </div>
+                  <form
+                    className="mt-3 flex gap-2"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      void submitChat("SEND");
+                    }}
+                  >
+                    <input
+                      value={chatText}
+                      onChange={(event) => setChatText(event.target.value)}
+                      maxLength={500}
+                      placeholder="Write a message"
+                      className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-sm text-white"
+                    />
+                    <button
+                      disabled={chatBusy || !chatText.trim()}
+                      className="rounded-xl bg-cyan-500 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50"
+                    >
+                      Send
+                    </button>
+                  </form>
+                  {chatError ? (
+                    <p className="mt-2 text-sm text-rose-300" role="status">
+                      {chatError}
+                    </p>
+                  ) : null}
+                </section>
+              ) : chatError ? (
+                <p className="mt-4 text-sm text-slate-400">
+                  Live chat is unavailable for this channel.
+                </p>
+              ) : null}
 
               {/* Schedule */}
               <div className="mt-6">
@@ -350,22 +547,31 @@ function ChannelPage() {
                 </div>
                 <div className="mt-4 divide-y divide-white/10">
                   {details.schedule.map((item) => (
-                    <div key={item.id} className="py-3.5">
-                      <p className="text-sm font-bold text-white">{item.title}</p>
-                      <p className="text-xs text-slate-400">
-                        {new Date(item.startsAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}{" "}
-                        –{" "}
-                        {new Date(item.endsAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                      {item.description ? (
-                        <p className="mt-1 text-xs text-slate-300">{item.description}</p>
-                      ) : null}
+                    <div key={item.id} className="flex items-start justify-between gap-4 py-3.5">
+                      <div>
+                        <p className="text-sm font-bold text-white">{item.title}</p>
+                        <p className="text-xs text-slate-400">
+                          {new Date(item.startsAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}{" "}
+                          –{" "}
+                          {new Date(item.endsAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                        {item.description ? (
+                          <p className="mt-1 text-xs text-slate-300">{item.description}</p>
+                        ) : null}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleProgrammeReminder(item.id, item.title)}
+                        className="shrink-0 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:border-cyan-300/40 hover:text-cyan-200"
+                      >
+                        {reminders[item.id] ? "Reminder set" : "Remind me"}
+                      </button>
                     </div>
                   ))}
                 </div>
