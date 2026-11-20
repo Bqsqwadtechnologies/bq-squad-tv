@@ -13,7 +13,7 @@ The repository tree and implementation areas inspected include Zillionaire admin
 1. Corrected the legal-page dashboard loader dependency so it tracks the `token` used by its authenticated request rather than `account.token`.
 2. Added a Provider Privacy Notice as a bundled **draft**, for owner review and completion.
 3. Added public lookup aliases for `provider-privacy` and `provider-privacy-policy`.
-4. Added the public `/provider-privacy` page route.
+4. Added public lookup through `/legal/provider-privacy` using the existing legal slug route.
 5. Added provider privacy and provider terms links to the public legal-document footer.
 6. Updated the legal-page test to require the new provider privacy draft and verify its provider audience.
 
@@ -50,6 +50,7 @@ Several existing legal drafts contain business-specific placeholders, including 
 - Owner-authenticated legal-page publication in Firestore.
 - Legal review and completion of unresolved commercial/legal placeholders.
 - Full website and Android release builds.
+- CI rerun after the latest legal-route and test-matrix corrections.
 
 ## Release gate
 
