@@ -55,6 +55,7 @@ import { Route as ProviderDocsRouteImport } from './routes/provider.docs'
 import { Route as ProviderStatementsRouteImport } from './routes/provider.statements'
 import { Route as ProviderTeamRouteImport } from './routes/provider.team'
 import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
+import { Route as WatchPartyPartyIdRouteImport } from './routes/watch-party.$partyId'
 import { Route as ZillionaireIndexRouteImport } from './routes/zillionaire.index'
 import { Route as ZillionaireAdsRouteImport } from './routes/zillionaire.ads'
 import { Route as ZillionaireAnalyticsRouteImport } from './routes/zillionaire.analytics'
@@ -95,8 +96,10 @@ import { Route as ZillionaireVideoStudioRouteImport } from './routes/zillionaire
 import { Route as ZillionaireViewersRouteImport } from './routes/zillionaire.viewers'
 import { Route as ZillionaireWalletsRouteImport } from './routes/zillionaire.wallets'
 import { Route as ApiPublicFirebaseSchemaInspectRouteImport } from './routes/api/public/firebase-schema-inspect'
+import { Route as ApiPublicV1CommentReportsRouteImport } from './routes/api/public/v1/comment-reports'
 import { Route as ApiPublicV1ContactRouteImport } from './routes/api/public/v1/contact'
 import { Route as ApiPublicV1NotificationsRouteImport } from './routes/api/public/v1/notifications'
+import { Route as ApiPublicV1ReactionsRouteImport } from './routes/api/public/v1/reactions'
 import { Route as ApiPublicV1WalletRouteImport } from './routes/api/public/v1/wallet'
 import { Route as ProducerChannelsChannelIdTeamRouteImport } from './routes/producer.channels.$channelId.team'
 import { Route as ApiPublicV1AccountDeleteRouteImport } from './routes/api/public/v1/account/delete'
@@ -153,6 +156,7 @@ import { Route as ApiPublicV1SessionsStartRouteImport } from './routes/api/publi
 import { Route as ApiPublicV1StorageCompleteRouteImport } from './routes/api/public/v1/storage/complete'
 import { Route as ApiPublicV1StorageIntentRouteImport } from './routes/api/public/v1/storage/intent'
 import { Route as ApiPublicV1SupportTicketsRouteImport } from './routes/api/public/v1/support/tickets'
+import { Route as ApiPublicV1UserNotificationPreferencesRouteImport } from './routes/api/public/v1/user/notification-preferences'
 import { Route as ApiPublicV1WalletHistoryRouteImport } from './routes/api/public/v1/wallet/history'
 import { Route as ApiPublicV1WalletLedgerRouteImport } from './routes/api/public/v1/wallet/ledger'
 import { Route as ApiPublicV1WalletPreferencesRouteImport } from './routes/api/public/v1/wallet/preferences'
@@ -160,6 +164,8 @@ import { Route as ApiPublicV1WalletPurchasesRouteImport } from './routes/api/pub
 import { Route as ApiPublicV1WalletSummaryRouteImport } from './routes/api/public/v1/wallet/summary'
 import { Route as ApiPublicV1WalletTopupsRouteImport } from './routes/api/public/v1/wallet/topups'
 import { Route as ApiPublicV1WalletWatchHistoryRouteImport } from './routes/api/public/v1/wallet/watch-history'
+import { Route as ApiPublicV1WatchPartiesIndexRouteImport } from './routes/api/public/v1/watch-parties/index'
+import { Route as ApiPublicV1WatchPartiesPartyIdRouteImport } from './routes/api/public/v1/watch-parties/$partyId'
 import { Route as ApiPublicV1WatchlistIndexRouteImport } from './routes/api/public/v1/watchlist/index'
 import { Route as ApiPublicV1WatchlistTitleIdRouteImport } from './routes/api/public/v1/watchlist/$titleId'
 import { Route as ApiPublicV1ZillionaireApprovalsRouteImport } from './routes/api/public/v1/zillionaire/approvals'
@@ -204,6 +210,7 @@ import { Route as ApiPublicV1SessionsSessionIdRefreshRouteImport } from './route
 import { Route as ApiPublicV1StreamingHlsSplatRouteImport } from './routes/api/public/v1/streaming/hls/$'
 import { Route as ApiPublicV1StreamingKeyAssetIdRouteImport } from './routes/api/public/v1/streaming/key/$assetId'
 import { Route as ApiPublicV1TitlesTitleIdRateRouteImport } from './routes/api/public/v1/titles/$titleId/rate'
+import { Route as ApiPublicV1UserLibraryLikedRouteImport } from './routes/api/public/v1/user/library/liked'
 import { Route as ApiPublicV1WalletGooglePlayProductsRouteImport } from './routes/api/public/v1/wallet/google-play/products'
 import { Route as ApiPublicV1WalletGooglePlayVerifyRouteImport } from './routes/api/public/v1/wallet/google-play/verify'
 import { Route as ApiPublicV1WalletReceiptPaymentIdRouteImport } from './routes/api/public/v1/wallet/receipt/$paymentId'
@@ -563,6 +570,11 @@ const SitemapXmlRoute = SitemapXmlRouteImport.update({
   path: '/sitemap/xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WatchPartyPartyIdRoute = WatchPartyPartyIdRouteImport.update({
+  id: '/watch-party/$partyId',
+  path: '/watch-party/$partyId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ZillionaireIndexRoute = ZillionaireIndexRouteImport.update({
   id: '/zillionaire/',
   path: '/zillionaire/',
@@ -767,6 +779,12 @@ const ApiPublicFirebaseSchemaInspectRoute =
     path: '/api/public/firebase-schema-inspect',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1CommentReportsRoute =
+  ApiPublicV1CommentReportsRouteImport.update({
+    id: '/api/public/v1/comment-reports',
+    path: '/api/public/v1/comment-reports',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ContactRoute = ApiPublicV1ContactRouteImport.update({
   id: '/api/public/v1/contact',
   path: '/api/public/v1/contact',
@@ -778,6 +796,11 @@ const ApiPublicV1NotificationsRoute =
     path: '/api/public/v1/notifications',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ReactionsRoute = ApiPublicV1ReactionsRouteImport.update({
+  id: '/api/public/v1/reactions',
+  path: '/api/public/v1/reactions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1WalletRoute = ApiPublicV1WalletRouteImport.update({
   id: '/api/public/v1/wallet',
   path: '/api/public/v1/wallet',
@@ -1098,6 +1121,12 @@ const ApiPublicV1SupportTicketsRoute =
     path: '/api/public/v1/support/tickets',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1UserNotificationPreferencesRoute =
+  ApiPublicV1UserNotificationPreferencesRouteImport.update({
+    id: '/api/public/v1/user/notification-preferences',
+    path: '/api/public/v1/user/notification-preferences',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1WalletHistoryRoute =
   ApiPublicV1WalletHistoryRouteImport.update({
     id: '/history',
@@ -1137,6 +1166,18 @@ const ApiPublicV1WalletWatchHistoryRoute =
     id: '/watch-history',
     path: '/watch-history',
     getParentRoute: () => ApiPublicV1WalletRoute,
+  } as any)
+const ApiPublicV1WatchPartiesIndexRoute =
+  ApiPublicV1WatchPartiesIndexRouteImport.update({
+    id: '/api/public/v1/watch-parties/',
+    path: '/api/public/v1/watch-parties/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1WatchPartiesPartyIdRoute =
+  ApiPublicV1WatchPartiesPartyIdRouteImport.update({
+    id: '/api/public/v1/watch-parties/$partyId',
+    path: '/api/public/v1/watch-parties/$partyId',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1WatchlistIndexRoute =
   ApiPublicV1WatchlistIndexRouteImport.update({
@@ -1399,6 +1440,12 @@ const ApiPublicV1TitlesTitleIdRateRoute =
   ApiPublicV1TitlesTitleIdRateRouteImport.update({
     id: '/api/public/v1/titles/$titleId/rate',
     path: '/api/public/v1/titles/$titleId/rate',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1UserLibraryLikedRoute =
+  ApiPublicV1UserLibraryLikedRouteImport.update({
+    id: '/api/public/v1/user/library/liked',
+    path: '/api/public/v1/user/library/liked',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1WalletGooglePlayProductsRoute =
@@ -2215,6 +2262,7 @@ export interface FileRoutesByFullPath {
   '/provider/statements': typeof ProviderStatementsRoute
   '/provider/team': typeof ProviderTeamRoute
   '/sitemap/xml': typeof SitemapXmlRoute
+  '/watch-party/$partyId': typeof WatchPartyPartyIdRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
   '/zillionaire/approvals': typeof ZillionaireApprovalsRoute
@@ -2257,8 +2305,10 @@ export interface FileRoutesByFullPath {
   '/provider/': typeof ProviderIndexRoute
   '/zillionaire/': typeof ZillionaireIndexRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/comment-reports': typeof ApiPublicV1CommentReportsRoute
   '/api/public/v1/contact': typeof ApiPublicV1ContactRoute
   '/api/public/v1/notifications': typeof ApiPublicV1NotificationsRouteWithChildren
+  '/api/public/v1/reactions': typeof ApiPublicV1ReactionsRoute
   '/api/public/v1/wallet': typeof ApiPublicV1WalletRouteWithChildren
   '/producer/channels/$channelId/team': typeof ProducerChannelsChannelIdTeamRoute
   '/api/public/v1/account/delete': typeof ApiPublicV1AccountDeleteRoute
@@ -2309,6 +2359,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
+  '/api/public/v1/user/notification-preferences': typeof ApiPublicV1UserNotificationPreferencesRoute
   '/api/public/v1/wallet/history': typeof ApiPublicV1WalletHistoryRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/wallet/preferences': typeof ApiPublicV1WalletPreferencesRoute
@@ -2316,6 +2367,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
   '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
   '/api/public/v1/wallet/watch-history': typeof ApiPublicV1WalletWatchHistoryRoute
+  '/api/public/v1/watch-parties/$partyId': typeof ApiPublicV1WatchPartiesPartyIdRoute
   '/api/public/v1/watchlist/$titleId': typeof ApiPublicV1WatchlistTitleIdRoute
   '/api/public/v1/zillionaire/approvals': typeof ApiPublicV1ZillionaireApprovalsRoute
   '/api/public/v1/zillionaire/audit': typeof ApiPublicV1ZillionaireAuditRoute
@@ -2337,6 +2389,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/epg/': typeof ApiPublicV1EpgIndexRoute
   '/api/public/v1/profiles/': typeof ApiPublicV1ProfilesIndexRoute
   '/api/public/v1/recommendations/': typeof ApiPublicV1RecommendationsIndexRoute
+  '/api/public/v1/watch-parties/': typeof ApiPublicV1WatchPartiesIndexRoute
   '/api/public/v1/watchlist/': typeof ApiPublicV1WatchlistIndexRoute
   '/api/public/v1/ads/$adId/events': typeof ApiPublicV1AdsAdIdEventsRoute
   '/api/public/v1/auth/devices/signout-all': typeof ApiPublicV1AuthDevicesSignoutAllRoute
@@ -2364,6 +2417,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/streaming/hls/$': typeof ApiPublicV1StreamingHlsSplatRoute
   '/api/public/v1/streaming/key/$assetId': typeof ApiPublicV1StreamingKeyAssetIdRoute
   '/api/public/v1/titles/$titleId/rate': typeof ApiPublicV1TitlesTitleIdRateRoute
+  '/api/public/v1/user/library/liked': typeof ApiPublicV1UserLibraryLikedRoute
   '/api/public/v1/wallet/google-play/products': typeof ApiPublicV1WalletGooglePlayProductsRoute
   '/api/public/v1/wallet/google-play/verify': typeof ApiPublicV1WalletGooglePlayVerifyRoute
   '/api/public/v1/wallet/receipt/$paymentId': typeof ApiPublicV1WalletReceiptPaymentIdRoute
@@ -2540,6 +2594,7 @@ export interface FileRoutesByTo {
   '/provider/statements': typeof ProviderStatementsRoute
   '/provider/team': typeof ProviderTeamRoute
   '/sitemap/xml': typeof SitemapXmlRoute
+  '/watch-party/$partyId': typeof WatchPartyPartyIdRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
   '/zillionaire/approvals': typeof ZillionaireApprovalsRoute
@@ -2582,8 +2637,10 @@ export interface FileRoutesByTo {
   '/provider': typeof ProviderIndexRoute
   '/zillionaire': typeof ZillionaireIndexRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/comment-reports': typeof ApiPublicV1CommentReportsRoute
   '/api/public/v1/contact': typeof ApiPublicV1ContactRoute
   '/api/public/v1/notifications': typeof ApiPublicV1NotificationsRouteWithChildren
+  '/api/public/v1/reactions': typeof ApiPublicV1ReactionsRoute
   '/api/public/v1/wallet': typeof ApiPublicV1WalletRouteWithChildren
   '/producer/channels/$channelId/team': typeof ProducerChannelsChannelIdTeamRoute
   '/api/public/v1/account/delete': typeof ApiPublicV1AccountDeleteRoute
@@ -2634,6 +2691,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
+  '/api/public/v1/user/notification-preferences': typeof ApiPublicV1UserNotificationPreferencesRoute
   '/api/public/v1/wallet/history': typeof ApiPublicV1WalletHistoryRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/wallet/preferences': typeof ApiPublicV1WalletPreferencesRoute
@@ -2641,6 +2699,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
   '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
   '/api/public/v1/wallet/watch-history': typeof ApiPublicV1WalletWatchHistoryRoute
+  '/api/public/v1/watch-parties/$partyId': typeof ApiPublicV1WatchPartiesPartyIdRoute
   '/api/public/v1/watchlist/$titleId': typeof ApiPublicV1WatchlistTitleIdRoute
   '/api/public/v1/zillionaire/approvals': typeof ApiPublicV1ZillionaireApprovalsRoute
   '/api/public/v1/zillionaire/audit': typeof ApiPublicV1ZillionaireAuditRoute
@@ -2661,6 +2720,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/epg': typeof ApiPublicV1EpgIndexRoute
   '/api/public/v1/profiles': typeof ApiPublicV1ProfilesIndexRoute
   '/api/public/v1/recommendations': typeof ApiPublicV1RecommendationsIndexRoute
+  '/api/public/v1/watch-parties': typeof ApiPublicV1WatchPartiesIndexRoute
   '/api/public/v1/watchlist': typeof ApiPublicV1WatchlistIndexRoute
   '/api/public/v1/ads/$adId/events': typeof ApiPublicV1AdsAdIdEventsRoute
   '/api/public/v1/auth/devices/signout-all': typeof ApiPublicV1AuthDevicesSignoutAllRoute
@@ -2688,6 +2748,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/streaming/hls/$': typeof ApiPublicV1StreamingHlsSplatRoute
   '/api/public/v1/streaming/key/$assetId': typeof ApiPublicV1StreamingKeyAssetIdRoute
   '/api/public/v1/titles/$titleId/rate': typeof ApiPublicV1TitlesTitleIdRateRoute
+  '/api/public/v1/user/library/liked': typeof ApiPublicV1UserLibraryLikedRoute
   '/api/public/v1/wallet/google-play/products': typeof ApiPublicV1WalletGooglePlayProductsRoute
   '/api/public/v1/wallet/google-play/verify': typeof ApiPublicV1WalletGooglePlayVerifyRoute
   '/api/public/v1/wallet/receipt/$paymentId': typeof ApiPublicV1WalletReceiptPaymentIdRoute
@@ -2865,6 +2926,7 @@ export interface FileRoutesById {
   '/provider/statements': typeof ProviderStatementsRoute
   '/provider/team': typeof ProviderTeamRoute
   '/sitemap/xml': typeof SitemapXmlRoute
+  '/watch-party/$partyId': typeof WatchPartyPartyIdRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
   '/zillionaire/approvals': typeof ZillionaireApprovalsRoute
@@ -2907,8 +2969,10 @@ export interface FileRoutesById {
   '/provider/': typeof ProviderIndexRoute
   '/zillionaire/': typeof ZillionaireIndexRoute
   '/api/public/firebase-schema-inspect': typeof ApiPublicFirebaseSchemaInspectRoute
+  '/api/public/v1/comment-reports': typeof ApiPublicV1CommentReportsRoute
   '/api/public/v1/contact': typeof ApiPublicV1ContactRoute
   '/api/public/v1/notifications': typeof ApiPublicV1NotificationsRouteWithChildren
+  '/api/public/v1/reactions': typeof ApiPublicV1ReactionsRoute
   '/api/public/v1/wallet': typeof ApiPublicV1WalletRouteWithChildren
   '/producer/channels/$channelId/team': typeof ProducerChannelsChannelIdTeamRoute
   '/api/public/v1/account/delete': typeof ApiPublicV1AccountDeleteRoute
@@ -2959,6 +3023,7 @@ export interface FileRoutesById {
   '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
+  '/api/public/v1/user/notification-preferences': typeof ApiPublicV1UserNotificationPreferencesRoute
   '/api/public/v1/wallet/history': typeof ApiPublicV1WalletHistoryRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/wallet/preferences': typeof ApiPublicV1WalletPreferencesRoute
@@ -2966,6 +3031,7 @@ export interface FileRoutesById {
   '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
   '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
   '/api/public/v1/wallet/watch-history': typeof ApiPublicV1WalletWatchHistoryRoute
+  '/api/public/v1/watch-parties/$partyId': typeof ApiPublicV1WatchPartiesPartyIdRoute
   '/api/public/v1/watchlist/$titleId': typeof ApiPublicV1WatchlistTitleIdRoute
   '/api/public/v1/zillionaire/approvals': typeof ApiPublicV1ZillionaireApprovalsRoute
   '/api/public/v1/zillionaire/audit': typeof ApiPublicV1ZillionaireAuditRoute
@@ -2987,6 +3053,7 @@ export interface FileRoutesById {
   '/api/public/v1/epg/': typeof ApiPublicV1EpgIndexRoute
   '/api/public/v1/profiles/': typeof ApiPublicV1ProfilesIndexRoute
   '/api/public/v1/recommendations/': typeof ApiPublicV1RecommendationsIndexRoute
+  '/api/public/v1/watch-parties/': typeof ApiPublicV1WatchPartiesIndexRoute
   '/api/public/v1/watchlist/': typeof ApiPublicV1WatchlistIndexRoute
   '/api/public/v1/ads/$adId/events': typeof ApiPublicV1AdsAdIdEventsRoute
   '/api/public/v1/auth/devices/signout-all': typeof ApiPublicV1AuthDevicesSignoutAllRoute
@@ -3014,6 +3081,7 @@ export interface FileRoutesById {
   '/api/public/v1/streaming/hls/$': typeof ApiPublicV1StreamingHlsSplatRoute
   '/api/public/v1/streaming/key/$assetId': typeof ApiPublicV1StreamingKeyAssetIdRoute
   '/api/public/v1/titles/$titleId/rate': typeof ApiPublicV1TitlesTitleIdRateRoute
+  '/api/public/v1/user/library/liked': typeof ApiPublicV1UserLibraryLikedRoute
   '/api/public/v1/wallet/google-play/products': typeof ApiPublicV1WalletGooglePlayProductsRoute
   '/api/public/v1/wallet/google-play/verify': typeof ApiPublicV1WalletGooglePlayVerifyRoute
   '/api/public/v1/wallet/receipt/$paymentId': typeof ApiPublicV1WalletReceiptPaymentIdRoute
@@ -3192,6 +3260,7 @@ export interface FileRouteTypes {
     | '/provider/statements'
     | '/provider/team'
     | '/sitemap/xml'
+    | '/watch-party/$partyId'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
     | '/zillionaire/approvals'
@@ -3234,8 +3303,10 @@ export interface FileRouteTypes {
     | '/provider/'
     | '/zillionaire/'
     | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/comment-reports'
     | '/api/public/v1/contact'
     | '/api/public/v1/notifications'
+    | '/api/public/v1/reactions'
     | '/api/public/v1/wallet'
     | '/producer/channels/$channelId/team'
     | '/api/public/v1/account/delete'
@@ -3286,6 +3357,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/storage/complete'
     | '/api/public/v1/storage/intent'
     | '/api/public/v1/support/tickets'
+    | '/api/public/v1/user/notification-preferences'
     | '/api/public/v1/wallet/history'
     | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/wallet/preferences'
@@ -3293,6 +3365,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/wallet/summary'
     | '/api/public/v1/wallet/topups'
     | '/api/public/v1/wallet/watch-history'
+    | '/api/public/v1/watch-parties/$partyId'
     | '/api/public/v1/watchlist/$titleId'
     | '/api/public/v1/zillionaire/approvals'
     | '/api/public/v1/zillionaire/audit'
@@ -3314,6 +3387,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/epg/'
     | '/api/public/v1/profiles/'
     | '/api/public/v1/recommendations/'
+    | '/api/public/v1/watch-parties/'
     | '/api/public/v1/watchlist/'
     | '/api/public/v1/ads/$adId/events'
     | '/api/public/v1/auth/devices/signout-all'
@@ -3341,6 +3415,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/streaming/hls/$'
     | '/api/public/v1/streaming/key/$assetId'
     | '/api/public/v1/titles/$titleId/rate'
+    | '/api/public/v1/user/library/liked'
     | '/api/public/v1/wallet/google-play/products'
     | '/api/public/v1/wallet/google-play/verify'
     | '/api/public/v1/wallet/receipt/$paymentId'
@@ -3517,6 +3592,7 @@ export interface FileRouteTypes {
     | '/provider/statements'
     | '/provider/team'
     | '/sitemap/xml'
+    | '/watch-party/$partyId'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
     | '/zillionaire/approvals'
@@ -3559,8 +3635,10 @@ export interface FileRouteTypes {
     | '/provider'
     | '/zillionaire'
     | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/comment-reports'
     | '/api/public/v1/contact'
     | '/api/public/v1/notifications'
+    | '/api/public/v1/reactions'
     | '/api/public/v1/wallet'
     | '/producer/channels/$channelId/team'
     | '/api/public/v1/account/delete'
@@ -3611,6 +3689,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/storage/complete'
     | '/api/public/v1/storage/intent'
     | '/api/public/v1/support/tickets'
+    | '/api/public/v1/user/notification-preferences'
     | '/api/public/v1/wallet/history'
     | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/wallet/preferences'
@@ -3618,6 +3697,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/wallet/summary'
     | '/api/public/v1/wallet/topups'
     | '/api/public/v1/wallet/watch-history'
+    | '/api/public/v1/watch-parties/$partyId'
     | '/api/public/v1/watchlist/$titleId'
     | '/api/public/v1/zillionaire/approvals'
     | '/api/public/v1/zillionaire/audit'
@@ -3638,6 +3718,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/epg'
     | '/api/public/v1/profiles'
     | '/api/public/v1/recommendations'
+    | '/api/public/v1/watch-parties'
     | '/api/public/v1/watchlist'
     | '/api/public/v1/ads/$adId/events'
     | '/api/public/v1/auth/devices/signout-all'
@@ -3665,6 +3746,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/streaming/hls/$'
     | '/api/public/v1/streaming/key/$assetId'
     | '/api/public/v1/titles/$titleId/rate'
+    | '/api/public/v1/user/library/liked'
     | '/api/public/v1/wallet/google-play/products'
     | '/api/public/v1/wallet/google-play/verify'
     | '/api/public/v1/wallet/receipt/$paymentId'
@@ -3841,6 +3923,7 @@ export interface FileRouteTypes {
     | '/provider/statements'
     | '/provider/team'
     | '/sitemap/xml'
+    | '/watch-party/$partyId'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
     | '/zillionaire/approvals'
@@ -3883,8 +3966,10 @@ export interface FileRouteTypes {
     | '/provider/'
     | '/zillionaire/'
     | '/api/public/firebase-schema-inspect'
+    | '/api/public/v1/comment-reports'
     | '/api/public/v1/contact'
     | '/api/public/v1/notifications'
+    | '/api/public/v1/reactions'
     | '/api/public/v1/wallet'
     | '/producer/channels/$channelId/team'
     | '/api/public/v1/account/delete'
@@ -3935,6 +4020,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/storage/complete'
     | '/api/public/v1/storage/intent'
     | '/api/public/v1/support/tickets'
+    | '/api/public/v1/user/notification-preferences'
     | '/api/public/v1/wallet/history'
     | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/wallet/preferences'
@@ -3942,6 +4028,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/wallet/summary'
     | '/api/public/v1/wallet/topups'
     | '/api/public/v1/wallet/watch-history'
+    | '/api/public/v1/watch-parties/$partyId'
     | '/api/public/v1/watchlist/$titleId'
     | '/api/public/v1/zillionaire/approvals'
     | '/api/public/v1/zillionaire/audit'
@@ -3963,6 +4050,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/epg/'
     | '/api/public/v1/profiles/'
     | '/api/public/v1/recommendations/'
+    | '/api/public/v1/watch-parties/'
     | '/api/public/v1/watchlist/'
     | '/api/public/v1/ads/$adId/events'
     | '/api/public/v1/auth/devices/signout-all'
@@ -3990,6 +4078,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/streaming/hls/$'
     | '/api/public/v1/streaming/key/$assetId'
     | '/api/public/v1/titles/$titleId/rate'
+    | '/api/public/v1/user/library/liked'
     | '/api/public/v1/wallet/google-play/products'
     | '/api/public/v1/wallet/google-play/verify'
     | '/api/public/v1/wallet/receipt/$paymentId'
@@ -4167,6 +4256,7 @@ export interface RootRouteChildren {
   ProviderStatementsRoute: typeof ProviderStatementsRoute
   ProviderTeamRoute: typeof ProviderTeamRoute
   SitemapXmlRoute: typeof SitemapXmlRoute
+  WatchPartyPartyIdRoute: typeof WatchPartyPartyIdRoute
   ZillionaireAdsRoute: typeof ZillionaireAdsRoute
   ZillionaireAnalyticsRoute: typeof ZillionaireAnalyticsRoute
   ZillionaireApprovalsRoute: typeof ZillionaireApprovalsRoute
@@ -4209,8 +4299,10 @@ export interface RootRouteChildren {
   ProviderIndexRoute: typeof ProviderIndexRoute
   ZillionaireIndexRoute: typeof ZillionaireIndexRoute
   ApiPublicFirebaseSchemaInspectRoute: typeof ApiPublicFirebaseSchemaInspectRoute
+  ApiPublicV1CommentReportsRoute: typeof ApiPublicV1CommentReportsRoute
   ApiPublicV1ContactRoute: typeof ApiPublicV1ContactRoute
   ApiPublicV1NotificationsRoute: typeof ApiPublicV1NotificationsRouteWithChildren
+  ApiPublicV1ReactionsRoute: typeof ApiPublicV1ReactionsRoute
   ApiPublicV1WalletRoute: typeof ApiPublicV1WalletRouteWithChildren
   ApiPublicV1AccountDeleteRoute: typeof ApiPublicV1AccountDeleteRoute
   ApiPublicV1AccountExportRoute: typeof ApiPublicV1AccountExportRoute
@@ -4259,6 +4351,8 @@ export interface RootRouteChildren {
   ApiPublicV1StorageCompleteRoute: typeof ApiPublicV1StorageCompleteRoute
   ApiPublicV1StorageIntentRoute: typeof ApiPublicV1StorageIntentRoute
   ApiPublicV1SupportTicketsRoute: typeof ApiPublicV1SupportTicketsRoute
+  ApiPublicV1UserNotificationPreferencesRoute: typeof ApiPublicV1UserNotificationPreferencesRoute
+  ApiPublicV1WatchPartiesPartyIdRoute: typeof ApiPublicV1WatchPartiesPartyIdRoute
   ApiPublicV1WatchlistTitleIdRoute: typeof ApiPublicV1WatchlistTitleIdRoute
   ApiPublicV1ZillionaireApprovalsRoute: typeof ApiPublicV1ZillionaireApprovalsRoute
   ApiPublicV1ZillionaireAuditRoute: typeof ApiPublicV1ZillionaireAuditRoute
@@ -4280,6 +4374,7 @@ export interface RootRouteChildren {
   ApiPublicV1EpgIndexRoute: typeof ApiPublicV1EpgIndexRoute
   ApiPublicV1ProfilesIndexRoute: typeof ApiPublicV1ProfilesIndexRoute
   ApiPublicV1RecommendationsIndexRoute: typeof ApiPublicV1RecommendationsIndexRoute
+  ApiPublicV1WatchPartiesIndexRoute: typeof ApiPublicV1WatchPartiesIndexRoute
   ApiPublicV1WatchlistIndexRoute: typeof ApiPublicV1WatchlistIndexRoute
   ApiPublicV1AdsAdIdEventsRoute: typeof ApiPublicV1AdsAdIdEventsRoute
   ApiPublicV1AuthDevicesSignoutAllRoute: typeof ApiPublicV1AuthDevicesSignoutAllRoute
@@ -4300,6 +4395,7 @@ export interface RootRouteChildren {
   ApiPublicV1StreamingHlsSplatRoute: typeof ApiPublicV1StreamingHlsSplatRoute
   ApiPublicV1StreamingKeyAssetIdRoute: typeof ApiPublicV1StreamingKeyAssetIdRoute
   ApiPublicV1TitlesTitleIdRateRoute: typeof ApiPublicV1TitlesTitleIdRateRoute
+  ApiPublicV1UserLibraryLikedRoute: typeof ApiPublicV1UserLibraryLikedRoute
   ApiPublicV1WorkerJobsClaimRoute: typeof ApiPublicV1WorkerJobsClaimRoute
   ApiPublicV1WorkerMaintenanceClaimRoute: typeof ApiPublicV1WorkerMaintenanceClaimRoute
   ApiPublicV1WorkerMaintenanceCompleteRoute: typeof ApiPublicV1WorkerMaintenanceCompleteRoute
@@ -4738,6 +4834,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapXmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/watch-party/$partyId': {
+      id: '/watch-party/$partyId'
+      path: '/watch-party/$partyId'
+      fullPath: '/watch-party/$partyId'
+      preLoaderRoute: typeof WatchPartyPartyIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/zillionaire/': {
       id: '/zillionaire/'
       path: '/zillionaire'
@@ -5018,6 +5121,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFirebaseSchemaInspectRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/comment-reports': {
+      id: '/api/public/v1/comment-reports'
+      path: '/api/public/v1/comment-reports'
+      fullPath: '/api/public/v1/comment-reports'
+      preLoaderRoute: typeof ApiPublicV1CommentReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/contact': {
       id: '/api/public/v1/contact'
       path: '/api/public/v1/contact'
@@ -5030,6 +5140,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/notifications'
       fullPath: '/api/public/v1/notifications'
       preLoaderRoute: typeof ApiPublicV1NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/reactions': {
+      id: '/api/public/v1/reactions'
+      path: '/api/public/v1/reactions'
+      fullPath: '/api/public/v1/reactions'
+      preLoaderRoute: typeof ApiPublicV1ReactionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/wallet': {
@@ -5424,6 +5541,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1SupportTicketsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/user/notification-preferences': {
+      id: '/api/public/v1/user/notification-preferences'
+      path: '/api/public/v1/user/notification-preferences'
+      fullPath: '/api/public/v1/user/notification-preferences'
+      preLoaderRoute: typeof ApiPublicV1UserNotificationPreferencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/wallet/history': {
       id: '/api/public/v1/wallet/history'
       path: '/history'
@@ -5472,6 +5596,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/v1/wallet/watch-history'
       preLoaderRoute: typeof ApiPublicV1WalletWatchHistoryRouteImport
       parentRoute: typeof ApiPublicV1WalletRoute
+    }
+    '/api/public/v1/watch-parties/': {
+      id: '/api/public/v1/watch-parties/'
+      path: '/api/public/v1/watch-parties'
+      fullPath: '/api/public/v1/watch-parties/'
+      preLoaderRoute: typeof ApiPublicV1WatchPartiesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/watch-parties/$partyId': {
+      id: '/api/public/v1/watch-parties/$partyId'
+      path: '/api/public/v1/watch-parties/$partyId'
+      fullPath: '/api/public/v1/watch-parties/$partyId'
+      preLoaderRoute: typeof ApiPublicV1WatchPartiesPartyIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/watchlist/': {
       id: '/api/public/v1/watchlist/'
@@ -5779,6 +5917,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/titles/$titleId/rate'
       fullPath: '/api/public/v1/titles/$titleId/rate'
       preLoaderRoute: typeof ApiPublicV1TitlesTitleIdRateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/user/library/liked': {
+      id: '/api/public/v1/user/library/liked'
+      path: '/api/public/v1/user/library/liked'
+      fullPath: '/api/public/v1/user/library/liked'
+      preLoaderRoute: typeof ApiPublicV1UserLibraryLikedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/wallet/google-play/products': {
@@ -6991,6 +7136,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProviderStatementsRoute: ProviderStatementsRoute,
   ProviderTeamRoute: ProviderTeamRoute,
   SitemapXmlRoute: SitemapXmlRoute,
+  WatchPartyPartyIdRoute: WatchPartyPartyIdRoute,
   ZillionaireAdsRoute: ZillionaireAdsRoute,
   ZillionaireAnalyticsRoute: ZillionaireAnalyticsRoute,
   ZillionaireApprovalsRoute: ZillionaireApprovalsRoute,
@@ -7033,8 +7179,10 @@ const rootRouteChildren: RootRouteChildren = {
   ProviderIndexRoute: ProviderIndexRoute,
   ZillionaireIndexRoute: ZillionaireIndexRoute,
   ApiPublicFirebaseSchemaInspectRoute: ApiPublicFirebaseSchemaInspectRoute,
+  ApiPublicV1CommentReportsRoute: ApiPublicV1CommentReportsRoute,
   ApiPublicV1ContactRoute: ApiPublicV1ContactRoute,
   ApiPublicV1NotificationsRoute: ApiPublicV1NotificationsRouteWithChildren,
+  ApiPublicV1ReactionsRoute: ApiPublicV1ReactionsRoute,
   ApiPublicV1WalletRoute: ApiPublicV1WalletRouteWithChildren,
   ApiPublicV1AccountDeleteRoute: ApiPublicV1AccountDeleteRoute,
   ApiPublicV1AccountExportRoute: ApiPublicV1AccountExportRoute,
@@ -7089,6 +7237,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1StorageCompleteRoute: ApiPublicV1StorageCompleteRoute,
   ApiPublicV1StorageIntentRoute: ApiPublicV1StorageIntentRoute,
   ApiPublicV1SupportTicketsRoute: ApiPublicV1SupportTicketsRoute,
+  ApiPublicV1UserNotificationPreferencesRoute:
+    ApiPublicV1UserNotificationPreferencesRoute,
+  ApiPublicV1WatchPartiesPartyIdRoute: ApiPublicV1WatchPartiesPartyIdRoute,
   ApiPublicV1WatchlistTitleIdRoute: ApiPublicV1WatchlistTitleIdRoute,
   ApiPublicV1ZillionaireApprovalsRoute: ApiPublicV1ZillionaireApprovalsRoute,
   ApiPublicV1ZillionaireAuditRoute: ApiPublicV1ZillionaireAuditRoute,
@@ -7114,6 +7265,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1EpgIndexRoute: ApiPublicV1EpgIndexRoute,
   ApiPublicV1ProfilesIndexRoute: ApiPublicV1ProfilesIndexRoute,
   ApiPublicV1RecommendationsIndexRoute: ApiPublicV1RecommendationsIndexRoute,
+  ApiPublicV1WatchPartiesIndexRoute: ApiPublicV1WatchPartiesIndexRoute,
   ApiPublicV1WatchlistIndexRoute: ApiPublicV1WatchlistIndexRoute,
   ApiPublicV1AdsAdIdEventsRoute: ApiPublicV1AdsAdIdEventsRoute,
   ApiPublicV1AuthDevicesSignoutAllRoute: ApiPublicV1AuthDevicesSignoutAllRoute,
@@ -7141,6 +7293,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1StreamingHlsSplatRoute: ApiPublicV1StreamingHlsSplatRoute,
   ApiPublicV1StreamingKeyAssetIdRoute: ApiPublicV1StreamingKeyAssetIdRoute,
   ApiPublicV1TitlesTitleIdRateRoute: ApiPublicV1TitlesTitleIdRateRoute,
+  ApiPublicV1UserLibraryLikedRoute: ApiPublicV1UserLibraryLikedRoute,
   ApiPublicV1WorkerJobsClaimRoute: ApiPublicV1WorkerJobsClaimRoute,
   ApiPublicV1WorkerMaintenanceClaimRoute:
     ApiPublicV1WorkerMaintenanceClaimRoute,

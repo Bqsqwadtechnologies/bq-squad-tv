@@ -590,3 +590,32 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 ### 5. Full Audit Visibility for Delegated Operations
 - **Decision**: Added dedicated Activity & Audit tab in `src/routes/zillionaire.team.tsx` enabling the platform owner to inspect every action performed by team members with actor UID, action name, target reference, reason, and timestamp.
 - Batch 9 finished, continuing.
+
+## Batch 10 — Viewer Features: Reactions, Watch Parties, Comment Moderation & Player Experience
+
+### 1. Like and Dislike Reaction Architecture & Liked Library
+- **Decision**: Implemented high-performance reactions API at `/api/public/v1/reactions` and liked library endpoint at `/api/public/v1/user/library/liked`.
+- **Decision**: Maintained aggregate counter summaries (`reactions_summary/{targetType}_{targetId}`) with concurrent vote delta resolution and voter state tracking in Firestore.
+- **Decision**: Added interactive Like and Dislike buttons with live counts across on-demand content (`content.$assetId.tsx`) and live TV channels (`channels.$channelId.tsx`).
+- **Decision**: Added dedicated "Liked Content" tab in the viewer Library (`src/routes/library.tsx`) rendering favorited videos, channels, and streams.
+
+### 2. Synced Watch Party System with Independent Billing
+- **Decision**: Created Watch Party backend (`/api/public/v1/watch-parties` and `watch-parties/$partyId`) supporting movies, episodes, channels, and live streams with configurable capacity (2 to 50 viewers).
+- **Decision**: Enforced Kids Safe Mode guards: age-restricted content (18+, R, TV-MA) is blocked from creation or joining for viewers with kids mode enabled.
+- **Decision**: Built full-screen synchronized watch room (`src/routes/watch-party.$partyId.tsx`) featuring host playback controls (play/pause/seek sync), participant kick actions, room termination, and real-time room chat.
+- **Decision**: Implemented independent per-viewer heartbeat metering (`watch_party_billing`) ensuring each participant is billed solely for their own watch minutes.
+
+### 3. Share Links, OpenGraph Cards & Android Deep Linking
+- **Decision**: Added deep link generation and Web Share API integration across viewer interfaces.
+- **Decision**: Configured OpenGraph and Twitter preview metadata (`og:title`, `og:description`, `og:image`, `twitter:card`) for social sharing.
+- **Decision**: Added Android deep link intent filters and navigation composables for `bqsqwad://watch/{id}` and `bqsqwad://party/{id}` in `android/app/src/main/java/com/bqsqwad/tv/ui/BqSqwadTvApp.kt`.
+
+### 4. Comment Reporting Workflow
+- **Decision**: Built public comment reporting endpoint at `/api/public/v1/comment-reports` supporting harassment, hate speech, spam, inappropriate content, and spoilers.
+- **Decision**: Added flag button on each viewer comment in `content.$assetId.tsx` with modal reporting and automatic moderation status flagging upon multiple reports.
+
+### 5. Advanced Player Experience & Notification Preferences
+- **Decision**: Added Sleep Timer selector (Off, 15m, 30m, 45m, 60m) with automatic countdown and playback pause on expiration.
+- **Decision**: Added Skip Intro trigger and Next Episode countdown integration with Watchlist reminder notifications.
+- **Decision**: Built notification preferences API at `/api/public/v1/user/notification-preferences` and settings tab in `src/routes/notifications.tsx` for watchlist releases, live broadcasts, watch party invites, and billing receipts.
+- Batch 10 finished, continuing.

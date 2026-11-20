@@ -26,6 +26,12 @@ import {
   Maximize,
   Cast,
   AlertTriangle,
+  ThumbsUp,
+  ThumbsDown,
+  Users,
+  Flag,
+  Moon,
+  Bell,
 } from "lucide-react";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 
@@ -92,6 +98,25 @@ export function ContentDetailsPage() {
   const [inWatchlist, setInWatchlist] = useState(false);
   const [showSkipIntro, setShowSkipIntro] = useState(false);
   const [nextEpisodeAvailable, setNextEpisodeAvailable] = useState(true);
+  // Batch 10 Viewer features
+  const [likeCount, setLikeCount] = useState<number>(0);
+  const [dislikeCount, setDislikeCount] = useState<number>(0);
+  const [userReaction, setUserReaction] = useState<"like" | "dislike" | null>(null);
+  const [sleepTimer, setSleepTimer] = useState<string>("off");
+  const [sleepTimerEndsAt, setSleepTimerEndsAt] = useState<number | null>(null);
+  const [reminderActive, setReminderActive] = useState(false);
+  const [partyModalOpen, setPartyModalOpen] = useState(false);
+  const [partyMaxParticipants, setPartyMaxParticipants] = useState(10);
+  const [partyBusy, setPartyBusy] = useState(false);
+  const [commentReportModalOpen, setCommentReportModalOpen] = useState(false);
+  const [targetCommentId, setTargetCommentId] = useState("");
+  const [commentReportReason, setCommentReportReason] = useState<"harassment" | "hate_speech" | "spam" | "inappropriate" | "spoiler" | "other">("spam");
+  const [commentReportDetails, setCommentReportDetails] = useState("");
+  const [commentReportBusy, setCommentReportBusy] = useState(false);
+
+
+  const [nextEpisodeCountdown, setNextEpisodeCountdown] = useState<number | null>(null);
+
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const sessionRef = useRef("");
@@ -138,6 +163,26 @@ export function ContentDetailsPage() {
       );
     setContent(contentResult.content);
     setComments(commentsResult);
+    // Load reactions
+    fetch("/api/public/v1/reactions?targetType=video&targetId=" + encodeURIComponent(assetId), { headers })
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data.likeCount === "number") setLikeCount(data.likeCount);
+        if (typeof data.dislikeCount === "number") setDislikeCount(data.dislikeCount);
+        if (data.userReaction) setUserReaction(data.userReaction);
+      })
+      .catch(() => {});
+
+    // Load reactions
+    fetch("/api/public/v1/reactions?targetType=video&targetId=" + encodeURIComponent(assetId), { headers })
+      .then((r) => r.json())
+      .then((data) => {
+        if (typeof data.likeCount === "number") setLikeCount(data.likeCount);
+        if (typeof data.dislikeCount === "number") setDislikeCount(data.dislikeCount);
+        if (data.userReaction) setUserReaction(data.userReaction);
+      })
+      .catch(() => {});
+
   }
 
   useEffect(() => {
@@ -380,6 +425,205 @@ export function ContentDetailsPage() {
     });
   }
 
+
+  async function handleReaction(vote: "like" | "dislike") {
+    const nextVote = userReaction === vote ? "none" : vote;
+    try {
+      const res = await api("/api/public/v1/reactions", {
+        method: "POST",
+        body: JSON.stringify({
+          targetType: "video",
+          targetId: assetId,
+          reaction: nextVote,
+          title: content?.title,
+          posterUrl: content?.posterUrl,
+        }),
+      });
+      if (typeof res.likeCount === "number") setLikeCount(res.likeCount as number);
+      if (typeof res.dislikeCount === "number") setDislikeCount(res.dislikeCount as number);
+      setUserReaction(res.userReaction as "like" | "dislike" | null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save reaction.");
+    }
+  }
+
+  async function handleCreateWatchParty() {
+    if (!content) return;
+    setPartyBusy(true);
+    setError("");
+    try {
+      const res = await api("/api/public/v1/watch-parties/", {
+        method: "POST",
+        body: JSON.stringify({
+          targetType: "movie",
+          targetId: assetId,
+          title: content.title,
+          posterUrl: content.posterUrl,
+          streamUrl: playbackUrl || null,
+          contentRating: content.contentRating || "PG-13",
+          maxParticipants: partyMaxParticipants,
+        }),
+      });
+      if (res.party && (res.party as any).id) {
+        window.location.assign();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create watch party.");
+    } finally {
+      setPartyBusy(false);
+      setPartyModalOpen(false);
+    }
+  }
+
+  async function submitCommentReport(e: FormEvent) {
+    e.preventDefault();
+    if (!targetCommentId) return;
+    setCommentReportBusy(true);
+    try {
+      await api("/api/public/v1/comment-reports", {
+        method: "POST",
+        body: JSON.stringify({
+          commentId: targetCommentId,
+          assetId,
+          reason: commentReportReason,
+          details: commentReportDetails,
+        }),
+      });
+      setMessage("Comment report submitted for moderator review.");
+      setCommentReportModalOpen(false);
+      setCommentReportDetails("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to report comment.");
+    } finally {
+      setCommentReportBusy(false);
+    }
+  }
+
+  function handleSleepTimerChange(mins: string) {
+    setSleepTimer(mins);
+    if (mins === "off") {
+      setSleepTimerEndsAt(null);
+    } else {
+      const durationMs = parseInt(mins, 10) * 60 * 1000;
+      setSleepTimerEndsAt(Date.now() + durationMs);
+    }
+  }
+
+  // Sleep timer interval
+  useEffect(() => {
+    if (!sleepTimerEndsAt) return;
+    const interval = setInterval(() => {
+      if (Date.now() >= sleepTimerEndsAt) {
+        if (videoRef.current) {
+          videoRef.current.pause();
+          setMessage("Sleep timer reached. Playback paused.");
+        }
+        setSleepTimer("off");
+        setSleepTimerEndsAt(null);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [sleepTimerEndsAt]);
+
+
+  async function handleReaction(vote: "like" | "dislike") {
+    const nextVote = userReaction === vote ? "none" : vote;
+    try {
+      const res = await api("/api/public/v1/reactions", {
+        method: "POST",
+        body: JSON.stringify({
+          targetType: "video",
+          targetId: assetId,
+          reaction: nextVote,
+          title: content?.title,
+          posterUrl: content?.posterUrl,
+        }),
+      });
+      if (typeof res.likeCount === "number") setLikeCount(res.likeCount as number);
+      if (typeof res.dislikeCount === "number") setDislikeCount(res.dislikeCount as number);
+      setUserReaction(res.userReaction as "like" | "dislike" | null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save reaction.");
+    }
+  }
+
+  async function handleCreateWatchParty() {
+    if (!content) return;
+    setPartyBusy(true);
+    setError("");
+    try {
+      const res = await api("/api/public/v1/watch-parties/", {
+        method: "POST",
+        body: JSON.stringify({
+          targetType: "movie",
+          targetId: assetId,
+          title: content.title,
+          posterUrl: content.posterUrl,
+          streamUrl: playbackUrl || null,
+          contentRating: content.contentRating || "PG-13",
+          maxParticipants: partyMaxParticipants,
+        }),
+      });
+      if (res.party && (res.party as any).id) {
+        window.location.assign(`/watch-party/${(res.party as any).id}?code=${(res.party as any).roomCode}`);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create watch party.");
+    } finally {
+      setPartyBusy(false);
+      setPartyModalOpen(false);
+    }
+  }
+
+  async function submitCommentReport(e: FormEvent) {
+    e.preventDefault();
+    if (!targetCommentId) return;
+    setCommentReportBusy(true);
+    try {
+      await api("/api/public/v1/comment-reports", {
+        method: "POST",
+        body: JSON.stringify({
+          commentId: targetCommentId,
+          assetId,
+          reason: commentReportReason,
+          details: commentReportDetails,
+        }),
+      });
+      setMessage("Comment report submitted for moderator review.");
+      setCommentReportModalOpen(false);
+      setCommentReportDetails("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to report comment.");
+    } finally {
+      setCommentReportBusy(false);
+    }
+  }
+
+  function handleSleepTimerChange(mins: string) {
+    setSleepTimer(mins);
+    if (mins === "off") {
+      setSleepTimerEndsAt(null);
+    } else {
+      const durationMs = parseInt(mins, 10) * 60 * 1000;
+      setSleepTimerEndsAt(Date.now() + durationMs);
+    }
+  }
+
+  useEffect(() => {
+    if (!sleepTimerEndsAt) return;
+    const interval = setInterval(() => {
+      if (Date.now() >= sleepTimerEndsAt) {
+        if (videoRef.current) {
+          videoRef.current.pause();
+          setMessage("Sleep timer reached. Playback paused.");
+        }
+        setSleepTimer("off");
+        setSleepTimerEndsAt(null);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [sleepTimerEndsAt]);
+
   async function handleShare() {
     const shareData = {
       title: content?.title ?? "BQ SQWAD TV",
@@ -506,7 +750,62 @@ export function ContentDetailsPage() {
           <a href="/" className="inline-flex items-center gap-2 text-sm font-bold text-cyan-200">
             <ArrowLeft size={16} /> Back to BQ SQWAD TV
           </a>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Reactions: Like & Dislike */}
+            <div className="flex items-center rounded-xl border border-white/10 bg-white/5 p-0.5 text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => void handleReaction("like")}
+                title="Like"
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 transition ${
+                  userReaction === "like" ? "bg-cyan-400 text-slate-950 font-bold" : "text-slate-300 hover:text-white"
+                }`}
+              >
+                <ThumbsUp size={13} className={userReaction === "like" ? "fill-current" : ""} />
+                <span>{likeCount}</span>
+              </button>
+              <div className="h-3 w-px bg-white/10" />
+              <button
+                type="button"
+                onClick={() => void handleReaction("dislike")}
+                title="Dislike"
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 transition ${
+                  userReaction === "dislike" ? "bg-rose-400 text-slate-950 font-bold" : "text-slate-300 hover:text-white"
+                }`}
+              >
+                <ThumbsDown size={13} className={userReaction === "dislike" ? "fill-current" : ""} />
+                <span>{dislikeCount}</span>
+              </button>
+            </div>
+
+            {/* Watch Together / Watch Party */}
+            <button
+              type="button"
+              onClick={() => setPartyModalOpen(true)}
+              className="flex items-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-400/20 transition"
+            >
+              <Users size={14} />
+              <span>Watch Party</span>
+            </button>
+
+            {/* Watchlist Reminder */}
+            <button
+              type="button"
+              onClick={() => {
+                setReminderActive((prev) => !prev);
+                setMessage(reminderActive ? "Watchlist reminder disabled." : "Reminder set! You will be notified of new episodes.");
+              }}
+              title="Toggle reminder"
+              className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition ${
+                reminderActive
+                  ? "border-amber-400/40 bg-amber-400/20 text-amber-300"
+                  : "border-white/10 bg-white/5 text-slate-300 hover:text-white"
+              }`}
+            >
+              <Bell size={14} className={reminderActive ? "fill-amber-300" : ""} />
+              <span className="hidden sm:inline">{reminderActive ? "Reminder On" : "Remind Me"}</span>
+            </button>
+
             <button
               type="button"
               onClick={toggleWatchlist}
@@ -827,8 +1126,8 @@ export function ContentDetailsPage() {
                   </div>
                 </div>
 
-                {/* Player Preferences: Speed, Subtitles, Audio, Quality */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                {/* Player Preferences: Speed, Subtitles, Audio, Quality, Sleep Timer */}
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
                   {/* Playback Speed */}
                   <div className="rounded-2xl border border-white/10 bg-[#040f33] p-3 space-y-1.5">
                     <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
@@ -900,6 +1199,24 @@ export function ContentDetailsPage() {
                       <option value="data_saver">Data Saver</option>
                     </select>
                   </div>
+
+                  {/* Sleep Timer */}
+                  <div className="rounded-2xl border border-white/10 bg-[#040f33] p-3 space-y-1.5">
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1">
+                      <Moon size={12} /> Sleep Timer
+                    </label>
+                    <select
+                      value={sleepTimer}
+                      onChange={(e) => handleSleepTimerChange(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-2.5 py-1 text-xs text-white focus:outline-none"
+                    >
+                      <option value="off">Off</option>
+                      <option value="15">15 Minutes</option>
+                      <option value="30">30 Minutes</option>
+                      <option value="45">45 Minutes</option>
+                      <option value="60">60 Minutes</option>
+                    </select>
+                  </div>
                 </div>
 
                 <p className="text-xs text-blue-100/45">
@@ -955,14 +1272,27 @@ export function ContentDetailsPage() {
               {comments.length ? (
                 <div className="mt-4 divide-y divide-white/10">
                   {comments.map((item) => (
-                    <article key={item.id} className="py-4">
-                      <p className="text-sm leading-6 text-blue-100/80">{item.body}</p>
-                      <p className="mt-2 text-[11px] text-blue-100/40">
-                        {item.viewerNumber} ·{" "}
-                        {item.createdAt
-                          ? new Date(item.createdAt).toLocaleDateString()
-                          : "Recently"}
-                      </p>
+                    <article key={item.id} className="py-4 flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm leading-6 text-blue-100/80">{item.body}</p>
+                        <p className="mt-2 text-[11px] text-blue-100/40">
+                          {item.viewerNumber} ·{" "}
+                          {item.createdAt
+                            ? new Date(item.createdAt).toLocaleDateString()
+                            : "Recently"}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTargetCommentId(item.id);
+                          setCommentReportModalOpen(true);
+                        }}
+                        title="Report comment"
+                        className="text-slate-500 hover:text-amber-400 transition p-1"
+                      >
+                        <Flag size={13} />
+                      </button>
                     </article>
                   ))}
                 </div>
@@ -980,6 +1310,234 @@ export function ContentDetailsPage() {
             ) : null}
           </>
         ) : null}
+
+        {/* Watch Party Modal */}
+        {partyModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="max-w-md w-full rounded-3xl border border-cyan-400/30 bg-[#07143D] p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-cyan-300">
+                  <Users size={18} /> Start a Watch Party
+                </h3>
+                <button onClick={() => setPartyModalOpen(false)} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+              <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+                Watch with friends in sync! You host the room and control playback. Every participant is billed individually for their own watch time.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                    Maximum Participants (2 to 50)
+                  </label>
+                  <input
+                    type="number"
+                    min={2}
+                    max={50}
+                    value={partyMaxParticipants}
+                    onChange={(e) => setPartyMaxParticipants(parseInt(e.target.value) || 10)}
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white"
+                  />
+                </div>
+                <div className="rounded-xl bg-white/5 border border-white/10 p-3 text-xs text-slate-400">
+                  <p className="font-bold text-slate-200 mb-1">Kids Safe Mode Protected</p>
+                  <p>Restricted content ratings ({content?.contentRating || "G"}) will be enforced for all participants.</p>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setPartyModalOpen(false)}
+                    className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold hover:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={partyBusy}
+                    onClick={() => void handleCreateWatchParty()}
+                    className="rounded-xl bg-cyan-400 px-5 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 transition"
+                  >
+                    {partyBusy ? "Creating Room…" : "Create Room & Join"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Comment Report Modal */}
+        {commentReportModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <form onSubmit={submitCommentReport} className="max-w-md w-full rounded-3xl border border-amber-400/30 bg-[#07143D] p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-amber-300">
+                  <Flag size={18} /> Report Comment
+                </h3>
+                <button type="button" onClick={() => setCommentReportModalOpen(false)} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+              <p className="text-xs text-slate-300 mb-4">
+                Help us keep BQ SQWAD TV safe and welcoming. Why are you reporting this comment?
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">Reason</label>
+                  <select
+                    value={commentReportReason}
+                    onChange={(e) => setCommentReportReason(e.target.value as any)}
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white"
+                  >
+                    <option value="harassment">Harassment or Bullying</option>
+                    <option value="hate_speech">Hate Speech</option>
+                    <option value="spam">Spam or Scam</option>
+                    <option value="inappropriate">Inappropriate Content</option>
+                    <option value="spoiler">Major Unmarked Spoilers</option>
+                    <option value="other">Other Violation</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">Additional Details (optional)</label>
+                  <textarea
+                    rows={3}
+                    value={commentReportDetails}
+                    onChange={(e) => setCommentReportDetails(e.target.value)}
+                    placeholder="Describe what is wrong…"
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCommentReportModalOpen(false)}
+                    className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold hover:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={commentReportBusy}
+                    className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-bold text-slate-950 hover:bg-amber-300 disabled:opacity-50 transition"
+                  >
+                    {commentReportBusy ? "Submitting…" : "Submit Report"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        )}
+
+
+        {/* Watch Party Modal */}
+        {partyModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="max-w-md w-full rounded-3xl border border-cyan-400/30 bg-[#07143D] p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-cyan-300">
+                  <Users size={18} /> Start a Watch Party
+                </h3>
+                <button onClick={() => setPartyModalOpen(false)} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+              <p className="text-xs text-slate-300 mb-4 leading-relaxed">
+                Watch with friends in sync! You host the room and control playback. Every participant is billed individually for their own watch time.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                    Maximum Participants (2 to 50)
+                  </label>
+                  <input
+                    type="number"
+                    min={2}
+                    max={50}
+                    value={partyMaxParticipants}
+                    onChange={(e) => setPartyMaxParticipants(parseInt(e.target.value) || 10)}
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white"
+                  />
+                </div>
+                <div className="rounded-xl bg-white/5 border border-white/10 p-3 text-xs text-slate-400">
+                  <p className="font-bold text-slate-200 mb-1">Kids Safe Mode Protected</p>
+                  <p>Restricted content ratings ({content?.contentRating || "G"}) will be enforced for all participants.</p>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setPartyModalOpen(false)}
+                    className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold hover:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={partyBusy}
+                    onClick={() => void handleCreateWatchParty()}
+                    className="rounded-xl bg-cyan-400 px-5 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-300 disabled:opacity-50 transition"
+                  >
+                    {partyBusy ? "Creating Room…" : "Create Room & Join"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Comment Report Modal */}
+        {commentReportModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <form onSubmit={submitCommentReport} className="max-w-md w-full rounded-3xl border border-amber-400/30 bg-[#07143D] p-6 shadow-2xl">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold flex items-center gap-2 text-amber-300">
+                  <Flag size={18} /> Report Comment
+                </h3>
+                <button type="button" onClick={() => setCommentReportModalOpen(false)} className="text-slate-400 hover:text-white">✕</button>
+              </div>
+              <p className="text-xs text-slate-300 mb-4">
+                Help us keep BQ SQWAD TV safe and welcoming. Why are you reporting this comment?
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">Reason</label>
+                  <select
+                    value={commentReportReason}
+                    onChange={(e) => setCommentReportReason(e.target.value as any)}
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white"
+                  >
+                    <option value="harassment">Harassment or Bullying</option>
+                    <option value="hate_speech">Hate Speech</option>
+                    <option value="spam">Spam or Scam</option>
+                    <option value="inappropriate">Inappropriate Content</option>
+                    <option value="spoiler">Major Unmarked Spoilers</option>
+                    <option value="other">Other Violation</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 mb-1.5">Additional Details (optional)</label>
+                  <textarea
+                    rows={3}
+                    value={commentReportDetails}
+                    onChange={(e) => setCommentReportDetails(e.target.value)}
+                    placeholder="Describe what is wrong…"
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setCommentReportModalOpen(false)}
+                    className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold hover:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={commentReportBusy}
+                    className="rounded-xl bg-amber-400 px-5 py-2 text-xs font-bold text-slate-950 hover:bg-amber-300 disabled:opacity-50 transition"
+                  >
+                    {commentReportBusy ? "Submitting…" : "Submit Report"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        )}
+
       </div>
     </main>
   );

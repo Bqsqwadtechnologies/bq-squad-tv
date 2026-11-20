@@ -15,6 +15,11 @@ import {
   Wallet,
   Volume2,
   VolumeX,
+  ThumbsUp,
+  ThumbsDown,
+  Users,
+  Share2,
+  Check,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
@@ -437,7 +442,53 @@ function ChannelPage() {
                     Now: {details.channel.currentProgramme ?? "Live Streaming Programme"}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Like & Dislike */}
+                  <div className="flex items-center rounded-xl border border-white/10 bg-white/5 p-0.5 text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => void handleReaction("like")}
+                      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 transition ${
+                        userReaction === "like" ? "bg-cyan-400 text-slate-950 font-bold" : "text-slate-300 hover:text-white"
+                      }`}
+                    >
+                      <ThumbsUp size={13} className={userReaction === "like" ? "fill-current" : ""} />
+                      <span>{likeCount}</span>
+                    </button>
+                    <div className="h-3 w-px bg-white/10" />
+                    <button
+                      type="button"
+                      onClick={() => void handleReaction("dislike")}
+                      className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 transition ${
+                        userReaction === "dislike" ? "bg-rose-400 text-slate-950 font-bold" : "text-slate-300 hover:text-white"
+                      }`}
+                    >
+                      <ThumbsDown size={13} className={userReaction === "dislike" ? "fill-current" : ""} />
+                      <span>{dislikeCount}</span>
+                    </button>
+                  </div>
+
+                  {/* Watch Party */}
+                  <button
+                    type="button"
+                    disabled={partyBusy}
+                    onClick={() => void handleCreateWatchParty()}
+                    className="flex items-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 py-1.5 text-xs font-bold text-cyan-300 hover:bg-cyan-400/20 transition"
+                  >
+                    <Users size={13} />
+                    <span>{partyBusy ? "Joining Party…" : "Watch Party"}</span>
+                  </button>
+
+                  {/* Share */}
+                  <button
+                    type="button"
+                    onClick={handleShare}
+                    className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white transition"
+                  >
+                    {copiedLink ? <Check size={13} className="text-emerald-400" /> : <Share2 size={13} />}
+                    <span>{copiedLink ? "Copied" : "Share"}</span>
+                  </button>
+
                   <span className="rounded-xl border border-cyan-400/30 bg-[#00D8F5]/10 px-3 py-1.5 text-xs font-bold text-[#00D8F5]">
                     Pay As You Go
                   </span>

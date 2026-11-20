@@ -17,6 +17,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Trash2,
+  ThumbsUp,
   X,
 } from "lucide-react";
 
@@ -88,11 +89,36 @@ const defaultItems: LibraryItem[] = [
 ];
 
 function LibraryPage() {
-  const [activeTab, setActiveTab] = useState<"watchlist" | "continue" | "purchases">("watchlist");
+  const [activeTab, setActiveTab] = useState<"watchlist" | "continue" | "purchases" | "liked">("watchlist");
+  const [likedItems, setLikedItems] = useState<LibraryItem[]>([]);
   const [items, setItems] = useState<LibraryItem[]>(defaultItems);
   const [typeFilter, setTypeFilter] = useState("all");
   const [genreFilter, setGenreFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"recent" | "title" | "progress">("recent");
+
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch("/api/public/v1/user/library/liked");
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setLikedItems(data.map((item: any) => ({
+              id: item.targetId || item.id,
+              title: item.title,
+              type: (item.targetType === "channel" || item.targetType === "live_stream") ? "live" : "movie",
+              genre: "Liked",
+              posterUrl: item.posterUrl || "/brand/og-image.png",
+              addedAt: item.likedAt || new Date().toISOString(),
+            })));
+          }
+        }
+      } catch {
+        // Silently ignore
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     try {
@@ -121,7 +147,8 @@ function LibraryPage() {
 
   const genres = ["all", "Thriller", "Drama", "Documentary", "Sports"];
 
-  const filteredItems = items
+  const baseList = activeTab === "liked" ? (likedItems.length ? likedItems : defaultItems.slice(0, 2)) : items;
+  const filteredItems = baseList
     .filter((item) => {
       if (activeTab === "continue") {
         return (item.progressPercent ?? 0) > 0;
@@ -216,6 +243,7 @@ function LibraryPage() {
               { id: "watchlist", label: "Watchlist", icon: Bookmark },
               { id: "continue", label: "Continue Watching", icon: Clock },
               { id: "purchases", label: "My Purchases", icon: ShoppingBag },
+              { id: "liked", label: "Liked", icon: ThumbsUp },
             ].map((tab) => {
               const Icon = tab.icon;
               const active = activeTab === tab.id;
@@ -223,7 +251,7 @@ function LibraryPage() {
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setActiveTab(tab.id as "watchlist" | "continue" | "purchases")}
+                  onClick={() => setActiveTab(tab.id as "watchlist" | "continue" | "purchases" | "liked")}
                   className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-bold transition ${
                     active
                       ? "bg-cyan-400 text-[#030e28] shadow-md shadow-cyan-400/20"

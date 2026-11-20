@@ -254,7 +254,28 @@ fun BqSqwadTvApp(
                         onPlay = { nav.navigate("player/$it") },
                     )
                 }
-                composable("player/{id}", arguments = listOf(navArgument("id") { type = NavType.StringType })) { entry ->
+                composable(
+                    "player/{id}",
+                    arguments = listOf(navArgument("id") { type = NavType.StringType }),
+                    deepLinks = listOf(
+                        navDeepLink { uriPattern = "bqsqwad://watch/{id}" },
+                        navDeepLink { uriPattern = "https://bqsqwad.tv/watch/{id}" },
+                    ),
+                ) { entry ->
+                    PlayerScreen(
+                        entry.arguments?.getString("id").orEmpty(),
+                        onExit = { nav.popBackStack() },
+                        onTopUp = { nav.navigate("wallet") },
+                    )
+                }
+                composable(
+                    "watch-party/{id}",
+                    arguments = listOf(navArgument("id") { type = NavType.StringType }),
+                    deepLinks = listOf(
+                        navDeepLink { uriPattern = "bqsqwad://party/{id}" },
+                        navDeepLink { uriPattern = "https://bqsqwad.tv/watch-party/{id}" },
+                    ),
+                ) { entry ->
                     PlayerScreen(
                         entry.arguments?.getString("id").orEmpty(),
                         onExit = { nav.popBackStack() },
