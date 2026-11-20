@@ -21,4 +21,4 @@ PUSH BADGE #14 SUCCESSFUL — V5-02 Batch 5 — 08730461f4e6c0486414d44cbe0e1275
 
 PUSH BADGE #15 SUCCESSFUL — V5-02 Batch 6 — a2a9825c1bc48fb93b804fde9f67008c8cd9a36f — Owner Test Lab with isolated private test channels, a virtual test-wallet display, audited preview and safe cleanup; seven-step checklist clearly labels unconnected end-to-end actions.
 
-PUSH BADGE #16 SUCCESSFUL — V5-02 Batch 7 — 0000000000000000000000000000000000000000 — Advertising manager with direct units, creatives, partner networks, placements, reporting, audience safety and paid viewer ad-free policy.
+PUSH BADGE #16 SUCCESSFUL — V5-02 Batch 7 — 80c59c9e223ecf2a6688329a700be1089d7fd4d9 — Advertising manager with direct units, creatives, partner networks, placements, reporting, audience safety and paid viewer ad-free policy.
