@@ -968,6 +968,7 @@ function ProducerChannelsInner({
                   <p className="text-[10px] leading-4 text-slate-400">These declarations are recorded for review. They do not replace licence evidence or independent approval, and the video stays private until approved.</p>
                 </div>
               </div>
+              </div>
 
               {/* Progress Bar */}
               {uploading && (
@@ -982,6 +983,7 @@ function ProducerChannelsInner({
                       style={{ width: `${uploadProgress}%` }}
                     />
                   </div>
+                </div>
                 </div>
               )}
 
@@ -1016,8 +1018,6 @@ function ProducerChannelsInner({
                 )}
               </div>
             </div>
-        </div>
-        </div>
           </div>
         )}
 
@@ -1315,7 +1315,6 @@ function ProducerChannelsInner({
             </div>
           </div>
         )}
-      </div>
       </div>
     </ConsoleShell>
   );
