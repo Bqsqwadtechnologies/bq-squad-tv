@@ -31,6 +31,12 @@ export function redactString(input: string): string {
   // Redact Bearer tokens
   text = text.replace(/Bearer\s+[A-Za-z0-9-_=.]+/gi, "Bearer [REDACTED_TOKEN]");
 
+  // Redact primary credit/debit card numbers (Visa, MC, Amex)
+  text = text.replace(/\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b/g, "[REDACTED_CARD]");
+
+  // Redact raw bank account numbers
+  text = text.replace(/(?:account_?number|accountNumber|bank_?account)\s*[:=]\s*["']?([0-9]{8,18})["']?/gi, "account_number: [REDACTED_ACCOUNT]");
+
   // Redact JWT tokens
   text = text.replace(
     /eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g,

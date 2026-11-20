@@ -681,6 +681,31 @@ function AccountPage() {
     }
   }
 
+  async function handleDeleteAccount() {
+    if (!window.confirm("Are you sure you want to delete your account? This action is permanent and will delete or anonymise your personal data.")) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      const token = await getActiveWebIdToken();
+      if (!token) throw new Error("Sign in again to confirm account deletion.");
+      const response = await fetch("/api/public/v1/account/delete", {
+        method: "POST",
+        headers: await getWebAuthHeaders(token),
+      });
+      const data = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Could not complete account deletion.");
+      await revokeAllWebSessions();
+      setSignedIn(false);
+      setVerificationPending(false);
+      setAccountEmail("");
+      setMessage("Your account and personal data have been deleted.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Account deletion failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleSignOut() {
     setBusy(true);
     try {
@@ -963,6 +988,14 @@ function AccountPage() {
                     className="w-full rounded-lg border border-cyan-300/25 px-3 py-2 text-xs font-bold text-cyan-100 hover:bg-cyan-300/5 disabled:opacity-50"
                   >
                     {busy ? "Please wait…" : "Sign out on all devices"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void handleDeleteAccount()}
+                    className="w-full rounded-lg border border-rose-500/30 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-500/10 disabled:opacity-50"
+                  >
+                    Delete Account &amp; Personal Data
                   </button>
                 </div>
               )}
