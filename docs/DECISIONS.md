@@ -297,3 +297,9 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Publishing auto-fills settings or neutral standard defaults and returns a warning when any fallback was used; drafts remain separate from the published copy.
 - Public legal routes resolve every documented slug through a published document, bundled default or safe fallback; unknown slugs return a not-found response without implying a supported policy is unavailable.
 - Default text is a starting point and needs qualified legal review before production use.
+
+## V5-02 Batch 9 — Legal text and storage visibility
+
+- Rewrote default legal copy for all 12 platform documents to adhere strictly to first-person plural voice ("we", never singular "I") and neutral provider terms, removing vendor names (Paystack, Google Play, etc.) from public and policy text.
+- Added comprehensive storage operations visibility directly within the Zillionaire Storage dashboard, showing total destinations, active pool counts, recorded storage usage, estimated free space against soft caps, ledger egress volumes, replica indicators, and failover status.
+- Added legal-copy safety automated tests to guarantee no vendor mentions and zero first-person singular pronouns appear across defaults.

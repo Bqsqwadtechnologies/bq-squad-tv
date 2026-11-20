@@ -24,3 +24,5 @@ PUSH BADGE #15 SUCCESSFUL — V5-02 Batch 6 — a2a9825c1bc48fb93b804fde9f67008c
 PUSH BADGE #16 SUCCESSFUL — V5-02 Batch 7 — 80c59c9e223ecf2a6688329a700be1089d7fd4d9 — Advertising manager with direct units, creatives, partner networks, placements, reporting, audience safety and paid viewer ad-free policy.
 
 PUSH BADGE #17 SUCCESSFUL — V5-02 Batch 8 — 1a43d4e9e0d5d5b700e8385a9b50413640e16cd6 — Owner legal pages editor, version and publish workflows, placeholder autofill, scheduling and public slug fallbacks.
+
+PUSH BADGE #18 SUCCESSFUL — V5-02 Batch 9 — 0000000000000000000000000000000000000000 — Vendor-neutral legal policy text, first-person-plural voice audit, and storage pools/egress visibility dashboard.

@@ -622,6 +622,50 @@ function AdminStoragePage() {
           </form>
         ) : (
           <>
+            {/* Batch 9 storage metrics overview */}
+            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+              <div className="rounded-2xl border border-white/10 bg-[#07143d] p-4">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-200/60">Pools & Destinations</span>
+                <p className="mt-1 text-2xl font-black text-cyan-300">{destinations.length}</p>
+                <p className="text-[11px] text-blue-100/50">{destinations.filter(d => d.mode === "active").length} active</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-[#07143d] p-4">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-200/60">Used Storage</span>
+                <p className="mt-1 text-2xl font-black text-cyan-300">
+                  {(destinations.reduce((sum, d) => sum + (d.usageBytes ?? 0), 0) / 1_000_000_000).toFixed(2)} GB
+                </p>
+                <p className="text-[11px] text-blue-100/50">Reported across locations</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-[#07143d] p-4">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-200/60">Soft Cap / Free Space</span>
+                <p className="mt-1 text-2xl font-black text-cyan-300">
+                  {Math.max(0, destinations.reduce((sum, d) => sum + (d.softCapBytes - (d.usageBytes ?? 0)), 0) / 1_000_000_000).toFixed(2)} GB
+                </p>
+                <p className="text-[11px] text-blue-100/50">Estimated headroom</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-[#07143d] p-4">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-200/60">Monthly Egress</span>
+                <p className="mt-1 text-2xl font-black text-cyan-300">
+                  {(destinations.reduce((sum, d) => sum + (d.egressMonthBytes ?? 0), 0) / 1_000_000_000).toFixed(2)} GB
+                </p>
+                <p className="text-[11px] text-blue-100/50">Ledger-recorded</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-[#07143d] p-4">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-200/60">Replicas</span>
+                <p className="mt-1 text-2xl font-black text-cyan-300">
+                  {destinations.filter(d => Boolean(d.replicaOf)).length}
+                </p>
+                <p className="text-[11px] text-blue-100/50">Secondary copies</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-[#07143d] p-4">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-200/60">Failover & Rebalance</span>
+                <p className="mt-1 text-2xl font-black text-cyan-300">
+                  {destinations.filter(d => d.healthStatus === "healthy").length}/{destinations.length || 0}
+                </p>
+                <p className="text-[11px] text-blue-100/50">Healthy status</p>
+              </div>
+            </div>
+
             <div className="mt-8 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4 text-xs leading-6 text-amber-100/80">
               Registering a location does not create it or move files. Enter usage exactly as shown
               in a provider report. A location can receive new files only after its connection,
