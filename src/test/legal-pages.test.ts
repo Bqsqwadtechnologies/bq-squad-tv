@@ -12,6 +12,7 @@ const REQUIRED_SLUGS = [
   "privacy-policy",
   "producer-policy",
   "producer-terms",
+  "provider-privacy",
   "provider-terms",
   "refund-policy",
   "terms",
@@ -30,10 +31,10 @@ const LINKED_FOOTER_AND_NAV_SLUGS = [
 ];
 
 describe("default legal page drafts", () => {
-  it("contains all 12 required unique audiences and slugs", () => {
+  it("contains all 13 required unique audiences and slugs", () => {
     const presentSlugs = pages.map((p) => p.slug).sort();
     expect(presentSlugs).toEqual(REQUIRED_SLUGS);
-    expect(new Set(presentSlugs).size).toBe(12);
+    expect(new Set(presentSlugs).size).toBe(13);
   });
 
   it("keeps seed pages as reviewable Markdown drafts without script tags", () => {
@@ -45,6 +46,7 @@ describe("default legal page drafts", () => {
     expect(pages.find((page) => page.slug === "cookie")?.audience).toBe("public");
     expect(pages.find((page) => page.slug === "producer-terms")?.audience).toBe("producer");
     expect(pages.find((page) => page.slug === "provider-terms")?.audience).toBe("provider");
+    expect(pages.find((page) => page.slug === "provider-privacy")?.audience).toBe("provider");
   });
 
   it("every linked footer, account, and Android slug resolves to an available bundled page", () => {
