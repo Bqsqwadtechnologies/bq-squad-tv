@@ -356,7 +356,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
             const isMp4OrHls =
               typeof asset["sourceFilename"] === "string" &&
               /\.(mp4|m3u8)$/i.test(asset["sourceFilename"]);
-            const processingAvailable = Boolean(process.env.MODAL_TOKEN_ID && process.env.MODAL_TOKEN_SECRET);
+
 
             if (directPublishRequested && processingAvailable) {
               // Direct publish mode
