@@ -17,6 +17,7 @@ import {
   SlidersHorizontal,
   Sparkles,
   Trash2,
+  X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/library")({
@@ -26,13 +27,14 @@ export const Route = createFileRoute("/library")({
       { title: "My Library — BQ SQWAD TV" },
       {
         name: "description",
-        content: "View your saved watchlist, purchase history, and continue watching titles on BQ SQWAD TV.",
+        content:
+          "View your saved watchlist, purchase history, and continue watching titles on BQ SQWAD TV.",
       },
     ],
   }),
 });
 
-type LibraryItem = {
+export type LibraryItem = {
   id: string;
   title: string;
   type: "movie" | "series" | "live";
@@ -40,9 +42,10 @@ type LibraryItem = {
   posterUrl: string;
   progressPercent?: number;
   addedAt: string;
+  isPurchased?: boolean;
 };
 
-const sampleWatchlist: LibraryItem[] = [
+const defaultItems: LibraryItem[] = [
   {
     id: "mov_lagos_nights",
     title: "Lagos Nights: Shadows of Victoria Island",
@@ -51,6 +54,7 @@ const sampleWatchlist: LibraryItem[] = [
     posterUrl: "/brand/og-image.png",
     progressPercent: 45,
     addedAt: "2026-03-28",
+    isPurchased: true,
   },
   {
     id: "ser_abidjan_hustle",
@@ -60,6 +64,7 @@ const sampleWatchlist: LibraryItem[] = [
     posterUrl: "/brand/og-image.png",
     progressPercent: 80,
     addedAt: "2026-03-25",
+    isPurchased: false,
   },
   {
     id: "mov_golden_savannah",
@@ -68,21 +73,75 @@ const sampleWatchlist: LibraryItem[] = [
     genre: "Documentary",
     posterUrl: "/brand/og-image.png",
     addedAt: "2026-03-20",
+    isPurchased: true,
+  },
+  {
+    id: "mov_super_eagles_triumph",
+    title: "Super Eagles: African Kings",
+    type: "movie",
+    genre: "Sports",
+    posterUrl: "/brand/og-image.png",
+    progressPercent: 20,
+    addedAt: "2026-03-15",
+    isPurchased: false,
   },
 ];
 
 function LibraryPage() {
-  const [activeTab, setActiveTab] = useState<"watchlist" | "continue" | "purchases" | "downloads">("watchlist");
-  const [items, setItems] = useState<LibraryItem[]>(sampleWatchlist);
+  const [activeTab, setActiveTab] = useState<"watchlist" | "continue" | "purchases">("watchlist");
+  const [items, setItems] = useState<LibraryItem[]>(defaultItems);
   const [typeFilter, setTypeFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("recent");
+  const [genreFilter, setGenreFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<"recent" | "title" | "progress">("recent");
 
-  const filteredItems = items.filter((item) => {
-    if (activeTab === "continue") return (item.progressPercent ?? 0) > 0;
-    if (activeTab === "purchases") return true;
-    if (typeFilter !== "all" && item.type !== typeFilter) return false;
-    return true;
-  });
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("bq_viewer_library");
+      if (stored) {
+        setItems(JSON.parse(stored));
+      }
+    } catch {
+      // Ignore localStorage error
+    }
+  }, []);
+
+  const saveItems = (newItems: LibraryItem[]) => {
+    setItems(newItems);
+    try {
+      localStorage.setItem("bq_viewer_library", JSON.stringify(newItems));
+    } catch {
+      // Ignore storage error
+    }
+  };
+
+  const removeItem = (id: string) => {
+    const updated = items.filter((item) => item.id !== id);
+    saveItems(updated);
+  };
+
+  const genres = ["all", "Thriller", "Drama", "Documentary", "Sports"];
+
+  const filteredItems = items
+    .filter((item) => {
+      if (activeTab === "continue") {
+        return (item.progressPercent ?? 0) > 0;
+      }
+      if (activeTab === "purchases") {
+        return item.isPurchased === true;
+      }
+      return true; // watchlist shows all saved items
+    })
+    .filter((item) => {
+      if (typeFilter !== "all" && item.type !== typeFilter) return false;
+      if (genreFilter !== "all" && item.genre.toLowerCase() !== genreFilter.toLowerCase())
+        return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "title") return a.title.localeCompare(b.title);
+      if (sortBy === "progress") return (b.progressPercent ?? 0) - (a.progressPercent ?? 0);
+      return b.addedAt.localeCompare(a.addedAt);
+    });
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#030B2A] via-[#07143D] to-[#0A1A4A] text-white pb-24 md:pb-12">
@@ -150,84 +209,125 @@ function LibraryPage() {
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex flex-wrap gap-2">
-          {[
-            { id: "watchlist", label: "Watchlist", icon: Bookmark },
-            { id: "continue", label: "Continue Watching", icon: Clock },
-            { id: "purchases", label: "My Purchases", icon: ShoppingBag },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-bold transition ${
-                  active
-                    ? "bg-cyan-400 text-[#030e28] shadow-md shadow-cyan-400/20"
-                    : "border border-white/10 bg-white/5 text-slate-300 hover:text-white"
-                }`}
-              >
-                <Icon size={15} />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+        {/* Tab Navigation & Downloads Placeholder Link */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: "watchlist", label: "Watchlist", icon: Bookmark },
+              { id: "continue", label: "Continue Watching", icon: Clock },
+              { id: "purchases", label: "My Purchases", icon: ShoppingBag },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const active = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id as "watchlist" | "continue" | "purchases")}
+                  className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-bold transition ${
+                    active
+                      ? "bg-cyan-400 text-[#030e28] shadow-md shadow-cyan-400/20"
+                      : "border border-white/10 bg-white/5 text-slate-300 hover:text-white"
+                  }`}
+                >
+                  <Icon size={15} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
 
           <Link
             to="/downloads"
-            className="flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-400 hover:text-cyan-300 transition"
+            className="flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-400/20 transition"
           >
             <Download size={15} />
-            <span>Downloads (Offline)</span>
+            <span>Downloads (Offline Viewer)</span>
           </Link>
         </div>
 
-        {/* Filter Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] uppercase font-bold text-slate-400">Type:</span>
-            {["all", "movie", "series"].map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => setTypeFilter(type)}
-                className={`rounded-xl px-3 py-1 text-xs font-medium capitalize transition ${
-                  typeFilter === type
-                    ? "bg-white/20 text-white font-bold"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                {type}
-              </button>
-            ))}
+        {/* Filter Controls: Type, Genre & Sort */}
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/5 bg-[#07143D]/50 p-4">
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Type Filters */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] uppercase font-bold text-slate-400">Type:</span>
+              {["all", "movie", "series"].map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setTypeFilter(type)}
+                  className={`rounded-xl px-2.5 py-1 text-xs font-medium capitalize transition ${
+                    typeFilter === type
+                      ? "bg-cyan-400 text-slate-950 font-bold"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+
+            {/* Genre Filters */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] uppercase font-bold text-slate-400">Genre:</span>
+              <div className="flex flex-wrap gap-1">
+                {genres.map((g) => (
+                  <button
+                    key={g}
+                    type="button"
+                    onClick={() => setGenreFilter(g)}
+                    className={`rounded-xl px-2.5 py-1 text-xs font-medium capitalize transition ${
+                      genreFilter === g
+                        ? "bg-white/20 text-white font-bold"
+                        : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
+          {/* Sort Dropdown */}
           <div className="flex items-center gap-2">
             <span className="text-[11px] uppercase font-bold text-slate-400">Sort:</span>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-1 text-xs text-white focus:outline-none"
+              onChange={(e) => setSortBy(e.target.value as "recent" | "title" | "progress")}
+              className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400"
             >
               <option value="recent">Recently Added</option>
               <option value="title">Alphabetical (A-Z)</option>
+              <option value="progress">Viewing Progress</option>
             </select>
           </div>
         </div>
 
-        {/* Items Grid or Empty State */}
+        {/* Items Grid or Designed Empty State */}
         {filteredItems.length === 0 ? (
-          <div className="rounded-3xl border border-white/10 bg-[#07143D]/60 p-12 text-center backdrop-blur-xl shadow-xl space-y-4">
+          <div
+            data-testid="empty-library-state"
+            className="rounded-3xl border border-white/10 bg-[#07143D]/60 p-12 text-center backdrop-blur-xl shadow-xl space-y-4"
+          >
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 text-slate-400">
-              <FolderHeart className="h-8 w-8 text-slate-500" />
+              {activeTab === "watchlist" && <Bookmark className="h-8 w-8 text-slate-500" />}
+              {activeTab === "continue" && <Clock className="h-8 w-8 text-slate-500" />}
+              {activeTab === "purchases" && <ShoppingBag className="h-8 w-8 text-slate-500" />}
             </div>
-            <h3 className="text-base font-bold text-white">No titles in your library yet</h3>
+            <h3 className="text-base font-bold text-white">
+              {activeTab === "watchlist" && "Your watchlist is empty"}
+              {activeTab === "continue" && "No unfinished videos"}
+              {activeTab === "purchases" && "No purchased titles yet"}
+            </h3>
             <p className="max-w-sm mx-auto text-xs text-slate-400 leading-relaxed">
-              Explore our catalogue of live channels, movies, and TV series, and bookmark titles to build
-              your watchlist.
+              {activeTab === "watchlist" &&
+                "Explore our catalogue of live channels, movies, and TV series, and bookmark titles to build your watchlist."}
+              {activeTab === "continue" &&
+                "Titles you start watching will automatically appear here so you can pick up right where you left off."}
+              {activeTab === "purchases" &&
+                "Titles you purchase or rent will be permanently available here for unlimited on-demand streaming."}
             </p>
             <Link
               to="/"
@@ -244,6 +344,7 @@ function LibraryPage() {
                 key={item.id}
                 className="group relative rounded-3xl border border-white/10 bg-[#07143D]/80 p-4 backdrop-blur-xl shadow-lg transition hover:border-cyan-400/50 hover:bg-[#0c1f54]"
               >
+                {/* Poster & Play Action */}
                 <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-[#030b2a]">
                   <img
                     src={item.posterUrl}
@@ -251,6 +352,7 @@ function LibraryPage() {
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+
                   <Link
                     to="/content/$assetId"
                     params={{ assetId: item.id }}
@@ -260,16 +362,29 @@ function LibraryPage() {
                       <Play className="h-5 w-5 fill-current ml-0.5" />
                     </div>
                   </Link>
+
+                  {/* Progress bar for continue watching */}
                   {item.progressPercent !== undefined && (
                     <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/20">
                       <div
-                        className="h-full bg-cyan-400"
+                        className="h-full bg-cyan-400 shadow-[0_0_8px_rgba(0,216,245,0.8)]"
                         style={{ width: `${item.progressPercent}%` }}
                       />
                     </div>
                   )}
+
+                  {/* Remove button */}
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    aria-label={`Remove ${item.title}`}
+                    className="absolute top-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-black/60 text-slate-300 opacity-0 group-hover:opacity-100 transition hover:bg-rose-600 hover:text-white"
+                  >
+                    <X size={14} />
+                  </button>
                 </div>
 
+                {/* Details */}
                 <div className="mt-3 space-y-1">
                   <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-cyan-400">
                     <span>{item.genre}</span>
@@ -279,9 +394,14 @@ function LibraryPage() {
                     {item.title}
                   </h4>
                   {item.progressPercent !== undefined && (
-                    <p className="text-[11px] text-slate-400">
+                    <p className="text-[11px] text-slate-400 font-medium">
                       {item.progressPercent}% watched
                     </p>
+                  )}
+                  {item.isPurchased && (
+                    <span className="inline-block rounded-md bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-bold text-emerald-300 uppercase">
+                      Purchased
+                    </span>
                   )}
                 </div>
               </div>
