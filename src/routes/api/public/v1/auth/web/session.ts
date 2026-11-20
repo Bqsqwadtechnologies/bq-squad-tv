@@ -1,3 +1,4 @@
+import { evaluateSigninSecurity } from "@/lib/server/abuse-protection";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, getFirebaseProjectId } from "@/lib/server/firebase-admin";
@@ -35,6 +36,24 @@ export const Route = createFileRoute("/api/public/v1/auth/web/session")({
             );
           }
           const fs = await Firestore.create();
+          const clientIp =
+            request.headers.get("cf-connecting-ip") ||
+            request.headers.get("x-real-ip") ||
+            request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+            "127.0.0.1";
+          const userAgent = request.headers.get("user-agent") || undefined;
+          const secEval = await evaluateSigninSecurity(fs, {
+            clientIp,
+            accountIdentifier: session.uid,
+            ...(userAgent ? { userAgent } : {}),
+          });
+          if (!secEval.allowed) {
+            throw new ApiError(
+              403,
+              "SIGNIN_SECURITY_BLOCKED",
+              secEval.reason || "Sign-in blocked by security policy.",
+            );
+          }
           await rotateWebRefreshSession(fs, body.refreshToken, session.refreshToken, session.uid);
           await recordRiskSignal(fs, session.uid, "signin");
           return Response.json(

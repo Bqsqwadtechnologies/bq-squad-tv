@@ -1,3 +1,4 @@
+import { evaluatePaymentFraud } from "@/lib/server/abuse-protection";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
@@ -63,6 +64,24 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
           const currency = wallet.currency;
           const pricing = await getPricingConfig(fs);
           const offer = getPaystackTopup(pricing, packageId, currency);
+          const clientIp =
+            request.headers.get("cf-connecting-ip") ||
+            request.headers.get("x-real-ip") ||
+            request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+            "127.0.0.1";
+          const fraudEval = await evaluatePaymentFraud(fs, {
+            uid: user.uid,
+            amountMinor: offer.amountMinor,
+            currency,
+            clientIp,
+          });
+          if (!fraudEval.allowed) {
+            throw new ApiError(
+              403,
+              "PAYMENT_SECURITY_HOLD",
+              "Payment held for security review. Please contact support if you believe this is an error.",
+            );
+          }
           const reference = "BQTV_" + crypto.randomUUID().replace(/-/g, "");
           const secret = process.env["PAYSTACK_SECRET_KEY"];
           if (!secret)

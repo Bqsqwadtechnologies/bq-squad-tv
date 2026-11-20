@@ -65,7 +65,7 @@ function ZillionaireSecurityRoute() {
   );
 }
 
-type TabType = "threats" | "secrets" | "backups" | "support_mode" | "sessions" | "audit_integrity";
+type TabType = "threats" | "abuse_fraud" | "secrets" | "backups" | "support_mode" | "sessions" | "audit_integrity";
 
 function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: boolean }) {
   const [activeTab, setActiveTab] = useState<TabType>("threats");
@@ -257,11 +257,15 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
       <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-3">
         {[
           { id: "threats" as const, label: "Threat Mitigation", icon: ShieldAlert },
+          { id: "abuse_fraud" as const, label: "Abuse & Fraud Defense", icon: ShieldCheck },
           { id: "secrets" as const, label: "Secret Health Check", icon: KeyRound },
           { id: "backups" as const, label: "Platform Backups Status", icon: Database },
           { id: "support_mode" as const, label: "Support Mode (View As)", icon: Eye },
           ...(isOwner
-            ? [{ id: "sessions" as const, label: "Devices & Sessions", icon: MonitorSmartphone }]
+            ? [
+                { id: "sessions" as const, label: "Devices & Sessions", icon: MonitorSmartphone },
+                { id: "audit_integrity" as const, label: "Audit Integrity", icon: FileCheck2 },
+              ]
             : []),
         ].map((tab) => {
           const Icon = tab.icon;
@@ -286,6 +290,7 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
 
       {activeTab === "sessions" && isOwner && <OwnerSessionsPanel token={token} />}
       {activeTab === "audit_integrity" && isOwner && <AuditIntegrityPanel token={token} />}
+      {activeTab === "abuse_fraud" && <AbuseFraudDefensePanel token={token} isOwner={isOwner === true} />}
 
       {/* TAB 1: THREAT MITIGATION (SecurityEventsView) */}
       {activeTab === "threats" && <SecurityEventsView sessionToken={token} isOwner={isOwner} />}
@@ -1025,6 +1030,594 @@ function AuditIntegrityPanel({ token }: { token: string }) {
           </div>
         )}
       </ConsoleCard>
+    </div>
+  );
+}
+
+
+
+type AbuseReputationRow = {
+  id: string;
+  targetType: string;
+  targetValue: string;
+  status: string;
+  reason: string;
+  expiresAt: string | null;
+};
+
+type AbuseHoldRow = {
+  id: string;
+  createdAt: string;
+  targetType: string;
+  targetId: string;
+  reason: string;
+  riskScore: number;
+  status: string;
+};
+
+function AbuseFraudDefensePanel({ token, isOwner }: { token: string; isOwner: boolean }) {
+  const [subTab, setSubTab] = useState<"limits" | "reputation" | "holds">("limits");
+  const [limits, setLimits] = useState<Record<string, { routeKey: string; label: string; maxRequests: number; windowSeconds: number; description: string }> | null>(null);
+  const [reputationEntries, setReputationEntries] = useState<AbuseReputationRow[]>([]);
+  const [holds, setHolds] = useState<AbuseHoldRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  // Edit limit modal state
+  const [editingRoute, setEditingRoute] = useState<{ routeKey: string; label: string; maxRequests: number; windowSeconds: number } | null>(null);
+  const [editReason, setEditReason] = useState("");
+  const [savingLimit, setSavingLimit] = useState(false);
+
+  // Add reputation state
+  const [newTargetType, setNewTargetType] = useState<"ip" | "device">("ip");
+  const [newTargetValue, setNewTargetValue] = useState("");
+  const [newStatus, setNewStatus] = useState<"blacklisted" | "greylisted" | "allowed">("blacklisted");
+  const [newReason, setNewReason] = useState("");
+  const [newTtlHours, setNewTtlHours] = useState(24);
+  const [addingReputation, setAddingReputation] = useState(false);
+
+  const loadLimits = useCallback(async () => {
+    setLoading(true);
+    setActionError(null);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/security/abuse-settings", {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setLimits(data.limits);
+      else throw new Error(data.error || "Failed to load limits");
+    } catch (e: any) {
+      setActionError(e.message || "Could not load rate limits.");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  const loadReputation = useCallback(async () => {
+    setLoading(true);
+    setActionError(null);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/security/reputation", {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setReputationEntries(data.entries || []);
+      else throw new Error(data.error || "Failed to load reputation list");
+    } catch (e: any) {
+      setActionError(e.message || "Could not load reputation entries.");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  const loadHolds = useCallback(async () => {
+    setLoading(true);
+    setActionError(null);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/security/holds", {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) setHolds(data.holds || []);
+      else throw new Error(data.error || "Failed to load holds");
+    } catch (e: any) {
+      setActionError(e.message || "Could not load security holds.");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (subTab === "limits") void loadLimits();
+    else if (subTab === "reputation") void loadReputation();
+    else if (subTab === "holds") void loadHolds();
+  }, [subTab, loadLimits, loadReputation, loadHolds]);
+
+  const handleSaveLimit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRoute) return;
+    setSavingLimit(true);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/security/abuse-settings", {
+        method: "PUT",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          routeKey: editingRoute.routeKey,
+          maxRequests: Number(editingRoute.maxRequests),
+          windowSeconds: Number(editingRoute.windowSeconds),
+          reason: editReason.trim() || "Policy update via console",
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not update route limit.");
+      setActionSuccess(`Rate limit updated for ${editingRoute.label}.`);
+      setEditingRoute(null);
+      setEditReason("");
+      void loadLimits();
+    } catch (err: any) {
+      setActionError(err.message || "Update failed.");
+    } finally {
+      setSavingLimit(false);
+    }
+  };
+
+  const handleAddReputation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTargetValue.trim() || !newReason.trim()) return;
+    setAddingReputation(true);
+    setActionError(null);
+    setActionSuccess(null);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/security/reputation", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          targetType: newTargetType,
+          targetValue: newTargetValue.trim(),
+          status: newStatus,
+          reason: newReason.trim(),
+          ttlHours: Number(newTtlHours) || 24,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not add reputation entry.");
+      setActionSuccess(`Reputation entry added for ${newTargetValue.trim()}.`);
+      setNewTargetValue("");
+      setNewReason("");
+      void loadReputation();
+    } catch (err: any) {
+      setActionError(err.message || "Failed to add entry.");
+    } finally {
+      setAddingReputation(false);
+    }
+  };
+
+  const handleRemoveReputation = async (entryId: string) => {
+    const reason = window.prompt("Reason for removing this reputation entry:");
+    if (!reason || reason.trim().length < 3) return;
+    setActionError(null);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/security/reputation", {
+        method: "DELETE",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ entryId, reason: reason.trim() }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || "Could not remove entry.");
+      }
+      setActionSuccess("Reputation entry removed.");
+      void loadReputation();
+    } catch (err: any) {
+      setActionError(err.message || "Failed to remove entry.");
+    }
+  };
+
+  const handleResolveHold = async (holdId: string, action: "RELEASE" | "CONFIRM_BAN") => {
+    const promptMsg = action === "CONFIRM_BAN"
+      ? "Enter confirmed suspension justification (mandatory audit reason):"
+      : "Enter reason for releasing hold:";
+    const reason = window.prompt(promptMsg);
+    if (!reason || reason.trim().length < 3) return;
+    setActionError(null);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/security/holds", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ holdId, action, reason: reason.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to resolve hold.");
+      setActionSuccess(`Hold resolved: ${action}.`);
+      void loadHolds();
+    } catch (err: any) {
+      setActionError(err.message || "Resolution failed.");
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Sub Tabs */}
+      <div className="flex gap-2 border-b border-white/5 pb-2">
+        {[
+          { id: "limits" as const, label: "Per-Route Rate Limits" },
+          { id: "reputation" as const, label: "IP & Device Reputation" },
+          { id: "holds" as const, label: "Security Holds Queue" },
+        ].map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => {
+              setSubTab(t.id);
+              setActionError(null);
+              setActionSuccess(null);
+            }}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              subTab === t.id
+                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                : "text-slate-400 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {actionError && (
+        <p role="alert" className="rounded-xl border border-rose-400/30 bg-rose-950/30 p-3 text-sm text-rose-200">
+          {actionError}
+        </p>
+      )}
+      {actionSuccess && (
+        <p role="status" className="rounded-xl border border-emerald-400/30 bg-emerald-950/30 p-3 text-sm text-emerald-200">
+          {actionSuccess}
+        </p>
+      )}
+
+      {/* Sub Tab 1: Route Limits */}
+      {subTab === "limits" && (
+        <ConsoleCard
+          title="Configurable Route Rate Limits"
+          subtitle="Owner-controlled burst and window limits to protect authentication, payments, playback, and APIs from credential stuffing and volumetric abuse."
+        >
+          {loading && !limits ? (
+            <div className="p-8 text-center text-slate-400">Loading route policies…</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="sticky top-0 bg-slate-900 text-xs uppercase text-slate-400">
+                  <tr>
+                    <th className="p-3">Route / Flow</th>
+                    <th className="p-3">Max Requests</th>
+                    <th className="p-3">Window (Sec)</th>
+                    <th className="p-3">Description</th>
+                    <th className="p-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {limits &&
+                    Object.values(limits).map((r) => (
+                      <tr key={r.routeKey} className="border-t border-white/5 hover:bg-white/[0.02]">
+                        <td className="p-3">
+                          <span className="font-semibold text-white">{r.label}</span>
+                          <span className="block font-mono text-xs text-slate-400">{r.routeKey}</span>
+                        </td>
+                        <td className="p-3 font-mono text-cyan-300">{r.maxRequests} req</td>
+                        <td className="p-3 font-mono text-slate-300">{r.windowSeconds}s</td>
+                        <td className="max-w-md p-3 text-xs text-slate-400">{r.description}</td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditingRoute({
+                                routeKey: r.routeKey,
+                                label: r.label,
+                                maxRequests: r.maxRequests,
+                                windowSeconds: r.windowSeconds,
+                              })
+                            }
+                            className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-xs font-semibold text-cyan-200 hover:bg-cyan-500/20"
+                          >
+                            Edit Limit
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Edit Modal */}
+          {editingRoute && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+              <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+                <h3 className="text-base font-bold text-white">Edit Policy: {editingRoute.label}</h3>
+                <p className="mt-1 text-xs text-slate-400 font-mono">{editingRoute.routeKey}</p>
+                <form onSubmit={handleSaveLimit} className="mt-4 space-y-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300">Max Requests</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10000}
+                      value={editingRoute.maxRequests}
+                      onChange={(e) =>
+                        setEditingRoute({ ...editingRoute, maxRequests: Number(e.target.value) })
+                      }
+                      className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 p-2.5 text-sm text-white"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300">Window Seconds</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={86400}
+                      value={editingRoute.windowSeconds}
+                      onChange={(e) =>
+                        setEditingRoute({ ...editingRoute, windowSeconds: Number(e.target.value) })
+                      }
+                      className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 p-2.5 text-sm text-white"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300">Audit Justification</label>
+                    <textarea
+                      value={editReason}
+                      onChange={(e) => setEditReason(e.target.value)}
+                      placeholder="Why is this limit being adjusted?"
+                      minLength={3}
+                      maxLength={1000}
+                      className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 p-2.5 text-sm text-white"
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditingRoute(null)}
+                      className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-white/5"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={savingLimit}
+                      className="rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-400"
+                    >
+                      {savingLimit ? "Saving…" : "Save Policy"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </ConsoleCard>
+      )}
+
+      {/* Sub Tab 2: Reputation List */}
+      {subTab === "reputation" && (
+        <div className="space-y-6">
+          <ConsoleCard
+            title="Add Reputation Rule"
+            subtitle="Block, greylist, or allowlist specific IP addresses or client device identifiers with mandatory reasoning."
+          >
+            <form onSubmit={handleAddReputation} className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5 items-end">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300">Target Type</label>
+                <select
+                  value={newTargetType}
+                  onChange={(e) => setNewTargetType(e.target.value as "ip" | "device")}
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 p-2 text-sm text-white"
+                >
+                  <option value="ip">IP Address</option>
+                  <option value="device">Device Identifier</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300">Target Value</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 192.0.2.1"
+                  value={newTargetValue}
+                  onChange={(e) => setNewTargetValue(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 p-2 text-sm text-white font-mono"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300">Status</label>
+                <select
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value as any)}
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 p-2 text-sm text-white"
+                >
+                  <option value="blacklisted">Blacklisted (Blocked)</option>
+                  <option value="greylisted">Greylisted (Elevated MFA)</option>
+                  <option value="allowed">Allowed (Exempt)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300">Reason</label>
+                <input
+                  type="text"
+                  placeholder="Audit reason"
+                  value={newReason}
+                  onChange={(e) => setNewReason(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-slate-950 p-2 text-sm text-white"
+                  required
+                />
+              </div>
+              <div>
+                <button
+                  type="submit"
+                  disabled={addingReputation}
+                  className="w-full rounded-xl bg-cyan-500 py-2.5 text-xs font-bold text-slate-950 hover:bg-cyan-400"
+                >
+                  {addingReputation ? "Adding…" : "Add Rule"}
+                </button>
+              </div>
+            </form>
+          </ConsoleCard>
+
+          <ConsoleCard
+            title="Active Reputation Rules"
+            subtitle="Current network and device entries enforcing edge restrictions."
+          >
+            {loading && reputationEntries.length === 0 ? (
+              <div className="p-8 text-center text-slate-400">Loading reputation list…</div>
+            ) : reputationEntries.length === 0 ? (
+              <div className="p-8 text-center text-slate-400">No active reputation rules found.</div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="sticky top-0 bg-slate-900 text-xs uppercase text-slate-400">
+                    <tr>
+                      <th className="p-3">Type</th>
+                      <th className="p-3">Target Value</th>
+                      <th className="p-3">Status</th>
+                      <th className="p-3">Reason</th>
+                      <th className="p-3">Expires At</th>
+                      <th className="p-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reputationEntries.map((entry) => (
+                      <tr key={entry.id} className="border-t border-white/5 hover:bg-white/[0.02]">
+                        <td className="p-3 text-xs uppercase font-mono text-slate-400">{entry.targetType}</td>
+                        <td className="p-3 font-mono text-white text-xs">{entry.targetValue}</td>
+                        <td className="p-3">
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                              entry.status === "blacklisted"
+                                ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                                : entry.status === "greylisted"
+                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                            }`}
+                          >
+                            {entry.status}
+                          </span>
+                        </td>
+                        <td className="p-3 text-xs text-slate-300">{entry.reason}</td>
+                        <td className="p-3 text-xs text-slate-400">{entry.expiresAt ? new Date(entry.expiresAt).toLocaleString() : "Permanent"}</td>
+                        <td className="p-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveReputation(entry.id)}
+                            className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-200 hover:bg-rose-500/20"
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </ConsoleCard>
+        </div>
+      )}
+
+      {/* Sub Tab 3: Security Holds Queue */}
+      {subTab === "holds" && (
+        <ConsoleCard
+          title="Security Holds & Review Queue"
+          subtitle="Automatic anomaly holds created by payment velocity, wallet freezing, referral abuse, or bot credential stuffing."
+        >
+          {loading && holds.length === 0 ? (
+            <div className="p-8 text-center text-slate-400">Loading holds…</div>
+          ) : holds.length === 0 ? (
+            <div className="p-8 text-center text-slate-400">All security holds are clear. No pending reviews.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="sticky top-0 bg-slate-900 text-xs uppercase text-slate-400">
+                  <tr>
+                    <th className="p-3">Time</th>
+                    <th className="p-3">Target</th>
+                    <th className="p-3">Trigger / Reason</th>
+                    <th className="p-3">Risk Score</th>
+                    <th className="p-3">Status</th>
+                    <th className="p-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {holds.map((h) => (
+                    <tr key={h.id} className="border-t border-white/5 hover:bg-white/[0.02]">
+                      <td className="p-3 text-xs text-slate-400">{new Date(h.createdAt).toLocaleString()}</td>
+                      <td className="p-3">
+                        <span className="block text-xs uppercase font-mono text-cyan-300">{h.targetType}</span>
+                        <span className="font-mono text-xs text-slate-300">{h.targetId}</span>
+                      </td>
+                      <td className="max-w-xs p-3 text-xs text-slate-300">{h.reason}</td>
+                      <td className="p-3 font-mono text-xs">
+                        <span className={`font-bold ${h.riskScore >= 80 ? "text-rose-400" : "text-amber-300"}`}>
+                          {h.riskScore}/100
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                            h.status === "pending"
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                              : h.status === "released"
+                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                              : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                          }`}
+                        >
+                          {h.status}
+                        </span>
+                      </td>
+                      <td className="p-3 text-right space-x-2">
+                        {h.status === "pending" && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleResolveHold(h.id, "RELEASE")}
+                              className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-200 hover:bg-emerald-500/20"
+                            >
+                              Release Hold
+                            </button>
+                            {isOwner && (
+                              <button
+                                type="button"
+                                onClick={() => handleResolveHold(h.id, "CONFIRM_BAN")}
+                                className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-200 hover:bg-rose-500/20"
+                              >
+                                Confirm Ban
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </ConsoleCard>
+      )}
     </div>
   );
 }

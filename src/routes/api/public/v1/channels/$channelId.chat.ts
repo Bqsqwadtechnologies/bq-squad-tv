@@ -1,3 +1,4 @@
+import { scoreChatSpam } from "@/lib/server/abuse-protection";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
@@ -51,9 +52,17 @@ export const Route = createFileRoute("/api/public/v1/channels/$channelId/chat")(
           if(settings["blockLinks"]===true&&/(https?:\/\/|www\.)/i.test(text)) throw new ApiError(400,"CHAT_LINK_BLOCKED","Links are not allowed in this chat.");
           const config=await fs.getDoc("moderationConfig/keywords"); const words=Array.isArray(config?.["keywords"])?config!["keywords"] as string[]:[]; const lowered=text.toLowerCase();
           const blocked=words.some(word=>typeof word==="string"&&word.trim()&&lowered.includes(word.trim().toLowerCase()));
+          const spamResult = scoreChatSpam(text, {
+            recentMessages: previous.map((p) => String(p["body"] || "")).filter(Boolean),
+            lastMessageTimeMs: typeof last === "string" ? Date.parse(last) : undefined,
+          });
+          if (spamResult.isSevere) {
+            throw new ApiError(429, "CHAT_SPAM_DETECTED", "Message blocked by automated spam filter.");
+          }
+          const messageStatus = profile?.["shadowBanned"] === true ? "SHADOW_BANNED" : (blocked || spamResult.isSpam) ? "FLAGGED" : "VISIBLE";
           const messageId=crypto.randomUUID().replace(/-/g,""); const createdAt=new Date().toISOString();
-          await fs.setDoc(`channels/${id}/liveChat/${messageId}`,{channelId:id,authorUid:user.uid,authorLabel:typeof profile?.["userNumber"]==="string"?`Viewer ${profile["userNumber"]}`:"Viewer",body:text,replyTo:body.replyTo||null,reactions:{},status:profile?.["shadowBanned"]===true?"SHADOW_BANNED":blocked?"FLAGGED":"VISIBLE",createdAt},{mustNotExist:true});
-          return Response.json({messageId,status:profile?.["shadowBanned"]===true?"SHADOW_BANNED":blocked?"FLAGGED":"VISIBLE"},{status:201});
+          await fs.setDoc(`channels/${id}/liveChat/${messageId}`,{channelId:id,authorUid:user.uid,authorLabel:typeof profile?.["userNumber"]==="string"?`Viewer ${profile["userNumber"]}`:"Viewer",body:text,replyTo:body.replyTo||null,reactions:{},status:messageStatus,createdAt},{mustNotExist:true});
+          return Response.json({messageId,status:messageStatus},{status:201});
         }
         const message=await fs.getDoc(`channels/${id}/liveChat/${body.messageId}`); if(!message) throw new ApiError(404,"CHAT_MESSAGE_NOT_FOUND","This message is no longer available.");
         if(body.action==="REPORT"){

@@ -225,8 +225,11 @@ import { Route as ApiPublicV1ZillionaireProvidersChannelsRouteImport } from './r
 import { Route as ApiPublicV1ZillionaireProvidersTestPlaybackRouteImport } from './routes/api/public/v1/zillionaire/providers/test-playback'
 import { Route as ApiPublicV1ZillionaireReceiptsIndexRouteImport } from './routes/api/public/v1/zillionaire/receipts/index'
 import { Route as ApiPublicV1ZillionaireReportsMonthlyRouteImport } from './routes/api/public/v1/zillionaire/reports/monthly'
+import { Route as ApiPublicV1ZillionaireSecurityAbuseSettingsRouteImport } from './routes/api/public/v1/zillionaire/security/abuse-settings'
 import { Route as ApiPublicV1ZillionaireSecurityEventsRouteImport } from './routes/api/public/v1/zillionaire/security/events'
+import { Route as ApiPublicV1ZillionaireSecurityHoldsRouteImport } from './routes/api/public/v1/zillionaire/security/holds'
 import { Route as ApiPublicV1ZillionaireSecurityLookupActorRouteImport } from './routes/api/public/v1/zillionaire/security/lookup-actor'
+import { Route as ApiPublicV1ZillionaireSecurityReputationRouteImport } from './routes/api/public/v1/zillionaire/security/reputation'
 import { Route as ApiPublicV1ZillionaireSeriesIndexRouteImport } from './routes/api/public/v1/zillionaire/series/index'
 import { Route as ApiPublicV1ZillionaireStorageDestinationsRouteImport } from './routes/api/public/v1/zillionaire/storage/destinations'
 import { Route as ApiPublicV1ZillionaireStorageDiscoverRouteImport } from './routes/api/public/v1/zillionaire/storage/discover'
@@ -1504,16 +1507,34 @@ const ApiPublicV1ZillionaireReportsMonthlyRoute =
     path: '/api/public/v1/zillionaire/reports/monthly',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireSecurityAbuseSettingsRoute =
+  ApiPublicV1ZillionaireSecurityAbuseSettingsRouteImport.update({
+    id: '/api/public/v1/zillionaire/security/abuse-settings',
+    path: '/api/public/v1/zillionaire/security/abuse-settings',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireSecurityEventsRoute =
   ApiPublicV1ZillionaireSecurityEventsRouteImport.update({
     id: '/api/public/v1/zillionaire/security/events',
     path: '/api/public/v1/zillionaire/security/events',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireSecurityHoldsRoute =
+  ApiPublicV1ZillionaireSecurityHoldsRouteImport.update({
+    id: '/api/public/v1/zillionaire/security/holds',
+    path: '/api/public/v1/zillionaire/security/holds',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireSecurityLookupActorRoute =
   ApiPublicV1ZillionaireSecurityLookupActorRouteImport.update({
     id: '/api/public/v1/zillionaire/security/lookup-actor',
     path: '/api/public/v1/zillionaire/security/lookup-actor',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireSecurityReputationRoute =
+  ApiPublicV1ZillionaireSecurityReputationRouteImport.update({
+    id: '/api/public/v1/zillionaire/security/reputation',
+    path: '/api/public/v1/zillionaire/security/reputation',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ZillionaireSeriesIndexRoute =
@@ -2068,8 +2089,11 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/providers/channels': typeof ApiPublicV1ZillionaireProvidersChannelsRoute
   '/api/public/v1/zillionaire/providers/test-playback': typeof ApiPublicV1ZillionaireProvidersTestPlaybackRoute
   '/api/public/v1/zillionaire/reports/monthly': typeof ApiPublicV1ZillionaireReportsMonthlyRoute
+  '/api/public/v1/zillionaire/security/abuse-settings': typeof ApiPublicV1ZillionaireSecurityAbuseSettingsRoute
   '/api/public/v1/zillionaire/security/events': typeof ApiPublicV1ZillionaireSecurityEventsRoute
+  '/api/public/v1/zillionaire/security/holds': typeof ApiPublicV1ZillionaireSecurityHoldsRoute
   '/api/public/v1/zillionaire/security/lookup-actor': typeof ApiPublicV1ZillionaireSecurityLookupActorRoute
+  '/api/public/v1/zillionaire/security/reputation': typeof ApiPublicV1ZillionaireSecurityReputationRoute
   '/api/public/v1/zillionaire/storage/destinations': typeof ApiPublicV1ZillionaireStorageDestinationsRoute
   '/api/public/v1/zillionaire/storage/discover': typeof ApiPublicV1ZillionaireStorageDiscoverRoute
   '/api/public/v1/zillionaire/storage/health': typeof ApiPublicV1ZillionaireStorageHealthRoute
@@ -2345,8 +2369,11 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/providers/channels': typeof ApiPublicV1ZillionaireProvidersChannelsRoute
   '/api/public/v1/zillionaire/providers/test-playback': typeof ApiPublicV1ZillionaireProvidersTestPlaybackRoute
   '/api/public/v1/zillionaire/reports/monthly': typeof ApiPublicV1ZillionaireReportsMonthlyRoute
+  '/api/public/v1/zillionaire/security/abuse-settings': typeof ApiPublicV1ZillionaireSecurityAbuseSettingsRoute
   '/api/public/v1/zillionaire/security/events': typeof ApiPublicV1ZillionaireSecurityEventsRoute
+  '/api/public/v1/zillionaire/security/holds': typeof ApiPublicV1ZillionaireSecurityHoldsRoute
   '/api/public/v1/zillionaire/security/lookup-actor': typeof ApiPublicV1ZillionaireSecurityLookupActorRoute
+  '/api/public/v1/zillionaire/security/reputation': typeof ApiPublicV1ZillionaireSecurityReputationRoute
   '/api/public/v1/zillionaire/storage/destinations': typeof ApiPublicV1ZillionaireStorageDestinationsRoute
   '/api/public/v1/zillionaire/storage/discover': typeof ApiPublicV1ZillionaireStorageDiscoverRoute
   '/api/public/v1/zillionaire/storage/health': typeof ApiPublicV1ZillionaireStorageHealthRoute
@@ -2624,8 +2651,11 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/providers/channels': typeof ApiPublicV1ZillionaireProvidersChannelsRoute
   '/api/public/v1/zillionaire/providers/test-playback': typeof ApiPublicV1ZillionaireProvidersTestPlaybackRoute
   '/api/public/v1/zillionaire/reports/monthly': typeof ApiPublicV1ZillionaireReportsMonthlyRoute
+  '/api/public/v1/zillionaire/security/abuse-settings': typeof ApiPublicV1ZillionaireSecurityAbuseSettingsRoute
   '/api/public/v1/zillionaire/security/events': typeof ApiPublicV1ZillionaireSecurityEventsRoute
+  '/api/public/v1/zillionaire/security/holds': typeof ApiPublicV1ZillionaireSecurityHoldsRoute
   '/api/public/v1/zillionaire/security/lookup-actor': typeof ApiPublicV1ZillionaireSecurityLookupActorRoute
+  '/api/public/v1/zillionaire/security/reputation': typeof ApiPublicV1ZillionaireSecurityReputationRoute
   '/api/public/v1/zillionaire/storage/destinations': typeof ApiPublicV1ZillionaireStorageDestinationsRoute
   '/api/public/v1/zillionaire/storage/discover': typeof ApiPublicV1ZillionaireStorageDiscoverRoute
   '/api/public/v1/zillionaire/storage/health': typeof ApiPublicV1ZillionaireStorageHealthRoute
@@ -2904,8 +2934,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/providers/channels'
     | '/api/public/v1/zillionaire/providers/test-playback'
     | '/api/public/v1/zillionaire/reports/monthly'
+    | '/api/public/v1/zillionaire/security/abuse-settings'
     | '/api/public/v1/zillionaire/security/events'
+    | '/api/public/v1/zillionaire/security/holds'
     | '/api/public/v1/zillionaire/security/lookup-actor'
+    | '/api/public/v1/zillionaire/security/reputation'
     | '/api/public/v1/zillionaire/storage/destinations'
     | '/api/public/v1/zillionaire/storage/discover'
     | '/api/public/v1/zillionaire/storage/health'
@@ -3181,8 +3214,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/providers/channels'
     | '/api/public/v1/zillionaire/providers/test-playback'
     | '/api/public/v1/zillionaire/reports/monthly'
+    | '/api/public/v1/zillionaire/security/abuse-settings'
     | '/api/public/v1/zillionaire/security/events'
+    | '/api/public/v1/zillionaire/security/holds'
     | '/api/public/v1/zillionaire/security/lookup-actor'
+    | '/api/public/v1/zillionaire/security/reputation'
     | '/api/public/v1/zillionaire/storage/destinations'
     | '/api/public/v1/zillionaire/storage/discover'
     | '/api/public/v1/zillionaire/storage/health'
@@ -3459,8 +3495,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/providers/channels'
     | '/api/public/v1/zillionaire/providers/test-playback'
     | '/api/public/v1/zillionaire/reports/monthly'
+    | '/api/public/v1/zillionaire/security/abuse-settings'
     | '/api/public/v1/zillionaire/security/events'
+    | '/api/public/v1/zillionaire/security/holds'
     | '/api/public/v1/zillionaire/security/lookup-actor'
+    | '/api/public/v1/zillionaire/security/reputation'
     | '/api/public/v1/zillionaire/storage/destinations'
     | '/api/public/v1/zillionaire/storage/discover'
     | '/api/public/v1/zillionaire/storage/health'
@@ -3721,8 +3760,11 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireProvidersChannelsRoute: typeof ApiPublicV1ZillionaireProvidersChannelsRoute
   ApiPublicV1ZillionaireProvidersTestPlaybackRoute: typeof ApiPublicV1ZillionaireProvidersTestPlaybackRoute
   ApiPublicV1ZillionaireReportsMonthlyRoute: typeof ApiPublicV1ZillionaireReportsMonthlyRoute
+  ApiPublicV1ZillionaireSecurityAbuseSettingsRoute: typeof ApiPublicV1ZillionaireSecurityAbuseSettingsRoute
   ApiPublicV1ZillionaireSecurityEventsRoute: typeof ApiPublicV1ZillionaireSecurityEventsRoute
+  ApiPublicV1ZillionaireSecurityHoldsRoute: typeof ApiPublicV1ZillionaireSecurityHoldsRoute
   ApiPublicV1ZillionaireSecurityLookupActorRoute: typeof ApiPublicV1ZillionaireSecurityLookupActorRoute
+  ApiPublicV1ZillionaireSecurityReputationRoute: typeof ApiPublicV1ZillionaireSecurityReputationRoute
   ApiPublicV1ZillionaireStorageDestinationsRoute: typeof ApiPublicV1ZillionaireStorageDestinationsRoute
   ApiPublicV1ZillionaireStorageDiscoverRoute: typeof ApiPublicV1ZillionaireStorageDiscoverRoute
   ApiPublicV1ZillionaireStorageHealthRoute: typeof ApiPublicV1ZillionaireStorageHealthRoute
@@ -5296,6 +5338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireReportsMonthlyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/security/abuse-settings': {
+      id: '/api/public/v1/zillionaire/security/abuse-settings'
+      path: '/api/public/v1/zillionaire/security/abuse-settings'
+      fullPath: '/api/public/v1/zillionaire/security/abuse-settings'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireSecurityAbuseSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/security/events': {
       id: '/api/public/v1/zillionaire/security/events'
       path: '/api/public/v1/zillionaire/security/events'
@@ -5303,11 +5352,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireSecurityEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/security/holds': {
+      id: '/api/public/v1/zillionaire/security/holds'
+      path: '/api/public/v1/zillionaire/security/holds'
+      fullPath: '/api/public/v1/zillionaire/security/holds'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireSecurityHoldsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/security/lookup-actor': {
       id: '/api/public/v1/zillionaire/security/lookup-actor'
       path: '/api/public/v1/zillionaire/security/lookup-actor'
       fullPath: '/api/public/v1/zillionaire/security/lookup-actor'
       preLoaderRoute: typeof ApiPublicV1ZillionaireSecurityLookupActorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/security/reputation': {
+      id: '/api/public/v1/zillionaire/security/reputation'
+      path: '/api/public/v1/zillionaire/security/reputation'
+      fullPath: '/api/public/v1/zillionaire/security/reputation'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireSecurityReputationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/zillionaire/series/': {
@@ -6212,10 +6275,16 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireProvidersTestPlaybackRoute,
   ApiPublicV1ZillionaireReportsMonthlyRoute:
     ApiPublicV1ZillionaireReportsMonthlyRoute,
+  ApiPublicV1ZillionaireSecurityAbuseSettingsRoute:
+    ApiPublicV1ZillionaireSecurityAbuseSettingsRoute,
   ApiPublicV1ZillionaireSecurityEventsRoute:
     ApiPublicV1ZillionaireSecurityEventsRoute,
+  ApiPublicV1ZillionaireSecurityHoldsRoute:
+    ApiPublicV1ZillionaireSecurityHoldsRoute,
   ApiPublicV1ZillionaireSecurityLookupActorRoute:
     ApiPublicV1ZillionaireSecurityLookupActorRoute,
+  ApiPublicV1ZillionaireSecurityReputationRoute:
+    ApiPublicV1ZillionaireSecurityReputationRoute,
   ApiPublicV1ZillionaireStorageDestinationsRoute:
     ApiPublicV1ZillionaireStorageDestinationsRoute,
   ApiPublicV1ZillionaireStorageDiscoverRoute:
