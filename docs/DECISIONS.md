@@ -280,3 +280,12 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - The displayed virtual wallet is informational only and is not connected to billing, payments, or revenue reporting. Do not describe it as a verified per-minute charge flow.
 - Cleanup is restricted to the caller's own active test-only channel and refuses deletion if the channel is published or ownership/type checks fail.
 - The seven-step guide is an owner-maintained checklist; test upload, processing, playback, comments and numeric instrumentation are not automatically connected or verified yet. Read-only preview records are audited and do not impersonate a real account.
+
+## V5-02 Batch 7 — Advertising manager
+
+- Ad units support Web and Android separately with placement, type, size, frequency capping, priority, dates, and audience targeting (country, channel, age rating, new vs returning).
+- Third-party network and SDK credentials (such as AdMob, Unity, AppLovin) are encrypted and stored server-side only; private connection keys are never sent to the browser or displayed after saving.
+- Placement manager provides explicit routing across home row, below player, between episodes, exit screen, and wallet top-up page.
+- Absolute child-profile and adult-channel safety gates: ads are never served to child viewer profiles or on channels rated 18+ or adult-only.
+- Paid viewers ad-free option: when enabled, active subscribers and verified paid tiers receive zero commercial ads.
+- Direct creative upload workflow includes owner review and approval status (pending, approved, rejected) before live rotation.

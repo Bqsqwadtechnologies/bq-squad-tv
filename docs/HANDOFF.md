@@ -8,3 +8,14 @@ Last batch finished: V5-02 Batch 6 (Test Lab owner controls and isolated test-on
 Next batch: V5-02 Batch 7 (Advertising manager); read its exact scope before editing.
 Implemented: protected `/zillionaire/test-lab` owner page, seven-step checklist, owner-scoped hidden unpublished test-channel creation, informational virtual-wallet balance, audited read-only preview record, and guarded one-tap removal of an unpublished owner-owned test channel. Public text scan, focused role matrix and development build passed.
 Known limits: the upload/process/publish/watch/comment/charge/analytics steps are a manual checklist only; no real media pipeline, viewer playback, chat/comment integration, per-minute fake charge, or results dashboard is wired. Do not claim these as end-to-end-tested. Android build not relevant to this batch.
+
+Last batch finished: V5-02 Batch 7 (Advertising manager: direct units, creatives, partner networks, placements, reporting, audience safety and ad-free paid viewer policy).
+Next batch: V5-02 Batch 8 (Legal pages editor and publisher); read its exact scope in the V5-02 specification before editing.
+Implemented:
+- Comprehensive Advertising Manager at `/zillionaire/ads` with 6 functional tabs: Ad Units, Own Creatives & Approvals, Partner Networks, Placement Manager, Reporting & CSV Export, and Audience & Ad-Free Policy.
+- Backend CRUD endpoints for Ad Units (`/api/public/v1/zillionaire/ads/units`), Creatives & Moderation (`/api/public/v1/zillionaire/ads/creatives`), Ad Policy Settings (`/api/public/v1/zillionaire/ads/settings`), and Reporting/CSV data (`/api/public/v1/zillionaire/ads/reports`).
+- Runtime enforcement in `/api/public/v1/ads/next`: strict zero-ad delivery for child profiles and adult-restricted (18+) channels, plus automatic ad suppression for paid/subscribed viewers when configured.
+- Security and scans passed: 103 test files (3,049 tests) all passed; zero-admin naming check passed; public-text scan passed; route access matrix regenerated with 249 routes.
+Known limits:
+- Estimated revenue in reports is calculated based on standard benchmark eCPM/CPC rates; third-party partner network earnings are reported out-of-band by respective network dashboards.
+- Creatives require active CDN media URLs; local asset binary uploading delegates to media storage.

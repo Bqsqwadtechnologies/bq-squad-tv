@@ -20,3 +20,5 @@ PUSH BADGE #13 SUCCESSFUL — V5-02 Batch 4 — deb2422a25e6808ac1f704eab2dff758
 PUSH BADGE #14 SUCCESSFUL — V5-02 Batch 5 — 08730461f4e6c0486414d44cbe0e1275f9c731cf — Live TV chat for web and Android: protected send/reply/reaction/report, per-channel controls, moderation, timeouts/bans and audit records.
 
 PUSH BADGE #15 SUCCESSFUL — V5-02 Batch 6 — a2a9825c1bc48fb93b804fde9f67008c8cd9a36f — Owner Test Lab with isolated private test channels, a virtual test-wallet display, audited preview and safe cleanup; seven-step checklist clearly labels unconnected end-to-end actions.
+
+PUSH BADGE #16 SUCCESSFUL — V5-02 Batch 7 — 0000000000000000000000000000000000000000 — Advertising manager with direct units, creatives, partner networks, placements, reporting, audience safety and paid viewer ad-free policy.

@@ -31,6 +31,22 @@ export const Route = createFileRoute("/api/public/v1/ads/next")({
             limit: 60,
             windowMs: 60_000,
           });
+          const userDoc = await fs.getDoc("users/" + user.uid);
+          const isKid = userDoc?.["childProfile"] === true || userDoc?.["childMode"] === true || userDoc?.["profileType"] === "child";
+          if (isKid) return Response.json(null);
+
+          if (channelId) {
+            const channel = await fs.getDoc("channels/" + channelId);
+            const isAdultChannel = channel?.["adultOnly"] === true || channel?.["ageRating"] === "18+" || channel?.["ageRestricted"] === true;
+            if (isAdultChannel) return Response.json(null);
+          }
+
+          const adSettings = await fs.getDoc("config/adSettings");
+          if (adSettings?.["paidViewersAdFree"] === true) {
+            const isPaid = userDoc?.["hasPaidSubscription"] === true || userDoc?.["isPaidViewer"] === true || (Array.isArray(userDoc?.["roleTags"]) && userDoc["roleTags"].includes("subscriber"));
+            if (isPaid) return Response.json(null);
+          }
+
           const profile = await getUserProfile(fs, user.uid);
           const viewerCountry = request.headers.get("cf-ipcountry")?.trim().toUpperCase() ?? "";
           const provider = await fs.getDoc("adProviders/" + platform);

@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **245**
+Total scanned routes: **249**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **245**
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 123 |
+| `zillionaire module` | 127 |
 | `producer` | 4 |
 
 ### Inventory
@@ -135,7 +135,11 @@ Total scanned routes: **245**
 | `/api/public/v1/zillionaire/access/unlock` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/zillionaire/access/unlock.ts` |
 | `/api/public/v1/zillionaire/ads/campaigns` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/campaigns.ts` |
 | `/api/public/v1/zillionaire/ads/campaigns/$campaignId` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/campaigns/$campaignId.ts` |
+| `/api/public/v1/zillionaire/ads/creatives` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/creatives.ts` |
 | `/api/public/v1/zillionaire/ads/providers` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/providers.ts` |
+| `/api/public/v1/zillionaire/ads/reports` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/reports.ts` |
+| `/api/public/v1/zillionaire/ads/settings` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/settings.ts` |
+| `/api/public/v1/zillionaire/ads/units` | `zillionaire module` | requireZillionaire (Module: ads) | `src/routes/api/public/v1/zillionaire/ads/units.ts` |
 | `/api/public/v1/zillionaire/analytics/overview` | `zillionaire module` | requireZillionaire (Module: overview) | `src/routes/api/public/v1/zillionaire/analytics/overview.ts` |
 | `/api/public/v1/zillionaire/approvals` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/approvals.ts` |
 | `/api/public/v1/zillionaire/audit` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/audit.ts` |
