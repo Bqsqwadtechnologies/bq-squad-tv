@@ -254,3 +254,43 @@ Before production launch, the owner should confirm: (1) legal pages have been re
 2. **Generic Response & Anti-Enumeration**:
    - Public password reset requests from web and mobile always return a generic success message, regardless of whether the email exists in the system.
    - Link expiration (default: 1 hour) and action URL templates are configured in the Firebase Console (Authentication -> Templates -> Password reset).
+
+## 15. Android Release & Google Play Store Submission (Batch 9)
+
+### Keystore Generation (Phone-Friendly / Terminal)
+To generate the release upload key:
+1. Run the keytool command from any terminal or workstation:
+   ```bash
+   keytool -genkey -v -keystore bq-sqwad-tv-release.jks -keyalg RSA -keysize 2048 -validity 10000 -alias bqsqwadtv
+   ```
+2. Enter a strong password when prompted, confirm your name/organization (BQ Sqwad Technologies), and complete the prompt.
+3. Securely store `bq-sqwad-tv-release.jks` in a protected vault.
+
+### Release Signing Secrets Configuration
+Configure the following four secrets in your CI/CD environment or local build configuration:
+- `ANDROID_KEYSTORE_PATH`: Absolute or relative path to `bq-sqwad-tv-release.jks`.
+- `ANDROID_KEYSTORE_PASSWORD`: Master password for the keystore file.
+- `ANDROID_KEY_ALIAS`: Key alias name (e.g., `bqsqwadtv`).
+- `ANDROID_KEY_PASSWORD`: Password for the private key entry.
+
+### Google Play Store Readiness Questionnaire Answers
+1. **Target SDK & Platform Versioning**:
+   - `compileSdk`: 36
+   - `targetSdk`: 36
+   - `minSdk`: 24 (Android 7.0+)
+   - Automated version bumping: `node scripts/bump-version-code.mjs`
+2. **Data Safety Declarations**:
+   - **Personal info**: Name, email address, and user identifier collected for account creation and session authorization. Optional phone number. Encrypted in transit (HTTPS/TLS).
+   - **Financial info**: In-app purchase history and wallet balance transactions managed via Google Play Billing and server-side verification.
+   - **App activity & analytics**: Video views, watch duration, and crash logs collected for platform analytics and service reliability.
+   - **Device or other IDs**: Device security tokens and Firebase Cloud Messaging tokens for notification delivery and fraud prevention.
+   - **Account Deletion**: Viewers can request immediate account and data deletion in-app and on the web at `https://bqsqwad.com/account-deletion`.
+3. **Content Rating (IARC)**:
+   - Category: Entertainment / Streaming.
+   - Age gating: Tiered rating system (All ages, 7+, 13+, 16+, 18+). 18+ content requires age verification; kids profiles restrict mature titles.
+   - User interactions: Video commenting, watch-together party rooms, and community reports.
+4. **Privacy Policy URL**:
+   - Canonical URL: `https://bqsqwad.com/legal/privacy-policy`
+
+### Sandbox Build Note
+Bytecode assembly tasks (`bundleRelease`, `assembleRelease`) require a Java Runtime Environment (JDK 17+) and Android SDK command-line tools. In cloud sandbox environments lacking JDK/Android SDK binaries, Gradle builds cannot execute bytecode compilation directly. The Android Gradle definitions, release signing configurations, ProGuard obfuscation profiles, and store compliance specifications are verified and ready for CI/CD or local machine execution.

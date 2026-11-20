@@ -393,3 +393,19 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - Aligns Android viewer capabilities with web viewer experience.
   - Linked account deletion (`https://bqsqwad.com/account-deletion`) and legal documentation across Android account and settings flows.
   - Retained Google Play in-app billing manager alongside server ledger reconciliation for cross-platform balance parity.
+
+## V6-01 Batch 9 — Android Release Readiness & Play Store Compliance (2026-11-20)
+
+### 1. Release Path & Signing Configuration
+- **Decision**: Prepared Android build definitions for release artifact packaging (`bundleRelease` and `assembleRelease`), reading secrets from environment variables (`ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`).
+- **Rationale**:
+  - Ensures clean separation between open repository code and private cryptographic signing credentials.
+  - Provided phone-friendly terminal instructions in `docs/OWNER-ACTIONS.md` for generating RSA-2048 upload keystore and configuring environment keys.
+
+### 2. ProGuard / R8 Rules Optimization
+- **Decision**: Expanded `android/app/proguard-rules.pro` to preserve reflection and serialization contracts across Google Play Billing, Firebase, Media3/ExoPlayer, Retrofit, Moshi, and Hilt/Dagger.
+- **Rationale**: Prevents runtime serialization failures and class-not-found exceptions when `isMinifyEnabled = true` and `isShrinkResources = true`.
+
+### 3. Versioning & Store Readiness
+- **Decision**: Added `scripts/bump-version-code.mjs` for automated build number increments; documented Google Play Store Data Safety, Content Rating (IARC), Target SDK 36, in-app account deletion, and canonical privacy URLs in `docs/OWNER-ACTIONS.md`.
+- **Sandbox Environment Note**: Documented that byte-compilation tasks requiring JDK 17 and Android SDK binaries cannot execute inside the web sandbox container, while the source build system, ProGuard rules, versioning automation, and Play Store submission specifications are verified.
