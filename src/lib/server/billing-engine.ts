@@ -113,3 +113,84 @@ export function calculateRevenueSplit(
   const platformMinor = grossRevenueMinor - shareMinor;
   return { shareMinor, platformMinor };
 }
+
+// ============================================================================
+// BATCH 6: COLLABORATION & AUTOMATIC REVENUE SPLITTING
+// Exact BigInt arithmetic, 10,000 basis points (100.00%), zero lost minor units
+// ============================================================================
+
+export type CollaboratorSplit = {
+  uid: string;
+  shareBps: bigint; // e.g., 7000n = 70.00%, 550n = 5.50%
+  role?: string;
+};
+
+export type SplitResult = {
+  uid: string;
+  shareBps: bigint;
+  allocatedMinor: bigint;
+};
+
+/**
+ * Validates that collaborator split shares sum to exactly 10,000 basis points (100.00%)
+ * and every active share is strictly positive.
+ */
+export function validateSplits(splits: readonly { shareBps: bigint }[]): boolean {
+  if (!splits || splits.length === 0) return false;
+  const sum = splits.reduce((acc, s) => acc + s.shareBps, 0n);
+  return sum === 10_000n && splits.every((s) => s.shareBps > 0n);
+}
+
+/**
+ * Splits gross revenue into platform share and producer pool.
+ * Platform share percentage is defined strictly by the owner and never shown to producers.
+ */
+export function calculateProducerPool(
+  grossMinor: bigint,
+  platformShareBps: bigint,
+): { producerMinor: bigint; platformMinor: bigint } {
+  if (grossMinor <= 0n) return { producerMinor: 0n, platformMinor: 0n };
+  const platformMinor = (grossMinor * platformShareBps) / 10_000n;
+  const producerMinor = grossMinor - platformMinor;
+  return { producerMinor, platformMinor };
+}
+
+/**
+ * Splits the producer pool automatically among collaborators based on their agreed percentages.
+ * Zero lost minor units: remainder due to integer division is assigned to the largest stakeholder.
+ */
+export function splitRevenueExact(
+  totalProducerMinor: bigint,
+  splits: readonly CollaboratorSplit[],
+): SplitResult[] {
+  if (!validateSplits(splits)) {
+    throw new Error("Invalid splits: total basis points must equal 10,000 and all shares must be positive.");
+  }
+  if (totalProducerMinor <= 0n) {
+    return splits.map((s) => ({ uid: s.uid, shareBps: s.shareBps, allocatedMinor: 0n }));
+  }
+
+  let totalAllocated = 0n;
+  const results: SplitResult[] = [];
+
+  for (let i = 0; i < splits.length; i++) {
+    const s = splits[i];
+    const share = (totalProducerMinor * s.shareBps) / 10_000n;
+    totalAllocated += share;
+    results.push({ uid: s.uid, shareBps: s.shareBps, allocatedMinor: share });
+  }
+
+  // Allocate any rounding remainder (no lost minor units) to the primary / largest collaborator
+  const remainder = totalProducerMinor - totalAllocated;
+  if (remainder > 0n && results.length > 0) {
+    let maxIdx = 0;
+    for (let i = 1; i < results.length; i++) {
+      if (results[i].shareBps > results[maxIdx].shareBps) {
+        maxIdx = i;
+      }
+    }
+    results[maxIdx].allocatedMinor += remainder;
+  }
+
+  return results;
+}

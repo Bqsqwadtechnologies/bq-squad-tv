@@ -509,3 +509,21 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 - **Decision**: Added owner emergency `FORCE_STOP` action in API and live TV console (`zillionaire.live-tv.tsx`) that immediately cuts live playback, marks stream as `suspended`, audits action, and sends priority notice to the channel operator.
 - **Decision**: Updated live TV console with distinct status badges and scheduling controls.
 - Batch 5 finished, continuing.
+
+## Batch 6 — Collaboration and automatic revenue split
+
+### 1. Co-Production Split Agreement & Confirmation Workflow
+- **Decision**: Added support for co-producers to agree on title-level revenue splits (e.g. 70/30, 94.5/5.5). The sum of shares must equal exactly 10,000 basis points (100.00%) with all individual shares strictly positive.
+- **Decision**: Added versioning (`version: number`) and confirmation tracking (`pending_confirmation` -> `active`). Any revision increments the agreement version and requires all parties to re-confirm before automated payouts proceed.
+
+### 2. Exact Integer Arithmetic & Zero Lost Minor Units
+- **Decision**: Extended `src/lib/server/billing-engine.ts` with `splitRevenueExact` and `calculateProducerPool` using exact BigInt integer division. Any remainder minor units resulting from division are systematically allocated to the primary/largest stakeholder, guaranteeing zero lost minor units across any currency allocation.
+
+### 3. Permanent Confidentiality of Platform Share & Producer Delete Ban
+- **Decision**: Platform take and rates per minute are configured strictly by the platform owner and are permanently hidden from producers.
+- **Decision**: Affirmed and surfaced platform policy that producers cannot delete ingested catalogue videos; video deletion and restoration are reserved exclusively for the platform owner to protect subscriber rights and revenue audit trails.
+
+### 4. Producer & Platform Revenue Interfaces
+- **Decision**: Created producer collaborations management page (`src/routes/producer.collaborations.tsx`) and API endpoint (`/api/public/v1/producer/collaborations/`) for creating split agreements, tracking confirmations, managing revisions, and raising dispute flags.
+- **Decision**: Enhanced Zillionaire finance console (`src/routes/zillionaire.finance.tsx`) with a dedicated "Splits & Collaborations" tab for auditing agreements and settlement status.
+- Batch 6 finished, continuing.

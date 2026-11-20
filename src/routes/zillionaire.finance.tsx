@@ -156,7 +156,7 @@ export function FinanceBody({
   initialTab?: string;
 }) {
   const [activeTab, setActiveTab] = useState<
-    "revenue" | "ledger" | "reconciliation" | "period_close" | "anomalies"
+    "revenue" | "splits" | "ledger" | "reconciliation" | "period_close" | "anomalies"
   >((initialTab as any) || "revenue");
   const [range, setRange] = useState<"7d" | "30d" | "90d">("30d");
   const [data, setData] = useState<FinanceData | null>(null);
@@ -435,6 +435,16 @@ export function FinanceBody({
             Revenue & Channels
           </button>
           <button
+            onClick={() => setActiveTab("splits")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              activeTab === "splits"
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                : "bg-white/5 text-white/70 hover:bg-white/10"
+            }`}
+          >
+            Splits & Collaborations
+          </button>
+          <button
             onClick={() => setActiveTab("ledger")}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === "ledger"
@@ -619,6 +629,74 @@ export function FinanceBody({
                       </td>
                     </tr>
                   )}
+                </tbody>
+              </table>
+            </div>
+          </ConsoleCard>
+        </div>
+      )}
+
+      {/* TAB: REVENUE SPLITS & COLLABORATIONS */}
+      {activeTab === "splits" && (
+        <div className="space-y-6">
+          <div className="rounded-xl border border-purple-800/40 bg-purple-950/20 p-4 text-purple-200">
+            <div className="flex items-center gap-2 font-semibold">
+              <Coins className="h-5 w-5 text-purple-400" />
+              <span>Co-Production Split & Revenue Policy</span>
+            </div>
+            <p className="mt-1 text-xs text-purple-300">
+              The platform share and rate per minute are decided strictly by the platform owner and are permanently hidden from producers. When payouts are computed, the net producer pool is split automatically by the agreed percentages into each collaborator balance with exact integer arithmetic and zero lost minor units.
+            </p>
+          </div>
+
+          <ConsoleCard
+            title="Co-Production Splits & Title Collaborations"
+            subtitle="Agreed producer splits, confirmation versions, and automated settlement rules"
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-white/80">
+                <thead className="bg-white/5 text-xs uppercase text-white/40">
+                  <tr>
+                    <th className="px-4 py-3">Title / Production</th>
+                    <th className="px-4 py-3">Collaborators & Agreed Shares</th>
+                    <th className="px-4 py-3">Version</th>
+                    <th className="px-4 py-3">Confirmation Status</th>
+                    <th className="px-4 py-3">Settlement Rule</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/10">
+                  <tr className="hover:bg-white/[0.02]">
+                    <td className="px-4 py-3 font-medium text-white">Lagos Nights Docuseries</td>
+                    <td className="px-4 py-3">
+                      <div className="space-y-1 text-xs">
+                        <div><span className="font-semibold text-emerald-400">70.00%</span> · lead@producer.ng (Lead)</div>
+                        <div><span className="font-semibold text-emerald-400">30.00%</span> · director@studio.ng (Co-Director)</div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-white/60">v1 (Confirmed)</td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full bg-emerald-950 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 border border-emerald-800">
+                        ACTIVE / AGREED
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-400">Auto-split on billing cycle</td>
+                  </tr>
+                  <tr className="hover:bg-white/[0.02]">
+                    <td className="px-4 py-3 font-medium text-white">Afrobeats Rising Feature</td>
+                    <td className="px-4 py-3">
+                      <div className="space-y-1 text-xs">
+                        <div><span className="font-semibold text-emerald-400">94.50%</span> · sound@producer.ng</div>
+                        <div><span className="font-semibold text-emerald-400">5.50%</span> · edit@studio.ng</div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-white/60">v2 (Updated)</td>
+                    <td className="px-4 py-3">
+                      <span className="rounded-full bg-amber-950 px-2.5 py-0.5 text-xs font-semibold text-amber-400 border border-amber-800">
+                        PENDING CONFIRMATION
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-400">Escrowed until confirmed</td>
+                  </tr>
                 </tbody>
               </table>
             </div>

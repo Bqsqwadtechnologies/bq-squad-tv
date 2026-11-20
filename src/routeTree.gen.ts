@@ -43,6 +43,7 @@ import { Route as ContentAssetIdRouteImport } from './routes/content.$assetId'
 import { Route as LegalSlugRouteImport } from './routes/legal.$slug'
 import { Route as ProducerIndexRouteImport } from './routes/producer.index'
 import { Route as ProducerChannelsRouteImport } from './routes/producer.channels'
+import { Route as ProducerCollaborationsRouteImport } from './routes/producer.collaborations'
 import { Route as ProducerDocsRouteImport } from './routes/producer.docs'
 import { Route as ProviderIndexRouteImport } from './routes/provider.index'
 import { Route as ProviderChannelsRouteImport } from './routes/provider.channels'
@@ -187,6 +188,7 @@ import { Route as ApiPublicV1NotificationsNotificationIdReadRouteImport } from '
 import { Route as ApiPublicV1PaymentsPaystackInitializeRouteImport } from './routes/api/public/v1/payments/paystack/initialize'
 import { Route as ApiPublicV1PaymentsPaystackVerifyRouteImport } from './routes/api/public/v1/payments/paystack/verify'
 import { Route as ApiPublicV1PaymentsPaystackWebhookRouteImport } from './routes/api/public/v1/payments/paystack/webhook'
+import { Route as ApiPublicV1ProducerCollaborationsIndexRouteImport } from './routes/api/public/v1/producer/collaborations/index'
 import { Route as ApiPublicV1ProducerPayoutsRequestRouteImport } from './routes/api/public/v1/producer/payouts/request'
 import { Route as ApiPublicV1ProducerVerificationUploadIntentRouteImport } from './routes/api/public/v1/producer/verification/upload-intent'
 import { Route as ApiPublicV1SecurityIntegrityChallengeRouteImport } from './routes/api/public/v1/security/integrity/challenge'
@@ -494,6 +496,11 @@ const ProducerIndexRoute = ProducerIndexRouteImport.update({
 const ProducerChannelsRoute = ProducerChannelsRouteImport.update({
   id: '/producer/channels',
   path: '/producer/channels',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProducerCollaborationsRoute = ProducerCollaborationsRouteImport.update({
+  id: '/producer/collaborations',
+  path: '/producer/collaborations',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProducerDocsRoute = ProducerDocsRouteImport.update({
@@ -1296,6 +1303,12 @@ const ApiPublicV1PaymentsPaystackWebhookRoute =
   ApiPublicV1PaymentsPaystackWebhookRouteImport.update({
     id: '/api/public/v1/payments/paystack/webhook',
     path: '/api/public/v1/payments/paystack/webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerCollaborationsIndexRoute =
+  ApiPublicV1ProducerCollaborationsIndexRouteImport.update({
+    id: '/api/public/v1/producer/collaborations/',
+    path: '/api/public/v1/producer/collaborations/',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ProducerPayoutsRequestRoute =
@@ -2161,6 +2174,7 @@ export interface FileRoutesByFullPath {
   '/content/$assetId': typeof ContentAssetIdRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
+  '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
@@ -2377,6 +2391,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/trending/promotions': typeof ApiPublicV1ZillionaireTrendingPromotionsRoute
   '/api/public/v1/zillionaire/workers/$workerId': typeof ApiPublicV1ZillionaireWorkersWorkerIdRoute
   '/api/public/v1/auth/devices/': typeof ApiPublicV1AuthDevicesIndexRoute
+  '/api/public/v1/producer/collaborations/': typeof ApiPublicV1ProducerCollaborationsIndexRoute
   '/api/public/v1/zillionaire/blocked-content/': typeof ApiPublicV1ZillionaireBlockedContentIndexRoute
   '/api/public/v1/zillionaire/channels/': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/comments/': typeof ApiPublicV1ZillionaireCommentsIndexRoute
@@ -2479,6 +2494,7 @@ export interface FileRoutesByTo {
   '/content/$assetId': typeof ContentAssetIdRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
+  '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
@@ -2694,6 +2710,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/trending/promotions': typeof ApiPublicV1ZillionaireTrendingPromotionsRoute
   '/api/public/v1/zillionaire/workers/$workerId': typeof ApiPublicV1ZillionaireWorkersWorkerIdRoute
   '/api/public/v1/auth/devices': typeof ApiPublicV1AuthDevicesIndexRoute
+  '/api/public/v1/producer/collaborations': typeof ApiPublicV1ProducerCollaborationsIndexRoute
   '/api/public/v1/zillionaire/blocked-content': typeof ApiPublicV1ZillionaireBlockedContentIndexRoute
   '/api/public/v1/zillionaire/channels': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/comments': typeof ApiPublicV1ZillionaireCommentsIndexRoute
@@ -2797,6 +2814,7 @@ export interface FileRoutesById {
   '/content/$assetId': typeof ContentAssetIdRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
+  '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
@@ -3013,6 +3031,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/trending/promotions': typeof ApiPublicV1ZillionaireTrendingPromotionsRoute
   '/api/public/v1/zillionaire/workers/$workerId': typeof ApiPublicV1ZillionaireWorkersWorkerIdRoute
   '/api/public/v1/auth/devices/': typeof ApiPublicV1AuthDevicesIndexRoute
+  '/api/public/v1/producer/collaborations/': typeof ApiPublicV1ProducerCollaborationsIndexRoute
   '/api/public/v1/zillionaire/blocked-content/': typeof ApiPublicV1ZillionaireBlockedContentIndexRoute
   '/api/public/v1/zillionaire/channels/': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/comments/': typeof ApiPublicV1ZillionaireCommentsIndexRoute
@@ -3117,6 +3136,7 @@ export interface FileRouteTypes {
     | '/content/$assetId'
     | '/legal/$slug'
     | '/producer/channels'
+    | '/producer/collaborations'
     | '/producer/docs'
     | '/provider/channels'
     | '/provider/contracts'
@@ -3333,6 +3353,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/trending/promotions'
     | '/api/public/v1/zillionaire/workers/$workerId'
     | '/api/public/v1/auth/devices/'
+    | '/api/public/v1/producer/collaborations/'
     | '/api/public/v1/zillionaire/blocked-content/'
     | '/api/public/v1/zillionaire/channels/'
     | '/api/public/v1/zillionaire/comments/'
@@ -3435,6 +3456,7 @@ export interface FileRouteTypes {
     | '/content/$assetId'
     | '/legal/$slug'
     | '/producer/channels'
+    | '/producer/collaborations'
     | '/producer/docs'
     | '/provider/channels'
     | '/provider/contracts'
@@ -3650,6 +3672,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/trending/promotions'
     | '/api/public/v1/zillionaire/workers/$workerId'
     | '/api/public/v1/auth/devices'
+    | '/api/public/v1/producer/collaborations'
     | '/api/public/v1/zillionaire/blocked-content'
     | '/api/public/v1/zillionaire/channels'
     | '/api/public/v1/zillionaire/comments'
@@ -3752,6 +3775,7 @@ export interface FileRouteTypes {
     | '/content/$assetId'
     | '/legal/$slug'
     | '/producer/channels'
+    | '/producer/collaborations'
     | '/producer/docs'
     | '/provider/channels'
     | '/provider/contracts'
@@ -3968,6 +3992,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/trending/promotions'
     | '/api/public/v1/zillionaire/workers/$workerId'
     | '/api/public/v1/auth/devices/'
+    | '/api/public/v1/producer/collaborations/'
     | '/api/public/v1/zillionaire/blocked-content/'
     | '/api/public/v1/zillionaire/channels/'
     | '/api/public/v1/zillionaire/comments/'
@@ -4071,6 +4096,7 @@ export interface RootRouteChildren {
   ContentAssetIdRoute: typeof ContentAssetIdRoute
   LegalSlugRoute: typeof LegalSlugRoute
   ProducerChannelsRoute: typeof ProducerChannelsRouteWithChildren
+  ProducerCollaborationsRoute: typeof ProducerCollaborationsRoute
   ProducerDocsRoute: typeof ProducerDocsRoute
   ProviderChannelsRoute: typeof ProviderChannelsRoute
   ProviderContractsRoute: typeof ProviderContractsRoute
@@ -4266,6 +4292,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireTrendingConfigRoute: typeof ApiPublicV1ZillionaireTrendingConfigRoute
   ApiPublicV1ZillionaireTrendingPromotionsRoute: typeof ApiPublicV1ZillionaireTrendingPromotionsRoute
   ApiPublicV1AuthDevicesIndexRoute: typeof ApiPublicV1AuthDevicesIndexRoute
+  ApiPublicV1ProducerCollaborationsIndexRoute: typeof ApiPublicV1ProducerCollaborationsIndexRoute
   ApiPublicV1ZillionaireBlockedContentIndexRoute: typeof ApiPublicV1ZillionaireBlockedContentIndexRoute
   ApiPublicV1ZillionaireCommentsIndexRoute: typeof ApiPublicV1ZillionaireCommentsIndexRoute
   ApiPublicV1ZillionaireContentAssetsIndexRoute: typeof ApiPublicV1ZillionaireContentAssetsIndexRoute
@@ -4560,6 +4587,13 @@ declare module '@tanstack/react-router' {
       path: '/producer/channels'
       fullPath: '/producer/channels'
       preLoaderRoute: typeof ProducerChannelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/producer/collaborations': {
+      id: '/producer/collaborations'
+      path: '/producer/collaborations'
+      fullPath: '/producer/collaborations'
+      preLoaderRoute: typeof ProducerCollaborationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/producer/docs': {
@@ -5568,6 +5602,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/payments/paystack/webhook'
       fullPath: '/api/public/v1/payments/paystack/webhook'
       preLoaderRoute: typeof ApiPublicV1PaymentsPaystackWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/collaborations/': {
+      id: '/api/public/v1/producer/collaborations/'
+      path: '/api/public/v1/producer/collaborations'
+      fullPath: '/api/public/v1/producer/collaborations/'
+      preLoaderRoute: typeof ApiPublicV1ProducerCollaborationsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/producer/payouts/request': {
@@ -6839,6 +6880,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContentAssetIdRoute: ContentAssetIdRoute,
   LegalSlugRoute: LegalSlugRoute,
   ProducerChannelsRoute: ProducerChannelsRouteWithChildren,
+  ProducerCollaborationsRoute: ProducerCollaborationsRoute,
   ProducerDocsRoute: ProducerDocsRoute,
   ProviderChannelsRoute: ProviderChannelsRoute,
   ProviderContractsRoute: ProviderContractsRoute,
@@ -7099,6 +7141,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ZillionaireTrendingPromotionsRoute:
     ApiPublicV1ZillionaireTrendingPromotionsRoute,
   ApiPublicV1AuthDevicesIndexRoute: ApiPublicV1AuthDevicesIndexRoute,
+  ApiPublicV1ProducerCollaborationsIndexRoute:
+    ApiPublicV1ProducerCollaborationsIndexRoute,
   ApiPublicV1ZillionaireBlockedContentIndexRoute:
     ApiPublicV1ZillionaireBlockedContentIndexRoute,
   ApiPublicV1ZillionaireCommentsIndexRoute:
