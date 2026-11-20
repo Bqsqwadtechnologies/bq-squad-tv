@@ -309,3 +309,6 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Added focused coverage for upload resume, audited deletion, live-chat timeout and audit evidence, plus hidden/unpublished owner-scoped test-lab creation and read-only preview.
 - Catalog filtering now excludes `testOnly` channels even if a misconfigured document is published, adding a second safety boundary against public discovery and revenue pathways.
 - Consolidated owner launch checks into the existing owner-actions checklist. External provider configuration and legal review remain owner actions, not claims made by automated tests.
+
+
+- V5-03 Batch 1 uses mandatory password + TOTP, AES-GCM encrypted authenticator secrets, atomic single-use recovery codes and the existing five-failure lockout; passkeys and new-device email alerts remain explicitly out of scope until implemented.

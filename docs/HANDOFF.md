@@ -1,35 +1,5 @@
-Last batch finished: V5-02 Batch 5 (Live TV chat for web and Android).
-Next batch: V5-02 Batch 6 (Test lab); read its exact scope in the V5-02 specification before editing.
-Implemented: authenticated channel chat API; send/reply-to field, reactions, reports, slow mode, subscriber-only checks, link and shared keyword filters, per-user rate limits, child-profile off, timeouts/bans, owner settings and audited moderation actions; web and Android viewer surfaces.
-Known gaps: chat replay remains off by default with no replay UI; moderator-role assignment and bulk-delete UI are not implemented. Keyword filtering uses the shared moderation keyword list, and chat reporting is stored for the owner console. Validate timeout/bans, reply threading, reactions, report review, and Android compilation. Do not claim real-time delivery; clients poll every 15 seconds. Verify message privacy: no emails or phone numbers are returned.
-Verification: development build passed; role matrix 2,432/2,432; no-admin-text scan, public-text scan and existing Live TV tests passed. Add focused chat API tests before treating this batch as complete.
-
-Last batch finished: V5-02 Batch 6 (Test Lab owner controls and isolated test-only channel).
-Next batch: V5-02 Batch 7 (Advertising manager); read its exact scope before editing.
-Implemented: protected `/zillionaire/test-lab` owner page, seven-step checklist, owner-scoped hidden unpublished test-channel creation, informational virtual-wallet balance, audited read-only preview record, and guarded one-tap removal of an unpublished owner-owned test channel. Public text scan, focused role matrix and development build passed.
-Known limits: the upload/process/publish/watch/comment/charge/analytics steps are a manual checklist only; no real media pipeline, viewer playback, chat/comment integration, per-minute fake charge, or results dashboard is wired. Do not claim these as end-to-end-tested. Android build not relevant to this batch.
-
-Last batch finished: V5-02 Batch 7 (Advertising manager: direct units, creatives, partner networks, placements, reporting, audience safety and ad-free paid viewer policy).
-Next batch: V5-02 Batch 8 (Legal pages editor and publisher); read its exact scope in the V5-02 specification before editing.
-Implemented:
-- Comprehensive Advertising Manager at `/zillionaire/ads` with 6 functional tabs: Ad Units, Own Creatives & Approvals, Partner Networks, Placement Manager, Reporting & CSV Export, and Audience & Ad-Free Policy.
-- Backend CRUD endpoints for Ad Units (`/api/public/v1/zillionaire/ads/units`), Creatives & Moderation (`/api/public/v1/zillionaire/ads/creatives`), Ad Policy Settings (`/api/public/v1/zillionaire/ads/settings`), and Reporting/CSV data (`/api/public/v1/zillionaire/ads/reports`).
-- Runtime enforcement in `/api/public/v1/ads/next`: strict zero-ad delivery for child profiles and adult-restricted (18+) channels, plus automatic ad suppression for paid/subscribed viewers when configured.
-- Security and scans passed: 103 test files (3,049 tests) all passed; zero-admin naming check passed; public-text scan passed; route access matrix regenerated with 249 routes.
-Known limits:
-- Estimated revenue in reports is calculated based on standard benchmark eCPM/CPC rates; third-party partner network earnings are reported out-of-band by respective network dashboards.
-- Creatives require active CDN media URLs; local asset binary uploading delegates to media storage.
-
-Last batch finished: V5-02 Batch 8 (Legal pages editor and publisher).
-Next batch: V5-02 Batch 9 (legal text and storage visibility); read the exact scope in the V5-02 specification before editing.
-Implemented: owner Pages console at `/zillionaire/pages` with 12 document entries, Markdown editing and preview, version history and compare, rollback, scheduled-publish controls, re-acceptance toggle, owner-only legal-review warning and one-tap defaults. Added authenticated list/save API, placeholder auto-fill using legal settings or standard fallbacks, and public route fallbacks for supported slugs. Draft content remains draft and does not affect acceptance; only published required versions marked for re-acceptance gate users.
-Verification: development build passed; public-text scan passed; route matrix regenerated for 251 routes. The full test suite must be rerun after these changes.
-Known limits: scheduled status is stored and exposed at its scheduled time by the public route, but no background job is added to transition it to published or issue re-acceptance notifications; scheduled page settings are not fully exercised by tests yet. Default legal text remains a starting point for qualified legal review.
-
-Last batch finished: V5-02 Batch 9 (Legal text and storage visibility).
-Next batch: V5-02 Batch 10 (Pipeline tests, direct-publish verification, live-chat moderation checks and checklist); read the exact scope in the V5-02 specification before editing.
-Implemented: audited plain-language legal copy across all 12 documents in `content/legal/default-pages.json` with vendor-neutral wording; added automated tests in `src/test/legal-copy-safety.test.ts`. Added a comprehensive storage visibility card matrix to `/zillionaire/storage` reporting pools, free space headroom, egress volume, replicas count, and failover health.
-Verification: build dev passed; public-text scan passed; Vitest passed 104 files and 3,072 tests.
-Known limits: storage metrics reflect current registered destinations and reported usage bytes; live per-channel bandwidth metrics require querying live edge access logs when streaming sessions run.
-
-V5-02 Batch 10 acceptance checks are complete. Added upload resume/delete audit tests, chat timeout audit tests, isolated test-lab creation/preview tests, and catalog exclusion of all `testOnly` channels. Added a single production-readiness checklist to `docs/OWNER-ACTIONS.md`. Focused tests (16), public-text scan, and development build passed. Remaining external work includes legal review and provider-console/account configuration. Next start V5-03 Batch 1 after reading the attached maximum-security spec and verifying current main.
+Last finished batch: V5-03 Batch 1, pushed to main as `8b94f4c3ddbb850f7d1f83983f05f0ca6f24bc2c`.
+Next batch: V5-03 Batch 2 (step-up and dual control).
+Known gaps: passkey/WebAuthn and new-device email confirmation/alerts are not implemented; configure `ZILLIONAIRE_MFA_ENCRYPTION_KEY` server-side before enrollment.
+Files touched: owner enrollment/unlock UI and APIs, TOTP helper, access matrix, tests, owner checklist.
+Verification: 107 test files/3,094 tests, development build and public-text scan passed.
