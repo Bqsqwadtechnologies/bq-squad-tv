@@ -522,6 +522,12 @@ export function ConsoleShell({
             icon: BadgeCheck,
           },
           {
+            id: "producer-team",
+            label: "Team & Scopes",
+            href: "/producer/team",
+            icon: Users,
+          },
+          {
             id: "producer-terms",
             label: "Terms & Agreement",
             href: "/producer-terms",
@@ -579,6 +585,12 @@ export function ConsoleShell({
             label: "Playback Monitor",
             href: "/provider#playback",
             icon: PlayCircle,
+          },
+          {
+            id: "provider-team",
+            label: "Team & Access",
+            href: "/provider/team",
+            icon: Users,
           },
           {
             id: "provider-docs",

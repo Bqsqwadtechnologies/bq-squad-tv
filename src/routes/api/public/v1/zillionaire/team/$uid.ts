@@ -13,8 +13,9 @@ import { requireStepUp } from "@/lib/server/zillionaire-access";
 
 const updateSchema = z.object({
   status: z.enum(["active", "suspended"]).optional(),
-  modules: z.array(z.enum(ZILLIONAIRE_MODULES as [string, ...string[]])).optional(),
+  modules: z.array(z.string()).optional(),
   roleTemplate: z.string().optional(),
+  roleName: z.string().optional(),
   expiryDate: z.string().nullable().optional(),
   reason: z.string().trim().min(3).max(1000),
 });
@@ -37,11 +38,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team/$uid")({
             actor.emailVerified === true,
           );
 
+          // ESCALATION RULE: People with a role cannot change their own role or anyone else's.
           if (!actorAccess.isZillionaireOwner) {
             throw new ApiError(
               403,
               "OWNER_AUTHORITY_REQUIRED",
-              "Only the platform owner can update team members.",
+              "People with a delegated role cannot change their own role or anyone else's. Only the platform owner can manage roles.",
             );
           }
 
@@ -49,8 +51,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team/$uid")({
           if (uid === actor.uid) {
             throw new ApiError(
               403,
-              "OWNER_ACCOUNT_PROTECTED",
-              "Owner account cannot be modified through team management.",
+              "SELF_ROLE_CHANGE_DENIED",
+              "People with a role cannot change their own role.",
             );
           }
 
@@ -81,6 +83,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team/$uid")({
             updates["adminModules"] = body.modules;
           }
           if (body.roleTemplate) updates["roleTemplate"] = body.roleTemplate;
+          if (body.roleName !== undefined) updates["roleName"] = body.roleName;
           if (body.expiryDate !== undefined) updates["permissionsExpiryDate"] = body.expiryDate;
 
           await fs.patchDoc(targetPath, updates);
@@ -114,11 +117,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team/$uid")({
             actor.emailVerified === true,
           );
 
+          // ESCALATION RULE: People with a role cannot change their own role or anyone else's.
           if (!actorAccess.isZillionaireOwner) {
             throw new ApiError(
               403,
               "OWNER_AUTHORITY_REQUIRED",
-              "Only the platform owner can revoke team roles.",
+              "People with a delegated role cannot change their own role or anyone else's. Only the platform owner can revoke roles.",
             );
           }
 

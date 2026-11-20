@@ -11,8 +11,9 @@ import {
 } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
 import { requireStepUp } from "@/lib/server/zillionaire-access";
+import { DASHBOARD_PERMISSIONS } from "@/lib/team-types";
 
-export const ROLE_TEMPLATES: Record<
+export const BUILTIN_ROLE_TEMPLATES: Record<
   string,
   { label: string; description: string; modules: ZillionaireModule[] }
 > = {
@@ -21,14 +22,24 @@ export const ROLE_TEMPLATES: Record<
     description: "Manage channels, movies, series, video studio and live TV.",
     modules: ["channels", "catalog", "video"],
   },
+  rights_specialist: {
+    label: "Rights & Copyright Specialist",
+    description: "Inspect copyright chain of title, licensing documents, and claims.",
+    modules: ["rights_review", "catalog"],
+  },
+  live_ops_lead: {
+    label: "Live Operations Lead",
+    description: "Review, schedule, approve, or force-stop live stream events.",
+    modules: ["live_approvals", "channels"],
+  },
   finance_officer: {
     label: "Finance Officer",
     description: "Review transactions, wallets, payouts and pricing.",
-    modules: ["finance", "pricing"],
+    modules: ["finance", "payouts", "pricing"],
   },
   support_agent: {
     label: "Support Agent",
-    description: "Manage support tickets and inquiries.",
+    description: "Manage customer support inquiries and tickets.",
     modules: ["support"],
   },
   moderator: {
@@ -44,15 +55,23 @@ export const ROLE_TEMPLATES: Record<
   security_reviewer: {
     label: "Security Reviewer",
     description: "Inspect security events, audit logs and rate limits.",
-    modules: ["roles"],
+    modules: ["security", "roles"],
+  },
+  platform_editor: {
+    label: "Editorial & Content Publisher",
+    description: "Manage legal pages, notifications, and reports.",
+    modules: ["pages", "notifications", "reports"],
   },
 };
 
 const inviteSchema = z.object({
-  email: z.string().trim().email(),
+  action: z.enum(["invite", "create_role"]).default("invite"),
+  email: z.string().trim().email().optional(),
   roleTemplate: z.string().optional(),
-  modules: z.array(z.enum(ZILLIONAIRE_MODULES as [string, ...string[]])).min(1),
-  expiryDate: z.string().optional(),
+  roleName: z.string().trim().min(2).max(100).optional(),
+  description: z.string().trim().max(500).optional(),
+  modules: z.array(z.string()).min(1),
+  expiryDate: z.string().nullable().optional(),
   reason: z.string().trim().min(3).max(1000),
 });
 
@@ -67,7 +86,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team")({
 
           // Query users collection for accounts with delegated modules
           const allUsers = await fs.query("users", {
-            limit: 100,
+            limit: 150,
           });
 
           const teamMembers = allUsers
@@ -88,12 +107,48 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team")({
               lastActive: ((u["lastActiveAt"] as string) || (u["updatedAt"] as string) || null) as
                 string | null,
               roleTemplate: ((u["roleTemplate"] as string) || "custom") as string,
+              roleName: ((u["roleName"] as string) || null) as string | null,
+              createdAt: ((u["createdAt"] as string) || null) as string | null,
             }));
+
+          // Load custom role templates
+          const customTemplatesDoc = await fs.getDoc("system_settings/role_templates").catch(() => null);
+          const customTemplates = (customTemplatesDoc?.["templates"] || {}) as Record<
+            string,
+            { label: string; description: string; modules: ZillionaireModule[] }
+          >;
+
+          const mergedTemplates = {
+            ...BUILTIN_ROLE_TEMPLATES,
+            ...customTemplates,
+          };
+
+          // Load recent audit activity for team members
+          const auditRows = await fs
+            .query("auditLog", {
+              orderByField: "createdAt",
+              descending: true,
+              limit: 50,
+            })
+            .catch(() => []);
+
+          const activity = auditRows.map((row) => ({
+            id: row.__id,
+            actorUid: typeof row["actorUid"] === "string" ? row["actorUid"] : null,
+            action: typeof row["action"] === "string" ? row["action"] : "unknown",
+            targetType: typeof row["targetType"] === "string" ? row["targetType"] : null,
+            targetId: typeof row["targetId"] === "string" ? row["targetId"] : null,
+            reason: typeof row["reason"] === "string" ? row["reason"].slice(0, 1000) : "",
+            createdAt:
+              typeof row["createdAt"] === "string" ? row["createdAt"] : new Date().toISOString(),
+          }));
 
           return Response.json({
             team: teamMembers,
-            roleTemplates: ROLE_TEMPLATES,
+            roleTemplates: mergedTemplates,
             availableModules: ZILLIONAIRE_MODULES,
+            availablePermissions: DASHBOARD_PERMISSIONS,
+            activity,
           });
         } catch (error) {
           return errorBody(error);
@@ -113,16 +168,64 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team")({
             actor.emailVerified === true,
           );
 
+          // ESCALATION RULE: People with a role cannot change their own role or anyone else's.
           if (!actorAccess.isZillionaireOwner) {
             throw new ApiError(
               403,
               "OWNER_AUTHORITY_REQUIRED",
-              "Only the platform owner can invite or grant team roles.",
+              "People with a delegated role cannot change their own role or anyone else's. Only the platform owner can manage roles.",
             );
           }
 
           const body = await parseBody(request, inviteSchema);
           requireStepUp(request, actor.uid, "team_manage");
+
+          // ACTION 1: CREATE CUSTOM ROLE TEMPLATE
+          if (body.action === "create_role") {
+            if (!body.roleName) {
+              throw new ApiError(400, "MISSING_ROLE_NAME", "Role name is required for custom roles.");
+            }
+            const roleKey = body.roleName.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+            const existingDoc = await fs.getDoc("system_settings/role_templates").catch(() => null);
+            const currentTemplates = (existingDoc?.["templates"] || {}) as Record<string, unknown>;
+
+            const newTemplate = {
+              label: body.roleName,
+              description: body.description || `Custom role created by platform owner: ${body.roleName}`,
+              modules: body.modules,
+              createdAt: new Date().toISOString(),
+              createdBy: actor.uid,
+            };
+
+            await fs.setDoc("system_settings/role_templates", {
+              templates: {
+                ...currentTemplates,
+                [roleKey]: newTemplate,
+              },
+              updatedAt: new Date().toISOString(),
+            });
+
+            await writeAuditLog(fs, {
+              actorUid: actor.uid,
+              action: "team.role_template_created",
+              targetType: "role_template",
+              targetId: roleKey,
+              reason: body.reason,
+              metadata: newTemplate,
+            });
+
+            return Response.json({
+              success: true,
+              roleKey,
+              template: newTemplate,
+            });
+          }
+
+          // ACTION 2: INVITE / DELEGATE PERMISSIONS TO USER
+          if (!body.email) {
+            throw new ApiError(400, "MISSING_EMAIL", "User email address is required for role delegation.");
+          }
+
           const normalizedEmail = body.email.toLowerCase();
 
           if (isProtectedZillionaire(normalizedEmail)) {
@@ -147,17 +250,25 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team")({
               matchingUsers[0]["id"] ||
               matchingUsers[0]["uid"] ||
               "") as string;
+            if (targetUid === actor.uid) {
+              throw new ApiError(
+                403,
+                "SELF_ROLE_CHANGE_DENIED",
+                "You cannot modify your own role permissions.",
+              );
+            }
             const targetPath = `users/${targetUid}`;
             await fs.patchDoc(targetPath, {
               zillionaireModules: body.modules,
               adminModules: body.modules,
               roleTemplate: body.roleTemplate || "custom",
+              roleName: body.roleName || null,
               permissionsExpiryDate: body.expiryDate || null,
               permissionsUpdatedAt: now,
               permissionsUpdatedBy: actor.uid,
             });
           } else {
-            // Create pending invitation / placeholder user doc
+            // Create pending placeholder user doc
             targetUid = `team_${Date.now()}`;
             const targetPath = `users/${targetUid}`;
             await fs.setDoc(targetPath, {
@@ -166,6 +277,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team")({
               zillionaireModules: body.modules,
               adminModules: body.modules,
               roleTemplate: body.roleTemplate || "custom",
+              roleName: body.roleName || null,
               permissionsExpiryDate: body.expiryDate || null,
               permissionsUpdatedAt: now,
               permissionsUpdatedBy: actor.uid,
@@ -183,6 +295,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team")({
               email: normalizedEmail,
               modules: body.modules,
               roleTemplate: body.roleTemplate || "custom",
+              roleName: body.roleName || null,
               expiryDate: body.expiryDate || null,
             },
           });
@@ -192,6 +305,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team")({
             uid: targetUid,
             email: normalizedEmail,
             modules: body.modules,
+            expiryDate: body.expiryDate || null,
           });
         } catch (error) {
           return errorBody(error);

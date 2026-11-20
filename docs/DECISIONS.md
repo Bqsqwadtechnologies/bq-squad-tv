@@ -567,3 +567,26 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 ### 5. Public Payment & Payout Policy
 - **Decision**: Published a dedicated public policy route at `/payment-and-payout-policy` detailing the payout cycle (30th to 1st), minimum disbursement thresholds, KYC tier verification requirements, permanent immutable records, and banking delay guidelines.
 - Batch 8 finished, continuing.
+
+## Batch 9 — Granular Dashboard Roles, Scoped Delegation & Escalation Prevention
+
+### 1. Universal Selectable Dashboard Job Permissions
+- **Decision**: Catalogued and exposed all 17 distinct dashboard jobs as selectable permissions in `src/lib/team-types.ts`: Users, Content Review, Rights Review, Live Approvals, Channels, Pricing, Finance, Payouts, Ads, Notifications, Moderation, Support, Security, Pages, Storage, Reports, and Team View.
+- **Decision**: Mapped permissions directly to internal platform modules while presenting clear human-readable labels, categorized by domain (operations, content, finance, security, system).
+
+### 2. Owner-Controlled Custom Role Templates & Delegation
+- **Decision**: Empowered platform owner to create and persist custom role templates in Firestore (`system_settings/role_templates`) bundling any subset of dashboard jobs with custom titles and descriptions.
+- **Decision**: Expanded `/api/public/v1/zillionaire/team` to support owner role creation (`create_role`), staff delegation (`invite`), and granular permission assignments with optional expiry dates (`expiryDate`).
+
+### 3. Strict Privilege Escalation Guards & Immutable Hierarchy
+- **Decision**: Strictly enforced in both backend handlers (`/api/public/v1/zillionaire/team` and `/api/public/v1/zillionaire/team/$uid`) that people with a delegated role cannot change their own role or anyone else's (`OWNER_AUTHORITY_REQUIRED` and `SELF_ROLE_CHANGE_DENIED`).
+- **Decision**: Read-only display and explanatory banners presented in UI when non-owner operators access the Team & Roles console.
+
+### 4. Tenant-Scoped Producer & Provider Team Management
+- **Decision**: Implemented isolated team APIs and consoles for Producers (`/api/public/v1/producer/team` and `src/routes/producer.team.tsx`) with scoped roles: `upload`, `analytics`, `comments`, `collaboration`.
+- **Decision**: Implemented isolated team APIs and consoles for Providers (`/api/public/v1/provider/team` and `src/routes/provider.team.tsx`) with scoped roles: `channels`, `schedule`, `statements`.
+- **Decision**: Strictly enforced tenancy checks ensuring studios and broadcast networks can only inspect and manage team members within their own organization.
+
+### 5. Full Audit Visibility for Delegated Operations
+- **Decision**: Added dedicated Activity & Audit tab in `src/routes/zillionaire.team.tsx` enabling the platform owner to inspect every action performed by team members with actor UID, action name, target reference, reason, and timestamp.
+- Batch 9 finished, continuing.

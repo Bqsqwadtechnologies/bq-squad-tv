@@ -46,12 +46,14 @@ import { Route as ProducerIndexRouteImport } from './routes/producer.index'
 import { Route as ProducerChannelsRouteImport } from './routes/producer.channels'
 import { Route as ProducerCollaborationsRouteImport } from './routes/producer.collaborations'
 import { Route as ProducerDocsRouteImport } from './routes/producer.docs'
+import { Route as ProducerTeamRouteImport } from './routes/producer.team'
 import { Route as ProviderIndexRouteImport } from './routes/provider.index'
 import { Route as ProviderChannelsRouteImport } from './routes/provider.channels'
 import { Route as ProviderContractsRouteImport } from './routes/provider.contracts'
 import { Route as ProviderDisputesRouteImport } from './routes/provider.disputes'
 import { Route as ProviderDocsRouteImport } from './routes/provider.docs'
 import { Route as ProviderStatementsRouteImport } from './routes/provider.statements'
+import { Route as ProviderTeamRouteImport } from './routes/provider.team'
 import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as ZillionaireIndexRouteImport } from './routes/zillionaire.index'
 import { Route as ZillionaireAdsRouteImport } from './routes/zillionaire.ads'
@@ -131,6 +133,7 @@ import { Route as ApiPublicV1ProducerChannelsRouteImport } from './routes/api/pu
 import { Route as ApiPublicV1ProducerEarningsRouteImport } from './routes/api/public/v1/producer/earnings'
 import { Route as ApiPublicV1ProducerMobileSummaryRouteImport } from './routes/api/public/v1/producer/mobile-summary'
 import { Route as ApiPublicV1ProducerPayoutsRouteImport } from './routes/api/public/v1/producer/payouts'
+import { Route as ApiPublicV1ProducerTeamRouteImport } from './routes/api/public/v1/producer/team'
 import { Route as ApiPublicV1ProducerVerificationRouteImport } from './routes/api/public/v1/producer/verification'
 import { Route as ApiPublicV1ProfileCompleteRouteImport } from './routes/api/public/v1/profile/complete'
 import { Route as ApiPublicV1ProfileCountryRouteImport } from './routes/api/public/v1/profile/country'
@@ -142,6 +145,7 @@ import { Route as ApiPublicV1ProviderDashboardRouteImport } from './routes/api/p
 import { Route as ApiPublicV1ProviderDisputesRouteImport } from './routes/api/public/v1/provider/disputes'
 import { Route as ApiPublicV1ProviderRegisterRouteImport } from './routes/api/public/v1/provider/register'
 import { Route as ApiPublicV1ProviderStatementsRouteImport } from './routes/api/public/v1/provider/statements'
+import { Route as ApiPublicV1ProviderTeamRouteImport } from './routes/api/public/v1/provider/team'
 import { Route as ApiPublicV1QualitySettingsRouteImport } from './routes/api/public/v1/quality/settings'
 import { Route as ApiPublicV1RecommendationsIndexRouteImport } from './routes/api/public/v1/recommendations/index'
 import { Route as ApiPublicV1SearchV2RouteImport } from './routes/api/public/v1/search/v2'
@@ -514,6 +518,11 @@ const ProducerDocsRoute = ProducerDocsRouteImport.update({
   path: '/producer/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProducerTeamRoute = ProducerTeamRouteImport.update({
+  id: '/producer/team',
+  path: '/producer/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProviderIndexRoute = ProviderIndexRouteImport.update({
   id: '/provider/',
   path: '/provider/',
@@ -542,6 +551,11 @@ const ProviderDocsRoute = ProviderDocsRouteImport.update({
 const ProviderStatementsRoute = ProviderStatementsRouteImport.update({
   id: '/provider/statements',
   path: '/provider/statements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderTeamRoute = ProviderTeamRouteImport.update({
+  id: '/provider/team',
+  path: '/provider/team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapXmlRoute = SitemapXmlRouteImport.update({
@@ -967,6 +981,11 @@ const ApiPublicV1ProducerPayoutsRoute =
     path: '/api/public/v1/producer/payouts',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ProducerTeamRoute = ApiPublicV1ProducerTeamRouteImport.update({
+  id: '/api/public/v1/producer/team',
+  path: '/api/public/v1/producer/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1ProducerVerificationRoute =
   ApiPublicV1ProducerVerificationRouteImport.update({
     id: '/api/public/v1/producer/verification',
@@ -1033,6 +1052,11 @@ const ApiPublicV1ProviderStatementsRoute =
     path: '/api/public/v1/provider/statements',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ProviderTeamRoute = ApiPublicV1ProviderTeamRouteImport.update({
+  id: '/api/public/v1/provider/team',
+  path: '/api/public/v1/provider/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1QualitySettingsRoute =
   ApiPublicV1QualitySettingsRouteImport.update({
     id: '/api/public/v1/quality/settings',
@@ -2183,11 +2207,13 @@ export interface FileRoutesByFullPath {
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
+  '/producer/team': typeof ProducerTeamRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
   '/provider/docs': typeof ProviderDocsRoute
   '/provider/statements': typeof ProviderStatementsRoute
+  '/provider/team': typeof ProviderTeamRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
@@ -2265,6 +2291,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
   '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
@@ -2275,6 +2302,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/provider/disputes': typeof ApiPublicV1ProviderDisputesRoute
   '/api/public/v1/provider/register': typeof ApiPublicV1ProviderRegisterRoute
   '/api/public/v1/provider/statements': typeof ApiPublicV1ProviderStatementsRoute
+  '/api/public/v1/provider/team': typeof ApiPublicV1ProviderTeamRoute
   '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
   '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
@@ -2504,11 +2532,13 @@ export interface FileRoutesByTo {
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
+  '/producer/team': typeof ProducerTeamRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
   '/provider/docs': typeof ProviderDocsRoute
   '/provider/statements': typeof ProviderStatementsRoute
+  '/provider/team': typeof ProviderTeamRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
@@ -2586,6 +2616,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
   '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
@@ -2596,6 +2627,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/provider/disputes': typeof ApiPublicV1ProviderDisputesRoute
   '/api/public/v1/provider/register': typeof ApiPublicV1ProviderRegisterRoute
   '/api/public/v1/provider/statements': typeof ApiPublicV1ProviderStatementsRoute
+  '/api/public/v1/provider/team': typeof ApiPublicV1ProviderTeamRoute
   '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
   '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
@@ -2825,11 +2857,13 @@ export interface FileRoutesById {
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
+  '/producer/team': typeof ProducerTeamRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
   '/provider/docs': typeof ProviderDocsRoute
   '/provider/statements': typeof ProviderStatementsRoute
+  '/provider/team': typeof ProviderTeamRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
   '/zillionaire/analytics': typeof ZillionaireAnalyticsRoute
@@ -2907,6 +2941,7 @@ export interface FileRoutesById {
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
   '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
@@ -2917,6 +2952,7 @@ export interface FileRoutesById {
   '/api/public/v1/provider/disputes': typeof ApiPublicV1ProviderDisputesRoute
   '/api/public/v1/provider/register': typeof ApiPublicV1ProviderRegisterRoute
   '/api/public/v1/provider/statements': typeof ApiPublicV1ProviderStatementsRoute
+  '/api/public/v1/provider/team': typeof ApiPublicV1ProviderTeamRoute
   '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
   '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
@@ -3148,11 +3184,13 @@ export interface FileRouteTypes {
     | '/producer/channels'
     | '/producer/collaborations'
     | '/producer/docs'
+    | '/producer/team'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
     | '/provider/docs'
     | '/provider/statements'
+    | '/provider/team'
     | '/sitemap/xml'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
@@ -3230,6 +3268,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
     | '/api/public/v1/producer/payouts'
+    | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/verification'
     | '/api/public/v1/profile/complete'
     | '/api/public/v1/profile/country'
@@ -3240,6 +3279,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/provider/disputes'
     | '/api/public/v1/provider/register'
     | '/api/public/v1/provider/statements'
+    | '/api/public/v1/provider/team'
     | '/api/public/v1/quality/settings'
     | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
@@ -3469,11 +3509,13 @@ export interface FileRouteTypes {
     | '/producer/channels'
     | '/producer/collaborations'
     | '/producer/docs'
+    | '/producer/team'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
     | '/provider/docs'
     | '/provider/statements'
+    | '/provider/team'
     | '/sitemap/xml'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
@@ -3551,6 +3593,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
     | '/api/public/v1/producer/payouts'
+    | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/verification'
     | '/api/public/v1/profile/complete'
     | '/api/public/v1/profile/country'
@@ -3561,6 +3604,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/provider/disputes'
     | '/api/public/v1/provider/register'
     | '/api/public/v1/provider/statements'
+    | '/api/public/v1/provider/team'
     | '/api/public/v1/quality/settings'
     | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
@@ -3789,11 +3833,13 @@ export interface FileRouteTypes {
     | '/producer/channels'
     | '/producer/collaborations'
     | '/producer/docs'
+    | '/producer/team'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
     | '/provider/docs'
     | '/provider/statements'
+    | '/provider/team'
     | '/sitemap/xml'
     | '/zillionaire/ads'
     | '/zillionaire/analytics'
@@ -3871,6 +3917,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
     | '/api/public/v1/producer/payouts'
+    | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/verification'
     | '/api/public/v1/profile/complete'
     | '/api/public/v1/profile/country'
@@ -3881,6 +3928,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/provider/disputes'
     | '/api/public/v1/provider/register'
     | '/api/public/v1/provider/statements'
+    | '/api/public/v1/provider/team'
     | '/api/public/v1/quality/settings'
     | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
@@ -4111,11 +4159,13 @@ export interface RootRouteChildren {
   ProducerChannelsRoute: typeof ProducerChannelsRouteWithChildren
   ProducerCollaborationsRoute: typeof ProducerCollaborationsRoute
   ProducerDocsRoute: typeof ProducerDocsRoute
+  ProducerTeamRoute: typeof ProducerTeamRoute
   ProviderChannelsRoute: typeof ProviderChannelsRoute
   ProviderContractsRoute: typeof ProviderContractsRoute
   ProviderDisputesRoute: typeof ProviderDisputesRoute
   ProviderDocsRoute: typeof ProviderDocsRoute
   ProviderStatementsRoute: typeof ProviderStatementsRoute
+  ProviderTeamRoute: typeof ProviderTeamRoute
   SitemapXmlRoute: typeof SitemapXmlRoute
   ZillionaireAdsRoute: typeof ZillionaireAdsRoute
   ZillionaireAnalyticsRoute: typeof ZillionaireAnalyticsRoute
@@ -4191,6 +4241,7 @@ export interface RootRouteChildren {
   ApiPublicV1ProducerEarningsRoute: typeof ApiPublicV1ProducerEarningsRoute
   ApiPublicV1ProducerMobileSummaryRoute: typeof ApiPublicV1ProducerMobileSummaryRoute
   ApiPublicV1ProducerPayoutsRoute: typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  ApiPublicV1ProducerTeamRoute: typeof ApiPublicV1ProducerTeamRoute
   ApiPublicV1ProducerVerificationRoute: typeof ApiPublicV1ProducerVerificationRouteWithChildren
   ApiPublicV1ProfileCompleteRoute: typeof ApiPublicV1ProfileCompleteRoute
   ApiPublicV1ProfileCountryRoute: typeof ApiPublicV1ProfileCountryRoute
@@ -4201,6 +4252,7 @@ export interface RootRouteChildren {
   ApiPublicV1ProviderDisputesRoute: typeof ApiPublicV1ProviderDisputesRoute
   ApiPublicV1ProviderRegisterRoute: typeof ApiPublicV1ProviderRegisterRoute
   ApiPublicV1ProviderStatementsRoute: typeof ApiPublicV1ProviderStatementsRoute
+  ApiPublicV1ProviderTeamRoute: typeof ApiPublicV1ProviderTeamRoute
   ApiPublicV1QualitySettingsRoute: typeof ApiPublicV1QualitySettingsRoute
   ApiPublicV1SearchV2Route: typeof ApiPublicV1SearchV2Route
   ApiPublicV1SessionsStartRoute: typeof ApiPublicV1SessionsStartRoute
@@ -4623,6 +4675,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProducerDocsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/producer/team': {
+      id: '/producer/team'
+      path: '/producer/team'
+      fullPath: '/producer/team'
+      preLoaderRoute: typeof ProducerTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/provider/': {
       id: '/provider/'
       path: '/provider'
@@ -4663,6 +4722,13 @@ declare module '@tanstack/react-router' {
       path: '/provider/statements'
       fullPath: '/provider/statements'
       preLoaderRoute: typeof ProviderStatementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider/team': {
+      id: '/provider/team'
+      path: '/provider/team'
+      fullPath: '/provider/team'
+      preLoaderRoute: typeof ProviderTeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap/xml': {
@@ -5218,6 +5284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProducerPayoutsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/producer/team': {
+      id: '/api/public/v1/producer/team'
+      path: '/api/public/v1/producer/team'
+      fullPath: '/api/public/v1/producer/team'
+      preLoaderRoute: typeof ApiPublicV1ProducerTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/producer/verification': {
       id: '/api/public/v1/producer/verification'
       path: '/api/public/v1/producer/verification'
@@ -5293,6 +5366,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/provider/statements'
       fullPath: '/api/public/v1/provider/statements'
       preLoaderRoute: typeof ApiPublicV1ProviderStatementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/provider/team': {
+      id: '/api/public/v1/provider/team'
+      path: '/api/public/v1/provider/team'
+      fullPath: '/api/public/v1/provider/team'
+      preLoaderRoute: typeof ApiPublicV1ProviderTeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/quality/settings': {
@@ -6903,11 +6983,13 @@ const rootRouteChildren: RootRouteChildren = {
   ProducerChannelsRoute: ProducerChannelsRouteWithChildren,
   ProducerCollaborationsRoute: ProducerCollaborationsRoute,
   ProducerDocsRoute: ProducerDocsRoute,
+  ProducerTeamRoute: ProducerTeamRoute,
   ProviderChannelsRoute: ProviderChannelsRoute,
   ProviderContractsRoute: ProviderContractsRoute,
   ProviderDisputesRoute: ProviderDisputesRoute,
   ProviderDocsRoute: ProviderDocsRoute,
   ProviderStatementsRoute: ProviderStatementsRoute,
+  ProviderTeamRoute: ProviderTeamRoute,
   SitemapXmlRoute: SitemapXmlRoute,
   ZillionaireAdsRoute: ZillionaireAdsRoute,
   ZillionaireAnalyticsRoute: ZillionaireAnalyticsRoute,
@@ -6988,6 +7070,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ProducerEarningsRoute: ApiPublicV1ProducerEarningsRoute,
   ApiPublicV1ProducerMobileSummaryRoute: ApiPublicV1ProducerMobileSummaryRoute,
   ApiPublicV1ProducerPayoutsRoute: ApiPublicV1ProducerPayoutsRouteWithChildren,
+  ApiPublicV1ProducerTeamRoute: ApiPublicV1ProducerTeamRoute,
   ApiPublicV1ProducerVerificationRoute:
     ApiPublicV1ProducerVerificationRouteWithChildren,
   ApiPublicV1ProfileCompleteRoute: ApiPublicV1ProfileCompleteRoute,
@@ -6999,6 +7082,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ProviderDisputesRoute: ApiPublicV1ProviderDisputesRoute,
   ApiPublicV1ProviderRegisterRoute: ApiPublicV1ProviderRegisterRoute,
   ApiPublicV1ProviderStatementsRoute: ApiPublicV1ProviderStatementsRoute,
+  ApiPublicV1ProviderTeamRoute: ApiPublicV1ProviderTeamRoute,
   ApiPublicV1QualitySettingsRoute: ApiPublicV1QualitySettingsRoute,
   ApiPublicV1SearchV2Route: ApiPublicV1SearchV2Route,
   ApiPublicV1SessionsStartRoute: ApiPublicV1SessionsStartRoute,
