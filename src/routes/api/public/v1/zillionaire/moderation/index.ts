@@ -41,6 +41,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/moderation/")({
             reports: reportsDocs.map((r) => ({
               id: r.__id || r["id"] || r["reportId"],
               reporterUid: r["reporterUid"] || "",
+              reporterName: r["reporterName"] || "",
+              reporterEmail: r["reporterEmail"] || "",
+              rightsHolderName: r["rightsHolderName"] || "",
+              rightsHolderEmail: r["rightsHolderEmail"] || "",
+              rightsBasis: r["rightsBasis"] || "",
               targetType: r["targetType"] || "comment",
               targetId: r["targetId"] || "",
               reason: r["reason"] || "",
