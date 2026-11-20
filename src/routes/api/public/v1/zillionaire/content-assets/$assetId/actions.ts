@@ -57,6 +57,11 @@ const actionSchema = z.discriminatedUnion("action", [
     complaintRef: z.string().trim().min(1).max(100),
     reason: z.string().trim().min(3).max(1000),
   }),
+  z.object({
+    action: z.literal("hard_delete"),
+    confirmName: z.string().trim().min(1),
+    reason: z.string().trim().min(5).max(1000),
+  }),
 ]);
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/$assetId/actions")({
@@ -286,6 +291,70 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
               createdAt: now,
             });
             return Response.json({ success: true, status: "TAKEDOWN" });
+          }
+
+          if (body.action === "hard_delete") {
+            const assetTitle = String(asset["title"] || asset["name"] || assetId);
+            if (
+              body.confirmName.trim().toLowerCase() !== assetTitle.trim().toLowerCase() &&
+              body.confirmName.trim() !== assetId
+            ) {
+              throw new ApiError(
+                400,
+                "CONFIRMATION_MISMATCH",
+                `Confirmation string must match asset title ("${assetTitle}") or asset ID.`,
+              );
+            }
+
+            // Inspect downstream dependencies
+            const [promos, heroSlots, channels] = await Promise.all([
+              fs
+                .query("trendingPromotions", {
+                  filters: [{ field: "targetId", op: "EQUAL", value: assetId }],
+                  limit: 20,
+                })
+                .catch(() => []),
+              fs
+                .query("heroSlots", {
+                  filters: [{ field: "targetId", op: "EQUAL", value: assetId }],
+                  limit: 20,
+                })
+                .catch(() => []),
+              fs
+                .query("liveChannels", {
+                  filters: [{ field: "featuredAssetId", op: "EQUAL", value: assetId }],
+                  limit: 20,
+                })
+                .catch(() => []),
+            ]);
+
+            const downstreamImpact = {
+              activePromotions: promos.length,
+              heroSlots: heroSlots.length,
+              channelsReferenced: channels.length,
+            };
+
+            // Purge asset from Firestore
+            await fs.delete(`contentAssets/${assetId}`);
+
+            // Audit hard delete with impact assessment
+            await fs.set(`auditLog/${auditId}`, {
+              actorUid: actor.uid,
+              action: "content.hard_deleted",
+              targetId: assetId,
+              assetTitle,
+              downstreamImpact,
+              reason: body.reason,
+              createdAt: now,
+            });
+
+            return Response.json({
+              success: true,
+              purged: true,
+              assetId,
+              downstreamImpact,
+              message: "Content asset permanently purged and downstream references audited.",
+            });
           }
 
           throw new ApiError(400, "INVALID_ACTION", "Unrecognised action.");

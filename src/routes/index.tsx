@@ -85,110 +85,11 @@ function HomePage() {
   // Content items loaded from catalog or real continue-watching storage
   const [continueWatchingItems, setContinueWatchingItems] = useState<ContentItem[]>([]);
 
-  const [trendingItems, setTrendingItems] = useState<ContentItem[]>([
-    {
-      id: "tr-1",
-      title: "The Chosen One",
-      category: "Movies",
-      posterUrl: null,
-      rank: 1,
-      pricePerMinute: "0.25",
-    },
-    {
-      id: "tr-2",
-      title: "Love & Life",
-      category: "Drama",
-      posterUrl: null,
-      rank: 2,
-      pricePerMinute: "0.20",
-    },
-    {
-      id: "tr-3",
-      title: "Action 24/7",
-      category: "Action",
-      posterUrl: null,
-      rank: 3,
-      pricePerMinute: "0.30",
-    },
-    {
-      id: "tr-4",
-      title: "Empire Bloodlines",
-      category: "Series",
-      posterUrl: null,
-      rank: 4,
-      pricePerMinute: "0.35",
-    },
-  ]);
+  const [trendingItems, setTrendingItems] = useState<ContentItem[]>([]);
 
-  const [liveNowItems, setLiveNowItems] = useState<ContentItem[]>([
-    {
-      id: "live-1",
-      title: "BQ Sports TV",
-      category: "Live Sports",
-      posterUrl: null,
-      channelId: "bq-sports",
-      isLive: true,
-      viewerCount: "18.4K",
-    },
-    {
-      id: "live-2",
-      title: "BQ News 24",
-      category: "Breaking News",
-      posterUrl: null,
-      channelId: "bq-news",
-      isLive: true,
-      viewerCount: "12.1K",
-    },
-    {
-      id: "live-3",
-      title: "BQ Movies Plus",
-      category: "Cinema Live",
-      posterUrl: null,
-      channelId: "bq-movies",
-      isLive: true,
-      viewerCount: "9.8K",
-    },
-    {
-      id: "live-4",
-      title: "BQ Kids Live",
-      category: "Animation & Kids",
-      posterUrl: null,
-      channelId: "bq-kids",
-      isLive: true,
-      viewerCount: "6.3K",
-    },
-  ]);
+  const [liveNowItems, setLiveNowItems] = useState<ContentItem[]>([]);
 
-  const [forYouItems, setForYouItems] = useState<ContentItem[]>([
-    {
-      id: "fy-1",
-      title: "The Hunter",
-      category: "Thriller",
-      posterUrl: null,
-      pricePerMinute: "0.25",
-    },
-    {
-      id: "fy-2",
-      title: "Power Play: Season 2",
-      category: "Series",
-      posterUrl: null,
-      pricePerMinute: "0.30",
-    },
-    {
-      id: "fy-3",
-      title: "Love Forever",
-      category: "Romance",
-      posterUrl: null,
-      pricePerMinute: "0.20",
-    },
-    {
-      id: "fy-4",
-      title: "Family First",
-      category: "Comedy",
-      posterUrl: null,
-      pricePerMinute: "0.25",
-    },
-  ]);
+  const [forYouItems, setForYouItems] = useState<ContentItem[]>([]);
 
   const [recentActivities, setRecentActivities] = useState<
     Array<{ id: string; title: string; timestamp: string; points: string }>
@@ -288,11 +189,10 @@ function HomePage() {
         if (res.ok) {
           const data = await res.json();
           if (active && data) {
-            if (Array.isArray(data.trending) && data.trending.length > 0) {
-              setTrendingItems(data.trending);
-            }
-            if (Array.isArray(data.liveNow) && data.liveNow.length > 0) {
-              setLiveNowItems(data.liveNow);
+            setTrendingItems(Array.isArray(data.trending) ? data.trending : []);
+            setLiveNowItems(Array.isArray(data.liveNow) ? data.liveNow : []);
+            if (Array.isArray(data.featuredContent)) {
+              setForYouItems(data.featuredContent);
             }
           }
         }
@@ -636,35 +536,41 @@ function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {liveNowItems.map((ch) => (
-              <Link
-                key={ch.id}
-                to="/channels/$channelId"
-                params={{ channelId: ch.channelId ?? "demo" }}
-                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] p-3 transition hover:border-[#00D8F5]/50 hover:shadow-lg hover:shadow-[#0052D4]/20 active:scale-95"
-              >
-                <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-gradient-to-br from-[#0052D4]/40 to-[#030B2A] flex items-center justify-center">
-                  <Radio
-                    size={28}
-                    className="text-[#00D8F5] opacity-75 group-hover:scale-110 transition"
-                  />
-                  <span className="absolute left-2 top-2 rounded-md bg-rose-600 px-2 py-0.5 text-[10px] font-black uppercase text-white shadow">
-                    ● LIVE
-                  </span>
-                  <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
-                    {ch.viewerCount}
-                  </span>
-                </div>
-                <div className="mt-2.5">
-                  <h3 className="line-clamp-1 text-xs font-bold text-white group-hover:text-[#00D8F5] sm:text-sm">
-                    {ch.title}
-                  </h3>
-                  <p className="line-clamp-1 text-[11px] text-slate-400">{ch.category}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {liveNowItems.length > 0 ? (
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {liveNowItems.map((ch) => (
+                <Link
+                  key={ch.id}
+                  to="/channels/$channelId"
+                  params={{ channelId: ch.channelId ?? "demo" }}
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] p-3 transition hover:border-[#00D8F5]/50 hover:shadow-lg hover:shadow-[#0052D4]/20 active:scale-95"
+                >
+                  <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-gradient-to-br from-[#0052D4]/40 to-[#030B2A] flex items-center justify-center">
+                    <Radio
+                      size={28}
+                      className="text-[#00D8F5] opacity-75 group-hover:scale-110 transition"
+                    />
+                    <span className="absolute left-2 top-2 rounded-md bg-rose-600 px-2 py-0.5 text-[10px] font-black uppercase text-white shadow">
+                      ● LIVE
+                    </span>
+                    <span className="absolute bottom-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-slate-200">
+                      {ch.viewerCount}
+                    </span>
+                  </div>
+                  <div className="mt-2.5">
+                    <h3 className="line-clamp-1 text-xs font-bold text-white group-hover:text-[#00D8F5] sm:text-sm">
+                      {ch.title}
+                    </h3>
+                    <p className="line-clamp-1 text-[11px] text-slate-400">{ch.category}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-dashed border-white/10 p-6 text-center text-xs text-slate-400">
+              No live broadcasts active right now. Check back soon!
+            </div>
+          )}
         </section>
 
         {/* Trending Now Poster Row */}
@@ -679,32 +585,38 @@ function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
-            {trendingItems.map((item, idx) => (
-              <Link
-                key={item.id}
-                to="/channels/$channelId"
-                params={{ channelId: "demo" }}
-                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] transition hover:border-[#00D8F5]/40 hover:shadow-lg hover:shadow-[#0052D4]/20 active:scale-95"
-              >
-                <div className="relative aspect-[2/3] w-full bg-gradient-to-t from-[#030B2A] via-[#0D1D45] to-[#142456] flex items-end p-3">
-                  <span className="absolute left-2 top-2 grid h-7 w-7 place-items-center rounded-lg bg-black/70 font-black text-xs text-[#00D8F5] shadow border border-cyan-400/30">
-                    #{item.rank ?? idx + 1}
-                  </span>
-                  <div className="w-full">
-                    <span className="rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-[#00D8F5]">
-                      {currencySymbol}
-                      {item.pricePerMinute ?? "0.25"}/min
+          {trendingItems.length > 0 ? (
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-4">
+              {trendingItems.map((item, idx) => (
+                <Link
+                  key={item.id}
+                  to="/channels/$channelId"
+                  params={{ channelId: "demo" }}
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] transition hover:border-[#00D8F5]/40 hover:shadow-lg hover:shadow-[#0052D4]/20 active:scale-95"
+                >
+                  <div className="relative aspect-[2/3] w-full bg-gradient-to-t from-[#030B2A] via-[#0D1D45] to-[#142456] flex items-end p-3">
+                    <span className="absolute left-2 top-2 grid h-7 w-7 place-items-center rounded-lg bg-black/70 font-black text-xs text-[#00D8F5] shadow border border-cyan-400/30">
+                      #{item.rank ?? idx + 1}
                     </span>
-                    <h3 className="mt-1 line-clamp-1 text-xs font-bold text-white group-hover:text-[#00D8F5] sm:text-sm">
-                      {item.title}
-                    </h3>
-                    <p className="text-[11px] text-slate-400">{item.category}</p>
+                    <div className="w-full">
+                      <span className="rounded-md bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-[#00D8F5]">
+                        {currencySymbol}
+                        {item.pricePerMinute ?? "0.25"}/min
+                      </span>
+                      <h3 className="mt-1 line-clamp-1 text-xs font-bold text-white group-hover:text-[#00D8F5] sm:text-sm">
+                        {item.title}
+                      </h3>
+                      <p className="text-[11px] text-slate-400">{item.category}</p>
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-dashed border-white/10 p-6 text-center text-xs text-slate-400">
+              No trending titles yet. Watch content to see it rank here!
+            </div>
+          )}
         </section>
 
         {/* For You / Recommended Rail */}
@@ -719,26 +631,32 @@ function HomePage() {
             </Link>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {forYouItems.map((item) => (
-              <Link
-                key={item.id}
-                to="/channels/$channelId"
-                params={{ channelId: "demo" }}
-                className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] p-3 transition hover:border-[#00D8F5]/40 hover:shadow-lg active:scale-95"
-              >
-                <div className="aspect-[4/3] w-full rounded-xl bg-gradient-to-br from-[#0052D4]/30 to-[#030B2A] flex items-center justify-center">
-                  <Film size={26} className="text-[#00D8F5]/60 group-hover:scale-110 transition" />
-                </div>
-                <div className="mt-2.5">
-                  <h3 className="line-clamp-1 text-xs font-bold text-white group-hover:text-[#00D8F5] sm:text-sm">
-                    {item.title}
-                  </h3>
-                  <p className="line-clamp-1 text-[11px] text-slate-400">{item.category}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {forYouItems.length > 0 ? (
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {forYouItems.map((item) => (
+                <Link
+                  key={item.id}
+                  to="/channels/$channelId"
+                  params={{ channelId: "demo" }}
+                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] p-3 transition hover:border-[#00D8F5]/40 hover:shadow-lg active:scale-95"
+                >
+                  <div className="aspect-[4/3] w-full rounded-xl bg-gradient-to-br from-[#0052D4]/30 to-[#030B2A] flex items-center justify-center">
+                    <Film size={26} className="text-[#00D8F5]/60 group-hover:scale-110 transition" />
+                  </div>
+                  <div className="mt-2.5">
+                    <h3 className="line-clamp-1 text-xs font-bold text-white group-hover:text-[#00D8F5] sm:text-sm">
+                      {item.title}
+                    </h3>
+                    <p className="line-clamp-1 text-[11px] text-slate-400">{item.category}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-dashed border-white/10 p-6 text-center text-xs text-slate-400">
+              Explore channels and titles to build your personalized recommendations.
+            </div>
+          )}
         </section>
 
         {/* Activity and Refer Friends Dual Cards (Directly matching dashboard style) */}

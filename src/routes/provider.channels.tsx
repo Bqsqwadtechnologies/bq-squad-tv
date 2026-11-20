@@ -142,62 +142,7 @@ function ProviderChannelsInner({
       if (channelsRes.ok) {
         const data = await channelsRes.json();
         const list = Array.isArray(data.channels) ? data.channels : [];
-        setChannels(
-          list.length > 0
-            ? list
-            : [
-                {
-                  id: "ch_prime_hd",
-                  name: "Apex Prime HD Feed",
-                  logoUrl: "/brand/bq-sqwad-tv-logo.png",
-                  categories: ["Entertainment", "Cinema"],
-                  language: "en",
-                  status: "published",
-                  health: "healthy",
-                  currentProgramme: "Midnight Feature Film",
-                  currentViewers: 2450,
-                  totalWatchMinutes: 38200,
-                  licenceExpiresAt: "2026-12-31T23:59:59Z",
-                  bandwidthCapGbps: 10.0,
-                  errorLogs: [
-                    {
-                      id: "log_101",
-                      timestamp: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
-                      level: "warn",
-                      message: "Edge transcoding profile auto-aligned to 1080p60",
-                    },
-                    {
-                      id: "log_102",
-                      timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-                      level: "info",
-                      message: "Keyframe cadence confirmed at 2.0s interval",
-                    },
-                  ],
-                },
-                {
-                  id: "ch_sports_live",
-                  name: "Apex Sports Live Relay",
-                  logoUrl: "/brand/bq-sqwad-tv-logo.png",
-                  categories: ["Sports"],
-                  language: "en",
-                  status: "published",
-                  health: "healthy",
-                  currentProgramme: "Premier Football Championship",
-                  currentViewers: 5120,
-                  totalWatchMinutes: 89400,
-                  licenceExpiresAt: "2027-06-30T23:59:59Z",
-                  bandwidthCapGbps: 15.0,
-                  errorLogs: [
-                    {
-                      id: "log_201",
-                      timestamp: new Date(Date.now() - 1000 * 60 * 25).toISOString(),
-                      level: "info",
-                      message: "Ingest bitstream stable at 6,200 kbps",
-                    },
-                  ],
-                },
-              ],
-        );
+        setChannels(list);
       }
 
       if (contractsRes.ok) {
@@ -276,7 +221,14 @@ function ProviderChannelsInner({
   const [newChannelLanguage, setNewChannelLanguage] = useState("en");
   const [newChannelBandwidthCap, setNewChannelBandwidthCap] = useState(8.0);
   const [newChannelStreamUrl, setNewChannelStreamUrl] = useState("");
+  const [newChannelBackupUrl, setNewChannelBackupUrl] = useState("");
   const [newChannelDescription, setNewChannelDescription] = useState("");
+  const [newChannelAgeRating, setNewChannelAgeRating] = useState("PG");
+  const [newChannelAdultOnly, setNewChannelAdultOnly] = useState(false);
+  const [newChannelStreamType, setNewChannelStreamType] = useState("hls_pull");
+  const [newChannelLicenceNumber, setNewChannelLicenceNumber] = useState("");
+  const [newChannelPolicyConfirmed, setNewChannelPolicyConfirmed] = useState(false);
+  const [newChannelTestStreamConfirmed, setNewChannelTestStreamConfirmed] = useState(false);
   const [creatingChannel, setCreatingChannel] = useState(false);
 
   async function handleCreateChannel(e: FormEvent) {
@@ -293,8 +245,18 @@ function ProviderChannelsInner({
           categories: [newChannelCategory],
           language: newChannelLanguage,
           bandwidthCapGbps: newChannelBandwidthCap,
+          streamType: newChannelStreamType,
           streamUrl: newChannelStreamUrl.trim() || undefined,
+          backupStreamUrl: newChannelBackupUrl.trim() || undefined,
           description: newChannelDescription.trim() || undefined,
+          ageRating: newChannelAgeRating,
+          adultOnly: newChannelAdultOnly,
+          rightsEvidence: {
+            licenceNumber: newChannelLicenceNumber.trim(),
+            territories: ["NG"],
+          },
+          policyConfirmed: newChannelPolicyConfirmed,
+          testStreamConfirmed: newChannelTestStreamConfirmed,
         }),
       });
       const data = await res.json();
@@ -556,7 +518,8 @@ Authorized Signatory: Ok's Lovable / BQ SQWAD TV Global Operations`;
           </div>
 
           <div className="space-y-4">
-            {channels.map((channel) => (
+            {channels.length > 0 ? (
+              channels.map((channel) => (
               <div
                 key={channel.id}
                 className="overflow-hidden rounded-2xl border border-white/10 bg-[#030b2a] transition hover:border-cyan-400/30"
@@ -577,6 +540,17 @@ Authorized Signatory: Ok's Lovable / BQ SQWAD TV Global Operations`;
                           }`}
                         >
                           {channel.health}
+                        </span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                            channel.status === "active" || channel.status === "published"
+                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                              : channel.status === "in_review"
+                                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                                : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                          }`}
+                        >
+                          {channel.status === "in_review" ? "Under Review" : channel.status || "In Review"}
                         </span>
                       </div>
                       <p className="text-[11px] text-slate-400 mt-0.5">
@@ -707,7 +681,23 @@ Authorized Signatory: Ok's Lovable / BQ SQWAD TV Global Operations`;
                   </div>
                 )}
               </div>
-            ))}
+            ))
+          ) : (
+            <div className="rounded-2xl border border-dashed border-white/10 bg-[#030b2a]/50 p-10 text-center">
+              <Tv className="mx-auto h-8 w-8 text-cyan-400/50 mb-3" />
+              <h3 className="text-sm font-bold text-white">No Connected Broadcast Channels</h3>
+              <p className="text-xs text-slate-400 max-w-md mx-auto mt-1 mb-4">
+                Submit your primary HLS pull feed or live playout channel. Submissions are reviewed for policy, rights evidence, and technical compliance before going live.
+              </p>
+              <button
+                onClick={() => setIsCreateChannelOpen(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 shadow-md shadow-cyan-400/20"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Submit Channel</span>
+              </button>
+            </div>
+          )}
           </div>
         </div>
 
@@ -794,17 +784,111 @@ Authorized Signatory: Ok's Lovable / BQ SQWAD TV Global Operations`;
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                      Stream Ingest Type
+                    </label>
+                    <select
+                      value={newChannelStreamType}
+                      onChange={(e) => setNewChannelStreamType(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
+                    >
+                      <option value="hls_pull">HLS Pull URL (Standard)</option>
+                      <option value="file_playout">Scheduled File Playout</option>
+                      <option value="rtmp_push">RTMP Push (Private Preview)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                      Age Rating
+                    </label>
+                    <select
+                      value={newChannelAgeRating}
+                      onChange={(e) => setNewChannelAgeRating(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
+                    >
+                      <option value="G">G - General Audience</option>
+                      <option value="PG">PG - Parental Guidance</option>
+                      <option value="12">12+ Teens</option>
+                      <option value="15">15+ Mature</option>
+                      <option value="18">18+ Adults Only</option>
+                    </select>
+                  </div>
+                </div>
+
+                {newChannelStreamType === "rtmp_push" && (
+                  <div className="rounded-xl border border-cyan-400/30 bg-cyan-950/30 p-2.5 text-[11px] text-cyan-200">
+                    💡 Dedicated RTMP push ingest is currently in private preview. Contact platform operations to assign an edge ingest server.
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
-                    Stream / Ingest Endpoint (Optional)
+                    Primary Stream URL (HLS / Ingest) *
                   </label>
                   <input
                     type="text"
+                    required
                     value={newChannelStreamUrl}
                     onChange={(e) => setNewChannelStreamUrl(e.target.value)}
-                    placeholder="rtmp://ingest.provider.com/live/ch_key"
+                    placeholder="https://stream.provider.com/live/primary.m3u8"
                     className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                      Backup Stream URL (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={newChannelBackupUrl}
+                      onChange={(e) => setNewChannelBackupUrl(e.target.value)}
+                      placeholder="https://backup.provider.com/live.m3u8"
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                      Licence / Contract Reference
+                    </label>
+                    <input
+                      type="text"
+                      value={newChannelLicenceNumber}
+                      onChange={(e) => setNewChannelLicenceNumber(e.target.value)}
+                      placeholder="e.g. LIC-2026-AFR-09"
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 rounded-xl border border-white/10 bg-black/20 p-3 text-xs">
+                  <label className="flex items-start gap-2 cursor-pointer text-slate-300">
+                    <input
+                      type="checkbox"
+                      required
+                      checked={newChannelPolicyConfirmed}
+                      onChange={(e) => setNewChannelPolicyConfirmed(e.target.checked)}
+                      className="mt-0.5 rounded border-white/20 bg-[#030b2a] text-cyan-400 focus:ring-0"
+                    />
+                    <span>
+                      I declare that all broadcast content complies with platform Content Policy and brand safety standards.
+                    </span>
+                  </label>
+
+                  <label className="flex items-start gap-2 cursor-pointer text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={newChannelTestStreamConfirmed}
+                      onChange={(e) => setNewChannelTestStreamConfirmed(e.target.checked)}
+                      className="mt-0.5 rounded border-white/20 bg-[#030b2a] text-cyan-400 focus:ring-0"
+                    />
+                    <span>
+                      I confirm the stream URL has been verified active with continuous keyframes and audio/video sync.
+                    </span>
+                  </label>
                 </div>
 
                 <div>
@@ -833,7 +917,7 @@ Authorized Signatory: Ok's Lovable / BQ SQWAD TV Global Operations`;
                     disabled={creatingChannel || !newChannelName.trim()}
                     className="rounded-xl bg-cyan-400 px-5 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 disabled:opacity-50"
                   >
-                    {creatingChannel ? "Provisioning..." : "Create Channel"}
+                    {creatingChannel ? "Submitting for Review..." : "Submit Channel for Review"}
                   </button>
                 </div>
               </form>

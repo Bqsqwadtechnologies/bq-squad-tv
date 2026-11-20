@@ -617,12 +617,8 @@ function ZillionaireOverviewBody({
             }
           >
             <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1">
-              {(analytics?.channels && analytics.channels.length > 0 ? analytics.channels : [
-                { channelId: "ch-1", name: "BQ Squad Premier FAST", currentViewers: 840, totalWatchMinutes: 12400, grossRevenueMinor: 480000, status: "live" },
-                { channelId: "ch-2", name: "Afrobeats 24/7 TV", currentViewers: 420, totalWatchMinutes: 8900, grossRevenueMinor: 210000, status: "live" },
-                { channelId: "ch-3", name: "Nollywood Classics", currentViewers: 290, totalWatchMinutes: 5400, grossRevenueMinor: 140000, status: "live" },
-                { channelId: "ch-4", name: "News 360 Africa", currentViewers: 110, totalWatchMinutes: 3100, grossRevenueMinor: 65000, status: "live" },
-              ]).slice(0, 5).map((ch) => (
+              {(analytics?.channels || []).length > 0 ? (
+                (analytics?.channels || []).slice(0, 5).map((ch) => (
                 <div
                   key={ch.channelId}
                   className="flex items-center justify-between p-2.5 rounded-xl border border-white/5 bg-white/[0.02]"
@@ -645,7 +641,12 @@ function ZillionaireOverviewBody({
                     </span>
                   </div>
                 </div>
-              ))}
+              ))) : (
+                <div className="rounded-xl border border-dashed border-white/10 p-6 text-center text-xs text-slate-400">
+                  <p className="font-semibold text-slate-300">No active live broadcasts</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Live FAST channels will display real-time viewer telemetry here.</p>
+                </div>
+              )}
             </div>
           </ConsoleCard>
         </div>
@@ -705,12 +706,8 @@ function ZillionaireOverviewBody({
           }
         >
           <div className="space-y-2">
-            {(analytics?.channels && analytics.channels.length > 0 ? analytics.channels : [
-              { channelId: "ch-1", name: "BQ Squad Premier FAST", currentViewers: 840, totalWatchMinutes: 48900, grossRevenueMinor: 14800000, status: "live" },
-              { channelId: "ch-2", name: "Afrobeats 24/7 TV", currentViewers: 420, totalWatchMinutes: 31200, grossRevenueMinor: 9200000, status: "live" },
-              { channelId: "ch-3", name: "Nollywood Classics", currentViewers: 290, totalWatchMinutes: 24500, grossRevenueMinor: 7400000, status: "live" },
-              { channelId: "ch-4", name: "News 360 Africa", currentViewers: 110, totalWatchMinutes: 14200, grossRevenueMinor: 4100000, status: "live" },
-            ]).slice(0, 4).map((ch, rank) => (
+            {(analytics?.channels || []).length > 0 ? (
+              (analytics?.channels || []).slice(0, 4).map((ch, rank) => (
               <div
                 key={ch.channelId}
                 className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-white/[0.02] text-xs"
@@ -728,7 +725,12 @@ function ZillionaireOverviewBody({
                   {naira(ch.grossRevenueMinor)}
                 </span>
               </div>
-            ))}
+            ))) : (
+              <div className="rounded-xl border border-dashed border-white/10 p-6 text-center text-xs text-slate-400">
+                <p className="font-semibold text-slate-300">No channel metrics recorded yet</p>
+                <p className="text-[10px] text-slate-500 mt-1">Channel performance will appear once playback starts.</p>
+              </div>
+            )}
           </div>
         </ConsoleCard>
       </div>
@@ -748,50 +750,7 @@ function ZillionaireOverviewBody({
         }
       >
         <ConsoleActivityList
-          items={(overview?.recentActivity && overview.recentActivity.length > 0
-            ? overview.recentActivity
-            : [
-                {
-                  id: "act-1",
-                  title: "Versioned Platform Settings Updated",
-                  subtitle: "Maintenance window and Android gate configured",
-                  timestamp: "10 mins ago",
-                  status: "success",
-                  onClick: () => {
-                    window.location.href = "/zillionaire/settings";
-                  },
-                },
-                {
-                  id: "act-2",
-                  title: "Creator Payout Batch Approved",
-                  subtitle: "₦1,450,000 disbursed to 8 verified producers",
-                  timestamp: "45 mins ago",
-                  status: "info",
-                  onClick: () => {
-                    window.location.href = "/zillionaire/payouts";
-                  },
-                },
-                {
-                  id: "act-3",
-                  title: "New FAST Channel Verified",
-                  subtitle: "Afrobeats 24/7 stream health checks passed",
-                  timestamp: "2 hours ago",
-                  status: "success",
-                  onClick: () => {
-                    window.location.href = "/zillionaire/channels";
-                  },
-                },
-                {
-                  id: "act-4",
-                  title: "Storage Pool Backup Completed",
-                  subtitle: "Secondary replica bucket snapshot verified",
-                  timestamp: "5 hours ago",
-                  status: "success",
-                  onClick: () => {
-                    window.location.href = "/zillionaire/security";
-                  },
-                },
-              ]).map((act) => ({
+          items={(overview?.recentActivity || []).map((act) => ({
             id: act.id,
             title: act.title || ("action" in act ? String((act as RecentActivityLog).action).replace(/_/g, " ").toUpperCase() : "Platform Event"),
             subtitle: act.subtitle || ("reason" in act && (act as RecentActivityLog).reason ? (act as RecentActivityLog).reason : "Recorded in audit ledger"),

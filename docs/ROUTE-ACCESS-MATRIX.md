@@ -2,19 +2,19 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **262**
+Total scanned routes: **267**
 
 ### Summary by Guard Class
 
 | Guard Class | Count |
 |---|---|
 | `public` | 14 |
-| `viewer` | 83 |
+| `viewer` | 84 |
 | `webhook signature` | 1 |
 | `provider` | 11 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 134 |
+| `zillionaire module` | 138 |
 | `producer` | 4 |
 
 ### Inventory
@@ -41,6 +41,7 @@ Total scanned routes: **262**
 | `/api/public/v1/auth/web/session/refresh` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/v1/auth/web/session/refresh.ts` |
 | `/api/public/v1/catalog/home` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/catalog/home.ts` |
 | `/api/public/v1/catalog/search` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/catalog/search.ts` |
+| `/api/public/v1/catalog/trending` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/catalog/trending.ts` |
 | `/api/public/v1/channels/$channelId` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/channels/$channelId.ts` |
 | `/api/public/v1/channels/$channelId/chat` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/channels/$channelId.chat.ts` |
 | `/api/public/v1/config/client` | `public` | Public Allow-List (Reviewed unauthenticated public endpoint) | `src/routes/api/public/v1/config/client.ts` |
@@ -177,6 +178,7 @@ Total scanned routes: **262**
 | `/api/public/v1/zillionaire/content-comments/$commentId/moderate` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/content-comments/$commentId/moderate.ts` |
 | `/api/public/v1/zillionaire/errors/` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/errors/index.ts` |
 | `/api/public/v1/zillionaire/finance` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/finance.ts` |
+| `/api/public/v1/zillionaire/hero-slots` | `zillionaire module` | requireZillionaire (Module: catalog) | `src/routes/api/public/v1/zillionaire/hero-slots.ts` |
 | `/api/public/v1/zillionaire/live-channels/` | `zillionaire module` | requireZillionaire (Module: channels) | `src/routes/api/public/v1/zillionaire/live-channels/index.ts` |
 | `/api/public/v1/zillionaire/live-chat/` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/live-chat/index.ts` |
 | `/api/public/v1/zillionaire/migration/zillionaire` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/migration/zillionaire.ts` |
@@ -203,6 +205,7 @@ Total scanned routes: **262**
 | `/api/public/v1/zillionaire/providers/approved-emails` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/zillionaire/providers/approved-emails.ts` |
 | `/api/public/v1/zillionaire/providers/channels` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/zillionaire/providers/channels.ts` |
 | `/api/public/v1/zillionaire/providers/test-playback` | `zillionaire module` | requireZillionaire (Module: providers) | `src/routes/api/public/v1/zillionaire/providers/test-playback.ts` |
+| `/api/public/v1/zillionaire/rails` | `zillionaire module` | requireZillionaire (Module: catalog) | `src/routes/api/public/v1/zillionaire/rails.ts` |
 | `/api/public/v1/zillionaire/receipts/` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/receipts/index.ts` |
 | `/api/public/v1/zillionaire/receipts/$receiptId/pdf` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/receipts/$receiptId/pdf.ts` |
 | `/api/public/v1/zillionaire/receipts/$receiptId/resend` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/receipts/$receiptId/resend.ts` |
@@ -231,6 +234,8 @@ Total scanned routes: **262**
 | `/api/public/v1/zillionaire/team` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/team.ts` |
 | `/api/public/v1/zillionaire/team/$uid` | `zillionaire module` | requireZillionaire (Module: roles) | `src/routes/api/public/v1/zillionaire/team/$uid.ts` |
 | `/api/public/v1/zillionaire/test-lab` | `zillionaire module` | requireZillionaire (Module: video) | `src/routes/api/public/v1/zillionaire/test-lab.ts` |
+| `/api/public/v1/zillionaire/trending/config` | `zillionaire module` | requireZillionaire (Module: catalog) | `src/routes/api/public/v1/zillionaire/trending/config.ts` |
+| `/api/public/v1/zillionaire/trending/promotions` | `zillionaire module` | requireZillionaire (Module: catalog) | `src/routes/api/public/v1/zillionaire/trending/promotions.ts` |
 | `/api/public/v1/zillionaire/upload/` | `zillionaire module` | requireZillionaire (Module: video) | `src/routes/api/public/v1/zillionaire/upload/index.ts` |
 | `/api/public/v1/zillionaire/users/` | `zillionaire module` | requireZillionaire (Module: users) | `src/routes/api/public/v1/zillionaire/users/index.ts` |
 | `/api/public/v1/zillionaire/users/$uid/` | `zillionaire module` | requireZillionaire (Module: users) | `src/routes/api/public/v1/zillionaire/users/$uid/index.ts` |
