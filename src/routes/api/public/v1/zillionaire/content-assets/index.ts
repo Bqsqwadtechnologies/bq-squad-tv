@@ -26,7 +26,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
           const channelFilter = url.searchParams.get("channelId")?.trim();
           const statusFilter = url.searchParams.get("status")?.trim();
 
-          const allAssets = await fs.query("contentAssets", { limit: 200 });
+          const allAssets = await fs.query("contentAssets", { orderByField: "createdAt", descending: true, limit: 200 });
           let filtered = allAssets;
 
           if (channelFilter) {
@@ -70,6 +70,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
                 channelId: a["channelId"] || "platform",
                 category: a["category"] || "general",
                 ageRating: a["ageRating"] || "PG",
+                ownershipDeclaration: a["ownershipDeclaration"] === true,
+                copyrightDeclaration: a["copyrightDeclaration"] === true,
                 posterUrl: a["posterUrl"] || a["thumbnailUrl"] || null,
                 masterPlaylistUrl: a["masterPlaylistUrl"] || null,
                 status: a["status"] || "ready",
