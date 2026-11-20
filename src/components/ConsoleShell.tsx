@@ -53,6 +53,7 @@ import {
   Flame,
   AlertCircle,
   ExternalLink,
+  BookOpen,
 } from "lucide-react";
 
 export type ConsoleType = "zillionaire" | "producer" | "provider";
@@ -518,6 +519,12 @@ export function ConsoleShell({
             href: "/producer-terms",
             icon: FileText,
           },
+          {
+            id: "producer-docs",
+            label: "Guides & Docs",
+            href: "/producer/docs",
+            icon: BookOpen,
+          },
         ],
       },
     ],
@@ -564,6 +571,12 @@ export function ConsoleShell({
             label: "Playback Monitor",
             href: "/provider#playback",
             icon: PlayCircle,
+          },
+          {
+            id: "provider-docs",
+            label: "Guides & Docs",
+            href: "/provider/docs",
+            icon: BookOpen,
           },
         ],
       },

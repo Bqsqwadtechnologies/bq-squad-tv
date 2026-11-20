@@ -14,3 +14,16 @@ Status:
 - Hardened provider channel creation with review workflow (`in_review` status, approval ticket generation, audit trail).
 - Completely updated route-access matrix to 267 routes (all properly guarded, 0 unguarded routes).
 - Verified full test suite (132 test files, 3,338 tests passing) and development build (`bun run build:dev`).
+## Current Handoff — V5-06 Batch 6
+Last finished batch: V5-06 Batch 6 — Partner & Creator Documentation Hubs, InfoTip Registry, QA Click Matrix, and Architectural Decisions.
+Status:
+- Implemented comprehensive partner documentation hub (`/provider/docs`) and creator documentation hub (`/producer/docs`).
+- Created central tips registry (`content/help/tips.json`) with structured technical parameters, anchor links, and descriptions.
+- Created accessible `InfoTip` popover component (`src/components/InfoTip.tsx`) with keyboard and screen-reader support.
+- Populated authoritative markdown documentation under `content/docs/provider/*.md` and `content/docs/producer/*.md` covering onboarding, HLS ingest, child safety, copyright, and settlement.
+- Created comprehensive `docs/QA-CLICK-MATRIX.md` detailing every role, route, modal, button, and verified security assertion.
+- Documented key architectural decisions in `docs/DECISIONS.md`: HLS pull vs. Phase 6 RTMP/SRT, server-side audited settlement statements, and multi-tenant security boundaries.
+- Cleaned forbidden owner names from public/portal references in `src/routes/provider.channels.tsx`.
+- Updated route access matrix to 269 routes with 0 unguarded routes.
+- Full automated test suite passes: 133 test files, 3,361 unit/integration tests passing.
+- Development build (`bun run build:dev`) and public-text scan pass with 0 errors.

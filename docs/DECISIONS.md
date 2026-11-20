@@ -350,3 +350,24 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 - Upgraded Producer Console with "Movies & Series Library" allowing producers to upload movies, series, and video assets. All episodes of a series are strictly grouped in one place under the series title without fragmentation.
 - Added authenticated asset listing endpoint `GET /api/public/v1/producer/channels/:channelId/assets` and updated metadata persistence schema for content type, series title, season and episode details.
 - Unlocked direct Zillionaire dashboard access with owner access password without requiring MFA setup prior to initial entry. Once enrolled, MFA remains strictly enforced. Authenticator secrets encryption fails closed safely if encryption keys are unconfigured.
+
+## V5-06 Batch 6 — Ingest Architecture, Statement Settlement & Documentation Hub (2026-11-20)
+
+### 1. Ingest Architecture: HLS Pull vs. RTMP/SRT
+- **Decision**: Production live channel ingest is standardized on HTTPS HLS pull (`.m3u8` master manifest). Direct RTMP and SRT live push ingestion are officially deferred to Phase 6 infrastructure deployment.
+- **Rationale**:
+  - HLS pull delegates video transcoding and packaging compute to the broadcaster's existing playout encoder, eliminating multi-tenant serverless transcoding bottlenecks and reducing platform operational overhead.
+  - Serverless and edge runtime environments cannot sustain long-lived stateful TCP/UDP socket listeners without specialized cluster orchestration.
+  - In partner consoles, RTMP and SRT options are explicitly labelled as "Coming Soon (Phase 6)" with zero fabricated listener URLs or fake connection statuses.
+
+### 2. Elimination of Client-Side Percentage Revenue Projections
+- **Decision**: Client-side percentage revenue estimates and simulated real-time earning tickers have been removed in favor of authoritative, server-audited monthly statements.
+- **Rationale**:
+  - Broadcaster partnerships require legal and financial certainty. Estimating revenues based on client-side math creates contractual ambiguity and discrepancy disputes.
+  - Payout calculations are computed server-side from cryptographically signed playback heartbeat sessions and settled according to master distribution agreements.
+
+### 3. Security Boundary & Centralized Documentation Hub
+- **Decision**:
+  - Implemented partner and creator documentation hubs (`/provider/docs` and `/producer/docs`) with searchable, anchor-linked technical guides stored directly in the repository under `content/docs/`.
+  - Introduced accessible `InfoTip` component backed by a centralized `content/help/tips.json` registry, giving contextual inline guidance for technical parameters without cluttering dashboard workflows.
+  - Maintained complete isolation between Viewer, Producer, Provider, and Console surfaces with 269 strictly guarded routes and 0 unguarded endpoints.

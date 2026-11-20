@@ -37,10 +37,12 @@ import { Route as ContentAssetIdRouteImport } from './routes/content.$assetId'
 import { Route as LegalSlugRouteImport } from './routes/legal.$slug'
 import { Route as ProducerIndexRouteImport } from './routes/producer.index'
 import { Route as ProducerChannelsRouteImport } from './routes/producer.channels'
+import { Route as ProducerDocsRouteImport } from './routes/producer.docs'
 import { Route as ProviderIndexRouteImport } from './routes/provider.index'
 import { Route as ProviderChannelsRouteImport } from './routes/provider.channels'
 import { Route as ProviderContractsRouteImport } from './routes/provider.contracts'
 import { Route as ProviderDisputesRouteImport } from './routes/provider.disputes'
+import { Route as ProviderDocsRouteImport } from './routes/provider.docs'
 import { Route as ProviderStatementsRouteImport } from './routes/provider.statements'
 import { Route as SitemapXmlRouteImport } from './routes/sitemap.xml'
 import { Route as ZillionaireIndexRouteImport } from './routes/zillionaire.index'
@@ -443,6 +445,11 @@ const ProducerChannelsRoute = ProducerChannelsRouteImport.update({
   path: '/producer/channels',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProducerDocsRoute = ProducerDocsRouteImport.update({
+  id: '/producer/docs',
+  path: '/producer/docs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProviderIndexRoute = ProviderIndexRouteImport.update({
   id: '/provider/',
   path: '/provider/',
@@ -461,6 +468,11 @@ const ProviderContractsRoute = ProviderContractsRouteImport.update({
 const ProviderDisputesRoute = ProviderDisputesRouteImport.update({
   id: '/provider/disputes',
   path: '/provider/disputes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderDocsRoute = ProviderDocsRouteImport.update({
+  id: '/provider/docs',
+  path: '/provider/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProviderStatementsRoute = ProviderStatementsRouteImport.update({
@@ -2007,9 +2019,11 @@ export interface FileRoutesByFullPath {
   '/content/$assetId': typeof ContentAssetIdRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
+  '/producer/docs': typeof ProducerDocsRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
+  '/provider/docs': typeof ProviderDocsRoute
   '/provider/statements': typeof ProviderStatementsRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
@@ -2302,9 +2316,11 @@ export interface FileRoutesByTo {
   '/content/$assetId': typeof ContentAssetIdRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
+  '/producer/docs': typeof ProducerDocsRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
+  '/provider/docs': typeof ProviderDocsRoute
   '/provider/statements': typeof ProviderStatementsRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
@@ -2597,9 +2613,11 @@ export interface FileRoutesById {
   '/content/$assetId': typeof ContentAssetIdRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
+  '/producer/docs': typeof ProducerDocsRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
+  '/provider/docs': typeof ProviderDocsRoute
   '/provider/statements': typeof ProviderStatementsRoute
   '/sitemap/xml': typeof SitemapXmlRoute
   '/zillionaire/ads': typeof ZillionaireAdsRoute
@@ -2894,9 +2912,11 @@ export interface FileRouteTypes {
     | '/content/$assetId'
     | '/legal/$slug'
     | '/producer/channels'
+    | '/producer/docs'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
+    | '/provider/docs'
     | '/provider/statements'
     | '/sitemap/xml'
     | '/zillionaire/ads'
@@ -3189,9 +3209,11 @@ export interface FileRouteTypes {
     | '/content/$assetId'
     | '/legal/$slug'
     | '/producer/channels'
+    | '/producer/docs'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
+    | '/provider/docs'
     | '/provider/statements'
     | '/sitemap/xml'
     | '/zillionaire/ads'
@@ -3483,9 +3505,11 @@ export interface FileRouteTypes {
     | '/content/$assetId'
     | '/legal/$slug'
     | '/producer/channels'
+    | '/producer/docs'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
+    | '/provider/docs'
     | '/provider/statements'
     | '/sitemap/xml'
     | '/zillionaire/ads'
@@ -3779,9 +3803,11 @@ export interface RootRouteChildren {
   ContentAssetIdRoute: typeof ContentAssetIdRoute
   LegalSlugRoute: typeof LegalSlugRoute
   ProducerChannelsRoute: typeof ProducerChannelsRouteWithChildren
+  ProducerDocsRoute: typeof ProducerDocsRoute
   ProviderChannelsRoute: typeof ProviderChannelsRoute
   ProviderContractsRoute: typeof ProviderContractsRoute
   ProviderDisputesRoute: typeof ProviderDisputesRoute
+  ProviderDocsRoute: typeof ProviderDocsRoute
   ProviderStatementsRoute: typeof ProviderStatementsRoute
   SitemapXmlRoute: typeof SitemapXmlRoute
   ZillionaireAdsRoute: typeof ZillionaireAdsRoute
@@ -4212,6 +4238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProducerChannelsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/producer/docs': {
+      id: '/producer/docs'
+      path: '/producer/docs'
+      fullPath: '/producer/docs'
+      preLoaderRoute: typeof ProducerDocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/provider/': {
       id: '/provider/'
       path: '/provider'
@@ -4238,6 +4271,13 @@ declare module '@tanstack/react-router' {
       path: '/provider/disputes'
       fullPath: '/provider/disputes'
       preLoaderRoute: typeof ProviderDisputesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider/docs': {
+      id: '/provider/docs'
+      path: '/provider/docs'
+      fullPath: '/provider/docs'
+      preLoaderRoute: typeof ProviderDocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/provider/statements': {
@@ -6361,9 +6401,11 @@ const rootRouteChildren: RootRouteChildren = {
   ContentAssetIdRoute: ContentAssetIdRoute,
   LegalSlugRoute: LegalSlugRoute,
   ProducerChannelsRoute: ProducerChannelsRouteWithChildren,
+  ProducerDocsRoute: ProducerDocsRoute,
   ProviderChannelsRoute: ProviderChannelsRoute,
   ProviderContractsRoute: ProviderContractsRoute,
   ProviderDisputesRoute: ProviderDisputesRoute,
+  ProviderDocsRoute: ProviderDocsRoute,
   ProviderStatementsRoute: ProviderStatementsRoute,
   SitemapXmlRoute: SitemapXmlRoute,
   ZillionaireAdsRoute: ZillionaireAdsRoute,

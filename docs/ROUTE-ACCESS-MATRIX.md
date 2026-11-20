@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **267**
+Total scanned routes: **269**
 
 ### Summary by Guard Class
 
@@ -11,11 +11,11 @@ Total scanned routes: **267**
 | `public` | 14 |
 | `viewer` | 84 |
 | `webhook signature` | 1 |
-| `provider` | 11 |
+| `provider` | 12 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
 | `zillionaire module` | 138 |
-| `producer` | 4 |
+| `producer` | 5 |
 
 ### Inventory
 
@@ -249,10 +249,12 @@ Total scanned routes: **267**
 | `/producer/` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer.index.tsx` |
 | `/producer/channels` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer.channels.tsx` |
 | `/producer/channels/$channelId/team` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer.channels.$channelId.team.tsx` |
+| `/producer/docs` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer.docs.tsx` |
 | `/provider/` | `provider` | Provider Binding Shell (Protected provider page shell) | `src/routes/provider.index.tsx` |
 | `/provider/channels` | `provider` | Provider Binding Shell (Protected provider page shell) | `src/routes/provider.channels.tsx` |
 | `/provider/contracts` | `provider` | Provider Binding Shell (Protected provider page shell) | `src/routes/provider.contracts.tsx` |
 | `/provider/disputes` | `provider` | Provider Binding Shell (Protected provider page shell) | `src/routes/provider.disputes.tsx` |
+| `/provider/docs` | `provider` | Provider Binding Shell (Protected provider page shell) | `src/routes/provider.docs.tsx` |
 | `/provider/statements` | `provider` | Provider Binding Shell (Protected provider page shell) | `src/routes/provider.statements.tsx` |
 | `/zillionaire/` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.index.tsx` |
 | `/zillionaire/ads` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.ads.tsx` |

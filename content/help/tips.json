@@ -1,0 +1,86 @@
+{
+  "channel_details": {
+    "title": "Channel Details",
+    "description": "Primary broadcast channel configuration including name, category, and operational parameters.",
+    "example": "e.g. Lagos Live 24/7 (News & Culture)",
+    "docsSlug": "integrating-a-channel",
+    "anchor": "channel-details"
+  },
+  "stream_source": {
+    "title": "Stream Source (HLS Pull)",
+    "description": "Primary live HTTPS stream manifest URL delivering HLS segments (.m3u8). Must be publicly reachable or authenticated via query token.",
+    "example": "https://stream.example.com/live/primary.m3u8",
+    "docsSlug": "integrating-a-channel",
+    "anchor": "stream-source"
+  },
+  "backup_stream_source": {
+    "title": "Backup Stream Source",
+    "description": "Failover stream URL used automatically if the primary ingest encounters uninterrupted packet loss or latency spikes.",
+    "example": "https://stream-backup.example.com/live/secondary.m3u8",
+    "docsSlug": "integrating-a-channel",
+    "anchor": "backup-source"
+  },
+  "bandwidth_cap": {
+    "title": "Bandwidth Cap",
+    "description": "Maximum outbound bitrate allocated to the channel stream across CDN edges.",
+    "example": "8.0 Gbps standard allocation",
+    "docsSlug": "integrating-a-channel",
+    "anchor": "bandwidth-cap"
+  },
+  "age_rating": {
+    "title": "Age Rating & Child Protection",
+    "description": "Content classification tag. Viewers under 18 or in Kids Mode are strictly restricted from adult-rated broadcasts.",
+    "example": "PG, 13+, 16+, 18+",
+    "docsSlug": "age-rating-and-child-protection",
+    "anchor": "age-rating"
+  },
+  "adult_content_flag": {
+    "title": "Adult Content Designation",
+    "description": "Explicit flag indicating mature themes. Requires verified provider credentials and restricts delivery to age-verified accounts.",
+    "example": "Restricted to 18+ verified profiles",
+    "docsSlug": "age-rating-and-child-protection",
+    "anchor": "adult-flag"
+  },
+  "rights_licence": {
+    "title": "Licence & Territory Distribution",
+    "description": "Contractual evidence of broadcast distribution rights for designated geographic regions and validity timeframes.",
+    "example": "Distribution agreement ref #LIC-2026-NG",
+    "docsSlug": "rights-and-copyright",
+    "anchor": "rights-and-licences"
+  },
+  "test_stream": {
+    "title": "Test Stream Validation",
+    "description": "Private staging playback verifying manifest syntax, keyframe cadence, and audio/video sync before public broadcast.",
+    "example": "Automated verification passes before review ticket generation",
+    "docsSlug": "integrating-a-channel",
+    "anchor": "test-stream"
+  },
+  "earnings_settlement": {
+    "title": "Earnings & Settlement",
+    "description": "Earned revenue computed from verified stream watch sessions and settled in accordance with your signed agreement.",
+    "example": "Settled according to your agreement terms",
+    "docsSlug": "earnings-and-payouts",
+    "anchor": "settlement-rules"
+  },
+  "trending_promotion": {
+    "title": "Trending Promotion",
+    "description": "Promoted placement on the viewer home and trending rails, transparently badged with a 'Sponsored' tag.",
+    "example": "Daily or weekly promotion packages",
+    "docsSlug": "promotion",
+    "anchor": "trending-promotions"
+  },
+  "schedule_slot": {
+    "title": "Schedule Slot & Playout",
+    "description": "Pre-scheduled broadcast programme window. Consecutive items must be queued back-to-back without overlapping conflicts.",
+    "example": "Daily 20:00 - 21:30 WAT",
+    "docsSlug": "scheduling",
+    "anchor": "schedule-slots"
+  },
+  "two_step_verification": {
+    "title": "Account Two-Step Verification",
+    "description": "Enhanced security requirement using authenticator TOTP codes to safeguard portal access and sensitive channel controls.",
+    "example": "Required for channel publishing and payout requests",
+    "docsSlug": "security",
+    "anchor": "two-step-verification"
+  }
+}

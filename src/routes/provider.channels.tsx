@@ -331,7 +331,7 @@ Status: ${contract?.status || "Fully Executed"}
 Territories: ${(contract?.territories || ["Global"]).join(", ")}
 
 This document certifies that the channel partner contract is binding and in good standing.
-Authorized Signatory: Ok's Lovable / BQ SQWAD TV Global Operations`;
+Authorized Signatory: BQ SQWAD TV Global Operations`;
 
     const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);

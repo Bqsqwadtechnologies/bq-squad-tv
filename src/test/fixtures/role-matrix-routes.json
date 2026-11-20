@@ -3876,6 +3876,23 @@
     }
   },
   {
+    "route": "/producer/docs",
+    "file": "src/routes/producer.docs.tsx",
+    "guard": "producer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 403,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 403
+    }
+  },
+  {
     "route": "/provider/",
     "file": "src/routes/provider.index.tsx",
     "guard": "provider",
@@ -3929,6 +3946,23 @@
   {
     "route": "/provider/disputes",
     "file": "src/routes/provider.disputes.tsx",
+    "guard": "provider",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 403,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 403
+    }
+  },
+  {
+    "route": "/provider/docs",
+    "file": "src/routes/provider.docs.tsx",
     "guard": "provider",
     "expected": {
       "anonymous": 401,
