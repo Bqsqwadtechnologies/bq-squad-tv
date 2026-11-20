@@ -81,6 +81,11 @@ export function ContentDetailsPage() {
   const [reporterEmail, setReporterEmail] = useState("");
   const [rightsHolderName, setRightsHolderName] = useState("");
   const [rightsHolderEmail, setRightsHolderEmail] = useState("");
+  const [reporterOrganization, setReporterOrganization] = useState("");
+  const [workClaimed, setWorkClaimed] = useState("");
+  const [proofLinkOrPath, setProofLinkOrPath] = useState("");
+  const [goodFaithStatement, setGoodFaithStatement] = useState(false);
+  const [signature, setSignature] = useState("");
   const [rightsBasis, setRightsBasis] = useState("");
   const [reportDetails, setReportDetails] = useState("");
   const [reportDeclaration, setReportDeclaration] = useState(false);
@@ -400,8 +405,12 @@ export function ContentDetailsPage() {
 
   async function submitCopyrightReport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!reportDeclaration) {
-      setError("Please confirm that your copyright report is accurate.");
+    if (!reportDeclaration || !goodFaithStatement) {
+      setError("Please confirm both statements of good faith and accuracy.");
+      return;
+    }
+    if (!signature.trim()) {
+      setError("Please provide an electronic signature.");
       return;
     }
     setReportBusy(true);
@@ -410,15 +419,35 @@ export function ContentDetailsPage() {
       const response = await fetch("/api/public/v1/content-reports", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ targetType: "content_asset", targetId: assetId, reason: "copyright_infringement", details: reportDetails, reporterName, reporterEmail, rightsHolderName, rightsHolderEmail, rightsBasis, declaration: true }),
+        body: JSON.stringify({
+          targetType: "content_asset",
+          targetId: assetId,
+          reason: "copyright_infringement",
+          details: reportDetails,
+          reporterName,
+          reporterEmail,
+          reporterOrganization,
+          workClaimed: workClaimed || rightsBasis,
+          proofLinkOrPath,
+          goodFaithStatement: true,
+          signature,
+          rightsHolderName,
+          rightsHolderEmail,
+          rightsBasis: rightsBasis || workClaimed,
+          declaration: true,
+        }),
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "The copyright report could not be submitted.");
       setReportOpen(false);
       setReportDetails("");
       setRightsBasis("");
+      setWorkClaimed("");
+      setProofLinkOrPath("");
+      setSignature("");
+      setGoodFaithStatement(false);
       setReportDeclaration(false);
-      setMessage("Copyright report received. The moderation team will review the claim.");
+      setMessage("Copyright report received. Video is now under review and counter-notice window is open.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The copyright report could not be submitted.");
     } finally {
@@ -501,32 +530,49 @@ export function ContentDetailsPage() {
               className="flex items-center gap-1.5 rounded-xl border border-amber-300/20 bg-amber-300/5 px-3 py-1.5 text-xs font-semibold text-amber-100 hover:bg-amber-300/10 transition"
             >
               <AlertTriangle size={14} />
-              <span>Report copyright</span>
+              <span>Report this video</span>
             </button>
           </div>
         </div>
 
         {reportOpen && (
-          <form onSubmit={submitCopyrightReport} className="mt-5 space-y-3 rounded-2xl border border-amber-300/20 bg-[#111b3b] p-4">
+          <form onSubmit={submitCopyrightReport} className="mt-5 space-y-3 rounded-2xl border border-amber-300/20 bg-[#111b3b] p-4 sm:p-6">
             <div>
-              <h2 className="text-sm font-bold text-amber-100">Copyright or ownership report</h2>
-              <p className="mt-1 text-xs leading-5 text-slate-300">Use this form if you are the rights holder or are authorised to act for them. Include enough information for the team to identify the rights and the video. False or abusive reports may be rejected.</p>
+              <h2 className="text-sm font-bold text-amber-100 flex items-center gap-2">
+                <AlertTriangle size={16} className="text-amber-400" />
+                Report this video (Copyright / Ownership Notice)
+              </h2>
+              <p className="mt-1 text-xs leading-5 text-slate-300">
+                Use this form to file a formal infringement notice. Submitting places this video under review and notifies the producer for counter-notice.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <input required value={reporterName} onChange={(e) => setReporterName(e.target.value)} placeholder="Reporter full name *" className="rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+              <input required type="email" value={reporterEmail} onChange={(e) => setReporterEmail(e.target.value)} placeholder="Reporter contact email *" className="rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+              <input value={reporterOrganization} onChange={(e) => setReporterOrganization(e.target.value)} placeholder="Organization / Studio (optional)" className="rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <input required value={reporterName} onChange={(e) => setReporterName(e.target.value)} placeholder="Your full name" className="rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
-              <input required type="email" value={reporterEmail} onChange={(e) => setReporterEmail(e.target.value)} placeholder="Your contact email" className="rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
-              <input required value={rightsHolderName} onChange={(e) => setRightsHolderName(e.target.value)} placeholder="Rights holder name" className="rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
-              <input required type="email" value={rightsHolderEmail} onChange={(e) => setRightsHolderEmail(e.target.value)} placeholder="Rights holder contact email" className="rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+              <input value={rightsHolderName} onChange={(e) => setRightsHolderName(e.target.value)} placeholder="Rights holder / Owner name" className="rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+              <input type="email" value={rightsHolderEmail} onChange={(e) => setRightsHolderEmail(e.target.value)} placeholder="Rights holder contact email" className="rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
             </div>
-            <textarea required minLength={10} value={rightsBasis} onChange={(e) => setRightsBasis(e.target.value)} placeholder="Explain the work you own/control and why this video infringes those rights." rows={3} className="w-full rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
-            <textarea value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} placeholder="Additional details or evidence references (do not include passwords or payment details)." rows={2} className="w-full rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
-            <label className="flex items-start gap-2 text-xs leading-5 text-slate-300">
-              <input type="checkbox" required checked={reportDeclaration} onChange={(e) => setReportDeclaration(e.target.checked)} className="mt-1 accent-cyan-400" />
-              I confirm that I am the rights holder or authorised representative and that the information in this report is accurate to the best of my knowledge.
-            </label>
-            <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setReportOpen(false)} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-300">Cancel</button>
-              <button type="submit" disabled={reportBusy} className="rounded-lg bg-amber-300 px-4 py-2 text-xs font-bold text-slate-950 disabled:opacity-50">{reportBusy ? "Submitting…" : "Submit copyright report"}</button>
+            <textarea required minLength={10} value={workClaimed || rightsBasis} onChange={(e) => { setWorkClaimed(e.target.value); setRightsBasis(e.target.value); }} placeholder="Identify the copyrighted work claimed to be infringed (title, registration, description) *" rows={3} className="w-full rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+            <input value={proofLinkOrPath} onChange={(e) => setProofLinkOrPath(e.target.value)} placeholder="Proof link, official catalogue entry or proof file URL (optional)" className="w-full rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+            <div className="space-y-2 rounded-xl border border-white/10 bg-[#071336] p-3 text-xs text-slate-300">
+              <label className="flex items-start gap-2">
+                <input type="checkbox" required checked={goodFaithStatement} onChange={(e) => setGoodFaithStatement(e.target.checked)} className="mt-0.5 accent-cyan-400" />
+                <span>I have a good faith belief that the use of this content is not authorized by the copyright owner, agent, or the law.</span>
+              </label>
+              <label className="flex items-start gap-2">
+                <input type="checkbox" required checked={reportDeclaration} onChange={(e) => setReportDeclaration(e.target.checked)} className="mt-0.5 accent-cyan-400" />
+                <span>I confirm under penalty of perjury that the information provided is accurate and that I am the owner or authorized representative.</span>
+              </label>
+            </div>
+            <div>
+              <input required value={signature} onChange={(e) => setSignature(e.target.value)} placeholder="Electronic signature (type full legal name) *" className="w-full rounded-lg border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <button type="button" onClick={() => setReportOpen(false)} className="rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-300 hover:text-white">Cancel</button>
+              <button type="submit" disabled={reportBusy} className="rounded-lg bg-amber-400 px-4 py-2 text-xs font-bold text-slate-950 disabled:opacity-50 hover:brightness-110">{reportBusy ? "Submitting…" : "Submit Report"}</button>
             </div>
           </form>
         )}
@@ -750,6 +796,20 @@ export function ContentDetailsPage() {
                     >
                       <PictureInPicture2 size={14} />
                       <span className="hidden sm:inline">PiP</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReportOpen(true);
+                        window.scrollTo({ top: 400, behavior: 'smooth' });
+                      }}
+                      title="Report this video"
+                      aria-label="Report this video"
+                      className="flex items-center gap-1.5 rounded-xl border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-300/20 transition"
+                    >
+                      <AlertTriangle size={14} />
+                      <span className="hidden sm:inline">Report</span>
                     </button>
 
                     {nextEpisodeAvailable && (

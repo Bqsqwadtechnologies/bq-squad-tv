@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  AlertTriangle,
   ArrowLeft,
   CalendarDays,
   Maximize2,
@@ -440,6 +441,13 @@ function ChannelPage() {
                   <span className="rounded-xl border border-cyan-400/30 bg-[#00D8F5]/10 px-3 py-1.5 text-xs font-bold text-[#00D8F5]">
                     Pay As You Go
                   </span>
+                  <a
+                    href={`/copyright-report?channelId=${encodeURIComponent(details.channel.id)}`}
+                    className="flex items-center gap-1.5 rounded-xl border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-xs font-semibold text-amber-200 hover:bg-amber-300/20 transition"
+                  >
+                    <AlertTriangle size={14} />
+                    <span>Report channel</span>
+                  </a>
                 </div>
               </div>
 

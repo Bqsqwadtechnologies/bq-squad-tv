@@ -40,6 +40,38 @@ export const Route = createFileRoute("/zillionaire/moderation")({
   }),
 });
 
+interface CopyrightCaseItem {
+  id: string;
+  caseId: string;
+  targetType: string;
+  targetId: string;
+  targetTitle: string;
+  producerUid: string | null;
+  producerName: string;
+  copyrightStrikes: number;
+  reporterName: string;
+  reporterEmail: string;
+  reporterOrganization: string | null;
+  workClaimed: string;
+  proofLinkOrPath: string | null;
+  goodFaithStatement: boolean;
+  signature: string;
+  status: "under_review" | "takedown" | "dismissed" | "restored";
+  counterNoticeDeadline: string | null;
+  counterNoticeStatus: string;
+  emailReceiptSent: boolean;
+  createdAt: string | null;
+  updatedAt: string | null;
+  resolvedAt: string | null;
+  resolutionNotes: string | null;
+  timeline: Array<{
+    event: string;
+    timestamp: string;
+    actor: string;
+    note: string;
+  }>;
+}
+
 interface CommentItem {
   id: string;
   assetId: string;
@@ -107,7 +139,7 @@ function ZillionaireModerationContent({
   onLock?: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<
-    "queue" | "reports" | "keywords" | "ratings" | "titles"
+    "queue" | "reports" | "keywords" | "ratings" | "titles" | "copyright"
   >("queue");
 
   const [loading, setLoading] = useState(true);
@@ -119,6 +151,12 @@ function ZillionaireModerationContent({
   const [keywords, setKeywords] = useState<string[]>([]);
   const [ratingAlerts, setRatingAlerts] = useState<RatingAbuseEvent[]>([]);
   const [assets, setAssets] = useState<AssetItem[]>([]);
+  const [copyrightCases, setCopyrightCases] = useState<CopyrightCaseItem[]>([]);
+  const [copyrightStats, setCopyrightStats] = useState({ total: 0, underReview: 0, takedowns: 0, restored: 0, counterNoticeActive: 0 });
+  const [selectedCase, setSelectedCase] = useState<CopyrightCaseItem | null>(null);
+  const [decisionModal, setDecisionModal] = useState<{ case: CopyrightCaseItem; action: "remove" | "keep" | "restore" } | null>(null);
+  const [decisionNotes, setDecisionNotes] = useState("");
+  const [decisionBusy, setDecisionBusy] = useState(false);
 
   // Filter states
   const [commentStatusFilter, setCommentStatusFilter] = useState("ALL");
@@ -151,6 +189,17 @@ function ZillionaireModerationContent({
       setKeywords(data.keywordFilters || []);
       setRatingAlerts(data.ratingAbuseEvents || []);
       setAssets(data.assets || []);
+
+      try {
+        const cRes = await fetch("/api/public/v1/zillionaire/copyright-cases/", { headers });
+        if (cRes.ok) {
+          const cData = await cRes.json();
+          setCopyrightCases(cData.cases || []);
+          if (cData.stats) setCopyrightStats(cData.stats);
+        }
+      } catch {
+        /* Ignore non-blocking case fetch */
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error loading data");
     } finally {
@@ -161,6 +210,35 @@ function ZillionaireModerationContent({
   useEffect(() => {
     void loadData();
   }, [token]);
+
+  const handleCopyrightDecision = async () => {
+    if (!decisionModal) return;
+    setDecisionBusy(true);
+    setError("");
+    try {
+      const headers = await getWebAuthHeaders(token);
+      headers.set("Content-Type", "application/json");
+      const res = await fetch("/api/public/v1/zillionaire/copyright-cases/", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          caseId: decisionModal.case.caseId || decisionModal.case.id,
+          action: decisionModal.action,
+          decisionNotes,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Decision failed");
+      setSuccessMessage(`Copyright case decision "${decisionModal.action}" applied.`);
+      setDecisionModal(null);
+      setDecisionNotes("");
+      await loadData();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error executing copyright decision");
+    } finally {
+      setDecisionBusy(false);
+    }
+  };
 
   const handleModerateComment = async (
     commentId: string,
@@ -451,6 +529,7 @@ function ZillionaireModerationContent({
           { key: "keywords", label: "Keyword Filters", icon: ShieldCheck },
           { key: "ratings", label: "Rating Abuse Detection", icon: Star },
           { key: "titles", label: "Per-Title Comments Control", icon: ToggleRight },
+          { key: "copyright", label: "Copyright Cases", icon: ShieldAlert },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.key;
@@ -919,6 +998,315 @@ function ZillionaireModerationContent({
             </table>
           </div>
         </ConsoleCard>
+      )}
+
+      {/* Tab 6: Copyright Cases */}
+      {activeTab === "copyright" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <ConsoleKpiCard
+              title="Under Review"
+              value={copyrightStats.underReview.toString()}
+              subtitle="Pending moderation decision"
+              variant="amber"
+              icon={AlertTriangle}
+            />
+            <ConsoleKpiCard
+              title="Counter-Notice Active"
+              value={copyrightStats.counterNoticeActive.toString()}
+              subtitle="14-day window open"
+              variant="purple"
+              icon={ShieldAlert}
+            />
+            <ConsoleKpiCard
+              title="Takedowns Enforced"
+              value={copyrightStats.takedowns.toString()}
+              subtitle="Strikes recorded"
+              variant="rose"
+              icon={Trash2}
+            />
+            <ConsoleKpiCard
+              title="Restored Content"
+              value={copyrightStats.restored.toString()}
+              subtitle="Counter-notice cleared"
+              variant="green"
+              icon={ShieldCheck}
+            />
+          </div>
+
+          <ConsoleCard
+            title="Copyright Cases & DMCA Notices"
+            description="Manage public copyright infringement claims. Videos under claim are placed under review with owner notification and statutory counter-notice window. Reviewers can enforce takedown with repeat-infringer strikes, keep content, or restore after counter-notice."
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                    <th className="py-2.5 px-3">Case ID</th>
+                    <th className="py-2.5 px-3">Target Video</th>
+                    <th className="py-2.5 px-3">Claimant / Org</th>
+                    <th className="py-2.5 px-3">Claimed Work & Proof</th>
+                    <th className="py-2.5 px-3">Producer Strikes</th>
+                    <th className="py-2.5 px-3">Status & Timeline</th>
+                    <th className="py-2.5 px-3 text-right">Decisions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {copyrightCases.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-slate-500">
+                        No copyright cases currently recorded.
+                      </td>
+                    </tr>
+                  ) : (
+                    copyrightCases.map((c) => (
+                      <tr key={c.id} className="hover:bg-slate-900/40 transition">
+                        <td className="py-2.5 px-3 font-mono font-bold text-amber-300">
+                          {c.caseId || c.id}
+                        </td>
+                        <td className="py-2.5 px-3 max-w-[200px]">
+                          <p className="font-bold text-white truncate">{c.targetTitle}</p>
+                          <p className="text-[10px] font-mono text-slate-400">{c.targetId}</p>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <p className="font-medium text-white">{c.reporterName}</p>
+                          {c.reporterOrganization && (
+                            <p className="text-[10px] text-cyan-300">{c.reporterOrganization}</p>
+                          )}
+                          <p className="text-[10px] text-slate-400">{c.reporterEmail}</p>
+                        </td>
+                        <td className="py-2.5 px-3 max-w-[220px]">
+                          <p className="text-slate-200 line-clamp-2">{c.workClaimed}</p>
+                          {c.proofLinkOrPath ? (
+                            <a
+                              href={c.proofLinkOrPath.startsWith("http") ? c.proofLinkOrPath : undefined}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[10px] text-cyan-400 hover:underline mt-0.5 inline-block"
+                            >
+                              Proof link ↗
+                            </a>
+                          ) : (
+                            <span className="text-[10px] text-slate-500">No proof URL</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              c.copyrightStrikes >= 3
+                                ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                                : c.copyrightStrikes > 0
+                                  ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                                  : "bg-slate-800 text-slate-400"
+                            }`}
+                          >
+                            {c.copyrightStrikes} / 3 strikes
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <div className="flex flex-col gap-1">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold capitalize w-fit ${
+                                c.status === "under_review"
+                                  ? "bg-amber-400/10 text-amber-300 border border-amber-400/20"
+                                  : c.status === "takedown"
+                                    ? "bg-rose-500/10 text-rose-300 border border-rose-500/20"
+                                    : c.status === "restored"
+                                      ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
+                                      : "bg-slate-800 text-slate-300"
+                              }`}
+                            >
+                              {c.status.replace("_", " ")}
+                            </span>
+                            {c.counterNoticeDeadline && c.status === "under_review" && (
+                              <span className="text-[10px] text-purple-300 font-mono">
+                                Window: {new Date(c.counterNoticeDeadline).toLocaleDateString()}
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCase(c)}
+                              className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold"
+                            >
+                              Timeline
+                            </button>
+                            {c.status === "under_review" && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDecisionModal({ case: c, action: "remove" });
+                                    setDecisionNotes("Infringing content confirmed; DMCA takedown issued.");
+                                  }}
+                                  className="px-2 py-1 rounded bg-rose-600/20 text-rose-300 border border-rose-500/30 hover:bg-rose-600/30 text-[11px] font-bold"
+                                >
+                                  Remove
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDecisionModal({ case: c, action: "keep" });
+                                    setDecisionNotes("License verified or claim unfounded.");
+                                  }}
+                                  className="px-2 py-1 rounded bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-600/30 text-[11px] font-bold"
+                                >
+                                  Keep
+                                </button>
+                              </>
+                            )}
+                            {c.status === "takedown" && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDecisionModal({ case: c, action: "restore" });
+                                  setDecisionNotes("Counter-notice accepted; rights demonstrated.");
+                                }}
+                                className="px-2 py-1 rounded bg-cyan-600/20 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-600/30 text-[11px] font-bold"
+                              >
+                                Restore
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </ConsoleCard>
+        </div>
+      )}
+
+      {/* Case Timeline / Details Modal */}
+      {selectedCase && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-2xl border border-slate-800 bg-[#091126] p-6 shadow-2xl text-slate-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-amber-400" />
+                <h3 className="text-base font-bold text-white">
+                  Case Details & Timeline: {selectedCase.caseId}
+                </h3>
+              </div>
+              <button
+                onClick={() => setSelectedCase(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="rounded-xl border border-white/10 bg-black/40 p-3 space-y-2">
+                <p><strong className="text-slate-300">Target Video:</strong> {selectedCase.targetTitle} ({selectedCase.targetId})</p>
+                <p><strong className="text-slate-300">Reporter:</strong> {selectedCase.reporterName} ({selectedCase.reporterEmail})</p>
+                {selectedCase.reporterOrganization && (
+                  <p><strong className="text-slate-300">Organization:</strong> {selectedCase.reporterOrganization}</p>
+                )}
+                <p><strong className="text-slate-300">Electronic Signature:</strong> <span className="font-mono text-cyan-300">{selectedCase.signature}</span></p>
+                <p><strong className="text-slate-300">Work Claimed:</strong> {selectedCase.workClaimed}</p>
+                {selectedCase.proofLinkOrPath && (
+                  <p><strong className="text-slate-300">Proof Link:</strong> <a href={selectedCase.proofLinkOrPath} target="_blank" rel="noreferrer" className="text-cyan-400 underline">{selectedCase.proofLinkOrPath}</a></p>
+                )}
+              </div>
+
+              <div>
+                <h4 className="font-bold text-white uppercase tracking-wider mb-2">Audit & Event Timeline</h4>
+                <div className="space-y-2 border-l-2 border-slate-700 pl-4">
+                  {selectedCase.timeline.map((item, idx) => (
+                    <div key={idx} className="relative">
+                      <div className="absolute -left-[21px] top-1 h-2.5 w-2.5 rounded-full bg-cyan-400" />
+                      <p className="font-bold text-white capitalize">{item.event.replace(/_/g, " ")}</p>
+                      <p className="text-[10px] text-slate-400">{item.timestamp} · Actor: {item.actor}</p>
+                      <p className="text-slate-300 mt-0.5">{item.note}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-white/10 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCase(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Decision Modal (Remove / Keep / Restore) */}
+      {decisionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-[#091126] p-6 shadow-2xl text-slate-100">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+              <h3 className="text-base font-bold text-white capitalize">
+                Confirm Copyright Decision: {decisionModal.action}
+              </h3>
+              <button
+                onClick={() => setDecisionModal(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <p className="text-slate-300">
+                Action: <strong className="uppercase text-amber-300">{decisionModal.action}</strong> on video{" "}
+                <strong className="text-white">{decisionModal.case.targetTitle}</strong>.
+              </p>
+              {decisionModal.action === "remove" && (
+                <p className="rounded-lg bg-rose-500/10 border border-rose-500/20 p-2 text-rose-200 text-[11px]">
+                  Enforcing takedown will remove the video from public view and increment the producer's repeat-infringer strikes ({decisionModal.case.copyrightStrikes} → {decisionModal.case.copyrightStrikes + 1}).
+                </p>
+              )}
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-semibold">
+                  Decision Notes & Audit Justification *
+                </label>
+                <textarea
+                  rows={3}
+                  value={decisionNotes}
+                  onChange={(e) => setDecisionNotes(e.target.value)}
+                  placeholder="Record justification for audit log..."
+                  className="w-full rounded-xl border border-slate-700 bg-black/50 p-2.5 text-white outline-none focus:border-cyan-400 text-xs"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-white/10 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDecisionModal(null)}
+                  className="px-4 py-2 rounded-xl border border-slate-700 text-slate-300 hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyrightDecision}
+                  disabled={decisionBusy || !decisionNotes.trim()}
+                  className={`px-5 py-2 rounded-xl font-bold text-white transition disabled:opacity-50 ${
+                    decisionModal.action === "remove"
+                      ? "bg-rose-600 hover:bg-rose-500"
+                      : "bg-emerald-600 hover:bg-emerald-500"
+                  }`}
+                >
+                  {decisionBusy ? "Applying..." : `Apply ${decisionModal.action}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Ban Commenter Modal */}

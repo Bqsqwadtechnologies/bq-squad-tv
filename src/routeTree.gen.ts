@@ -15,6 +15,7 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as AccountDeletionRouteImport } from './routes/account-deletion'
 import { Route as AgeRestrictionRouteImport } from './routes/age-restriction'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CopyrightReportRouteImport } from './routes/copyright-report'
 import { Route as DownloadsRouteImport } from './routes/downloads'
 import { Route as HelpRouteImport } from './routes/help'
 import { Route as HighDemandRouteImport } from './routes/high-demand'
@@ -229,6 +230,7 @@ import { Route as ApiPublicV1ZillionaireConfigModalSpendRouteImport } from './ro
 import { Route as ApiPublicV1ZillionaireConfigPricingRouteImport } from './routes/api/public/v1/zillionaire/config/pricing'
 import { Route as ApiPublicV1ZillionaireConfigSettingsRouteImport } from './routes/api/public/v1/zillionaire/config/settings'
 import { Route as ApiPublicV1ZillionaireContentAssetsIndexRouteImport } from './routes/api/public/v1/zillionaire/content-assets/index'
+import { Route as ApiPublicV1ZillionaireCopyrightCasesIndexRouteImport } from './routes/api/public/v1/zillionaire/copyright-cases/index'
 import { Route as ApiPublicV1ZillionaireDeliveryIndexRouteImport } from './routes/api/public/v1/zillionaire/delivery/index'
 import { Route as ApiPublicV1ZillionaireEmailTestRouteImport } from './routes/api/public/v1/zillionaire/email/test'
 import { Route as ApiPublicV1ZillionaireErrorsIndexRouteImport } from './routes/api/public/v1/zillionaire/errors/index'
@@ -352,6 +354,11 @@ const AgeRestrictionRoute = AgeRestrictionRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CopyrightReportRoute = CopyrightReportRouteImport.update({
+  id: '/copyright-report',
+  path: '/copyright-report',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DownloadsRoute = DownloadsRouteImport.update({
@@ -1549,6 +1556,12 @@ const ApiPublicV1ZillionaireContentAssetsIndexRoute =
     path: '/api/public/v1/zillionaire/content-assets/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireCopyrightCasesIndexRoute =
+  ApiPublicV1ZillionaireCopyrightCasesIndexRouteImport.update({
+    id: '/api/public/v1/zillionaire/copyright-cases/',
+    path: '/api/public/v1/zillionaire/copyright-cases/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireDeliveryIndexRoute =
   ApiPublicV1ZillionaireDeliveryIndexRouteImport.update({
     id: '/api/public/v1/zillionaire/delivery/',
@@ -2121,6 +2134,7 @@ export interface FileRoutesByFullPath {
   '/account-deletion': typeof AccountDeletionRoute
   '/age-restriction': typeof AgeRestrictionRoute
   '/contact': typeof ContactRoute
+  '/copyright-report': typeof CopyrightReportRoute
   '/downloads': typeof DownloadsRoute
   '/help': typeof HelpRoute
   '/high-demand': typeof HighDemandRoute
@@ -2367,6 +2381,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/channels/': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/comments/': typeof ApiPublicV1ZillionaireCommentsIndexRoute
   '/api/public/v1/zillionaire/content-assets/': typeof ApiPublicV1ZillionaireContentAssetsIndexRoute
+  '/api/public/v1/zillionaire/copyright-cases/': typeof ApiPublicV1ZillionaireCopyrightCasesIndexRoute
   '/api/public/v1/zillionaire/delivery/': typeof ApiPublicV1ZillionaireDeliveryIndexRoute
   '/api/public/v1/zillionaire/errors/': typeof ApiPublicV1ZillionaireErrorsIndexRoute
   '/api/public/v1/zillionaire/live-channels/': typeof ApiPublicV1ZillionaireLiveChannelsIndexRoute
@@ -2437,6 +2452,7 @@ export interface FileRoutesByTo {
   '/account-deletion': typeof AccountDeletionRoute
   '/age-restriction': typeof AgeRestrictionRoute
   '/contact': typeof ContactRoute
+  '/copyright-report': typeof CopyrightReportRoute
   '/downloads': typeof DownloadsRoute
   '/help': typeof HelpRoute
   '/high-demand': typeof HighDemandRoute
@@ -2682,6 +2698,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/channels': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/comments': typeof ApiPublicV1ZillionaireCommentsIndexRoute
   '/api/public/v1/zillionaire/content-assets': typeof ApiPublicV1ZillionaireContentAssetsIndexRoute
+  '/api/public/v1/zillionaire/copyright-cases': typeof ApiPublicV1ZillionaireCopyrightCasesIndexRoute
   '/api/public/v1/zillionaire/delivery': typeof ApiPublicV1ZillionaireDeliveryIndexRoute
   '/api/public/v1/zillionaire/errors': typeof ApiPublicV1ZillionaireErrorsIndexRoute
   '/api/public/v1/zillionaire/live-channels': typeof ApiPublicV1ZillionaireLiveChannelsIndexRoute
@@ -2753,6 +2770,7 @@ export interface FileRoutesById {
   '/account-deletion': typeof AccountDeletionRoute
   '/age-restriction': typeof AgeRestrictionRoute
   '/contact': typeof ContactRoute
+  '/copyright-report': typeof CopyrightReportRoute
   '/downloads': typeof DownloadsRoute
   '/help': typeof HelpRoute
   '/high-demand': typeof HighDemandRoute
@@ -2999,6 +3017,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/channels/': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/comments/': typeof ApiPublicV1ZillionaireCommentsIndexRoute
   '/api/public/v1/zillionaire/content-assets/': typeof ApiPublicV1ZillionaireContentAssetsIndexRoute
+  '/api/public/v1/zillionaire/copyright-cases/': typeof ApiPublicV1ZillionaireCopyrightCasesIndexRoute
   '/api/public/v1/zillionaire/delivery/': typeof ApiPublicV1ZillionaireDeliveryIndexRoute
   '/api/public/v1/zillionaire/errors/': typeof ApiPublicV1ZillionaireErrorsIndexRoute
   '/api/public/v1/zillionaire/live-channels/': typeof ApiPublicV1ZillionaireLiveChannelsIndexRoute
@@ -3071,6 +3090,7 @@ export interface FileRouteTypes {
     | '/account-deletion'
     | '/age-restriction'
     | '/contact'
+    | '/copyright-report'
     | '/downloads'
     | '/help'
     | '/high-demand'
@@ -3317,6 +3337,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/channels/'
     | '/api/public/v1/zillionaire/comments/'
     | '/api/public/v1/zillionaire/content-assets/'
+    | '/api/public/v1/zillionaire/copyright-cases/'
     | '/api/public/v1/zillionaire/delivery/'
     | '/api/public/v1/zillionaire/errors/'
     | '/api/public/v1/zillionaire/live-channels/'
@@ -3387,6 +3408,7 @@ export interface FileRouteTypes {
     | '/account-deletion'
     | '/age-restriction'
     | '/contact'
+    | '/copyright-report'
     | '/downloads'
     | '/help'
     | '/high-demand'
@@ -3632,6 +3654,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/channels'
     | '/api/public/v1/zillionaire/comments'
     | '/api/public/v1/zillionaire/content-assets'
+    | '/api/public/v1/zillionaire/copyright-cases'
     | '/api/public/v1/zillionaire/delivery'
     | '/api/public/v1/zillionaire/errors'
     | '/api/public/v1/zillionaire/live-channels'
@@ -3702,6 +3725,7 @@ export interface FileRouteTypes {
     | '/account-deletion'
     | '/age-restriction'
     | '/contact'
+    | '/copyright-report'
     | '/downloads'
     | '/help'
     | '/high-demand'
@@ -3948,6 +3972,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/channels/'
     | '/api/public/v1/zillionaire/comments/'
     | '/api/public/v1/zillionaire/content-assets/'
+    | '/api/public/v1/zillionaire/copyright-cases/'
     | '/api/public/v1/zillionaire/delivery/'
     | '/api/public/v1/zillionaire/errors/'
     | '/api/public/v1/zillionaire/live-channels/'
@@ -4019,6 +4044,7 @@ export interface RootRouteChildren {
   AccountDeletionRoute: typeof AccountDeletionRoute
   AgeRestrictionRoute: typeof AgeRestrictionRoute
   ContactRoute: typeof ContactRoute
+  CopyrightReportRoute: typeof CopyrightReportRoute
   DownloadsRoute: typeof DownloadsRoute
   HelpRoute: typeof HelpRoute
   HighDemandRoute: typeof HighDemandRoute
@@ -4243,6 +4269,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireBlockedContentIndexRoute: typeof ApiPublicV1ZillionaireBlockedContentIndexRoute
   ApiPublicV1ZillionaireCommentsIndexRoute: typeof ApiPublicV1ZillionaireCommentsIndexRoute
   ApiPublicV1ZillionaireContentAssetsIndexRoute: typeof ApiPublicV1ZillionaireContentAssetsIndexRoute
+  ApiPublicV1ZillionaireCopyrightCasesIndexRoute: typeof ApiPublicV1ZillionaireCopyrightCasesIndexRoute
   ApiPublicV1ZillionaireDeliveryIndexRoute: typeof ApiPublicV1ZillionaireDeliveryIndexRoute
   ApiPublicV1ZillionaireErrorsIndexRoute: typeof ApiPublicV1ZillionaireErrorsIndexRoute
   ApiPublicV1ZillionaireLiveChannelsIndexRoute: typeof ApiPublicV1ZillionaireLiveChannelsIndexRoute
@@ -4337,6 +4364,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/copyright-report': {
+      id: '/copyright-report'
+      path: '/copyright-report'
+      fullPath: '/copyright-report'
+      preLoaderRoute: typeof CopyrightReportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/downloads': {
@@ -5837,6 +5871,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireContentAssetsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/copyright-cases/': {
+      id: '/api/public/v1/zillionaire/copyright-cases/'
+      path: '/api/public/v1/zillionaire/copyright-cases'
+      fullPath: '/api/public/v1/zillionaire/copyright-cases/'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireCopyrightCasesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/delivery/': {
       id: '/api/public/v1/zillionaire/delivery/'
       path: '/api/public/v1/zillionaire/delivery'
@@ -6771,6 +6812,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountDeletionRoute: AccountDeletionRoute,
   AgeRestrictionRoute: AgeRestrictionRoute,
   ContactRoute: ContactRoute,
+  CopyrightReportRoute: CopyrightReportRoute,
   DownloadsRoute: DownloadsRoute,
   HelpRoute: HelpRoute,
   HighDemandRoute: HighDemandRoute,
@@ -7063,6 +7105,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireCommentsIndexRoute,
   ApiPublicV1ZillionaireContentAssetsIndexRoute:
     ApiPublicV1ZillionaireContentAssetsIndexRoute,
+  ApiPublicV1ZillionaireCopyrightCasesIndexRoute:
+    ApiPublicV1ZillionaireCopyrightCasesIndexRoute,
   ApiPublicV1ZillionaireDeliveryIndexRoute:
     ApiPublicV1ZillionaireDeliveryIndexRoute,
   ApiPublicV1ZillionaireErrorsIndexRoute:

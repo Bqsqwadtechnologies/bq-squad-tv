@@ -457,3 +457,36 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 - **Decision**: Automated instant push and in-app notifications to submitters/producers upon every review decision with audit logging in platform ledger.
 - **Decision**: Enforced "Content review" (`content`) role or `moderation` role for delegated reviewers.
 - Batch 3 finished, continuing.
+
+## V6 File 02 Batch 4 — Public Copyright Reporting & Moderation Cases (2026-11-20)
+
+### 1. Public Copyright Infringement Reporting Entry Points
+- **Decision**: Added accessible copyright takedown reporting entry points across the viewer surface:
+  - "Report this video" button and modal on `content.$assetId.tsx` (above description and inside player overlay controls)
+  - "Report channel" link on `channels.$channelId.tsx`
+  - Dedicated public takedown notice page at `/copyright-report` supporting deep-linked `?assetId=` and `?channelId=` parameters.
+- **Rationale**: Complies with DMCA and statutory notice obligations, allowing copyright owners or their authorized agents to submit takedown notices without an account.
+
+### 2. Required Claimant Information & Legal Affirmations
+- **Decision**: All copyright submissions require:
+  - Reporter full legal name, contact email, and optional organisation/studio
+  - Targeted video ID, channel ID, or content URL
+  - Detailed description of the claimed copyrighted work
+  - Optional proof link or public registration catalogue entry
+  - Mandatory good-faith belief statement
+  - Mandatory penalty-of-perjury accuracy statement
+  - Electronic signature (typed full legal name)
+  - Hidden honeypot field for anti-spam filtering.
+
+### 3. Immediate Review State & Counter-Notice Initiation
+- **Decision**: Filing a claim automatically updates the target video in `contentAssets/{assetId}` to `contentStatus: "under_review"`, sets `reviewQueueFlag`, starts a statutory 14-day counter-notice deadline, and conditionally hides the content per platform owner policy.
+- **Decision**: Automatically sends an in-app notice to the producer informing them of the claim, claimant details, and counter-notice deadline, and logs an audit record.
+
+### 4. Zillionaire Moderation Copyright Cases & Repeat-Infringer Policy
+- **Decision**: Integrated a dedicated "Copyright Cases" tab in `zillionaire.moderation.tsx` backed by `/api/public/v1/zillionaire/copyright-cases/`.
+- **Decision**: Reviewers can inspect the complete claim details, timeline, proof, and producer repeat-infringer strike count (out of 3).
+- **Decision**: Provided three adjudication actions:
+  - `remove` (enforces DMCA takedown, hides content, increments producer copyright strike, notifies producer and claimant)
+  - `keep` (dismisses claim, clears under-review status, restores video to published status)
+  - `restore` (restores content after successful counter-notice resolution).
+- Batch 4 finished, continuing.
