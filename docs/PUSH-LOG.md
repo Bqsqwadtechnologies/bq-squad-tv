@@ -68,3 +68,5 @@ PUSH BADGE #37 SUCCESSFUL — V5-04 Batch 8 — 14f2738e0844ae52415184d3efd6e0a4
 PUSH BADGE #38 SUCCESSFUL — V5-04 Batch 9 — bfcc74eea3c0ac124bfb042c33aad4f8d9809bc0 — Provider registration flow: 5-step stepper (Company info, Legal & tax, Ingest profile, Settlement account, Agreement e-signature), automatic approval ticket routing, onboarding checklist with 24-48h review duration, and immediate sandbox ingest credentials.
 
 PUSH BADGE #39 SUCCESSFUL — V5-04 Batch 10 — 333301596fc3c808c9f5740276f561a60e459ed1 — Comprehensive console verification: role isolation tests (producer/provider/viewer), producer privacy protection (no percentage/gross exposure), provider email gating, onboarding flows, and payout notifications.
+
+PUSH BADGE #40 SUCCESSFUL — V5-05 Batch 1 — 679d4d8af788336ee8cce11837091f16e2205d1a — Bottom navigation (Home, Live TV, Library, Downloads, Settings) on web and Android, Downloads coming-soon screen, and profile avatar account hub.
