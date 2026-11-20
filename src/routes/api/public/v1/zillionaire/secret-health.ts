@@ -158,10 +158,26 @@ export const SECRET_CATALOG: readonly SecretCatalogEntry[] = [
   {
     name: "BREVO_API_KEY",
     category: "Infrastructure & Compute",
-    description: "Transactional email API key, if configured",
+    description: "Transactional email API key for user verifications and password resets",
     recommendedRotationDays: 90,
     rotationReminder:
       "Generate a replacement in the Brevo dashboard, update deployment secrets, verify mail delivery, then revoke the old key.",
+  },
+  {
+    name: "BREVO_SENDER_EMAIL",
+    category: "Infrastructure & Compute",
+    description: "Sender email address for verification and transactional emails (default: verification@bqsqwad.com)",
+    recommendedRotationDays: 365,
+    rotationReminder:
+      "Confirm sender email has DKIM and SPF aligned in Brevo domain settings.",
+  },
+  {
+    name: "BREVO_SENDER_NAME",
+    category: "Infrastructure & Compute",
+    description: "Display name for transactional emails (default: BQ SQWAD TV)",
+    recommendedRotationDays: 365,
+    rotationReminder:
+      "Sender branding configuration.",
   },
   {
     name: "CONFIG_BACKUP_KEY",

@@ -228,6 +228,7 @@ import { Route as ApiPublicV1ZillionaireConfigPricingRouteImport } from './route
 import { Route as ApiPublicV1ZillionaireConfigSettingsRouteImport } from './routes/api/public/v1/zillionaire/config/settings'
 import { Route as ApiPublicV1ZillionaireContentAssetsIndexRouteImport } from './routes/api/public/v1/zillionaire/content-assets/index'
 import { Route as ApiPublicV1ZillionaireDeliveryIndexRouteImport } from './routes/api/public/v1/zillionaire/delivery/index'
+import { Route as ApiPublicV1ZillionaireEmailTestRouteImport } from './routes/api/public/v1/zillionaire/email/test'
 import { Route as ApiPublicV1ZillionaireErrorsIndexRouteImport } from './routes/api/public/v1/zillionaire/errors/index'
 import { Route as ApiPublicV1ZillionaireLiveChannelsIndexRouteImport } from './routes/api/public/v1/zillionaire/live-channels/index'
 import { Route as ApiPublicV1ZillionaireLiveChatIndexRouteImport } from './routes/api/public/v1/zillionaire/live-chat/index'
@@ -1539,6 +1540,12 @@ const ApiPublicV1ZillionaireDeliveryIndexRoute =
     path: '/api/public/v1/zillionaire/delivery/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireEmailTestRoute =
+  ApiPublicV1ZillionaireEmailTestRouteImport.update({
+    id: '/api/public/v1/zillionaire/email/test',
+    path: '/api/public/v1/zillionaire/email/test',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireErrorsIndexRoute =
   ApiPublicV1ZillionaireErrorsIndexRouteImport.update({
     id: '/api/public/v1/zillionaire/errors/',
@@ -2294,6 +2301,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/config/modal-spend': typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
+  '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
   '/api/public/v1/zillionaire/pages/publish': typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -2604,6 +2612,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/config/modal-spend': typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
+  '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
   '/api/public/v1/zillionaire/pages/publish': typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -2916,6 +2925,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/config/modal-spend': typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
+  '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
   '/api/public/v1/zillionaire/pages/publish': typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -3229,6 +3239,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/modal-spend'
     | '/api/public/v1/zillionaire/config/pricing'
     | '/api/public/v1/zillionaire/config/settings'
+    | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
     | '/api/public/v1/zillionaire/pages/publish'
@@ -3539,6 +3550,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/modal-spend'
     | '/api/public/v1/zillionaire/config/pricing'
     | '/api/public/v1/zillionaire/config/settings'
+    | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
     | '/api/public/v1/zillionaire/pages/publish'
@@ -3850,6 +3862,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/modal-spend'
     | '/api/public/v1/zillionaire/config/pricing'
     | '/api/public/v1/zillionaire/config/settings'
+    | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
     | '/api/public/v1/zillionaire/pages/publish'
@@ -4144,6 +4157,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireConfigModalSpendRoute: typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   ApiPublicV1ZillionaireConfigPricingRoute: typeof ApiPublicV1ZillionaireConfigPricingRoute
   ApiPublicV1ZillionaireConfigSettingsRoute: typeof ApiPublicV1ZillionaireConfigSettingsRoute
+  ApiPublicV1ZillionaireEmailTestRoute: typeof ApiPublicV1ZillionaireEmailTestRoute
   ApiPublicV1ZillionaireMigrationZillionaireRoute: typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   ApiPublicV1ZillionaireOperationsLiveRoute: typeof ApiPublicV1ZillionaireOperationsLiveRoute
   ApiPublicV1ZillionairePagesPublishRoute: typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -5762,6 +5776,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireDeliveryIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/email/test': {
+      id: '/api/public/v1/zillionaire/email/test'
+      path: '/api/public/v1/zillionaire/email/test'
+      fullPath: '/api/public/v1/zillionaire/email/test'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireEmailTestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/errors/': {
       id: '/api/public/v1/zillionaire/errors/'
       path: '/api/public/v1/zillionaire/errors'
@@ -6891,6 +6912,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireConfigPricingRoute,
   ApiPublicV1ZillionaireConfigSettingsRoute:
     ApiPublicV1ZillionaireConfigSettingsRoute,
+  ApiPublicV1ZillionaireEmailTestRoute: ApiPublicV1ZillionaireEmailTestRoute,
   ApiPublicV1ZillionaireMigrationZillionaireRoute:
     ApiPublicV1ZillionaireMigrationZillionaireRoute,
   ApiPublicV1ZillionaireOperationsLiveRoute:

@@ -165,3 +165,42 @@ export async function sendSupportContactEmail(input: SupportContactEmailInput): 
     );
   }
 }
+
+export async function sendTestEmail(to: string): Promise<{ success: boolean; messageId?: string }> {
+  const cleanTo = to.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanTo)) {
+    throw new ApiError(400, "INVALID_EMAIL", "A valid email address is required.");
+  }
+  const apiKey = requiredEnv("BREVO_API_KEY");
+  const senderEmail = (process.env["BREVO_SENDER_EMAIL"] ?? DEFAULT_SENDER_EMAIL).trim();
+  const senderName = (process.env["BREVO_SENDER_NAME"] ?? DEFAULT_SENDER_NAME).trim();
+
+  let response: Response;
+  try {
+    response = await fetch(BREVO_EMAIL_ENDPOINT, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "api-key": apiKey,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        sender: { name: senderName, email: senderEmail },
+        to: [{ email: cleanTo }],
+        subject: "BQ SQWAD TV — Test Email Delivery",
+        textContent: "This is a test email sent from BQ SQWAD TV Zillionaire Console to verify that your transactional email secrets and delivery pipeline are working correctly.",
+        htmlContent: "<!doctype html><html><body style=\"font-family:Arial,sans-serif;color:#142033\"><h2>BQ SQWAD TV</h2><p>This is a test email sent from your <strong>Zillionaire Console</strong> to verify transactional email delivery.</p><p style=\"color:#059669;font-weight:bold\">Email delivery is working correctly!</p><p>Sender: " + escapeHtml(senderEmail) + " (" + escapeHtml(senderName) + ")</p></body></html>",
+      }),
+    });
+  } catch (err) {
+    throw new ApiError(502, "EMAIL_DELIVERY_FAILED", "Brevo email delivery failed: " + (err instanceof Error ? err.message : String(err)));
+  }
+
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new ApiError(502, "EMAIL_DELIVERY_FAILED", "Brevo email delivery failed: " + errText);
+  }
+
+  const result = (await response.json()) as { messageId?: string };
+  return { success: true, messageId: result.messageId };
+}

@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   ShieldAlert,
   KeyRound,
+  Mail,
   Database,
   Eye,
   CheckCircle2,
@@ -132,6 +133,38 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
 
   // Support Mode (View As) State
   const [viewAsTargetRole, setViewAsTargetRole] = useState<"producer" | "provider">("producer");
+  const [sendingTestEmail, setSendingTestEmail] = useState(false);
+  const [testEmailStatus, setTestEmailStatus] = useState<string | null>(null);
+  const [testEmailError, setTestEmailError] = useState<string | null>(null);
+
+  const handleSendTestEmail = async () => {
+    setSendingTestEmail(true);
+    setTestEmailStatus(null);
+    setTestEmailError(null);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/email/test", {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setTestEmailError(data.message || data.error || "Failed to send test email.");
+      } else {
+        setTestEmailStatus(
+          `Test email dispatched successfully to ${data.recipient}! (ID: ${data.messageId || "sent"})`,
+        );
+      }
+    } catch (err) {
+      setTestEmailError(err instanceof Error ? err.message : "Network error");
+    } finally {
+      setSendingTestEmail(false);
+    }
+  };
+
   const [viewAsTargetId, setViewAsTargetId] = useState("");
   const [viewAsReason, setViewAsReason] = useState("");
   const [viewAsError, setViewAsError] = useState<string | null>(null);
@@ -485,6 +518,60 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
               </div>
             </div>
           )}
+
+          <ConsoleCard
+            title="Email Delivery & Verification Pipeline"
+            subtitle="Brevo transactional email delivery for user verification codes, password resets, and account notices."
+          >
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border border-white/10 bg-slate-900/60">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-white text-sm">Transactional Sender</span>
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold border ${
+                        secretData?.secrets.find((s) => s.name === "BREVO_API_KEY")?.status === "present"
+                          ? "border-emerald-500/30 bg-emerald-500/20 text-emerald-300"
+                          : "border-amber-500/30 bg-amber-500/20 text-amber-300"
+                      }`}
+                    >
+                      {secretData?.secrets.find((s) => s.name === "BREVO_API_KEY")?.status === "present"
+                        ? "Brevo Key Configured"
+                        : "Brevo Key Missing"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Required environment variables: <code className="text-cyan-300">BREVO email credentials</code> (mandatory),{" "}
+                    <code className="text-cyan-300">BREVO_SENDER_EMAIL</code> (default: verification@bqsqwad.com),{" "}
+                    <code className="text-cyan-300">BREVO_SENDER_NAME</code> (default: BQ SQWAD TV).
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSendTestEmail}
+                  disabled={sendingTestEmail}
+                  className="flex items-center gap-2 shrink-0 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-medium text-xs transition"
+                >
+                  <Mail className={`w-3.5 h-3.5 ${sendingTestEmail ? "animate-spin" : ""}`} />
+                  {sendingTestEmail ? "Sending..." : "Send test email to me"}
+                </button>
+              </div>
+
+              {testEmailStatus && (
+                <div className="p-3 rounded-lg border border-emerald-500/30 bg-emerald-950/40 text-emerald-200 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{testEmailStatus}</span>
+                </div>
+              )}
+
+              {testEmailError && (
+                <div className="p-3 rounded-lg border border-red-500/30 bg-red-950/40 text-red-200 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>{testEmailError}</span>
+                </div>
+              )}
+            </div>
+          </ConsoleCard>
 
           <ConsoleCard
             title="Cryptographic Secret Health & Rotation Matrix"
@@ -1517,7 +1604,7 @@ function AbuseFraudDefensePanel({ token, isOwner }: { token: string; isOwner: bo
       {subTab === "limits" && (
         <ConsoleCard
           title="Configurable Route Rate Limits"
-          subtitle="Owner-controlled burst and window limits to protect authentication, payments, playback, and APIs from credential stuffing and volumetric abuse."
+          subtitle="Owner-controlled burst and window limits to protect authentication, payments, playback, and endpoints from credential stuffing and volumetric abuse."
         >
           {loading && !limits ? (
             <div className="p-8 text-center text-slate-400">Loading route policies…</div>

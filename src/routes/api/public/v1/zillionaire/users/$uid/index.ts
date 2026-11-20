@@ -325,12 +325,45 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/")({
 
           if (body.action === "send_password_reset") {
             const resetEventId = crypto.randomUUID();
+            const targetUserEmail = typeof userDoc["email"] === "string" ? userDoc["email"].trim() : null;
+            let dispatchStatus = "DISPATCHED";
+            let dispatchError: string | null = null;
+
+            if (targetUserEmail) {
+              try {
+                // Dispatch password reset via Firebase Identity Toolkit
+                const firebaseKey =
+                  process.env.FIREBASE_WEB_API_KEY ||
+                  process.env.VITE_FIREBASE_API_KEY ||
+                  "AIzaSyD6QfAIfn_T0YWxxYKDbw8lZfj_s81N2ow";
+                const resetResp = await fetch(
+                  `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseKey}`,
+                  {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ requestType: "PASSWORD_RESET", email: targetUserEmail }),
+                  },
+                );
+                if (!resetResp.ok) {
+                  const errJson = (await resetResp.json().catch(() => ({}))) as Record<string, unknown>;
+                  dispatchStatus = "FAILED";
+                  dispatchError = JSON.stringify(errJson);
+                }
+              } catch (e) {
+                dispatchStatus = "FAILED";
+                dispatchError = e instanceof Error ? e.message : String(e);
+              }
+            } else {
+              dispatchStatus = "NO_EMAIL";
+            }
+
             await fs.set(`passwordResetRequests/${resetEventId}`, {
               uid,
               email: userDoc["email"],
               requestedBy: actor.uid,
               reason: body.reason,
-              status: "PENDING_DISPATCH",
+              status: dispatchStatus,
+              error: dispatchError,
               createdAt: now,
             });
             await fs.set(`auditLog/${auditId}`, {
@@ -338,9 +371,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/")({
               action: "user.send_password_reset",
               targetId: uid,
               reason: body.reason,
+              metadata: { dispatchStatus, error: dispatchError },
               createdAt: now,
             });
-            return Response.json({ success: true, resetEventId });
+            return Response.json({ success: true, resetEventId, status: dispatchStatus });
           }
 
           if (body.action === "disable_parental_pin") {

@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **277**
+Total scanned routes: **278**
 
 ### Summary by Guard Class
 
@@ -14,7 +14,7 @@ Total scanned routes: **277**
 | `provider` | 12 |
 | `playback token` | 2 |
 | `worker signature` | 13 |
-| `zillionaire module` | 146 |
+| `zillionaire module` | 147 |
 | `producer` | 4 |
 
 ### Inventory
@@ -179,6 +179,7 @@ Total scanned routes: **277**
 | `/api/public/v1/zillionaire/content-assets/$assetId/rights` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/content-assets/$assetId/rights.ts` |
 | `/api/public/v1/zillionaire/content-comments/$commentId/moderate` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/zillionaire/content-comments/$commentId/moderate.ts` |
 | `/api/public/v1/zillionaire/delivery/` | `zillionaire module` | requireZillionaire (Module: delivery) | `src/routes/api/public/v1/zillionaire/delivery/index.ts` |
+| `/api/public/v1/zillionaire/email/test` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/email/test.ts` |
 | `/api/public/v1/zillionaire/errors/` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/errors/index.ts` |
 | `/api/public/v1/zillionaire/finance` | `zillionaire module` | requireZillionaire (Module: finance) | `src/routes/api/public/v1/zillionaire/finance.ts` |
 | `/api/public/v1/zillionaire/hero-slots` | `zillionaire module` | requireZillionaire (Module: catalog) | `src/routes/api/public/v1/zillionaire/hero-slots.ts` |

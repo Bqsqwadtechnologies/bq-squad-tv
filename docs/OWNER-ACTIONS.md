@@ -234,3 +234,23 @@ Before production launch, the owner should confirm: (1) legal pages have been re
 - **Owner MFA and backup encryption:** do not replace `ZILLIONAIRE_MFA_ENCRYPTION_KEY` or `CONFIG_BACKUP_KEY` in place. First implement and test a versioned re-encryption/restore migration; otherwise stored authenticator secrets or encrypted backups may become unrecoverable.
 - **Email / Supabase / scheduler:** rotate `BREVO_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `LOVABLE_CRON_SECRET` only when the integration is configured. Update every dependent service, verify delivery/API/scheduled requests, then revoke the old credential. Remove `LOVABLE_CRON_SECRET_PREVIOUS` after its overlap window.
 - Rotation dates and recommended cycles in the console are operational reminders, not provider-enforced expiry dates. Maintain the provider's own key inventory and alerts; never claim a key is rotated based only on this application record.
+
+## 14. Transactional Email & Password Reset (Brevo & Firebase)
+
+### Brevo Transactional Email Configuration
+1. **Hosting Secrets**:
+   - `BREVO_API_KEY`: API key from Brevo dashboard (SMTP & API -> API Keys). Required for verification emails and test delivery.
+   - `BREVO_SENDER_EMAIL` (Optional): Verified sender email address in Brevo (defaults to `verification@bqsqwad.com`).
+   - `BREVO_SENDER_NAME` (Optional): Friendly sender display name (defaults to `BQ SQWAD TV`).
+2. **Testing Email Delivery**:
+   - In Zillionaire Console (`/zillionaire/security`), navigate to **Email Delivery & Verification Pipeline**.
+   - Click **Send test email to me** (or provide a destination recipient). The server dispatches a test email via Brevo and reports delivery status and message ID.
+   - Enforces a rate limit of 5 test emails per hour per owner account.
+
+### Password Reset Security & Policies
+1. **Staff & Owner Console Reset Dispatch**:
+   - Zillionaire operators and owners can trigger password reset emails to users from the Viewer Management console (`/zillionaire/viewers`).
+   - Staff and owners **MUST NEVER** see, generate, display, or directly set a user password. The system dispatches an official Firebase password reset link directly to the user email.
+2. **Generic Response & Anti-Enumeration**:
+   - Public password reset requests from web and mobile always return a generic success message, regardless of whether the email exists in the system.
+   - Link expiration (default: 1 hour) and action URL templates are configured in the Firebase Console (Authentication -> Templates -> Password reset).
