@@ -9,6 +9,23 @@ import { channelScheduleSchema, saveChannelSchedule } from "@/lib/server/channel
 export const Route = createFileRoute("/api/public/v1/producer/channels/$channelId/schedule")({
   server: {
     handlers: {
+      GET: async ({ request, params }) => {
+        try {
+          const user = await requireUser(request);
+          const channelId = params.channelId;
+          if (!/^[A-Za-z0-9_-]{1,80}$/.test(channelId))
+            throw new ApiError(400, "CHANNEL_ID_INVALID", "The channel id is invalid.");
+          const fs = await Firestore.create();
+          await requireChannelPermission(fs, channelId, user.uid, "channel.read");
+          const scheduleList = await fs.query(`channels/${channelId}/schedule`, {
+            orderBy: [{ field: "startsAt", direction: "ASCENDING" }],
+            limit: 100,
+          }).catch(() => []);
+          return Response.json({ items: scheduleList });
+        } catch (error) {
+          return errorBody(error);
+        }
+      },
       POST: async ({ request, params }) => {
         try {
           const user = await requireUser(request);
