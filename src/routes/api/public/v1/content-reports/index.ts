@@ -15,7 +15,7 @@ const reportSchema = z.object({
   rightsHolderEmail: z.string().trim().email().max(254).optional(),
   rightsBasis: z.string().trim().min(10).max(3000).optional(),
   declaration: z.literal(true).optional(),
-};
+});
 
 export const Route = createFileRoute("/api/public/v1/content-reports/")({
   server: {
