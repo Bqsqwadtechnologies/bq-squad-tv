@@ -678,3 +678,16 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - Added idempotent migration and read fallback helper in `src/lib/server/kyc-migration.ts` ensuring zero data loss if legacy provider verification documents exist.
   - Implemented automated verification test (`src/test/no-legacy-verification-names.test.ts`) that scans `src`, `android`, `scripts`, and `docs` to prevent regressions.
   - Verified `bun run scan:public-text` and `bun run build` pass cleanly.
+
+## V6-05 Batch A1: KYC Data Model, Field Encryption & Private Storage
+
+- **Status**: Implemented & Verified
+- **Date**: 2026-11-20
+- **Scope & Rationale**:
+  - Implemented standard KYC schema in `src/lib/server/kyc/types.ts` (`kycStatus`, `kycType`, `kycCountry`, `kycVersion`, `kycSubmittedAt`, `kycReviewedAt`, `kycReviewedBy`, `kycRejectionReason`, `kycHistory[]`).
+  - Added AES-256-GCM field-level encryption for sensitive attributes (ID numbers, tax numbers, DOB, account numbers) with configurable secret `KYC_FIELD_ENCRYPTION_KEY`.
+  - Added safe data-masking utilities for table and list representations.
+  - Implemented secure isolated vault path generator in `src/lib/server/kyc/storage.ts` ensuring no raw or guessable URLs are exposed.
+  - Added strict document validation (MIME types, 10KB min / 10MB max, magic bytes checks, SHA-256 hashing) and short-lived 60-second signed viewer URLs with forensic watermark overlay metadata.
+  - Documented secret keys in `docs/OWNER-ACTIONS.md`.
+  - Verified with dedicated unit test suite (`src/test/batch-a1-kyc-storage.test.ts`).

@@ -309,3 +309,8 @@ When deploying with an external audiovisual content matching provider (e.g. Audi
    - Navigate to `/zillionaire/rights-review`.
    - Items flagged by either internal perceptual fingerprint comparisons or the external service appear with "Possible duplicate of <title>" or external catalogue match warnings for human review.
    - Note: The platform **never auto-rejects** on match — all duplicates are held for human reviewer evaluation.
+
+## KYC & Private Vault Secrets
+
+1. `KYC_FIELD_ENCRYPTION_KEY`: A 32-byte (256-bit) cryptographically strong secret used for AES-256-GCM field-level encryption of sensitive identity documents, tax IDs, and bank account numbers in the database. When unset, a deterministic development fallback is active.
+2. `KYC_VAULT_SIGNING_SECRET`: A high-entropy signing secret used to generate HMAC-SHA256 signatures for 60-second short-lived document viewing URLs in the Zillionaire console.
