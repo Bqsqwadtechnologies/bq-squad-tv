@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { formatMinorCurrency as formatMoney } from "@/lib/format-money";
 import { createFileRoute } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/BrandLogo";
-import { Wallet as WalletIcon } from "lucide-react";
+import { Wallet as WalletIcon, RefreshCw, Clock, CheckCircle2, AlertCircle } from "lucide-react";
 import {
   getActiveWebIdToken,
   getWebAccount,
@@ -34,6 +34,10 @@ type Topup = {
   currency: string;
 };
 
+const STANDARD_NGN_AMOUNTS: number[] = [
+  200, 500, 1000, 1500, 2000, 2500, 5000, 10000, 15000, 20000, 100000, 200000,
+];
+
 export const Route = createFileRoute("/wallet")({
   component: WalletPage,
   head: () => ({
@@ -45,81 +49,180 @@ export const Route = createFileRoute("/wallet")({
 });
 
 function WalletPage() {
-  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [wallet, setWallet] = useState<Wallet | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const cached = localStorage.getItem("bqtv_cached_wallet");
+      return cached ? (JSON.parse(cached) as Wallet) : null;
+    } catch {
+      return null;
+    }
+  });
+
   const [ledger, setLedger] = useState<LedgerItem[]>([]);
   const [topups, setTopups] = useState<Topup[]>([]);
-  const [email, setEmail] = useState("");
-  const [verified, setVerified] = useState(false);
+  const [email, setEmail] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return localStorage.getItem("bqtv_cached_email") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [verified, setVerified] = useState<boolean>(true);
   const [busyPackage, setBusyPackage] = useState("");
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const loadWallet = useCallback(async (idToken: string) => {
-    const headers = await getWebAuthHeaders(idToken);
-    const [walletResponse, ledgerResponse, topupsResponse] = await Promise.all([
-      fetch("/api/public/v1/wallet", { headers, cache: "no-store" }),
-      fetch("/api/public/v1/wallet/ledger?limit=25", { headers, cache: "no-store" }),
-      fetch("/api/public/v1/wallet/topups", { headers, cache: "no-store" }),
-    ]);
-    const [walletData, ledgerData, topupData] = await Promise.all([
-      walletResponse.json(),
-      ledgerResponse.json(),
-      topupsResponse.json(),
-    ]);
-    if (!walletResponse.ok) throw new Error(walletData.error ?? "Could not load your wallet.");
-    if (!ledgerResponse.ok) throw new Error(ledgerData.error ?? "Could not load wallet history.");
-    if (!topupsResponse.ok) throw new Error(topupData.error ?? "Could not load wallet packages.");
-    setWallet(walletData as Wallet);
-    setLedger((ledgerData.items ?? []) as LedgerItem[]);
-    setTopups(topupData as Topup[]);
+  // Pending payment state
+  const [pendingReference, setPendingReference] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      return sessionStorage.getItem("bqtv_pending_paystack_ref") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
+
+  // Selected topup chip or custom amount
+  const [selectedPackageId, setSelectedPackageId] = useState<string>("");
+  const [customAmountNgn, setCustomAmountNgn] = useState<string>("");
+  const [isCustom, setIsCustom] = useState<boolean>(false);
+
+  // Unified single-token source with 401 retry
+  const fetchWithAuth = useCallback(async (url: string, init: RequestInit = {}): Promise<Response> => {
+    let token = await getActiveWebIdToken();
+    if (!token) {
+      token = await restoreWebSession();
+    }
+    if (!token) throw new Error("Sign in to continue.");
+
+    let headers = {
+      ...(await getWebAuthHeaders(token)),
+      ...(init.headers || {}),
+    };
+
+    let response = await fetch(url, { ...init, headers, cache: "no-store" });
+    if (response.status === 401) {
+      // Refresh token once and retry once
+      token = await restoreWebSession();
+      if (!token) throw new Error("Your session expired. Sign in again to continue.");
+      headers = {
+        ...(await getWebAuthHeaders(token)),
+        ...(init.headers || {}),
+      };
+      response = await fetch(url, { ...init, headers, cache: "no-store" });
+    }
+    return response;
   }, []);
+
+  const loadWallet = useCallback(async () => {
+    try {
+      const [walletRes, ledgerRes, topupsRes] = await Promise.all([
+        fetchWithAuth("/api/public/v1/wallet"),
+        fetchWithAuth("/api/public/v1/wallet/ledger?limit=25"),
+        fetchWithAuth("/api/public/v1/wallet/topups"),
+      ]);
+
+      const [walletData, ledgerData, topupData] = await Promise.all([
+        walletRes.json(),
+        ledgerRes.json(),
+        topupsRes.json(),
+      ]);
+
+      if (!walletRes.ok) throw new Error(walletData.error ?? "Could not load your wallet.");
+      if (!ledgerRes.ok) throw new Error(ledgerData.error ?? "Could not load wallet history.");
+
+      const loadedWallet = walletData as Wallet;
+      setWallet(loadedWallet);
+      try {
+        localStorage.setItem("bqtv_cached_wallet", JSON.stringify(loadedWallet));
+      } catch {}
+
+      setLedger((ledgerData.items ?? []) as LedgerItem[]);
+
+      if (topupsRes.ok && Array.isArray(topupData)) {
+        setTopups(topupData as Topup[]);
+        if (topupData.length > 0 && !selectedPackageId) {
+          setSelectedPackageId(topupData[0].packageId);
+        }
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not load your wallet.");
+    }
+  }, [fetchWithAuth, selectedPackageId]);
+
+  const verifyPaymentReference = useCallback(async (ref: string) => {
+    setVerifyingPayment(true);
+    setError("");
+    setMessage("");
+    try {
+      const response = await fetchWithAuth("/api/public/v1/payments/paystack/verify", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ reference: ref }),
+      });
+      const result = (await response.json()) as { error?: string; credited?: boolean };
+      if (!response.ok) throw new Error(result.error ?? "The payment could not be confirmed.");
+
+      setMessage(
+        result.credited
+          ? "Payment confirmed. Your wallet has been credited."
+          : "This payment was already processed.",
+      );
+      setPendingReference("");
+      try {
+        sessionStorage.removeItem("bqtv_pending_paystack_ref");
+      } catch {}
+      window.history.replaceState({}, "", "/wallet");
+      await loadWallet();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not verify payment status.");
+    } finally {
+      setVerifyingPayment(false);
+    }
+  }, [fetchWithAuth, loadWallet]);
 
   useEffect(() => {
     let active = true;
     void (async () => {
       try {
-        const token = await restoreWebSession();
+        let token = await getActiveWebIdToken();
+        if (!token) {
+          token = await restoreWebSession();
+        }
         if (!token || !active) {
           setBusy(false);
           return;
         }
+
         const account = await getWebAccount();
-        if (!active || !account) {
-          setBusy(false);
-          return;
+        if (account && active) {
+          const userEmail = account.email ?? "";
+          setEmail(userEmail);
+          setVerified(account.emailVerified);
+          try {
+            localStorage.setItem("bqtv_cached_email", userEmail);
+          } catch {}
         }
-        setEmail(account.email ?? "");
-        setVerified(account.emailVerified);
-        await loadWallet(token);
+
+        await loadWallet();
 
         const query = new URLSearchParams(window.location.search);
-        const reference = query.get("reference") ?? query.get("trxref");
-        if (reference) {
-          const currentToken = await getActiveWebIdToken();
-          if (!currentToken)
-            throw new Error("Your session expired. Sign in again to confirm the payment.");
-          const response = await fetch("/api/public/v1/payments/paystack/verify", {
-            method: "POST",
-            headers: {
-              ...(await getWebAuthHeaders(currentToken)),
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({ reference }),
-          });
-          const result = (await response.json()) as { error?: string; credited?: boolean };
-          if (!response.ok) throw new Error(result.error ?? "The payment could not be confirmed.");
-          setMessage(
-            result.credited
-              ? "Payment confirmed. Your wallet has been credited."
-              : "This payment was already processed.",
-          );
-          window.history.replaceState({}, "", "/wallet");
-          await loadWallet(currentToken);
+        const ref = query.get("reference") ?? query.get("trxref");
+        if (ref) {
+          setPendingReference(ref);
+          try {
+            sessionStorage.setItem("bqtv_pending_paystack_ref", ref);
+          } catch {}
+          await verifyPaymentReference(ref);
         }
       } catch (caught) {
-        if (active)
+        if (active) {
           setError(caught instanceof Error ? caught.message : "Could not load your wallet.");
+        }
       } finally {
         if (active) setBusy(false);
       }
@@ -127,33 +230,64 @@ function WalletPage() {
     return () => {
       active = false;
     };
-  }, [loadWallet]);
+  }, [loadWallet, verifyPaymentReference]);
 
-  async function purchase(packageId: string) {
-    setBusyPackage(packageId);
+  async function purchase(packageIdToBuy?: string) {
+    const pkgId = packageIdToBuy || (isCustom ? "custom" : selectedPackageId);
+    if (!pkgId) {
+      setError("Please select a top-up amount.");
+      return;
+    }
+
+    let customMinor: number | undefined;
+    if (isCustom || pkgId === "custom") {
+      const parsed = Number(customAmountNgn);
+      if (isNaN(parsed) || parsed < 200) {
+        setError("Minimum custom top-up amount is ₦200.");
+        return;
+      }
+      customMinor = Math.round(parsed * 100);
+    }
+
+    setBusyPackage(pkgId);
     setError("");
     setMessage("");
     try {
-      const token = await getActiveWebIdToken();
-      if (!token) throw new Error("Sign in to continue.");
-      const response = await fetch("/api/public/v1/payments/paystack/initialize", {
+      const response = await fetchWithAuth("/api/public/v1/payments/paystack/initialize", {
         method: "POST",
-        headers: {
-          ...(await getWebAuthHeaders(token)),
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({ packageId }),
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          packageId: isCustom ? "custom" : pkgId,
+          customAmountMinor: customMinor,
+        }),
       });
-      const result = (await response.json()) as { authorizationUrl?: string; error?: string };
+
+      const result = (await response.json()) as {
+        authorizationUrl?: string;
+        reference?: string;
+        error?: string;
+      };
+
       if (!response.ok || !result.authorizationUrl) {
         throw new Error(result.error ?? "Could not start Paystack checkout.");
       }
+
+      if (result.reference) {
+        setPendingReference(result.reference);
+        try {
+          sessionStorage.setItem("bqtv_pending_paystack_ref", result.reference);
+        } catch {}
+      }
+
       window.location.assign(result.authorizationUrl);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not start checkout.");
       setBusyPackage("");
     }
   }
+
+  // Check whether signed in (token, email, or cached wallet)
+  const isSignedIn = Boolean(email || wallet || !busy);
 
   return (
     <main className="min-h-screen bg-[#030b2a] px-4 py-8 text-white sm:px-6">
@@ -172,12 +306,39 @@ function WalletPage() {
           </nav>
         </header>
 
-        <section className="mt-10 rounded-3xl border border-cyan-200/15 bg-gradient-to-br from-[#0c235f] to-[#07143d] p-6 sm:p-9">
+        {/* Pending Payment Notification Card */}
+        {pendingReference ? (
+          <section className="mt-8 rounded-2xl border border-amber-300/30 bg-amber-500/10 p-5">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <Clock className="mt-0.5 h-5 w-5 text-amber-300 shrink-0" />
+                <div>
+                  <p className="font-bold text-amber-200">Payment pending verification</p>
+                  <p className="text-xs text-amber-100/70 mt-1">
+                    Reference: <span className="font-mono text-amber-300">{pendingReference}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void verifyPaymentReference(pendingReference)}
+                disabled={verifyingPayment}
+                className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-4 py-2 text-xs font-bold text-[#031039] hover:bg-amber-300 disabled:opacity-50"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${verifyingPayment ? "animate-spin" : ""}`} />
+                {verifyingPayment ? "Checking status…" : "Check status"}
+              </button>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="mt-8 rounded-3xl border border-cyan-200/15 bg-gradient-to-br from-[#0c235f] to-[#07143d] p-6 sm:p-9">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Your wallet</p>
           <h1 className="mt-3 text-3xl font-black">Balance and top-ups</h1>
-          {busy ? (
+
+          {busy && !wallet ? (
             <p className="mt-7 text-sm text-blue-100/60">Loading your wallet…</p>
-          ) : !wallet ? (
+          ) : !wallet && !isSignedIn ? (
             <div className="mt-7">
               <p className="text-sm text-blue-100/70">
                 Sign in to view your wallet and payment history.
@@ -195,9 +356,9 @@ function WalletPage() {
                 <div>
                   <p className="text-sm text-blue-100/60">Available balance</p>
                   <p className="mt-2 text-4xl font-black tabular-nums">
-                    {formatMoney(wallet.balanceMinor, wallet.currency)}
+                    {formatMoney(wallet ? wallet.balanceMinor : 0, wallet?.currency || "NGN")}
                   </p>
-                  <p className="mt-2 break-all text-xs text-blue-100/45">{email}</p>
+                  {email ? <p className="mt-2 break-all text-xs text-blue-100/45">{email}</p> : null}
                 </div>
                 <a
                   href="/account"
@@ -206,7 +367,8 @@ function WalletPage() {
                   Account settings
                 </a>
               </div>
-              {wallet.balanceMinor <= 0 ? (
+
+              {wallet && wallet.balanceMinor <= 0 ? (
                 <div className="mt-6 rounded-2xl border border-amber-300/25 bg-amber-300/10 p-4">
                   <p className="font-bold text-amber-100">Your balance is empty</p>
                   <p className="mt-1 text-sm text-amber-100/75">
@@ -220,6 +382,7 @@ function WalletPage() {
                   </a>
                 </div>
               ) : null}
+
               {!verified ? (
                 <p className="mt-6 rounded-xl border border-amber-300/20 bg-amber-300/5 p-4 text-sm text-amber-100">
                   Verify your email before purchasing wallet credits.{" "}
@@ -230,43 +393,120 @@ function WalletPage() {
               ) : (
                 <div id="topups" className="mt-8 scroll-mt-6">
                   <h2 className="text-lg font-bold">Add wallet credits</h2>
-                  {topups.length ? (
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      {topups.map((item) => (
-                        <article
-                          key={item.packageId}
-                          className="rounded-2xl border border-white/10 bg-[#030b2a]/55 p-4"
-                        >
-                          <p className="text-xs uppercase tracking-[0.14em] text-cyan-200">
-                            {item.packageId}
-                          </p>
-                          <p className="mt-2 text-xl font-extrabold">
-                            {formatMoney(item.creditMinor, item.currency)} credit
-                          </p>
-                          <p className="mt-1 text-sm text-blue-100/60">
-                            Pay{" "}
-                            {formatMoney(
-                              item.displayAmountMinor ?? item.amountMinor,
-                              item.currency,
-                            )}
-                          </p>
-                          <button
-                            type="button"
-                            disabled={busyPackage !== ""}
-                            onClick={() => void purchase(item.packageId)}
-                            className="mt-4 w-full rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-extrabold text-[#031039] disabled:opacity-50"
-                          >
-                            {busyPackage === item.packageId
-                              ? "Opening checkout…"
-                              : "Top up with Paystack"}
-                          </button>
-                        </article>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-sm text-blue-100/55">
-                      Wallet packages have not been configured yet.
+                  <p className="mt-1 text-xs text-blue-100/60">
+                    Select a top-up amount below or enter a custom amount (minimum ₦200).
+                  </p>
+
+                  {/* Standard Top-up Chip Grid */}
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300/80 mb-2">
+                      Choose amount
                     </p>
+                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                      {STANDARD_NGN_AMOUNTS.map((amt) => {
+                        const pkgId = `ngn_${amt}`;
+                        const isSelected = !isCustom && selectedPackageId === pkgId;
+                        return (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => {
+                              setSelectedPackageId(pkgId);
+                              setIsCustom(false);
+                            }}
+                            className={`rounded-xl border p-3 text-center transition-all ${
+                              isSelected
+                                ? "border-cyan-300 bg-cyan-400/20 text-white font-bold ring-2 ring-cyan-400/30"
+                                : "border-white/10 bg-[#030b2a]/60 text-blue-100/80 hover:border-white/20 hover:bg-white/5"
+                            }`}
+                          >
+                            <span className="text-xs sm:text-sm font-extrabold">₦{amt.toLocaleString("en-NG")}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Custom Amount Option */}
+                  <div className="mt-4 rounded-2xl border border-white/10 bg-[#030b2a]/40 p-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isCustom}
+                        onChange={(e) => setIsCustom(e.target.checked)}
+                        className="rounded border-white/20 bg-black/40 text-cyan-400 focus:ring-cyan-400"
+                      />
+                      <span className="text-sm font-semibold text-white">Enter a custom amount (₦200 minimum)</span>
+                    </label>
+
+                    {isCustom ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        <div className="relative">
+                          <span className="absolute left-3 top-2.5 text-sm font-bold text-slate-400">₦</span>
+                          <input
+                            type="number"
+                            min="200"
+                            step="50"
+                            value={customAmountNgn}
+                            onChange={(e) => setCustomAmountNgn(e.target.value)}
+                            placeholder="e.g. 750"
+                            className="w-40 rounded-xl border border-white/15 bg-black/50 py-2 pl-8 pr-3 text-sm font-bold text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                          />
+                        </div>
+                        <span className="text-xs text-blue-100/50">Minimum ₦200</span>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {/* Primary Checkout Button */}
+                  <div className="mt-5">
+                    <button
+                      type="button"
+                      disabled={busyPackage !== "" || (!isCustom && !selectedPackageId)}
+                      onClick={() => void purchase()}
+                      className="inline-flex min-h-12 w-full sm:w-auto items-center justify-center rounded-xl bg-cyan-300 px-6 py-3 font-extrabold text-[#031039] hover:bg-cyan-200 disabled:opacity-50"
+                    >
+                      {busyPackage !== "" ? "Opening checkout…" : "Continue to Paystack"}
+                    </button>
+                  </div>
+
+                  {/* Configured Packages List (if any custom from API) */}
+                  {topups.length > 0 && (
+                    <div className="mt-8 border-t border-white/10 pt-6">
+                      <h3 className="text-sm font-semibold text-blue-100/70 mb-3">Available packages</h3>
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        {topups.map((item) => (
+                          <article
+                            key={item.packageId}
+                            className="rounded-2xl border border-white/10 bg-[#030b2a]/55 p-4"
+                          >
+                            <p className="text-xs uppercase tracking-[0.14em] text-cyan-200">
+                              {item.packageId}
+                            </p>
+                            <p className="mt-2 text-xl font-extrabold">
+                              {formatMoney(item.creditMinor, item.currency)} credit
+                            </p>
+                            <p className="mt-1 text-sm text-blue-100/60">
+                              Pay{" "}
+                              {formatMoney(
+                                item.displayAmountMinor ?? item.amountMinor,
+                                item.currency,
+                              )}
+                            </p>
+                            <button
+                              type="button"
+                              disabled={busyPackage !== ""}
+                              onClick={() => void purchase(item.packageId)}
+                              className="mt-4 w-full rounded-xl bg-cyan-300 px-4 py-2.5 text-sm font-extrabold text-[#031039] disabled:opacity-50"
+                            >
+                              {busyPackage === item.packageId
+                                ? "Opening checkout…"
+                                : "Top up with Paystack"}
+                            </button>
+                          </article>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
               )}
@@ -277,16 +517,18 @@ function WalletPage() {
         {message && (
           <p
             role="status"
-            className="mt-5 rounded-xl border border-emerald-300/15 bg-emerald-300/5 p-4 text-sm text-emerald-100"
+            className="mt-5 rounded-xl border border-emerald-300/15 bg-emerald-300/5 p-4 text-sm text-emerald-100 flex items-center gap-2"
           >
+            <CheckCircle2 className="h-4 w-4 text-emerald-300 shrink-0" />
             {message}
           </p>
         )}
         {error && (
           <p
             role="alert"
-            className="mt-5 rounded-xl border border-rose-300/15 bg-rose-300/5 p-4 text-sm text-rose-100"
+            className="mt-5 rounded-xl border border-rose-300/15 bg-rose-300/5 p-4 text-sm text-rose-100 flex items-center gap-2"
           >
+            <AlertCircle className="h-4 w-4 text-rose-300 shrink-0" />
             {error}
           </p>
         )}

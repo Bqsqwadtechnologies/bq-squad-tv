@@ -9,7 +9,10 @@ import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getPaystackTopup } from "@/lib/server/paystack";
 import { assertRiskStepUp, recordRiskSignal } from "@/lib/server/risk-engine";
 
-const schema = z.object({ packageId: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/) });
+const schema = z.object({
+  packageId: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
+  customAmountMinor: z.number().int().min(20000).optional(),
+});
 
 async function markPaymentStatus(
   fs: Firestore,
@@ -57,14 +60,14 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
               "EMAIL_REQUIRED",
               "Add an email address before making a website payment.",
             );
-          const { packageId } = await parseBody(request, schema);
+          const { packageId, customAmountMinor } = await parseBody(request, schema);
           const fs = await Firestore.create();
           await enforceRateLimit(fs, "paystack-init:" + user.uid, { limit: 5, windowMs: 60_000 });
           await assertRiskStepUp(fs, user.uid, user.authTime);
           const wallet = await getWallet(fs, user.uid);
           const currency = wallet.currency;
           const pricing = await getPricingConfig(fs);
-          const offer = getPaystackTopup(pricing, packageId, currency);
+          const offer = getPaystackTopup(pricing, packageId, currency, customAmountMinor);
           const clientIp =
             request.headers.get("cf-connecting-ip") ||
             request.headers.get("x-real-ip") ||

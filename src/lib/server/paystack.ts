@@ -247,10 +247,29 @@ export async function creditPaystackPayment(
   );
 }
 
+export const DEFAULT_NGN_TOPUPS: Record<
+  string,
+  { amountMinor: number; creditMinor: number; displayAmountMinor?: number }
+> = {
+  ngn_200: { amountMinor: 20000, creditMinor: 20000 },
+  ngn_500: { amountMinor: 50000, creditMinor: 50000 },
+  ngn_1000: { amountMinor: 100000, creditMinor: 100000 },
+  ngn_1500: { amountMinor: 150000, creditMinor: 150000 },
+  ngn_2000: { amountMinor: 200000, creditMinor: 200000 },
+  ngn_2500: { amountMinor: 250000, creditMinor: 250000 },
+  ngn_5000: { amountMinor: 500000, creditMinor: 500000 },
+  ngn_10000: { amountMinor: 1000000, creditMinor: 1000000 },
+  ngn_15000: { amountMinor: 1500000, creditMinor: 1500000 },
+  ngn_20000: { amountMinor: 2000000, creditMinor: 2000000 },
+  ngn_100000: { amountMinor: 10000000, creditMinor: 10000000 },
+  ngn_200000: { amountMinor: 20000000, creditMinor: 20000000 },
+};
+
 export function getPaystackTopup(
   config: Record<string, unknown>,
   packageId: string,
   requestedCurrency = "NGN",
+  customAmountMinor?: number,
 ): { amountMinor: number; displayAmountMinor: number; creditMinor: number } {
   const currency = requireCurrency(requestedCurrency);
   if (!isSupportedPaystackCurrency(currency))
@@ -259,6 +278,25 @@ export function getPaystackTopup(
       "PAYMENT_CURRENCY_UNSUPPORTED",
       "Paystack does not support this wallet currency.",
     );
+
+  if (packageId === "custom") {
+    if (
+      typeof customAmountMinor !== "number" ||
+      !Number.isSafeInteger(customAmountMinor) ||
+      customAmountMinor < 20000
+    ) {
+      throw new ApiError(
+        400,
+        "TOPUP_MINIMUM_REQUIRED",
+        "The minimum custom wallet top-up is ₦200.",
+      );
+    }
+    return {
+      amountMinor: customAmountMinor,
+      displayAmountMinor: customAmountMinor,
+      creditMinor: customAmountMinor,
+    };
+  }
   const byCurrency = config["walletTopupsByCurrency"];
   const currencyOffers =
     byCurrency && typeof byCurrency === "object" && !Array.isArray(byCurrency)
@@ -272,8 +310,11 @@ export function getPaystackTopup(
       : currency === "NGN"
         ? config["walletTopups"]
         : null;
-  const offer =
+  let offer =
     offers && typeof offers === "object" ? (offers as Record<string, unknown>)[packageId] : null;
+  if ((!offer || typeof offer !== "object") && currency === "NGN" && DEFAULT_NGN_TOPUPS[packageId]) {
+    offer = DEFAULT_NGN_TOPUPS[packageId];
+  }
   if (!offer || typeof offer !== "object")
     throw new ApiError(400, "TOPUP_UNAVAILABLE", "This wallet top-up is not available.");
   const row = offer as Record<string, unknown>;
