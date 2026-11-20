@@ -269,6 +269,13 @@ export function ConsoleShell({
             module: "video",
           },
           {
+            id: "rights-review",
+            label: "Rights review",
+            href: "/zillionaire/rights-review",
+            icon: ShieldCheck,
+            module: "content",
+          },
+          {
             id: "comments",
             label: "Comments & ratings",
             href: "/zillionaire/comments",

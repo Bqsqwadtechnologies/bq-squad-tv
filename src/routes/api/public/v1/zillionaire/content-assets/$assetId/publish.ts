@@ -4,6 +4,7 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireZillionaireModule } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
+import { assertCanPublishWithoutDuplicateConflict } from "@/lib/server/copyright/fingerprint";
 
 const schema = z.object({ reason: z.string().trim().min(3).max(1000) }).strict();
 
@@ -53,6 +54,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
               "At least one licensed viewing country is required.",
             );
           }
+          await assertCanPublishWithoutDuplicateConflict(fs, asset);
           const now = new Date().toISOString();
           await fs.patchDoc("contentAssets/" + assetId, {
             contentStatus: "published",

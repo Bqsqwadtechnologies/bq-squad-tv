@@ -43,6 +43,14 @@ type ContentAsset = {
   commentsOpen: boolean;
   posterUrl?: string | null;
   createdAt?: string | null;
+  rightsReviewStatus?: string | null;
+  rejectionReasonCode?: string | null;
+  rejectionReasonLabel?: string | null;
+  rejectionMessage?: string | null;
+  appealAllowed?: boolean;
+  appealSubmitted?: boolean;
+  reviewQueueFlag?: string | null;
+  duplicateDetected?: boolean;
 };
 
 type GroupedTitle = {
@@ -161,6 +169,12 @@ function ProducerChannelsInner({
   const [uploadCopyrightHolder, setUploadCopyrightHolder] = useState("");
   const [uploadProductionYear, setUploadProductionYear] = useState(String(new Date().getFullYear()));
   const [uploadEvidenceFile, setUploadEvidenceFile] = useState<File | null>(null);
+  // Appeal modal state
+  const [appealAsset, setAppealAsset] = useState<ContentAsset | null>(null);
+  const [appealExplanation, setAppealExplanation] = useState("");
+  const [appealSubmitting, setAppealSubmitting] = useState(false);
+  const [appealError, setAppealError] = useState("");
+  const [appealSuccess, setAppealSuccess] = useState("");
   const [uploadTerritories, setUploadTerritories] = useState("NG, GH, US, GB");
   const [uploadValidFrom, setUploadValidFrom] = useState("2026-01-01");
   const [uploadValidUntil, setUploadValidUntil] = useState("2030-12-31");
@@ -329,6 +343,46 @@ function ProducerChannelsInner({
     function validateVideoFile(file: File): boolean {
     const nameLower = file.name.toLowerCase();
     return ALLOWED_VIDEO_EXTS.some((ext) => nameLower.endsWith(ext));
+  }
+
+  async function submitAppeal(e: React.FormEvent) {
+    e.preventDefault();
+    if (!appealAsset) return;
+    if (appealExplanation.trim().length < 10) {
+      setAppealError("Provide an appeal explanation of at least 10 characters.");
+      return;
+    }
+    setAppealSubmitting(true);
+    setAppealError("");
+    setAppealSuccess("");
+    try {
+      const token = await getAuthToken();
+      if (!token) throw new Error("Authentication required.");
+      const res = await fetch(
+        `/api/public/v1/producer/content-assets/${encodeURIComponent(appealAsset.assetId || appealAsset.id)}/appeal`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await getWebAuthHeaders(token)),
+          },
+          body: JSON.stringify({ explanation: appealExplanation.trim() }),
+        },
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Appeal submission failed.");
+      setAppealSuccess("Your appeal has been submitted for rights review.");
+      setTimeout(() => {
+        setAppealAsset(null);
+        setAppealExplanation("");
+        setAppealSuccess("");
+        if (selectedChannelId && token) loadChannelAssets(selectedChannelId, token);
+      }, 1500);
+    } catch (err) {
+      setAppealError(err instanceof Error ? err.message : "Appeal failed.");
+    } finally {
+      setAppealSubmitting(false);
+    }
   }
 
   function handleFileDrop(e: React.DragEvent<HTMLDivElement>) {
@@ -1309,11 +1363,47 @@ function ProducerChannelsInner({
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-2 text-xs">
-                              <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 text-[10px] font-bold text-emerald-300">
-                                Verified Master
-                              </span>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 text-xs">
+                              {ep.status === "rejected" || ep.rightsReviewStatus === "rejected" ? (
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="rounded-lg bg-rose-500/15 border border-rose-500/40 px-2.5 py-1 text-[10px] font-bold text-rose-300">
+                                    Rejected: {ep.rejectionReasonLabel || ep.rejectionReasonCode || "Rights issue"}
+                                  </span>
+                                  {ep.appealSubmitted ? (
+                                    <span className="rounded-lg bg-amber-500/15 border border-amber-500/30 px-2.5 py-1 text-[10px] font-bold text-amber-300">
+                                      Appeal under review
+                                    </span>
+                                  ) : ep.appealAllowed !== false ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setAppealAsset(ep);
+                                        setAppealExplanation("");
+                                        setAppealError("");
+                                        setAppealSuccess("");
+                                      }}
+                                      className="rounded-lg bg-rose-500/20 border border-rose-400/40 px-2.5 py-1 text-[10px] font-bold text-rose-200 hover:bg-rose-500/30 transition"
+                                    >
+                                      Appeal Rejection
+                                    </button>
+                                  ) : null}
+                                </div>
+                              ) : ep.status === "ready" ? (
+                                <span className="rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 text-[10px] font-bold text-emerald-300">
+                                  Verified Master
+                                </span>
+                              ) : (
+                                <span className="rounded-lg bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-1 text-[10px] font-bold text-cyan-300">
+                                  {ep.status}
+                                </span>
+                              )}
                             </div>
+                            {(ep.status === "rejected" || ep.rightsReviewStatus === "rejected") && ep.rejectionMessage && (
+                              <div className="w-full mt-1 rounded-xl bg-rose-950/40 border border-rose-500/20 p-2.5 text-xs text-rose-200">
+                                <span className="font-semibold text-rose-300">Reason: </span>
+                                {ep.rejectionMessage}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1322,6 +1412,87 @@ function ProducerChannelsInner({
                 })}
               </div>
             )}
+          </div>
+        )}
+
+        {/* MODAL: APPEAL REJECTION */}
+        {appealAsset && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="w-full max-w-lg rounded-3xl border border-rose-500/30 bg-[#07143d] p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-500/20 text-rose-300">
+                    <ShieldAlert className="h-4 w-4" />
+                  </div>
+                  <h3 className="text-base font-bold text-white">Appeal Upload Rejection</h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAppealAsset(null)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="rounded-2xl bg-white/5 p-3.5 space-y-1.5 text-xs">
+                <p className="font-bold text-white">{appealAsset.episodeTitle || appealAsset.title}</p>
+                <p className="text-rose-300">
+                  <span className="font-semibold">Rejection reason: </span>
+                  {appealAsset.rejectionReasonLabel || appealAsset.rejectionReasonCode || "Policy issue"}
+                </p>
+                {appealAsset.rejectionMessage && (
+                  <p className="text-slate-300">{appealAsset.rejectionMessage}</p>
+                )}
+                <p className="text-[11px] text-slate-400 italic">
+                  Note: In accordance with platform policy, rejected uploads can be appealed once only.
+                </p>
+              </div>
+
+              {appealError && (
+                <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300 font-medium">
+                  {appealError}
+                </div>
+              )}
+              {appealSuccess && (
+                <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-300 font-medium">
+                  {appealSuccess}
+                </div>
+              )}
+
+              <form onSubmit={submitAppeal} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase mb-1">
+                    Appeal Explanation & Additional Rights Evidence *
+                  </label>
+                  <textarea
+                    rows={4}
+                    required
+                    value={appealExplanation}
+                    onChange={(e) => setAppealExplanation(e.target.value)}
+                    placeholder="Provide details about your rights, licences, or corrections for the review team (minimum 10 characters)..."
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-white placeholder-slate-500 focus:border-rose-400 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setAppealAsset(null)}
+                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={appealSubmitting || !appealExplanation.trim()}
+                    className="rounded-xl bg-rose-500 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-rose-500/20 hover:bg-rose-600 disabled:opacity-50 transition"
+                  >
+                    {appealSubmitting ? "Submitting..." : "Submit Appeal (Once Only)"}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
 

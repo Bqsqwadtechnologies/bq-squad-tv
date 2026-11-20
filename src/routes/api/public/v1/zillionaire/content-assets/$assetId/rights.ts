@@ -5,8 +5,17 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireZillionaireModule } from "@/lib/server/roles";
 import { isSafeStoragePath } from "@/lib/server/storage/security";
 import { writeAuditLog } from "@/lib/server/audit";
+import {
+  REJECTION_REASON_CODES,
+  REJECTION_REASON_LABELS,
+  RejectionReasonCode,
+} from "@/lib/server/copyright/fingerprint";
 
-const schema = z.object({ approved: z.boolean(), reason: z.string().trim().min(3).max(1000) });
+const schema = z.object({
+  approved: z.boolean(),
+  reason: z.string().trim().min(3).max(1000),
+  reasonCode: z.enum(REJECTION_REASON_CODES).optional(),
+});
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/$assetId/rights")({
   server: {
@@ -62,6 +71,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
               );
           }
           const now = new Date().toISOString();
+          const reasonCode = !body.approved ? (body.reasonCode || "other") : null;
           const updatedLicense = {
             ...license,
             status: body.approved ? "verified" : "rejected",
@@ -69,9 +79,27 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
             reviewedBy: user.uid,
             reviewedAt: now,
             reviewReason: body.reason,
+            ...(reasonCode ? { rejectionReasonCode: reasonCode } : {}),
           };
           await fs.patchDoc("contentAssets/" + params.assetId, {
             license: updatedLicense,
+            ...(body.approved
+              ? {
+                  rightsReviewStatus: "verified",
+                  ownerReviewRequired: false,
+                  duplicateDetected: false,
+                  reviewQueueFlag: null,
+                }
+              : {
+                  status: "rejected",
+                  rightsReviewStatus: "rejected",
+                  rejectionReasonCode: reasonCode,
+                  rejectionMessage: body.reason,
+                  rejectedAt: now,
+                  rejectedBy: user.uid,
+                  appealAllowed: true,
+                  appealSubmitted: false,
+                }),
             updatedAt: now,
           });
           await writeAuditLog(fs, {

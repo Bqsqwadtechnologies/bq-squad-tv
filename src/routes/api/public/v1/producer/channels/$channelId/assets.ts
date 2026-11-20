@@ -5,6 +5,10 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireChannelPermission } from "@/lib/server/channel-access";
 import { isSafeStoragePath } from "@/lib/server/storage/security";
 import { writeAuditLog } from "@/lib/server/audit";
+import {
+  REJECTION_REASON_LABELS,
+  RejectionReasonCode,
+} from "@/lib/server/copyright/fingerprint";
 
 const schema = z.object({
   assetId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),
@@ -76,6 +80,16 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
               commentsOpen: a["commentsOpen"] !== false,
               posterUrl: a["posterUrl"] || null,
               createdAt: a["createdAt"] || null,
+              rightsReviewStatus: a["rightsReviewStatus"] || ((a["license"] as any)?.status) || null,
+              rejectionReasonCode: a["rejectionReasonCode"] || ((a["license"] as any)?.rejectionReasonCode) || null,
+              rejectionReasonLabel: (a["rejectionReasonCode"] || ((a["license"] as any)?.rejectionReasonCode))
+                ? REJECTION_REASON_LABELS[(a["rejectionReasonCode"] || ((a["license"] as any)?.rejectionReasonCode)) as RejectionReasonCode] || (a["rejectionReasonCode"] || ((a["license"] as any)?.rejectionReasonCode))
+                : null,
+              rejectionMessage: a["rejectionMessage"] || ((a["license"] as any)?.reviewReason) || null,
+              appealAllowed: a["appealAllowed"] !== false,
+              appealSubmitted: a["appealSubmitted"] === true,
+              reviewQueueFlag: a["reviewQueueFlag"] || null,
+              duplicateDetected: a["duplicateDetected"] === true,
             })),
           });
         } catch (error) {

@@ -11,6 +11,11 @@ import {
 } from "@/lib/server/storage/transfers";
 import { commitStorageReservation } from "@/lib/server/storage/reservations";
 import { wakeModalVideoWorker } from "@/lib/server/modal-wake";
+import {
+  computePerceptualFingerprint,
+  detectDuplicatesAndFlag,
+  checkExternalCopyrightService,
+} from "@/lib/server/copyright/fingerprint";
 
 const bodySchema = z.object({
   assetId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),
@@ -72,6 +77,32 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             );
           }
           const mediaKind = assertMediaMatchesExtension(inspected.headerBytes, filename);
+          const { fileHash, perceptualFingerprint } = computePerceptualFingerprint(
+            inspected.headerBytes,
+            undefined,
+            actualSize,
+          );
+          const dupResult = await detectDuplicatesAndFlag(
+            fs,
+            assetId,
+            user.uid,
+            fileHash,
+            perceptualFingerprint,
+          );
+          const externalMatch = await checkExternalCopyrightService({
+            assetId,
+            fileHash,
+            perceptualFingerprint,
+            filename,
+            sizeBytes: actualSize,
+          });
+          const isDuplicate = dupResult.duplicateDetected || externalMatch.matched;
+          const duplicateOfTitle =
+            dupResult.duplicateOfTitle ||
+            (externalMatch.matched ? externalMatch.details || "External catalogue" : null);
+          const reviewQueueFlag =
+            dupResult.reviewQueueFlag ||
+            (externalMatch.matched ? `Possible copyright match: ${duplicateOfTitle}` : null);
           const now = new Date().toISOString();
           const sourceDestinationId =
             typeof asset["sourceDestinationId"] === "string"
@@ -151,9 +182,36 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             sourceVerified: true,
             sourceMediaKind: mediaKind,
             actualSizeBytes: actualSize,
+            fileHash,
+            perceptualFingerprint,
+            checksumSha256: asset["checksumSha256"] || fileHash,
+            duplicateDetected: isDuplicate,
+            duplicateOfAssetId: dupResult.duplicateOfAssetId,
+            duplicateOfTitle,
+            duplicateType: dupResult.duplicateType,
+            reviewQueueFlag,
+            rightsReviewStatus: isDuplicate ? "flagged" : "pending",
+            ownerReviewRequired: isDuplicate || asset["ownerReviewRequired"] === true,
+            externalCopyrightCheck: externalMatch,
             sourceVerifiedAt: now,
             updatedAt: now,
           });
+          if (isDuplicate) {
+            await writeAuditLog(fs, {
+              actorUid: user.uid,
+              action: "content.duplicate_flagged",
+              targetType: "contentAsset",
+              targetId: assetId,
+              reason: reviewQueueFlag || "Possible duplicate detected during upload verification",
+              metadata: {
+                channelId,
+                fileHash,
+                perceptualFingerprint,
+                duplicateOfAssetId: dupResult.duplicateOfAssetId,
+                duplicateOfTitle,
+              },
+            });
+          }
           await writeAuditLog(fs, {
             actorUid: user.uid,
             action: "content.upload_verified",

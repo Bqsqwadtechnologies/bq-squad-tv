@@ -420,3 +420,20 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 ## V6-01 Batch 10 — Route integrity check (2026-11-20)
 
 - Added `bun run check:route-integrity` to ensure route source files are represented in the generated route tree and route paths are unique. It currently validates 310 route files. Full release verification remains incomplete because repository-wide type-check and lint failures and unavailable Android tooling are documented in `docs/OWNER-CHECKLIST.md`.
+
+## V6 File 02 Batch 2 — Copyright, Fingerprint & Review Queue (2026-11-20)
+
+### 1. Heuristic Perceptual Fingerprinting & Catalog Matching
+- **Decision**: On upload completion (`/api/public/v1/storage/complete`), compute a SHA-256 content/header hash and a perceptual frame-interval fingerprint across media bytes. Match candidate fingerprints against the existing catalogue using dual-pass lookup (exact hash and near-match perceptual similarity).
+- **Rationale**: Identifies prospective duplicates early in the pipeline while maintaining manual review integrity; avoids auto-rejections. Flagged uploads receive the label "Possible duplicate of <title>" and require reviewer resolution.
+- **External Integration**: Configured optional `COPYRIGHT_MATCH_SERVICE_URL` and `COPYRIGHT_MATCH_API_KEY` behind environment flags for commercial matching services, documented in `docs/OWNER-ACTIONS.md`.
+
+### 2. Multi-Producer Duplicate Publish Protection
+- **Decision**: Block publishing the same video asset across different producers in `/api/public/v1/zillionaire/content-assets/$assetId/publish`.
+- **Rationale**: Enforces exclusive rights and prevents piracy or duplicate channel claims over identical audiovisual assets.
+
+### 3. Reason Codes, Review Queue & One-Time Producer Appeals
+- **Decision**: Standardised rejection reason codes (`copyright_suspected`, `duplicate`, `wrong_age_rating`, `poor_quality`, `missing_proof_of_rights`, `policy_violation`, `other`) with human-readable labels and mandatory reviewer messages.
+- **Decision**: Built `/zillionaire/rights-review` console and `/api/public/v1/zillionaire/rights-review` API with duplicate comparison modals, independent reviewer validation, and proof-of-rights checks.
+- **Decision**: Added single-appeal mechanism for producers at `/api/public/v1/producer/content-assets/$assetId/appeal`, updating producer channels console with rejection details and appeal submission workflows.
+- Batch 2 finished, continuing.

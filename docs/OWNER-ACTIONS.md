@@ -294,3 +294,18 @@ Configure the following four secrets in your CI/CD environment or local build co
 
 ### Sandbox Build Note
 Bytecode assembly tasks (`bundleRelease`, `assembleRelease`) require a Java Runtime Environment (JDK 17+) and Android SDK command-line tools. In cloud sandbox environments lacking JDK/Android SDK binaries, Gradle builds cannot execute bytecode compilation directly. The Android Gradle definitions, release signing configurations, ProGuard obfuscation profiles, and store compliance specifications are verified and ready for CI/CD or local machine execution.
+
+## External Copyright Matching Service (Optional Integration)
+
+When deploying with an external audiovisual content matching provider (e.g. Audible Magic, ACRCloud, or proprietary fingerprinting API):
+
+1. Set the following environment secrets in your host deployment:
+   - `COPYRIGHT_MATCH_SERVICE_URL`: The HTTPS endpoint of the copyright matching service (e.g. `https://api.copyrightmatch.provider.com/v1/fingerprint-check`).
+   - `COPYRIGHT_MATCH_API_KEY`: API authentication key / bearer token.
+2. In the external service dashboard:
+   - Configure catalogue matching against commercial media and broadcast databases.
+   - Set confidence threshold for automatic review queue flagging (default: 85% confidence score).
+3. In the Zillionaire Control Centre:
+   - Navigate to `/zillionaire/rights-review`.
+   - Items flagged by either internal perceptual fingerprint comparisons or the external service appear with "Possible duplicate of <title>" or external catalogue match warnings for human review.
+   - Note: The platform **never auto-rejects** on match — all duplicates are held for human reviewer evaluation.
