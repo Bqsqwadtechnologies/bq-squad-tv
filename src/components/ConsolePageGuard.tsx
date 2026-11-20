@@ -570,6 +570,33 @@ export function ConsolePageGuard({
     };
   }, [role, requiredModule, isZillionaireRoute]);
 
+  useEffect(() => {
+    if (state.status !== "authorized" || !state.account.isOwner || !isZillionaireRoute) return;
+    let idleTimer: ReturnType<typeof setTimeout>;
+    const lockForInactivity = () => {
+      window.location.reload();
+    };
+    const resetIdle = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(lockForInactivity, 15 * 60 * 1000);
+    };
+    const events: Array<keyof WindowEventMap> = [
+      "pointerdown",
+      "keydown",
+      "mousemove",
+      "touchstart",
+      "wheel",
+    ];
+    events.forEach((event) => window.addEventListener(event, resetIdle, { passive: true }));
+    resetIdle();
+    const absoluteTimer = setTimeout(lockForInactivity, 8 * 60 * 60 * 1000);
+    return () => {
+      clearTimeout(idleTimer);
+      clearTimeout(absoluteTimer);
+      events.forEach((event) => window.removeEventListener(event, resetIdle));
+    };
+  }, [state, isZillionaireRoute]);
+
   const handleLock = async () => {
     try {
       if (state.status === "authorized") {

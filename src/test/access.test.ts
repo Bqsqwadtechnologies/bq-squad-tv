@@ -26,6 +26,7 @@ import {
 function mockFirestore(docs: Record<string, unknown> = {}) {
   return {
     getDoc: vi.fn(async (p: string) => (docs[p] ? docs[p] : null)),
+    patchDoc: vi.fn(async () => undefined),
   } as unknown as Firestore;
 }
 
@@ -77,12 +78,18 @@ describe("Central Access Library (src/lib/server/access.ts)", () => {
         authTime: 123456,
       });
 
-      const fs = mockFirestore({
-        "users/owner-1": { email: "owner@zillionaire.com", roleTags: [] },
-      });
-
       const { createUnlockToken } = await import("@/lib/server/zillionaire-access");
       const { token } = createUnlockToken("owner-1");
+      const sessionId = JSON.parse(Buffer.from(token.split(".")[0]!, "base64url").toString())
+        .sessionId as string;
+      const fs = mockFirestore({
+        "users/owner-1": { email: "owner@zillionaire.com", roleTags: [] },
+        [`zillionaireOwnerSessions/owner-1_${sessionId}`]: {
+          revoked: false,
+          createdAt: new Date().toISOString(),
+          lastSeenAt: new Date().toISOString(),
+        },
+      });
       const req = new Request("http://localhost/api/test", {
         headers: { "x-zillionaire-unlock": token },
       });

@@ -15,6 +15,8 @@ import {
   Server,
   Layers,
   Clock,
+  MonitorSmartphone,
+  LogOut,
 } from "lucide-react";
 import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 import {
@@ -59,7 +61,7 @@ function ZillionaireSecurityRoute() {
   );
 }
 
-type TabType = "threats" | "secrets" | "backups" | "support_mode";
+type TabType = "threats" | "secrets" | "backups" | "support_mode" | "sessions";
 
 function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: boolean }) {
   const [activeTab, setActiveTab] = useState<TabType>("threats");
@@ -205,6 +207,9 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
           { id: "secrets" as const, label: "Secret Health Check", icon: KeyRound },
           { id: "backups" as const, label: "Platform Backups Status", icon: Database },
           { id: "support_mode" as const, label: "Support Mode (View As)", icon: Eye },
+          ...(isOwner
+            ? [{ id: "sessions" as const, label: "Devices & Sessions", icon: MonitorSmartphone }]
+            : []),
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -226,10 +231,10 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
         })}
       </div>
 
+      {activeTab === "sessions" && isOwner && <OwnerSessionsPanel token={token} />}
+
       {/* TAB 1: THREAT MITIGATION (SecurityEventsView) */}
-      {activeTab === "threats" && (
-        <SecurityEventsView sessionToken={token} isOwner={isOwner} />
-      )}
+      {activeTab === "threats" && <SecurityEventsView sessionToken={token} isOwner={isOwner} />}
 
       {/* TAB 2: SECRET HEALTH CHECK */}
       {activeTab === "secrets" && (
@@ -245,7 +250,9 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
             <ConsoleKpiCard
               title="Missing Critical Keys"
               value={secretData ? secretData.missingCount : "—"}
-              subtitle={secretData && secretData.missingCount > 0 ? "Requires attention" : "All optimal"}
+              subtitle={
+                secretData && secretData.missingCount > 0 ? "Requires attention" : "All optimal"
+              }
               icon={AlertTriangle}
               variant={secretData && secretData.missingCount > 0 ? "gold" : "blue"}
             />
@@ -274,9 +281,13 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
             }
           >
             {secretsLoading && !secretData ? (
-              <div className="p-8 text-center text-xs text-slate-500">Scanning environment and encrypted vaults...</div>
+              <div className="p-8 text-center text-xs text-slate-500">
+                Scanning environment and encrypted vaults...
+              </div>
             ) : !secretData ? (
-              <div className="p-8 text-center text-xs text-slate-500">Failed to load secret health check.</div>
+              <div className="p-8 text-center text-xs text-slate-500">
+                Failed to load secret health check.
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {secretData.secrets.map((sec) => (
@@ -290,14 +301,14 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
                         {sec.name.includes("PAYSTACK")
                           ? "Paystack payment processing & webhook verification"
                           : sec.name.includes("FIREBASE")
-                          ? "Firebase Admin SDK authentication & Firestore"
-                          : sec.name.includes("STORAGE") || sec.name.includes("B2")
-                          ? "Backblaze B2 & Lovable storage replication"
-                          : sec.name.includes("STREAMING")
-                          ? "HMAC token signing for anti-hotlinking video stream"
-                          : sec.name.includes("MODAL")
-                          ? "Modal serverless GPU worker transcode queue"
-                          : "Critical infrastructure security key"}
+                            ? "Firebase Admin SDK authentication & Firestore"
+                            : sec.name.includes("STORAGE") || sec.name.includes("B2")
+                              ? "Backblaze B2 & Lovable storage replication"
+                              : sec.name.includes("STREAMING")
+                                ? "HMAC token signing for anti-hotlinking video stream"
+                                : sec.name.includes("MODAL")
+                                  ? "Modal serverless GPU worker transcode queue"
+                                  : "Critical infrastructure security key"}
                       </p>
                     </div>
                     <div>
@@ -370,9 +381,13 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
             )}
 
             {backupsLoading && !backupData ? (
-              <div className="p-8 text-center text-xs text-slate-500">Querying backup status...</div>
+              <div className="p-8 text-center text-xs text-slate-500">
+                Querying backup status...
+              </div>
             ) : !backupData ? (
-              <div className="p-8 text-center text-xs text-slate-500">Failed to load backup status.</div>
+              <div className="p-8 text-center text-xs text-slate-500">
+                Failed to load backup status.
+              </div>
             ) : (
               <div className="space-y-3">
                 {backupData.backups.map((bak) => (
@@ -418,10 +433,14 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
             <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-xs text-amber-200 mb-6 flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <strong className="text-amber-100 font-bold block text-sm">Strict Read-Only Enforcement</strong>
+                <strong className="text-amber-100 font-bold block text-sm">
+                  Strict Read-Only Enforcement
+                </strong>
                 <p>
-                  While in Support Mode, a persistent high-visibility warning banner is affixed across the top of all views.
-                  Modifications, payment transfers, and destructive operations are completely disabled. Entering this mode writes a tamper-evident audit record with your justification reason.
+                  While in Support Mode, a persistent high-visibility warning banner is affixed
+                  across the top of all views. Modifications, payment transfers, and destructive
+                  operations are completely disabled. Entering this mode writes a tamper-evident
+                  audit record with your justification reason.
                 </p>
               </div>
             </div>
@@ -448,7 +467,9 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
                     }`}
                   >
                     <span className="font-bold text-sm block">Producer Console</span>
-                    <span className="text-[11px] text-slate-400">Content production, episodes, earnings</span>
+                    <span className="text-[11px] text-slate-400">
+                      Content production, episodes, earnings
+                    </span>
                   </button>
                   <button
                     type="button"
@@ -460,7 +481,9 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
                     }`}
                   >
                     <span className="font-bold text-sm block">Content Provider</span>
-                    <span className="text-[11px] text-slate-400">Channel distribution, live stream feeds</span>
+                    <span className="text-[11px] text-slate-400">
+                      Channel distribution, live stream feeds
+                    </span>
                   </button>
                 </div>
               </div>
@@ -509,5 +532,119 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
         </div>
       )}
     </div>
+  );
+}
+
+function OwnerSessionsPanel({ token }: { token: string }) {
+  const [sessions, setSessions] = useState<
+    Array<{
+      id: string;
+      browser: string;
+      lastSeenAt: string;
+      createdAt: string;
+      current: boolean;
+      country: string;
+    }>
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState("");
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/access/sessions", {
+        headers: { authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not load sessions.");
+      setSessions(data.sessions || []);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not load sessions.");
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+  useEffect(() => {
+    void load();
+  }, [load]);
+  const signOutEverywhere = async () => {
+    if (
+      !window.confirm(
+        "Sign out every owner device? You will need your access password and authenticator code to unlock again.",
+      )
+    )
+      return;
+    setMessage("");
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/access/sessions", {
+        method: "POST",
+        headers: { authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Could not revoke owner sessions.");
+      setMessage("All owner sessions were signed out. This screen will lock now.");
+      setTimeout(() => window.location.reload(), 800);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not revoke sessions.");
+    }
+  };
+  return (
+    <ConsoleCard
+      title="Owner devices & sessions"
+      subtitle="Owner sessions lock after 15 minutes idle and expire after 8 hours. Country detection is unavailable until a trusted edge location source is configured."
+      headerAction={
+        <button
+          type="button"
+          onClick={() => void signOutEverywhere()}
+          className="inline-flex items-center gap-2 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-bold text-rose-200 hover:bg-rose-500/20"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign out everywhere
+        </button>
+      }
+    >
+      {message && (
+        <p
+          role="status"
+          className="mb-4 rounded-xl border border-cyan-400/20 bg-cyan-500/10 p-3 text-sm text-cyan-100"
+        >
+          {message}
+        </p>
+      )}
+      {loading ? (
+        <div className="p-8 text-center text-sm text-slate-400">Loading owner sessions…</div>
+      ) : sessions.length === 0 ? (
+        <div className="rounded-xl border border-white/10 bg-slate-900/50 p-8 text-center text-sm text-slate-300">
+          No active owner sessions were found.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {sessions.map((session) => (
+            <div
+              key={session.id}
+              className="flex flex-col gap-3 rounded-xl border border-white/10 bg-slate-900/60 p-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div>
+                <p className="font-semibold text-white">
+                  {session.browser}{" "}
+                  {session.current && (
+                    <span className="ml-2 rounded-full bg-cyan-500/15 px-2 py-1 text-xs text-cyan-200">
+                      This device
+                    </span>
+                  )}
+                </p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Country: {session.country} · Last seen:{" "}
+                  {new Date(session.lastSeenAt).toLocaleString()}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  Started: {new Date(session.createdAt).toLocaleString()}
+                </p>
+              </div>
+              <span className="text-xs text-emerald-300">Owner session</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </ConsoleCard>
   );
 }

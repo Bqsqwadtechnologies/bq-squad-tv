@@ -35,6 +35,7 @@ describe("V4-01 Batch 02: Zillionaire Owner Access Password & Unlock Gate", () =
   function createMockFs() {
     return {
       getDoc: vi.fn(async () => null),
+      query: vi.fn(async () => []),
       setDoc: vi.fn(async () => undefined),
       patchDoc: vi.fn(async () => undefined),
       docName: (p: string) => `projects/p/databases/(default)/documents/${p}`,
@@ -243,7 +244,7 @@ describe("V4-01 Batch 02: Zillionaire Owner Access Password & Unlock Gate", () =
     },
   );
 
-  it("5. Correct password and TOTP: unlocks, issues signed token with 30m TTL and Set-Cookie", async () => {
+  it("5. Correct password and TOTP: unlocks, issues signed token with 8h absolute TTL and Set-Cookie", async () => {
     const mockFs = createMockFs();
     const secret = generateTotpSecret();
     vi.mocked(mockFs.getDoc).mockImplementation(async (path: string) =>
@@ -288,7 +289,8 @@ describe("V4-01 Batch 02: Zillionaire Owner Access Password & Unlock Gate", () =
     const json = await unlockRes.json();
     expect(json.ok).toBe(true);
     expect(typeof json.token).toBe("string");
-    expect(json.expiresAt).toBeGreaterThan(Math.floor(Date.now() / 1000) + 1700);
+    expect(json.expiresAt).toBeGreaterThan(Math.floor(Date.now() / 1000) + 28000);
+    expect(json.expiresAt).toBeLessThanOrEqual(Math.floor(Date.now() / 1000) + 28800);
 
     const setCookie = unlockRes.headers.get("set-cookie");
     expect(setCookie).toContain("zillionaire_unlock=");

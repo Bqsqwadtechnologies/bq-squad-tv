@@ -82,7 +82,7 @@ export async function requireZillionaire(
   const ctx = await requireViewer(request, existingFs);
   const access = await requireZillionaireModule(ctx.fs, ctx.user, module);
   if (access.isZillionaireOwner) {
-    requireZillionaireUnlock(request, ctx.user.uid);
+    await requireZillionaireUnlock(request, ctx.user.uid, ctx.fs);
   }
   return { ...ctx, module };
 }

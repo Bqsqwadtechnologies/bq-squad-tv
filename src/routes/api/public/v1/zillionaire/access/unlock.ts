@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { createFileRoute } from "@tanstack/react-router";
 import { errorBody } from "@/lib/server/api";
 import { requireViewer } from "@/lib/server/access";
@@ -165,7 +166,37 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/unlock")
 
           // Successful unlock
           clearFailure(user.uid);
-          const { token, expiresAt } = createUnlockToken(user.uid);
+          const userAgent = request.headers.get("user-agent") || "Unknown browser";
+          const forwarded =
+            request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+          const deviceFingerprint = crypto.createHash("sha256").update(userAgent).digest("hex");
+          const { token, expiresAt, sessionId } = createUnlockToken(user.uid, deviceFingerprint);
+          const browser = userAgent.includes("Firefox")
+            ? "Firefox"
+            : userAgent.includes("Edg/")
+              ? "Edge"
+              : userAgent.includes("Chrome")
+                ? "Chrome"
+                : userAgent.includes("Safari")
+                  ? "Safari"
+                  : "Other";
+          const deviceHash = crypto
+            .createHash("sha256")
+            .update(`${userAgent}|${forwarded}`)
+            .digest("hex");
+          await fs.setDoc(
+            `zillionaireOwnerSessions/${user.uid}_${sessionId}`,
+            {
+              uid: user.uid,
+              sessionId,
+              browser,
+              deviceHash,
+              lastSeenAt: new Date().toISOString(),
+              createdAt: new Date().toISOString(),
+              revoked: false,
+            },
+            { mustNotExist: true },
+          );
 
           const isProd = process.env["NODE_ENV"] === "production";
           const cookieHeader = `${ZILLIONAIRE_UNLOCK_COOKIE}=${encodeURIComponent(token)}; Path=/; Max-Age=${UNLOCK_TTL_SECONDS}; HttpOnly; SameSite=Lax${isProd ? "; Secure" : ""}`;
@@ -175,6 +206,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/unlock")
               ok: true,
               token,
               expiresAt,
+              sessionId,
             }),
             {
               status: 200,

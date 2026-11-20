@@ -1887,6 +1887,23 @@
     }
   },
   {
+    "route": "/api/public/v1/zillionaire/access/sessions",
+    "file": "src/routes/api/public/v1/zillionaire/access/sessions.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/zillionaire/access/status",
     "file": "src/routes/api/public/v1/zillionaire/access/status.ts",
     "guard": "viewer",

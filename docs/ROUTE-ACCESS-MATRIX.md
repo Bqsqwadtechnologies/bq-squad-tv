@@ -2,14 +2,14 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **253**
+Total scanned routes: **254**
 
 ### Summary by Guard Class
 
 | Guard Class          | Count |
 | -------------------- | ----- |
 | `public`             | 13    |
-| `viewer`             | 80    |
+| `viewer`             | 81    |
 | `webhook signature`  | 1     |
 | `provider`           | 11    |
 | `playback token`     | 2     |
@@ -132,6 +132,7 @@ Total scanned routes: **253**
 | `/api/public/v1/worker/maintenance/schedule-wallet-holds`              | `worker signature`   | requireVideoWorker (Ed25519 / HMAC video worker signature check)             | `src/routes/api/public/v1/worker/maintenance/schedule-wallet-holds.ts`              |
 | `/api/public/v1/zillionaire/access/lock`                               | `viewer`             | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/zillionaire/access/lock.ts`                               |
 | `/api/public/v1/zillionaire/access/mfa`                                | `viewer`             | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/zillionaire/access/mfa.ts`                                |
+| `/api/public/v1/zillionaire/access/sessions`                           | `viewer`             | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/zillionaire/access/sessions.ts`                           |
 | `/api/public/v1/zillionaire/access/status`                             | `viewer`             | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/zillionaire/access/status.ts`                             |
 | `/api/public/v1/zillionaire/access/step-up`                            | `viewer`             | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/zillionaire/access/step-up.ts`                            |
 | `/api/public/v1/zillionaire/access/unlock`                             | `viewer`             | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/zillionaire/access/unlock.ts`                             |

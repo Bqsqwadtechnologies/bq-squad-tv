@@ -3,7 +3,9 @@ import { ApiError } from "./firebase-admin";
 
 export const ZILLIONAIRE_UNLOCK_HEADER = "x-zillionaire-unlock";
 export const ZILLIONAIRE_UNLOCK_COOKIE = "zillionaire_unlock";
-export const UNLOCK_TTL_SECONDS = 30 * 60; // 30 minutes
+export const OWNER_IDLE_TIMEOUT_SECONDS = 15 * 60;
+export const UNLOCK_TTL_SECONDS = 8 * 60 * 60;
+export const OWNER_SESSION_ABSOLUTE_SECONDS = 8 * 60 * 60;
 export const MAX_ATTEMPTS = 5;
 export const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -14,6 +16,13 @@ interface AttemptState {
 }
 
 const attemptStore = new Map<string, AttemptState>();
+const revokedSessions = new Set<string>();
+export function revokeOwnerSession(sessionId: string): void {
+  revokedSessions.add(sessionId);
+}
+export function clearRevokedOwnerSessions(): void {
+  revokedSessions.clear();
+}
 
 function getSigningSecret(): string {
   return (
@@ -124,19 +133,24 @@ export interface UnlockTokenPayload {
   iat: number;
   exp: number;
   deviceHash?: string | undefined;
+  sessionId?: string | undefined;
+  absoluteExp?: number | undefined;
+  sessionId?: string | undefined;
 }
 
 export function createUnlockToken(
   uid: string,
   deviceHash?: string,
-): { token: string; expiresAt: number } {
+): { token: string; expiresAt: number; sessionId: string } {
   const now = Math.floor(Date.now() / 1000);
-  const expiresAt = now + UNLOCK_TTL_SECONDS;
+  const expiresAt = now + OWNER_SESSION_ABSOLUTE_SECONDS;
   const payload: UnlockTokenPayload = {
     uid,
     iat: now,
     exp: expiresAt,
     deviceHash,
+    sessionId: crypto.randomUUID(),
+    absoluteExp: now + OWNER_SESSION_ABSOLUTE_SECONDS,
   };
 
   const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -148,6 +162,7 @@ export function createUnlockToken(
   return {
     token: `${payloadB64}.${signature}`,
     expiresAt,
+    sessionId: payload.sessionId!,
   };
 }
 
@@ -169,9 +184,18 @@ export function parseAndVerifyUnlockToken(
   const expectedSignature = crypto
     .createHmac("sha256", getSigningSecret())
     .update(payloadB64)
-    .digest("base64url");
+    .digest();
+  let actualSignature: Buffer;
+  try {
+    actualSignature = Buffer.from(signature, "base64url");
+  } catch {
+    return { valid: false, reason: "INVALID_SIGNATURE" };
+  }
 
-  if (signature !== expectedSignature) {
+  if (
+    actualSignature.length !== expectedSignature.length ||
+    !crypto.timingSafeEqual(actualSignature, expectedSignature)
+  ) {
     return { valid: false, reason: "INVALID_SIGNATURE" };
   }
 
@@ -187,11 +211,39 @@ export function parseAndVerifyUnlockToken(
   }
 
   const now = Math.floor(Date.now() / 1000);
-  if (payload.exp <= now) {
-    return { valid: false, reason: "EXPIRED" };
-  }
+  const absoluteExp = typeof payload.absoluteExp === "number" ? payload.absoluteExp : payload.exp;
+  if (payload.exp <= now || absoluteExp <= now) return { valid: false, reason: "EXPIRED" };
+  if (payload.sessionId && revokedSessions.has(payload.sessionId))
+    return { valid: false, reason: "REVOKED" };
 
-  return { valid: true, expiresAt: payload.exp };
+  return { valid: true, expiresAt: Math.min(payload.exp, absoluteExp) };
+}
+
+export function refreshUnlockToken(
+  token: string,
+  expectedUid: string,
+): { token: string; expiresAt: number } | null {
+  const [encoded, signature] = token.split(".");
+  if (!encoded || !signature) return null;
+  const verified = parseAndVerifyUnlockToken(token, expectedUid);
+  if (!verified.valid) return null;
+  let payload: UnlockTokenPayload;
+  try {
+    payload = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as UnlockTokenPayload;
+  } catch {
+    return null;
+  }
+  const now = Math.floor(Date.now() / 1000);
+  const absoluteExp = typeof payload.absoluteExp === "number" ? payload.absoluteExp : now;
+  const exp = Math.min(now + OWNER_SESSION_ABSOLUTE_SECONDS, absoluteExp);
+  if (exp <= now) return null;
+  payload.exp = exp;
+  const refreshed = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const refreshedSignature = crypto
+    .createHmac("sha256", getSigningSecret())
+    .update(refreshed)
+    .digest("base64url");
+  return { token: `${refreshed}.${refreshedSignature}`, expiresAt: exp };
 }
 
 export function extractUnlockToken(request: Request): string | null {
@@ -209,7 +261,11 @@ export function extractUnlockToken(request: Request): string | null {
   return null;
 }
 
-export function requireZillionaireUnlock(request: Request, uid: string): void {
+export async function requireZillionaireUnlock(
+  request: Request,
+  uid: string,
+  fs?: import("./firebase-admin").Firestore,
+): Promise<void> {
   if (!isAccessPasswordConfigured()) {
     throw new ApiError(
       423,
@@ -227,6 +283,59 @@ export function requireZillionaireUnlock(request: Request, uid: string): void {
       "ZILLIONAIRE_LOCKED",
       "Zillionaire dashboard is locked. Enter your access password.",
     );
+  }
+  if (fs) {
+    const token = extractUnlockToken(request);
+    const encodedPayload = token?.split(".")[0];
+    try {
+      const payload = encodedPayload
+        ? (JSON.parse(
+            Buffer.from(encodedPayload, "base64url").toString("utf8"),
+          ) as UnlockTokenPayload)
+        : null;
+      const actualDevice = crypto
+        .createHash("sha256")
+        .update(request.headers.get("user-agent") || "Unknown browser")
+        .digest("hex");
+      if (payload?.deviceHash && payload.deviceHash !== actualDevice)
+        throw new ApiError(
+          428,
+          "ZILLIONAIRE_DEVICE_CHALLENGE_REQUIRED",
+          "Owner session device changed. Unlock again.",
+        );
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(423, "ZILLIONAIRE_LOCKED", "Owner session is invalid. Unlock again.");
+    }
+    const encoded = token?.split(".")[0];
+    let sessionId: string | undefined;
+    try {
+      sessionId = encoded
+        ? (JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as UnlockTokenPayload)
+            .sessionId
+        : undefined;
+    } catch {
+      sessionId = undefined;
+    }
+    if (!sessionId)
+      throw new ApiError(423, "ZILLIONAIRE_LOCKED", "Owner session is invalid. Unlock again.");
+    const session = await fs.getDoc(`zillionaireOwnerSessions/${uid}_${sessionId}`);
+    if (!session || session["revoked"] === true)
+      throw new ApiError(
+        423,
+        "ZILLIONAIRE_SESSION_REVOKED",
+        "This owner session has ended. Unlock again.",
+      );
+    const lastSeenMs = Date.parse(String(session["lastSeenAt"] || session["createdAt"] || ""));
+    if (!Number.isFinite(lastSeenMs) || Date.now() - lastSeenMs > OWNER_IDLE_TIMEOUT_SECONDS * 1000)
+      throw new ApiError(
+        423,
+        "ZILLIONAIRE_IDLE_TIMEOUT",
+        "Owner session idle timeout reached. Unlock again.",
+      );
+    await fs.patchDoc(`zillionaireOwnerSessions/${uid}_${sessionId}`, {
+      lastSeenAt: new Date().toISOString(),
+    });
   }
 }
 

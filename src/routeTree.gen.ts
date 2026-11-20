@@ -185,7 +185,9 @@ import { Route as ApiPublicV1WorkerMaintenanceScheduleRouteImport } from './rout
 import { Route as ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRouteImport } from './routes/api/public/v1/worker/maintenance/schedule-wallet-holds'
 import { Route as ApiPublicV1ZillionaireAccessLockRouteImport } from './routes/api/public/v1/zillionaire/access/lock'
 import { Route as ApiPublicV1ZillionaireAccessMfaRouteImport } from './routes/api/public/v1/zillionaire/access/mfa'
+import { Route as ApiPublicV1ZillionaireAccessSessionsRouteImport } from './routes/api/public/v1/zillionaire/access/sessions'
 import { Route as ApiPublicV1ZillionaireAccessStatusRouteImport } from './routes/api/public/v1/zillionaire/access/status'
+import { Route as ApiPublicV1ZillionaireAccessStepUpRouteImport } from './routes/api/public/v1/zillionaire/access/step-up'
 import { Route as ApiPublicV1ZillionaireAccessUnlockRouteImport } from './routes/api/public/v1/zillionaire/access/unlock'
 import { Route as ApiPublicV1ZillionaireAdsCampaignsRouteImport } from './routes/api/public/v1/zillionaire/ads/campaigns'
 import { Route as ApiPublicV1ZillionaireAdsCreativesRouteImport } from './routes/api/public/v1/zillionaire/ads/creatives'
@@ -1262,10 +1264,22 @@ const ApiPublicV1ZillionaireAccessMfaRoute =
     path: '/api/public/v1/zillionaire/access/mfa',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireAccessSessionsRoute =
+  ApiPublicV1ZillionaireAccessSessionsRouteImport.update({
+    id: '/api/public/v1/zillionaire/access/sessions',
+    path: '/api/public/v1/zillionaire/access/sessions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireAccessStatusRoute =
   ApiPublicV1ZillionaireAccessStatusRouteImport.update({
     id: '/api/public/v1/zillionaire/access/status',
     path: '/api/public/v1/zillionaire/access/status',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireAccessStepUpRoute =
+  ApiPublicV1ZillionaireAccessStepUpRouteImport.update({
+    id: '/api/public/v1/zillionaire/access/step-up',
+    path: '/api/public/v1/zillionaire/access/step-up',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ZillionaireAccessUnlockRoute =
@@ -2027,7 +2041,9 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/worker/maintenance/schedule-wallet-holds': typeof ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute
   '/api/public/v1/zillionaire/access/lock': typeof ApiPublicV1ZillionaireAccessLockRoute
   '/api/public/v1/zillionaire/access/mfa': typeof ApiPublicV1ZillionaireAccessMfaRoute
+  '/api/public/v1/zillionaire/access/sessions': typeof ApiPublicV1ZillionaireAccessSessionsRoute
   '/api/public/v1/zillionaire/access/status': typeof ApiPublicV1ZillionaireAccessStatusRoute
+  '/api/public/v1/zillionaire/access/step-up': typeof ApiPublicV1ZillionaireAccessStepUpRoute
   '/api/public/v1/zillionaire/access/unlock': typeof ApiPublicV1ZillionaireAccessUnlockRoute
   '/api/public/v1/zillionaire/ads/campaigns': typeof ApiPublicV1ZillionaireAdsCampaignsRouteWithChildren
   '/api/public/v1/zillionaire/ads/creatives': typeof ApiPublicV1ZillionaireAdsCreativesRoute
@@ -2302,7 +2318,9 @@ export interface FileRoutesByTo {
   '/api/public/v1/worker/maintenance/schedule-wallet-holds': typeof ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute
   '/api/public/v1/zillionaire/access/lock': typeof ApiPublicV1ZillionaireAccessLockRoute
   '/api/public/v1/zillionaire/access/mfa': typeof ApiPublicV1ZillionaireAccessMfaRoute
+  '/api/public/v1/zillionaire/access/sessions': typeof ApiPublicV1ZillionaireAccessSessionsRoute
   '/api/public/v1/zillionaire/access/status': typeof ApiPublicV1ZillionaireAccessStatusRoute
+  '/api/public/v1/zillionaire/access/step-up': typeof ApiPublicV1ZillionaireAccessStepUpRoute
   '/api/public/v1/zillionaire/access/unlock': typeof ApiPublicV1ZillionaireAccessUnlockRoute
   '/api/public/v1/zillionaire/ads/campaigns': typeof ApiPublicV1ZillionaireAdsCampaignsRouteWithChildren
   '/api/public/v1/zillionaire/ads/creatives': typeof ApiPublicV1ZillionaireAdsCreativesRoute
@@ -2579,7 +2597,9 @@ export interface FileRoutesById {
   '/api/public/v1/worker/maintenance/schedule-wallet-holds': typeof ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute
   '/api/public/v1/zillionaire/access/lock': typeof ApiPublicV1ZillionaireAccessLockRoute
   '/api/public/v1/zillionaire/access/mfa': typeof ApiPublicV1ZillionaireAccessMfaRoute
+  '/api/public/v1/zillionaire/access/sessions': typeof ApiPublicV1ZillionaireAccessSessionsRoute
   '/api/public/v1/zillionaire/access/status': typeof ApiPublicV1ZillionaireAccessStatusRoute
+  '/api/public/v1/zillionaire/access/step-up': typeof ApiPublicV1ZillionaireAccessStepUpRoute
   '/api/public/v1/zillionaire/access/unlock': typeof ApiPublicV1ZillionaireAccessUnlockRoute
   '/api/public/v1/zillionaire/ads/campaigns': typeof ApiPublicV1ZillionaireAdsCampaignsRouteWithChildren
   '/api/public/v1/zillionaire/ads/creatives': typeof ApiPublicV1ZillionaireAdsCreativesRoute
@@ -2857,7 +2877,9 @@ export interface FileRouteTypes {
     | '/api/public/v1/worker/maintenance/schedule-wallet-holds'
     | '/api/public/v1/zillionaire/access/lock'
     | '/api/public/v1/zillionaire/access/mfa'
+    | '/api/public/v1/zillionaire/access/sessions'
     | '/api/public/v1/zillionaire/access/status'
+    | '/api/public/v1/zillionaire/access/step-up'
     | '/api/public/v1/zillionaire/access/unlock'
     | '/api/public/v1/zillionaire/ads/campaigns'
     | '/api/public/v1/zillionaire/ads/creatives'
@@ -3132,7 +3154,9 @@ export interface FileRouteTypes {
     | '/api/public/v1/worker/maintenance/schedule-wallet-holds'
     | '/api/public/v1/zillionaire/access/lock'
     | '/api/public/v1/zillionaire/access/mfa'
+    | '/api/public/v1/zillionaire/access/sessions'
     | '/api/public/v1/zillionaire/access/status'
+    | '/api/public/v1/zillionaire/access/step-up'
     | '/api/public/v1/zillionaire/access/unlock'
     | '/api/public/v1/zillionaire/ads/campaigns'
     | '/api/public/v1/zillionaire/ads/creatives'
@@ -3408,7 +3432,9 @@ export interface FileRouteTypes {
     | '/api/public/v1/worker/maintenance/schedule-wallet-holds'
     | '/api/public/v1/zillionaire/access/lock'
     | '/api/public/v1/zillionaire/access/mfa'
+    | '/api/public/v1/zillionaire/access/sessions'
     | '/api/public/v1/zillionaire/access/status'
+    | '/api/public/v1/zillionaire/access/step-up'
     | '/api/public/v1/zillionaire/access/unlock'
     | '/api/public/v1/zillionaire/ads/campaigns'
     | '/api/public/v1/zillionaire/ads/creatives'
@@ -3668,7 +3694,9 @@ export interface RootRouteChildren {
   ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute: typeof ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute
   ApiPublicV1ZillionaireAccessLockRoute: typeof ApiPublicV1ZillionaireAccessLockRoute
   ApiPublicV1ZillionaireAccessMfaRoute: typeof ApiPublicV1ZillionaireAccessMfaRoute
+  ApiPublicV1ZillionaireAccessSessionsRoute: typeof ApiPublicV1ZillionaireAccessSessionsRoute
   ApiPublicV1ZillionaireAccessStatusRoute: typeof ApiPublicV1ZillionaireAccessStatusRoute
+  ApiPublicV1ZillionaireAccessStepUpRoute: typeof ApiPublicV1ZillionaireAccessStepUpRoute
   ApiPublicV1ZillionaireAccessUnlockRoute: typeof ApiPublicV1ZillionaireAccessUnlockRoute
   ApiPublicV1ZillionaireAdsCampaignsRoute: typeof ApiPublicV1ZillionaireAdsCampaignsRouteWithChildren
   ApiPublicV1ZillionaireAdsCreativesRoute: typeof ApiPublicV1ZillionaireAdsCreativesRoute
@@ -4988,11 +5016,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireAccessMfaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/access/sessions': {
+      id: '/api/public/v1/zillionaire/access/sessions'
+      path: '/api/public/v1/zillionaire/access/sessions'
+      fullPath: '/api/public/v1/zillionaire/access/sessions'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireAccessSessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/access/status': {
       id: '/api/public/v1/zillionaire/access/status'
       path: '/api/public/v1/zillionaire/access/status'
       fullPath: '/api/public/v1/zillionaire/access/status'
       preLoaderRoute: typeof ApiPublicV1ZillionaireAccessStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/access/step-up': {
+      id: '/api/public/v1/zillionaire/access/step-up'
+      path: '/api/public/v1/zillionaire/access/step-up'
+      fullPath: '/api/public/v1/zillionaire/access/step-up'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireAccessStepUpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/zillionaire/access/unlock': {
@@ -6119,8 +6161,12 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1WorkerMaintenanceScheduleWalletHoldsRoute,
   ApiPublicV1ZillionaireAccessLockRoute: ApiPublicV1ZillionaireAccessLockRoute,
   ApiPublicV1ZillionaireAccessMfaRoute: ApiPublicV1ZillionaireAccessMfaRoute,
+  ApiPublicV1ZillionaireAccessSessionsRoute:
+    ApiPublicV1ZillionaireAccessSessionsRoute,
   ApiPublicV1ZillionaireAccessStatusRoute:
     ApiPublicV1ZillionaireAccessStatusRoute,
+  ApiPublicV1ZillionaireAccessStepUpRoute:
+    ApiPublicV1ZillionaireAccessStepUpRoute,
   ApiPublicV1ZillionaireAccessUnlockRoute:
     ApiPublicV1ZillionaireAccessUnlockRoute,
   ApiPublicV1ZillionaireAdsCampaignsRoute:
