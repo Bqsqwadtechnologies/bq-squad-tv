@@ -94,7 +94,6 @@ The checker reports names only. Add or verify each name in the hosting provider'
 
 Only enable a feature after its required server-side setting is present and verified. The checker cannot inspect provider dashboards and does not establish that a credential is valid.
 
-
 ## 9. Modal worker setup and key rotation
 
 1. Keep the existing Modal application name and existing worker deployment; do not create a second worker app or queue.
@@ -103,7 +102,7 @@ Only enable a feature after its required server-side setting is present and veri
 4. Rotate a worker by adding its replacement credential, deploying the new worker, verifying successful claims, then disabling the old worker ID in the Zillionaire dashboard.
 5. Keep the legacy shared worker key only during the migration window. Remove `STREAMING_HMAC_SECRET` worker fallback after all worker IDs use individual credentials; the same secret may still be required by playback signing until that separate use is migrated.
 6. Deploy the updated existing Modal worker before enabling production playback. Its five-minute poll now schedules expiry sweeps for abandoned viewing-wallet holds; verify that `wallet_hold_reconcile` tasks complete and release expired holds. If the worker is not running, a two-minute hold can remain reserved until maintenance resumes.
-6. Keep the monthly spend guard on. Confirm provider account limits with the billing owner before any production processing.
+7. Keep the monthly spend guard on. Confirm provider account limits with the billing owner before any production processing.
 
 ## 10. Legal policy publication
 
@@ -116,7 +115,6 @@ Before publishing the legal pages as final policies:
 5. Only then replace the publication-pending page notices and remove their noindex metadata.
 
 The current website routes are placeholders that explicitly say publication is pending. They are not legal agreements and must not be represented as approved policies.
-
 
 ## 11. Storage Fabric — File 03
 
@@ -152,7 +150,6 @@ Keep these values in the hosting provider's server-side environment settings onl
 The owner-only secret health endpoint reports names and presence only; it never returns values. It is a diagnostic, not proof that a credential is valid or that the corresponding provider account is ready. Keep paid egress disabled and preserve both legacy storage locations.
 
 The current security-header policy enforces transport, MIME, framing, referrer and browser-permission headers. Its CSP is in report-only mode while the website's script/style/asset requirements are audited; do not treat CSP enforcement as complete until a nonce/hash policy is verified against production rendering.
-
 
 ## 8. Legal page drafts — required before public launch
 
@@ -199,3 +196,10 @@ To deploy or activate the multi-bitrate video transcoding host (240p to 1080p HL
 ## Batch readiness checklist (V5-02)
 
 Before production launch, the owner should confirm: (1) legal pages have been reviewed by qualified counsel and placeholders reflect the actual service; (2) upload storage, direct playback and publishing have been tested with non-production media; (3) ad creatives, audience targeting and placements meet applicable policy and have an approved budget; (4) live chat timeout/ban and child-profile restrictions work as intended; (5) the test lab remains hidden, unpublished and excluded from public catalogs; (6) all required hosting secrets are present and validated without exposing values; and (7) storage, billing and worker limits are confirmed in the relevant provider consoles. This is a readiness checklist, not evidence that external settings or services are configured.
+
+## Owner authenticator setup (V5-03 Batch 1)
+
+- Set `ZILLIONAIRE_MFA_ENCRYPTION_KEY` in the server-side secret manager to a securely generated value with at least 32 characters. Never put its value in source control, chat, or logs. The service fails closed for authenticator setup if it is missing.
+- Sign in with the verified owner account and existing owner access password, then enroll an authenticator app and confirm a current six-digit code. Store the one-time recovery codes in a secure password manager; they are displayed once and each code is single-use.
+- Keep `ZILLIONAIRE_ACCESS_PASSWORD` configured. It remains required in addition to authenticator verification.
+- Email alerts for new devices, location changes, and failed-attempt bursts, and passkey/WebAuthn are not implemented by this batch.

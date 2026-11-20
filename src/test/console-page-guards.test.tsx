@@ -82,6 +82,7 @@ describe("Batch 08: Console Page Guards", () => {
         return new Response(
           JSON.stringify({
             configured: true,
+            mfaEnabled: true,
             unlocked: true,
             lockedOut: false,
           }),

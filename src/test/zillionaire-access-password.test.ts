@@ -11,6 +11,7 @@ import {
 } from "@/lib/server/zillionaire-access";
 import * as accessModule from "@/lib/server/access";
 import { Firestore } from "@/lib/server/firebase-admin";
+import { encryptTotpSecret, generateTotpSecret, totpAt } from "@/lib/server/zillionaire-totp";
 
 describe("V4-01 Batch 02: Zillionaire Owner Access Password & Unlock Gate", () => {
   const originalEnv = { ...process.env };
@@ -22,6 +23,7 @@ describe("V4-01 Batch 02: Zillionaire Owner Access Password & Unlock Gate", () =
     process.env["ZILLIONAIRE_EMAIL"] = ownerEmail;
     process.env["ZILLIONAIRE_ACCESS_PASSWORD"] = "UltraSecretZillionairePass2026!";
     process.env["SESSION_SECRET"] = "test-session-secret-bqsqwad-32chars!";
+    process.env["ZILLIONAIRE_MFA_ENCRYPTION_KEY"] = "test-only-encryption-key-with-entropy-123";
     clearFailure(ownerUid);
     clearFailure("other-user-456");
   });
@@ -241,8 +243,14 @@ describe("V4-01 Batch 02: Zillionaire Owner Access Password & Unlock Gate", () =
     },
   );
 
-  it("5. Correct password: unlocks, issues signed token with 30m TTL and Set-Cookie", async () => {
+  it("5. Correct password and TOTP: unlocks, issues signed token with 30m TTL and Set-Cookie", async () => {
     const mockFs = createMockFs();
+    const secret = generateTotpSecret();
+    vi.mocked(mockFs.getDoc).mockImplementation(async (path: string) =>
+      path === `zillionaireMfa/${ownerUid}`
+        ? { enabled: true, secret: encryptTotpSecret(secret), recoveryCodeHashes: [] }
+        : null,
+    );
     vi.spyOn(accessModule, "requireViewer").mockResolvedValue({
       user: {
         uid: ownerUid,
@@ -267,7 +275,7 @@ describe("V4-01 Batch 02: Zillionaire Owner Access Password & Unlock Gate", () =
     const unlockReq = new Request("http://localhost/api/public/v1/zillionaire/access/unlock", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ password: "UltraSecretZillionairePass2026!" }),
+      body: JSON.stringify({ password: "UltraSecretZillionairePass2026!", code: totpAt(secret) }),
     });
     const unlockHandler = (
       UnlockRoute.options.server as unknown as {

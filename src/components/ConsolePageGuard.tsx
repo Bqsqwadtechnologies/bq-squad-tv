@@ -27,6 +27,7 @@ export interface ConsolePageGuardProps {
 
 function OwnerVerificationView({ token, email }: { token: string; email: string }) {
   const [code, setCode] = useState("");
+  const [recoveryCode, setRecoveryCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [resendStatus, setResendStatus] = useState("");
@@ -106,7 +107,10 @@ function OwnerVerificationView({ token, email }: { token: string; email: string 
               inputMode="numeric"
               maxLength={6}
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              onChange={(e) => {
+                setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                setRecoveryCode("");
+              }}
               placeholder="000000"
               className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-center text-2xl font-mono tracking-[0.5em] text-white outline-none focus:border-cyan-300"
               required
@@ -166,6 +170,137 @@ function AccessPasswordSetupView() {
   );
 }
 
+function OwnerMfaSetupView({ token }: { token: string }) {
+  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [reason, setReason] = useState("Enable mandatory owner authenticator verification");
+  const [secret, setSecret] = useState("");
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function send(action: "ENROLL" | "CONFIRM") {
+    setBusy(true);
+    setMessage("");
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const body = action === "ENROLL" ? { action, password, reason } : { action, code, reason };
+      const res = await fetch("/api/public/v1/zillionaire/access/mfa", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = (await res.json()) as {
+        secret?: string;
+        otpauthUrl?: string;
+        recoveryCodes?: string[];
+        error?: string;
+      };
+      if (!res.ok) {
+        setMessage(data.error || "Could not update authenticator setup.");
+        return;
+      }
+      if (action === "ENROLL") setSecret(data.secret || "");
+      else setRecoveryCodes(data.recoveryCodes || []);
+    } catch {
+      setMessage("Network error during authenticator setup.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#070E22] px-4 text-white">
+      <div className="w-full max-w-lg rounded-3xl border border-cyan-500/20 bg-[#0A1128] p-8 shadow-2xl">
+        <div className="flex justify-center mb-6">
+          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-10 w-auto" />
+        </div>
+        <p className="text-xs uppercase tracking-widest text-cyan-300">Owner sign-in protection</p>
+        <h1 className="mt-3 text-2xl font-black">Set up an authenticator</h1>
+        <p className="mt-2 text-sm text-slate-300">
+          The owner password alone is no longer enough. Add this account to an authenticator app,
+          confirm a current code, then store the one-time recovery codes safely.
+        </p>
+        {recoveryCodes.length ? (
+          <div className="mt-5 rounded-xl bg-slate-900 p-4">
+            <p className="font-bold">
+              Save these recovery codes now. They will not be shown again.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 font-mono text-sm">
+              {recoveryCodes.map((item) => (
+                <code key={item}>{item}</code>
+              ))}
+            </div>
+            <button
+              className="mt-5 w-full rounded-xl bg-cyan-400 p-3 font-bold text-slate-950"
+              onClick={() => window.location.reload()}
+            >
+              I saved the codes, continue
+            </button>
+          </div>
+        ) : !secret ? (
+          <form
+            className="mt-5 space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void send("ENROLL");
+            }}
+          >
+            <label className="block text-sm">
+              Owner access password
+              <input
+                className="mt-1 w-full rounded-lg bg-slate-950 p-3"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </label>
+            <label className="block text-sm">
+              Reason for this security change
+              <input
+                className="mt-1 w-full rounded-lg bg-slate-950 p-3"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                required
+              />
+            </label>
+            <button
+              disabled={busy}
+              className="w-full rounded-xl bg-cyan-400 p-3 font-bold text-slate-950"
+            >
+              {busy ? "Preparing…" : "Begin authenticator setup"}
+            </button>
+          </form>
+        ) : (
+          <div className="mt-5 space-y-4">
+            <p className="text-sm">Enter this setup key manually in your authenticator app:</p>
+            <code className="block break-all rounded-xl bg-slate-950 p-4 text-cyan-200">
+              {secret}
+            </code>
+            <label className="block text-sm">
+              Six-digit code
+              <input
+                inputMode="numeric"
+                maxLength={6}
+                className="mt-1 w-full rounded-lg bg-slate-950 p-3 text-center font-mono text-xl"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              />
+            </label>
+            <button
+              disabled={busy || code.length !== 6}
+              onClick={() => void send("CONFIRM")}
+              className="w-full rounded-xl bg-cyan-400 p-3 font-bold text-slate-950"
+            >
+              Verify and enable
+            </button>
+          </div>
+        )}
+        {message && <p className="mt-4 text-sm text-rose-300">{message}</p>}
+      </div>
+    </div>
+  );
+}
+
 function AccessPasswordUnlockView({
   token,
   onUnlocked,
@@ -178,6 +313,7 @@ function AccessPasswordUnlockView({
   initialRemainingSeconds?: number | undefined;
 }) {
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [lockedOut, setLockedOut] = useState(Boolean(initialLockedOut));
@@ -208,7 +344,10 @@ function AccessPasswordUnlockView({
       const res = await fetch("/api/public/v1/zillionaire/access/unlock", {
         method: "POST",
         headers: { ...headers, "content-type": "application/json" },
-        body: JSON.stringify({ password: password.trim() }),
+        body: JSON.stringify({
+          password: password.trim(),
+          ...(recoveryCode.trim() ? { recoveryCode: recoveryCode.trim() } : { code }),
+        }),
       });
       const data = (await res.json()) as {
         ok?: boolean;
@@ -269,9 +408,35 @@ function AccessPasswordUnlockView({
                 required
               />
             </label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+              Authenticator Code
+              <input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="mt-2 w-full rounded-xl border border-white/15 bg-[#030718] px-4 py-3 text-center font-mono text-white outline-none focus:border-cyan-400"
+                required
+              />
+            </label>
+            <details className="rounded-xl border border-white/10 p-3 text-sm text-slate-300">
+              <summary className="cursor-pointer">Use a recovery code instead</summary>
+              <input
+                aria-label="One-time recovery code"
+                autoComplete="off"
+                className="mt-3 w-full rounded-lg bg-[#030718] p-3 font-mono text-white"
+                value={recoveryCode}
+                onChange={(e) => {
+                  setRecoveryCode(e.target.value);
+                  if (e.target.value) setCode("");
+                }}
+                placeholder="Enter an unused recovery code"
+              />
+            </details>
             <button
               type="submit"
-              disabled={busy || !password.trim()}
+              disabled={busy || !password.trim() || (!recoveryCode.trim() && code.length !== 6)}
               className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 font-extrabold text-[#030718] transition hover:brightness-110 disabled:opacity-50"
             >
               {busy ? "Verifying…" : "Unlock Dashboard"}
@@ -294,6 +459,7 @@ export function ConsolePageGuard({
     | { status: "denied" }
     | { status: "unverified_owner"; token: string; email: string }
     | { status: "setup_required" }
+    | { status: "mfa_setup"; token: string }
     | {
         status: "locked";
         token: string;
@@ -342,10 +508,15 @@ export function ConsolePageGuard({
                 configured: boolean;
                 unlocked: boolean;
                 lockedOut: boolean;
+                mfaEnabled?: boolean;
                 remainingLockSeconds?: number;
               };
               if (!statusData.configured) {
                 if (active) setState({ status: "setup_required" });
+                return;
+              }
+              if (!statusData.mfaEnabled) {
+                if (active) setState({ status: "mfa_setup", token });
                 return;
               }
               if (!statusData.unlocked) {
@@ -431,6 +602,10 @@ export function ConsolePageGuard({
 
   if (state.status === "setup_required") {
     return <AccessPasswordSetupView />;
+  }
+
+  if (state.status === "mfa_setup") {
+    return <OwnerMfaSetupView token={state.token} />;
   }
 
   if (state.status === "locked") {

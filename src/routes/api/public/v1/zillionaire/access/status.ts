@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/status")
     handlers: {
       GET: async ({ request }) => {
         try {
-          const { user, access } = await requireViewer(request);
+          const { user, fs, access } = await requireViewer(request);
 
           if (!access.isZillionaireOwner && access.zillionaireModules.length === 0) {
             throw new ApiError(403, "ACCESS_DENIED", "Access denied.");
@@ -32,10 +32,13 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/status")
           }
 
           const configured = isAccessPasswordConfigured();
+          const mfa = await fs.getDoc(`zillionaireMfa/${user.uid}`);
+          const mfaEnabled = mfa?.["enabled"] === true;
           if (!configured) {
             return Response.json({
               isOwner: true,
               configured: false,
+              mfaEnabled,
               unlocked: false,
               lockedOut: false,
               legacySecretWarning: access.legacySecretWarning === true,
@@ -47,6 +50,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/status")
             return Response.json({
               isOwner: true,
               configured: true,
+              mfaEnabled,
               unlocked: false,
               lockedOut: true,
               remainingLockSeconds: lockout.remainingLockSeconds,
@@ -60,7 +64,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/status")
           return Response.json({
             isOwner: true,
             configured: true,
-            unlocked: verifyResult.valid,
+            mfaEnabled,
+            unlocked: verifyResult.valid && mfaEnabled,
             expiresAt: verifyResult.expiresAt,
             lockedOut: false,
             legacySecretWarning: access.legacySecretWarning === true,
