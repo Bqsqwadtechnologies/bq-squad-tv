@@ -314,7 +314,6 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
         body: JSON.stringify({
           action: "COMPLETE_UPLOAD",
           assetId,
-          directPublish,
           durationSeconds: 5400, // 1h 30m
           codec: "h264/aac",
           resolution: "1080p",
