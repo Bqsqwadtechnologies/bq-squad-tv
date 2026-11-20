@@ -40,3 +40,5 @@ PUSH BADGE #23 SUCCESSFUL — V5-03 Batch 4 — ffb22b3b36780dc1f3ebb91003ed6970
 PUSH BADGE #24 SUCCESSFUL — V5-03 Batch 5 — dd06dee57cda87b42d9412ebd693f9e348d4f593 — Secrets health, rotation tracking, key-versioning guidance and environment isolation
 
 PUSH BADGE #25 SUCCESSFUL — V5-03 Batch 6 — de4aa3300d9c9cc8de93f6fccd5d1b24b6abce58 — Owner-controlled route limits, IP and device reputation list, payment fraud velocity checks, wallet freeze, referral-abuse detection, and security review holds queue.
+
+PUSH BADGE #26 SUCCESSFUL — V5-03 Batch 7 — 7b2b7a8ecd9b6d59a0e7384a2c0e448ff2684ed9 — Playback tokens bound to device/user/time, hotlink protection, download blocking, player watermark, and instant token revocation.
