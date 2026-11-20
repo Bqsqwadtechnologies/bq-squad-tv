@@ -70,3 +70,4 @@ PUSH BADGE #38 SUCCESSFUL — V5-04 Batch 9 — bfcc74eea3c0ac124bfb042c33aad4f8
 PUSH BADGE #39 SUCCESSFUL — V5-04 Batch 10 — 333301596fc3c808c9f5740276f561a60e459ed1 — Comprehensive console verification: role isolation tests (producer/provider/viewer), producer privacy protection (no percentage/gross exposure), provider email gating, onboarding flows, and payout notifications.
 
 PUSH BADGE #40 SUCCESSFUL — V5-05 Batch 1 — 679d4d8af788336ee8cce11837091f16e2205d1a — Bottom navigation (Home, Live TV, Library, Downloads, Settings) on web and Android, Downloads coming-soon screen, and profile avatar account hub.
+PUSH BADGE #41 SUCCESSFUL — V5-05 Batch 2 — e670935f93ebcb7932e13d25c339177e8f7156cc — Viewer Home dashboard with welcome banner, 4 KPI gradient cards, continue watching, live now, trending, activity feed, and interactive referral program modal.
