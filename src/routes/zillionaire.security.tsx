@@ -65,7 +65,7 @@ function ZillionaireSecurityRoute() {
   );
 }
 
-type TabType = "threats" | "abuse_fraud" | "secrets" | "backups" | "support_mode" | "sessions" | "audit_integrity";
+type TabType = "threats" | "abuse_fraud" | "secrets" | "backups" | "incident_mode" | "support_mode" | "sessions" | "audit_integrity";
 
 function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: boolean }) {
   const [activeTab, setActiveTab] = useState<TabType>("threats");
@@ -118,6 +118,17 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
   const [backupsLoading, setBackupsLoading] = useState(false);
   const [triggeringBackup, setTriggeringBackup] = useState(false);
   const [backupTriggerMessage, setBackupTriggerMessage] = useState<string | null>(null);
+
+  // Emergency Incident Mode State
+  const [incidentData, setIncidentData] = useState<{
+    active: boolean;
+    currentIncident: { reason?: string; updatedAt?: string; actorUid?: string } | null;
+    timeline: Array<{ id: string; action: string; reason: string; actorUid: string; timestamp: string }>;
+  } | null>(null);
+  const [incidentLoading, setIncidentLoading] = useState(false);
+  const [incidentReason, setIncidentReason] = useState("");
+  const [incidentSubmitting, setIncidentSubmitting] = useState(false);
+  const [incidentMessage, setIncidentMessage] = useState<string | null>(null);
 
   // Support Mode (View As) State
   const [viewAsTargetRole, setViewAsTargetRole] = useState<"producer" | "provider">("producer");
@@ -172,6 +183,54 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
     }
   };
 
+  const fetchIncidentStatus = useCallback(async () => {
+    setIncidentLoading(true);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/security/incident-mode", {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setIncidentData(json);
+      }
+    } catch (e) {
+      console.error("Failed to load incident status", e);
+    } finally {
+      setIncidentLoading(false);
+    }
+  }, [token]);
+
+  const handleToggleIncident = async (action: "ACTIVATE" | "RELEASE") => {
+    if (!incidentReason.trim() && action === "ACTIVATE") {
+      alert("Please provide an audited reason for emergency lockdown.");
+      return;
+    }
+    setIncidentSubmitting(true);
+    setIncidentMessage(null);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/security/incident-mode", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action,
+          reason: incidentReason.trim() || (action === "RELEASE" ? "Owner released emergency lockdown" : "Emergency intervention"),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message ?? "Incident action failed");
+      setIncidentMessage(data.message);
+      setIncidentReason("");
+      await fetchIncidentStatus();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Incident action failed");
+    } finally {
+      setIncidentSubmitting(false);
+    }
+  };
+
   const fetchBackupStatus = useCallback(async () => {
     setBackupsLoading(true);
     try {
@@ -194,6 +253,8 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
       void fetchSecretHealth();
     } else if (activeTab === "backups" && !backupData) {
       void fetchBackupStatus();
+    } else if (activeTab === "incident_mode" && !incidentData) {
+      void fetchIncidentStatus();
     }
   }, [activeTab, secretData, backupData, fetchSecretHealth, fetchBackupStatus]);
 
@@ -260,6 +321,7 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
           { id: "abuse_fraud" as const, label: "Abuse & Fraud Defense", icon: ShieldCheck },
           { id: "secrets" as const, label: "Secret Health Check", icon: KeyRound },
           { id: "backups" as const, label: "Platform Backups Status", icon: Database },
+          { id: "incident_mode" as const, label: "Emergency Panic & Lockdown", icon: AlertTriangle },
           { id: "support_mode" as const, label: "Support Mode (View As)", icon: Eye },
           ...(isOwner
             ? [
@@ -623,6 +685,168 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
               </div>
             )}
           </ConsoleCard>
+        </div>
+      )}
+
+      {/* TAB: EMERGENCY INCIDENT MODE & PANIC BUTTON */}
+      {activeTab === "incident_mode" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <ConsoleKpiCard
+              title="Platform Lockdown State"
+              value={incidentData?.active ? "EMERGENCY ACTIVE" : "Normal Operations"}
+              subtitle={incidentData?.active ? "Payouts & Logins Frozen" : "All services operational"}
+              icon={AlertTriangle}
+              variant={incidentData?.active ? "red" : "green"}
+            />
+            <ConsoleKpiCard
+              title="Recorded Incidents"
+              value={incidentData?.timeline?.length ?? 0}
+              subtitle="Tamper-evident log"
+              icon={Clock}
+              variant="blue"
+            />
+            <ConsoleKpiCard
+              title="Panic Control Authority"
+              value="Zillionaire Owner"
+              subtitle="Single-tap confirmed freeze"
+              icon={Lock}
+              variant="purple"
+            />
+          </div>
+
+          <ConsoleCard
+            title="Emergency Incident Mode (Panic Button)"
+            subtitle="Immediately freeze payouts, pause console logins for producers and providers, and halt new sign-ups while an active investigation takes place."
+          >
+            <div className="rounded-2xl border border-white/10 bg-[#030b2a] p-5 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div>
+                  <h4 className="text-sm font-bold text-white">Current Protection Status</h4>
+                  <p className="text-xs text-blue-100/60 mt-0.5">
+                    {incidentData?.active
+                      ? "The platform is currently in EMERGENCY LOCKDOWN mode."
+                      : "The platform is running under normal operational posture."}
+                  </p>
+                </div>
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
+                    incidentData?.active
+                      ? "bg-rose-500/20 text-rose-300 border border-rose-500/40 animate-pulse"
+                      : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                  }`}
+                >
+                  <span className={`h-2 w-2 rounded-full ${incidentData?.active ? "bg-rose-400" : "bg-emerald-400"}`} />
+                  {incidentData?.active ? "Lockdown Active" : "Normal Operations"}
+                </span>
+              </div>
+
+              {incidentMessage && (
+                <div className="rounded-xl border border-cyan-400/30 bg-cyan-950/40 p-3 text-xs text-cyan-200">
+                  {incidentMessage}
+                </div>
+              )}
+
+              {incidentData?.active && incidentData.currentIncident && (
+                <div className="rounded-xl border border-rose-500/30 bg-rose-950/30 p-4 space-y-2">
+                  <div className="text-xs font-bold uppercase tracking-wider text-rose-300">Active Lockdown Details</div>
+                  <p className="text-xs text-rose-100/90 font-medium">Reason: {incidentData.currentIncident.reason}</p>
+                  <p className="text-[11px] text-rose-200/60">Updated At: {incidentData.currentIncident.updatedAt}</p>
+                </div>
+              )}
+
+              <div className="pt-2">
+                <label className="block text-xs font-semibold text-blue-100/80 mb-2">
+                  {incidentData?.active ? "Release Confirmation Note" : "Lockdown Reason (Mandatory for Audit Trail)"}
+                </label>
+                <textarea
+                  value={incidentReason}
+                  onChange={(e) => setIncidentReason(e.target.value)}
+                  placeholder={
+                    incidentData?.active
+                      ? "Document resolution findings prior to releasing lockdown..."
+                      : "Describe the active threat or drill requirement prompting emergency lockdown..."
+                  }
+                  className="w-full rounded-xl border border-white/15 bg-[#050f35] px-3.5 py-2.5 text-xs text-white placeholder:text-blue-100/30 min-h-20 outline-none focus:border-cyan-300"
+                />
+
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {incidentData?.active ? (
+                    <button
+                      type="button"
+                      disabled={incidentSubmitting}
+                      onClick={() => void handleToggleIncident("RELEASE")}
+                      className="rounded-xl bg-emerald-500 hover:bg-emerald-400 px-5 py-2.5 text-xs font-bold text-slate-950 transition disabled:opacity-50"
+                    >
+                      {incidentSubmitting ? "Releasing..." : "Release Emergency Lockdown"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={incidentSubmitting || !incidentReason.trim()}
+                      onClick={() => {
+                        if (confirm("CONFIRM EMERGENCY LOCKDOWN: This will immediately freeze payouts and console logins. Proceed?")) {
+                          void handleToggleIncident("ACTIVATE");
+                        }
+                      }}
+                      className="rounded-xl bg-rose-600 hover:bg-rose-500 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-rose-900/40 transition disabled:opacity-50"
+                    >
+                      {incidentSubmitting ? "Activating..." : "Activate Panic Button (Freeze All)"}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    disabled={incidentLoading}
+                    onClick={() => void fetchIncidentStatus()}
+                    className="rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-xs font-semibold text-blue-100 transition"
+                  >
+                    Refresh Status
+                  </button>
+                </div>
+              </div>
+            </div>
+          </ConsoleCard>
+
+          {/* Incident Timeline */}
+          {incidentData?.timeline && incidentData.timeline.length > 0 && (
+            <ConsoleCard
+              title="Emergency Incident Timeline"
+              subtitle="Chronological record of emergency lockdowns, security drills, and release actions"
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-white/10 text-cyan-200">
+                      <th className="py-2.5 pr-4 font-bold">Timestamp</th>
+                      <th className="py-2.5 pr-4 font-bold">Action</th>
+                      <th className="py-2.5 pr-4 font-bold">Reason</th>
+                      <th className="py-2.5 font-bold">Actor UID</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 text-blue-100/80">
+                    {incidentData.timeline.map((item) => (
+                      <tr key={item.id} className="hover:bg-white/5 transition">
+                        <td className="py-2.5 pr-4 font-mono text-[11px] text-white/70">{item.timestamp}</td>
+                        <td className="py-2.5 pr-4">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              item.action === "ACTIVATE"
+                                ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                                : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                            }`}
+                          >
+                            {item.action}
+                          </span>
+                        </td>
+                        <td className="py-2.5 pr-4 font-medium text-white">{item.reason}</td>
+                        <td className="py-2.5 font-mono text-[11px] text-blue-100/50">{item.actorUid}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </ConsoleCard>
+          )}
         </div>
       )}
 
