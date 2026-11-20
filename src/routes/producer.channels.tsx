@@ -148,7 +148,6 @@ function ProducerChannelsInner({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const uploadTimerRef = useRef<any>(null);
 
   // Live stream setup state
   const [streamKeyRevealed, setStreamKeyRevealed] = useState(false);
@@ -402,7 +401,6 @@ function ProducerChannelsInner({
     }
   }
   function cancelUpload() {
-    if (uploadTimerRef.current) clearInterval(uploadTimerRef.current);
     setUploading(false);
     setUploadProgress(0);
     setUploadFile(null);
