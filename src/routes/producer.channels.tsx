@@ -1316,6 +1316,7 @@ function ProducerChannelsInner({
         )}
       </div>
       </div>
+      </div>
     </ConsoleShell>
   );
 }
