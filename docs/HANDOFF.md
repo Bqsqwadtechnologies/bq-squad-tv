@@ -1,3 +1,3 @@
-Last completed batch: V5-04 Batch 7 — statements & settlements.
-Statements & settlements completed: shared StatementsSettlementView component supporting both producer and provider modes, monthly statement table with period, gross watch time, gross revenue, deductions breakdown, net payout, payment status badge (Pending / Processing / Paid / Disputed), statement detail modal with line-item breakdown and signed PDF download button.
-Next: V5-04 Batch 8 — dispute management & resolution.
+Last completed batch: V5-04 Batch 8 — dispute management & resolution.
+Dispute management completed: shared SharedDisputeSystem component, dispute filing form (category, statement ID, claimed amount, description, evidence file attachment), dispute list with filter (All / Open / Under Review / Resolved / Rejected), dispute thread view (chronological message history between producer/provider and platform team), resolution card (accepted amount, adjustment line on next statement, resolution notes), and decision controls (accept / reject / counter-offer).
+Next: V5-04 Batch 9 — provider registration & onboarding.
