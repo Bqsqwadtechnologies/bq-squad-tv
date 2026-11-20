@@ -404,9 +404,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
               throw new ApiError(404, "ASSET_NOT_FOUND", "Upload asset does not exist.");
             }
 
-            let newStatus = asset["status"];
-            let newContentStatus = asset["contentStatus"];
-
             if (data.operation === "direct_publish" || data.operation === "approve") {
               throw new ApiError(
                 403,
