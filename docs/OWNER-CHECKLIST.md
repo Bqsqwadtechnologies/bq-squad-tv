@@ -34,3 +34,24 @@ Run this in order on the published web app and the Android build. Do not mark re
 - Full suite: 3,209 passed, 14 failed (130 files); release sign-off is blocked until the known failures are reviewed and fixed.
 - Android native compile: not run because no wrapper or system Gradle was available.
 - Secret values are not present in this workspace execution environment; required secret names are documented in `docs/OWNER-ACTIONS.md`.
+
+
+## V6 Release Readiness — Owner Actions Still Required
+
+- [ ] Generate and securely back up the Android upload keystore. Configure `ANDROID_KEYSTORE_PATH`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD` only in the build secret manager; never commit values or the keystore.
+- [ ] Build and install a debug APK on a supported Android device; build a signed release AAB/APK using JDK 17+ and Android SDK tools, then verify the signing certificate and perform an internal Play test.
+- [ ] In Play Console, verify the actual Data Safety answers against production SDK behavior, complete the IARC content-rating questionnaire, set the privacy policy URL, and test the in-app and web account-deletion flows before submission.
+- [ ] Confirm `compileSdk`/`targetSdk` requirements against current Play Console requirements and update app versionCode for each upload using `node scripts/bump-version-code.mjs`.
+- [ ] Run the complete route-integrity check, lint, full test suite, type-check, build, public-text scan, and secret-name check; resolve and document all failures.
+- [ ] Manually verify navigation/back behavior on web and Android, role boundaries, wallet/Paystack test mode, and the exact user-facing release flows in the checklist above.
+- [ ] Have legal counsel approve published privacy, terms, producer, and provider policies; verify all listed public URLs are reachable before launch.
+
+### V6 Verification Record (2026-11-20)
+- Build: passed (`bun run build`).
+- Public-text scan: passed (`bun run scan:public-text`).
+- Batch 9 release readiness tests: 4 passed.
+- Android native compilation: not run; this environment lacks JDK/Android SDK tooling.
+- Type-check and full suite: existing failures recorded during this work; release sign-off remains blocked until reviewed and resolved.
+- Route-access matrix: generated 278 routes; dedicated route-integrity script not present.
+- Lint: failed on pre-existing repository-wide formatting/type lint findings (details in validation logs).
+- Secret-name check: documented names pass; check exits nonzero because these required secret names are absent from this sandbox environment, and no values were printed.

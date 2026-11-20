@@ -47,7 +47,9 @@ describe("Batch 9: Release Readiness & Play Store Compliance", () => {
     expect(doc).toContain("ANDROID_KEY_PASSWORD");
     expect(doc).toContain("https://bqsqwad.com/account-deletion");
     expect(doc).toContain("https://bqsqwad.com/legal/privacy-policy");
-    expect(doc).toContain(": 36");
-    expect(doc).toContain(": 36");
+    expect(doc).toContain("`compileSdk`: 36");
+    expect(doc).toContain("`targetSdk`: 36");
+    expect(doc).toContain("Content Rating (IARC)");
+    expect(doc).toContain("Data Safety Declarations");
   });
 });
