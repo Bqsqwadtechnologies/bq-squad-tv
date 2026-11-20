@@ -330,7 +330,7 @@ function ZillionaireMoviesPage({
     setActionFeedback(null);
     try {
       const headers = await getWebAuthHeaders();
-      const res = await fetch("/api/public/v1/zillionaire/content-assets/bulk-actions", {
+      const res = await fetch("/api/public/v1/zillionaire/content-assets/", {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
         body: JSON.stringify({
