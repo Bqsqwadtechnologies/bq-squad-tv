@@ -10,6 +10,7 @@ const REQUIRED_SLUGS = [
   "copyright-dmca",
   "help",
   "privacy-policy",
+  "producer-privacy",
   "producer-policy",
   "producer-terms",
   "provider-privacy",
@@ -31,10 +32,10 @@ const LINKED_FOOTER_AND_NAV_SLUGS = [
 ];
 
 describe("default legal page drafts", () => {
-  it("contains all 13 required unique audiences and slugs", () => {
+  it("contains all 14 required unique audiences and slugs", () => {
     const presentSlugs = pages.map((p) => p.slug).sort();
     expect(presentSlugs).toEqual(REQUIRED_SLUGS);
-    expect(new Set(presentSlugs).size).toBe(13);
+    expect(new Set(presentSlugs).size).toBe(14);
   });
 
   it("keeps seed pages as reviewable Markdown drafts without script tags", () => {
