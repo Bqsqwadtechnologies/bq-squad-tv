@@ -662,6 +662,11 @@ export function ContentDetailsPage() {
                   </div>
                 ) : null}
                 <div className="relative overflow-hidden rounded-2xl bg-black">
+                  {content.contentRating && (
+                    <div className="absolute left-3 top-3 z-10 rounded-lg border border-white/20 bg-black/80 px-3 py-1.5 text-xs font-bold text-white">
+                      AGE RATING: {content.contentRating}
+                    </div>
+                  )}
                   <video
                     ref={videoRef}
                     src={playbackUrl}
