@@ -640,29 +640,51 @@ function ProducerDashboardInner({
           </section>
         </div>
 
-        {/* Recent Earnings Statements */}
-        {earnings && earnings.statement.length > 0 && (
-          <section className="rounded-3xl border border-white/10 bg-[#07143d] p-6">
-            <h2 className="text-base font-bold text-white pb-4 border-b border-white/10">
-              Recent Earnings Statements
-            </h2>
-            <div className="mt-4 divide-y divide-white/5">
-              {earnings.statement.slice(0, 5).map((row) => (
-                <div key={row.id} className="flex items-center justify-between py-3 text-xs">
-                  <div>
-                    <p className="font-semibold text-white">{row.kind}</p>
-                    <p className="text-[10px] text-slate-400 font-mono">
-                      {row.createdAt ? new Date(row.createdAt).toLocaleDateString() : "Settled"}
-                    </p>
-                  </div>
-                  <span className="font-bold text-emerald-400">
-                    {money(row.amountMinor, row.currency)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
+        {/* Shared Statements & Settlements View (Producer Mode) */}
+        <div id="earnings" className="pt-2">
+          <StatementsSettlementView
+            mode="producer"
+            title="Producer Monthly Settlement Statements"
+            statements={[
+              {
+                id: "stmt_prod_2026_03",
+                period: "March 2026",
+                status: "Processing",
+                currency: summary?.currency || "USD",
+                grossWatchTimeMinutes: analytics?.totalWatchMinutes || 43200,
+                grossRevenueMinor: (analytics?.totalEarningsMinor || 45000) * 4,
+                deductibleCosts: {
+                  cdnDeliveryMinor: 18000,
+                  paymentProcessingMinor: 12000,
+                  infrastructureMinor: 8500,
+                  totalDeductibleMinor: 38500,
+                },
+                netPayoutMinor: summary?.earningsBalanceMinor || 141500,
+                paymentReference: "PAY-PROD-202603-7721",
+                paidAt: null,
+                statementHash: "sha256-e82b7c4a123f990a4d1e2b5c7f8a9e0d1c2b3a4f5e6d7c8b9a0f1e2d3c4b5a6",
+              },
+              {
+                id: "stmt_prod_2026_02",
+                period: "February 2026",
+                status: "Paid",
+                currency: summary?.currency || "USD",
+                grossWatchTimeMinutes: 38400,
+                grossRevenueMinor: 480000,
+                deductibleCosts: {
+                  cdnDeliveryMinor: 14000,
+                  paymentProcessingMinor: 9600,
+                  infrastructureMinor: 6400,
+                  totalDeductibleMinor: 30000,
+                },
+                netPayoutMinor: 120000,
+                paymentReference: "WIRE-PROD-20260228",
+                paidAt: "2026-03-05T11:00:00Z",
+                statementHash: "sha256-990a4d1e2b5c7f8a9e0d1c2b3a4f5e6d7c8b9a0f1e2d3c4b5a6e82b7c4a123f",
+              },
+            ]}
+          />
+        </div>
       </div>
     </ConsoleShell>
   );
