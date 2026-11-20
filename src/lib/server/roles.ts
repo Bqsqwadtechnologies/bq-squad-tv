@@ -83,10 +83,9 @@ export type OwnerEmailConfig = {
 
 export function getOwnerEmailConfig(): OwnerEmailConfig {
   const zillionaireEmail = (process.env["ZILLIONAIRE_EMAIL"] || "").trim().toLowerCase();
-  const legacyAdminEmail = (process.env["ADMIN_EMAIL"] || "").trim().toLowerCase();
   return {
     email: zillionaireEmail,
-    isLegacySecret: Boolean(!zillionaireEmail && legacyAdminEmail),
+    isLegacySecret: false,
   };
 }
 

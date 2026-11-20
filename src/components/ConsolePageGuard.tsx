@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { restoreWebSession, getWebAuthHeaders } from "@/lib/firebase-web-auth";
+import { restoreWebSession, getWebAuthHeaders, signInWithEmailPassword, createAccountWithEmailPassword, sendPasswordResetEmail, signOutWeb } from "@/lib/firebase-web-auth";
 import { NotFoundView } from "@/components/NotFoundView";
 
 export type ConsoleRole = "zillionaire" | "admin" | "producer" | "provider";
@@ -11,7 +11,6 @@ export type ConsoleAccount = {
   roles: string[];
   isOwner: boolean;
   needsOwnerVerification?: boolean;
-  legacySecretWarning?: boolean | undefined;
   modules: string[];
   producerPlanActive?: boolean;
   providerId?: string | null;
@@ -449,6 +448,306 @@ function AccessPasswordUnlockView({
   );
 }
 
+
+function ConsoleAuthPortal({
+  role,
+  currentAccount,
+}: {
+  role: ConsoleRole;
+  currentAccount?: ConsoleAccount;
+}) {
+  const [tab, setTab] = useState<"signin" | "register" | "reset">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [currency, setCurrency] = useState("NGN");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const consoleTitle = role === "producer" ? "Producer Console" : "Provider Console";
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+    setBusy(true);
+    setError("");
+    setSuccess("");
+    try {
+      await signInWithEmailPassword(email.trim(), password);
+      window.location.reload();
+    } catch (err: any) {
+      setError(err?.message || "Invalid console credentials. Please check your email and password.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+    setBusy(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      if (role === "provider") {
+        // Provider accounts require pre-approved email
+        const res = await fetch("/api/public/v1/provider/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: name.trim() || email.split("@")[0],
+            contactEmail: email.trim(),
+            settlementCurrency: currency,
+          }),
+        });
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.message || "Access denied. Contact tv@bqsqwad.com");
+        }
+      }
+
+      await createAccountWithEmailPassword(email.trim(), password);
+      setSuccess("Account created successfully. Loading your console...");
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err: any) {
+      setError(err?.message || "Registration failed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    setBusy(true);
+    setError("");
+    setSuccess("");
+    try {
+      await sendPasswordResetEmail(email.trim());
+      setSuccess("Password reset instructions have been sent to your email.");
+    } catch (err: any) {
+      setError(err?.message || "Failed to send reset email.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    setBusy(true);
+    try {
+      await signOutWeb();
+      window.location.reload();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#070e22] px-4 py-12 text-white">
+      <div className="w-full max-w-md rounded-3xl border border-cyan-500/20 bg-[#0a1435] p-8 shadow-2xl">
+        <div className="flex justify-center mb-6">
+          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-10 w-auto" />
+        </div>
+
+        <div className="text-center">
+          <span className="inline-block rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold tracking-widest text-cyan-300 uppercase">
+            {consoleTitle}
+          </span>
+          <h1 className="mt-3 text-2xl font-black">{consoleTitle} Access</h1>
+          <p className="mt-2 text-xs text-blue-100/70">
+            Dedicated creator & partner administration. Viewer sessions cannot open management consoles.
+          </p>
+        </div>
+
+        {currentAccount && (
+          <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs text-amber-200 text-center">
+            Signed in as <strong>{currentAccount.email}</strong> (Viewer role).
+            <button
+              onClick={handleSignOut}
+              disabled={busy}
+              className="mt-2 block w-full rounded-lg bg-amber-400/20 py-1.5 font-bold hover:bg-amber-400/30"
+            >
+              Sign Out & Switch to Console Account
+            </button>
+          </div>
+        )}
+
+        <div className="mt-6 flex border-b border-white/10 text-sm font-semibold">
+          <button
+            onClick={() => { setTab("signin"); setError(""); setSuccess(""); }}
+            className={`flex-1 pb-3 text-center transition ${tab === "signin" ? "border-b-2 border-cyan-400 text-cyan-300" : "text-blue-200/60 hover:text-white"}`}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => { setTab("register"); setError(""); setSuccess(""); }}
+            className={`flex-1 pb-3 text-center transition ${tab === "register" ? "border-b-2 border-cyan-400 text-cyan-300" : "text-blue-200/60 hover:text-white"}`}
+          >
+            Create Account
+          </button>
+          <button
+            onClick={() => { setTab("reset"); setError(""); setSuccess(""); }}
+            className={`flex-1 pb-3 text-center transition ${tab === "reset" ? "border-b-2 border-cyan-400 text-cyan-300" : "text-blue-200/60 hover:text-white"}`}
+          >
+            Reset
+          </button>
+        </div>
+
+        {error && (
+          <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/15 p-3 text-xs text-rose-300 text-center">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/15 p-3 text-xs text-emerald-300 text-center">
+            {success}
+          </div>
+        )}
+
+        {tab === "signin" && (
+          <form onSubmit={handleSignIn} className="mt-6 space-y-4">
+            <label className="block text-xs font-bold uppercase tracking-wider text-blue-200">
+              Console Email
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="partner@example.com"
+                className="mt-1 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300"
+              />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-blue-200">
+              Password
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="mt-1 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 py-3 font-extrabold text-[#030718] transition hover:brightness-110 disabled:opacity-50"
+            >
+              {busy ? "Signing in…" : "Sign In to Console"}
+            </button>
+          </form>
+        )}
+
+        {tab === "register" && (
+          <form onSubmit={handleRegister} className="mt-6 space-y-4">
+            {role === "provider" && (
+              <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/10 p-3 text-xs text-cyan-200">
+                Provider registrations are restricted to pre-approved partner email addresses.
+              </div>
+            )}
+            <label className="block text-xs font-bold uppercase tracking-wider text-blue-200">
+              {role === "producer" ? "Brand or Studio Name" : "Provider Entity Name"}
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={role === "producer" ? "Apex Studios" : "Global Distribution Ltd"}
+                className="mt-1 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300"
+              />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-blue-200">
+              Email Address
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="partner@example.com"
+                className="mt-1 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300"
+              />
+            </label>
+            <label className="block text-xs font-bold uppercase tracking-wider text-blue-200">
+              Password
+              <input
+                type="password"
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                className="mt-1 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300"
+              />
+            </label>
+            {role === "provider" && (
+              <label className="block text-xs font-bold uppercase tracking-wider text-blue-200">
+                Settlement Currency
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300"
+                >
+                  <option value="NGN">NGN - Nigerian Naira</option>
+                  <option value="USD">USD - US Dollar</option>
+                  <option value="GBP">GBP - British Pound</option>
+                </select>
+              </label>
+            )}
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 py-3 font-extrabold text-[#030718] transition hover:brightness-110 disabled:opacity-50"
+            >
+              {busy ? "Registering…" : "Register Console Account"}
+            </button>
+          </form>
+        )}
+
+        {tab === "reset" && (
+          <form onSubmit={handleReset} className="mt-6 space-y-4">
+            <label className="block text-xs font-bold uppercase tracking-wider text-blue-200">
+              Console Account Email
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="partner@example.com"
+                className="mt-1 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 py-3 font-extrabold text-[#030718] transition hover:brightness-110 disabled:opacity-50"
+            >
+              {busy ? "Sending…" : "Send Reset Email"}
+            </button>
+          </form>
+        )}
+
+        <div className="mt-8 border-t border-white/10 pt-4 text-center">
+          <button
+            onClick={async () => {
+              if (window.confirm("Sign out of all sessions across all devices?")) {
+                await fetch("/api/public/v1/auth/devices/signout-all", { method: "POST" }).catch(() => undefined);
+                await signOutWeb();
+                window.location.reload();
+              }
+            }}
+            className="text-xs text-blue-200/50 hover:text-rose-300"
+          >
+            Security Emergency: Sign out everywhere
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ConsolePageGuard({
   role,
   module: requiredModule,
@@ -456,7 +755,7 @@ export function ConsolePageGuard({
 }: ConsolePageGuardProps) {
   const [state, setState] = useState<
     | { status: "checking" }
-    | { status: "denied" }
+    | { status: "denied"; token?: string; account?: ConsoleAccount }
     | { status: "unverified_owner"; token: string; email: string }
     | { status: "setup_required" }
     | { status: "mfa_setup"; token: string }
@@ -558,7 +857,7 @@ export function ConsolePageGuard({
         }
 
         if (active) {
-          setState(authorized ? { status: "authorized", token, account } : { status: "denied" });
+          setState(authorized ? { status: "authorized", token, account } : { status: "denied", token, account });
         }
       } catch {
         if (active) setState({ status: "denied" });
@@ -647,17 +946,15 @@ export function ConsolePageGuard({
   }
 
   if (state.status === "denied") {
-    return <NotFoundView />;
+    if (isZillionaireRoute) {
+      return <NotFoundView />;
+    }
+    return <ConsoleAuthPortal role={role} currentAccount={state.account} />;
   }
 
   return (
     <>
-      {state.account.legacySecretWarning && (
-        <div className="bg-amber-500/20 border-b border-amber-500/30 px-4 py-2 text-center text-xs text-amber-200">
-          <strong>Security Notice:</strong> The legacy secret <code>ADMIN_EMAIL</code> is currently
-          in use. Please rename it to <code>ZILLIONAIRE_EMAIL</code> in your project settings.
-        </div>
-      )}
+
       {typeof children === "function"
         ? children({ token: state.token, account: state.account, onLock: handleLock })
         : children}
