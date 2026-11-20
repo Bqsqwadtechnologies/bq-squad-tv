@@ -984,7 +984,6 @@ function ProducerChannelsInner({
                     />
                   </div>
                 </div>
-                </div>
               )}
 
               {/* Actions */}
