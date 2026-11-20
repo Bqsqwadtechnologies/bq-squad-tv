@@ -1,4 +1,5 @@
 import React, { useState, type FormEvent } from "react";
+import { ALL_COUNTRIES } from "../lib/kyc-country-rules";
 import {
   AlertCircle,
   Building,
@@ -409,14 +410,18 @@ export function ProviderRegistrationFlow({
                   <label className="block font-bold text-slate-300 uppercase mb-1">
                     Country of Incorporation
                   </label>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
-                    placeholder="e.g. Nigeria"
                     className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2.5 text-white"
-                  />
+                  >
+                    {ALL_COUNTRIES.map((entry) => (
+                      <option key={entry.code} value={entry.name}>
+                        {entry.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block font-bold text-slate-300 uppercase mb-1">

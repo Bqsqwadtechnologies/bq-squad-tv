@@ -691,3 +691,15 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - Added strict document validation (MIME types, 10KB min / 10MB max, magic bytes checks, SHA-256 hashing) and short-lived 60-second signed viewer URLs with forensic watermark overlay metadata.
   - Documented secret keys in `docs/OWNER-ACTIONS.md`.
   - Verified with dedicated unit test suite (`src/test/batch-a1-kyc-storage.test.ts`).
+
+## V6-05 Batch A2: Country-First KYC with Global Coverage
+
+- **Status**: Implemented & Verified
+- **Date**: 2026-11-20
+- **Scope & Rationale**:
+  - Added a global directory with 193 countries and ISO-3166 alpha-2 codes in `src/lib/kyc-country-rules.ts`.
+  - Defined tailored ID types, tax formats, company registration rules, address labels, and bank-code systems for Nigeria, UK, US, Ghana, Kenya, and South Africa.
+  - Added safe generic KYC requirements for all other countries; generic rules are non-blocking and retain passport/national ID options.
+  - Integrated the full country directory into provider registration via a country selector.
+  - Added reusable country format validation and automated coverage for country data, validators, tailored rules, and generic fallback.
+  - Verified country test suite (5 passed), production build, and public text scan.
