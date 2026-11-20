@@ -86,7 +86,27 @@ data class GoogleAuthConfigResponse(
     val googleClientId: String = "",
 )
 
+data class PublicClientConfigResponse(
+    val maintenance: MaintenanceStatus = MaintenanceStatus(),
+    val appVersion: AndroidVersionStatus = AndroidVersionStatus(),
+)
+
+data class MaintenanceStatus(
+    val active: Boolean = false,
+    val message: String = "",
+)
+
+data class AndroidVersionStatus(
+    val minAndroidVersionCode: Int = 1,
+    val latestAndroidVersionCode: Int = 1,
+    val forceUpdateAndroid: Boolean = false,
+    val androidUpdateUrl: String = "",
+)
+
 interface ProfileApi {
+    @GET("v1/config/client")
+    suspend fun publicClientConfig(): PublicClientConfigResponse
+
     @GET("v1/auth/web/config")
     suspend fun googleAuthConfig(): GoogleAuthConfigResponse
 

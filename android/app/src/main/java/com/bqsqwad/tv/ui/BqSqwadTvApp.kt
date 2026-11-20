@@ -28,11 +28,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
 import com.bqsqwad.tv.data.auth.AuthRepository
+import com.bqsqwad.tv.BuildConfig
 import com.bqsqwad.tv.ui.player.PlayerScreen
 import com.bqsqwad.tv.ui.screens.*
 import com.google.firebase.auth.FirebaseAuth
@@ -62,6 +64,47 @@ fun BqSqwadTvApp(
     val nav = rememberNavController()
     val auth = remember { AuthRepository() }
     val scope = rememberCoroutineScope()
+    val uriHandler = LocalUriHandler.current
+    var maintenanceMessage by remember { mutableStateOf<String?>(null) }
+    var maintenanceActive by remember { mutableStateOf(false) }
+    var forceUpdateUrl by remember { mutableStateOf<String?>(null) }
+    var updateRequired by remember { mutableStateOf(false) }
+    var publicConfigLoaded by remember { mutableStateOf(false) }
+    fun refreshPublicConfig() {
+        scope.launch {
+            runCatching { auth.publicClientConfig() }.onSuccess { config ->
+                maintenanceActive = config.maintenance.active
+                maintenanceMessage = config.maintenance.message
+                val version = config.appVersion
+                updateRequired = version.forceUpdateAndroid && BuildConfig.VERSION_CODE < version.minAndroidVersionCode
+                forceUpdateUrl = version.androidUpdateUrl.ifBlank { null }
+            }
+            publicConfigLoaded = true
+        }
+    }
+    LaunchedEffect(Unit) { refreshPublicConfig() }
+    if (!publicConfigLoaded) {
+        Surface(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+        }
+        return
+    }
+    if (updateRequired) {
+        Surface(Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxSize().padding(28.dp), verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("Update required", style = androidx.compose.material3.MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(8.dp))
+                Text("Install the latest version of BQ SQWAD TV to continue.")
+                Spacer(Modifier.height(16.dp))
+                androidx.compose.material3.Button(onClick = { forceUpdateUrl?.let { runCatching { uriHandler.openUri(it) } } }, enabled = !forceUpdateUrl.isNullOrBlank()) { Text("Get the update") }
+            }
+        }
+        return
+    }
+    if (maintenanceActive) {
+        MaintenanceScreen(onRetry = { refreshPublicConfig() })
+        return
+    }
     val signedInUid = FirebaseAuth.getInstance().currentUser?.uid
     var launchComplete by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {

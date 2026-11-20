@@ -45,6 +45,8 @@ class AuthRepository(
 
     suspend fun googleWebClientId(): String = profileApi.googleAuthConfig().googleClientId.trim()
 
+    suspend fun publicClientConfig(): PublicClientConfigResponse = profileApi.publicClientConfig()
+
     private suspend fun currentBearerToken(): String {
         val user = auth.currentUser ?: error("Sign in before continuing.")
         val token = user.getIdToken(false).awaitResult().token

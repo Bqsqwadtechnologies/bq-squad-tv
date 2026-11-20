@@ -32,3 +32,5 @@ Disallow: /zillionaire
 Disallow: /api/
 Disallow: /producer
 Disallow: /provider
+
+Sitemap: https://bqsqwad.com/sitemap.xml
