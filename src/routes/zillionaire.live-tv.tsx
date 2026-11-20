@@ -63,6 +63,9 @@ type LiveChannel = {
   } | null;
   expiryDate: string | null;
   expiryWarning: string;
+  approvalStatus?: string;
+  rightsEvidence?: { licenceNumber?: string; licenceContractUrl?: string; territories?: string[] } | null;
+  scheduledStartAt?: string | null;
   epgProgrammes: Programme[];
 };
 
@@ -339,7 +342,20 @@ function LiveTvPage({
                         {channel.logoUrl ? <img src={channel.logoUrl} alt="" className="h-full w-full object-cover" /> : <Tv className="h-5 w-5 text-cyan-300" />}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2 font-semibold text-white">{channel.title}<ConsoleStatusBadge status={channel.isLive ? "active" : "warning"} label={channel.streamStatus} /></div>
+                        <div className="flex flex-wrap items-center gap-2 font-semibold text-white">
+                          {channel.title}
+                          <span className={`rounded px-2 py-0.5 text-xs font-semibold ${
+                            channel.approvalStatus === "live" || channel.isLive ? "bg-emerald-900/60 text-emerald-300 border border-emerald-700" :
+                            channel.approvalStatus === "scheduled" ? "bg-purple-900/60 text-purple-300 border border-purple-700" :
+                            channel.approvalStatus === "approved" ? "bg-sky-900/60 text-sky-300 border border-sky-700" :
+                            channel.approvalStatus === "suspended" ? "bg-amber-950 text-amber-300 border border-amber-800" :
+                            channel.approvalStatus === "rejected" ? "bg-rose-950 text-rose-300 border border-rose-800" :
+                            channel.approvalStatus === "submitted" || channel.submissionStatus === "PENDING_APPROVAL" ? "bg-yellow-950 text-yellow-300 border border-yellow-800" :
+                            "bg-slate-800 text-slate-300"
+                          }`}>
+                            {channel.approvalStatus ? channel.approvalStatus.toUpperCase() : channel.streamStatus}
+                          </span>
+                        </div>
                         <p className="text-xs text-slate-400">{channel.handle} · {channel.category} · {channel.language} · {channel.ageRating}</p>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-slate-300"><Users className="h-4 w-4" />{channel.viewerCount.toLocaleString()} viewers</div>
@@ -372,9 +388,32 @@ function LiveTvPage({
                         }} className="rounded-lg border border-red-800 px-3 py-2 text-xs font-semibold text-red-200">Reject</button>
                       </div>
                     )}
-                    <button onClick={() => void toggleLive(channel)} disabled={busy} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 ${channel.isLive ? "bg-red-700 hover:bg-red-600" : "bg-emerald-700 hover:bg-emerald-600"}`}>
-                      {busy && <LoaderCircle className="mr-2 inline h-4 w-4 animate-spin" />}{channel.isLive ? "End live" : "Go live"}
-                    </button>
+                    {channel.rightsEvidence && (
+                      <div className="rounded border border-slate-800 bg-slate-900/40 p-2 text-xs text-slate-300">
+                        <span className="font-semibold text-slate-400">Rights verification:</span> {channel.rightsEvidence.licenceNumber ? `Licence #${channel.rightsEvidence.licenceNumber}` : "Documentation attached"}
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button onClick={() => void toggleLive(channel)} disabled={busy || channel.approvalStatus === "submitted" || channel.approvalStatus === "rejected" || channel.approvalStatus === "suspended"} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 ${channel.isLive ? "bg-amber-700 hover:bg-amber-600" : "bg-emerald-700 hover:bg-emerald-600"}`}>
+                        {busy && <LoaderCircle className="mr-2 inline h-4 w-4 animate-spin" />}{channel.isLive ? "End live" : "Go live"}
+                      </button>
+                      {(channel.isLive || channel.streamStatus === "LIVE") && (
+                        <button onClick={() => {
+                          const reason = window.prompt("Reason for emergency force stop?");
+                          if (reason?.trim()) void act({ action: "FORCE_STOP", channelId: channel.id, reason });
+                        }} disabled={busy} className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600">
+                          Force stop
+                        </button>
+                      )}
+                      {channel.approvalStatus === "approved" && (
+                        <button onClick={() => {
+                          const scheduledStartAt = window.prompt("Scheduled start time (ISO string)?", new Date().toISOString());
+                          if (scheduledStartAt?.trim()) void act({ action: "SCHEDULE_LIVE", channelId: channel.id, scheduledStartAt: scheduledStartAt.trim(), reason: "Scheduled broadcast" });
+                        }} disabled={busy} className="rounded-lg bg-purple-700 px-3 py-2 text-xs font-semibold text-white hover:bg-purple-600">
+                          Schedule broadcast
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">

@@ -490,3 +490,22 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - `keep` (dismisses claim, clears under-review status, restores video to published status)
   - `restore` (restores content after successful counter-notice resolution).
 - Batch 4 finished, continuing.
+
+## Batch 5 — Live stream approval workflow, state machine transitions, HLS validation, and broadcast controls
+
+### 1. Mandatory Pre-Air Live Stream Approvals
+- **Decision**: No live stream may broadcast until approved by the platform owner or an operator assigned the delegated `live_approvals` role.
+- **Decision**: Added `live_approvals` and `rights_review` modules to `ZillionaireModule` with backward compatibility falling back to `channels` and `content`/`moderation`.
+
+### 2. Live Stream State Machine
+- **Decision**: Implemented formal lifecycle states: `draft` -> `submitted` -> `approved` -> `scheduled` -> `live` -> `ended`, with dedicated `rejected` and `suspended` branches.
+- **Decision**: The `GO_LIVE` action strictly enforces that streams must be in `approved` or `scheduled` state before going on-air; attempts to broadcast from unapproved or suspended states return explicit errors.
+
+### 3. Submission Technical & Rights Proof Guardrails
+- **Decision**: Enforced HTTPS HLS playlist verification (`https://...` ending in `.m3u8`) across platform and provider channel endpoints.
+- **Decision**: Enforced rights verification documentation (licence number or executed agreement) prior to submission.
+
+### 4. Immediate Force-Stop Emergency Control & Visual State Badges
+- **Decision**: Added owner emergency `FORCE_STOP` action in API and live TV console (`zillionaire.live-tv.tsx`) that immediately cuts live playback, marks stream as `suspended`, audits action, and sends priority notice to the channel operator.
+- **Decision**: Updated live TV console with distinct status badges and scheduling controls.
+- Batch 5 finished, continuing.

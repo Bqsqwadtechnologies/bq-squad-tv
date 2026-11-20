@@ -61,6 +61,24 @@ export const Route = createFileRoute("/api/public/v1/provider/channels")({
             );
           }
 
+          const streamUrl = (body.streamUrl || "").trim();
+          if (!streamUrl || !streamUrl.startsWith("https://") || !/\.m3u8(?:$|[?#])/i.test(streamUrl)) {
+            return Response.json(
+              { error: "A valid HTTPS HLS stream URL ending in .m3u8 is required." },
+              { status: 400 },
+            );
+          }
+
+          if (
+            !body.rightsEvidence ||
+            (!body.rightsEvidence.licenceNumber && !body.rightsEvidence.licenceContractUrl)
+          ) {
+            return Response.json(
+              { error: "Rights proof (licence number or contract URL) is required before submitting a live stream." },
+              { status: 400 },
+            );
+          }
+
           const channelId = "chan_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
           const slug = (body.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, "-")).slice(0, 50);
           const now = new Date().toISOString();
@@ -84,7 +102,10 @@ export const Route = createFileRoute("/api/public/v1/provider/channels")({
             categories,
             language,
             country,
-            status: "in_review", // Must be approved by owner before going live
+            status: "in_review",
+            approvalStatus: "submitted",
+            streamStatus: "OFFLINE",
+            isLive: false,
             published: false,
             health: "healthy",
             bandwidthCapGbps,

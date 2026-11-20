@@ -93,6 +93,23 @@ const actionSchema = z.discriminatedUnion("action", [
     failoverActive: z.boolean(),
     reason: z.string().trim().min(3).max(1000),
   }),
+  z.object({
+    action: z.literal("SCHEDULE_LIVE"),
+    channelId: z.string().trim().min(1).max(80),
+    scheduledStartAt: z.string().trim().min(4).max(100),
+    scheduledEndAt: z.string().trim().max(100).optional(),
+    reason: z.string().trim().min(3).max(1000),
+  }),
+  z.object({
+    action: z.literal("FORCE_STOP"),
+    channelId: z.string().trim().min(1).max(80),
+    reason: z.string().trim().min(3).max(1000),
+  }),
+  z.object({
+    action: z.literal("SUSPEND"),
+    channelId: z.string().trim().min(1).max(80),
+    reason: z.string().trim().min(3).max(1000),
+  }),
 ]);
 
 
@@ -104,7 +121,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
           const request = event.request;
           const user = await requireUser(request);
           const fs = await Firestore.create();
-          await requireZillionaireModule(fs, user, "channels");
+          await requireZillionaireModule(fs, user, "live_approvals");
 
           const channels = (await fs.query("channels", { limit: 100 })) || [];
           const liveChannels = channels.filter((c) => isLiveChannel(c));
@@ -156,6 +173,9 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               isLive: Boolean(ch["isLive"]),
               streamStatus: ch["streamStatus"] || (ch["isLive"] ? "LIVE" : "OFFLINE"),
               submissionStatus: ch["submissionStatus"] || (ch["ownerUid"] === "platform" ? "APPROVED" : "PENDING_APPROVAL"),
+              approvalStatus: (ch["approvalStatus"] as string) || (ch["isLive"] ? "live" : ch["submissionStatus"] === "APPROVED" ? "approved" : "submitted"),
+              rightsEvidence: ch["rightsEvidence"] || null,
+              scheduledStartAt: ch["scheduledStartAt"] || null,
               submittedBy: ch["submittedBy"] || ch["ownerUid"] || "platform",
               type: ch["type"] || (ch["ownerUid"] === "platform" ? "platform" : "provider"),
               viewerCount: viewersCountByChannel[id] || 0,
@@ -203,7 +223,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
             }
           }
           const fs = await Firestore.create();
-          await requireZillionaireModule(fs, user, "channels");
+          await requireZillionaireModule(fs, user, "live_approvals");
 
           const now = new Date().toISOString();
 
@@ -234,6 +254,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               published: true,
               isLive: false,
               streamStatus: "OFFLINE",
+              approvalStatus: "ended",
               submissionStatus: "APPROVED",
               playbackHealth: null,
               createdAt: now,
@@ -258,8 +279,19 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
             if (!existing) throw new ApiError(404, "CHANNEL_NOT_FOUND", "Live channel not found.");
             if (!isLiveChannel(existing))
               throw new ApiError(409, "NOT_A_LIVE_CHANNEL", "This action is only available for live channels.");
-            if (existing["submissionStatus"] === "PENDING_APPROVAL" || existing["submissionStatus"] === "REJECTED")
+            const appStatus = (existing["approvalStatus"] as string) || "";
+            if (appStatus === "suspended" || existing["streamStatus"] === "SUSPENDED") {
+              throw new ApiError(403, "CHANNEL_SUSPENDED", "This channel has been suspended and cannot go live.");
+            }
+            if (
+              existing["submissionStatus"] === "PENDING_APPROVAL" ||
+              existing["submissionStatus"] === "REJECTED" ||
+              appStatus === "submitted" ||
+              appStatus === "rejected" ||
+              appStatus === "draft"
+            ) {
               throw new ApiError(409, "CHANNEL_NOT_APPROVED", "This channel must be approved before going live.");
+            }
             if (typeof existing["streamUrl"] !== "string" || !existing["streamUrl"])
               throw new ApiError(409, "STREAM_NOT_CONFIGURED", "A primary stream must be configured before going live.");
             const updated = {
@@ -267,6 +299,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               id: body.channelId,
               isLive: true,
               streamStatus: "LIVE",
+              approvalStatus: "live",
               liveStartedAt: now,
               playbackHealth: existing["playbackHealth"] || null,
               updatedAt: now,
@@ -293,6 +326,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               id: body.channelId,
               isLive: false,
               streamStatus: "OFFLINE",
+              approvalStatus: "ended",
               liveEndedAt: now,
               updatedAt: now,
             };
@@ -317,6 +351,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               ...existing,
               id: body.channelId,
               submissionStatus: "APPROVED",
+              approvalStatus: "approved",
               approvedBy: user.uid,
               approvedAt: now,
               status: "ACTIVE",
@@ -344,10 +379,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               ...existing,
               id: body.channelId,
               submissionStatus: "REJECTED",
+              approvalStatus: "rejected",
               rejectedReason: body.rejectionReason,
               status: "REJECTED",
               isLive: false,
               streamStatus: "OFFLINE",
+              approvalStatus: "ended",
               updatedAt: now,
             };
             await fs.setDoc(`channels/${body.channelId}`, updated);
@@ -415,6 +452,79 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               metadata: { status, bitrateMbps: body.bitrateMbps, bufferingPct: body.bufferingPct, errorRatePct: body.errorRatePct },
             });
             return Response.json({ success: true, channelId: body.channelId, playbackHealth });
+          }
+
+                    if (body.action === "SCHEDULE_LIVE") {
+            const existing = await fs.getDoc(`channels/${body.channelId}`);
+            if (!existing) throw new ApiError(404, "CHANNEL_NOT_FOUND", "Live channel not found.");
+            if (!isLiveChannel(existing))
+              throw new ApiError(409, "NOT_A_LIVE_CHANNEL", "This action is only available for live channels.");
+            if (existing["submissionStatus"] !== "APPROVED" && existing["approvalStatus"] !== "approved") {
+              throw new ApiError(409, "CHANNEL_NOT_APPROVED", "Only approved channels can be scheduled.");
+            }
+            const updated = {
+              ...existing,
+              id: body.channelId,
+              streamStatus: "SCHEDULED",
+              approvalStatus: "scheduled",
+              scheduledStartAt: body.scheduledStartAt,
+              scheduledEndAt: body.scheduledEndAt || null,
+              updatedAt: now,
+            };
+            await fs.setDoc(`channels/${body.channelId}`, updated);
+            await writeAuditLog(fs, {
+              actorUid: user.uid,
+              action: "live_channel.scheduled",
+              targetType: "channel",
+              targetId: body.channelId,
+              reason: body.reason,
+              metadata: { scheduledStartAt: body.scheduledStartAt },
+            });
+            return Response.json({ success: true, channelId: body.channelId, approvalStatus: "scheduled" });
+          }
+
+          if (body.action === "FORCE_STOP" || body.action === "SUSPEND") {
+            const existing = await fs.getDoc(`channels/${body.channelId}`);
+            if (!existing) throw new ApiError(404, "CHANNEL_NOT_FOUND", "Live channel not found.");
+            if (!isLiveChannel(existing))
+              throw new ApiError(409, "NOT_A_LIVE_CHANNEL", "This action is only available for live channels.");
+            const updated = {
+              ...existing,
+              id: body.channelId,
+              isLive: false,
+              streamStatus: "SUSPENDED",
+              approvalStatus: "suspended",
+              suspendedReason: body.reason,
+              forceStoppedAt: now,
+              forceStoppedBy: user.uid,
+              updatedAt: now,
+            };
+            await fs.setDoc(`channels/${body.channelId}`, updated);
+            await writeAuditLog(fs, {
+              actorUid: user.uid,
+              action: "live_channel.force_stopped",
+              targetType: "channel",
+              targetId: body.channelId,
+              reason: body.reason,
+              metadata: { forceStoppedBy: user.uid, forceStoppedAt: now },
+            });
+
+            // Notify submitter immediately
+            const submitter = String(existing["ownerUid"] || existing["submittedBy"] || "");
+            if (submitter && submitter !== "platform" && submitter !== user.uid) {
+              const notificationId = crypto.randomUUID().replace(/-/g, "");
+              await fs.setDoc(`users/${submitter}/notifications/${notificationId}`, {
+                notificationId,
+                title: `Broadcast Suspended: ${existing["title"] || body.channelId}`,
+                body: `Your live stream was force-stopped by platform operations: ${body.reason}`,
+                deepLink: "/provider/channels",
+                read: false,
+                deliveryStatus: "queued",
+                createdAt: now,
+              }).catch(() => null);
+            }
+
+            return Response.json({ success: true, channelId: body.channelId, isLive: false, streamStatus: "SUSPENDED", approvalStatus: "suspended" });
           }
 
           throw new ApiError(400, "INVALID_ACTION", "Unknown action provided.");

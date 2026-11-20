@@ -28,7 +28,9 @@ export type ZillionaireModule =
   | "support"
   | "pages"
   | "finance"
-  | "catalog";
+  | "catalog"
+  | "live_approvals"
+  | "rights_review";
 
 // Backward-compatible type alias during migration
 export type AdminModule = ZillionaireModule;
@@ -71,6 +73,8 @@ export const ZILLIONAIRE_MODULES: ZillionaireModule[] = [
   "pages",
   "finance",
   "catalog",
+  "live_approvals",
+  "rights_review",
 ];
 
 // Backward-compatible constant alias
@@ -104,6 +108,8 @@ export function hasModuleAccess(
   required: ZillionaireModule,
 ): boolean {
   if (activeModules.includes(required)) return true;
+  if (required === "live_approvals" && (activeModules.includes("channels") || activeModules.includes("live_approvals"))) return true;
+  if (required === "rights_review" && (activeModules.includes("content") || activeModules.includes("moderation") || activeModules.includes("rights_review"))) return true;
   // Module family aliases: finance covers payments, payouts, wallets; catalog covers content
   if (
     (required === "payments" || required === "payouts" || required === "wallets") &&
