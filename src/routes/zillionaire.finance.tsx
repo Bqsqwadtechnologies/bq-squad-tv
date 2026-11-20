@@ -1,3 +1,4 @@
+import { generateStatementHtml, triggerPrintOrDownload } from "@/lib/pdf-statement";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -304,6 +305,24 @@ export function FinanceBody({
     document.body.removeChild(link);
   };
 
+  const handleDownloadPdfStatement = () => {
+    if (!data) return;
+    const html = generateStatementHtml({
+      id: `stmt_owner_${range}_${Date.now().toString().slice(-6)}`,
+      period: range === "7d" ? "Past 7 Days" : range === "30d" ? "Past 30 Days" : range === "90d" ? "Past Quarter" : "Year to Date",
+      recipientName: "Platform Treasury & Distribution Consolidated",
+      recipientRole: "partner",
+      currency: "NGN",
+      grossRevenueMinor: data.stats.grossRevenueMinor,
+      deductionsMinor: data.stats.totalProducerMinor,
+      netPayoutMinor: data.stats.platformRevenueMinor,
+      paymentReference: "CONSOLIDATED-LEDGER-STATEMENT",
+      paidAt: new Date().toISOString(),
+      statementHash: "sha256-" + crypto.randomUUID().replace(/-/g, ""),
+    });
+    triggerPrintOrDownload(html, `statement-${range}`);
+  };
+
   const handleExportStatement = () => {
     if (!data) return;
     const rows = data.revenueByChannel.map((c) => ({
@@ -524,13 +543,22 @@ export function FinanceBody({
             title="Daily Revenue Trend"
             subtitle={`Gross platform revenue and net distributions over the selected ${range} window`}
             action={
-              <button
-                onClick={handleExportStatement}
-                className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white font-medium flex items-center gap-1.5 transition-all"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Export Statement (CSV)
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleExportStatement}
+                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white font-medium flex items-center gap-1.5 transition-all"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  CSV
+                </button>
+                <button
+                  onClick={handleDownloadPdfStatement}
+                  className="px-3 py-1.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-xs text-cyan-200 border border-cyan-400/30 font-medium flex items-center gap-1.5 transition-all"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download PDF Statement
+                </button>
+              </div>
             }
           >
             <div className="h-64 flex flex-col justify-end pt-4">

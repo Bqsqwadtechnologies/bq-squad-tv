@@ -1,3 +1,4 @@
+import { getNextPayoutWindow } from "@/lib/payout-calendar";
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
 import { ConsoleShell, ConsoleKpiCard } from "@/components/ConsoleShell";
 import { useEffect, useState, type FormEvent } from "react";
@@ -116,6 +117,7 @@ function ProducerDashboardInner({
   const [legalConsentChecked, setLegalConsentChecked] = useState(false);
   const [legalBusy, setLegalBusy] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState<"24h" | "7d" | "30d" | "12m">("30d");
+  const payoutWindow = getNextPayoutWindow();
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(true);
@@ -646,6 +648,35 @@ function ProducerDashboardInner({
               </a>
             </div>
           </section>
+        </div>
+
+        {/* Next Payout Calendar & Disclosure Banner */}
+        <div className="rounded-2xl border border-cyan-400/20 bg-[#040e30]/80 p-5 shadow-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <Calendar className="h-5 w-5 text-cyan-300 mt-0.5 shrink-0" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+                    Next Payout Schedule
+                  </span>
+                  <span className="rounded-full bg-cyan-400/10 px-2 py-0.5 text-[10px] font-mono font-semibold text-cyan-200">
+                    {payoutWindow.nextPayoutDateFormatted}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-slate-300 leading-relaxed font-medium">
+                  {payoutWindow.disclosure}
+                </p>
+              </div>
+            </div>
+            <a
+              href="/payment-and-payout-policy"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-300 hover:text-cyan-200 shrink-0 self-start sm:self-center"
+            >
+              <span>Disbursement Policy</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+          </div>
         </div>
 
         {/* Shared Statements & Settlements View (Producer Mode) */}

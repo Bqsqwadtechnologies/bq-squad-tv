@@ -27,6 +27,7 @@ import { Route as MoviesRouteImport } from './routes/movies'
 import { Route as NotAvailableRouteImport } from './routes/not-available'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as OfflineRouteImport } from './routes/offline'
+import { Route as PaymentAndPayoutPolicyRouteImport } from './routes/payment-and-payout-policy'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProducerPrivacyRouteImport } from './routes/producer-privacy'
 import { Route as ProducerTermsRouteImport } from './routes/producer-terms'
@@ -416,6 +417,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
 const OfflineRoute = OfflineRouteImport.update({
   id: '/offline',
   path: '/offline',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentAndPayoutPolicyRoute = PaymentAndPayoutPolicyRouteImport.update({
+  id: '/payment-and-payout-policy',
+  path: '/payment-and-payout-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -2159,6 +2165,7 @@ export interface FileRoutesByFullPath {
   '/not-available': typeof NotAvailableRoute
   '/notifications': typeof NotificationsRoute
   '/offline': typeof OfflineRoute
+  '/payment-and-payout-policy': typeof PaymentAndPayoutPolicyRoute
   '/privacy': typeof PrivacyRoute
   '/producer-privacy': typeof ProducerPrivacyRoute
   '/producer-terms': typeof ProducerTermsRoute
@@ -2479,6 +2486,7 @@ export interface FileRoutesByTo {
   '/not-available': typeof NotAvailableRoute
   '/notifications': typeof NotificationsRoute
   '/offline': typeof OfflineRoute
+  '/payment-and-payout-policy': typeof PaymentAndPayoutPolicyRoute
   '/privacy': typeof PrivacyRoute
   '/producer-privacy': typeof ProducerPrivacyRoute
   '/producer-terms': typeof ProducerTermsRoute
@@ -2799,6 +2807,7 @@ export interface FileRoutesById {
   '/not-available': typeof NotAvailableRoute
   '/notifications': typeof NotificationsRoute
   '/offline': typeof OfflineRoute
+  '/payment-and-payout-policy': typeof PaymentAndPayoutPolicyRoute
   '/privacy': typeof PrivacyRoute
   '/producer-privacy': typeof ProducerPrivacyRoute
   '/producer-terms': typeof ProducerTermsRoute
@@ -3121,6 +3130,7 @@ export interface FileRouteTypes {
     | '/not-available'
     | '/notifications'
     | '/offline'
+    | '/payment-and-payout-policy'
     | '/privacy'
     | '/producer-privacy'
     | '/producer-terms'
@@ -3441,6 +3451,7 @@ export interface FileRouteTypes {
     | '/not-available'
     | '/notifications'
     | '/offline'
+    | '/payment-and-payout-policy'
     | '/privacy'
     | '/producer-privacy'
     | '/producer-terms'
@@ -3760,6 +3771,7 @@ export interface FileRouteTypes {
     | '/not-available'
     | '/notifications'
     | '/offline'
+    | '/payment-and-payout-policy'
     | '/privacy'
     | '/producer-privacy'
     | '/producer-terms'
@@ -4081,6 +4093,7 @@ export interface RootRouteChildren {
   NotAvailableRoute: typeof NotAvailableRoute
   NotificationsRoute: typeof NotificationsRoute
   OfflineRoute: typeof OfflineRoute
+  PaymentAndPayoutPolicyRoute: typeof PaymentAndPayoutPolicyRoute
   PrivacyRoute: typeof PrivacyRoute
   ProducerPrivacyRoute: typeof ProducerPrivacyRoute
   ProducerTermsRoute: typeof ProducerTermsRoute
@@ -4475,6 +4488,13 @@ declare module '@tanstack/react-router' {
       path: '/offline'
       fullPath: '/offline'
       preLoaderRoute: typeof OfflineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment-and-payout-policy': {
+      id: '/payment-and-payout-policy'
+      path: '/payment-and-payout-policy'
+      fullPath: '/payment-and-payout-policy'
+      preLoaderRoute: typeof PaymentAndPayoutPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -6865,6 +6885,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotAvailableRoute: NotAvailableRoute,
   NotificationsRoute: NotificationsRoute,
   OfflineRoute: OfflineRoute,
+  PaymentAndPayoutPolicyRoute: PaymentAndPayoutPolicyRoute,
   PrivacyRoute: PrivacyRoute,
   ProducerPrivacyRoute: ProducerPrivacyRoute,
   ProducerTermsRoute: ProducerTermsRoute,

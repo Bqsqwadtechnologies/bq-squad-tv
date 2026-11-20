@@ -40,7 +40,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/")({
               (p) =>
                 String(p.__id || p["id"] || "").toLowerCase().includes(q) ||
                 ((p["uid"] as string) || "").toLowerCase().includes(q) ||
-                ((p["settlementReference"] as string) || "").toLowerCase().includes(q),
+                ((p["settlementReference"] as string) || "").toLowerCase().includes(q) ||
+                ((p["reversalReference"] as string) || "").toLowerCase().includes(q),
             );
           }
 
@@ -49,16 +50,21 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/")({
               id: p.__id || p["id"],
               uid: p["uid"] || "",
               amountMinor: Number(p["amountMinor"] || 0),
+              paidAmountMinor: p["paidAmountMinor"] !== undefined ? Number(p["paidAmountMinor"]) : undefined,
               currency: p["currency"] || "NGN",
               status: p["status"] || "REQUESTED",
               payoutAccount: p["payoutAccount"] || null,
               settlementReference: p["settlementReference"] || null,
+              reversalReference: p["reversalReference"] || null,
               reviewReason: p["reviewReason"] || null,
               settlementReason: p["settlementReason"] || null,
               holdReason: p["holdReason"] || null,
+              reversalReason: p["reversalReason"] || null,
+              failureReason: p["failureReason"] || null,
               createdAt: p["createdAt"] || p["requestedAt"] || null,
               reviewedAt: p["reviewedAt"] || null,
               settledAt: p["settledAt"] || null,
+              reversedAt: p["reversedAt"] || null,
             })),
           });
         } catch (error) {

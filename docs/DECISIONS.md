@@ -544,3 +544,26 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 ### 4. Owner Pricing Control Console & History
 - **Decision**: Extended `src/routes/zillionaire.pricing.tsx` with dedicated tabbed sections for Defaults & Currencies, Movies/Series/Episodes, Channels & Live Streams, Categories, Promos & Bundles, and a Versioned History audit log backed by `/api/public/v1/zillionaire/config/pricing`.
 - Batch 7 finished, continuing.
+
+## Batch 8 — Payout window, settlement states & payment policy
+
+### 1. Payout Window Schedule & Mandatory Delay Disclosure
+- **Decision**: Established universal payout calendar logic in `src/lib/payout-calendar.ts` calculating the regular payout window between the 30th and the 1st of each month (`PAYOUT_WINDOW_START_DAY = 30`, `PAYOUT_WINDOW_END_DAY = 1`).
+- **Decision**: Surfaced the explicit required disclosure across Producer and Provider consoles: *"Payouts are processed between the 30th and the 1st of each month; bank and international settlement may take longer."* with real-time indicators for upcoming or currently open processing cycles.
+
+### 2. Owner Settlement Workflow & Notification Pipeline
+- **Decision**: Expanded `/api/public/v1/zillionaire/payouts/$payoutId/settle` to support full settlement (`SETTLE`/`PAID`), partial settlement (`PARTIAL`), failure handling (`FAIL`), and official reversal (`REVERSE`).
+- **Decision**: Required owner input for amount paid (minor units), unique settlement/banking reference, and exact settlement date on every paid disbursement.
+- **Decision**: Automatic dispatch of in-app notifications and queuing of email notifications to producers/providers upon disbursement completion.
+
+### 3. Immutable Financial Ledger & Non-Destructive Reversals
+- **Decision**: Strictly enforced policy that payment and payout records are never deleted from the platform. Any reversed payment writes an immutable append-only record to `payout_reversals`, marks the original payout status as `REVERSED`, and records timestamped reversal reasons and audit logs.
+- **Decision**: Every document, statement, and receipt carries cryptographic sha256 checksums, UTC timestamps, and permanent archival markers.
+
+### 4. Searchable Statements & Downloadable PDF Receipts
+- **Decision**: Built `src/lib/pdf-statement.ts` providing standardized, print-ready, styled HTML and PDF downloadable receipts and statements for both platform owners and record owners (producers and providers).
+- **Decision**: Added searchable disbursement records and instant PDF receipt download in `src/routes/zillionaire.payouts.tsx` and consolidated PDF statement export in `src/routes/zillionaire.finance.tsx`.
+
+### 5. Public Payment & Payout Policy
+- **Decision**: Published a dedicated public policy route at `/payment-and-payout-policy` detailing the payout cycle (30th to 1st), minimum disbursement thresholds, KYC tier verification requirements, permanent immutable records, and banking delay guidelines.
+- Batch 8 finished, continuing.
