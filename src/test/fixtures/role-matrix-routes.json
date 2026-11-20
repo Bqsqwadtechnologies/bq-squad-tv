@@ -391,6 +391,23 @@
     }
   },
   {
+    "route": "/api/public/v1/comment-reports",
+    "file": "src/routes/api/public/v1/comment-reports.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/config/client",
     "file": "src/routes/api/public/v1/config/client.ts",
     "guard": "public",
@@ -471,6 +488,23 @@
       "provider B": 200,
       "delegate with module": 200,
       "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/content-assets/$assetId/rights-evidence",
+    "file": "src/routes/api/public/v1/content-assets/$assetId/rights-evidence.ts",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
       "worker": 401,
       "owner": 200
     }
@@ -952,6 +986,40 @@
     }
   },
   {
+    "route": "/api/public/v1/producer/collaborations/",
+    "file": "src/routes/api/public/v1/producer/collaborations/index.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/producer/content-assets/$assetId/appeal",
+    "file": "src/routes/api/public/v1/producer/content-assets/$assetId/appeal.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/producer/earnings",
     "file": "src/routes/api/public/v1/producer/earnings.ts",
     "guard": "viewer",
@@ -1005,6 +1073,23 @@
   {
     "route": "/api/public/v1/producer/payouts/request",
     "file": "src/routes/api/public/v1/producer/payouts/request.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/producer/team",
+    "file": "src/routes/api/public/v1/producer/team.ts",
     "guard": "viewer",
     "expected": {
       "anonymous": 401,
@@ -1224,8 +1309,42 @@
     }
   },
   {
+    "route": "/api/public/v1/provider/team",
+    "file": "src/routes/api/public/v1/provider/team.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/quality/settings",
     "file": "src/routes/api/public/v1/quality/settings.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/reactions",
+    "file": "src/routes/api/public/v1/reactions.ts",
     "guard": "viewer",
     "expected": {
       "anonymous": 401,
@@ -1496,6 +1615,40 @@
     }
   },
   {
+    "route": "/api/public/v1/user/library/liked",
+    "file": "src/routes/api/public/v1/user/library/liked.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/user/notification-preferences",
+    "file": "src/routes/api/public/v1/user/notification-preferences.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/wallet",
     "file": "src/routes/api/public/v1/wallet.ts",
     "guard": "viewer",
@@ -1668,6 +1821,40 @@
   {
     "route": "/api/public/v1/wallet/watch-history",
     "file": "src/routes/api/public/v1/wallet/watch-history.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/watch-parties/",
+    "file": "src/routes/api/public/v1/watch-parties/index.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/watch-parties/$partyId",
+    "file": "src/routes/api/public/v1/watch-parties/$partyId.ts",
     "guard": "viewer",
     "expected": {
       "anonymous": 401,
@@ -2669,6 +2856,23 @@
     }
   },
   {
+    "route": "/api/public/v1/zillionaire/copyright-cases/",
+    "file": "src/routes/api/public/v1/zillionaire/copyright-cases/index.ts",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/zillionaire/delivery/",
     "file": "src/routes/api/public/v1/zillionaire/delivery/index.ts",
     "guard": "zillionaire module",
@@ -3300,6 +3504,23 @@
   {
     "route": "/api/public/v1/zillionaire/reports/monthly",
     "file": "src/routes/api/public/v1/zillionaire/reports/monthly.ts",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/api/public/v1/zillionaire/rights-review/",
+    "file": "src/routes/api/public/v1/zillionaire/rights-review/index.ts",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,
@@ -3961,8 +4182,42 @@
     }
   },
   {
+    "route": "/producer/collaborations",
+    "file": "src/routes/producer.collaborations.tsx",
+    "guard": "producer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 403,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 403
+    }
+  },
+  {
     "route": "/producer/docs",
     "file": "src/routes/producer.docs.tsx",
+    "guard": "producer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 403,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 403
+    }
+  },
+  {
+    "route": "/producer/team",
+    "file": "src/routes/producer.team.tsx",
     "guard": "producer",
     "expected": {
       "anonymous": 401,
@@ -4080,6 +4335,23 @@
     }
   },
   {
+    "route": "/provider/team",
+    "file": "src/routes/provider.team.tsx",
+    "guard": "provider",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 403,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 403
+    }
+  },
+  {
     "route": "/zillionaire/",
     "file": "src/routes/zillionaire.index.tsx",
     "guard": "zillionaire module",
@@ -4116,6 +4388,23 @@
   {
     "route": "/zillionaire/analytics",
     "file": "src/routes/zillionaire.analytics.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/announcements",
+    "file": "src/routes/zillionaire.announcements.tsx",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,
@@ -4199,8 +4488,59 @@
     }
   },
   {
+    "route": "/zillionaire/collaborations",
+    "file": "src/routes/zillionaire.collaborations.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/zillionaire/comments",
     "file": "src/routes/zillionaire.comments.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/content-calendar",
+    "file": "src/routes/zillionaire.content-calendar.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/copyright-cases",
+    "file": "src/routes/zillionaire.copyright-cases.tsx",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,
@@ -4301,6 +4641,40 @@
     }
   },
   {
+    "route": "/zillionaire/fraud-watch",
+    "file": "src/routes/zillionaire.fraud-watch.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/geo-rules",
+    "file": "src/routes/zillionaire.geo-rules.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/zillionaire/live-tv",
     "file": "src/routes/zillionaire.live-tv.tsx",
     "guard": "zillionaire module",
@@ -4320,6 +4694,23 @@
   {
     "route": "/zillionaire/moderation",
     "file": "src/routes/zillionaire.moderation.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/moderation-workload",
+    "file": "src/routes/zillionaire.moderation-workload.tsx",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,
@@ -4437,6 +4828,23 @@
     }
   },
   {
+    "route": "/zillionaire/privacy-requests",
+    "file": "src/routes/zillionaire.privacy-requests.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/zillionaire/producers",
     "file": "src/routes/zillionaire.producers.tsx",
     "guard": "zillionaire module",
@@ -4522,8 +4930,76 @@
     }
   },
   {
+    "route": "/zillionaire/releases",
+    "file": "src/routes/zillionaire.releases.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/zillionaire/reports",
     "file": "src/routes/zillionaire.reports.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/rights-review",
+    "file": "src/routes/zillionaire.rights-review.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/scheduled-reports",
+    "file": "src/routes/zillionaire.scheduled-reports.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/search-tuning",
+    "file": "src/routes/zillionaire.search-tuning.tsx",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,
@@ -4590,6 +5066,40 @@
     }
   },
   {
+    "route": "/zillionaire/splits-audit",
+    "file": "src/routes/zillionaire.splits-audit.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/status-page",
+    "file": "src/routes/zillionaire.status-page.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/zillionaire/storage",
     "file": "src/routes/zillionaire.storage.tsx",
     "guard": "zillionaire module",
@@ -4607,8 +5117,42 @@
     }
   },
   {
+    "route": "/zillionaire/strikes-appeals",
+    "file": "src/routes/zillionaire.strikes-appeals.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/zillionaire/support",
     "file": "src/routes/zillionaire.support.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/support-macros",
+    "file": "src/routes/zillionaire.support-macros.tsx",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,
@@ -4643,6 +5187,23 @@
   {
     "route": "/zillionaire/test-lab",
     "file": "src/routes/zillionaire.test-lab.tsx",
+    "guard": "zillionaire module",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 403,
+      "producer A": 403,
+      "producer B": 403,
+      "provider A": 403,
+      "provider B": 403,
+      "delegate with module": 200,
+      "delegate without module": 403,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
+    "route": "/zillionaire/trending-rails",
+    "file": "src/routes/zillionaire.trending-rails.tsx",
     "guard": "zillionaire module",
     "expected": {
       "anonymous": 401,
