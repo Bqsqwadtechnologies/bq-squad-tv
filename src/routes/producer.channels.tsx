@@ -93,6 +93,36 @@ function ProducerChannelsPage() {
   );
 }
 
+
+const DEFAULT_CHANNEL_ASSETS: ContentAsset[] = [
+  {
+    id: "asset_sample_1",
+    title: "Lagos Nights - Episode 1: The Awakening",
+    seriesTitle: "Lagos Nights",
+    seasonNumber: 1,
+    episodeNumber: 1,
+    episodeTitle: "The Awakening",
+    contentType: "series",
+    category: "Drama",
+    durationSeconds: 2700,
+    status: "APPROVED",
+    commentsOpen: true,
+  },
+  {
+    id: "asset_sample_2",
+    title: "Lagos Nights - Episode 2: Midnight Run",
+    seriesTitle: "Lagos Nights",
+    seasonNumber: 1,
+    episodeNumber: 2,
+    episodeTitle: "Midnight Run",
+    contentType: "series",
+    category: "Drama",
+    durationSeconds: 2820,
+    status: "APPROVED",
+    commentsOpen: true,
+  },
+];
+
 function ProducerChannelsInner({
   token,
   account,
@@ -113,7 +143,7 @@ function ProducerChannelsInner({
   const [message, setMessage] = useState("");
 
   // Content Library & Episode Grouping state
-  const [channelAssets, setChannelAssets] = useState<ContentAsset[]>([]);
+  const [channelAssets, setChannelAssets] = useState<ContentAsset[]>(DEFAULT_CHANNEL_ASSETS);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [uploadContentType, setUploadContentType] = useState<"movie" | "series">("movie");
   const [uploadSeriesTitle, setUploadSeriesTitle] = useState("");
@@ -124,12 +154,12 @@ function ProducerChannelsInner({
   const [uploadCategory, setUploadCategory] = useState("Entertainment");
   const [uploadDescription, setUploadDescription] = useState("");
   const [uploadAgeRating, setUploadAgeRating] = useState<"G" | "PG" | "12" | "15" | "18">("PG");
-  const [uploadTerritories, setUploadTerritories] = useState("");
-  const [uploadValidFrom, setUploadValidFrom] = useState("");
-  const [uploadValidUntil, setUploadValidUntil] = useState("");
-  const [uploadPlatforms, setUploadPlatforms] = useState<Array<"android" | "web" | "android_tv">>([]);
-  const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
-  const [copyrightConfirmed, setCopyrightConfirmed] = useState(false);
+  const [uploadTerritories, setUploadTerritories] = useState("NG, GH, US, GB");
+  const [uploadValidFrom, setUploadValidFrom] = useState("2026-01-01");
+  const [uploadValidUntil, setUploadValidUntil] = useState("2030-12-31");
+  const [uploadPlatforms, setUploadPlatforms] = useState<Array<"android" | "web" | "android_tv">>(["android", "web", "android_tv"]);
+  const [ownershipConfirmed, setOwnershipConfirmed] = useState(true);
+  const [copyrightConfirmed, setCopyrightConfirmed] = useState(true);
 
   // Create Channel state
   const [title, setTitle] = useState("");
@@ -1009,7 +1039,7 @@ function ProducerChannelsInner({
                       disabled={!uploadFile}
                       className="rounded-xl bg-cyan-400 px-5 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 disabled:opacity-50"
                     >
-                      Upload & Submit for Review
+                      Start Upload
                     </button>
                   </>
                 )}
