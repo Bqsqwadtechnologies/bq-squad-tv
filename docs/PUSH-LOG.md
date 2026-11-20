@@ -76,3 +76,4 @@ PUSH BADGE #43 SUCCESSFUL — V5-05 Batch 4 — 6e377db0721c89b02b0672db754b53a5
 PUSH BADGE #44 SUCCESSFUL — V5-05 Batch 5 — 25c3a60164eef84cd72d588acfd5b9b4b1280e71 — Viewer Player experience with subtitles, audio selection, speed controls, resume points, PiP, and live viewing meter.
 PUSH BADGE #45 SUCCESSFUL — V5-05 Batch 6 — 662f573ba3d7504e3c462ce3658bb111b1b876d4 — Viewer social and safety settings: add/remove watchlist from content details, Kids Safe Mode with Parent PIN gating, search and notifications integration.
 PUSH BADGE #46 SUCCESSFUL — V5-05 Batch 7 — 7b72a4f14403577697dc911d09a41123fc0f35d8 — Verified wallet with configured Paystack top-ups, transaction history, recorded daily usage and low-balance top-up action.
+PUSH BADGE #47 SUCCESSFUL — V5-05 Batch 8 — 019efd3ce1c51ba2c5ec030cc11f0a0992f34132 — Web and Android now use the same dynamically served Google client config with visible retry states and existing verification/legal flows preserved.
