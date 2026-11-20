@@ -50,9 +50,11 @@ import { Route as ZillionaireErrorsRouteImport } from './routes/zillionaire.erro
 import { Route as ZillionaireFeaturesRouteImport } from './routes/zillionaire.features'
 import { Route as ZillionaireFinanceRouteImport } from './routes/zillionaire.finance'
 import { Route as ZillionaireFirebaseSchemaRouteImport } from './routes/zillionaire.firebase-schema'
+import { Route as ZillionaireLiveTvRouteImport } from './routes/zillionaire.live-tv'
 import { Route as ZillionaireModerationRouteImport } from './routes/zillionaire.moderation'
 import { Route as ZillionaireMoviesRouteImport } from './routes/zillionaire.movies'
 import { Route as ZillionaireNotificationsRouteImport } from './routes/zillionaire.notifications'
+import { Route as ZillionairePagesRouteImport } from './routes/zillionaire.pages'
 import { Route as ZillionairePaymentsRouteImport } from './routes/zillionaire.payments'
 import { Route as ZillionairePayoutsRouteImport } from './routes/zillionaire.payouts'
 import { Route as ZillionairePricingRouteImport } from './routes/zillionaire.pricing'
@@ -66,6 +68,7 @@ import { Route as ZillionaireSettingsRouteImport } from './routes/zillionaire.se
 import { Route as ZillionaireStorageRouteImport } from './routes/zillionaire.storage'
 import { Route as ZillionaireSupportRouteImport } from './routes/zillionaire.support'
 import { Route as ZillionaireTeamRouteImport } from './routes/zillionaire.team'
+import { Route as ZillionaireTestLabRouteImport } from './routes/zillionaire.test-lab'
 import { Route as ZillionaireUploadStudioRouteImport } from './routes/zillionaire.upload-studio'
 import { Route as ZillionaireVideoStudioRouteImport } from './routes/zillionaire.video-studio'
 import { Route as ZillionaireViewersRouteImport } from './routes/zillionaire.viewers'
@@ -140,6 +143,7 @@ import { Route as ApiPublicV1ZillionaireNotificationsRouteImport } from './route
 import { Route as ApiPublicV1ZillionaireOverviewRouteImport } from './routes/api/public/v1/zillionaire/overview'
 import { Route as ApiPublicV1ZillionaireSecretHealthRouteImport } from './routes/api/public/v1/zillionaire/secret-health'
 import { Route as ApiPublicV1ZillionaireTeamRouteImport } from './routes/api/public/v1/zillionaire/team'
+import { Route as ApiPublicV1ZillionaireTestLabRouteImport } from './routes/api/public/v1/zillionaire/test-lab'
 import { Route as ApiPublicV1ZillionaireVideoJobsRouteImport } from './routes/api/public/v1/zillionaire/video-jobs'
 import { Route as ApiPublicV1ZillionaireWorkersRouteImport } from './routes/api/public/v1/zillionaire/workers'
 import { Route as ApiPublicV1AdsAdIdEventsRouteImport } from './routes/api/public/v1/ads/$adId/events'
@@ -151,6 +155,7 @@ import { Route as ApiPublicV1AuthSessionRevokeAllRouteImport } from './routes/ap
 import { Route as ApiPublicV1AuthWebConfigRouteImport } from './routes/api/public/v1/auth/web/config'
 import { Route as ApiPublicV1AuthWebMeRouteImport } from './routes/api/public/v1/auth/web/me'
 import { Route as ApiPublicV1AuthWebSessionRouteImport } from './routes/api/public/v1/auth/web/session'
+import { Route as ApiPublicV1ChannelsChannelIdChatRouteImport } from './routes/api/public/v1/channels/$channelId.chat'
 import { Route as ApiPublicV1ContentAssetsAssetIdCommentsRouteImport } from './routes/api/public/v1/content-assets/$assetId/comments'
 import { Route as ApiPublicV1ContentAssetsAssetIdRatingRouteImport } from './routes/api/public/v1/content-assets/$assetId/rating'
 import { Route as ApiPublicV1NotificationsNotificationIdReadRouteImport } from './routes/api/public/v1/notifications/$notificationId/read'
@@ -182,7 +187,11 @@ import { Route as ApiPublicV1ZillionaireAccessLockRouteImport } from './routes/a
 import { Route as ApiPublicV1ZillionaireAccessStatusRouteImport } from './routes/api/public/v1/zillionaire/access/status'
 import { Route as ApiPublicV1ZillionaireAccessUnlockRouteImport } from './routes/api/public/v1/zillionaire/access/unlock'
 import { Route as ApiPublicV1ZillionaireAdsCampaignsRouteImport } from './routes/api/public/v1/zillionaire/ads/campaigns'
+import { Route as ApiPublicV1ZillionaireAdsCreativesRouteImport } from './routes/api/public/v1/zillionaire/ads/creatives'
 import { Route as ApiPublicV1ZillionaireAdsProvidersRouteImport } from './routes/api/public/v1/zillionaire/ads/providers'
+import { Route as ApiPublicV1ZillionaireAdsReportsRouteImport } from './routes/api/public/v1/zillionaire/ads/reports'
+import { Route as ApiPublicV1ZillionaireAdsSettingsRouteImport } from './routes/api/public/v1/zillionaire/ads/settings'
+import { Route as ApiPublicV1ZillionaireAdsUnitsRouteImport } from './routes/api/public/v1/zillionaire/ads/units'
 import { Route as ApiPublicV1ZillionaireAnalyticsOverviewRouteImport } from './routes/api/public/v1/zillionaire/analytics/overview'
 import { Route as ApiPublicV1ZillionaireBillingHealthRouteImport } from './routes/api/public/v1/zillionaire/billing/health'
 import { Route as ApiPublicV1ZillionaireBlockedContentIndexRouteImport } from './routes/api/public/v1/zillionaire/blocked-content/index'
@@ -193,9 +202,12 @@ import { Route as ApiPublicV1ZillionaireConfigPricingRouteImport } from './route
 import { Route as ApiPublicV1ZillionaireConfigSettingsRouteImport } from './routes/api/public/v1/zillionaire/config/settings'
 import { Route as ApiPublicV1ZillionaireContentAssetsIndexRouteImport } from './routes/api/public/v1/zillionaire/content-assets/index'
 import { Route as ApiPublicV1ZillionaireErrorsIndexRouteImport } from './routes/api/public/v1/zillionaire/errors/index'
+import { Route as ApiPublicV1ZillionaireLiveChannelsIndexRouteImport } from './routes/api/public/v1/zillionaire/live-channels/index'
+import { Route as ApiPublicV1ZillionaireLiveChatIndexRouteImport } from './routes/api/public/v1/zillionaire/live-chat/index'
 import { Route as ApiPublicV1ZillionaireMigrationZillionaireRouteImport } from './routes/api/public/v1/zillionaire/migration/zillionaire'
 import { Route as ApiPublicV1ZillionaireModerationIndexRouteImport } from './routes/api/public/v1/zillionaire/moderation/index'
 import { Route as ApiPublicV1ZillionaireOperationsLiveRouteImport } from './routes/api/public/v1/zillionaire/operations/live'
+import { Route as ApiPublicV1ZillionairePagesIndexRouteImport } from './routes/api/public/v1/zillionaire/pages/index'
 import { Route as ApiPublicV1ZillionairePagesPublishRouteImport } from './routes/api/public/v1/zillionaire/pages/publish'
 import { Route as ApiPublicV1ZillionairePagesPublishDefaultsRouteImport } from './routes/api/public/v1/zillionaire/pages/publish-defaults'
 import { Route as ApiPublicV1ZillionairePagesRollbackRouteImport } from './routes/api/public/v1/zillionaire/pages/rollback'
@@ -478,6 +490,11 @@ const ZillionaireFirebaseSchemaRoute =
     path: '/zillionaire/firebase-schema',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ZillionaireLiveTvRoute = ZillionaireLiveTvRouteImport.update({
+  id: '/zillionaire/live-tv',
+  path: '/zillionaire/live-tv',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ZillionaireModerationRoute = ZillionaireModerationRouteImport.update({
   id: '/zillionaire/moderation',
   path: '/zillionaire/moderation',
@@ -494,6 +511,11 @@ const ZillionaireNotificationsRoute =
     path: '/zillionaire/notifications',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ZillionairePagesRoute = ZillionairePagesRouteImport.update({
+  id: '/zillionaire/pages',
+  path: '/zillionaire/pages',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ZillionairePaymentsRoute = ZillionairePaymentsRouteImport.update({
   id: '/zillionaire/payments',
   path: '/zillionaire/payments',
@@ -557,6 +579,11 @@ const ZillionaireSupportRoute = ZillionaireSupportRouteImport.update({
 const ZillionaireTeamRoute = ZillionaireTeamRouteImport.update({
   id: '/zillionaire/team',
   path: '/zillionaire/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZillionaireTestLabRoute = ZillionaireTestLabRouteImport.update({
+  id: '/zillionaire/test-lab',
+  path: '/zillionaire/test-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ZillionaireUploadStudioRoute = ZillionaireUploadStudioRouteImport.update({
@@ -983,6 +1010,12 @@ const ApiPublicV1ZillionaireTeamRoute =
     path: '/api/public/v1/zillionaire/team',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireTestLabRoute =
+  ApiPublicV1ZillionaireTestLabRouteImport.update({
+    id: '/api/public/v1/zillionaire/test-lab',
+    path: '/api/public/v1/zillionaire/test-lab',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireVideoJobsRoute =
   ApiPublicV1ZillionaireVideoJobsRouteImport.update({
     id: '/api/public/v1/zillionaire/video-jobs',
@@ -1047,6 +1080,12 @@ const ApiPublicV1AuthWebSessionRoute =
     id: '/api/public/v1/auth/web/session',
     path: '/api/public/v1/auth/web/session',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ChannelsChannelIdChatRoute =
+  ApiPublicV1ChannelsChannelIdChatRouteImport.update({
+    id: '/chat',
+    path: '/chat',
+    getParentRoute: () => ApiPublicV1ChannelsChannelIdRoute,
   } as any)
 const ApiPublicV1ContentAssetsAssetIdCommentsRoute =
   ApiPublicV1ContentAssetsAssetIdCommentsRouteImport.update({
@@ -1234,10 +1273,34 @@ const ApiPublicV1ZillionaireAdsCampaignsRoute =
     path: '/api/public/v1/zillionaire/ads/campaigns',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireAdsCreativesRoute =
+  ApiPublicV1ZillionaireAdsCreativesRouteImport.update({
+    id: '/api/public/v1/zillionaire/ads/creatives',
+    path: '/api/public/v1/zillionaire/ads/creatives',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireAdsProvidersRoute =
   ApiPublicV1ZillionaireAdsProvidersRouteImport.update({
     id: '/api/public/v1/zillionaire/ads/providers',
     path: '/api/public/v1/zillionaire/ads/providers',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireAdsReportsRoute =
+  ApiPublicV1ZillionaireAdsReportsRouteImport.update({
+    id: '/api/public/v1/zillionaire/ads/reports',
+    path: '/api/public/v1/zillionaire/ads/reports',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireAdsSettingsRoute =
+  ApiPublicV1ZillionaireAdsSettingsRouteImport.update({
+    id: '/api/public/v1/zillionaire/ads/settings',
+    path: '/api/public/v1/zillionaire/ads/settings',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireAdsUnitsRoute =
+  ApiPublicV1ZillionaireAdsUnitsRouteImport.update({
+    id: '/api/public/v1/zillionaire/ads/units',
+    path: '/api/public/v1/zillionaire/ads/units',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ZillionaireAnalyticsOverviewRoute =
@@ -1300,6 +1363,18 @@ const ApiPublicV1ZillionaireErrorsIndexRoute =
     path: '/api/public/v1/zillionaire/errors/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireLiveChannelsIndexRoute =
+  ApiPublicV1ZillionaireLiveChannelsIndexRouteImport.update({
+    id: '/api/public/v1/zillionaire/live-channels/',
+    path: '/api/public/v1/zillionaire/live-channels/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireLiveChatIndexRoute =
+  ApiPublicV1ZillionaireLiveChatIndexRouteImport.update({
+    id: '/api/public/v1/zillionaire/live-chat/',
+    path: '/api/public/v1/zillionaire/live-chat/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireMigrationZillionaireRoute =
   ApiPublicV1ZillionaireMigrationZillionaireRouteImport.update({
     id: '/api/public/v1/zillionaire/migration/zillionaire',
@@ -1316,6 +1391,12 @@ const ApiPublicV1ZillionaireOperationsLiveRoute =
   ApiPublicV1ZillionaireOperationsLiveRouteImport.update({
     id: '/api/public/v1/zillionaire/operations/live',
     path: '/api/public/v1/zillionaire/operations/live',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionairePagesIndexRoute =
+  ApiPublicV1ZillionairePagesIndexRouteImport.update({
+    id: '/api/public/v1/zillionaire/pages/',
+    path: '/api/public/v1/zillionaire/pages/',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ZillionairePagesPublishRoute =
@@ -1802,9 +1883,11 @@ export interface FileRoutesByFullPath {
   '/zillionaire/features': typeof ZillionaireFeaturesRoute
   '/zillionaire/finance': typeof ZillionaireFinanceRoute
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
+  '/zillionaire/live-tv': typeof ZillionaireLiveTvRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
   '/zillionaire/movies': typeof ZillionaireMoviesRoute
   '/zillionaire/notifications': typeof ZillionaireNotificationsRoute
+  '/zillionaire/pages': typeof ZillionairePagesRoute
   '/zillionaire/payments': typeof ZillionairePaymentsRoute
   '/zillionaire/payouts': typeof ZillionairePayoutsRoute
   '/zillionaire/pricing': typeof ZillionairePricingRoute
@@ -1818,6 +1901,7 @@ export interface FileRoutesByFullPath {
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
+  '/zillionaire/test-lab': typeof ZillionaireTestLabRoute
   '/zillionaire/upload-studio': typeof ZillionaireUploadStudioRoute
   '/zillionaire/video-studio': typeof ZillionaireVideoStudioRoute
   '/zillionaire/viewers': typeof ZillionaireViewersRoute
@@ -1837,7 +1921,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/analytics/viewer': typeof ApiPublicV1AnalyticsViewerRoute
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
-  '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
+  '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRouteWithChildren
   '/api/public/v1/config/client': typeof ApiPublicV1ConfigClientRoute
   '/api/public/v1/content-assets/$assetId': typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
   '/api/public/v1/continue-watching/position': typeof ApiPublicV1ContinueWatchingPositionRoute
@@ -1888,6 +1972,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/overview': typeof ApiPublicV1ZillionaireOverviewRoute
   '/api/public/v1/zillionaire/secret-health': typeof ApiPublicV1ZillionaireSecretHealthRoute
   '/api/public/v1/zillionaire/team': typeof ApiPublicV1ZillionaireTeamRouteWithChildren
+  '/api/public/v1/zillionaire/test-lab': typeof ApiPublicV1ZillionaireTestLabRoute
   '/api/public/v1/zillionaire/video-jobs': typeof ApiPublicV1ZillionaireVideoJobsRoute
   '/api/public/v1/zillionaire/workers': typeof ApiPublicV1ZillionaireWorkersRouteWithChildren
   '/api/public/v1/content-reports/': typeof ApiPublicV1ContentReportsIndexRoute
@@ -1905,6 +1990,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/auth/web/config': typeof ApiPublicV1AuthWebConfigRoute
   '/api/public/v1/auth/web/me': typeof ApiPublicV1AuthWebMeRoute
   '/api/public/v1/auth/web/session': typeof ApiPublicV1AuthWebSessionRouteWithChildren
+  '/api/public/v1/channels/$channelId/chat': typeof ApiPublicV1ChannelsChannelIdChatRoute
   '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
   '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
   '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
@@ -1936,7 +2022,11 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/access/status': typeof ApiPublicV1ZillionaireAccessStatusRoute
   '/api/public/v1/zillionaire/access/unlock': typeof ApiPublicV1ZillionaireAccessUnlockRoute
   '/api/public/v1/zillionaire/ads/campaigns': typeof ApiPublicV1ZillionaireAdsCampaignsRouteWithChildren
+  '/api/public/v1/zillionaire/ads/creatives': typeof ApiPublicV1ZillionaireAdsCreativesRoute
   '/api/public/v1/zillionaire/ads/providers': typeof ApiPublicV1ZillionaireAdsProvidersRoute
+  '/api/public/v1/zillionaire/ads/reports': typeof ApiPublicV1ZillionaireAdsReportsRoute
+  '/api/public/v1/zillionaire/ads/settings': typeof ApiPublicV1ZillionaireAdsSettingsRoute
+  '/api/public/v1/zillionaire/ads/units': typeof ApiPublicV1ZillionaireAdsUnitsRoute
   '/api/public/v1/zillionaire/analytics/overview': typeof ApiPublicV1ZillionaireAnalyticsOverviewRoute
   '/api/public/v1/zillionaire/billing/health': typeof ApiPublicV1ZillionaireBillingHealthRoute
   '/api/public/v1/zillionaire/config/flags': typeof ApiPublicV1ZillionaireConfigFlagsRoute
@@ -1973,7 +2063,10 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/channels/': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/content-assets/': typeof ApiPublicV1ZillionaireContentAssetsIndexRoute
   '/api/public/v1/zillionaire/errors/': typeof ApiPublicV1ZillionaireErrorsIndexRoute
+  '/api/public/v1/zillionaire/live-channels/': typeof ApiPublicV1ZillionaireLiveChannelsIndexRoute
+  '/api/public/v1/zillionaire/live-chat/': typeof ApiPublicV1ZillionaireLiveChatIndexRoute
   '/api/public/v1/zillionaire/moderation/': typeof ApiPublicV1ZillionaireModerationIndexRoute
+  '/api/public/v1/zillionaire/pages/': typeof ApiPublicV1ZillionairePagesIndexRoute
   '/api/public/v1/zillionaire/payments/': typeof ApiPublicV1ZillionairePaymentsIndexRoute
   '/api/public/v1/zillionaire/payouts/': typeof ApiPublicV1ZillionairePayoutsIndexRoute
   '/api/public/v1/zillionaire/producers/': typeof ApiPublicV1ZillionaireProducersIndexRoute
@@ -2065,9 +2158,11 @@ export interface FileRoutesByTo {
   '/zillionaire/features': typeof ZillionaireFeaturesRoute
   '/zillionaire/finance': typeof ZillionaireFinanceRoute
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
+  '/zillionaire/live-tv': typeof ZillionaireLiveTvRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
   '/zillionaire/movies': typeof ZillionaireMoviesRoute
   '/zillionaire/notifications': typeof ZillionaireNotificationsRoute
+  '/zillionaire/pages': typeof ZillionairePagesRoute
   '/zillionaire/payments': typeof ZillionairePaymentsRoute
   '/zillionaire/payouts': typeof ZillionairePayoutsRoute
   '/zillionaire/pricing': typeof ZillionairePricingRoute
@@ -2081,6 +2176,7 @@ export interface FileRoutesByTo {
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
+  '/zillionaire/test-lab': typeof ZillionaireTestLabRoute
   '/zillionaire/upload-studio': typeof ZillionaireUploadStudioRoute
   '/zillionaire/video-studio': typeof ZillionaireVideoStudioRoute
   '/zillionaire/viewers': typeof ZillionaireViewersRoute
@@ -2100,7 +2196,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/analytics/viewer': typeof ApiPublicV1AnalyticsViewerRoute
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
-  '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
+  '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRouteWithChildren
   '/api/public/v1/config/client': typeof ApiPublicV1ConfigClientRoute
   '/api/public/v1/content-assets/$assetId': typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
   '/api/public/v1/continue-watching/position': typeof ApiPublicV1ContinueWatchingPositionRoute
@@ -2150,6 +2246,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/overview': typeof ApiPublicV1ZillionaireOverviewRoute
   '/api/public/v1/zillionaire/secret-health': typeof ApiPublicV1ZillionaireSecretHealthRoute
   '/api/public/v1/zillionaire/team': typeof ApiPublicV1ZillionaireTeamRouteWithChildren
+  '/api/public/v1/zillionaire/test-lab': typeof ApiPublicV1ZillionaireTestLabRoute
   '/api/public/v1/zillionaire/video-jobs': typeof ApiPublicV1ZillionaireVideoJobsRoute
   '/api/public/v1/zillionaire/workers': typeof ApiPublicV1ZillionaireWorkersRouteWithChildren
   '/api/public/v1/content-reports': typeof ApiPublicV1ContentReportsIndexRoute
@@ -2167,6 +2264,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/auth/web/config': typeof ApiPublicV1AuthWebConfigRoute
   '/api/public/v1/auth/web/me': typeof ApiPublicV1AuthWebMeRoute
   '/api/public/v1/auth/web/session': typeof ApiPublicV1AuthWebSessionRouteWithChildren
+  '/api/public/v1/channels/$channelId/chat': typeof ApiPublicV1ChannelsChannelIdChatRoute
   '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
   '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
   '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
@@ -2198,7 +2296,11 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/access/status': typeof ApiPublicV1ZillionaireAccessStatusRoute
   '/api/public/v1/zillionaire/access/unlock': typeof ApiPublicV1ZillionaireAccessUnlockRoute
   '/api/public/v1/zillionaire/ads/campaigns': typeof ApiPublicV1ZillionaireAdsCampaignsRouteWithChildren
+  '/api/public/v1/zillionaire/ads/creatives': typeof ApiPublicV1ZillionaireAdsCreativesRoute
   '/api/public/v1/zillionaire/ads/providers': typeof ApiPublicV1ZillionaireAdsProvidersRoute
+  '/api/public/v1/zillionaire/ads/reports': typeof ApiPublicV1ZillionaireAdsReportsRoute
+  '/api/public/v1/zillionaire/ads/settings': typeof ApiPublicV1ZillionaireAdsSettingsRoute
+  '/api/public/v1/zillionaire/ads/units': typeof ApiPublicV1ZillionaireAdsUnitsRoute
   '/api/public/v1/zillionaire/analytics/overview': typeof ApiPublicV1ZillionaireAnalyticsOverviewRoute
   '/api/public/v1/zillionaire/billing/health': typeof ApiPublicV1ZillionaireBillingHealthRoute
   '/api/public/v1/zillionaire/config/flags': typeof ApiPublicV1ZillionaireConfigFlagsRoute
@@ -2235,7 +2337,10 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/channels': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/content-assets': typeof ApiPublicV1ZillionaireContentAssetsIndexRoute
   '/api/public/v1/zillionaire/errors': typeof ApiPublicV1ZillionaireErrorsIndexRoute
+  '/api/public/v1/zillionaire/live-channels': typeof ApiPublicV1ZillionaireLiveChannelsIndexRoute
+  '/api/public/v1/zillionaire/live-chat': typeof ApiPublicV1ZillionaireLiveChatIndexRoute
   '/api/public/v1/zillionaire/moderation': typeof ApiPublicV1ZillionaireModerationIndexRoute
+  '/api/public/v1/zillionaire/pages': typeof ApiPublicV1ZillionairePagesIndexRoute
   '/api/public/v1/zillionaire/payments': typeof ApiPublicV1ZillionairePaymentsIndexRoute
   '/api/public/v1/zillionaire/payouts': typeof ApiPublicV1ZillionairePayoutsIndexRoute
   '/api/public/v1/zillionaire/producers': typeof ApiPublicV1ZillionaireProducersIndexRoute
@@ -2328,9 +2433,11 @@ export interface FileRoutesById {
   '/zillionaire/features': typeof ZillionaireFeaturesRoute
   '/zillionaire/finance': typeof ZillionaireFinanceRoute
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
+  '/zillionaire/live-tv': typeof ZillionaireLiveTvRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
   '/zillionaire/movies': typeof ZillionaireMoviesRoute
   '/zillionaire/notifications': typeof ZillionaireNotificationsRoute
+  '/zillionaire/pages': typeof ZillionairePagesRoute
   '/zillionaire/payments': typeof ZillionairePaymentsRoute
   '/zillionaire/payouts': typeof ZillionairePayoutsRoute
   '/zillionaire/pricing': typeof ZillionairePricingRoute
@@ -2344,6 +2451,7 @@ export interface FileRoutesById {
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/support': typeof ZillionaireSupportRoute
   '/zillionaire/team': typeof ZillionaireTeamRoute
+  '/zillionaire/test-lab': typeof ZillionaireTestLabRoute
   '/zillionaire/upload-studio': typeof ZillionaireUploadStudioRoute
   '/zillionaire/video-studio': typeof ZillionaireVideoStudioRoute
   '/zillionaire/viewers': typeof ZillionaireViewersRoute
@@ -2363,7 +2471,7 @@ export interface FileRoutesById {
   '/api/public/v1/analytics/viewer': typeof ApiPublicV1AnalyticsViewerRoute
   '/api/public/v1/catalog/home': typeof ApiPublicV1CatalogHomeRoute
   '/api/public/v1/catalog/search': typeof ApiPublicV1CatalogSearchRoute
-  '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRoute
+  '/api/public/v1/channels/$channelId': typeof ApiPublicV1ChannelsChannelIdRouteWithChildren
   '/api/public/v1/config/client': typeof ApiPublicV1ConfigClientRoute
   '/api/public/v1/content-assets/$assetId': typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
   '/api/public/v1/continue-watching/position': typeof ApiPublicV1ContinueWatchingPositionRoute
@@ -2414,6 +2522,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/overview': typeof ApiPublicV1ZillionaireOverviewRoute
   '/api/public/v1/zillionaire/secret-health': typeof ApiPublicV1ZillionaireSecretHealthRoute
   '/api/public/v1/zillionaire/team': typeof ApiPublicV1ZillionaireTeamRouteWithChildren
+  '/api/public/v1/zillionaire/test-lab': typeof ApiPublicV1ZillionaireTestLabRoute
   '/api/public/v1/zillionaire/video-jobs': typeof ApiPublicV1ZillionaireVideoJobsRoute
   '/api/public/v1/zillionaire/workers': typeof ApiPublicV1ZillionaireWorkersRouteWithChildren
   '/api/public/v1/content-reports/': typeof ApiPublicV1ContentReportsIndexRoute
@@ -2431,6 +2540,7 @@ export interface FileRoutesById {
   '/api/public/v1/auth/web/config': typeof ApiPublicV1AuthWebConfigRoute
   '/api/public/v1/auth/web/me': typeof ApiPublicV1AuthWebMeRoute
   '/api/public/v1/auth/web/session': typeof ApiPublicV1AuthWebSessionRouteWithChildren
+  '/api/public/v1/channels/$channelId/chat': typeof ApiPublicV1ChannelsChannelIdChatRoute
   '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
   '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
   '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
@@ -2462,7 +2572,11 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/access/status': typeof ApiPublicV1ZillionaireAccessStatusRoute
   '/api/public/v1/zillionaire/access/unlock': typeof ApiPublicV1ZillionaireAccessUnlockRoute
   '/api/public/v1/zillionaire/ads/campaigns': typeof ApiPublicV1ZillionaireAdsCampaignsRouteWithChildren
+  '/api/public/v1/zillionaire/ads/creatives': typeof ApiPublicV1ZillionaireAdsCreativesRoute
   '/api/public/v1/zillionaire/ads/providers': typeof ApiPublicV1ZillionaireAdsProvidersRoute
+  '/api/public/v1/zillionaire/ads/reports': typeof ApiPublicV1ZillionaireAdsReportsRoute
+  '/api/public/v1/zillionaire/ads/settings': typeof ApiPublicV1ZillionaireAdsSettingsRoute
+  '/api/public/v1/zillionaire/ads/units': typeof ApiPublicV1ZillionaireAdsUnitsRoute
   '/api/public/v1/zillionaire/analytics/overview': typeof ApiPublicV1ZillionaireAnalyticsOverviewRoute
   '/api/public/v1/zillionaire/billing/health': typeof ApiPublicV1ZillionaireBillingHealthRoute
   '/api/public/v1/zillionaire/config/flags': typeof ApiPublicV1ZillionaireConfigFlagsRoute
@@ -2499,7 +2613,10 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/channels/': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/content-assets/': typeof ApiPublicV1ZillionaireContentAssetsIndexRoute
   '/api/public/v1/zillionaire/errors/': typeof ApiPublicV1ZillionaireErrorsIndexRoute
+  '/api/public/v1/zillionaire/live-channels/': typeof ApiPublicV1ZillionaireLiveChannelsIndexRoute
+  '/api/public/v1/zillionaire/live-chat/': typeof ApiPublicV1ZillionaireLiveChatIndexRoute
   '/api/public/v1/zillionaire/moderation/': typeof ApiPublicV1ZillionaireModerationIndexRoute
+  '/api/public/v1/zillionaire/pages/': typeof ApiPublicV1ZillionairePagesIndexRoute
   '/api/public/v1/zillionaire/payments/': typeof ApiPublicV1ZillionairePaymentsIndexRoute
   '/api/public/v1/zillionaire/payouts/': typeof ApiPublicV1ZillionairePayoutsIndexRoute
   '/api/public/v1/zillionaire/producers/': typeof ApiPublicV1ZillionaireProducersIndexRoute
@@ -2593,9 +2710,11 @@ export interface FileRouteTypes {
     | '/zillionaire/features'
     | '/zillionaire/finance'
     | '/zillionaire/firebase-schema'
+    | '/zillionaire/live-tv'
     | '/zillionaire/moderation'
     | '/zillionaire/movies'
     | '/zillionaire/notifications'
+    | '/zillionaire/pages'
     | '/zillionaire/payments'
     | '/zillionaire/payouts'
     | '/zillionaire/pricing'
@@ -2609,6 +2728,7 @@ export interface FileRouteTypes {
     | '/zillionaire/storage'
     | '/zillionaire/support'
     | '/zillionaire/team'
+    | '/zillionaire/test-lab'
     | '/zillionaire/upload-studio'
     | '/zillionaire/video-studio'
     | '/zillionaire/viewers'
@@ -2679,6 +2799,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/overview'
     | '/api/public/v1/zillionaire/secret-health'
     | '/api/public/v1/zillionaire/team'
+    | '/api/public/v1/zillionaire/test-lab'
     | '/api/public/v1/zillionaire/video-jobs'
     | '/api/public/v1/zillionaire/workers'
     | '/api/public/v1/content-reports/'
@@ -2696,6 +2817,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/auth/web/config'
     | '/api/public/v1/auth/web/me'
     | '/api/public/v1/auth/web/session'
+    | '/api/public/v1/channels/$channelId/chat'
     | '/api/public/v1/content-assets/$assetId/comments'
     | '/api/public/v1/content-assets/$assetId/rating'
     | '/api/public/v1/notifications/$notificationId/read'
@@ -2727,7 +2849,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/access/status'
     | '/api/public/v1/zillionaire/access/unlock'
     | '/api/public/v1/zillionaire/ads/campaigns'
+    | '/api/public/v1/zillionaire/ads/creatives'
     | '/api/public/v1/zillionaire/ads/providers'
+    | '/api/public/v1/zillionaire/ads/reports'
+    | '/api/public/v1/zillionaire/ads/settings'
+    | '/api/public/v1/zillionaire/ads/units'
     | '/api/public/v1/zillionaire/analytics/overview'
     | '/api/public/v1/zillionaire/billing/health'
     | '/api/public/v1/zillionaire/config/flags'
@@ -2764,7 +2890,10 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/channels/'
     | '/api/public/v1/zillionaire/content-assets/'
     | '/api/public/v1/zillionaire/errors/'
+    | '/api/public/v1/zillionaire/live-channels/'
+    | '/api/public/v1/zillionaire/live-chat/'
     | '/api/public/v1/zillionaire/moderation/'
+    | '/api/public/v1/zillionaire/pages/'
     | '/api/public/v1/zillionaire/payments/'
     | '/api/public/v1/zillionaire/payouts/'
     | '/api/public/v1/zillionaire/producers/'
@@ -2856,9 +2985,11 @@ export interface FileRouteTypes {
     | '/zillionaire/features'
     | '/zillionaire/finance'
     | '/zillionaire/firebase-schema'
+    | '/zillionaire/live-tv'
     | '/zillionaire/moderation'
     | '/zillionaire/movies'
     | '/zillionaire/notifications'
+    | '/zillionaire/pages'
     | '/zillionaire/payments'
     | '/zillionaire/payouts'
     | '/zillionaire/pricing'
@@ -2872,6 +3003,7 @@ export interface FileRouteTypes {
     | '/zillionaire/storage'
     | '/zillionaire/support'
     | '/zillionaire/team'
+    | '/zillionaire/test-lab'
     | '/zillionaire/upload-studio'
     | '/zillionaire/video-studio'
     | '/zillionaire/viewers'
@@ -2941,6 +3073,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/overview'
     | '/api/public/v1/zillionaire/secret-health'
     | '/api/public/v1/zillionaire/team'
+    | '/api/public/v1/zillionaire/test-lab'
     | '/api/public/v1/zillionaire/video-jobs'
     | '/api/public/v1/zillionaire/workers'
     | '/api/public/v1/content-reports'
@@ -2958,6 +3091,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/auth/web/config'
     | '/api/public/v1/auth/web/me'
     | '/api/public/v1/auth/web/session'
+    | '/api/public/v1/channels/$channelId/chat'
     | '/api/public/v1/content-assets/$assetId/comments'
     | '/api/public/v1/content-assets/$assetId/rating'
     | '/api/public/v1/notifications/$notificationId/read'
@@ -2989,7 +3123,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/access/status'
     | '/api/public/v1/zillionaire/access/unlock'
     | '/api/public/v1/zillionaire/ads/campaigns'
+    | '/api/public/v1/zillionaire/ads/creatives'
     | '/api/public/v1/zillionaire/ads/providers'
+    | '/api/public/v1/zillionaire/ads/reports'
+    | '/api/public/v1/zillionaire/ads/settings'
+    | '/api/public/v1/zillionaire/ads/units'
     | '/api/public/v1/zillionaire/analytics/overview'
     | '/api/public/v1/zillionaire/billing/health'
     | '/api/public/v1/zillionaire/config/flags'
@@ -3026,7 +3164,10 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/channels'
     | '/api/public/v1/zillionaire/content-assets'
     | '/api/public/v1/zillionaire/errors'
+    | '/api/public/v1/zillionaire/live-channels'
+    | '/api/public/v1/zillionaire/live-chat'
     | '/api/public/v1/zillionaire/moderation'
+    | '/api/public/v1/zillionaire/pages'
     | '/api/public/v1/zillionaire/payments'
     | '/api/public/v1/zillionaire/payouts'
     | '/api/public/v1/zillionaire/producers'
@@ -3118,9 +3259,11 @@ export interface FileRouteTypes {
     | '/zillionaire/features'
     | '/zillionaire/finance'
     | '/zillionaire/firebase-schema'
+    | '/zillionaire/live-tv'
     | '/zillionaire/moderation'
     | '/zillionaire/movies'
     | '/zillionaire/notifications'
+    | '/zillionaire/pages'
     | '/zillionaire/payments'
     | '/zillionaire/payouts'
     | '/zillionaire/pricing'
@@ -3134,6 +3277,7 @@ export interface FileRouteTypes {
     | '/zillionaire/storage'
     | '/zillionaire/support'
     | '/zillionaire/team'
+    | '/zillionaire/test-lab'
     | '/zillionaire/upload-studio'
     | '/zillionaire/video-studio'
     | '/zillionaire/viewers'
@@ -3204,6 +3348,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/overview'
     | '/api/public/v1/zillionaire/secret-health'
     | '/api/public/v1/zillionaire/team'
+    | '/api/public/v1/zillionaire/test-lab'
     | '/api/public/v1/zillionaire/video-jobs'
     | '/api/public/v1/zillionaire/workers'
     | '/api/public/v1/content-reports/'
@@ -3221,6 +3366,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/auth/web/config'
     | '/api/public/v1/auth/web/me'
     | '/api/public/v1/auth/web/session'
+    | '/api/public/v1/channels/$channelId/chat'
     | '/api/public/v1/content-assets/$assetId/comments'
     | '/api/public/v1/content-assets/$assetId/rating'
     | '/api/public/v1/notifications/$notificationId/read'
@@ -3252,7 +3398,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/access/status'
     | '/api/public/v1/zillionaire/access/unlock'
     | '/api/public/v1/zillionaire/ads/campaigns'
+    | '/api/public/v1/zillionaire/ads/creatives'
     | '/api/public/v1/zillionaire/ads/providers'
+    | '/api/public/v1/zillionaire/ads/reports'
+    | '/api/public/v1/zillionaire/ads/settings'
+    | '/api/public/v1/zillionaire/ads/units'
     | '/api/public/v1/zillionaire/analytics/overview'
     | '/api/public/v1/zillionaire/billing/health'
     | '/api/public/v1/zillionaire/config/flags'
@@ -3289,7 +3439,10 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/channels/'
     | '/api/public/v1/zillionaire/content-assets/'
     | '/api/public/v1/zillionaire/errors/'
+    | '/api/public/v1/zillionaire/live-channels/'
+    | '/api/public/v1/zillionaire/live-chat/'
     | '/api/public/v1/zillionaire/moderation/'
+    | '/api/public/v1/zillionaire/pages/'
     | '/api/public/v1/zillionaire/payments/'
     | '/api/public/v1/zillionaire/payouts/'
     | '/api/public/v1/zillionaire/producers/'
@@ -3382,9 +3535,11 @@ export interface RootRouteChildren {
   ZillionaireFeaturesRoute: typeof ZillionaireFeaturesRoute
   ZillionaireFinanceRoute: typeof ZillionaireFinanceRoute
   ZillionaireFirebaseSchemaRoute: typeof ZillionaireFirebaseSchemaRoute
+  ZillionaireLiveTvRoute: typeof ZillionaireLiveTvRoute
   ZillionaireModerationRoute: typeof ZillionaireModerationRoute
   ZillionaireMoviesRoute: typeof ZillionaireMoviesRoute
   ZillionaireNotificationsRoute: typeof ZillionaireNotificationsRoute
+  ZillionairePagesRoute: typeof ZillionairePagesRoute
   ZillionairePaymentsRoute: typeof ZillionairePaymentsRoute
   ZillionairePayoutsRoute: typeof ZillionairePayoutsRoute
   ZillionairePricingRoute: typeof ZillionairePricingRoute
@@ -3398,6 +3553,7 @@ export interface RootRouteChildren {
   ZillionaireStorageRoute: typeof ZillionaireStorageRoute
   ZillionaireSupportRoute: typeof ZillionaireSupportRoute
   ZillionaireTeamRoute: typeof ZillionaireTeamRoute
+  ZillionaireTestLabRoute: typeof ZillionaireTestLabRoute
   ZillionaireUploadStudioRoute: typeof ZillionaireUploadStudioRoute
   ZillionaireVideoStudioRoute: typeof ZillionaireVideoStudioRoute
   ZillionaireViewersRoute: typeof ZillionaireViewersRoute
@@ -3416,7 +3572,7 @@ export interface RootRouteChildren {
   ApiPublicV1AnalyticsViewerRoute: typeof ApiPublicV1AnalyticsViewerRoute
   ApiPublicV1CatalogHomeRoute: typeof ApiPublicV1CatalogHomeRoute
   ApiPublicV1CatalogSearchRoute: typeof ApiPublicV1CatalogSearchRoute
-  ApiPublicV1ChannelsChannelIdRoute: typeof ApiPublicV1ChannelsChannelIdRoute
+  ApiPublicV1ChannelsChannelIdRoute: typeof ApiPublicV1ChannelsChannelIdRouteWithChildren
   ApiPublicV1ConfigClientRoute: typeof ApiPublicV1ConfigClientRoute
   ApiPublicV1ContentAssetsAssetIdRoute: typeof ApiPublicV1ContentAssetsAssetIdRouteWithChildren
   ApiPublicV1ContinueWatchingPositionRoute: typeof ApiPublicV1ContinueWatchingPositionRoute
@@ -3460,6 +3616,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireOverviewRoute: typeof ApiPublicV1ZillionaireOverviewRoute
   ApiPublicV1ZillionaireSecretHealthRoute: typeof ApiPublicV1ZillionaireSecretHealthRoute
   ApiPublicV1ZillionaireTeamRoute: typeof ApiPublicV1ZillionaireTeamRouteWithChildren
+  ApiPublicV1ZillionaireTestLabRoute: typeof ApiPublicV1ZillionaireTestLabRoute
   ApiPublicV1ZillionaireVideoJobsRoute: typeof ApiPublicV1ZillionaireVideoJobsRoute
   ApiPublicV1ZillionaireWorkersRoute: typeof ApiPublicV1ZillionaireWorkersRouteWithChildren
   ApiPublicV1ContentReportsIndexRoute: typeof ApiPublicV1ContentReportsIndexRoute
@@ -3500,7 +3657,11 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireAccessStatusRoute: typeof ApiPublicV1ZillionaireAccessStatusRoute
   ApiPublicV1ZillionaireAccessUnlockRoute: typeof ApiPublicV1ZillionaireAccessUnlockRoute
   ApiPublicV1ZillionaireAdsCampaignsRoute: typeof ApiPublicV1ZillionaireAdsCampaignsRouteWithChildren
+  ApiPublicV1ZillionaireAdsCreativesRoute: typeof ApiPublicV1ZillionaireAdsCreativesRoute
   ApiPublicV1ZillionaireAdsProvidersRoute: typeof ApiPublicV1ZillionaireAdsProvidersRoute
+  ApiPublicV1ZillionaireAdsReportsRoute: typeof ApiPublicV1ZillionaireAdsReportsRoute
+  ApiPublicV1ZillionaireAdsSettingsRoute: typeof ApiPublicV1ZillionaireAdsSettingsRoute
+  ApiPublicV1ZillionaireAdsUnitsRoute: typeof ApiPublicV1ZillionaireAdsUnitsRoute
   ApiPublicV1ZillionaireAnalyticsOverviewRoute: typeof ApiPublicV1ZillionaireAnalyticsOverviewRoute
   ApiPublicV1ZillionaireBillingHealthRoute: typeof ApiPublicV1ZillionaireBillingHealthRoute
   ApiPublicV1ZillionaireConfigFlagsRoute: typeof ApiPublicV1ZillionaireConfigFlagsRoute
@@ -3534,7 +3695,10 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireBlockedContentIndexRoute: typeof ApiPublicV1ZillionaireBlockedContentIndexRoute
   ApiPublicV1ZillionaireContentAssetsIndexRoute: typeof ApiPublicV1ZillionaireContentAssetsIndexRoute
   ApiPublicV1ZillionaireErrorsIndexRoute: typeof ApiPublicV1ZillionaireErrorsIndexRoute
+  ApiPublicV1ZillionaireLiveChannelsIndexRoute: typeof ApiPublicV1ZillionaireLiveChannelsIndexRoute
+  ApiPublicV1ZillionaireLiveChatIndexRoute: typeof ApiPublicV1ZillionaireLiveChatIndexRoute
   ApiPublicV1ZillionaireModerationIndexRoute: typeof ApiPublicV1ZillionaireModerationIndexRoute
+  ApiPublicV1ZillionairePagesIndexRoute: typeof ApiPublicV1ZillionairePagesIndexRoute
   ApiPublicV1ZillionairePaymentsIndexRoute: typeof ApiPublicV1ZillionairePaymentsIndexRoute
   ApiPublicV1ZillionairePayoutsIndexRoute: typeof ApiPublicV1ZillionairePayoutsIndexRoute
   ApiPublicV1ZillionaireProducersIndexRoute: typeof ApiPublicV1ZillionaireProducersIndexRoute
@@ -3865,6 +4029,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ZillionaireFirebaseSchemaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zillionaire/live-tv': {
+      id: '/zillionaire/live-tv'
+      path: '/zillionaire/live-tv'
+      fullPath: '/zillionaire/live-tv'
+      preLoaderRoute: typeof ZillionaireLiveTvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/zillionaire/moderation': {
       id: '/zillionaire/moderation'
       path: '/zillionaire/moderation'
@@ -3884,6 +4055,13 @@ declare module '@tanstack/react-router' {
       path: '/zillionaire/notifications'
       fullPath: '/zillionaire/notifications'
       preLoaderRoute: typeof ZillionaireNotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/pages': {
+      id: '/zillionaire/pages'
+      path: '/zillionaire/pages'
+      fullPath: '/zillionaire/pages'
+      preLoaderRoute: typeof ZillionairePagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/payments': {
@@ -3975,6 +4153,13 @@ declare module '@tanstack/react-router' {
       path: '/zillionaire/team'
       fullPath: '/zillionaire/team'
       preLoaderRoute: typeof ZillionaireTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/test-lab': {
+      id: '/zillionaire/test-lab'
+      path: '/zillionaire/test-lab'
+      fullPath: '/zillionaire/test-lab'
+      preLoaderRoute: typeof ZillionaireTestLabRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/upload-studio': {
@@ -4495,6 +4680,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireTeamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/test-lab': {
+      id: '/api/public/v1/zillionaire/test-lab'
+      path: '/api/public/v1/zillionaire/test-lab'
+      fullPath: '/api/public/v1/zillionaire/test-lab'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireTestLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/video-jobs': {
       id: '/api/public/v1/zillionaire/video-jobs'
       path: '/api/public/v1/zillionaire/video-jobs'
@@ -4571,6 +4763,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/v1/auth/web/session'
       preLoaderRoute: typeof ApiPublicV1AuthWebSessionRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/channels/$channelId/chat': {
+      id: '/api/public/v1/channels/$channelId/chat'
+      path: '/chat'
+      fullPath: '/api/public/v1/channels/$channelId/chat'
+      preLoaderRoute: typeof ApiPublicV1ChannelsChannelIdChatRouteImport
+      parentRoute: typeof ApiPublicV1ChannelsChannelIdRoute
     }
     '/api/public/v1/content-assets/$assetId/comments': {
       id: '/api/public/v1/content-assets/$assetId/comments'
@@ -4789,11 +4988,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireAdsCampaignsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/ads/creatives': {
+      id: '/api/public/v1/zillionaire/ads/creatives'
+      path: '/api/public/v1/zillionaire/ads/creatives'
+      fullPath: '/api/public/v1/zillionaire/ads/creatives'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireAdsCreativesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/ads/providers': {
       id: '/api/public/v1/zillionaire/ads/providers'
       path: '/api/public/v1/zillionaire/ads/providers'
       fullPath: '/api/public/v1/zillionaire/ads/providers'
       preLoaderRoute: typeof ApiPublicV1ZillionaireAdsProvidersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/ads/reports': {
+      id: '/api/public/v1/zillionaire/ads/reports'
+      path: '/api/public/v1/zillionaire/ads/reports'
+      fullPath: '/api/public/v1/zillionaire/ads/reports'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireAdsReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/ads/settings': {
+      id: '/api/public/v1/zillionaire/ads/settings'
+      path: '/api/public/v1/zillionaire/ads/settings'
+      fullPath: '/api/public/v1/zillionaire/ads/settings'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireAdsSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/ads/units': {
+      id: '/api/public/v1/zillionaire/ads/units'
+      path: '/api/public/v1/zillionaire/ads/units'
+      fullPath: '/api/public/v1/zillionaire/ads/units'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireAdsUnitsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/zillionaire/analytics/overview': {
@@ -4866,6 +5093,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireErrorsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/live-channels/': {
+      id: '/api/public/v1/zillionaire/live-channels/'
+      path: '/api/public/v1/zillionaire/live-channels'
+      fullPath: '/api/public/v1/zillionaire/live-channels/'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireLiveChannelsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/live-chat/': {
+      id: '/api/public/v1/zillionaire/live-chat/'
+      path: '/api/public/v1/zillionaire/live-chat'
+      fullPath: '/api/public/v1/zillionaire/live-chat/'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireLiveChatIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/migration/zillionaire': {
       id: '/api/public/v1/zillionaire/migration/zillionaire'
       path: '/api/public/v1/zillionaire/migration/zillionaire'
@@ -4885,6 +5126,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/zillionaire/operations/live'
       fullPath: '/api/public/v1/zillionaire/operations/live'
       preLoaderRoute: typeof ApiPublicV1ZillionaireOperationsLiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/pages/': {
+      id: '/api/public/v1/zillionaire/pages/'
+      path: '/api/public/v1/zillionaire/pages'
+      fullPath: '/api/public/v1/zillionaire/pages/'
+      preLoaderRoute: typeof ApiPublicV1ZillionairePagesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/zillionaire/pages/publish': {
@@ -5467,6 +5715,21 @@ const ApiPublicV1WalletRouteChildren: ApiPublicV1WalletRouteChildren = {
 const ApiPublicV1WalletRouteWithChildren =
   ApiPublicV1WalletRoute._addFileChildren(ApiPublicV1WalletRouteChildren)
 
+interface ApiPublicV1ChannelsChannelIdRouteChildren {
+  ApiPublicV1ChannelsChannelIdChatRoute: typeof ApiPublicV1ChannelsChannelIdChatRoute
+}
+
+const ApiPublicV1ChannelsChannelIdRouteChildren: ApiPublicV1ChannelsChannelIdRouteChildren =
+  {
+    ApiPublicV1ChannelsChannelIdChatRoute:
+      ApiPublicV1ChannelsChannelIdChatRoute,
+  }
+
+const ApiPublicV1ChannelsChannelIdRouteWithChildren =
+  ApiPublicV1ChannelsChannelIdRoute._addFileChildren(
+    ApiPublicV1ChannelsChannelIdRouteChildren,
+  )
+
 interface ApiPublicV1ContentAssetsAssetIdRouteChildren {
   ApiPublicV1ContentAssetsAssetIdCommentsRoute: typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
   ApiPublicV1ContentAssetsAssetIdRatingRoute: typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
@@ -5693,9 +5956,11 @@ const rootRouteChildren: RootRouteChildren = {
   ZillionaireFeaturesRoute: ZillionaireFeaturesRoute,
   ZillionaireFinanceRoute: ZillionaireFinanceRoute,
   ZillionaireFirebaseSchemaRoute: ZillionaireFirebaseSchemaRoute,
+  ZillionaireLiveTvRoute: ZillionaireLiveTvRoute,
   ZillionaireModerationRoute: ZillionaireModerationRoute,
   ZillionaireMoviesRoute: ZillionaireMoviesRoute,
   ZillionaireNotificationsRoute: ZillionaireNotificationsRoute,
+  ZillionairePagesRoute: ZillionairePagesRoute,
   ZillionairePaymentsRoute: ZillionairePaymentsRoute,
   ZillionairePayoutsRoute: ZillionairePayoutsRoute,
   ZillionairePricingRoute: ZillionairePricingRoute,
@@ -5709,6 +5974,7 @@ const rootRouteChildren: RootRouteChildren = {
   ZillionaireStorageRoute: ZillionaireStorageRoute,
   ZillionaireSupportRoute: ZillionaireSupportRoute,
   ZillionaireTeamRoute: ZillionaireTeamRoute,
+  ZillionaireTestLabRoute: ZillionaireTestLabRoute,
   ZillionaireUploadStudioRoute: ZillionaireUploadStudioRoute,
   ZillionaireVideoStudioRoute: ZillionaireVideoStudioRoute,
   ZillionaireViewersRoute: ZillionaireViewersRoute,
@@ -5727,7 +5993,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1AnalyticsViewerRoute: ApiPublicV1AnalyticsViewerRoute,
   ApiPublicV1CatalogHomeRoute: ApiPublicV1CatalogHomeRoute,
   ApiPublicV1CatalogSearchRoute: ApiPublicV1CatalogSearchRoute,
-  ApiPublicV1ChannelsChannelIdRoute: ApiPublicV1ChannelsChannelIdRoute,
+  ApiPublicV1ChannelsChannelIdRoute:
+    ApiPublicV1ChannelsChannelIdRouteWithChildren,
   ApiPublicV1ConfigClientRoute: ApiPublicV1ConfigClientRoute,
   ApiPublicV1ContentAssetsAssetIdRoute:
     ApiPublicV1ContentAssetsAssetIdRouteWithChildren,
@@ -5778,6 +6045,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ZillionaireSecretHealthRoute:
     ApiPublicV1ZillionaireSecretHealthRoute,
   ApiPublicV1ZillionaireTeamRoute: ApiPublicV1ZillionaireTeamRouteWithChildren,
+  ApiPublicV1ZillionaireTestLabRoute: ApiPublicV1ZillionaireTestLabRoute,
   ApiPublicV1ZillionaireVideoJobsRoute: ApiPublicV1ZillionaireVideoJobsRoute,
   ApiPublicV1ZillionaireWorkersRoute:
     ApiPublicV1ZillionaireWorkersRouteWithChildren,
@@ -5835,8 +6103,14 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireAccessUnlockRoute,
   ApiPublicV1ZillionaireAdsCampaignsRoute:
     ApiPublicV1ZillionaireAdsCampaignsRouteWithChildren,
+  ApiPublicV1ZillionaireAdsCreativesRoute:
+    ApiPublicV1ZillionaireAdsCreativesRoute,
   ApiPublicV1ZillionaireAdsProvidersRoute:
     ApiPublicV1ZillionaireAdsProvidersRoute,
+  ApiPublicV1ZillionaireAdsReportsRoute: ApiPublicV1ZillionaireAdsReportsRoute,
+  ApiPublicV1ZillionaireAdsSettingsRoute:
+    ApiPublicV1ZillionaireAdsSettingsRoute,
+  ApiPublicV1ZillionaireAdsUnitsRoute: ApiPublicV1ZillionaireAdsUnitsRoute,
   ApiPublicV1ZillionaireAnalyticsOverviewRoute:
     ApiPublicV1ZillionaireAnalyticsOverviewRoute,
   ApiPublicV1ZillionaireBillingHealthRoute:
@@ -5901,8 +6175,13 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireContentAssetsIndexRoute,
   ApiPublicV1ZillionaireErrorsIndexRoute:
     ApiPublicV1ZillionaireErrorsIndexRoute,
+  ApiPublicV1ZillionaireLiveChannelsIndexRoute:
+    ApiPublicV1ZillionaireLiveChannelsIndexRoute,
+  ApiPublicV1ZillionaireLiveChatIndexRoute:
+    ApiPublicV1ZillionaireLiveChatIndexRoute,
   ApiPublicV1ZillionaireModerationIndexRoute:
     ApiPublicV1ZillionaireModerationIndexRoute,
+  ApiPublicV1ZillionairePagesIndexRoute: ApiPublicV1ZillionairePagesIndexRoute,
   ApiPublicV1ZillionairePaymentsIndexRoute:
     ApiPublicV1ZillionairePaymentsIndexRoute,
   ApiPublicV1ZillionairePayoutsIndexRoute:

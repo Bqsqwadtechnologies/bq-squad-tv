@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireZillionaireModule } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
@@ -11,6 +11,40 @@ const schema = z
     reason: z.string().trim().min(3).max(1000),
   })
   .strict();
+
+const DEFAULT_CONFIG: Record<string, string> = {
+  effective_date: "January 1, 2026",
+  last_updated: "April 2026",
+  company_name: "BQ Sqwad Technologies",
+  platform_name: "BQ SQWAD TV",
+  contact_email: "tv@bqsqwad.com",
+  support_email: "tv@bqsqwad.com",
+  legal_email: "tv@bqsqwad.com",
+  governing_country: "Nigeria",
+  minimum_age: "13",
+  governing_law: "the laws of the Federal Republic of Nigeria",
+  dispute_resolution_forum: "Lagos, Nigeria",
+  data_retention_period: "7 years for billing logs and 90 days for diagnostic data",
+};
+
+function fillPlaceholders(raw: string, dynamicSettings: Record<string, unknown>): { text: string; defaultedCount: number } {
+  if (typeof raw !== "string") return { text: "", defaultedCount: 0 };
+  let defaultedCount = 0;
+  const text = raw.replace(/\{\{\s*([a-zA-Z0-9_-]+)\s*\}\}/g, (_match, rawKey: string) => {
+    const key = rawKey.toLowerCase().replace(/-/g, "_");
+    const val =
+      typeof dynamicSettings[key] === "string" && (dynamicSettings[key] as string).trim()
+        ? (dynamicSettings[key] as string).trim()
+        : DEFAULT_CONFIG[key];
+    if (val) {
+      if (!dynamicSettings[key]) defaultedCount++;
+      return val;
+    }
+    defaultedCount++;
+    return "BQ SQWAD TV";
+  });
+  return { text, defaultedCount };
+}
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish-defaults")({
   server: {
@@ -39,41 +73,58 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish-d
             );
           }
 
+          const settingsDoc = await fs.getDoc("platformConfig/legalSettings").catch(() => null);
+          const settings =
+            settingsDoc?.["values"] && typeof settingsDoc["values"] === "object"
+              ? (settingsDoc["values"] as Record<string, unknown>)
+              : {};
+
           const now = new Date().toISOString();
           const results = [];
+          let totalDefaulted = 0;
 
           for (const page of defaultPages) {
             const path = "sitePages/" + page.slug;
             const existing = await fs.getDoc(path);
+            const sourceBody = typeof existing?.["body"] === "string" ? (existing["body"] as string) : page.body;
+            const sourceTitle = typeof existing?.["title"] === "string" ? (existing["title"] as string) : page.title;
+            const sourceAudience = existing?.["audience"] ?? page.audience ?? "public";
             const currentVersion = Number.isSafeInteger(existing?.["version"])
               ? Number(existing!["version"])
               : 0;
             const nextVersion = currentVersion + 1;
 
+            const { text: processedBody, defaultedCount } = fillPlaceholders(sourceBody, settings);
+            totalDefaulted += defaultedCount;
+
             const versionRecord = {
               version: nextVersion,
-              title: page.title,
-              body: page.body,
+              title: sourceTitle,
+              body: processedBody,
               status: "published",
               effectiveAt: now,
-              changeSummary: "One-click default publish",
+              changeSummary: "One-click default publish with auto-filled placeholders",
               createdAt: now,
               createdBy: user.uid,
             };
 
+            const existingHistory = Array.isArray(existing?.["versions"])
+              ? (existing!["versions"] as unknown[])
+              : [];
+
             await fs.setDoc(path, {
               slug: page.slug,
-              title: page.title,
-              audience: page.audience ?? "public",
+              title: sourceTitle,
+              audience: sourceAudience,
               status: "published",
-              body: page.body,
+              body: processedBody,
               version: nextVersion,
               effectiveAt: now,
-              changeSummary: "Published bundled defaults",
+              changeSummary: "One-click published defaults",
               requiresReacceptance: false,
               updatedBy: user.uid,
               updatedAt: now,
-              versions: [versionRecord],
+              versions: [...existingHistory, versionRecord],
             });
 
             results.push({ slug: page.slug, version: nextVersion });
@@ -85,10 +136,17 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish-d
             targetType: "sitePages",
             targetId: "all_defaults",
             reason: body.reason,
-            after: { count: results.length },
+            after: { count: results.length, totalDefaulted },
           });
 
-          return Response.json({ published: true, pages: results });
+          return Response.json({
+            published: true,
+            pages: results,
+            warning:
+              totalDefaulted > 0
+                ? `${totalDefaulted} placeholder fields were automatically populated from standard defaults.`
+                : null,
+          });
         } catch (error) {
           return errorBody(error);
         }

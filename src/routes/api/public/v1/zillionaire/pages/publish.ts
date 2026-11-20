@@ -9,6 +9,7 @@ const schema = z
   .object({
     slug: z.string().regex(/^[a-z0-9-]{1,80}$/),
     effectiveAt: z.string().datetime(),
+    scheduledPublishAt: z.string().datetime().nullable().optional(),
     changeSummary: z.string().trim().min(3).max(500),
     reason: z.string().trim().min(3).max(1000),
     requiresReacceptance: z.boolean().default(true),
@@ -58,12 +59,14 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish")
             contact_email: "tv@bqsqwad.com",
             support_email: "tv@bqsqwad.com",
             legal_email: "tv@bqsqwad.com",
+            governing_country: "Nigeria",
             minimum_age: "13",
             governing_law: "the laws of the Federal Republic of Nigeria",
             dispute_resolution_forum: "Lagos, Nigeria",
             data_retention_period: "7 years for billing logs and 90 days for diagnostic data",
           };
 
+          let defaultedCount = 0;
           const markdown = sourceMarkdown.replace(
             /\{\{\s*([a-z0-9_-]+)\s*\}\}/g,
             (_match, rawKey: string) => {
@@ -72,6 +75,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish")
                 typeof settings[key] === "string" && (settings[key] as string).trim()
                   ? (settings[key] as string).trim()
                   : (DEFAULT_CONFIG[key] ?? "BQ SQWAD TV");
+              if (!settings[key]) defaultedCount++;
               return val;
             },
           );
@@ -87,6 +91,13 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish")
               "PAGE_LINK_UNSAFE",
               "Only secure web and email links are allowed.",
             );
+
+          const isScheduled =
+            typeof body.scheduledPublishAt === "string" &&
+            new Date(body.scheduledPublishAt).getTime() > Date.now();
+
+          const targetStatus = isScheduled ? "scheduled" : "published";
+
           const nextVersion =
             (Number.isSafeInteger(existing["version"]) ? Number(existing["version"]) : 0) + 1;
           const now = new Date().toISOString();
@@ -97,8 +108,9 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish")
             version: nextVersion,
             title: existing["title"],
             body: markdown,
-            status: "published",
+            status: targetStatus,
             effectiveAt: body.effectiveAt,
+            scheduledPublishAt: body.scheduledPublishAt ?? null,
             changeSummary: body.changeSummary,
             createdAt: now,
             createdBy: user.uid,
@@ -118,10 +130,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish")
                   update: {
                     name: fs.docName(path),
                     fields: encodeFields({
-                      status: "published",
+                      status: targetStatus,
                       body: markdown,
                       version: nextVersion,
                       effectiveAt: body.effectiveAt,
+                      scheduledPublishAt: body.scheduledPublishAt ?? null,
                       changeSummary: body.changeSummary,
                       requiresReacceptance: body.requiresReacceptance,
                       updatedBy: user.uid,
@@ -135,18 +148,29 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish")
           });
           await writeAuditLog(fs, {
             actorUid: user.uid,
-            action: "legal.page_published",
+            action: isScheduled ? "legal.page_scheduled" : "legal.page_published",
             targetType: "sitePage",
             targetId: body.slug,
             reason: body.reason,
             before: { status: existing["status"], version: existing["version"] },
             after: {
-              status: "published",
+              status: targetStatus,
               version: nextVersion,
+              scheduledPublishAt: body.scheduledPublishAt,
               requiresReacceptance: body.requiresReacceptance,
             },
           });
-          return Response.json({ published: true, slug: body.slug, version: nextVersion });
+          return Response.json({
+            published: targetStatus === "published",
+            scheduled: targetStatus === "scheduled",
+            slug: body.slug,
+            version: nextVersion,
+            status: targetStatus,
+            warning:
+              defaultedCount > 0
+                ? `${defaultedCount} empty placeholders were filled with standard system defaults.`
+                : null,
+          });
         } catch (error) {
           return errorBody(error);
         }

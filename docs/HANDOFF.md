@@ -19,3 +19,9 @@ Implemented:
 Known limits:
 - Estimated revenue in reports is calculated based on standard benchmark eCPM/CPC rates; third-party partner network earnings are reported out-of-band by respective network dashboards.
 - Creatives require active CDN media URLs; local asset binary uploading delegates to media storage.
+
+Last batch finished: V5-02 Batch 8 (Legal pages editor and publisher).
+Next batch: V5-02 Batch 9 (legal text and storage visibility); read the exact scope in the V5-02 specification before editing.
+Implemented: owner Pages console at `/zillionaire/pages` with 12 document entries, Markdown editing and preview, version history and compare, rollback, scheduled-publish controls, re-acceptance toggle, owner-only legal-review warning and one-tap defaults. Added authenticated list/save API, placeholder auto-fill using legal settings or standard fallbacks, and public route fallbacks for supported slugs. Draft content remains draft and does not affect acceptance; only published required versions marked for re-acceptance gate users.
+Verification: development build passed; public-text scan passed; route matrix regenerated for 251 routes. The full test suite must be rerun after these changes.
+Known limits: scheduled status is stored and exposed at its scheduled time by the public route, but no background job is added to transition it to published or issue re-acceptance notifications; scheduled page settings are not fully exercised by tests yet. Default legal text remains a starting point for qualified legal review.

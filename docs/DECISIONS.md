@@ -289,3 +289,11 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Absolute child-profile and adult-channel safety gates: ads are never served to child viewer profiles or on channels rated 18+ or adult-only.
 - Paid viewers ad-free option: when enabled, active subscribers and verified paid tiers receive zero commercial ads.
 - Direct creative upload workflow includes owner review and approval status (pending, approved, rejected) before live rotation.
+
+## V5-02 Batch 8 — Legal pages editor and publisher
+
+- Added owner-only Pages console for all 12 public, producer and provider legal documents, with Markdown edit/preview, version history, compare, rollback, scheduling and one-tap default publishing.
+- Draft-only records do not block account access; only published required pages with re-acceptance enabled affect acceptance checks.
+- Publishing auto-fills settings or neutral standard defaults and returns a warning when any fallback was used; drafts remain separate from the published copy.
+- Public legal routes resolve every documented slug through a published document, bundled default or safe fallback; unknown slugs return a not-found response without implying a supported policy is unavailable.
+- Default text is a starting point and needs qualified legal review before production use.
