@@ -73,18 +73,18 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
       POST: async ({ request, params }) => {
         try {
           const user = await requireUser(request);
-          const body = await parseBody(request, schema);
           const channelId = params.channelId;
           if (!/^[A-Za-z0-9_-]{1,80}$/.test(channelId))
             throw new ApiError(400, "CHANNEL_ID_INVALID", "The channel id is invalid.");
+          const fs = await Firestore.create();
+          await requireChannelPermission(fs, channelId, user.uid, "video.upload");
+          const body = await parseBody(request, schema);
           if (Date.parse(body.validUntil) <= Date.parse(body.validFrom))
             throw new ApiError(
               400,
               "LICENSE_TERM_INVALID",
               "The license end date must be after its start date.",
             );
-          const fs = await Firestore.create();
-          await requireChannelPermission(fs, channelId, user.uid, "video.upload");
           const asset = await fs.getDoc("contentAssets/" + body.assetId);
           if (
             !asset ||
