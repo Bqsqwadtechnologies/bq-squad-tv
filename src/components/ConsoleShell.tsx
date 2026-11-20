@@ -270,7 +270,7 @@ export function ConsoleShell({
           {
             id: "comments",
             label: "Comments & ratings",
-            href: "/zillionaire/comments",
+            href: "/zillionaire/moderation",
             icon: MessageSquare,
             module: "moderation",
           },
@@ -338,7 +338,7 @@ export function ConsoleShell({
           {
             id: "promotions",
             label: "Promotions",
-            href: "/zillionaire/promotions",
+            href: "/zillionaire/ads",
             icon: Sparkles,
             module: "ads",
           },
@@ -347,13 +347,6 @@ export function ConsoleShell({
             label: "Notifications",
             href: "/zillionaire/notifications",
             icon: Bell,
-            module: "overview",
-          },
-          {
-            id: "referrals",
-            label: "Referrals",
-            href: "/zillionaire/referrals",
-            icon: Share2,
             module: "overview",
           },
         ],
@@ -427,7 +420,7 @@ export function ConsoleShell({
           {
             id: "delivery",
             label: "Delivery & HLS",
-            href: "/zillionaire/delivery",
+            href: "/zillionaire/storage",
             icon: Server,
             module: "delivery",
           },
