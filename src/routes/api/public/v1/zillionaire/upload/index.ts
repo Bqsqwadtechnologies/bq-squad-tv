@@ -39,7 +39,6 @@ const actionSchema = z.discriminatedUnion("action", [
     sizeBytes: z.number().int().positive().max(MAX_BYTES),
     mimeType: z.string().trim().min(1).max(100),
     checksumSha256: z.string().trim().max(64).optional(),
-    directPublish: z.boolean().default(false),
     subtitles: z
       .array(
         z.object({
@@ -73,7 +72,6 @@ const actionSchema = z.discriminatedUnion("action", [
     durationSeconds: z.number().int().positive().max(86400).optional(),
     codec: z.string().max(50).optional(),
     resolution: z.string().max(20).optional(),
-    directPublish: z.boolean().optional(),
     reason: z.string().trim().max(500).optional(),
   }),
   z.object({
@@ -248,7 +246,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
               checksumSha256: data.checksumSha256 || null,
               duplicateDetected,
               duplicateOfAssetId: duplicateAssetId,
-              directPublish: data.directPublish,
+              directPublish: false,
               subtitles: data.subtitles,
               audioTracks: data.audioTracks,
               status: "uploading",
@@ -271,7 +269,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
                 channelId: data.channelId,
                 filename: data.filename,
                 sizeBytes: data.sizeBytes,
-                directPublish: data.directPublish,
+                directPublish: false,
                 duplicateDetected,
               },
             });
@@ -281,7 +279,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
               chunkSizeBytes: CHUNK_SIZE,
               totalChunks,
               duplicateDetected,
-              directPublish: data.directPublish,
+              directPublish: false,
             });
           }
 
