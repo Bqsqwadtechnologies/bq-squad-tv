@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
-import { requireZillionaireModule } from "@/lib/server/roles";
+import { isProtectedZillionaire, requireZillionaireModule } from "@/lib/server/roles";
+import { requireStepUp } from "@/lib/server/zillionaire-access";
 
 const schema = z.object({ reason: z.string().trim().min(3).max(1000) });
 
@@ -19,6 +20,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payments/$payme
           const body = await parseBody(request, schema);
           const fs = await Firestore.create();
           await requireZillionaireModule(fs, actor, "payments");
+          if (isProtectedZillionaire(actor.email || ""))
+            requireStepUp(request, actor.uid, "payment_reversal");
           const paymentPath = "payments/" + paymentId;
           const initial = await fs.getDoc(paymentPath);
           if (!initial || typeof initial["uid"] !== "string")

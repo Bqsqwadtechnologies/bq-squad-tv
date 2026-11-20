@@ -18,7 +18,6 @@
 - 2026-11-17 — Playback is online-only. Do not add offline download tabs, buttons, settings or client functionality unless a later owner decision explicitly changes the delivery model. Keep producer features and producer access code intact.
 - 2026-11-17 — Product UI must not assign people or accounts the labels “Admin” or “Super Admin”. The Zillionaire Dashboard is the product control centre; individual access is granted only through explicit delegated module permissions.
 
-
 ## Storage Fabric — File 03
 
 - The compact storage pool is sharded by purpose with no more than 200 destination entries per shard. Upload selection reads the purpose shards and the selected shared-account summary; it does not scan all destination documents.
@@ -34,12 +33,11 @@
 - Dispute threads: Dispute threads are bidirectional and support operator replies via `/api/public/v1/zillionaire/support/messages` and provider replies via `/api/public/v1/provider/disputes`. Thread isolation prevents any other provider from reading or appending to foreign dispute threads.
 - Accessibility & navigation: All three consoles (Zillionaire Dashboard, Producer Console, Partner Portal) implement visible focus indicators (`focus-visible:ring-2 focus-visible:ring-cyan-400`), keyboard navigation (tabIndex, form submission, enter key handling), and explicit accessible labels (`aria-label`, `role="region"`, `role="status"`).
 
-
 ## Automatic Checks & Role Isolation CI — File 01, Batch 01
 
-- 2026-11-18 — Automatic checks enabled on push to  and  via . Concurrency cancels obsolete runs, actions are pinned to immutable commit SHAs, and jobs independently isolate , , , , , , and . Manual workflows remain preserved.
+- 2026-11-18 — Automatic checks enabled on push to and via . Concurrency cancels obsolete runs, actions are pinned to immutable commit SHAs, and jobs independently isolate , , , , , , and . Manual workflows remain preserved.
 - 2026-11-18 — Decisions superseding earlier orders (File 00):
-  1. Automatic checks are now on. The owner asked for the role-isolation and workflow suites to run on every change and block on failure. Because there are no pull requests, add a workflow that runs on every push to  (and on pull requests if one is ever opened), with path filters, concurrency that cancels older runs, and a failing run reported on the commit. Keep the old manual workflows as they are.
+  1. Automatic checks are now on. The owner asked for the role-isolation and workflow suites to run on every change and block on failure. Because there are no pull requests, add a workflow that runs on every push to (and on pull requests if one is ever opened), with path filters, concurrency that cancels older runs, and a failing run reported on the commit. Keep the old manual workflows as they are.
   2. The role named "admin" is replaced by Zillionaire in code, data and tests (file 01).
   3. Bottom navigation follows the uploaded design: Home, Live TV, Library, Downloads, Settings. Downloads has no download function: it opens a well-designed "Coming soon" screen (viewing stays online only). The profile avatar sits top right on every screen.
   4. Dark navy and black is the normal theme; white is the second theme. Default is dark.
@@ -85,9 +83,11 @@
 ## Batch 07 — Fine-Grained Module Delegation for Zillionaire Operators (File 01)
 
 ### Context & Requirements
+
 V3-01 Batch 07 mandates fine-grained module access for Zillionaire operators (`roles`, `finance`, `channels`, `storage`, `catalog`, `support`, `moderation`, `pricing`, `providers`, `producers`, `users`, `ads`, `reports`, `video`, `delivery`, `settings`). The platform must strictly enforce that operators granted one module cannot call endpoints or access resources of another.
 
 ### Architecture & Implementation
+
 1. **Module Registry Expansion**: Expanded `ZILLIONAIRE_MODULES` in `src/lib/server/roles.ts` to include `"finance"` and `"catalog"`, alongside all operational modules.
 2. **Family Aliasing & Compatibility**:
    - Operator granted `"finance"` receives permission for `"finance"`, `"payments"`, `"payouts"`, and `"wallets"`, but remains strictly isolated from all other modules.
@@ -106,9 +106,11 @@ V3-01 Batch 07 mandates fine-grained module access for Zillionaire operators (`r
 ## Batch 08 — Server-Checked Console Page Guards & Anti-Probing 404 Parity (File 01)
 
 ### Context & Requirements
+
 V3-01 Batch 08 requires server-checked page guards for privileged console entry points (`/admin`, `/producer`, `/provider`). Unauthenticated or unauthorized visitors must see no login forms, no console headers, and no hint that a control surface exists at the URI. The failure mode must match an unknown route's plain 404 "Page not found" screen. No console data or API requests may trigger before the server validates the visitor's role.
 
 ### Architecture & Implementation
+
 1. **Server Role Resolution (`/api/public/v1/auth/web/me`)**:
    - Replaced basic user check with central `requireViewer(request)` and platform role resolution.
    - Securely returns `{ uid, email, emailVerified, roles, isOwner, modules, producerPlanActive, providerId }` with `no-store` cache headers.
@@ -130,9 +132,11 @@ V3-01 Batch 08 requires server-checked page guards for privileged console entry 
 ## Batch 09 — Privacy-Safe Denied-Access Audit Events & Sharded Counters (File 01)
 
 ### Context & Requirements
+
 V3-01 Batch 09 requires writing structured privacy-safe audit records (`accessDenials/{id}`) on every authorization failure (cross-role, cross-tenant, missing module, bad worker signature, disabled feature flag). Under no circumstances may raw user emails, display names, bearer tokens, cookies, auth headers, request bodies, query strings, raw database identifiers, signed playback links, or wallet figures be persisted in denial logs. The system must support sharded hourly counters per `(actorHash, routePattern, reasonCode)`, enforce a 90-day retention TTL, and emit immediate security alerts when any single actor exceeds 10 denials in a rolling hour.
 
 ### Architecture & Implementation
+
 1. **Privacy-Preserving Hashing & Coarse Attributes (`src/lib/server/access-denials.ts`)**:
    - `actorHash` and `targetHash`: HMAC-SHA256 digests generated with server-side `AUDIT_HASH_KEY`. Raw IDs are never recorded in Firestore denial documents.
    - `routePattern`: Normalized URL path mapping dynamic segments (UUIDs, prefixed IDs like `usr_`, `ch_`, `prov_`, numeric IDs) to canonical route patterns (e.g. `/api/public/v1/content-assets/:assetId/approve`), stripping query parameters, hashes, and request bodies.
@@ -155,9 +159,11 @@ V3-01 Batch 09 requires writing structured privacy-safe audit records (`accessDe
 ## Batch V4-01 — Zillionaire Route Migration, Access Matrix & Anti-Probing Parity
 
 ### Context & Requirements
+
 V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` paths in favor of `/zillionaire/*` and `/api/public/v1/zillionaire/*`. Legacy admin paths must present generic 404 parity with `noindex` rather than revealing administrative presence. All module routes, access resolvers, and route tests must align with the new canonical hierarchy.
 
 ### Architecture & Implementation
+
 1. **Route Renaming & Anti-Probing 404**:
    - Renamed all console page routes (`src/routes/admin.*.tsx` -> `src/routes/zillionaire.*.tsx`).
    - Renamed all API endpoints (`src/routes/api/public/v1/admin/*` -> `src/routes/api/public/v1/zillionaire/*`).
@@ -177,25 +183,31 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
    - Production bundle built cleanly (`dist/client`, `dist/server`).
 
 ## Batch V4-02 Batch 01 — Viewer 360 Control Engine
+
 - 2026-11-19 — Implemented Viewer 360 in `zillionaire.viewers.tsx` and `/api/public/v1/zillionaire/users/$uid/` supporting multi-attribute search (email, ID, name, phone, wallet, device), 9 profile tabs (Profile, Wallet/ledger, Payments, Receipts, Watch history, Devices/sessions, Comments, Security, Notes), mandatory-reasoned actions (suspend, unsuspend, restrict, ban, force sign-out everywhere, revoke device, change email, mark verified, password reset link, disable parental PIN, country update prior to wallet settlement, soft delete/anonymize), targeted in-app/email messaging with templates, and audited wallet balance credit/debit with Paystack references.
 
 ## Batch V4-02 Batch 02 — Receipts and Money Documents Registry
+
 - 2026-11-19 — Implemented sequential receipts engine (`BQ-REC-...`, `BQ-PAY-...`, `BQ-REF-...`) with Firestore atomic sequence generator, Zillionaire receipts console (`zillionaire.receipts.tsx`), PDF/printable document generation endpoint, resend email capability with audit logging, and customer lifetime spend aggregation.
 
 ## Batch V4-02 Batch 03 — Content Control (Veto Power)
+
 - 2026-11-19 — Implemented Movies & series veto control screen (`zillionaire.movies.tsx`) with instant playback block, 30-day soft delete, in-console master playlist preview player, copyright complaint takedown workflow, reprocess job queuing, metadata editing, and multi-asset bulk actions.
 
 ## Batch V4-02 Batch 04 — Blocked Content Log
+
 - 2026-11-19 — Implemented dedicated Blocked Content compliance registry (`zillionaire.blocked-content.tsx`), DMCA/copyright complaint notice inspection modal, and one-click owner instant unblock route (`/api/public/v1/zillionaire/blocked-content/$assetId/unblock`).
 - **v4-02-batch05**: Implemented Channels Master Control console (`/zillionaire/channels`) and API endpoints (`api/public/v1/zillionaire/channels/` & `$channelId/actions`). Supports complete channel governance across platform and provider channels: verified badge grants/revocations, instant suspension with content playback lock, featured homepage showcase, audited ownership transfer, 30-day soft deletion with restore, handle modification, live broadcast permissions, and per-channel revenue share split overrides (70/30, 80/20, 85/15, 50/50, 100/0).
 
 ## Batch V4-02 Batch 06 — Revenue Share, Payouts Review & Settlement, and Payments Reversal
+
 - 2026-11-19 — Implemented Payouts Control Console (`/zillionaire/payouts`) and Payments Control Console (`/zillionaire/payments`) alongside `/api/public/v1/zillionaire/payouts/` and `/api/public/v1/zillionaire/payments/` endpoints.
   - Payouts: Full lifecycle management (approve, reject, hold, unhold, and mark paid / settle with settlement reference and audit logging) with live split & net calculator.
   - Payments: Comprehensive transaction filtering (by status, gateway, reference, UID, date range), gateway reconciliation status tracking, and two-step confirmation reversal modal requiring typed safety confirmation (`REVERSE`) and audit tracking.
   - Role isolation: Maintained strict `payouts` and `payments` module requirements under `requireZillionaireModule` with 219 routes catalogued in route-access matrix and 2,687 passing tests.
 
 ## Batch V4-02 Batch 07 — Producers Verification & Channels, and Providers Allowlist & Licence Vault
+
 - 2026-11-19 — Implemented Producers Directory & Governance, and Providers Licence Vault & Allowlist:
   - Producers (`/zillionaire/producers` & `/api/public/v1/zillionaire/producers/*`): Producer verification review with signed evidence inspection, approve/reject/request evidence actions, instant creator suspension/unsuspension, view assigned channels and balance/lifetime earnings, and verified audit-trailed payout bank account editing (`update_payout_account`).
   - Providers (`/zillionaire/providers` & `/api/public/v1/zillionaire/providers/*`): Approved email allowlist management (add email, Verify, Grant, Revoke, Suspend) with immediate active session invalidation on Revoke. Licence and contract vault for binding agreements and valid date windows, monthly settlement statement review, dispute resolution portal, and non-metered test playback verification for linear FAST channels.
@@ -203,6 +215,7 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
   - Route Access & Quality: 220 routes catalogued in `ROUTE-ACCESS-MATRIX.md` with full role-matrix validation, clean public-text scan, and 2,697 passing Vitest tests.
 
 ## Batch V4-02 Batch 08 — Moderation & Community Safety
+
 - 2026-11-19 — Implemented Moderation & Community Safety engine:
   - Zillionaire Moderation Console (`/zillionaire/moderation` & `/api/public/v1/zillionaire/moderation/`): Comments queue with approve, hide, delete, ban commenter, and shadow-ban actions; user reports registry with resolution notes; auto-flagging keyword dictionary filter; rating abuse & brigading detection; and per-title comments on/off control respecting `commentsOpen`.
   - Viewer Reporting & Gating (`/api/public/v1/content-reports/`): Viewers submit reports on comments, assets, channels or users with rate-limiting. Comments endpoint enforces `commentsOpen !== false`, bans, shadow-bans, and keyword checks. Rating endpoint detects high-velocity and 1-star brigading anomalies.
@@ -224,12 +237,14 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
   - Route Access & Quality: Navigation wired to ConsoleShell under Money section, dead `/zillionaire/wallets` link resolved, 233 routes catalogued in `ROUTE-ACCESS-MATRIX.md`, role-matrix expectations verified, and all 2,850 Vitest tests passing.
 
 ## V5-01 Batch 8 — Support desk and user accounts (2026-11-19)
+
 - Unified support desk at `/zillionaire/support` with ticket priority, status workflow, internal operator notes (private to team), canned reply templates, and linked records (User Account UID, Payment Reference, Receipt ID).
 - Reusable audience segments with min-spend, platform, and geographic criteria saved to Firestore `userSegments` with audience count estimates and CSV export.
 - Account recovery challenge queue at `/api/public/v1/zillionaire/support/` with identity check verification (email, billing, device fingerprint); operators never view or handle plaintext user passwords, dispatching cryptographic verification tokens.
 - Role matrix and route access matrix updated to 234 routes with all 96 test files / 2,865 tests passing.
 
 ## V5-01 Batch 9 — Tests, rename sweep, push log (2026-11-19)
+
 - Full Vitest suite passing: 97 test files / 2,868 tests green.
 - Public-text scan (`scripts/scan-public-text.mjs`) passing with 0 findings across all routes and components.
 - Added `src/test/no-admin-strings.test.ts` to permanently enforce zero occurrences of "admin" or "administrator" in user-visible UI text, router paths, and single-owner configuration.
@@ -238,6 +253,7 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Completed all 9 batches of V5-01 (Finish Zillionaire Control + Catch-Up).
 
 ### V5-02 Batch 1: Upload Studio & Ingestion Pipeline
+
 - Built `/zillionaire/upload-studio` and `/api/public/v1/zillionaire/upload/` providing multi-format uploads (Movie, Series, Episode, Trailer, Live recording).
 - Integrated chunked resumable upload mechanics with progress tracking, pause/resume, retry, and Direct Publish mode for instantaneous MP4/HLS availability without blocking on worker transcoding.
 - Wired automated fallback to background transcode queues with status tracking: Uploading, Verifying, Processing, Needs Review, Ready, Published, Failed.
@@ -246,6 +262,7 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Maintained strict zero-admin naming and brand guidelines, verified public-text scan clean, and passed all 98 Vitest suites (2,893 tests).
 
 ### V5-02 Batch 2: Series, Seasons & Episodes Pipeline
+
 - Built `/zillionaire/series` and `/api/public/v1/zillionaire/series/` for comprehensive episodic content management under the content module.
 - Implemented series hierarchy with nested seasons and episodes, reordering, and bulk auto-numbering.
 - Added episode status controls (Draft, Scheduled, Published, Archived) with automated release schedules.
@@ -254,18 +271,17 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Verified zero-admin strings test, public-text scan green, dev build passing, and full test suite passing cleanly (99 suites / 2,918 tests).
 
 ### V5-02 Batch 3: Movies Library Management & Curation
+
 - Built `/api/public/v1/zillionaire/movies/curation/` for shelves, hero rotation schedules, and per-title curation overrides.
 - Enhanced `/zillionaire/movies` with dedicated tabs for Catalogue & Takedowns, Collections & Shelves (Trending, New Releases, For You, custom rows with pin/rank), Featured Hero Rotation with start/end schedules, and Regional Geo-availability windows with Price Per Minute overrides and Free Preview minutes.
 - Wired strict content module authorization, full audit logging for all curation updates, and verified 239 routes in the route access matrix.
 - Verified zero-admin strings test, public-text scan clean, dev build passing, and full test suite passing cleanly (100 suites / 2,933 tests).
-
 
 ## V5-02 Batch 4 — Live TV
 
 - Live channel inventory uses explicit live-channel records only; the console must not fill empty inventory with sample channels or synthetic viewer/health metrics. Unknown playback telemetry is displayed as unknown until a trusted monitor reports it.
 - Channel mutations require a reason and write an audit event. A pending or rejected channel cannot be started; approvals apply only to existing pending submissions.
 - HLS URLs are validated for secure playlist shape, but this does not prove stream reachability or entitlement.
-
 
 ## V5-02 Batch 5 — Live chat
 
@@ -310,5 +326,5 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Catalog filtering now excludes `testOnly` channels even if a misconfigured document is published, adding a second safety boundary against public discovery and revenue pathways.
 - Consolidated owner launch checks into the existing owner-actions checklist. External provider configuration and legal review remain owner actions, not claims made by automated tests.
 
-
 - V5-03 Batch 1 uses mandatory password + TOTP, AES-GCM encrypted authenticator secrets, atomic single-use recovery codes and the existing five-failure lockout; passkeys and new-device email alerts remain explicitly out of scope until implemented.
+- V5-03 Batch 2 protects owner wallet adjustments, payment reversals, permanent account removals, team grants/revocations, and payout settlement with a five-minute actor/action-scoped step-up token; finance dual approval, configurable daily limits, revenue-share changes, settings/secrets changes, and data exports still need separate implementation.

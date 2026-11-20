@@ -229,3 +229,77 @@ export function requireZillionaireUnlock(request: Request, uid: string): void {
     );
   }
 }
+
+export const STEP_UP_TTL_SECONDS = 5 * 60;
+export const ZILLIONAIRE_STEP_UP_HEADER = "x-zillionaire-step-up";
+export type StepUpScope =
+  "wallet_adjust" | "payment_reversal" | "permanent_delete" | "team_manage" | "payout_settlement";
+
+export function createStepUpToken(
+  uid: string,
+  scope: StepUpScope,
+): { token: string; expiresAt: number } {
+  const iat = Math.floor(Date.now() / 1000);
+  const payload = { uid, scope, iat, exp: iat + STEP_UP_TTL_SECONDS };
+  const encoded = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = crypto
+    .createHmac("sha256", getSigningSecret())
+    .update(encoded)
+    .digest("base64url");
+  return { token: `${encoded}.${signature}`, expiresAt: payload.exp };
+}
+
+export function requireStepUp(request: Request, uid: string, scope: StepUpScope): void {
+  const token = request.headers.get(ZILLIONAIRE_STEP_UP_HEADER);
+  if (!token)
+    throw new ApiError(
+      428,
+      "STEP_UP_REQUIRED",
+      "Re-authenticate to continue this sensitive action.",
+    );
+  const [encoded, signature, extra] = token.split(".");
+  if (!encoded || !signature || extra)
+    throw new ApiError(
+      428,
+      "STEP_UP_REQUIRED",
+      "Re-authenticate to continue this sensitive action.",
+    );
+  const expected = crypto.createHmac("sha256", getSigningSecret()).update(encoded).digest();
+  let actual: Buffer;
+  try {
+    actual = Buffer.from(signature, "base64url");
+  } catch {
+    throw new ApiError(
+      428,
+      "STEP_UP_REQUIRED",
+      "Re-authenticate to continue this sensitive action.",
+    );
+  }
+  if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected))
+    throw new ApiError(
+      428,
+      "STEP_UP_REQUIRED",
+      "Re-authenticate to continue this sensitive action.",
+    );
+  let payload: { uid?: string; scope?: string; exp?: number };
+  try {
+    payload = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as typeof payload;
+  } catch {
+    throw new ApiError(
+      428,
+      "STEP_UP_REQUIRED",
+      "Re-authenticate to continue this sensitive action.",
+    );
+  }
+  if (
+    payload.uid !== uid ||
+    payload.scope !== scope ||
+    typeof payload.exp !== "number" ||
+    payload.exp <= Date.now() / 1000
+  )
+    throw new ApiError(
+      428,
+      "STEP_UP_REQUIRED",
+      "Re-authenticate to continue this sensitive action.",
+    );
+}

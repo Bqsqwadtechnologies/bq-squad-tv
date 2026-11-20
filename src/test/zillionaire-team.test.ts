@@ -4,6 +4,7 @@ import { Route as TeamMemberRoute } from "@/routes/api/public/v1/zillionaire/tea
 import { Firestore, ApiError } from "@/lib/server/firebase-admin";
 import * as apiModule from "@/lib/server/api";
 import type { VerifiedUser } from "@/lib/server/firebase-auth";
+import { createStepUpToken } from "@/lib/server/zillionaire-access";
 
 const OWNER_EMAIL = "zillionaire@bqsqwad.tv";
 
@@ -20,6 +21,11 @@ const memberServer = TeamMemberRoute.options.server as unknown as {
     DELETE: (ctx: { request: Request; params: { uid: string } }) => Promise<Response>;
   };
 };
+
+function stepUpHeader() {
+  process.env["SESSION_SECRET"] = "team-test-signing-key";
+  return { "x-zillionaire-step-up": createStepUpToken("owner_uid", "team_manage").token };
+}
 
 function createMemoryFirestore() {
   const store: Record<string, Record<string, unknown>> = {};
@@ -172,7 +178,7 @@ describe("Zillionaire Team & Roles Management", () => {
 
     const opReq = new Request("https://test/api/public/v1/zillionaire/team", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...stepUpHeader() },
       body: JSON.stringify(invitePayload),
     });
     const res1 = await teamServer.handlers.POST({
@@ -190,7 +196,7 @@ describe("Zillionaire Team & Roles Management", () => {
 
     const ownerReq = new Request("https://test/api/public/v1/zillionaire/team", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...stepUpHeader() },
       body: JSON.stringify(invitePayload),
     });
     const res2 = await teamServer.handlers.POST({
@@ -227,7 +233,7 @@ describe("Zillionaire Team & Roles Management", () => {
     // 1. Update status to suspended
     const updateReq = new Request(`https://test/api/public/v1/zillionaire/team/${targetUid}`, {
       method: "PUT",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...stepUpHeader() },
       body: JSON.stringify({
         status: "suspended",
         reason: "Temporary investigation of moderation actions",
@@ -245,6 +251,7 @@ describe("Zillionaire Team & Roles Management", () => {
     // 2. Instant revocation via DELETE
     const deleteReq = new Request(`https://test/api/public/v1/zillionaire/team/${targetUid}`, {
       method: "DELETE",
+      headers: stepUpHeader(),
     });
     const deleteRes = await memberServer.handlers.DELETE({
       request: deleteReq,

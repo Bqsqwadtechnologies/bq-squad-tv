@@ -7,7 +7,8 @@ import {
   type FirestoreWrite,
 } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
-import { requireZillionaireModule } from "@/lib/server/roles";
+import { isProtectedZillionaire, requireZillionaireModule } from "@/lib/server/roles";
+import { requireStepUp } from "@/lib/server/zillionaire-access";
 
 const schema = z.object({
   settlementReference: z.string().trim().min(4).max(150),
@@ -26,6 +27,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
           const body = await parseBody(request, schema);
           const fs = await Firestore.create();
           await requireZillionaireModule(fs, actor, "payouts");
+          if (isProtectedZillionaire(actor.email || ""))
+            requireStepUp(request, actor.uid, "payout_settlement");
           const payoutPath = "payouts/" + payoutId;
           const initial = await fs.getDoc(payoutPath);
           if (!initial || typeof initial["uid"] !== "string")

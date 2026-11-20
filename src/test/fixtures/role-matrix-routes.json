@@ -1904,6 +1904,23 @@
     }
   },
   {
+    "route": "/api/public/v1/zillionaire/access/step-up",
+    "file": "src/routes/api/public/v1/zillionaire/access/step-up.ts",
+    "guard": "viewer",
+    "expected": {
+      "anonymous": 401,
+      "viewer": 200,
+      "producer A": 200,
+      "producer B": 200,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
+      "worker": 401,
+      "owner": 200
+    }
+  },
+  {
     "route": "/api/public/v1/zillionaire/access/unlock",
     "file": "src/routes/api/public/v1/zillionaire/access/unlock.ts",
     "guard": "viewer",

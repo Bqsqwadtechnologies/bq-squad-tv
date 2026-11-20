@@ -10,6 +10,7 @@ import {
   type ZillionaireModule,
 } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
+import { requireStepUp } from "@/lib/server/zillionaire-access";
 
 export const ROLE_TEMPLATES: Record<
   string,
@@ -121,6 +122,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team")({
           }
 
           const body = await parseBody(request, inviteSchema);
+          requireStepUp(request, actor.uid, "team_manage");
           const normalizedEmail = body.email.toLowerCase();
 
           if (isProtectedZillionaire(normalizedEmail)) {

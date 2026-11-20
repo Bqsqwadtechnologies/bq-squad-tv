@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
+import { requestZillionaireStepUp } from "@/lib/zillionaire-step-up";
 
 export const Route = createFileRoute("/zillionaire/team")({
   component: ZillionaireTeamRoute,
@@ -138,8 +139,8 @@ function ZillionaireTeamContent({
     setInviting(true);
     setInviteError("");
     try {
-      const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      const headers = await requestZillionaireStepUp("team_manage", inviteReason.trim());
+      headers.set("Authorization", (await getWebAuthHeaders(token)).get("Authorization") || "");
       const res = await fetch("/api/public/v1/zillionaire/team", {
         method: "POST",
         headers,
@@ -177,8 +178,11 @@ function ZillionaireTeamContent({
 
     setActionBusyUid(member.uid);
     try {
-      const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      const headers = await requestZillionaireStepUp(
+        "team_manage",
+        `Change access for ${member.email}`,
+      );
+      headers.set("Authorization", (await getWebAuthHeaders(token)).get("Authorization") || "");
       const res = await fetch(`/api/public/v1/zillionaire/team/${member.uid}`, {
         method: "PUT",
         headers,
@@ -205,7 +209,11 @@ function ZillionaireTeamContent({
 
     setActionBusyUid(member.uid);
     try {
-      const headers = await getWebAuthHeaders(token);
+      const headers = await requestZillionaireStepUp(
+        "team_manage",
+        `Revoke access for ${member.email}`,
+      );
+      headers.set("Authorization", (await getWebAuthHeaders(token)).get("Authorization") || "");
       const res = await fetch(`/api/public/v1/zillionaire/team/${member.uid}`, {
         method: "DELETE",
         headers,

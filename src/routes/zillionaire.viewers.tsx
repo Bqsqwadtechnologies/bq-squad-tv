@@ -39,6 +39,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
+import { requestZillionaireStepUp } from "@/lib/zillionaire-step-up";
 
 export const Route = createFileRoute("/zillionaire/viewers")({
   component: ZillionaireViewersRoute,
@@ -172,13 +173,21 @@ function ZillionaireViewersPage({
   onLock,
 }: {
   token: string | null;
-  account: { uid: string; email?: string; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
+  account: {
+    uid: string;
+    email?: string;
+    roles?: string[];
+    modules?: string[];
+    isOwner?: boolean;
+  } | null;
   onLock?: () => void;
 }) {
   const [users, setUsers] = useState<ViewerAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "SUSPENDED" | "RESTRICTED" | "BANNED">("ALL");
+  const [statusFilter, setStatusFilter] = useState<
+    "ALL" | "ACTIVE" | "SUSPENDED" | "RESTRICTED" | "BANNED"
+  >("ALL");
 
   // Selected User State for Viewer 360 Detail Modal/Drawer
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
@@ -269,13 +278,30 @@ function ZillionaireViewersPage({
 
   const handleExecuteAction = async (payloadOverride?: Record<string, unknown>) => {
     if (!selectedUid) return;
-    const finalPayload = payloadOverride || { action: pendingAction, reason: actionReason, ...actionPayload };
+    const finalPayload = payloadOverride || {
+      action: pendingAction,
+      reason: actionReason,
+      ...actionPayload,
+    };
     setSubmittingAction(true);
     setActionError(null);
     setActionSuccess(null);
 
     try {
-      const headers = await getWebAuthHeaders();
+      const sensitiveScope =
+        finalPayload.action === "wallet_adjust"
+          ? "wallet_adjust"
+          : finalPayload.action === "reverse_payment"
+            ? "payment_reversal"
+            : finalPayload.action === "delete_or_anonymize"
+              ? "permanent_delete"
+              : null;
+      const headers = sensitiveScope
+        ? await requestZillionaireStepUp(
+            sensitiveScope,
+            String(finalPayload.reason || "Sensitive owner action"),
+          )
+        : await getWebAuthHeaders();
       const res = await fetch(`/api/public/v1/zillionaire/users/${selectedUid}/`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -429,7 +455,10 @@ function ZillionaireViewersPage({
                   <div className="font-medium text-white flex items-center gap-2">
                     <span>{u.displayName}</span>
                     {u.roleTags?.map((tag) => (
-                      <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800">
+                      <span
+                        key={tag}
+                        className="text-[10px] px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800"
+                      >
                         {tag}
                       </span>
                     ))}
@@ -447,10 +476,10 @@ function ZillionaireViewersPage({
                       u.accountStatus === "BANNED"
                         ? "error"
                         : u.suspended || u.accountStatus === "SUSPENDED"
-                        ? "warning"
-                        : u.accountStatus === "RESTRICTED"
-                        ? "warning"
-                        : "active"
+                          ? "warning"
+                          : u.accountStatus === "RESTRICTED"
+                            ? "warning"
+                            : "active"
                     }
                     label={u.accountStatus}
                   />
@@ -461,8 +490,8 @@ function ZillionaireViewersPage({
                       u.riskScore >= 70
                         ? "text-red-400"
                         : u.riskScore >= 40
-                        ? "text-amber-400"
-                        : "text-emerald-400"
+                          ? "text-amber-400"
+                          : "text-emerald-400"
                     }`}
                   >
                     {u.riskScore} / 100
@@ -505,8 +534,8 @@ function ZillionaireViewersPage({
                             userDetails.profile.accountStatus === "BANNED"
                               ? "error"
                               : userDetails.profile.accountStatus === "SUSPENDED"
-                              ? "warning"
-                              : "active"
+                                ? "warning"
+                                : "active"
                           }
                           label={userDetails.profile.accountStatus}
                         />
@@ -560,7 +589,9 @@ function ZillionaireViewersPage({
               {/* Tab Body */}
               <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {loadingDetails ? (
-                  <div className="py-12 text-center text-slate-400">Loading complete viewer 360 data...</div>
+                  <div className="py-12 text-center text-slate-400">
+                    Loading complete viewer 360 data...
+                  </div>
                 ) : !userDetails ? (
                   <div className="py-12 text-center text-red-400">Failed to load viewer data.</div>
                 ) : (
@@ -569,7 +600,10 @@ function ZillionaireViewersPage({
                     {actionError && (
                       <div className="p-3 bg-red-950/60 border border-red-800 rounded-lg text-red-300 text-xs flex items-center justify-between">
                         <span>{actionError}</span>
-                        <button onClick={() => setActionError(null)} className="text-red-400 hover:text-white">
+                        <button
+                          onClick={() => setActionError(null)}
+                          className="text-red-400 hover:text-white"
+                        >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -577,7 +611,10 @@ function ZillionaireViewersPage({
                     {actionSuccess && (
                       <div className="p-3 bg-emerald-950/60 border border-emerald-800 rounded-lg text-emerald-300 text-xs flex items-center justify-between">
                         <span>{actionSuccess}</span>
-                        <button onClick={() => setActionSuccess(null)} className="text-emerald-400 hover:text-white">
+                        <button
+                          onClick={() => setActionSuccess(null)}
+                          className="text-emerald-400 hover:text-white"
+                        >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
@@ -665,7 +702,9 @@ function ZillionaireViewersPage({
                           <h3 className="font-bold text-slate-300 text-sm">Account Overview</h3>
                           <div className="flex justify-between border-b border-slate-800/80 pb-2">
                             <span className="text-slate-400">Display Name:</span>
-                            <span className="text-white font-medium">{userDetails.profile.displayName}</span>
+                            <span className="text-white font-medium">
+                              {userDetails.profile.displayName}
+                            </span>
                           </div>
                           <div className="flex justify-between border-b border-slate-800/80 pb-2">
                             <span className="text-slate-400">Email:</span>
@@ -684,11 +723,15 @@ function ZillionaireViewersPage({
                           </div>
                           <div className="flex justify-between border-b border-slate-800/80 pb-2">
                             <span className="text-slate-400">Phone:</span>
-                            <span className="text-white font-medium">{userDetails.profile.phone || "—"}</span>
+                            <span className="text-white font-medium">
+                              {userDetails.profile.phone || "—"}
+                            </span>
                           </div>
                           <div className="flex justify-between border-b border-slate-800/80 pb-2">
                             <span className="text-slate-400">Country:</span>
-                            <span className="text-white font-medium">{userDetails.profile.country}</span>
+                            <span className="text-white font-medium">
+                              {userDetails.profile.country}
+                            </span>
                           </div>
                           <div className="flex justify-between border-b border-slate-800/80 pb-2">
                             <span className="text-slate-400">Registration Date:</span>
@@ -701,7 +744,9 @@ function ZillionaireViewersPage({
                         </div>
 
                         <div className="p-4 bg-slate-950 border border-slate-800 rounded-lg space-y-3">
-                          <h3 className="font-bold text-slate-300 text-sm">Security & Integrity State</h3>
+                          <h3 className="font-bold text-slate-300 text-sm">
+                            Security & Integrity State
+                          </h3>
                           <div className="flex justify-between border-b border-slate-800/80 pb-2">
                             <span className="text-slate-400">Risk Score:</span>
                             <span
@@ -709,8 +754,8 @@ function ZillionaireViewersPage({
                                 userDetails.profile.riskScore >= 70
                                   ? "text-red-400"
                                   : userDetails.profile.riskScore >= 40
-                                  ? "text-amber-400"
-                                  : "text-emerald-400"
+                                    ? "text-amber-400"
+                                    : "text-emerald-400"
                               }`}
                             >
                               {userDetails.profile.riskScore} / 100
@@ -719,7 +764,9 @@ function ZillionaireViewersPage({
                           <div className="flex justify-between border-b border-slate-800/80 pb-2">
                             <span className="text-slate-400">Parental PIN:</span>
                             <span className="text-white font-medium">
-                              {userDetails.profile.parentalPinConfigured ? "Configured (Active)" : "None"}
+                              {userDetails.profile.parentalPinConfigured
+                                ? "Configured (Active)"
+                                : "None"}
                             </span>
                           </div>
                           <div className="flex justify-between border-b border-slate-800/80 pb-2">
@@ -761,7 +808,10 @@ function ZillionaireViewersPage({
                           <div>
                             <span className="text-slate-400 text-xs">Current Wallet Balance</span>
                             <div className="text-2xl font-bold text-white mt-1">
-                              {formatMinor(userDetails.wallet.balanceMinor, userDetails.wallet.currency)}
+                              {formatMinor(
+                                userDetails.wallet.balanceMinor,
+                                userDetails.wallet.currency,
+                              )}
                             </div>
                             <span className="text-[11px] text-slate-500 font-mono">
                               Currency: {userDetails.wallet.currency}
@@ -779,7 +829,9 @@ function ZillionaireViewersPage({
                         </div>
 
                         <div>
-                          <h4 className="font-bold text-slate-300 mb-2">Immutable Ledger Entries</h4>
+                          <h4 className="font-bold text-slate-300 mb-2">
+                            Immutable Ledger Entries
+                          </h4>
                           {userDetails.wallet.ledger.length === 0 ? (
                             <div className="p-4 bg-slate-950 border border-slate-800 rounded text-center text-slate-500">
                               No ledger entries recorded yet.
@@ -813,7 +865,10 @@ function ZillionaireViewersPage({
                                         {formatMinor(e.amountMinor, userDetails.wallet.currency)}
                                       </td>
                                       <td className="p-2.5 text-slate-300">
-                                        {formatMinor(e.balanceAfterMinor, userDetails.wallet.currency)}
+                                        {formatMinor(
+                                          e.balanceAfterMinor,
+                                          userDetails.wallet.currency,
+                                        )}
                                       </td>
                                       <td className="p-2.5 font-mono text-[11px] text-slate-500">
                                         {e.reference || "—"}
@@ -860,7 +915,13 @@ function ZillionaireViewersPage({
                                     </td>
                                     <td className="p-2.5">
                                       <ConsoleStatusBadge
-                                        status={p.status === "SUCCESS" ? "active" : p.status === "REVERSED" ? "error" : "warning"}
+                                        status={
+                                          p.status === "SUCCESS"
+                                            ? "active"
+                                            : p.status === "REVERSED"
+                                              ? "error"
+                                              : "warning"
+                                        }
                                         label={p.status}
                                       />
                                     </td>
@@ -913,11 +974,19 @@ function ZillionaireViewersPage({
                               <tbody className="divide-y divide-slate-800/60 bg-slate-900/50">
                                 {userDetails.receipts.map((r) => (
                                   <tr key={r.id}>
-                                    <td className="p-2.5 font-mono text-cyan-400 font-bold">{r.receiptNumber}</td>
-                                    <td className="p-2.5 text-slate-300 uppercase font-mono">{r.type}</td>
-                                    <td className="p-2.5 text-white font-bold">{formatMinor(r.amountMinor, r.currency)}</td>
+                                    <td className="p-2.5 font-mono text-cyan-400 font-bold">
+                                      {r.receiptNumber}
+                                    </td>
+                                    <td className="p-2.5 text-slate-300 uppercase font-mono">
+                                      {r.type}
+                                    </td>
+                                    <td className="p-2.5 text-white font-bold">
+                                      {formatMinor(r.amountMinor, r.currency)}
+                                    </td>
                                     <td className="p-2.5 text-slate-400">
-                                      {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "—"}
+                                      {r.createdAt
+                                        ? new Date(r.createdAt).toLocaleDateString()
+                                        : "—"}
                                     </td>
                                     <td className="p-2.5 flex gap-2">
                                       <button
@@ -927,7 +996,11 @@ function ZillionaireViewersPage({
                                         View
                                       </button>
                                       <button
-                                        onClick={() => alert(`Receipt #${r.receiptNumber} resent to ${userDetails.profile.email}`)}
+                                        onClick={() =>
+                                          alert(
+                                            `Receipt #${r.receiptNumber} resent to ${userDetails.profile.email}`,
+                                          )
+                                        }
                                         className="px-2 py-1 bg-cyan-950 hover:bg-cyan-900 text-cyan-300 border border-cyan-800 rounded text-[11px]"
                                       >
                                         Resend Email
@@ -945,7 +1018,9 @@ function ZillionaireViewersPage({
                     {/* TAB 5: Watch History */}
                     {activeTab === "watchHistory" && (
                       <div className="space-y-4 text-xs">
-                        <h4 className="font-bold text-slate-300">Viewed Videos & Playback Telemetry</h4>
+                        <h4 className="font-bold text-slate-300">
+                          Viewed Videos & Playback Telemetry
+                        </h4>
                         {userDetails.watchHistory.length === 0 ? (
                           <div className="p-6 bg-slate-950 border border-slate-800 rounded-lg text-center text-slate-500">
                             No watch history on record.
@@ -1014,17 +1089,25 @@ function ZillionaireViewersPage({
                               <tbody className="divide-y divide-slate-800/60 bg-slate-900/50">
                                 {userDetails.devices.map((d) => (
                                   <tr key={d.id}>
-                                    <td className="p-2.5 font-medium text-white">{d.deviceModel}</td>
-                                    <td className="p-2.5 text-cyan-400 uppercase font-mono">{d.platform}</td>
+                                    <td className="p-2.5 font-medium text-white">
+                                      {d.deviceModel}
+                                    </td>
+                                    <td className="p-2.5 text-cyan-400 uppercase font-mono">
+                                      {d.platform}
+                                    </td>
                                     <td className="p-2.5 font-mono text-slate-400">{d.ipPrefix}</td>
                                     <td className="p-2.5 text-slate-400">
-                                      {d.lastActiveAt ? new Date(d.lastActiveAt).toLocaleString() : "—"}
+                                      {d.lastActiveAt
+                                        ? new Date(d.lastActiveAt).toLocaleString()
+                                        : "—"}
                                     </td>
                                     <td className="p-2.5">
                                       {d.revoked ? (
                                         <span className="text-red-400 font-semibold">Revoked</span>
                                       ) : (
-                                        <span className="text-emerald-400 font-semibold">Active</span>
+                                        <span className="text-emerald-400 font-semibold">
+                                          Active
+                                        </span>
                                       )}
                                     </td>
                                     <td className="p-2.5">
@@ -1067,12 +1150,15 @@ function ZillionaireViewersPage({
                                 <div>
                                   <p className="text-white text-xs">{c.text}</p>
                                   <span className="text-[10px] text-slate-500 font-mono">
-                                    Video: {c.videoId} • {c.createdAt ? new Date(c.createdAt).toLocaleString() : ""}
+                                    Video: {c.videoId} •{" "}
+                                    {c.createdAt ? new Date(c.createdAt).toLocaleString() : ""}
                                   </span>
                                 </div>
                                 <span
                                   className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
-                                    c.hidden ? "bg-red-950 text-red-400 border border-red-800" : "bg-emerald-950 text-emerald-400"
+                                    c.hidden
+                                      ? "bg-red-950 text-red-400 border border-red-800"
+                                      : "bg-emerald-950 text-emerald-400"
                                   }`}
                                 >
                                   {c.hidden ? "Hidden" : "Public"}
@@ -1087,13 +1173,16 @@ function ZillionaireViewersPage({
                     {/* TAB 8: Security & PIN */}
                     {activeTab === "security" && (
                       <div className="p-4 bg-slate-950 border border-slate-800 rounded-lg space-y-4 text-xs">
-                        <h4 className="font-bold text-slate-300 text-sm">Security & Access Management</h4>
+                        <h4 className="font-bold text-slate-300 text-sm">
+                          Security & Access Management
+                        </h4>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg space-y-2">
                             <span className="font-bold text-white block">Password Reset Link</span>
                             <p className="text-slate-400 text-[11px]">
-                              Send an official password reset link directly to the user's registered email address. The owner never sees or sets passwords.
+                              Send an official password reset link directly to the user's registered
+                              email address. The owner never sees or sets passwords.
                             </p>
                             <button
                               onClick={() => {
@@ -1109,7 +1198,9 @@ function ZillionaireViewersPage({
                           <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg space-y-2">
                             <span className="font-bold text-white block">Email Verification</span>
                             <p className="text-slate-400 text-[11px]">
-                              Current status: {userDetails.profile.emailVerified ? "Verified" : "Unverified"}. You can manually mark this email as verified upon manual proof.
+                              Current status:{" "}
+                              {userDetails.profile.emailVerified ? "Verified" : "Unverified"}. You
+                              can manually mark this email as verified upon manual proof.
                             </p>
                             {!userDetails.profile.emailVerified && (
                               <button
@@ -1145,13 +1236,18 @@ function ZillionaireViewersPage({
                           </div>
 
                           <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg space-y-2">
-                            <span className="font-bold text-white block">Change Country Setting</span>
+                            <span className="font-bold text-white block">
+                              Change Country Setting
+                            </span>
                             <p className="text-slate-400 text-[11px]">
-                              Country can be changed only before the viewer has established wallet ledger transactions.
+                              Country can be changed only before the viewer has established wallet
+                              ledger transactions.
                             </p>
                             <button
                               onClick={() => {
-                                const newCountry = prompt("Enter 2-letter ISO country code (e.g. US, GH, KE, NG):");
+                                const newCountry = prompt(
+                                  "Enter 2-letter ISO country code (e.g. US, GH, KE, NG):",
+                                );
                                 if (newCountry && newCountry.length === 2) {
                                   setPendingAction("change_country");
                                   setActionPayload({ country: newCountry.toUpperCase() });
@@ -1177,10 +1273,14 @@ function ZillionaireViewersPage({
                         ) : (
                           <div className="space-y-2">
                             {userDetails.notes.map((n) => (
-                              <div key={n.id} className="p-3 bg-slate-950 border border-slate-800 rounded-lg space-y-1">
+                              <div
+                                key={n.id}
+                                className="p-3 bg-slate-950 border border-slate-800 rounded-lg space-y-1"
+                              >
                                 <p className="text-white">{n.text}</p>
                                 <div className="text-[10px] text-slate-500 font-mono">
-                                  Operator: {n.authorUid} • {n.createdAt ? new Date(n.createdAt).toLocaleString() : ""}
+                                  Operator: {n.authorUid} •{" "}
+                                  {n.createdAt ? new Date(n.createdAt).toLocaleString() : ""}
                                 </div>
                               </div>
                             ))}
@@ -1213,7 +1313,8 @@ function ZillionaireViewersPage({
               </div>
 
               <p className="text-xs text-slate-300">
-                Every administrative write requires a clear reason and is permanently recorded in the immutable audit log.
+                Every administrative write requires a clear reason and is permanently recorded in
+                the immutable audit log.
               </p>
 
               <div>
@@ -1259,14 +1360,19 @@ function ZillionaireViewersPage({
                   <Mail className="w-5 h-5 text-blue-400" />
                   Send Message to Viewer
                 </h3>
-                <button onClick={() => setShowMessageModal(false)} className="text-slate-400 hover:text-white">
+                <button
+                  onClick={() => setShowMessageModal(false)}
+                  className="text-slate-400 hover:text-white"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="space-y-3 text-xs">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Message Template</label>
+                  <label className="block font-semibold text-slate-300 mb-1">
+                    Message Template
+                  </label>
                   <select
                     value={selectedTemplate}
                     onChange={(e) => {
@@ -1288,7 +1394,9 @@ function ZillionaireViewersPage({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Delivery Channel</label>
+                  <label className="block font-semibold text-slate-300 mb-1">
+                    Delivery Channel
+                  </label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-1.5 text-slate-300 cursor-pointer">
                       <input
@@ -1381,7 +1489,10 @@ function ZillionaireViewersPage({
                   <Wallet className="w-5 h-5 text-emerald-400" />
                   Manual Wallet Balance Adjustment
                 </h3>
-                <button onClick={() => setShowWalletModal(false)} className="text-slate-400 hover:text-white">
+                <button
+                  onClick={() => setShowWalletModal(false)}
+                  className="text-slate-400 hover:text-white"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>

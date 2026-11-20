@@ -9,6 +9,7 @@ import {
   ZILLIONAIRE_MODULES,
 } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
+import { requireStepUp } from "@/lib/server/zillionaire-access";
 
 const updateSchema = z.object({
   status: z.enum(["active", "suspended"]).optional(),
@@ -44,6 +45,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team/$uid")({
             );
           }
 
+          requireStepUp(request, actor.uid, "team_manage");
           if (uid === actor.uid) {
             throw new ApiError(
               403,
@@ -120,6 +122,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/team/$uid")({
             );
           }
 
+          requireStepUp(request, actor.uid, "team_manage");
           if (uid === actor.uid) {
             throw new ApiError(403, "OWNER_ACCOUNT_PROTECTED", "Owner account cannot be revoked.");
           }

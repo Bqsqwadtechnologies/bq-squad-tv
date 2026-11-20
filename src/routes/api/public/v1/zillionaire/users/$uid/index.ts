@@ -4,6 +4,7 @@ import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { isProtectedZillionaire, requireZillionaireModule } from "@/lib/server/roles";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
+import { requireStepUp } from "@/lib/server/zillionaire-access";
 
 const actionSchema = z.discriminatedUnion("action", [
   z.object({
@@ -127,7 +128,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/")({
               phone: userDoc["phone"] || null,
               country: userDoc["country"] || "NG",
               createdAt: userDoc["createdAt"] || null,
-              accountStatus: userDoc["accountStatus"] || (userDoc["suspended"] ? "SUSPENDED" : "ACTIVE"),
+              accountStatus:
+                userDoc["accountStatus"] || (userDoc["suspended"] ? "SUSPENDED" : "ACTIVE"),
               emailVerified: Boolean(userDoc["emailVerified"]),
               parentalPinConfigured: Boolean(userDoc["parentalPinHash"]),
               riskScore: Number(userDoc["riskScore"] || 0),
@@ -210,6 +212,13 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/")({
           });
 
           const body = await parseBody(request, actionSchema);
+          const owner = isProtectedZillionaire(actor.email || "");
+          if (owner && body.action === "wallet_adjust")
+            requireStepUp(request, actor.uid, "wallet_adjust");
+          if (owner && body.action === "reverse_payment")
+            requireStepUp(request, actor.uid, "payment_reversal");
+          if (owner && body.action === "delete_or_anonymize")
+            requireStepUp(request, actor.uid, "permanent_delete");
           const userDoc = await fs.get(`users/${uid}`);
           if (!userDoc) {
             throw new ApiError(404, "USER_NOT_FOUND", "User not found.");
@@ -434,7 +443,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/")({
             const delta = body.type === "CREDIT" ? body.amountMinor : -body.amountMinor;
             const newBal = currentBal + delta;
             if (newBal < 0) {
-              throw new ApiError(400, "INSUFFICIENT_FUNDS", "Adjustment would cause negative balance.");
+              throw new ApiError(
+                400,
+                "INSUFFICIENT_FUNDS",
+                "Adjustment would cause negative balance.",
+              );
             }
 
             const ledgerId = crypto.randomUUID();
