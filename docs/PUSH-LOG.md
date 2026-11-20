@@ -44,3 +44,5 @@ PUSH BADGE #25 SUCCESSFUL — V5-03 Batch 6 — de4aa3300d9c9cc8de93f6fccd5d1b24
 PUSH BADGE #26 SUCCESSFUL — V5-03 Batch 7 — 7b2b7a8ecd9b6d59a0e7384a2c0e448ff2684ed9 — Playback tokens bound to device/user/time, hotlink protection, download blocking, player watermark, and instant token revocation.
 
 PUSH BADGE #27 SUCCESSFUL — V5-03 Batch 8 — 2f6ed355fd911adc6a9f4b8c3bdc1688d4cd766a — Data export and deletion, retention-safe anonymisation, cookie consent, kids mode privacy gates, and Play Store data safety.
+
+PUSH BADGE #28 SUCCESSFUL — V5-03 Batch 9 — e31e569eb1b9f2d91c65e06ac2210332a289334c — Backup status, restore drill checklist, emergency panic lockdown button, and incident timeline.
