@@ -414,3 +414,7 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 
 - Added mandatory producer declaration metadata for age classification, warnings, language, genre, production year, copyright holder and licence type.
 - Kept licence evidence as an HTTPS reference in this first implementation; server-side validation rejects non-HTTPS evidence and requires a reference for licensed/public-domain submissions. The current form does not upload an evidence file, so file-based proof storage remains an explicit follow-up limitation rather than claiming the proof upload requirement is complete.
+
+## V6-01 Batch 10 — Route integrity check (2026-11-20)
+
+- Added `bun run check:route-integrity` to ensure route source files are represented in the generated route tree and route paths are unique. It currently validates 310 route files. Full release verification remains incomplete because repository-wide type-check and lint failures and unavailable Android tooling are documented in `docs/OWNER-CHECKLIST.md`.

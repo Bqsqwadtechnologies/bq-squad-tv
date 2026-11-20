@@ -51,7 +51,7 @@ Run this in order on the published web app and the Android build. Do not mark re
 - Public-text scan: passed (`bun run scan:public-text`).
 - Batch 9 release readiness tests: 4 passed.
 - Android native compilation: not run; this environment lacks JDK/Android SDK tooling.
-- Type-check and full suite: existing failures recorded during this work; release sign-off remains blocked until reviewed and resolved.
-- Route-access matrix: generated 278 routes; dedicated route-integrity script not present.
+- Type-check and lint: existing repository-wide failures recorded during this work; release sign-off remains blocked until reviewed and resolved. Full suite passed in this environment (3,465 tests); Android native compilation remains unavailable.
+- Route-access matrix: generated 278 routes. `bun run check:route-integrity` now passes for 310 generated route files with no duplicate paths.
 - Lint: failed on pre-existing repository-wide formatting/type lint findings (details in validation logs).
 - Secret-name check: documented names pass; check exits nonzero because these required secret names are absent from this sandbox environment, and no values were printed.
