@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "scan:public-text": "node scripts/scan-public-text.mjs",
-    "check:secret-names": "node scripts/check-secret-names.mjs"
+    "check:secret-names": "node scripts/check-secret-names.mjs",
+    "check:firestore-indexes": "node scripts/check-firestore-indexes.mjs"
   },
   "overrides": {
     "rolldown": "1.2.1"

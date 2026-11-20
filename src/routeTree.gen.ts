@@ -138,6 +138,7 @@ import { Route as ApiPublicV1WalletPreferencesRouteImport } from './routes/api/p
 import { Route as ApiPublicV1WalletPurchasesRouteImport } from './routes/api/public/v1/wallet/purchases'
 import { Route as ApiPublicV1WalletSummaryRouteImport } from './routes/api/public/v1/wallet/summary'
 import { Route as ApiPublicV1WalletTopupsRouteImport } from './routes/api/public/v1/wallet/topups'
+import { Route as ApiPublicV1WalletWatchHistoryRouteImport } from './routes/api/public/v1/wallet/watch-history'
 import { Route as ApiPublicV1WatchlistIndexRouteImport } from './routes/api/public/v1/watchlist/index'
 import { Route as ApiPublicV1WatchlistTitleIdRouteImport } from './routes/api/public/v1/watchlist/$titleId'
 import { Route as ApiPublicV1ZillionaireApprovalsRouteImport } from './routes/api/public/v1/zillionaire/approvals'
@@ -989,6 +990,12 @@ const ApiPublicV1WalletTopupsRoute = ApiPublicV1WalletTopupsRouteImport.update({
   path: '/topups',
   getParentRoute: () => ApiPublicV1WalletRoute,
 } as any)
+const ApiPublicV1WalletWatchHistoryRoute =
+  ApiPublicV1WalletWatchHistoryRouteImport.update({
+    id: '/watch-history',
+    path: '/watch-history',
+    getParentRoute: () => ApiPublicV1WalletRoute,
+  } as any)
 const ApiPublicV1WatchlistIndexRoute =
   ApiPublicV1WatchlistIndexRouteImport.update({
     id: '/api/public/v1/watchlist/',
@@ -2061,6 +2068,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/wallet/purchases': typeof ApiPublicV1WalletPurchasesRoute
   '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
   '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
+  '/api/public/v1/wallet/watch-history': typeof ApiPublicV1WalletWatchHistoryRoute
   '/api/public/v1/watchlist/$titleId': typeof ApiPublicV1WatchlistTitleIdRoute
   '/api/public/v1/zillionaire/approvals': typeof ApiPublicV1ZillionaireApprovalsRoute
   '/api/public/v1/zillionaire/audit': typeof ApiPublicV1ZillionaireAuditRoute
@@ -2350,6 +2358,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/wallet/purchases': typeof ApiPublicV1WalletPurchasesRoute
   '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
   '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
+  '/api/public/v1/wallet/watch-history': typeof ApiPublicV1WalletWatchHistoryRoute
   '/api/public/v1/watchlist/$titleId': typeof ApiPublicV1WatchlistTitleIdRoute
   '/api/public/v1/zillionaire/approvals': typeof ApiPublicV1ZillionaireApprovalsRoute
   '/api/public/v1/zillionaire/audit': typeof ApiPublicV1ZillionaireAuditRoute
@@ -2639,6 +2648,7 @@ export interface FileRoutesById {
   '/api/public/v1/wallet/purchases': typeof ApiPublicV1WalletPurchasesRoute
   '/api/public/v1/wallet/summary': typeof ApiPublicV1WalletSummaryRoute
   '/api/public/v1/wallet/topups': typeof ApiPublicV1WalletTopupsRoute
+  '/api/public/v1/wallet/watch-history': typeof ApiPublicV1WalletWatchHistoryRoute
   '/api/public/v1/watchlist/$titleId': typeof ApiPublicV1WatchlistTitleIdRoute
   '/api/public/v1/zillionaire/approvals': typeof ApiPublicV1ZillionaireApprovalsRoute
   '/api/public/v1/zillionaire/audit': typeof ApiPublicV1ZillionaireAuditRoute
@@ -2930,6 +2940,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/wallet/purchases'
     | '/api/public/v1/wallet/summary'
     | '/api/public/v1/wallet/topups'
+    | '/api/public/v1/wallet/watch-history'
     | '/api/public/v1/watchlist/$titleId'
     | '/api/public/v1/zillionaire/approvals'
     | '/api/public/v1/zillionaire/audit'
@@ -3219,6 +3230,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/wallet/purchases'
     | '/api/public/v1/wallet/summary'
     | '/api/public/v1/wallet/topups'
+    | '/api/public/v1/wallet/watch-history'
     | '/api/public/v1/watchlist/$titleId'
     | '/api/public/v1/zillionaire/approvals'
     | '/api/public/v1/zillionaire/audit'
@@ -3507,6 +3519,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/wallet/purchases'
     | '/api/public/v1/wallet/summary'
     | '/api/public/v1/wallet/topups'
+    | '/api/public/v1/wallet/watch-history'
     | '/api/public/v1/watchlist/$titleId'
     | '/api/public/v1/zillionaire/approvals'
     | '/api/public/v1/zillionaire/audit'
@@ -4836,6 +4849,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1WalletTopupsRouteImport
       parentRoute: typeof ApiPublicV1WalletRoute
     }
+    '/api/public/v1/wallet/watch-history': {
+      id: '/api/public/v1/wallet/watch-history'
+      path: '/watch-history'
+      fullPath: '/api/public/v1/wallet/watch-history'
+      preLoaderRoute: typeof ApiPublicV1WalletWatchHistoryRouteImport
+      parentRoute: typeof ApiPublicV1WalletRoute
+    }
     '/api/public/v1/watchlist/': {
       id: '/api/public/v1/watchlist/'
       path: '/api/public/v1/watchlist'
@@ -5981,6 +6001,7 @@ interface ApiPublicV1WalletRouteChildren {
   ApiPublicV1WalletPurchasesRoute: typeof ApiPublicV1WalletPurchasesRoute
   ApiPublicV1WalletSummaryRoute: typeof ApiPublicV1WalletSummaryRoute
   ApiPublicV1WalletTopupsRoute: typeof ApiPublicV1WalletTopupsRoute
+  ApiPublicV1WalletWatchHistoryRoute: typeof ApiPublicV1WalletWatchHistoryRoute
   ApiPublicV1WalletGooglePlayProductsRoute: typeof ApiPublicV1WalletGooglePlayProductsRoute
   ApiPublicV1WalletGooglePlayVerifyRoute: typeof ApiPublicV1WalletGooglePlayVerifyRoute
   ApiPublicV1WalletReceiptPaymentIdRoute: typeof ApiPublicV1WalletReceiptPaymentIdRoute
@@ -5993,6 +6014,7 @@ const ApiPublicV1WalletRouteChildren: ApiPublicV1WalletRouteChildren = {
   ApiPublicV1WalletPurchasesRoute: ApiPublicV1WalletPurchasesRoute,
   ApiPublicV1WalletSummaryRoute: ApiPublicV1WalletSummaryRoute,
   ApiPublicV1WalletTopupsRoute: ApiPublicV1WalletTopupsRoute,
+  ApiPublicV1WalletWatchHistoryRoute: ApiPublicV1WalletWatchHistoryRoute,
   ApiPublicV1WalletGooglePlayProductsRoute:
     ApiPublicV1WalletGooglePlayProductsRoute,
   ApiPublicV1WalletGooglePlayVerifyRoute:

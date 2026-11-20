@@ -18,5 +18,17 @@
   "LEGAL_ACCEPTANCE_REQUIRED": "Please review and accept our updated terms to continue.",
   "SUSPENDED": "Your account is currently suspended. Please contact support.",
   "INTERNAL": "Something went wrong on our end. Please try again shortly.",
-  "GENERIC_ERROR": "Something went wrong on our end. Please try again shortly."
+  "GENERIC_ERROR": "Something went wrong on our end. Please try again shortly.",
+  "FIRESTORE_ERROR": "Our service is temporarily unavailable. Please try again shortly.",
+  "DATABASE_ERROR": "Our service is temporarily unavailable. Please try again shortly.",
+  "SERVICE_UNAVAILABLE": "This service is temporarily unavailable. Please try again shortly.",
+  "LEGAL_PAGES_NOT_READY": "Terms and policies are being updated. Please try again shortly.",
+  "LEGAL_PAGE_INCOMPLETE": "Terms and policies are being updated. Please try again shortly.",
+  "WALLET_CURRENCY_LOCKED": "Your wallet currency can change only when your balance is zero and no viewing sessions or held funds remain.",
+  "COUNTRY_CODE_INVALID": "Please choose a valid two-letter country code.",
+  "CHANNEL_CREATION_RESTRICTED": "Channel creation is reserved for licensed channel providers.",
+  "AGE_BELOW_MINIMUM": "You must be at least 13 years old to hold an account.",
+  "DATE_OF_BIRTH_INVALID": "Please enter a valid date of birth within the last 120 years.",
+  "PARENTAL_PIN_INCORRECT": "Incorrect parental controls PIN.",
+  "SESSION_LIMIT_EXCEEDED": "You have reached the maximum active viewing sessions for your account."
 }

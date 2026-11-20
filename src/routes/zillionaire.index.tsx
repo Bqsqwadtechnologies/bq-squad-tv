@@ -668,12 +668,7 @@ function ZillionaireOverviewBody({
           }
         >
           <div className="space-y-2">
-            {(analytics?.videos && analytics.videos.length > 0 ? analytics.videos : [
-              { assetId: "v1", title: "Lagos Nights: Season Premiere", channelId: "ch-1", totalWatchMinutes: 18400, viewsCount: 14200, uniqueViewersCount: 9800 },
-              { assetId: "v2", title: "The Royal Dynasty (Part 1)", channelId: "ch-1", totalWatchMinutes: 12100, viewsCount: 8900, uniqueViewersCount: 6400 },
-              { assetId: "v3", title: "Behind The Beat Documentary", channelId: "ch-2", totalWatchMinutes: 8400, viewsCount: 6100, uniqueViewersCount: 4200 },
-              { assetId: "v4", title: "Stand-Up Special Live in Abuja", channelId: "ch-3", totalWatchMinutes: 5900, viewsCount: 4300, uniqueViewersCount: 3100 },
-            ]).slice(0, 4).map((vid, rank) => (
+            {(analytics?.videos && analytics.videos.length > 0 ? analytics.videos : []).slice(0, 4).map((vid, rank) => (
               <div
                 key={vid.assetId}
                 className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-white/[0.02] text-xs"

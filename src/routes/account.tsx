@@ -1177,7 +1177,7 @@ function AccountPage() {
                   <span>
                     I have read and accept the{" "}
                     <a
-                      href="/legal/terms"
+                      href="/terms"
                       target="_blank"
                       rel="noreferrer"
                       className="underline underline-offset-4 text-cyan-200"
@@ -1186,7 +1186,7 @@ function AccountPage() {
                     </a>{" "}
                     and{" "}
                     <a
-                      href="/legal/privacy-policy"
+                      href="/privacy"
                       target="_blank"
                       rel="noreferrer"
                       className="underline underline-offset-4 text-cyan-200"

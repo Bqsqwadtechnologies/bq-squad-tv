@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
-import { ageInYears, errorBody, parseBody, requireUser } from "@/lib/server/api";
+import { ageInYears, validateAccountAge, errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { hashParentalPin } from "@/lib/server/parental-pin";
 import { currencyForCountry, normalizeCountryCode } from "@/lib/server/currency";
 import { writeAuditLog } from "@/lib/server/audit";
@@ -28,7 +28,9 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
         try {
           const user = await requireUser(request);
           const body = await parseBody(request, bodySchema);
-          const adultEligible = ageInYears(body.dateOfBirth) >= 18;
+          const age = validateAccountAge(body.dateOfBirth);
+          const isUnder18 = age < 18;
+          const adultEligible = !isUnder18;
           const fs = await Firestore.create();
           await assertLegalAcceptance(fs, user.uid, "public");
           const existingProfile = await fs.getDoc("users/" + user.uid);
@@ -129,6 +131,8 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
             adultAgeVerified,
             adultIdentityVerified,
             adultEligible: verifiedAdultEligible,
+            kidsSafeMode: isUnder18 ? true : (existingProfile?.["kidsSafeMode"] === true),
+            kidsModeLocked: isUnder18,
             parentalPinEnabled: typeof body.parentalPin === "string",
             ...(nextCountry ? { preferredCurrency: nextCurrency } : {}),
             updatedAt: new Date().toISOString(),
@@ -147,6 +151,9 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           return Response.json({
             profileComplete: true,
             adultEligible: verifiedAdultEligible,
+            isUnder18,
+            kidsSafeMode: isUnder18 ? true : (existingProfile?.["kidsSafeMode"] === true),
+            kidsModeLocked: isUnder18,
             parentalPinEnabled: typeof body.parentalPin === "string",
             ...(nextCountry
               ? { countryCode: nextCountry, currency: nextCurrency }

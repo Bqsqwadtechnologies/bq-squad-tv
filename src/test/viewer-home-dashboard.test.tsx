@@ -27,7 +27,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   };
 });
 
-describe("Viewer Home Dashboard (V5-05 Batch 2)", () => {
+describe("Viewer Home Dashboard (V5-05 Batch 2 / V5-06 Batch 2)", () => {
   const HomeComponent = Route.options.component!;
 
   it("renders the welcome banner and call-to-action buttons", () => {
@@ -37,20 +37,20 @@ describe("Viewer Home Dashboard (V5-05 Batch 2)", () => {
     expect(screen.getByRole("link", { name: /Start Watching/i })).toBeDefined();
   });
 
-  it("renders the 4 KPI cards with gradient styles and metrics", () => {
+  it("renders the 4 KPI cards with truthful initial metrics", () => {
     render(<HomeComponent />);
 
     expect(screen.getByText(/Watch Time/i)).toBeDefined();
-    expect(screen.getByText(/28.5 hrs/i)).toBeDefined();
+    expect(screen.getByText(/0\.0 hrs/i)).toBeDefined();
 
     expect(screen.getByText(/Available Balance/i)).toBeDefined();
-    expect(screen.getByText(/12,800/i)).toBeDefined();
+    expect(screen.getByText(/0\.00/i)).toBeDefined();
 
     expect(screen.getAllByText(/^Rewards$/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/2,560 pts/i)).toBeDefined();
+    expect(screen.getByText(/0 pts/i)).toBeDefined();
 
     expect(screen.getByText(/Referrals/i)).toBeDefined();
-    expect(screen.getByText("48")).toBeDefined();
+    expect(screen.getByText("0")).toBeDefined();
   });
 
   it("renders quick access navigation tiles for Live TV, Movies, Series, and Kids", () => {
@@ -62,10 +62,9 @@ describe("Viewer Home Dashboard (V5-05 Batch 2)", () => {
     expect(screen.getAllByRole("link", { name: /Kids/i }).length).toBeGreaterThan(0);
   });
 
-  it("renders live now, trending, continue watching, and activity sections", () => {
+  it("renders live now, trending, activity, and referral sections", () => {
     render(<HomeComponent />);
 
-    expect(screen.getByText(/Continue Watching/i)).toBeDefined();
     expect(screen.getByText(/Live Now/i)).toBeDefined();
     expect(screen.getByText(/Trending Now/i)).toBeDefined();
     expect(screen.getByText(/For You/i)).toBeDefined();
@@ -79,7 +78,6 @@ describe("Viewer Home Dashboard (V5-05 Batch 2)", () => {
     const referButton = screen.getByRole("button", { name: /Refer Now/i });
     fireEvent.click(referButton);
 
-    expect(screen.getAllByText(/BQS-VWR-8492/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Your Referral Code/i)).toBeDefined();
   });
 });

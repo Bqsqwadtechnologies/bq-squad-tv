@@ -1,9 +1,13 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { LegalPageView } from "@/components/LegalPageView";
+
 export const Route = createFileRoute("/privacy")({
-  beforeLoad: () => {
-    throw redirect({ href: "/legal/privacy-policy" });
-  },
+  component: () => <LegalPageView slug="privacy-policy" />,
   head: () => ({
-    meta: [{ title: "Privacy Policy | BQ SQWAD TV" }, { name: "robots", content: "index, follow" }],
+    meta: [
+      { title: "Privacy Policy | BQ SQWAD TV" },
+      { name: "description", content: "Read the BQ SQWAD TV Privacy Policy." },
+      { name: "robots", content: "index, follow" },
+    ],
   }),
 });

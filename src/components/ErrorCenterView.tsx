@@ -139,7 +139,7 @@ ${item.topStackFrames.join("\n") || "No stack frames captured"}
       case "payment_provider":
         return "Verify Paystack webhook secret configuration and balance ledger integrity.";
       case "storage":
-        return "Check Backblaze B2/Cloudflare storage credentials, upload policy, and signed URL expiration.";
+        return "Check Backblaze B2 storage credentials, upload policy, and signed URL expiration.";
       case "database":
         return "Check Firestore quota limits, composite indexes, and transaction conflict retries.";
       case "video_processing":

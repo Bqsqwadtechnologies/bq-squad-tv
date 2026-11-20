@@ -46,6 +46,16 @@ export const Route = createFileRoute("/api/public/v1/profiles/")({
           const user = await requireUser(request);
           const body = await parseBody(request, createProfileSchema);
           const fs = await Firestore.create();
+          const userDoc = await fs.getDoc("users/" + user.uid);
+          let isAccountUnder18 = false;
+          if (typeof userDoc?.["dateOfBirth"] === "string") {
+            try {
+              const { ageInYears } = await import("@/lib/server/api");
+              isAccountUnder18 = ageInYears(userDoc["dateOfBirth"] as string) < 18;
+            } catch {}
+          }
+          const enforcedKids = isAccountUnder18 ? true : body.isKids;
+          const enforcedRating = isAccountUnder18 ? "G" : (body.isKids ? "G" : body.maturityRating);
 
           const existing = await fs.query("profiles", {
             filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
@@ -67,8 +77,8 @@ export const Route = createFileRoute("/api/public/v1/profiles/")({
             uid: user.uid,
             name: body.name,
             avatarUrl: body.avatarUrl ?? null,
-            isKids: body.isKids,
-            maturityRating: body.isKids ? "G" : body.maturityRating,
+            isKids: enforcedKids,
+            maturityRating: enforcedRating,
             pinHash: body.pin ? "pin_set" : null,
             createdAt: now,
             updatedAt: now,
@@ -78,8 +88,8 @@ export const Route = createFileRoute("/api/public/v1/profiles/")({
             profile: {
               id: profileId,
               name: body.name,
-              isKids: body.isKids,
-              maturityRating: body.isKids ? "G" : body.maturityRating,
+              isKids: enforcedKids,
+              maturityRating: enforcedRating,
               hasPin: Boolean(body.pin),
             },
           });

@@ -23,6 +23,9 @@ import {
   Tv2,
   Volume2,
   Wallet,
+  Maximize,
+  Cast,
+  AlertTriangle,
 } from "lucide-react";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 
@@ -54,6 +57,7 @@ export function ContentDetailsPage() {
   const [authToken, setAuthToken] = useState("");
   const [content, setContent] = useState<Content | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
+  const [wallet, setWallet] = useState<{ balanceMinor: number; currency: string } | null>(null);
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
   const [message, setMessage] = useState("");
@@ -571,6 +575,23 @@ export function ContentDetailsPage() {
             {/* Video Player Section with Batch 5 Controls */}
             {playbackUrl ? (
               <section className="mt-7 rounded-3xl border border-cyan-300/20 bg-[#07143d] p-4 sm:p-6 space-y-4">
+                {/* Low Balance Warning */}
+                {wallet && content.ratePerMinuteMinor > 0 && (wallet.balanceMinor / content.ratePerMinuteMinor) < 5 ? (
+                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-3.5 text-amber-200">
+                    <div className="flex items-center gap-2.5 text-xs">
+                      <AlertTriangle size={18} className="text-amber-400 shrink-0" />
+                      <span>
+                        <strong>Low balance alert:</strong> Under 5 minutes of viewing credit remaining. Top up to prevent stream interruption.
+                      </span>
+                    </div>
+                    <Link
+                      to="/wallet"
+                      className="rounded-xl bg-amber-400 px-3 py-1.5 text-xs font-bold text-black hover:bg-amber-300 transition"
+                    >
+                      Top up
+                    </Link>
+                  </div>
+                ) : null}
                 <div className="relative overflow-hidden rounded-2xl bg-black">
                   <video
                     ref={videoRef}

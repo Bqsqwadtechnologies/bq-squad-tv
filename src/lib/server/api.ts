@@ -104,12 +104,34 @@ export function ageInYears(dateOfBirthIso: string, now: Date = new Date()): numb
   let age = now.getUTCFullYear() - dob.getUTCFullYear();
   const monthDelta = now.getUTCMonth() - dob.getUTCMonth();
   if (monthDelta < 0 || (monthDelta === 0 && now.getUTCDate() < dob.getUTCDate())) age -= 1;
+
+  if (age > 120) {
+    throw new ApiError(
+      400,
+      "DATE_OF_BIRTH_INVALID",
+      "dateOfBirth must be a valid date within the last 120 years.",
+    );
+  }
+  return age;
+}
+
+export function validateAccountAge(dateOfBirthIso: string, now: Date = new Date()): number {
+  const age = ageInYears(dateOfBirthIso, now);
+  if (age < 13) {
+    throw new ApiError(
+      400,
+      "AGE_BELOW_MINIMUM",
+      "You must be at least 13 years old to hold an account.",
+    );
+  }
   return age;
 }
 
 export type UserProfile = {
   profileComplete: boolean;
   adultEligible: boolean;
+  isUnder18: boolean;
+  kidsSafeMode: boolean;
   roleTags: string[];
   countryCode: string;
 };
@@ -117,21 +139,30 @@ export type UserProfile = {
 export async function getUserProfile(fs: Firestore, uid: string): Promise<UserProfile> {
   const doc = await fs.getDoc(`users/${uid}`);
   let dateOfBirthVerifiedAdult = false;
+  let isUnder18 = false;
   if (typeof doc?.["dateOfBirth"] === "string") {
     try {
-      dateOfBirthVerifiedAdult = ageInYears(doc["dateOfBirth"] as string) >= 18;
+      const computedAge = ageInYears(doc["dateOfBirth"] as string);
+      dateOfBirthVerifiedAdult = computedAge >= 18;
+      isUnder18 = computedAge < 18;
     } catch {
       // Corrupt or legacy profile dates must never grant adult access.
       dateOfBirthVerifiedAdult = false;
+      isUnder18 = true;
     }
   }
+  const adultEligible =
+    doc?.["adultEligible"] === true &&
+    doc?.["adultAgeVerified"] === true &&
+    doc?.["adultIdentityVerified"] === true &&
+    dateOfBirthVerifiedAdult;
+  const kidsSafeMode = isUnder18 || doc?.["kidsSafeMode"] === true || doc?.["isKids"] === true;
+
   return {
     profileComplete: doc?.["profileComplete"] === true,
-    adultEligible:
-      doc?.["adultEligible"] === true &&
-      doc?.["adultAgeVerified"] === true &&
-      doc?.["adultIdentityVerified"] === true &&
-      dateOfBirthVerifiedAdult,
+    adultEligible: isUnder18 ? false : adultEligible,
+    isUnder18,
+    kidsSafeMode,
     roleTags: Array.isArray(doc?.["roleTags"]) ? (doc["roleTags"] as string[]) : [],
     countryCode:
       typeof doc?.["countryCode"] === "string"

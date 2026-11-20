@@ -60,36 +60,11 @@ function SearchPage() {
         { headers, cache: "no-store" },
       );
       if (response.ok) {
-        const data = (await response.json()) as { channels?: SearchItem[] };
-        setResults(Array.isArray(data.channels) ? data.channels : []);
+        const data = (await response.json()) as { results?: SearchItem[]; channels?: SearchItem[] };
+        const items = data.results || data.channels || [];
+        setResults(Array.isArray(items) ? items : []);
       } else {
-        // Fallback demo results for public search
-        setResults(
-          [
-            {
-              id: "1",
-              title: "Midnight Echoes",
-              category: "Movies",
-              posterUrl: null,
-              pricePerMinute: "0.25",
-            },
-            {
-              id: "2",
-              title: "Lagos Nights",
-              category: "Series",
-              posterUrl: null,
-              pricePerMinute: "0.30",
-            },
-            {
-              id: "3",
-              title: "BQ Sqwad Sports HD",
-              category: "Live TV",
-              posterUrl: null,
-              isLive: true,
-              pricePerMinute: "0.40",
-            },
-          ].filter((i) => i.title.toLowerCase().includes(searchQuery.toLowerCase())),
-        );
+        setResults([]);
       }
     } catch {
       setResults([]);

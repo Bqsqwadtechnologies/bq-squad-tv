@@ -2,14 +2,14 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **261**
+Total scanned routes: **262**
 
 ### Summary by Guard Class
 
 | Guard Class | Count |
 |---|---|
 | `public` | 14 |
-| `viewer` | 82 |
+| `viewer` | 83 |
 | `webhook signature` | 1 |
 | `provider` | 11 |
 | `playback token` | 2 |
@@ -117,6 +117,7 @@ Total scanned routes: **261**
 | `/api/public/v1/wallet/receipt/$paymentId` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/wallet/receipt/$paymentId.ts` |
 | `/api/public/v1/wallet/summary` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/wallet/summary.ts` |
 | `/api/public/v1/wallet/topups` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/wallet/topups.ts` |
+| `/api/public/v1/wallet/watch-history` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/wallet/watch-history.ts` |
 | `/api/public/v1/watchlist/` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/watchlist/index.ts` |
 | `/api/public/v1/watchlist/$titleId` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/watchlist/$titleId.ts` |
 | `/api/public/v1/worker/jobs/$assetId/complete` | `worker signature` | requireVideoWorker (Ed25519 / HMAC video worker signature check) | `src/routes/api/public/v1/worker/jobs/$assetId/complete.ts` |

@@ -38,7 +38,7 @@ function WatchHistoryPage() {
           if (active) setSignedIn(false);
           return;
         }
-        const response = await fetch("/api/public/v1/wallet/ledger?limit=100", {
+        const response = await fetch("/api/public/v1/wallet/watch-history?limit=100", {
           headers: await getWebAuthHeaders(token),
           cache: "no-store",
         });
@@ -46,7 +46,7 @@ function WatchHistoryPage() {
         if (!response.ok) throw new Error(data.error ?? "Watch history is unavailable.");
         if (active) {
           setSignedIn(true);
-          setItems((data.items ?? []).filter((item) => item.kind === "watch_charge"));
+          setItems(data.items ?? []);
         }
       } catch (caught) {
         if (active)

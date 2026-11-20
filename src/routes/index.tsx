@@ -76,32 +76,14 @@ function HomePage() {
   const [activeBannerIndex, setActiveBannerIndex] = useState(0);
   const [referralModalOpen, setReferralModalOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [balance, setBalance] = useState("12,800");
-  const [watchTimeHours, setWatchTimeHours] = useState("28.5");
-  const [rewardPoints, setRewardPoints] = useState("2,560");
-  const [referralCount, setReferralCount] = useState(48);
+  const [balance, setBalance] = useState("0.00");
+  const [watchTimeHours, setWatchTimeHours] = useState("0.0");
+  const [rewardPoints, setRewardPoints] = useState("0");
+  const [referralCount, setReferralCount] = useState(0);
+  const [userReferralCode, setUserReferralCode] = useState<string>("BQS-TV-BONUS");
 
-  // Content items loaded from catalog or curated defaults
-  const [continueWatchingItems, setContinueWatchingItems] = useState<ContentItem[]>([
-    {
-      id: "cw-1",
-      title: "The Last Chapter",
-      category: "Action / Drama",
-      posterUrl: null,
-      channelId: "demo",
-      duration: "42m left",
-      progressPercent: 65,
-    },
-    {
-      id: "cw-2",
-      title: "Lagos Nights: Episode 4",
-      category: "Series",
-      posterUrl: null,
-      channelId: "demo",
-      duration: "18m left",
-      progressPercent: 30,
-    },
-  ]);
+  // Content items loaded from catalog or real continue-watching storage
+  const [continueWatchingItems, setContinueWatchingItems] = useState<ContentItem[]>([]);
 
   const [trendingItems, setTrendingItems] = useState<ContentItem[]>([
     {
@@ -208,28 +190,11 @@ function HomePage() {
     },
   ]);
 
-  const [recentActivities] = useState([
-    {
-      id: "act-1",
-      title: "Watched: The Last Chapter",
-      timestamp: "2h ago",
-      points: "+100 pts",
-    },
-    {
-      id: "act-2",
-      title: "Referral bonus: Friend joined",
-      timestamp: "1d ago",
-      points: "+250 pts",
-    },
-    {
-      id: "act-3",
-      title: "Daily streak bonus",
-      timestamp: "2d ago",
-      points: "+50 pts",
-    },
-  ]);
+  const [recentActivities, setRecentActivities] = useState<
+    Array<{ id: string; title: string; timestamp: string; points: string }>
+  >([]);
 
-  const referralCode = "BQS-VWR-8492";
+  const referralCode = userReferralCode;
   const referralLink = `https://bqsqwad.tv/register?ref=${referralCode}`;
 
   useEffect(() => {
@@ -237,6 +202,30 @@ function HomePage() {
     async function loadCatalog() {
       try {
         setCatalogState("loading");
+
+        // Load saved library / continue watching from localStorage
+        try {
+          const stored = localStorage.getItem("bq_viewer_library");
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed)) {
+              setContinueWatchingItems(
+                parsed
+                  .filter((p: any) => (p.progressPercent ?? 0) > 0)
+                  .map((p: any) => ({
+                    id: p.id,
+                    title: p.title,
+                    category: p.genre || "Media",
+                    posterUrl: p.posterUrl,
+                    channelId: p.channelId,
+                    progressPercent: p.progressPercent,
+                    duration: p.duration,
+                  }))
+              );
+            }
+          }
+        } catch {}
+
         const configRes = await fetch("/api/public/v1/config/client", { cache: "no-store" });
         if (configRes.ok) {
           const cfg = (await configRes.json()) as { currencySymbol?: string };
@@ -244,6 +233,56 @@ function HomePage() {
             setCurrencySymbol(cfg.currencySymbol);
           }
         }
+
+        // Authenticated user metrics
+        try {
+          const session = await restoreWebSession();
+          if (session) {
+            const headers = await getWebAuthHeaders(session);
+            const [walletRes, historyRes, profileRes] = await Promise.all([
+              fetch("/api/public/v1/wallet", { headers, cache: "no-store" }),
+              fetch("/api/public/v1/wallet/watch-history?limit=10", { headers, cache: "no-store" }),
+              fetch("/api/public/v1/profile", { headers, cache: "no-store" }),
+            ]);
+
+            if (active && walletRes.ok) {
+              const wData = await walletRes.json();
+              if (typeof wData.balanceMinor === "number") {
+                setBalance((wData.balanceMinor / 100).toFixed(2));
+              }
+              if (wData.symbol) setCurrencySymbol(wData.symbol);
+            }
+
+            if (active && historyRes.ok) {
+              const hData = await historyRes.json();
+              if (Array.isArray(hData.items) && hData.items.length > 0) {
+                const totalSeconds = hData.items.reduce(
+                  (acc: number, item: any) => acc + (item.durationSeconds || 0),
+                  0
+                );
+                setWatchTimeHours((totalSeconds / 3600).toFixed(1));
+                setRecentActivities(
+                  hData.items.slice(0, 5).map((item: any) => ({
+                    id: item.id,
+                    title: item.description || "Viewing session",
+                    timestamp: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recent",
+                    points: item.formattedAmount || `-${item.amountMinor / 100}`,
+                  }))
+                );
+              }
+            }
+
+            if (active && profileRes.ok) {
+              const pData = await profileRes.json();
+              if (pData.referralCode) {
+                setUserReferralCode(pData.referralCode);
+              }
+              if (typeof pData.referralCount === "number") {
+                setReferralCount(pData.referralCount);
+              }
+            }
+          }
+        } catch {}
 
         const res = await fetch("/api/public/v1/catalog/home", { cache: "no-store" });
         if (res.ok) {
@@ -719,22 +758,29 @@ function HomePage() {
               </Link>
             </div>
             <div className="mt-4 divide-y divide-white/5 space-y-3">
-              {recentActivities.map((act) => (
-                <div key={act.id} className="flex items-center justify-between pt-2">
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-8 w-8 place-items-center rounded-lg bg-[#0052D4]/30 text-[#00D8F5]">
-                      <Play size={14} fill="currentColor" />
+              {recentActivities.length > 0 ? (
+                recentActivities.map((act) => (
+                  <div key={act.id} className="flex items-center justify-between pt-2">
+                    <div className="flex items-center gap-3">
+                      <div className="grid h-8 w-8 place-items-center rounded-lg bg-[#0052D4]/30 text-[#00D8F5]">
+                        <Play size={14} fill="currentColor" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-white sm:text-sm">{act.title}</p>
+                        <p className="text-[11px] text-slate-400">{act.timestamp}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-semibold text-white sm:text-sm">{act.title}</p>
-                      <p className="text-[11px] text-slate-400">{act.timestamp}</p>
-                    </div>
+                    <span className="rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-400">
+                      {act.points}
+                    </span>
                   </div>
-                  <span className="rounded-full bg-emerald-500/20 px-2.5 py-1 text-xs font-bold text-emerald-400">
-                    {act.points}
-                  </span>
+                ))
+              ) : (
+                <div className="py-6 text-center text-xs text-slate-400">
+                  <p>No recent activity recorded yet.</p>
+                  <p className="mt-1 text-[11px] text-slate-500">Your viewing sessions and wallet transactions will appear here.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
