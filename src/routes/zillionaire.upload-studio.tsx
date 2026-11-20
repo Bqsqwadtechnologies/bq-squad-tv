@@ -947,7 +947,7 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
                 <div>
                   <h4 className="font-semibold text-slate-100">Verified processing and publication</h4>
                   <p className="mt-1 text-xs text-slate-400">
-                    Producer uploads are stored privately, verified and queued for processing. Videos remain unavailable to viewers until rights evidence has been checked, an authorised administrator approves the content, and the separate publishing step succeeds.
+                    Producer uploads are stored privately, verified and queued for processing. Videos remain unavailable to viewers until rights evidence has been checked, an authorised review team approves the content, and the separate publishing step succeeds.
                   </p>
                 </div>
               </div>
@@ -967,7 +967,7 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
                   <strong className="text-slate-100">Worker Deployment:</strong> Deploy the background worker service to enable multi-bitrate ladder transcode jobs.
                 </li>
                 <li className="pl-1">
-                  <strong className="text-slate-100">Verification:</strong> Every source must be verified and processed before an administrator can approve it. Direct publication is disabled.
+                  <strong className="text-slate-100">Verification:</strong> Every source must be verified and processed before an review team can approve it. Direct publication is disabled.
                 </li>
               </ol>
             </div>
