@@ -20,3 +20,21 @@
 - Offline encrypted downloads remain deferred; the app clearly presents online-only availability.
 - Some player preference selectors are UI preferences and need stream manifest/track metadata to actually switch audio/subtitle/quality tracks.
 - Kids Safe Mode and watchlist state currently persist locally on the web device; cross-device sync/server-side PIN enforcement needs backend integration before being presented as account-wide protection.
+
+# V5-06 Release Notes — Partner Consoles, Documentation Hub & Platform Controls
+
+## Delivered
+- **Producer Movies & Series Library**: Grouped episodes contiguously under series titles without fragmentation; asset listing and management APIs.
+- **Provider Channel Provisioning**: Dedicated channel creation workflow restricted to verified Providers; automated submission review routing to unified approvals inbox.
+- **Direct Owner Access**: Owner password unlock without MFA setup blocker for immediate console availability.
+- **Viewer & Content Protection**: Verified email requirements on sensitive viewer endpoints, age-rating enforcement, Kids Safe Mode lockout, and safe public error messages.
+- **Catalogue Trending & Dynamic Rails**: Real-time server-audited trending algorithm with sponsored badge; Zillionaire console curation endpoints for hero slots and rails.
+- **Advertising Placement Manager**: Margins-only non-interruptive ad policy, device geometry validations, and anti-gaming protection.
+- **Documentation Hubs & Help System**: Complete searchable documentation hubs (`/provider/docs`, `/producer/docs`), accessible `InfoTip` component backed by central `content/help/tips.json` registry, and 12 Markdown topic guides.
+- **Comprehensive Quality Matrix**: Detailed interactive click matrix (`docs/QA-CLICK-MATRIX.md`) and architectural rationale (`docs/DECISIONS.md`) documenting HLS pull vs. Phase 6 RTMP/SRT.
+
+## Verification
+- Web development build (`bun run build:dev`): clean, route tree validated.
+- Public-text scan (`bun run scan:public-text`): passed with 0 errors (all forbidden vendor references and owner names removed).
+- Full Vitest test suite: 133 test files passed (3,361 tests passing).
+- Route & Role Security Matrix: 269 total routes (14 public, 84 viewer, 1 webhook, 12 provider, 2 playback, 13 worker, 138 console, 5 producer) with 0 unguarded endpoints.

@@ -81,3 +81,14 @@ No accessibility conformance claim is made. Automated and manual checks remain r
 - Both players show the BQ SQWAD TV brand mark as a watermark; the Android player no longer displays a fragment of a viewer identifier.
 - The site icon points to the official uploaded PNG brand mark. The obsolete ICO was removed.
 - The new screens have not been checked with TalkBack, browser screen readers, keyboard-only navigation, 200% zoom or automated accessibility tooling.
+
+## InfoTip, Documentation Hubs & Portal Navigation (2026-11-20)
+
+- **Accessible InfoTip Component (`src/components/InfoTip.tsx`)**:
+  - Accessible button triggers using `aria-label="Help information for [Feature Title]"` and proper keyboard focus targets.
+  - Built on Radix UI popovers with automated focus trapping and `Escape` key dismissal.
+  - Contrast ratios conform to WCAG 2.1 AA specifications with high-contrast text against semi-transparent dark backdrops (`bg-background/95`).
+- **Partner and Creator Documentation Hubs (`/provider/docs`, `/producer/docs`)**:
+  - Semantic HTML5 landmark structure (`<article>`, `<h2>`, `<h3>`, `<nav>`).
+  - Anchor navigation with keyboard focusable "Share" buttons providing direct section links.
+  - Screen-reader friendly summaries and expanded guidance without hidden or low-contrast elements.
