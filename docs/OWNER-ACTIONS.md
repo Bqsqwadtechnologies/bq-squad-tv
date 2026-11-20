@@ -1,5 +1,16 @@
 # Owner Actions
 
+# Owner Actions
+
+## Security Verification Checklist (Mandatory Pre-Launch Testing)
+Complete the following operational tests in the Zillionaire Control Centre:
+1. [ ] **Enrol 2FA:** Set up an authenticator app (Google Authenticator, Authy, or 1Password) in `/zillionaire/security` -> MFA. Confirm six-digit TOTP verification succeeds and save emergency recovery codes.
+2. [ ] **Sign in on a new device:** Sign in from an unrecognized browser or mobile device. Confirm device registry entry is created in `/zillionaire/security` -> Devices & Sessions.
+3. [ ] **Step-up verification on payout:** Attempt to settle a payout in `/zillionaire/payouts` without step-up confirmation. Confirm the server returns `STEP_UP_REQUIRED` and requires fresh password + TOTP verification.
+4. [ ] **Audit-chain tamper test:** Run `/zillionaire/security` -> Audit Integrity Check. Confirm all cryptographic parent-hash links are verified green with zero broken links.
+5. [ ] **Emergency Panic Button Drill:** In `/zillionaire/security` -> Emergency Panic, activate Emergency Lockdown with a test reason. Confirm payouts and console sign-ins are frozen immediately, then perform one-tap release and verify normal status returns.
+
+
 This checklist contains account-console work that cannot safely be completed from source code. The account owner (and an adult billing owner/guardian where applicable) must perform provider-console and spending changes. Never send passwords, access keys, signing values or service-account files in chat or commit them to Git.
 
 ## 1. Backblaze storage accounts — repeat for all ten
