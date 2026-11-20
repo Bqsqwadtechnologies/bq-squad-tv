@@ -153,14 +153,14 @@ function ProducerChannelsInner({
   const [uploadCommentsOpen, setUploadCommentsOpen] = useState(true);
   const [uploadCategory, setUploadCategory] = useState("Entertainment");
   const [uploadDescription, setUploadDescription] = useState("");
-  const [uploadAgeRating, setUploadAgeRating] = useState<"G" | "PG" | "12" | "15" | "18">("PG");
+  const [uploadAgeRating, setUploadAgeRating] = useState<"G" | "TV-Y7" | "PG-13" | "16" | "18">("PG-13");
   const [uploadWarnings, setUploadWarnings] = useState("");
   const [uploadLanguage, setUploadLanguage] = useState("English");
   const [uploadGenre, setUploadGenre] = useState("Drama");
   const [uploadLicenseType, setUploadLicenseType] = useState<"owned" | "licensed" | "public_domain">("owned");
   const [uploadCopyrightHolder, setUploadCopyrightHolder] = useState("");
   const [uploadProductionYear, setUploadProductionYear] = useState(String(new Date().getFullYear()));
-  const [uploadEvidenceUrl, setUploadEvidenceUrl] = useState("");
+  const [uploadEvidenceFile, setUploadEvidenceFile] = useState<File | null>(null);
   const [uploadTerritories, setUploadTerritories] = useState("NG, GH, US, GB");
   const [uploadValidFrom, setUploadValidFrom] = useState("2026-01-01");
   const [uploadValidUntil, setUploadValidUntil] = useState("2030-12-31");
@@ -376,12 +376,8 @@ function ProducerChannelsInner({
       setUploadError("Enter the language, genre, copyright holder and four-digit production year.");
       return;
     }
-    if (uploadLicenseType !== "owned" && !uploadEvidenceUrl.trim()) {
-      setUploadError("Add a secure link to the licence or clearance evidence for licensed or public-domain content.");
-      return;
-    }
-    if (uploadEvidenceUrl.trim() && !/^https:\/\//i.test(uploadEvidenceUrl.trim())) {
-      setUploadError("Rights evidence links must use HTTPS.");
+    if (!uploadEvidenceFile) {
+      setUploadError("Upload a PDF, PNG or JPEG licence, contract or clearance document.");
       return;
     }
     const territories = uploadTerritories.split(",").map((value) => value.trim().toUpperCase()).filter(Boolean);
@@ -410,7 +406,17 @@ function ProducerChannelsInner({
       setUploadProgress(15);
       const putResponse = await fetch(intent.signedUrl, { method: intent.method || "PUT", headers: { "content-type": mimeType }, body: uploadFile });
       if (!putResponse.ok) throw new Error("The video file could not be transferred to secure storage.");
-      setUploadProgress(80);
+      setUploadProgress(40);
+      const evidenceForm = new FormData();
+      evidenceForm.append("file", uploadEvidenceFile);
+      const evidenceResponse = await fetch(`/api/public/v1/content-assets/${encodeURIComponent(intent.assetId)}/rights-evidence`, {
+        method: "POST",
+        headers: await getWebAuthHeaders(token),
+        body: evidenceForm,
+      });
+      const evidence = await evidenceResponse.json();
+      if (!evidenceResponse.ok || !evidence.rightsEvidencePath) throw new Error(evidence.error || "The rights evidence could not be stored privately.");
+      setUploadProgress(55);
       const completeResponse = await fetch("/api/public/v1/storage/complete", { method: "POST", headers, body: JSON.stringify({ assetId: intent.assetId }) });
       const completed = await completeResponse.json();
       if (!completeResponse.ok) throw new Error(completed.error || "The uploaded video could not be verified.");
@@ -423,7 +429,7 @@ function ProducerChannelsInner({
       const metadataResponse = await fetch("/api/public/v1/producer/channels/" + encodeURIComponent(selectedChannelId) + "/assets", {
         method: "POST",
         headers,
-        body: JSON.stringify({ assetId: intent.assetId, title: titleText, description: uploadDescription, category: uploadCategory, genre: uploadGenre.trim(), language: uploadLanguage.trim(), contentWarnings: uploadWarnings.split(",").map((item) => item.trim()).filter(Boolean), productionYear: Number(uploadProductionYear), licenseType: uploadLicenseType, copyrightHolderName: uploadCopyrightHolder.trim(), rightsEvidenceUrl: uploadEvidenceUrl.trim() || undefined, contentType: uploadContentType, ageRating: uploadAgeRating, ownershipDeclaration: true, copyrightDeclaration: true, seriesTitle: isSeries ? seriesName : undefined, seasonNumber: uploadSeasonNumber, episodeNumber, episodeTitle: isSeries ? (uploadEpisodeTitle || "Episode " + episodeNumber) : undefined, commentsOpen: uploadCommentsOpen, territoryCodes: territories, platforms: uploadPlatforms, validFrom: validFrom.toISOString(), validUntil: validUntil.toISOString() }),
+        body: JSON.stringify({ assetId: intent.assetId, title: titleText, description: uploadDescription, category: uploadCategory, genre: uploadGenre.trim(), language: uploadLanguage.trim(), contentWarnings: uploadWarnings.split(",").map((item) => item.trim()).filter(Boolean), productionYear: Number(uploadProductionYear), licenseType: uploadLicenseType, copyrightHolderName: uploadCopyrightHolder.trim(), rightsEvidencePath: evidence.rightsEvidencePath, contentType: uploadContentType, ageRating: uploadAgeRating, ownershipDeclaration: true, copyrightDeclaration: true, seriesTitle: isSeries ? seriesName : undefined, seasonNumber: uploadSeasonNumber, episodeNumber, episodeTitle: isSeries ? (uploadEpisodeTitle || "Episode " + episodeNumber) : undefined, commentsOpen: uploadCommentsOpen, territoryCodes: territories, platforms: uploadPlatforms, validFrom: validFrom.toISOString(), validUntil: validUntil.toISOString() }),
       });
       const metadata = await metadataResponse.json();
       if (!metadataResponse.ok) throw new Error(metadata.error || "Video stored, but its metadata and rights declaration could not be submitted.");
@@ -971,11 +977,11 @@ function ProducerChannelsInner({
                   <label className="text-[11px] font-semibold text-slate-300">
                     Age rating
                     <select value={uploadAgeRating} onChange={(e) => setUploadAgeRating(e.target.value as typeof uploadAgeRating)} className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white">
-                      <option value="G">G — General</option>
-                      <option value="PG">PG — Parental guidance</option>
-                      <option value="12">12</option>
-                      <option value="15">15</option>
-                      <option value="18">18</option>
+                      <option value="G">All ages</option>
+                      <option value="TV-Y7">7+</option>
+                      <option value="PG-13">13+</option>
+                      <option value="16">16+</option>
+                      <option value="18">18+</option>
                     </select>
                   </label>
                   <label className="text-[11px] font-semibold text-slate-300">
@@ -1005,8 +1011,8 @@ function ProducerChannelsInner({
                     <input type="number" value={uploadProductionYear} onChange={(e) => setUploadProductionYear(e.target.value)} min="1888" max={new Date().getFullYear()} required className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
                   </label>
                   <label className="col-span-2 text-[11px] font-semibold text-slate-300">
-                    Rights evidence link (HTTPS)
-                    <input type="url" value={uploadEvidenceUrl} onChange={(e) => setUploadEvidenceUrl(e.target.value)} placeholder="https://…" maxLength={2000} className="mt-1 w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2 text-xs text-white" />
+                    Proof of rights (PDF, PNG or JPEG; 10 MB max)
+                    <input type="file" accept="application/pdf,image/png,image/jpeg" required onChange={(e) => setUploadEvidenceFile(e.target.files?.[0] || null)} className="mt-1 w-full text-xs text-white file:mr-2 file:rounded-md file:border-0 file:bg-cyan-500/20 file:px-3 file:py-2 file:text-cyan-100" />
                   </label>
                   <label className="text-[11px] font-semibold text-slate-300">
                     Licensed countries (ISO codes)

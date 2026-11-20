@@ -12,14 +12,13 @@ const schema = z.object({
   description: z.string().trim().max(3000).default(""),
   category: z.string().trim().min(2).max(60),
   contentType: z.enum(["movie", "series", "video"]).default("movie"),
-  ageRating: z.enum(["G", "PG", "12", "15", "18"]),
+  ageRating: z.enum(["G", "TV-Y7", "PG-13", "16", "18"]),
   genre: z.string().trim().min(2).max(60),
   language: z.string().trim().min(2).max(60),
   contentWarnings: z.array(z.string().trim().min(1).max(80)).max(20).default([]),
   productionYear: z.number().int().min(1888).max(new Date().getFullYear()),
   licenseType: z.enum(["owned", "licensed", "public_domain"]),
   copyrightHolderName: z.string().trim().min(2).max(150),
-  rightsEvidenceUrl: z.string().url().max(2000).optional(),
   ownershipDeclaration: z.literal(true),
   copyrightDeclaration: z.literal(true),
   seriesTitle: z.string().trim().max(150).optional(),
@@ -37,7 +36,7 @@ const schema = z.object({
     .max(3),
   validFrom: z.string().datetime(),
   validUntil: z.string().datetime(),
-  rightsEvidencePath: z.string().min(1).max(1024).optional(),
+  rightsEvidencePath: z.string().min(1).max(1024),
 });
 
 export const Route = createFileRoute("/api/public/v1/producer/channels/$channelId/assets")({
@@ -98,10 +97,8 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
               "LICENSE_TERM_INVALID",
               "The license end date must be after its start date.",
             );
-          if (body.rightsEvidenceUrl && new URL(body.rightsEvidenceUrl).protocol !== "https:")
-            throw new ApiError(400, "RIGHTS_EVIDENCE_URL_INVALID", "Rights evidence links must use HTTPS.");
-          if (body.licenseType !== "owned" && !body.rightsEvidenceUrl)
-            throw new ApiError(400, "RIGHTS_EVIDENCE_REQUIRED", "A secure evidence link is required for licensed or public-domain content.");
+          if (!body.rightsEvidencePath)
+            throw new ApiError(400, "RIGHTS_EVIDENCE_REQUIRED", "A private proof-of-rights document is required before review.");
           const asset = await fs.getDoc("contentAssets/" + body.assetId);
           if (
             !asset ||
@@ -137,7 +134,7 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
             validFrom: body.validFrom,
             validUntil: body.validUntil,
             evidencePath: body.rightsEvidencePath || null,
-            evidenceUrl: body.rightsEvidenceUrl || null,
+            evidenceUrl: null,
             licenseType: body.licenseType,
             copyrightHolderName: body.copyrightHolderName,
             submittedBy: user.uid,
@@ -155,7 +152,7 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
             productionYear: body.productionYear,
             licenseType: body.licenseType,
             copyrightHolderName: body.copyrightHolderName,
-            rightsEvidenceUrl: body.rightsEvidenceUrl || null,
+            rightsEvidencePath: body.rightsEvidencePath,
             contentType: body.contentType,
             ageRating: body.ageRating,
             ownershipDeclaration: true,

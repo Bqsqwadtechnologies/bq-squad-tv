@@ -151,12 +151,12 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
   const [description, setDescription] = useState("");
   const [genre, setGenre] = useState("Drama");
   const [language, setLanguage] = useState("English");
-  const [ageRating, setAgeRating] = useState<"G" | "PG" | "13+" | "16+" | "18+">("13+");
+  const [ageRating, setAgeRating] = useState<"G" | "TV-Y7" | "PG-13" | "16" | "18">("PG-13");
   const [contentWarnings, setContentWarnings] = useState("");
   const [licenseType, setLicenseType] = useState<"owned" | "licensed" | "public_domain">("owned");
   const [copyrightHolderName, setCopyrightHolderName] = useState("");
   const [productionYear, setProductionYear] = useState(String(new Date().getFullYear()));
-  const [rightsEvidenceUrl, setRightsEvidenceUrl] = useState("");
+  const [rightsEvidenceFile, setRightsEvidenceFile] = useState<File | null>(null);
   const [releaseDate, setReleaseDate] = useState(new Date().toISOString().slice(0, 10));
   const [cast, setCast] = useState("");
   const [posterUrl, setPosterUrl] = useState("");
@@ -219,12 +219,8 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
       setError("Enter the copyright holder and four-digit production year before submitting.");
       return;
     }
-    if (licenseType !== "owned" && !rightsEvidenceUrl.trim()) {
-      setError("A rights evidence link is required for licensed or public-domain content.");
-      return;
-    }
-    if (rightsEvidenceUrl.trim() && !/^https:\/\//i.test(rightsEvidenceUrl.trim())) {
-      setError("Rights evidence links must use HTTPS.");
+    if (!rightsEvidenceFile) {
+      setError("Upload a PDF, PNG or JPEG licence, contract or clearance document.");
       return;
     }
 
@@ -257,7 +253,6 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
           licenseType,
           copyrightHolderName: copyrightHolderName.trim(),
           productionYear: Number(productionYear),
-          rightsEvidenceUrl: rightsEvidenceUrl.trim() || undefined,
           releaseDate,
           cast,
           posterUrl: posterUrl.trim() || undefined,
@@ -277,6 +272,17 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
       const initData = await initRes.json();
       const assetId = initData.assetId as string;
       const totalChunks = initData.totalChunks as number;
+      const evidenceForm = new FormData();
+      evidenceForm.append("file", rightsEvidenceFile);
+      const evidenceRes = await fetch(`/api/public/v1/content-assets/${encodeURIComponent(assetId)}/rights-evidence`, {
+        method: "POST",
+        headers: await getWebAuthHeaders(token || ""),
+        body: evidenceForm,
+      });
+      if (!evidenceRes.ok) {
+        const evidenceError = await evidenceRes.json();
+        throw new Error(evidenceError.error || "The rights document could not be stored privately.");
+      }
 
       // Add to active queue
       const queueItem: ActiveUploadQueueItem = {
@@ -621,14 +627,14 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
                   <div className="grid grid-cols-2 gap-3">
                     <select
                       value={ageRating}
-                      onChange={(e) => setAgeRating(e.target.value as "G" | "PG" | "13+" | "16+" | "18+")}
+                      onChange={(e) => setAgeRating(e.target.value as typeof ageRating)}
                       className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
                     >
-                      <option value="G">G (All Audiences)</option>
-                      <option value="PG">PG (Parental Guidance)</option>
-                      <option value="13+">13+ (Teens)</option>
-                      <option value="16+">16+ (Mature)</option>
-                      <option value="18+">18+ (Adults Only)</option>
+                      <option value="G">All ages</option>
+                      <option value="TV-Y7">7+</option>
+                      <option value="PG-13">13+</option>
+                      <option value="16">16+</option>
+                      <option value="18">18+</option>
                     </select>
                     <input
                       type="date"
@@ -654,9 +660,16 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
                   <label className="text-xs font-semibold text-slate-300">Production year
                     <input type="number" value={productionYear} onChange={(e) => setProductionYear(e.target.value)} min="1888" max={new Date().getFullYear()} required className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100" />
                   </label>
-                  <label className="text-xs font-semibold text-slate-300 sm:col-span-2">Rights evidence link (HTTPS)
-                    <input type="url" value={rightsEvidenceUrl} onChange={(e) => setRightsEvidenceUrl(e.target.value)} maxLength={2000} placeholder="https://…" className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100" />
+                  <label className="text-xs font-semibold text-slate-300 sm:col-span-2">Proof of rights (PDF, PNG or JPEG; 10 MB max)
+                    <input type="file" accept="application/pdf,image/png,image/jpeg" required onChange={(e) => setRightsEvidenceFile(e.target.files?.[0] || null)} className="mt-2 w-full text-xs text-slate-300 file:mr-2 file:rounded-md file:border-0 file:bg-amber-400 file:px-3 file:py-2 file:font-semibold file:text-slate-950" />
                   </label>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                    Proof of Rights (PDF, PNG or JPEG; 10 MB max)
+                  </label>
+                  <input type="file" accept="application/pdf,image/png,image/jpeg" required onChange={(e) => setRightsEvidenceFile(e.target.files?.[0] || null)} className="w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-amber-400 file:px-3 file:py-2 file:font-semibold file:text-slate-950" />
                 </div>
 
                 <div>

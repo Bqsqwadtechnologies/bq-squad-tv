@@ -412,8 +412,10 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 
 ## V6 File 02 Batch 1 — Upload Rights Declaration (2026-11-20)
 
-- Added mandatory producer declaration metadata for age classification, warnings, language, genre, production year, copyright holder and licence type.
-- Kept licence evidence as an HTTPS reference in this first implementation; server-side validation rejects non-HTTPS evidence and requires a reference for licensed/public-domain submissions. The current form does not upload an evidence file, so file-based proof storage remains an explicit follow-up limitation rather than claiming the proof upload requirement is complete.
+- Producer Channels and Upload Studio now require the requested age band, content warnings, language, genre, ownership declaration, licence type, private proof document, copyright holder and production year.
+- Rights proof accepts PDF, PNG or JPEG up to 10 MB and is stored privately under the uploader's channel/asset path. The API verifies uploader/channel scope, validates the private path, and the independent rights-review route checks the private object before approval.
+- Age bands use the required All ages, 7+, 13+, 16+ and 18+ labels, mapped to the platform's existing content-rating values.
+- Batch 1 finished, continuing.
 
 ## V6-01 Batch 10 — Route integrity check (2026-11-20)
 

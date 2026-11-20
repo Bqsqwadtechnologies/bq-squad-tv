@@ -119,7 +119,7 @@ describe("Zillionaire Upload Studio API", () => {
         mediaType: "Movie",
         genre: "Action",
         language: "English",
-        ageRating: "13+",
+        ageRating: "PG-13",
         licenseType: "owned",
         copyrightHolderName: "BQ Test Studio",
         productionYear: 2025,

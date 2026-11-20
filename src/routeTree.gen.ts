@@ -180,6 +180,7 @@ import { Route as ApiPublicV1AuthWebSessionRouteImport } from './routes/api/publ
 import { Route as ApiPublicV1ChannelsChannelIdChatRouteImport } from './routes/api/public/v1/channels/$channelId.chat'
 import { Route as ApiPublicV1ContentAssetsAssetIdCommentsRouteImport } from './routes/api/public/v1/content-assets/$assetId/comments'
 import { Route as ApiPublicV1ContentAssetsAssetIdRatingRouteImport } from './routes/api/public/v1/content-assets/$assetId/rating'
+import { Route as ApiPublicV1ContentAssetsAssetIdRightsEvidenceRouteImport } from './routes/api/public/v1/content-assets/$assetId/rights-evidence'
 import { Route as ApiPublicV1NotificationsNotificationIdReadRouteImport } from './routes/api/public/v1/notifications/$notificationId/read'
 import { Route as ApiPublicV1PaymentsPaystackInitializeRouteImport } from './routes/api/public/v1/payments/paystack/initialize'
 import { Route as ApiPublicV1PaymentsPaystackVerifyRouteImport } from './routes/api/public/v1/payments/paystack/verify'
@@ -1252,6 +1253,12 @@ const ApiPublicV1ContentAssetsAssetIdRatingRoute =
     path: '/rating',
     getParentRoute: () => ApiPublicV1ContentAssetsAssetIdRoute,
   } as any)
+const ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute =
+  ApiPublicV1ContentAssetsAssetIdRightsEvidenceRouteImport.update({
+    id: '/rights-evidence',
+    path: '/rights-evidence',
+    getParentRoute: () => ApiPublicV1ContentAssetsAssetIdRoute,
+  } as any)
 const ApiPublicV1NotificationsNotificationIdReadRoute =
   ApiPublicV1NotificationsNotificationIdReadRouteImport.update({
     id: '/$notificationId/read',
@@ -2258,6 +2265,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/channels/$channelId/chat': typeof ApiPublicV1ChannelsChannelIdChatRoute
   '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
   '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
+  '/api/public/v1/content-assets/$assetId/rights-evidence': typeof ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute
   '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
   '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
@@ -2569,6 +2577,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/channels/$channelId/chat': typeof ApiPublicV1ChannelsChannelIdChatRoute
   '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
   '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
+  '/api/public/v1/content-assets/$assetId/rights-evidence': typeof ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute
   '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
   '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
@@ -2882,6 +2891,7 @@ export interface FileRoutesById {
   '/api/public/v1/channels/$channelId/chat': typeof ApiPublicV1ChannelsChannelIdChatRoute
   '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
   '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
+  '/api/public/v1/content-assets/$assetId/rights-evidence': typeof ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute
   '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
   '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
@@ -3196,6 +3206,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/channels/$channelId/chat'
     | '/api/public/v1/content-assets/$assetId/comments'
     | '/api/public/v1/content-assets/$assetId/rating'
+    | '/api/public/v1/content-assets/$assetId/rights-evidence'
     | '/api/public/v1/notifications/$notificationId/read'
     | '/api/public/v1/payments/paystack/initialize'
     | '/api/public/v1/payments/paystack/verify'
@@ -3507,6 +3518,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/channels/$channelId/chat'
     | '/api/public/v1/content-assets/$assetId/comments'
     | '/api/public/v1/content-assets/$assetId/rating'
+    | '/api/public/v1/content-assets/$assetId/rights-evidence'
     | '/api/public/v1/notifications/$notificationId/read'
     | '/api/public/v1/payments/paystack/initialize'
     | '/api/public/v1/payments/paystack/verify'
@@ -3819,6 +3831,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/channels/$channelId/chat'
     | '/api/public/v1/content-assets/$assetId/comments'
     | '/api/public/v1/content-assets/$assetId/rating'
+    | '/api/public/v1/content-assets/$assetId/rights-evidence'
     | '/api/public/v1/notifications/$notificationId/read'
     | '/api/public/v1/payments/paystack/initialize'
     | '/api/public/v1/payments/paystack/verify'
@@ -5440,6 +5453,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ContentAssetsAssetIdRatingRouteImport
       parentRoute: typeof ApiPublicV1ContentAssetsAssetIdRoute
     }
+    '/api/public/v1/content-assets/$assetId/rights-evidence': {
+      id: '/api/public/v1/content-assets/$assetId/rights-evidence'
+      path: '/rights-evidence'
+      fullPath: '/api/public/v1/content-assets/$assetId/rights-evidence'
+      preLoaderRoute: typeof ApiPublicV1ContentAssetsAssetIdRightsEvidenceRouteImport
+      parentRoute: typeof ApiPublicV1ContentAssetsAssetIdRoute
+    }
     '/api/public/v1/notifications/$notificationId/read': {
       id: '/api/public/v1/notifications/$notificationId/read'
       path: '/$notificationId/read'
@@ -6495,6 +6515,7 @@ const ApiPublicV1ChannelsChannelIdRouteWithChildren =
 interface ApiPublicV1ContentAssetsAssetIdRouteChildren {
   ApiPublicV1ContentAssetsAssetIdCommentsRoute: typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
   ApiPublicV1ContentAssetsAssetIdRatingRoute: typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
+  ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute: typeof ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute
 }
 
 const ApiPublicV1ContentAssetsAssetIdRouteChildren: ApiPublicV1ContentAssetsAssetIdRouteChildren =
@@ -6503,6 +6524,8 @@ const ApiPublicV1ContentAssetsAssetIdRouteChildren: ApiPublicV1ContentAssetsAsse
       ApiPublicV1ContentAssetsAssetIdCommentsRoute,
     ApiPublicV1ContentAssetsAssetIdRatingRoute:
       ApiPublicV1ContentAssetsAssetIdRatingRoute,
+    ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute:
+      ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute,
   }
 
 const ApiPublicV1ContentAssetsAssetIdRouteWithChildren =
