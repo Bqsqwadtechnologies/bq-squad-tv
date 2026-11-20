@@ -398,7 +398,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
                 contentStatus: "draft",
                 transcodeJobId: data.assetId,
               });
-            }
           }
 
           if (data.action === "ACTION_UPLOAD") {
@@ -411,7 +410,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
             let newContentStatus = asset["contentStatus"];
 
             if (data.operation === "direct_publish" || data.operation === "approve") {
-              throw new ApiError(403, "APPROVAL_WORKFLOW_REQUIRED", "Uploads cannot be published from this legacy action. Complete processing, rights review and the separate approval workflow first.");            } else if (data.operation === "pause") {
+              throw new ApiError(
+                403,
+                "APPROVAL_WORKFLOW_REQUIRED",
+                "Uploads cannot be published from this legacy action. Complete processing, rights review and the separate approval workflow first.",
+              );
+            } else if (data.operation === "pause") {
               await fs.patchDoc(`contentAssets/${data.assetId}`, {
                 status: "paused",
                 updatedAt: now,
