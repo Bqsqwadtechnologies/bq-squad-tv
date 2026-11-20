@@ -303,3 +303,9 @@ V4-01 mandates decommissioning legacy `/admin/*` and `/api/public/v1/admin/*` pa
 - Rewrote default legal copy for all 12 platform documents to adhere strictly to first-person plural voice ("we", never singular "I") and neutral provider terms, removing vendor names (Paystack, Google Play, etc.) from public and policy text.
 - Added comprehensive storage operations visibility directly within the Zillionaire Storage dashboard, showing total destinations, active pool counts, recorded storage usage, estimated free space against soft caps, ledger egress volumes, replica indicators, and failover status.
 - Added legal-copy safety automated tests to guarantee no vendor mentions and zero first-person singular pronouns appear across defaults.
+
+## V5-02 Batch 10 — Acceptance and isolation tests
+
+- Added focused coverage for upload resume, audited deletion, live-chat timeout and audit evidence, plus hidden/unpublished owner-scoped test-lab creation and read-only preview.
+- Catalog filtering now excludes `testOnly` channels even if a misconfigured document is published, adding a second safety boundary against public discovery and revenue pathways.
+- Consolidated owner launch checks into the existing owner-actions checklist. External provider configuration and legal review remain owner actions, not claims made by automated tests.

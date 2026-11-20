@@ -29,6 +29,6 @@ export function toChannelSummary(doc: ChannelDoc): ChannelSummary {
 /** Adult-tagged channels are removed entirely for viewers who are not adult-eligible. */
 export function visibleChannels(docs: ChannelDoc[], adultEligible: boolean): ChannelDoc[] {
   return docs.filter(
-    (doc) => doc["published"] === true && (adultEligible || doc["adultOnly"] !== true),
+    (doc) => doc["published"] === true && doc["testOnly"] !== true && (adultEligible || doc["adultOnly"] !== true),
   );
 }

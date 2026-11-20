@@ -195,3 +195,7 @@ To deploy or activate the multi-bitrate video transcoding host (240p to 1080p HL
    modal deploy workers/video_worker.py
    ```
 5. **Direct Publish Fallback**: Until the worker is deployed, the Upload Studio operates in **Direct Publish** mode, streaming H.264/AAC MP4 and HLS files directly to Web and Mobile viewers with token authentication and per-minute billing enabled.
+
+## Batch readiness checklist (V5-02)
+
+Before production launch, the owner should confirm: (1) legal pages have been reviewed by qualified counsel and placeholders reflect the actual service; (2) upload storage, direct playback and publishing have been tested with non-production media; (3) ad creatives, audience targeting and placements meet applicable policy and have an approved budget; (4) live chat timeout/ban and child-profile restrictions work as intended; (5) the test lab remains hidden, unpublished and excluded from public catalogs; (6) all required hosting secrets are present and validated without exposing values; and (7) storage, billing and worker limits are confirmed in the relevant provider consoles. This is a readiness checklist, not evidence that external settings or services are configured.

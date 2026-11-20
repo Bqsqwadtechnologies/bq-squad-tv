@@ -6,6 +6,7 @@ describe("catalogue adult visibility", () => {
     { __id: "general", published: true, adultOnly: false },
     { __id: "adult", published: true, adultOnly: true },
     { __id: "unpublished", published: false, adultOnly: false },
+    { __id: "test-only", published: true, adultOnly: false, testOnly: true },
   ];
 
   it("removes adult-only and unpublished channels for non-adult viewers", () => {

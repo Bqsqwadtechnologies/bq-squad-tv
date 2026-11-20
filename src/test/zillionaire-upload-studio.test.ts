@@ -247,4 +247,25 @@ describe("Zillionaire Upload Studio API", () => {
       }),
     );
   });
+it("deletes only the requested asset and audits the destructive upload action", async () => {
+    memFs.storedDocs["contentAssets/ast_delete_test"] = { channelId: "ch_main", status: "needs_review" };
+    const handler = (UploadRoute.options.server as unknown as { handlers: { POST: (ctx: unknown) => Promise<Response> } }).handlers.POST;
+    const res = await handler({ request: new Request("http://localhost/api/public/v1/zillionaire/upload/", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "ACTION_UPLOAD", assetId: "ast_delete_test", operation: "delete", reason: "Remove duplicate test asset" }),
+    }) });
+    expect(res.status).toBe(200);
+    expect(memFs.storedDocs["contentAssets/ast_delete_test"]).toBeUndefined();
+    expect(auditModule.writeAuditLog).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: "content.upload_delete", targetId: "ast_delete_test" }));
+  });
+it("resumes a paused upload and clears the prior failure reason", async () => {
+    memFs.storedDocs["contentAssets/ast_resume_test"] = { channelId: "ch_main", status: "paused", failureReason: "Temporary interruption" };
+    const handler = (UploadRoute.options.server as unknown as { handlers: { POST: (ctx: unknown) => Promise<Response> } }).handlers.POST;
+    const res = await handler({ request: new Request("http://localhost/api/public/v1/zillionaire/upload/", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "ACTION_UPLOAD", assetId: "ast_resume_test", operation: "resume", reason: "Continue interrupted upload" }),
+    }) });
+    expect(res.status).toBe(200);
+    expect(memFs.storedDocs["contentAssets/ast_resume_test"]).toMatchObject({ status: "uploading", failureReason: null });
+  });
 });
