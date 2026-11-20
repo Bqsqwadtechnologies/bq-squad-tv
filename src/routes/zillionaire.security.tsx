@@ -19,6 +19,8 @@ import {
   LogOut,
   FileCheck2,
   Download,
+  RotateCw,
+  X,
 } from "lucide-react";
 import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 import {
@@ -72,10 +74,29 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
   const [secretData, setSecretData] = useState<{
     presentCount: number;
     missingCount: number;
+    overdueCount?: number;
+    dueSoonCount?: number;
     checkedAt: string;
-    secrets: Array<{ name: string; status: "present" | "missing" }>;
+    secrets: Array<{
+      name: string;
+      category?: string;
+      description?: string;
+      status: "present" | "missing";
+      recommendedRotationDays?: number;
+      rotationCycleDays?: number;
+      rotationReminder?: string;
+      lastRotatedAt?: string | null;
+      nextDueAt?: string | null;
+      isOverdue?: boolean;
+      rotationStatus?: "healthy" | "due_soon" | "overdue" | "not_recorded";
+    }>;
   } | null>(null);
   const [secretsLoading, setSecretsLoading] = useState(false);
+  const [rotationModalOpen, setRotationModalOpen] = useState(false);
+  const [rotationSecretName, setRotationSecretName] = useState("");
+  const [rotationCycleDays, setRotationCycleDays] = useState(90);
+  const [submittingRotation, setSubmittingRotation] = useState(false);
+  const [rotationError, setRotationError] = useState<string | null>(null);
 
   // Backup State
   const [backupData, setBackupData] = useState<{
@@ -120,6 +141,36 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
       setSecretsLoading(false);
     }
   }, [token]);
+
+  const handleRecordRotation = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!rotationSecretName) return;
+    setSubmittingRotation(true);
+    setRotationError(null);
+    try {
+      const response = await fetch("/api/public/v1/zillionaire/secret-health", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          secretName: rotationSecretName,
+          rotationCycleDays,
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.message ?? "Failed to record rotation");
+      }
+      setRotationModalOpen(false);
+      await fetchSecretHealth();
+    } catch (error) {
+      setRotationError(error instanceof Error ? error.message : "Failed to record rotation");
+    } finally {
+      setSubmittingRotation(false);
+    }
+  };
 
   const fetchBackupStatus = useCallback(async () => {
     setBackupsLoading(true);
@@ -242,11 +293,11 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
       {/* TAB 2: SECRET HEALTH CHECK */}
       {activeTab === "secrets" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <ConsoleKpiCard
               title="Configured Secrets"
               value={secretData ? secretData.presentCount : "—"}
-              subtitle="Verified active"
+              subtitle="Verified active in environment"
               icon={ShieldCheck}
               variant="green"
             />
@@ -254,79 +305,223 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
               title="Missing Critical Keys"
               value={secretData ? secretData.missingCount : "—"}
               subtitle={
-                secretData && secretData.missingCount > 0 ? "Requires attention" : "All optimal"
+                secretData?.missingCount ? "Requires attention" : "All critical keys present"
               }
               icon={AlertTriangle}
-              variant={secretData && secretData.missingCount > 0 ? "gold" : "blue"}
+              variant={secretData?.missingCount ? "gold" : "blue"}
+            />
+            <ConsoleKpiCard
+              title="Rotation Overdue"
+              value={secretData ? (secretData.overdueCount ?? 0) : "—"}
+              subtitle={
+                secretData?.overdueCount
+                  ? `${secretData.overdueCount} overdue for rotation`
+                  : secretData?.dueSoonCount
+                    ? `${secretData.dueSoonCount} due within 14 days`
+                    : "No overdue rotations"
+              }
+              icon={RotateCw}
+              variant={secretData?.overdueCount ? "gold" : "green"}
             />
             <ConsoleKpiCard
               title="Secret Values Protection"
               value="100% Redacted"
-              subtitle="Never displayed in UI or code"
+              subtitle="Values never exposed in UI or logs"
               icon={Lock}
               variant="gold"
             />
           </div>
 
+          {rotationModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-lg rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+                <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                  <div>
+                    <h3 className="flex items-center gap-2 text-base font-bold text-white">
+                      <RotateCw className="h-4 w-4 text-blue-400" />
+                      Record Secret Key Rotation
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Record provider-side rotation only. Never enter secret values here.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Close"
+                    onClick={() => setRotationModalOpen(false)}
+                    className="rounded-lg p-1 text-slate-400 hover:bg-white/10 hover:text-white"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+                <form onSubmit={handleRecordRotation} className="space-y-4 pt-4">
+                  {rotationError && (
+                    <p
+                      role="alert"
+                      className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-300"
+                    >
+                      {rotationError}
+                    </p>
+                  )}
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Secret
+                    <select
+                      value={rotationSecretName}
+                      onChange={(event) => {
+                        const name = event.target.value;
+                        setRotationSecretName(name);
+                        setRotationCycleDays(
+                          secretData?.secrets.find((secret) => secret.name === name)
+                            ?.recommendedRotationDays ?? 90,
+                        );
+                      }}
+                      className="mt-1 w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 font-mono text-xs text-white"
+                      required
+                    >
+                      <option value="">Choose a secret…</option>
+                      {secretData?.secrets.map((secret) => (
+                        <option key={secret.name} value={secret.name}>
+                          {secret.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block text-xs font-semibold text-slate-300">
+                    Rotation cycle (days)
+                    <input
+                      type="number"
+                      min={1}
+                      max={730}
+                      value={rotationCycleDays}
+                      onChange={(event) => setRotationCycleDays(Number(event.target.value))}
+                      className="mt-1 w-full rounded-xl border border-white/10 bg-slate-800 px-3 py-2 text-xs text-white"
+                      required
+                    />
+                  </label>
+                  <div className="flex justify-end gap-3 border-t border-white/10 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setRotationModalOpen(false)}
+                      className="rounded-xl px-4 py-2 text-xs font-bold text-slate-300 hover:bg-white/10"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submittingRotation || !rotationSecretName}
+                      className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-500 disabled:opacity-50"
+                    >
+                      {submittingRotation ? "Recording…" : "Save Rotation Record"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
           <ConsoleCard
-            title="Cryptographic Secret Health Status"
-            subtitle="Validation of environment and vault keys required for payments, storage, transcoding, and authentication (Values are strictly hidden)"
+            title="Cryptographic Secret Health & Rotation Matrix"
+            subtitle="Environment key presence and rotation reminders. Secret values are never returned or displayed."
             headerAction={
-              <button
-                type="button"
-                onClick={() => void fetchSecretHealth()}
-                disabled={secretsLoading}
-                className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10 transition disabled:opacity-50"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${secretsLoading ? "animate-spin" : ""}`} />
-                Re-validate Keys
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRotationSecretName("");
+                    setRotationCycleDays(90);
+                    setRotationModalOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl border border-blue-500/30 bg-blue-600/20 px-3 py-1.5 text-xs font-bold text-blue-300 hover:bg-blue-600/30"
+                >
+                  <RotateCw className="h-3.5 w-3.5" />
+                  Record Rotation
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void fetchSecretHealth()}
+                  disabled={secretsLoading}
+                  className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10 disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${secretsLoading ? "animate-spin" : ""}`} />
+                  Re-validate
+                </button>
+              </div>
             }
           >
             {secretsLoading && !secretData ? (
               <div className="p-8 text-center text-xs text-slate-500">
-                Scanning environment and encrypted vaults...
+                Checking environment configuration…
               </div>
             ) : !secretData ? (
               <div className="p-8 text-center text-xs text-slate-500">
                 Failed to load secret health check.
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {secretData.secrets.map((sec) => (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {secretData.secrets.map((secret) => (
                   <div
-                    key={sec.name}
-                    className="flex items-center justify-between p-3.5 rounded-xl border border-white/10 bg-slate-900/60"
+                    key={secret.name}
+                    className="space-y-3 rounded-xl border border-white/10 bg-slate-900/60 p-4"
                   >
-                    <div className="space-y-0.5">
-                      <span className="font-mono text-xs font-bold text-slate-200">{sec.name}</span>
-                      <p className="text-[10px] text-slate-400">
-                        {sec.name.includes("PAYSTACK")
-                          ? "Paystack payment processing & webhook verification"
-                          : sec.name.includes("FIREBASE")
-                            ? "Firebase Admin SDK authentication & Firestore"
-                            : sec.name.includes("STORAGE") || sec.name.includes("B2")
-                              ? "Backblaze B2 & Lovable storage replication"
-                              : sec.name.includes("STREAMING")
-                                ? "HMAC token signing for anti-hotlinking video stream"
-                                : sec.name.includes("MODAL")
-                                  ? "Modal serverless GPU worker transcode queue"
-                                  : "Critical infrastructure security key"}
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="font-mono text-xs font-bold text-slate-200">
+                          {secret.name}
+                        </span>
+                        <p className="mt-1 text-[10px] text-slate-400">
+                          {secret.description ?? "Critical infrastructure configuration"}
+                        </p>
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-lg border px-2 py-1 text-[10px] font-bold ${secret.status === "present" ? "border-emerald-500/30 bg-emerald-500/20 text-emerald-300" : "border-amber-500/30 bg-amber-500/20 text-amber-300"}`}
+                      >
+                        {secret.status === "present" ? "Present" : "Missing"}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 rounded-lg border border-white/5 bg-black/20 p-2 text-[10px]">
+                      <div>
+                        <span className="block text-slate-500">Last rotated</span>
+                        <span className="text-slate-300">
+                          {secret.lastRotatedAt
+                            ? new Date(secret.lastRotatedAt).toLocaleDateString()
+                            : "Not recorded"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="block text-slate-500">Next due</span>
+                        <span
+                          className={secret.isOverdue ? "font-bold text-red-400" : "text-slate-300"}
+                        >
+                          {secret.nextDueAt
+                            ? new Date(secret.nextDueAt).toLocaleDateString()
+                            : "Not scheduled"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 border-t border-white/5 pt-2">
+                      <span className="text-[10px] text-slate-400">
+                        Recommended every{" "}
+                        {secret.rotationCycleDays ?? secret.recommendedRotationDays ?? 90} days
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRotationSecretName(secret.name);
+                          setRotationCycleDays(
+                            secret.rotationCycleDays ?? secret.recommendedRotationDays ?? 90,
+                          );
+                          setRotationModalOpen(true);
+                        }}
+                        className="text-[10px] font-bold text-blue-400 hover:text-blue-300"
+                      >
+                        Record rotation
+                      </button>
+                    </div>
+                    {secret.rotationReminder && (
+                      <p className="rounded-lg border border-blue-500/20 bg-blue-950/30 p-2 text-[10px] text-blue-200">
+                        {secret.rotationReminder}
                       </p>
-                    </div>
-                    <div>
-                      {sec.status === "present" ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                          Present
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                          <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
-                          Missing
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
                 ))}
               </div>
