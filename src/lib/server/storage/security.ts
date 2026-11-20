@@ -42,6 +42,7 @@ export type PlaybackTokenClaims = {
   path: string;
   exp: number;
   iat: number;
+  deviceId?: string;
 };
 
 export async function signPlaybackToken(
@@ -55,7 +56,8 @@ export async function signPlaybackToken(
     !Number.isSafeInteger(claims.exp) ||
     !Number.isSafeInteger(claims.iat) ||
     claims.exp <= claims.iat ||
-    claims.exp - claims.iat > 900
+    claims.exp - claims.iat > 900 ||
+    (claims.deviceId && !/^[A-Za-z0-9_.:-]{1,128}$/.test(claims.deviceId))
   ) {
     throw new ApiError(400, "STREAM_TOKEN_CLAIMS_INVALID", "Playback token claims are invalid.");
   }
@@ -70,7 +72,7 @@ export async function signPlaybackToken(
 
 export async function verifyPlaybackToken(
   token: string,
-  expected: { sid: string; uid: string; path: string },
+  expected: { sid: string; uid: string; path: string; deviceId?: string },
   secret = process.env["STREAMING_HMAC_SECRET"] ?? "",
   nowSeconds = Math.floor(Date.now() / 1000),
 ): Promise<PlaybackTokenClaims> {
@@ -96,6 +98,7 @@ export async function verifyPlaybackToken(
     claims.sid !== expected.sid ||
     claims.uid !== expected.uid ||
     claims.path !== expected.path ||
+    (expected.deviceId && claims.deviceId && claims.deviceId !== expected.deviceId) ||
     !Number.isSafeInteger(claims.iat) ||
     claims.iat > nowSeconds + 60 ||
     !Number.isSafeInteger(claims.exp) ||

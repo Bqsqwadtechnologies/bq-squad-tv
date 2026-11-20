@@ -1,3 +1,4 @@
+import { isAllowedStreamingOrigin, logRestreamingForensicAlert } from "@/lib/server/streaming/forensics";
 import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody } from "@/lib/server/api";
@@ -156,6 +157,10 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
     handlers: {
       GET: async ({ request, params }) => {
         try {
+          const originHeader = request.headers.get("origin") || request.headers.get("referer");
+          if (!isAllowedStreamingOrigin(originHeader)) {
+            throw new ApiError(403, "HOTLINK_FORBIDDEN", "Hotlinking stream resources is not permitted.");
+          }
           const url = new URL(request.url);
           const sid = sessionId(url.searchParams.get("sid"));
           const token = url.searchParams.get("token") ?? "";
@@ -170,6 +175,19 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
             );
           }
           const uid = session["uid"];
+          const clientIp = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+          if (session["lastStreamIp"] && session["lastStreamIp"] !== clientIp && clientIp !== "unknown") {
+            void logRestreamingForensicAlert(fs, {
+              sessionId: sid,
+              uid,
+              resourcePath,
+              primaryIp: String(session["lastStreamIp"]),
+              conflictingIp: clientIp,
+              userAgent: request.headers.get("user-agent") || "",
+              timestamp: new Date().toISOString(),
+              reason: "IP_HOPPING",
+            });
+          }
           await verifyPlaybackToken(token, { sid, uid, path: resourcePath });
           const lastHeartbeat =
             typeof session["lastHeartbeatAt"] === "string"
@@ -440,8 +458,10 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
           }
 
           const headers = new Headers({
-            "cache-control": "private, no-store",
+            "cache-control": "private, no-store, no-cache, must-revalidate",
             "x-content-type-options": "nosniff",
+            "content-disposition": "inline",
+            "x-download-options": "noopen",
             "content-type": upstream.headers.get("content-type") ?? "application/octet-stream",
           });
           for (const name of ["content-length", "content-range", "accept-ranges"]) {

@@ -361,6 +361,20 @@ function ContentDetailsPage() {
                     aria-hidden="true"
                     className="pointer-events-none absolute right-4 top-4 w-20 opacity-40"
                   />
+                  {session?.sessionId && (
+                    <div className="pointer-events-none absolute bottom-4 left-4 z-10 select-none opacity-30">
+                      <span className="font-mono text-[10px] font-semibold text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                        Viewer #{session.sessionId.slice(-6).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  {session?.sessionId && (
+                    <div className="pointer-events-none absolute bottom-4 left-4 z-10 select-none opacity-30">
+                      <span className="font-mono text-[10px] font-semibold text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
+                        Viewer #{session.sessionId.slice(-6).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
                 </div>
                 <p className="mt-3 text-xs text-blue-100/45">
                   Playback metering uses server heartbeats. Keep this page open while watching.
