@@ -30,3 +30,5 @@ PUSH BADGE #18 SUCCESSFUL — V5-02 Batch 9 — 8f257f5b998a28ecbc83913b3e848575
 PUSH BADGE #19 SUCCESSFUL — V5-02 Batch 10 — 86403294f099c6b77126b847fc589b533e92a615 — Upload resume/delete audit checks, live-chat timeout coverage, isolated test-lab checks, test-only catalog exclusion, and owner readiness checklist.
 
 PUSH BADGE #20 SUCCESSFUL — V5-03 Batch 1 — 8b94f4c3ddbb850f7d1f83983f05f0ca6f24bc2c — Mandatory owner authenticator setup, TOTP unlock and one-time recovery codes.
+
+PUSH BADGE #21 SUCCESSFUL — V5-03 Batch 2 — 7c5e88d84de032ebe35110b0b3f0be5aab050b2f — Five-minute step-up verification for owner wallet, reversal, deletion, team and payout actions.
