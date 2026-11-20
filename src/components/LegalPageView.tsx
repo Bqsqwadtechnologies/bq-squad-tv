@@ -159,7 +159,7 @@ export function LegalPageView({ slug }: { slug: string }) {
         <a href="/producer-terms" className="hover:text-foreground">
           Producer Terms
         </a>
-        <a href="/provider-privacy" className="hover:text-foreground">
+        <a href="/legal/provider-privacy" className="hover:text-foreground">
           Provider Privacy
         </a>
         <a href="/legal/provider-terms" className="hover:text-foreground">
