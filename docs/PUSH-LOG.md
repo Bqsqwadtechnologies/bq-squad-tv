@@ -62,3 +62,5 @@ PUSH BADGE #34 SUCCESSFUL — V5-04 Batch 5 — c8b2e8922b6f45e7ce3746ba6628eae9
 PUSH BADGE #35 SUCCESSFUL — V5-04 Batch 6 — 0203ffa883712d6b34a469306a064cc020fe5f54 — Provider working tools: connected channels list with per-channel bandwidth cap & error logs, 5-location live latency ping chart, contract status card with download PDF, and dispute filing modal.
 
 PUSH BADGE #36 SUCCESSFUL — V5-04 Batch 7 — dc60b749e255550f091d447b4bec69f6cf6506b5 — Shared statements/settlement view component (producer vs provider mode), monthly statement table with gross watch time, deductions breakdown, net payout, status badges, and detail modal with line-item breakdown & signed PDF download.
+
+PUSH BADGE #37 SUCCESSFUL — V5-04 Batch 8 — 14f2738e0844ae52415184d3efd6e0a4b485f1ff — Shared dispute management system: dispute filing form with evidence upload, filterable dispute list, chronological message threads, settlement resolution card, and operations decision controls.
