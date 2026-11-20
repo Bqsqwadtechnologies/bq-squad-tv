@@ -68,6 +68,8 @@ type UploadRecord = {
   genre: string;
   language: string;
   ageRating: string;
+  ownershipDeclaration?: boolean;
+  copyrightDeclaration?: boolean;
   releaseDate: string | null;
   cast: string;
   posterUrl: string | null;
@@ -437,7 +439,7 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
           />
           <ConsoleKpiCard
             title="Awaiting Approval"
-            value={uploads.filter((u) => u.directPublish).length}
+            value={uploads.filter((u) => u.displayState === "Needs review" || u.displayState === "Ready").length}
             subtitle="Private until approved"
             icon={Zap}
             variant="info"
@@ -884,7 +886,7 @@ function UploadStudioContent({ account }: { account: ConsoleAccount }) {
                                 )}
                               </div>
                               <div className="text-xs text-slate-500">
-                                {asset.mediaType} • {asset.genre} • {asset.ageRating}
+                                {asset.mediaType} • {asset.genre} • {asset.ageRating} • Rights declaration: {asset.ownershipDeclaration && asset.copyrightDeclaration ? "submitted" : "missing"}
                               </div>
                             </div>
                           </div>
