@@ -187,41 +187,68 @@ describe("ConsoleShell and Shared Components", () => {
     fireEvent.click(exitBtn);
     expect(handleReset).toHaveBeenCalledTimes(1);
   });
-});
+  it("supports responsive rendering at 360px and 1280px viewports", () => {
+    window.innerWidth = 360;
+    fireEvent(window, new Event("resize"));
 
-it("supports responsive rendering at 360px and 1280px viewports", () => {
-  // 360px mobile viewport simulation
-  window.innerWidth = 360;
-  fireEvent(window, new Event("resize"));
+    const { rerender } = render(
+      <ConsoleShell
+        consoleType="zillionaire"
+        title="Zillionaire"
+        tagline="360px Mobile View"
+        account={{ isOwner: true }}
+      >
+        <div>Content Mobile</div>
+      </ConsoleShell>,
+    );
 
-  const { container, rerender } = render(
-    <ConsoleShell
-      consoleType="zillionaire"
-      title="Zillionaire"
-      tagline="360px Mobile View"
-      account={{ isOwner: true }}
-    >
-      <div>Content Mobile</div>
-    </ConsoleShell>,
-  );
+    expect(screen.getByText("More")).toBeDefined();
 
-  // More button on mobile bottom bar should be present
-  expect(screen.getByText("More")).toBeDefined();
+    window.innerWidth = 1280;
+    fireEvent(window, new Event("resize"));
 
-  // 1280px desktop viewport simulation
-  window.innerWidth = 1280;
-  fireEvent(window, new Event("resize"));
+    rerender(
+      <ConsoleShell
+        consoleType="zillionaire"
+        title="Zillionaire"
+        tagline="1280px Desktop View"
+        account={{ isOwner: true }}
+      >
+        <div>Content Desktop</div>
+      </ConsoleShell>,
+    );
 
-  rerender(
-    <ConsoleShell
-      consoleType="zillionaire"
-      title="Zillionaire"
-      tagline="1280px Desktop View"
-      account={{ isOwner: true }}
-    >
-      <div>Content Desktop</div>
-    </ConsoleShell>,
-  );
+    expect(screen.getByText("1280px Desktop View")).toBeDefined();
+  });
 
-  expect(screen.getByText("1280px Desktop View")).toBeDefined();
+  it("renders channel switcher and earnings ticker in top bar", () => {
+    const handleSelectChannel = vi.fn();
+
+    render(
+      <ConsoleShell
+        consoleType="producer"
+        title="Producer Studio"
+        tagline="Manage Channel"
+        channelSwitcher={{
+          activeChannelId: "ch_1",
+          channels: [
+            { id: "ch_1", name: "Apex TV" },
+            { id: "ch_2", name: "Apex Live" },
+          ],
+          onSelect: handleSelectChannel,
+        }}
+        earningsTicker={{
+          amount: "₦ 145,000.00",
+          label: "30d Net",
+          changePercent: "+18.2%",
+        }}
+      >
+        <div>Content</div>
+      </ConsoleShell>,
+    );
+
+    expect(screen.getByText(/30d Net: ₦ 145,000.00/i)).toBeDefined();
+    expect(screen.getByText("+18.2%")).toBeDefined();
+    expect(screen.getByText(/Apex TV/i)).toBeDefined();
+  });
 });

@@ -90,6 +90,18 @@ export interface ViewAsConfig {
   onReset: () => void;
 }
 
+export interface ChannelSwitcherConfig {
+  activeChannelId: string;
+  channels: Array<{ id: string; name: string; iconUrl?: string }>;
+  onSelect: (channelId: string) => void;
+}
+
+export interface EarningsTickerConfig {
+  amount: string;
+  label?: string;
+  changePercent?: string;
+}
+
 export interface ConsoleShellProps {
   consoleType: ConsoleType;
   title: string;
@@ -105,6 +117,8 @@ export interface ConsoleShellProps {
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
   viewAs?: ViewAsConfig;
+  channelSwitcher?: ChannelSwitcherConfig;
+  earningsTicker?: EarningsTickerConfig;
   lastUpdated?: string;
   onRefresh?: () => void;
   isRefreshing?: boolean;
@@ -125,6 +139,8 @@ export function ConsoleShell({
   searchPlaceholder = "Search across users, channels, videos, payments...",
   onSearch,
   viewAs,
+  channelSwitcher,
+  earningsTicker,
   lastUpdated,
   onRefresh,
   isRefreshing = false,
@@ -644,9 +660,9 @@ export function ConsoleShell({
       )}
 
       <div className="flex min-h-screen">
-        {/* Desktop Sidebar */}
+        {/* Desktop Sidebar (Collapsed rail on tablet, full width on desktop) */}
         <aside
-          className={`hidden md:flex flex-col w-64 shrink-0 border-r transition-colors z-30 ${
+          className={`hidden md:flex flex-col md:w-20 lg:w-64 shrink-0 border-r transition-all duration-300 z-30 ${
             theme === "dark"
               ? "bg-[#060b1b] border-blue-950/40 text-slate-300"
               : "bg-white border-slate-200 text-slate-700 shadow-sm"
@@ -677,7 +693,7 @@ export function ConsoleShell({
             {filteredGroups.map((group) => (
               <div key={group.id} className="space-y-1">
                 {group.title && (
-                  <h4 className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  <h4 className="px-3 text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2 hidden lg:block">
                     {group.title}
                   </h4>
                 )}
@@ -713,7 +729,7 @@ export function ConsoleShell({
                                   : "text-slate-500 group-hover:text-blue-600"
                             }`}
                           />
-                          <span className="truncate">{item.label}</span>
+                          <span className="truncate hidden lg:inline">{item.label}</span>
                         </div>
                         {item.badge !== undefined && (
                           <span
@@ -783,6 +799,34 @@ export function ConsoleShell({
 
             {/* Top Bar Actions */}
             <div className="flex items-center gap-2 sm:gap-3">
+              {/* Channel Switcher */}
+              {channelSwitcher && channelSwitcher.channels.length > 0 && (
+                <div className="relative hidden sm:block">
+                  <select
+                    value={channelSwitcher.activeChannelId}
+                    onChange={(e) => channelSwitcher.onSelect(e.target.value)}
+                    className="h-8 rounded-xl border border-cyan-500/30 bg-[#0a1435] px-3 text-xs font-semibold text-cyan-200 outline-none hover:border-cyan-400"
+                  >
+                    {channelSwitcher.channels.map((c) => (
+                      <option key={c.id} value={c.id} className="bg-[#060b1b] text-white">
+                        📺 {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Earnings / Balance Ticker */}
+              {earningsTicker && (
+                <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 text-xs font-semibold shadow-inner">
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>{earningsTicker.label || "Revenue"}: {earningsTicker.amount}</span>
+                  {earningsTicker.changePercent && (
+                    <span className="text-[10px] text-emerald-400 font-bold">{earningsTicker.changePercent}</span>
+                  )}
+                </div>
+              )}
+
               {/* Global Search Input / Button */}
               <button
                 onClick={() => setSearchModalOpen(true)}
