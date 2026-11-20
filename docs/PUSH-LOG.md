@@ -60,3 +60,5 @@ PUSH BADGE #33 SUCCESSFUL — V5-04 Batch 4 — e8812ffe95f712c8ef20e9c1d982603c
 PUSH BADGE #34 SUCCESSFUL — V5-04 Batch 5 — c8b2e8922b6f45e7ce3746ba6628eae9f693c48f — Provider dashboard matching reference board, provider KPI cards, 99.98% uptime SLA gauge, live stream monitor grid with telemetry & status badges, and quick actions.
 
 PUSH BADGE #35 SUCCESSFUL — V5-04 Batch 6 — 0203ffa883712d6b34a469306a064cc020fe5f54 — Provider working tools: connected channels list with per-channel bandwidth cap & error logs, 5-location live latency ping chart, contract status card with download PDF, and dispute filing modal.
+
+PUSH BADGE #36 SUCCESSFUL — V5-04 Batch 7 — dc60b749e255550f091d447b4bec69f6cf6506b5 — Shared statements/settlement view component (producer vs provider mode), monthly statement table with gross watch time, deductions breakdown, net payout, status badges, and detail modal with line-item breakdown & signed PDF download.
