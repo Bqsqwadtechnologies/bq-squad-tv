@@ -80,6 +80,7 @@ fun WalletScreen(onBack: () -> Unit) {
         }
         Spacer(Modifier.height(16.dp))
         Text("Top up with Google Play", style = MaterialTheme.typography.titleLarge)
+        Text("Purchases sync across Android and web. Minimum top-up amount applies.", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
         if (products.isEmpty()) {
             Text(
                 "Google Play top-ups are loading or are not configured.",

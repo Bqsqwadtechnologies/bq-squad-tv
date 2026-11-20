@@ -234,6 +234,11 @@ fun SettingsScreen(
             modifier = Modifier.clickable(onClick = onProfile),
         )
         ListItem(
+            headlineContent = { Text("Account deletion") },
+            supportingContent = { Text("Permanently delete account and associated data") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/account-deletion") },
+        )
+        ListItem(
             headlineContent = { Text("Help & support") },
             supportingContent = { Text("Get help with your account") },
             modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/help") },
@@ -315,6 +320,9 @@ fun AccountScreen(
         ProfileAction("Notifications", "Account and programme updates", onNotifications)
         ProfileAction("Producer Console", "Manage your channels", onProducer)
         ProfileAction("Provider Console", "Licensed channel distribution", { uriHandler.openUri("https://bqsqwad.com/provider") })
+        ProfileAction("Terms of service", "Platform terms and conditions", { uriHandler.openUri("https://bqsqwad.com/legal/terms") })
+        ProfileAction("Privacy notice", "Privacy policy and personal data notice", { uriHandler.openUri("https://bqsqwad.com/legal/privacy-policy") })
+        ProfileAction("Account deletion", "Permanently delete account and data", { uriHandler.openUri("https://bqsqwad.com/account-deletion") })
         ProfileAction("Help & support", "Get help with your account", { uriHandler.openUri("https://bqsqwad.com/help") })
         ProfileAction("About BQ SQWAD TV", "Bq Sqwad Technologies", { uriHandler.openUri("https://bqsqwad.com/about") })
         ProfileAction("Settings", "Playback and notifications", onSettings)

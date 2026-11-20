@@ -228,6 +228,7 @@ fun BqSqwadTvApp(
                             onThemeModeChange(next)
                             scope.launch { runCatching { auth.saveThemePreference(next) } }
                         },
+                        onNotifications = { nav.navigate("notifications") },
                     )
                 }
                 composable("account") {
@@ -235,6 +236,8 @@ fun BqSqwadTvApp(
                         onWallet = { nav.navigate("wallet") },
                         onProducer = { nav.navigate("producer") },
                         onSettings = { nav.navigate("settings") },
+                        onHistory = { nav.navigate("history") },
+                        onNotifications = { nav.navigate("notifications") },
                         onSignOut = {
                             FirebaseAuth.getInstance().signOut()
                             nav.navigate("signin") { popUpTo(0) }
@@ -258,6 +261,8 @@ fun BqSqwadTvApp(
                         onTopUp = { nav.navigate("wallet") },
                     )
                 }
+                composable("history") { HistoryScreen(onBack = { nav.popBackStack() }) }
+                composable("notifications") { NotificationsScreen(onBack = { nav.popBackStack() }) }
                 composable("wallet") { WalletScreen(onBack = { nav.popBackStack() }) }
                 composable("producer") { ProducerScreen(onBack = { nav.popBackStack() }) }
             }

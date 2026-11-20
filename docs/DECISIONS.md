@@ -383,3 +383,13 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - Updated `ConsoleRole` across `ConsolePageGuard` and Zillionaire routes to use `"zillionaire"`.
   - Updated `SharedDisputeSystem` and `SecurityEventsView` to use `"zillionaire"` and operator designations.
   - Enhanced `scripts/scan-public-text.mjs` to enforce forbidden terms `"admin"` and `"administrator"` on public-facing text, components, legal copy, and docs file names.
+
+
+## V6-01 Batch 8 — Web & Android Parity (2026-11-20)
+
+### 1. Navigation and View Parity
+- **Decision**: Closed Android navigation gaps by adding dedicated routes and composables for `history` and `notifications` in `BqSqwadTvApp.kt`, and wired actions from `AccountScreen` and `SettingsScreen`.
+- **Rationale**:
+  - Aligns Android viewer capabilities with web viewer experience.
+  - Linked account deletion (`https://bqsqwad.com/account-deletion`) and legal documentation across Android account and settings flows.
+  - Retained Google Play in-app billing manager alongside server ledger reconciliation for cross-platform balance parity.
