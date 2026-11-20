@@ -7,6 +7,8 @@ type Page = {
   body: string;
   version: number;
   effectiveAt?: string | null;
+  status?: "draft" | "scheduled" | "published";
+  published?: boolean;
 };
 
 function renderLine(line: string, key: number) {
@@ -91,10 +93,19 @@ export function LegalPageView({ slug }: { slug: string }) {
       {page ? (
         <>
           <h1 className="mb-2 text-3xl font-black">{page.title}</h1>
-          <p className="mb-7 text-xs text-muted-foreground">
-            Version {page.version}
-            {page.effectiveAt ? " · Effective " + page.effectiveAt : ""}
-          </p>
+          {page.published === true && page.status === "published" ? (
+            <p className="mb-7 text-xs text-muted-foreground">
+              Version {page.version}
+              {page.effectiveAt ? " · Effective " + new Date(page.effectiveAt).toLocaleDateString() : ""}
+            </p>
+          ) : (
+            <div className="mb-7 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+              <p className="text-sm font-bold text-amber-700 dark:text-amber-300">Draft — not yet effective</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                This document is available for review but has not been formally published. It does not replace an effective policy or agreement.
+              </p>
+            </div>
+          )}
           <article className="space-y-1">{page.body.split("\n").map(renderLine)}</article>
         </>
       ) : loading ? (
