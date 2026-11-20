@@ -69,6 +69,8 @@ interface ContentAsset {
   channelId: string;
   category: string;
   ageRating: string;
+  ownershipDeclaration?: boolean;
+  copyrightDeclaration?: boolean;
   posterUrl: string | null;
   masterPlaylistUrl: string | null;
   status: string;
@@ -297,6 +299,28 @@ function ZillionaireMoviesPage({
     }
   };
 
+  const executePublicationAction = async (assetId: string, stage: "approve" | "publish") => {
+    const reason = window.prompt("Enter the reason for " + stage + ":", stage === "approve" ? "Reviewed content, age rating and rights evidence" : "Approved content published after rights verification");
+    if (!reason || reason.trim().length < 3) return;
+    setSubmittingAction(true);
+    setActionFeedback(null);
+    try {
+      const headers = await getWebAuthHeaders();
+      const response = await fetch("/api/public/v1/zillionaire/content-assets/" + encodeURIComponent(assetId) + "/" + stage, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || data.error || "The publication action could not be completed.");
+      setActionFeedback(stage === "approve" ? "Video approved for the separate publishing step." : "Video published successfully.");
+      await fetchAssets();
+    } catch (caught) {
+      setActionFeedback(caught instanceof Error ? caught.message : "The publication action could not be completed.");
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
   const handleBulkAction = async (action: string, extra: Record<string, unknown> = {}) => {
     if (selectedIds.size === 0) return;
     const reason = prompt(`Enter reason for ${action} on ${selectedIds.size} titles:`);
@@ -706,6 +730,8 @@ function ZillionaireMoviesPage({
                             <span>•</span>
                             <span>Rating: {a.ageRating}</span>
                             <span>•</span>
+                            <span>Rights: {a.ownershipDeclaration && a.copyrightDeclaration ? "Declared" : "Declaration missing"}</span>
+                            <span>•</span>
                             <span>{a.category}</span>
                           </div>
                         </div>
@@ -758,6 +784,26 @@ function ZillionaireMoviesPage({
                         >
                           <Edit className="w-3.5 h-3.5" />
                         </button>
+                        {a.status === "ready" && a.contentStatus !== "published" && (
+                          <button
+                            onClick={() => void executePublicationAction(a.id, "approve")}
+                            disabled={submittingAction}
+                            title="Approve after processing and rights evidence review"
+                            className="rounded bg-cyan-950 px-2 py-1 text-[10px] font-bold text-cyan-200 hover:bg-cyan-900 disabled:opacity-50"
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {a.status === "ready" && a.contentStatus !== "published" && a.rightsStatus === "verified" && (
+                          <button
+                            onClick={() => void executePublicationAction(a.id, "publish")}
+                            disabled={submittingAction}
+                            title="Publish approved content with verified rights"
+                            className="rounded bg-emerald-950 px-2 py-1 text-[10px] font-bold text-emerald-200 hover:bg-emerald-900 disabled:opacity-50"
+                          >
+                            Publish
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setTargetAssetId(a.id);
