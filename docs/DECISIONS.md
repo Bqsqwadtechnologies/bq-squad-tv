@@ -341,3 +341,4 @@ V5-05 Batch 7: Reused verified wallet summary, ledger, and package APIs; usage f
 V5-05 Batch 8: Both sign-in surfaces use the same public Google web client configuration endpoint; Android keeps a visible disabled/retry state when the ID is missing, while the web renders its disabled/retry control as configuration resolves.
 
 V5-05 Batch 9: Android checks the live public client settings before app access, shows maintenance/force-update screens from those settings, and the public sitemap lists only viewer-facing URLs.
+V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-build blockers in the release notes and ordered owner checklist; release is not marked signed off until those are cleared.
