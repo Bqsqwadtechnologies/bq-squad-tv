@@ -9,6 +9,12 @@ export const Route = createFileRoute("/api/public/v1/auth/web/me")({
       GET: async ({ request }) => {
         try {
           const { user, access } = await requireViewer(request);
+          if (!user.emailVerified) {
+            return Response.json(
+              { email: user.email, emailVerified: false },
+              { headers: { "cache-control": "no-store", pragma: "no-cache" } },
+            );
+          }
           return Response.json(
             {
               uid: user.uid,

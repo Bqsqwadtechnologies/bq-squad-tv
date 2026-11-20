@@ -20,7 +20,6 @@ export const Route = createFileRoute("/api/public/v1/provider/contracts")({
             territories: Array.isArray(c["territories"]) ? c["territories"] : ["ALL"],
             platforms: Array.isArray(c["platforms"]) ? c["platforms"] : ["web", "android"],
             revenueModel: c["revenueModel"] || "provider_gross_profit_bps",
-            providerShareBps: Number(c["providerShareBps"] || 2500),
             settlementCurrency: c["settlementCurrency"] || "NGN",
             validFrom: c["validFrom"] || null,
             validUntil: c["validUntil"] || null,

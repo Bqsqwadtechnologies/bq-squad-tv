@@ -9,7 +9,6 @@ type Contract = {
   territories: string[];
   platforms: string[];
   revenueModel: string;
-  providerShareBps: number;
   settlementCurrency: string;
   validFrom: string | null;
   validUntil: string | null;
@@ -180,7 +179,7 @@ function ProviderContractsPage() {
                       <div>
                         <span className="text-slate-400 block mb-1">Revenue Model</span>
                         <span className="text-sm font-semibold text-white">
-                          {(c.providerShareBps / 100).toFixed(1)}% Gross Profit
+                          See your signed agreement
                         </span>
                       </div>
                       <div>

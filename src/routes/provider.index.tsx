@@ -50,10 +50,6 @@ type ProviderMetrics = {
   estimatedViewers: number;
   totalWatchMinutes: number;
   totalWatchHours: number;
-  estimatedGrossRevenueMinor: number;
-  allocatedDeductibleCostsMinor: number;
-  grossProfitMinor: number;
-  estimatedEarningsMinor: number;
   pendingPaymentsMinor: number;
   completedPaymentsMinor: number;
   currency: string;
@@ -66,7 +62,6 @@ type ProviderInfo = {
   id: string;
   name: string;
   settlementCurrency: string;
-  providerShareBps: number;
 };
 
 function formatCurrency(minorUnits: number, currency: string) {
@@ -512,23 +507,17 @@ function ProviderDashboardInner({
               </a>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="rounded-2xl border border-white/5 bg-[#030b2a] p-4">
-                <p className="text-[11px] font-bold text-slate-400 uppercase">Gross Channel Revenue</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase">Pending Settlement</p>
                 <p className="mt-1 text-lg font-black text-white font-mono">
-                  {formatCurrency(metrics.estimatedGrossRevenueMinor, metrics.currency)}
-                </p>
-              </div>
-              <div className="rounded-2xl border border-white/5 bg-[#030b2a] p-4">
-                <p className="text-[11px] font-bold text-slate-400 uppercase">Allocated Bandwidth Deductibles</p>
-                <p className="mt-1 text-lg font-black text-slate-300 font-mono">
-                  {formatCurrency(metrics.allocatedDeductibleCostsMinor, metrics.currency)}
+                  {formatCurrency(metrics.pendingPaymentsMinor, metrics.currency)}
                 </p>
               </div>
               <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-4">
-                <p className="text-[11px] font-bold text-emerald-400 uppercase">Net Provider Settlement</p>
+                <p className="text-[11px] font-bold text-emerald-400 uppercase">Completed Settlement</p>
                 <p className="mt-1 text-lg font-black text-emerald-300 font-mono">
-                  {formatCurrency(metrics.estimatedEarningsMinor, metrics.currency)}
+                  {formatCurrency(metrics.completedPaymentsMinor, metrics.currency)}
                 </p>
               </div>
             </div>

@@ -6,7 +6,7 @@ on:
       api_base_url:
         description: "Public API Base URL"
         required: false
-        default: "https://bqsqwad.com/api/public"
+        default: "https://tv.bqsqwad.com/api/public"
   push:
     branches:
       - main
@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   build-debug-apk:
-    name: Assemble Debug APK
+    name: Assemble Debug APK & Record Fingerprints
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -46,19 +46,48 @@ jobs:
       - name: Accept Android SDK licenses
         run: yes | sdkmanager --licenses || true
 
+      - name: Restore Stable Debug Keystore if Configured
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_DEBUG_KEYSTORE_B64 }}
+        run: |
+          mkdir -p ~/.android
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+            echo "Restored debug keystore from repository secrets."
+          else
+            echo "No secret debug keystore configured; Gradle will generate a default one."
+          fi
+
       - name: Build Debug APK
         env:
-          API_BASE_URL: ${{ github.event.inputs.api_base_url || 'https://bqsqwad.com/api/public' }}
+          API_BASE_URL: ${{ github.event.inputs.api_base_url || 'https://tv.bqsqwad.com/api/public' }}
         run: |
           gradle -p android :app:assembleDebug --no-daemon --stacktrace
 
-      - name: Verify APK Generated
+      - name: Verify APK and Extract SHA Fingerprints
         run: |
           ls -lh android/app/build/outputs/apk/debug/ || exit 1
+          APK_FILE=$(find android/app/build/outputs/apk/debug/ -name "*.apk" | head -n 1)
+          echo "Inspecting $APK_FILE"
+          
+          mkdir -p build-fingerprints
+          keytool -printcert -jarfile "$APK_FILE" > build-fingerprints/fingerprints.txt || true
+          
+          echo "### Android Debug Build Certificate Fingerprints" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat build-fingerprints/fingerprints.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: bq-sqwad-tv-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
+          retention-days: 14
+
+      - name: Upload Signing Fingerprints
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-signing-fingerprints
+          path: build-fingerprints/fingerprints.txt
           retention-days: 14

@@ -1,3 +1,4 @@
+import { requireVerifiedViewer } from "@/lib/server/access";
 import { createFileRoute } from "@tanstack/react-router";
 import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
 import { z } from "zod";
@@ -78,7 +79,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
       POST: async ({ request }) => {
         let rotatedWebCookie: string | null = null;
         try {
-          const user = await requireUser(request);
+          const { user } = await requireVerifiedViewer(request);
           const body = await parseBody(request, bodySchema);
           const fs = await Firestore.create();
           await assertLegalAcceptance(fs, user.uid, "public");

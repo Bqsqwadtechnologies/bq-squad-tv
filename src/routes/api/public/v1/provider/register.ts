@@ -78,6 +78,22 @@ export const Route = createFileRoute("/api/public/v1/provider/register")({
           const ownerEmail = getConfiguredOwnerEmail();
           const isOwner = Boolean(ownerEmail && callerEmail === ownerEmail);
 
+          if (!isOwner) {
+            const approvedDoc = await fs.getDoc(`approvedProviders/${callerEmail}`);
+            const isApproved =
+              approvedDoc &&
+              (approvedDoc["status"] === "granted" ||
+                approvedDoc["status"] === "verified" ||
+                approvedDoc["status"] === "approved");
+            if (!isApproved) {
+              throw new ApiError(
+                403,
+                "REGISTRATION_NOT_PERMITTED",
+                "We couldn't create this account. Request access at tv.bqsqwad.com/provider.",
+              );
+            }
+          }
+
           const providerId = `prov_${Date.now()}`;
           const providerName = (body.name || callerEmail.split("@")[0] || "Channel Partner").trim();
           const settlementCurrency = (body.settlementCurrency || "USD").toUpperCase();

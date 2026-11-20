@@ -1,3 +1,4 @@
+import { requireVerifiedViewer } from "@/lib/server/access";
 import { evaluatePaymentFraud } from "@/lib/server/abuse-protection";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
     handlers: {
       POST: async ({ request }) => {
         try {
-          const user = await requireUser(request);
+          const { user } = await requireVerifiedViewer(request);
           if (!user.emailVerified)
             throw new ApiError(
               403,

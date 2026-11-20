@@ -71,6 +71,18 @@ export async function requireViewer(
   return { user, fs, access };
 }
 
+/** Identity-protected viewer. Email verification is mandatory before wallet, playback, or account-data access. */
+export async function requireVerifiedViewer(
+  request: Request,
+  existingFs?: Firestore,
+): Promise<ViewerContext> {
+  const ctx = await requireViewer(request, existingFs);
+  if (!ctx.user.emailVerified) {
+    throw new ApiError(403, "EMAIL_VERIFICATION_REQUIRED", "Verify your email before continuing.");
+  }
+  return ctx;
+}
+
 /**
  * Primary Zillionaire owner or delegated module member.
  */

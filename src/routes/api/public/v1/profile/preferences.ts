@@ -1,3 +1,4 @@
+import { requireVerifiedViewer } from "@/lib/server/access";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { Firestore } from "@/lib/server/firebase-admin";
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/api/public/v1/profile/preferences")({
     handlers: {
       GET: async ({ request }) => {
         try {
-          const user = await requireUser(request);
+          const { user } = await requireVerifiedViewer(request);
           const fs = await Firestore.create();
           const profile = await fs.getDoc("users/" + user.uid);
           const stored = profile?.["themeMode"];
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/api/public/v1/profile/preferences")({
       },
       PUT: async ({ request }) => {
         try {
-          const user = await requireUser(request);
+          const { user } = await requireVerifiedViewer(request);
           const body = await parseBody(request, schema);
           const fs = await Firestore.create();
           await fs.patchDoc("users/" + user.uid, {

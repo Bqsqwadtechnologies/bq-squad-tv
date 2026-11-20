@@ -22,7 +22,6 @@ export const Route = createFileRoute("/api/public/v1/provider/dashboard")({
             (c) => c["status"] === "published" || c["status"] === "active",
           ).length;
 
-          const providerShareBps = Number(providerDoc?.["providerShareBps"] || 2500);
           const settlementCurrency = String(providerDoc?.["settlementCurrency"] || "NGN");
 
           const estimatedMinutes = providerChannels.reduce(
@@ -33,19 +32,13 @@ export const Route = createFileRoute("/api/public/v1/provider/dashboard")({
             (sum, c) => sum + Number(c["grossRevenueMinor"] || 0),
             0,
           );
-          const allocatedDeductibleCostsMinor = Math.floor(estimatedRevenueMinor * 0.15);
-          const grossProfitMinor = Math.max(
-            0,
-            estimatedRevenueMinor - allocatedDeductibleCostsMinor,
-          );
-          const estimatedEarningsMinor = Math.floor((grossProfitMinor * providerShareBps) / 10000);
+          const estimatedEarningsMinor = Number(providerDoc?.["pendingPayoutsMinor"] || 0);
 
           return Response.json({
             provider: {
               id: providerId,
               name: providerDoc?.["name"] || "Channel Partner",
               settlementCurrency,
-              providerShareBps,
             },
             metrics: {
               channelsCount: providerChannels.length,
@@ -60,9 +53,6 @@ export const Route = createFileRoute("/api/public/v1/provider/dashboard")({
               ),
               totalWatchMinutes: estimatedMinutes,
               totalWatchHours: Math.round((estimatedMinutes / 60) * 10) / 10,
-              estimatedGrossRevenueMinor: estimatedRevenueMinor,
-              allocatedDeductibleCostsMinor,
-              grossProfitMinor,
               estimatedEarningsMinor,
               pendingPaymentsMinor: Number(providerDoc?.["pendingPayoutsMinor"] || 0),
               completedPaymentsMinor: Number(providerDoc?.["completedPayoutsMinor"] || 0),
