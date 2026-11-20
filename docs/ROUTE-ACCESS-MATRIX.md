@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **279**
+Total scanned routes: **277**
 
 ### Summary by Guard Class
 
@@ -15,7 +15,7 @@ Total scanned routes: **279**
 | `playback token` | 2 |
 | `worker signature` | 13 |
 | `zillionaire module` | 146 |
-| `producer` | 6 |
+| `producer` | 4 |
 
 ### Inventory
 
@@ -250,8 +250,6 @@ Total scanned routes: **279**
 | `/api/public/v1/zillionaire/video-jobs` | `zillionaire module` | requireZillionaire (Module: content) | `src/routes/api/public/v1/zillionaire/video-jobs.ts` |
 | `/api/public/v1/zillionaire/workers` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/workers.ts` |
 | `/api/public/v1/zillionaire/workers/$workerId` | `zillionaire module` | requireZillionaire (Module: security) | `src/routes/api/public/v1/zillionaire/workers/$workerId.ts` |
-| `/producer-privacy` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer-privacy.tsx` |
-| `/producer-terms` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer-terms.tsx` |
 | `/producer/` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer.index.tsx` |
 | `/producer/channels` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer.channels.tsx` |
 | `/producer/channels/$channelId/team` | `producer` | Producer Verified Shell (Protected producer page shell) | `src/routes/producer.channels.$channelId.team.tsx` |

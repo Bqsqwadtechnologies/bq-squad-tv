@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AccountRouteImport } from './routes/account'
+import { Route as AccountDeletionRouteImport } from './routes/account-deletion'
 import { Route as AgeRestrictionRouteImport } from './routes/age-restriction'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DownloadsRouteImport } from './routes/downloads'
@@ -28,6 +29,9 @@ import { Route as OfflineRouteImport } from './routes/offline'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ProducerPrivacyRouteImport } from './routes/producer-privacy'
 import { Route as ProducerTermsRouteImport } from './routes/producer-terms'
+import { Route as ProviderPrivacyRouteImport } from './routes/provider-privacy'
+import { Route as ProviderPrivacyPolicyRouteImport } from './routes/provider-privacy-policy'
+import { Route as ProviderTermsRouteImport } from './routes/provider-terms'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SeriesRouteImport } from './routes/series'
 import { Route as SettingsRouteImport } from './routes/settings'
@@ -330,6 +334,11 @@ const AccountRoute = AccountRouteImport.update({
   path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountDeletionRoute = AccountDeletionRouteImport.update({
+  id: '/account-deletion',
+  path: '/account-deletion',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AgeRestrictionRoute = AgeRestrictionRouteImport.update({
   id: '/age-restriction',
   path: '/age-restriction',
@@ -408,6 +417,21 @@ const ProducerPrivacyRoute = ProducerPrivacyRouteImport.update({
 const ProducerTermsRoute = ProducerTermsRouteImport.update({
   id: '/producer-terms',
   path: '/producer-terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderPrivacyRoute = ProviderPrivacyRouteImport.update({
+  id: '/provider-privacy',
+  path: '/provider-privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderPrivacyPolicyRoute = ProviderPrivacyPolicyRouteImport.update({
+  id: '/provider-privacy-policy',
+  path: '/provider-privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProviderTermsRoute = ProviderTermsRouteImport.update({
+  id: '/provider-terms',
+  path: '/provider-terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SearchRoute = SearchRouteImport.update({
@@ -2060,6 +2084,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/account-deletion': typeof AccountDeletionRoute
   '/age-restriction': typeof AgeRestrictionRoute
   '/contact': typeof ContactRoute
   '/downloads': typeof DownloadsRoute
@@ -2076,6 +2101,9 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/producer-privacy': typeof ProducerPrivacyRoute
   '/producer-terms': typeof ProducerTermsRoute
+  '/provider-privacy': typeof ProviderPrivacyRoute
+  '/provider-privacy-policy': typeof ProviderPrivacyPolicyRoute
+  '/provider-terms': typeof ProviderTermsRoute
   '/search': typeof SearchRoute
   '/series': typeof SeriesRoute
   '/settings': typeof SettingsRoute
@@ -2367,6 +2395,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/account-deletion': typeof AccountDeletionRoute
   '/age-restriction': typeof AgeRestrictionRoute
   '/contact': typeof ContactRoute
   '/downloads': typeof DownloadsRoute
@@ -2383,6 +2412,9 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/producer-privacy': typeof ProducerPrivacyRoute
   '/producer-terms': typeof ProducerTermsRoute
+  '/provider-privacy': typeof ProviderPrivacyRoute
+  '/provider-privacy-policy': typeof ProviderPrivacyPolicyRoute
+  '/provider-terms': typeof ProviderTermsRoute
   '/search': typeof SearchRoute
   '/series': typeof SeriesRoute
   '/settings': typeof SettingsRoute
@@ -2674,6 +2706,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/account': typeof AccountRoute
+  '/account-deletion': typeof AccountDeletionRoute
   '/age-restriction': typeof AgeRestrictionRoute
   '/contact': typeof ContactRoute
   '/downloads': typeof DownloadsRoute
@@ -2690,6 +2723,9 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/producer-privacy': typeof ProducerPrivacyRoute
   '/producer-terms': typeof ProducerTermsRoute
+  '/provider-privacy': typeof ProviderPrivacyRoute
+  '/provider-privacy-policy': typeof ProviderPrivacyPolicyRoute
+  '/provider-terms': typeof ProviderTermsRoute
   '/search': typeof SearchRoute
   '/series': typeof SeriesRoute
   '/settings': typeof SettingsRoute
@@ -2983,6 +3019,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/account-deletion'
     | '/age-restriction'
     | '/contact'
     | '/downloads'
@@ -2999,6 +3036,9 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/producer-privacy'
     | '/producer-terms'
+    | '/provider-privacy'
+    | '/provider-privacy-policy'
+    | '/provider-terms'
     | '/search'
     | '/series'
     | '/settings'
@@ -3290,6 +3330,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/account-deletion'
     | '/age-restriction'
     | '/contact'
     | '/downloads'
@@ -3306,6 +3347,9 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/producer-privacy'
     | '/producer-terms'
+    | '/provider-privacy'
+    | '/provider-privacy-policy'
+    | '/provider-terms'
     | '/search'
     | '/series'
     | '/settings'
@@ -3596,6 +3640,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/account'
+    | '/account-deletion'
     | '/age-restriction'
     | '/contact'
     | '/downloads'
@@ -3612,6 +3657,9 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/producer-privacy'
     | '/producer-terms'
+    | '/provider-privacy'
+    | '/provider-privacy-policy'
+    | '/provider-terms'
     | '/search'
     | '/series'
     | '/settings'
@@ -3904,6 +3952,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   AccountRoute: typeof AccountRoute
+  AccountDeletionRoute: typeof AccountDeletionRoute
   AgeRestrictionRoute: typeof AgeRestrictionRoute
   ContactRoute: typeof ContactRoute
   DownloadsRoute: typeof DownloadsRoute
@@ -3920,6 +3969,9 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProducerPrivacyRoute: typeof ProducerPrivacyRoute
   ProducerTermsRoute: typeof ProducerTermsRoute
+  ProviderPrivacyRoute: typeof ProviderPrivacyRoute
+  ProviderPrivacyPolicyRoute: typeof ProviderPrivacyPolicyRoute
+  ProviderTermsRoute: typeof ProviderTermsRoute
   SearchRoute: typeof SearchRoute
   SeriesRoute: typeof SeriesRoute
   SettingsRoute: typeof SettingsRoute
@@ -4198,6 +4250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account-deletion': {
+      id: '/account-deletion'
+      path: '/account-deletion'
+      fullPath: '/account-deletion'
+      preLoaderRoute: typeof AccountDeletionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/age-restriction': {
       id: '/age-restriction'
       path: '/age-restriction'
@@ -4308,6 +4367,27 @@ declare module '@tanstack/react-router' {
       path: '/producer-terms'
       fullPath: '/producer-terms'
       preLoaderRoute: typeof ProducerTermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider-privacy': {
+      id: '/provider-privacy'
+      path: '/provider-privacy'
+      fullPath: '/provider-privacy'
+      preLoaderRoute: typeof ProviderPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider-privacy-policy': {
+      id: '/provider-privacy-policy'
+      path: '/provider-privacy-policy'
+      fullPath: '/provider-privacy-policy'
+      preLoaderRoute: typeof ProviderPrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/provider-terms': {
+      id: '/provider-terms'
+      path: '/provider-terms'
+      fullPath: '/provider-terms'
+      preLoaderRoute: typeof ProviderTermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/search': {
@@ -6582,6 +6662,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   AccountRoute: AccountRoute,
+  AccountDeletionRoute: AccountDeletionRoute,
   AgeRestrictionRoute: AgeRestrictionRoute,
   ContactRoute: ContactRoute,
   DownloadsRoute: DownloadsRoute,
@@ -6598,6 +6679,9 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProducerPrivacyRoute: ProducerPrivacyRoute,
   ProducerTermsRoute: ProducerTermsRoute,
+  ProviderPrivacyRoute: ProviderPrivacyRoute,
+  ProviderPrivacyPolicyRoute: ProviderPrivacyPolicyRoute,
+  ProviderTermsRoute: ProviderTermsRoute,
   SearchRoute: SearchRoute,
   SeriesRoute: SeriesRoute,
   SettingsRoute: SettingsRoute,

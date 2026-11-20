@@ -175,6 +175,11 @@ describe("Producer Working Tools (V5-04 Batch 4)", () => {
 
     expect(screen.getByText("movie.mp4")).toBeDefined();
 
+    // Affirm copyright and ownership declarations specifically (not platform checkboxes)
+    const declarationSection = screen.getByText(/Copyright and ownership declaration/i).parentElement;
+    const declarationCheckboxes = declarationSection ? declarationSection.querySelectorAll("input[type=\"checkbox\"]") : [];
+    declarationCheckboxes.forEach((cb) => fireEvent.click(cb));
+
     // Start upload
     const startBtn = screen.getByText("Start Upload");
     fireEvent.click(startBtn);

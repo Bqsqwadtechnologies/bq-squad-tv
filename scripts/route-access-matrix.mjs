@@ -182,7 +182,7 @@ export function buildMatrix() {
       if (rel.startsWith("api/")) return false;
       const name = path.basename(f);
       return (
-        name.startsWith("zillionaire") || name.startsWith("producer") || name.startsWith("provider")
+        name.startsWith("zillionaire") || name.startsWith("producer.") || name.startsWith("provider.")
       );
     }),
   ];

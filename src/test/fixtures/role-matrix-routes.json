@@ -3893,40 +3893,6 @@
     }
   },
   {
-    "route": "/producer-privacy",
-    "file": "src/routes/producer-privacy.tsx",
-    "guard": "producer",
-    "expected": {
-      "anonymous": 401,
-      "viewer": 403,
-      "producer A": 200,
-      "producer B": 200,
-      "provider A": 403,
-      "provider B": 403,
-      "delegate with module": 403,
-      "delegate without module": 403,
-      "worker": 401,
-      "owner": 403
-    }
-  },
-  {
-    "route": "/producer-terms",
-    "file": "src/routes/producer-terms.tsx",
-    "guard": "producer",
-    "expected": {
-      "anonymous": 401,
-      "viewer": 403,
-      "producer A": 200,
-      "producer B": 200,
-      "provider A": 403,
-      "provider B": 403,
-      "delegate with module": 403,
-      "delegate without module": 403,
-      "worker": 401,
-      "owner": 403
-    }
-  },
-  {
     "route": "/producer/",
     "file": "src/routes/producer.index.tsx",
     "guard": "producer",

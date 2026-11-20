@@ -158,8 +158,8 @@ function ProducerChannelsInner({
   const [uploadValidFrom, setUploadValidFrom] = useState("2026-01-01");
   const [uploadValidUntil, setUploadValidUntil] = useState("2030-12-31");
   const [uploadPlatforms, setUploadPlatforms] = useState<Array<"android" | "web" | "android_tv">>(["android", "web", "android_tv"]);
-  const [ownershipConfirmed, setOwnershipConfirmed] = useState(true);
-  const [copyrightConfirmed, setCopyrightConfirmed] = useState(true);
+  const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
+  const [copyrightConfirmed, setCopyrightConfirmed] = useState(false);
 
   // Create Channel state
   const [title, setTitle] = useState("");
