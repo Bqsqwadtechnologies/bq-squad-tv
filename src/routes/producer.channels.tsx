@@ -154,6 +154,13 @@ function ProducerChannelsInner({
   const [uploadCommentsOpen, setUploadCommentsOpen] = useState(true);
   const [uploadCategory, setUploadCategory] = useState("Entertainment");
   const [uploadDescription, setUploadDescription] = useState("");
+  const [uploadAgeRating, setUploadAgeRating] = useState<"G" | "PG" | "12" | "15" | "18">("PG");
+  const [uploadTerritories, setUploadTerritories] = useState("");
+  const [uploadValidFrom, setUploadValidFrom] = useState("");
+  const [uploadValidUntil, setUploadValidUntil] = useState("");
+  const [uploadPlatforms, setUploadPlatforms] = useState<Array<"android" | "web" | "android_tv">>([]);
+  const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
+  const [copyrightConfirmed, setCopyrightConfirmed] = useState(false);
 
   // Create Channel state
   const [title, setTitle] = useState("");
@@ -353,53 +360,61 @@ function ProducerChannelsInner({
     }
   }
 
-  function startUpload() {
-    if (!uploadFile) {
-      setUploadError("Please select a valid video file.");
+  async function startUpload() {
+    if (!uploadFile || !selectedChannelId) {
+      setUploadError("Select a channel and a valid video file.");
+      return;
+    }
+    if (!ownershipConfirmed || !copyrightConfirmed) {
+      setUploadError("Confirm that you own or are authorised to distribute this video and that the submission does not knowingly infringe another party's rights.");
+      return;
+    }
+    const territories = uploadTerritories.split(",").map((value) => value.trim().toUpperCase()).filter(Boolean);
+    if (!territories.length || !uploadValidFrom || !uploadValidUntil || !uploadPlatforms.length) {
+      setUploadError("Enter the licensed countries, licence dates and permitted platforms.");
+      return;
+    }
+    const validFrom = new Date(uploadValidFrom + "T00:00:00.000Z");
+    const validUntil = new Date(uploadValidUntil + "T23:59:59.999Z");
+    if (!Number.isFinite(validFrom.getTime()) || !Number.isFinite(validUntil.getTime()) || validUntil <= validFrom) {
+      setUploadError("The licence end date must be after its start date.");
       return;
     }
     setUploading(true);
     setUploadProgress(5);
-    uploadTimerRef.current = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 95) {
-          clearInterval(uploadTimerRef.current);
-          return 95;
-        }
-        return prev + 15;
-      });
-    }, 400);
-
-    setTimeout(() => {
-      clearInterval(uploadTimerRef.current);
-      setUploadProgress(100);
-      setUploading(false);
+    setUploadError("");
+    try {
+      const extension = uploadFile.name.toLowerCase().split(".").pop() || "";
+      const mimeByExtension: Record<string, string> = { mp4: "video/mp4", mov: "video/quicktime", mkv: "video/x-matroska", webm: "video/webm" };
+      const mimeType = uploadFile.type || mimeByExtension[extension] || "";
+      if (!mimeType) throw new Error("The selected video format is not supported.");
+      const headers = { ...(await getWebAuthHeaders(token)), "content-type": "application/json" };
+      const intentResponse = await fetch("/api/public/v1/storage/intent", { method: "POST", headers, body: JSON.stringify({ channelId: selectedChannelId, filename: uploadFile.name, sizeBytes: uploadFile.size, mimeType, transcodeProfile: "standard" }) });
+      const intent = await intentResponse.json();
+      if (!intentResponse.ok || !intent.signedUrl || !intent.assetId) throw new Error(intent.error || "Could not prepare secure video upload.");
+      setUploadProgress(15);
+      const putResponse = await fetch(intent.signedUrl, { method: intent.method || "PUT", headers: { "content-type": mimeType }, body: uploadFile });
+      if (!putResponse.ok) throw new Error("The video file could not be transferred to secure storage.");
+      setUploadProgress(80);
+      const completeResponse = await fetch("/api/public/v1/storage/complete", { method: "POST", headers, body: JSON.stringify({ assetId: intent.assetId }) });
+      const completed = await completeResponse.json();
+      if (!completeResponse.ok) throw new Error(completed.error || "The uploaded video could not be verified.");
+      setUploadProgress(90);
       const isSeries = uploadContentType === "series";
-      const seriesName = (uploadSeriesTitle || uploadTitle || "Feature Film").trim();
-      const epNum = isSeries ? uploadEpisodeNumber : null;
-      const titleText = isSeries 
-        ? `${seriesName} - Episode ${epNum}${uploadEpisodeTitle ? `: ${uploadEpisodeTitle}` : ""}`
-        : (uploadTitle || uploadFile.name.replace(/\.[^/.]+$/, ""));
-
-      const newAsset: ContentAsset = {
-        id: "asset_" + Date.now(),
-        assetId: "asset_" + Date.now(),
-        title: titleText,
-        contentType: uploadContentType,
-        seriesTitle: seriesName,
-        seasonNumber: uploadSeasonNumber,
-        episodeNumber: epNum,
-        episodeTitle: uploadEpisodeTitle || `Episode ${epNum}`,
-        description: uploadDescription,
-        category: uploadCategory,
-        status: "ready",
-        durationSeconds: 2700,
-        commentsOpen: uploadCommentsOpen,
-        createdAt: new Date().toISOString(),
-      };
-      setChannelAssets((prev) => [newAsset, ...prev]);
-
-      setMessage(`Media asset "${titleText}" uploaded and grouped under "${seriesName}".`);
+      const seriesName = (uploadSeriesTitle || uploadTitle || "").trim();
+      const episodeNumber = isSeries ? uploadEpisodeNumber : undefined;
+      const titleText = isSeries ? seriesName + " - Episode " + episodeNumber + (uploadEpisodeTitle ? ": " + uploadEpisodeTitle : "") : (uploadTitle || uploadFile.name.replace(/\.[^/.]+$/, "")).trim();
+      if (!titleText) throw new Error("A title is required.");
+      const metadataResponse = await fetch("/api/public/v1/producer/channels/" + encodeURIComponent(selectedChannelId) + "/assets", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ assetId: intent.assetId, title: titleText, description: uploadDescription, category: uploadCategory, contentType: uploadContentType, ageRating: uploadAgeRating, ownershipDeclaration: true, copyrightDeclaration: true, seriesTitle: isSeries ? seriesName : undefined, seasonNumber: uploadSeasonNumber, episodeNumber, episodeTitle: isSeries ? (uploadEpisodeTitle || "Episode " + episodeNumber) : undefined, commentsOpen: uploadCommentsOpen, territoryCodes: territories, platforms: uploadPlatforms, validFrom: validFrom.toISOString(), validUntil: validUntil.toISOString() }),
+      });
+      const metadata = await metadataResponse.json();
+      if (!metadataResponse.ok) throw new Error(metadata.error || "Video stored, but its metadata and rights declaration could not be submitted.");
+      setUploadProgress(100);
+      await loadChannelAssets(selectedChannelId, token);
+      setMessage("Video uploaded and submitted for review. It remains private until rights checks and independent approval are complete.");
       setIsUploadOpen(false);
       setUploadFile(null);
       setUploadThumbnail(null);
@@ -407,10 +422,18 @@ function ProducerChannelsInner({
       setUploadSeriesTitle("");
       setUploadEpisodeTitle("");
       setUploadDescription("");
-      setUploadProgress(0);
-    }, 2500);
+      setUploadTerritories("");
+      setUploadValidFrom("");
+      setUploadValidUntil("");
+      setUploadPlatforms([]);
+      setOwnershipConfirmed(false);
+      setCopyrightConfirmed(false);
+    } catch (caught) {
+      setUploadError(caught instanceof Error ? caught.message : "Video upload failed.");
+    } finally {
+      setUploading(false);
+    }
   }
-
   function cancelUpload() {
     if (uploadTimerRef.current) clearInterval(uploadTimerRef.current);
     setUploading(false);
