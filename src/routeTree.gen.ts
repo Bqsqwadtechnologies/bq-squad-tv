@@ -154,6 +154,7 @@ import { Route as ApiPublicV1ProducerChannelsRouteImport } from './routes/api/pu
 import { Route as ApiPublicV1ProducerEarningsRouteImport } from './routes/api/public/v1/producer/earnings'
 import { Route as ApiPublicV1ProducerMobileSummaryRouteImport } from './routes/api/public/v1/producer/mobile-summary'
 import { Route as ApiPublicV1ProducerPayoutProfileRouteImport } from './routes/api/public/v1/producer/payout-profile'
+import { Route as ApiPublicV1ProducerPayoutProofUploadRouteImport } from './routes/api/public/v1/producer/payout-proof-upload'
 import { Route as ApiPublicV1ProducerPayoutsRouteImport } from './routes/api/public/v1/producer/payouts'
 import { Route as ApiPublicV1ProducerTeamRouteImport } from './routes/api/public/v1/producer/team'
 import { Route as ApiPublicV1ProducerVerificationRouteImport } from './routes/api/public/v1/producer/verification'
@@ -272,6 +273,7 @@ import { Route as ApiPublicV1ZillionaireEmailTestRouteImport } from './routes/ap
 import { Route as ApiPublicV1ZillionaireErrorsIndexRouteImport } from './routes/api/public/v1/zillionaire/errors/index'
 import { Route as ApiPublicV1ZillionaireKycCountryRulesRouteImport } from './routes/api/public/v1/zillionaire/kyc/country-rules'
 import { Route as ApiPublicV1ZillionaireKycDetailRouteImport } from './routes/api/public/v1/zillionaire/kyc/detail'
+import { Route as ApiPublicV1ZillionaireKycPayoutAccountsRouteImport } from './routes/api/public/v1/zillionaire/kyc/payout-accounts'
 import { Route as ApiPublicV1ZillionaireKycQueueRouteImport } from './routes/api/public/v1/zillionaire/kyc/queue'
 import { Route as ApiPublicV1ZillionaireKycRevealRouteImport } from './routes/api/public/v1/zillionaire/kyc/reveal'
 import { Route as ApiPublicV1ZillionaireKycViewDocRouteImport } from './routes/api/public/v1/zillionaire/kyc/view-doc'
@@ -1131,6 +1133,12 @@ const ApiPublicV1ProducerPayoutProfileRoute =
     path: '/api/public/v1/producer/payout-profile',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ProducerPayoutProofUploadRoute =
+  ApiPublicV1ProducerPayoutProofUploadRouteImport.update({
+    id: '/api/public/v1/producer/payout-proof-upload',
+    path: '/api/public/v1/producer/payout-proof-upload',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ProducerPayoutsRoute =
   ApiPublicV1ProducerPayoutsRouteImport.update({
     id: '/api/public/v1/producer/payouts',
@@ -1831,6 +1839,12 @@ const ApiPublicV1ZillionaireKycDetailRoute =
   ApiPublicV1ZillionaireKycDetailRouteImport.update({
     id: '/api/public/v1/zillionaire/kyc/detail',
     path: '/api/public/v1/zillionaire/kyc/detail',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireKycPayoutAccountsRoute =
+  ApiPublicV1ZillionaireKycPayoutAccountsRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/payout-accounts',
+    path: '/api/public/v1/zillionaire/kyc/payout-accounts',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ZillionaireKycQueueRoute =
@@ -2540,6 +2554,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
   '/api/public/v1/producer/payout-profile': typeof ApiPublicV1ProducerPayoutProfileRoute
+  '/api/public/v1/producer/payout-proof-upload': typeof ApiPublicV1ProducerPayoutProofUploadRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -2653,6 +2668,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
   '/api/public/v1/zillionaire/kyc/detail': typeof ApiPublicV1ZillionaireKycDetailRoute
+  '/api/public/v1/zillionaire/kyc/payout-accounts': typeof ApiPublicV1ZillionaireKycPayoutAccountsRoute
   '/api/public/v1/zillionaire/kyc/queue': typeof ApiPublicV1ZillionaireKycQueueRoute
   '/api/public/v1/zillionaire/kyc/reveal': typeof ApiPublicV1ZillionaireKycRevealRoute
   '/api/public/v1/zillionaire/kyc/view-doc': typeof ApiPublicV1ZillionaireKycViewDocRoute
@@ -2899,6 +2915,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
   '/api/public/v1/producer/payout-profile': typeof ApiPublicV1ProducerPayoutProfileRoute
+  '/api/public/v1/producer/payout-proof-upload': typeof ApiPublicV1ProducerPayoutProofUploadRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -3011,6 +3028,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
   '/api/public/v1/zillionaire/kyc/detail': typeof ApiPublicV1ZillionaireKycDetailRoute
+  '/api/public/v1/zillionaire/kyc/payout-accounts': typeof ApiPublicV1ZillionaireKycPayoutAccountsRoute
   '/api/public/v1/zillionaire/kyc/queue': typeof ApiPublicV1ZillionaireKycQueueRoute
   '/api/public/v1/zillionaire/kyc/reveal': typeof ApiPublicV1ZillionaireKycRevealRoute
   '/api/public/v1/zillionaire/kyc/view-doc': typeof ApiPublicV1ZillionaireKycViewDocRoute
@@ -3258,6 +3276,7 @@ export interface FileRoutesById {
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
   '/api/public/v1/producer/payout-profile': typeof ApiPublicV1ProducerPayoutProfileRoute
+  '/api/public/v1/producer/payout-proof-upload': typeof ApiPublicV1ProducerPayoutProofUploadRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -3371,6 +3390,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
   '/api/public/v1/zillionaire/kyc/detail': typeof ApiPublicV1ZillionaireKycDetailRoute
+  '/api/public/v1/zillionaire/kyc/payout-accounts': typeof ApiPublicV1ZillionaireKycPayoutAccountsRoute
   '/api/public/v1/zillionaire/kyc/queue': typeof ApiPublicV1ZillionaireKycQueueRoute
   '/api/public/v1/zillionaire/kyc/reveal': typeof ApiPublicV1ZillionaireKycRevealRoute
   '/api/public/v1/zillionaire/kyc/view-doc': typeof ApiPublicV1ZillionaireKycViewDocRoute
@@ -3619,6 +3639,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
     | '/api/public/v1/producer/payout-profile'
+    | '/api/public/v1/producer/payout-proof-upload'
     | '/api/public/v1/producer/payouts'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/verification'
@@ -3732,6 +3753,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/kyc/country-rules'
     | '/api/public/v1/zillionaire/kyc/detail'
+    | '/api/public/v1/zillionaire/kyc/payout-accounts'
     | '/api/public/v1/zillionaire/kyc/queue'
     | '/api/public/v1/zillionaire/kyc/reveal'
     | '/api/public/v1/zillionaire/kyc/view-doc'
@@ -3978,6 +4000,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
     | '/api/public/v1/producer/payout-profile'
+    | '/api/public/v1/producer/payout-proof-upload'
     | '/api/public/v1/producer/payouts'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/verification'
@@ -4090,6 +4113,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/kyc/country-rules'
     | '/api/public/v1/zillionaire/kyc/detail'
+    | '/api/public/v1/zillionaire/kyc/payout-accounts'
     | '/api/public/v1/zillionaire/kyc/queue'
     | '/api/public/v1/zillionaire/kyc/reveal'
     | '/api/public/v1/zillionaire/kyc/view-doc'
@@ -4336,6 +4360,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
     | '/api/public/v1/producer/payout-profile'
+    | '/api/public/v1/producer/payout-proof-upload'
     | '/api/public/v1/producer/payouts'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/verification'
@@ -4449,6 +4474,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/kyc/country-rules'
     | '/api/public/v1/zillionaire/kyc/detail'
+    | '/api/public/v1/zillionaire/kyc/payout-accounts'
     | '/api/public/v1/zillionaire/kyc/queue'
     | '/api/public/v1/zillionaire/kyc/reveal'
     | '/api/public/v1/zillionaire/kyc/view-doc'
@@ -4694,6 +4720,7 @@ export interface RootRouteChildren {
   ApiPublicV1ProducerEarningsRoute: typeof ApiPublicV1ProducerEarningsRoute
   ApiPublicV1ProducerMobileSummaryRoute: typeof ApiPublicV1ProducerMobileSummaryRoute
   ApiPublicV1ProducerPayoutProfileRoute: typeof ApiPublicV1ProducerPayoutProfileRoute
+  ApiPublicV1ProducerPayoutProofUploadRoute: typeof ApiPublicV1ProducerPayoutProofUploadRoute
   ApiPublicV1ProducerPayoutsRoute: typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   ApiPublicV1ProducerTeamRoute: typeof ApiPublicV1ProducerTeamRoute
   ApiPublicV1ProducerVerificationRoute: typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -4788,6 +4815,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireEmailTestRoute: typeof ApiPublicV1ZillionaireEmailTestRoute
   ApiPublicV1ZillionaireKycCountryRulesRoute: typeof ApiPublicV1ZillionaireKycCountryRulesRoute
   ApiPublicV1ZillionaireKycDetailRoute: typeof ApiPublicV1ZillionaireKycDetailRoute
+  ApiPublicV1ZillionaireKycPayoutAccountsRoute: typeof ApiPublicV1ZillionaireKycPayoutAccountsRoute
   ApiPublicV1ZillionaireKycQueueRoute: typeof ApiPublicV1ZillionaireKycQueueRoute
   ApiPublicV1ZillionaireKycRevealRoute: typeof ApiPublicV1ZillionaireKycRevealRoute
   ApiPublicV1ZillionaireKycViewDocRoute: typeof ApiPublicV1ZillionaireKycViewDocRoute
@@ -5895,6 +5923,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProducerPayoutProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/producer/payout-proof-upload': {
+      id: '/api/public/v1/producer/payout-proof-upload'
+      path: '/api/public/v1/producer/payout-proof-upload'
+      fullPath: '/api/public/v1/producer/payout-proof-upload'
+      preLoaderRoute: typeof ApiPublicV1ProducerPayoutProofUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/producer/payouts': {
       id: '/api/public/v1/producer/payouts'
       path: '/api/public/v1/producer/payouts'
@@ -6719,6 +6754,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/zillionaire/kyc/detail'
       fullPath: '/api/public/v1/zillionaire/kyc/detail'
       preLoaderRoute: typeof ApiPublicV1ZillionaireKycDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/kyc/payout-accounts': {
+      id: '/api/public/v1/zillionaire/kyc/payout-accounts'
+      path: '/api/public/v1/zillionaire/kyc/payout-accounts'
+      fullPath: '/api/public/v1/zillionaire/kyc/payout-accounts'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycPayoutAccountsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/zillionaire/kyc/queue': {
@@ -7811,6 +7853,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ProducerEarningsRoute: ApiPublicV1ProducerEarningsRoute,
   ApiPublicV1ProducerMobileSummaryRoute: ApiPublicV1ProducerMobileSummaryRoute,
   ApiPublicV1ProducerPayoutProfileRoute: ApiPublicV1ProducerPayoutProfileRoute,
+  ApiPublicV1ProducerPayoutProofUploadRoute:
+    ApiPublicV1ProducerPayoutProofUploadRoute,
   ApiPublicV1ProducerPayoutsRoute: ApiPublicV1ProducerPayoutsRouteWithChildren,
   ApiPublicV1ProducerTeamRoute: ApiPublicV1ProducerTeamRoute,
   ApiPublicV1ProducerVerificationRoute:
@@ -7940,6 +7984,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ZillionaireKycCountryRulesRoute:
     ApiPublicV1ZillionaireKycCountryRulesRoute,
   ApiPublicV1ZillionaireKycDetailRoute: ApiPublicV1ZillionaireKycDetailRoute,
+  ApiPublicV1ZillionaireKycPayoutAccountsRoute:
+    ApiPublicV1ZillionaireKycPayoutAccountsRoute,
   ApiPublicV1ZillionaireKycQueueRoute: ApiPublicV1ZillionaireKycQueueRoute,
   ApiPublicV1ZillionaireKycRevealRoute: ApiPublicV1ZillionaireKycRevealRoute,
   ApiPublicV1ZillionaireKycViewDocRoute: ApiPublicV1ZillionaireKycViewDocRoute,

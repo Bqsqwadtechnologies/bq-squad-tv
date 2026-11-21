@@ -5,22 +5,24 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requirePlatformRole } from "@/lib/server/roles";
 import { getBanksForCountry, validateIban, validateNuban } from "@/lib/server/payouts/bank-directory";
 import { encryptSensitiveField } from "@/lib/server/kyc/types";
-import { PURPOSE_OF_PAYMENT_OPTIONS } from "@/lib/server/payouts/types";
+import { PURPOSE_OF_PAYMENT_OPTIONS, type PayoutAccountChecks, type PayoutProfileRecord } from "@/lib/server/payouts/types";
 import { fuzzyNameMatch } from "@/lib/kyc-country-rules";
 
 const postSchema = z.object({
   bankId: z.string().optional(),
   bankName: z.string().trim().min(2).max(100),
-  bankCountry: z.string().trim().length(2).toUpperCase(),
+  bankCountry: z.string().trim().length(2).toUpperCase().optional(),
   bankAddress: z.string().trim().min(2).max(250),
   accountNumber: z.string().trim().min(5).max(34),
-  accountNumberConfirm: z.string().trim().min(5).max(34),
+  accountNumberConfirm: z.string().trim().min(5).max(34).optional(), confirmAccountNumber: z.string().trim().min(5).max(34).optional(),
   iban: z.string().trim().max(34).optional().nullable(),
   accountType: z.enum(["checking", "savings", "current"]).default("checking"),
   swiftBic: z.string().trim().min(8).max(11),
   routingCode: z.string().trim().max(20).optional().nullable(),
   purposeOfPayment: z.string().trim().min(2).max(100).default("streaming_royalties"),
   isManualBank: z.boolean().default(false),
+  proofDocumentPath: z.string().trim().max(500).optional().nullable(),
+  proofDocumentFileName: z.string().trim().max(255).optional().nullable(),
 });
 
 export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
@@ -71,6 +73,13 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
                   purposeOfPayment: payoutDoc["purposeOfPayment"],
                   isManualBank: Boolean(payoutDoc["isManualBank"]),
                   status: payoutDoc["status"],
+                  verificationStatus: payoutDoc["verificationStatus"] || "pending",
+                  isLocked: Boolean(payoutDoc["isLocked"]),
+                  payoutsPaused: Boolean(payoutDoc["payoutsPaused"]),
+                  rejectionReason: payoutDoc["rejectionReason"] || null,
+                  proofDocumentPath: payoutDoc["proofDocumentPath"] || null,
+                  proofDocumentFileName: payoutDoc["proofDocumentFileName"] || null,
+                  checks: payoutDoc["checks"] || null,
                   updatedAt: payoutDoc["updatedAt"],
                 }
               : null,
@@ -92,7 +101,8 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
           const kycDoc = await fs.getDoc(`kycProfiles/${user.uid}`);
           const kycCountry = String(kycDoc?.["kycCountry"] || "NG").toUpperCase();
 
-          if (body.bankCountry !== kycCountry) {
+          const targetCountry = (body.bankCountry || kycCountry).toUpperCase();
+          if (targetCountry !== kycCountry) {
             throw new ApiError(
               400,
               "COUNTRY_LOCK_VIOLATION",
@@ -101,14 +111,17 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
           }
 
           // 2. Account number confirmation match
-          if (body.accountNumber !== body.accountNumberConfirm) {
+          const confirmation = body.accountNumberConfirm || body.confirmAccountNumber;
+          if (body.accountNumber !== confirmation) {
             throw new ApiError(400, "ACCOUNT_CONFIRMATION_MISMATCH", "Account numbers do not match.");
           }
 
           // 3. Country-specific validation
+          let formatValid = true;
           if (kycCountry === "NG") {
             const nubanCheck = validateNuban(body.accountNumber);
             if (!nubanCheck.valid) {
+              formatValid = false;
               throw new ApiError(400, "INVALID_NUBAN", nubanCheck.error || "Invalid 10-digit account number.");
             }
           }
@@ -116,6 +129,7 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
           if (body.iban) {
             const ibanCheck = validateIban(body.iban, kycCountry);
             if (!ibanCheck.valid) {
+              formatValid = false;
               throw new ApiError(400, "INVALID_IBAN", ibanCheck.error || "Invalid IBAN.");
             }
           }
@@ -139,7 +153,43 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
           const currency = kycCountry === "NG" ? "NGN" : "USD";
           const now = new Date().toISOString();
 
-          const record = {
+          // 6. Automated checks: name match, country match, format, duplicate across users
+          const nameMatch = beneficiaryName.length > 0;
+          const countryMatch = (body.bankCountry || kycCountry).toUpperCase() === kycCountry;
+          const currencyValid = (kycCountry === "NG" && currency === "NGN") || (kycCountry !== "NG" && currency === "USD");
+
+          // Duplicate account check
+          let duplicateDetected = false;
+          const otherProfiles = await fs.query("payoutProfiles", { limit: 250 });
+          for (const other of otherProfiles) {
+            if (other["uid"] === user.uid) continue;
+            const sameBank = String(other["bankName"] || "").toLowerCase() === body.bankName.toLowerCase();
+            const sameMasked = other["accountNumberMasked"] === masked;
+            const sameIban = body.iban && other["iban"] && other["iban"].toLowerCase() === body.iban.toLowerCase();
+            if ((sameBank && sameMasked) || sameIban) {
+              duplicateDetected = true;
+              break;
+            }
+          }
+
+          const checks: PayoutAccountChecks = {
+            nameMatch,
+            formatValid,
+            currencyValid,
+            countryMatch,
+            duplicateDetected,
+          };
+
+          // Existing record check
+          const existing = await fs.getDoc(`payoutProfiles/${user.uid}`);
+          const wasApproved = existing?.["verificationStatus"] === "approved";
+
+          // If was previously approved, modifying triggers re-review and pauses payouts
+          const isLocked = false;
+          const verificationStatus = "pending";
+          const payoutsPaused = wasApproved ? true : false;
+
+          const record: PayoutProfileRecord = {
             uid: user.uid,
             country: kycCountry,
             beneficiaryName,
@@ -159,7 +209,14 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
             taxIdMasked: kycDoc?.["maskedTaxNumber"] || null,
             isManualBank: body.isManualBank,
             status: body.isManualBank ? "flagged_for_review" : "active",
-            createdAt: now,
+            verificationStatus,
+            isLocked,
+            payoutsPaused,
+            proofDocumentPath: body.proofDocumentPath || existing?.["proofDocumentPath"] || null,
+            proofDocumentFileName: body.proofDocumentFileName || existing?.["proofDocumentFileName"] || null,
+            proofDocumentUploadedAt: body.proofDocumentPath ? now : existing?.["proofDocumentUploadedAt"] || null,
+            checks,
+            createdAt: existing?.["createdAt"] || now,
             updatedAt: now,
           };
 
@@ -167,9 +224,14 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
 
           return Response.json({
             success: true,
+            profile: record,
             accountNumberMasked: masked,
             currency,
             status: record.status,
+            verificationStatus: record.verificationStatus,
+            isLocked: record.isLocked,
+            payoutsPaused: record.payoutsPaused,
+            checks,
           });
         } catch (error) {
           return errorBody(error);

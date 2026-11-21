@@ -105,3 +105,5 @@ PUSH BADGE #63 SUCCESSFUL — v6-05-A7 — Zillionaire KYC review queue with Pen
 PUSH BADGE #64 SUCCESSFUL — v6-05-A8 — KYC approval enforcement across producer/provider endpoints (403 KYC_NOT_APPROVED), signature verification in vault storage, 45 passing KYC unit & integration tests across 11 files (Batches A1–A8), clean production build and public-text scan.
 
 PUSH BADGE #65 SUCCESSFUL — v6-05-B1 — Country-locked payout bank account form, bank directory lookup, IBAN/NUBAN checksum validation, and encrypted storage.
+
+PUSH BADGE #66 SUCCESSFUL — v6-05-B2 — Proof of account and verification (bank statement upload, duplicate account detection, Zillionaire payout queue tab, and account lock on approval).

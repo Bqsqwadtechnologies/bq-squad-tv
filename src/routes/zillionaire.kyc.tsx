@@ -38,26 +38,22 @@ import {
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
 
 export const Route = createFileRoute("/zillionaire/kyc")({
-  component: KycReviewRoute,
-  head: () => ({
-    meta: [
-      { title: "KYC Review Queue | Zillionaire Control Centre" },
-      { name: "robots", content: "noindex, nofollow, noarchive" },
-    ],
-  }),
+  component: KycQueuePage,
 });
 
-function KycReviewRoute() {
+function KycQueuePage() {
   return (
-    <ConsolePageGuard role="zillionaire">
-      {({ token, account, onLock }) => (
+    <ConsolePageGuard
+      requiredModules={["security", "compliance", "finance", "producers", "overview"]}
+      title="Identity & Payout Verification Queue"
+      description="Manage and review producer and provider KYC compliance applications and payout accounts."
+    >
+      {({ account, token, onLock }) => (
         <ConsoleShell
-          consoleType="zillionaire"
-          title="KYC Review Queue"
-          tagline="Compliance verification for producer and provider identities, corporate filings, and biometric liveness checks"
-          activePath="/zillionaire/kyc"
           account={{
-            email: account.email || undefined,
+            email: account.email,
+            displayName: account.displayName,
+            role: account.role,
             isOwner: account.isOwner,
             modules: account.modules,
           }}
@@ -72,21 +68,12 @@ function KycReviewRoute() {
 
 interface KycItem {
   uid: string;
-  role: "producer" | "provider";
-  kycType: "producer_personal" | "producer_business" | "provider_corporate";
-  kycStatus: "pending" | "approved" | "rejected" | "needs_changes" | "unsubmitted";
-  kycCountry: string;
-  kycVersion: number;
-  kycSubmittedAt?: string;
   legalName: string;
-  businessName?: string;
-  officialEmail?: string;
-  phone?: string;
-  maskedIdNumber?: string;
-  maskedTaxNumber?: string;
-  companyRegNumber?: string;
+  kycType: string;
+  kycCountry: string;
+  kycStatus: string;
   riskScore: number;
-  riskFlags: string[];
+  submittedAt: string;
   documentCount: number;
   hasFaceCapture: boolean;
   autoChecks: {
@@ -97,10 +84,45 @@ interface KycItem {
   };
 }
 
+interface PayoutAccountItem {
+  uid: string;
+  beneficiaryName: string;
+  beneficiaryAddress: string;
+  bankName: string;
+  bankCountry: string;
+  bankAddress: string;
+  accountNumberMasked: string;
+  iban?: string | null;
+  accountType: string;
+  currency: string;
+  swiftBic: string;
+  routingCode?: string | null;
+  purposeOfPayment: string;
+  isManualBank: boolean;
+  verificationStatus: "pending" | "approved" | "rejected";
+  isLocked: boolean;
+  payoutsPaused: boolean;
+  rejectionReason?: string | null;
+  proofDocumentPath?: string | null;
+  proofDocumentFileName?: string | null;
+  proofViewerUrl?: string | null;
+  checks?: {
+    nameMatch: boolean;
+    formatValid: boolean;
+    currencyValid: boolean;
+    countryMatch: boolean;
+    duplicateDetected: boolean;
+  };
+  updatedAt: string;
+}
+
 function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }) {
+  const [section, setSection] = useState<"kyc" | "payout_accounts">("kyc");
   const [activeTab, setActiveTab] = useState<string>("pending");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // KYC items & counters
   const [items, setItems] = useState<KycItem[]>([]);
   const [counters, setCounters] = useState({
     pending: 0,
@@ -112,7 +134,17 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Detail Modal State
+  // Payout accounts items & counters
+  const [payoutItems, setPayoutItems] = useState<PayoutAccountItem[]>([]);
+  const [payoutCounters, setPayoutCounters] = useState({
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    total: 0,
+  });
+  const [payoutLoading, setPayoutLoading] = useState(false);
+
+  // Detail Modal State (KYC)
   const [selectedUid, setSelectedUid] = useState<string | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailProfile, setDetailProfile] = useState<any | null>(null);
@@ -143,9 +175,30 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
     }
   }, [activeTab, typeFilter, searchQuery, token]);
 
+  const fetchPayoutAccounts = useCallback(async () => {
+    setPayoutLoading(true);
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const url = `/api/public/v1/zillionaire/kyc/payout-accounts?tab=${activeTab}&search=${encodeURIComponent(searchQuery)}`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setPayoutItems(data.items || []);
+      if (data.counters) setPayoutCounters(data.counters);
+    } catch (err: any) {
+      console.error("Failed to load payout accounts", err);
+    } finally {
+      setPayoutLoading(false);
+    }
+  }, [activeTab, searchQuery, token]);
+
   useEffect(() => {
-    fetchQueue();
-  }, [fetchQueue]);
+    if (section === "payout_accounts") {
+      fetchPayoutAccounts();
+    } else {
+      fetchQueue();
+    }
+  }, [section, fetchQueue, fetchPayoutAccounts]);
 
   const openDetail = async (uid: string) => {
     setSelectedUid(uid);
@@ -231,214 +284,519 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
     }
   };
 
+  const handleApprovePayout = async (uid: string) => {
+    if (!confirm("Approve and lock this payout bank account for verified wire transfers?")) return;
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const res = await fetch("/api/public/v1/zillionaire/kyc/payout-accounts", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ uid, action: "approve" }),
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Approval failed");
+      }
+      alert("Payout account verified and locked.");
+      fetchPayoutAccounts();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleRejectPayout = async (uid: string) => {
+    const reason = prompt("Enter mandatory rejection reason (sent to user):");
+    if (!reason || reason.trim().length < 3) {
+      alert("A reason of at least 3 characters is mandatory.");
+      return;
+    }
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const res = await fetch("/api/public/v1/zillionaire/kyc/payout-accounts", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ uid, action: "reject", reason }),
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Rejection failed");
+      }
+      alert("Payout account rejected.");
+      fetchPayoutAccounts();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <ConsoleKpiCard
-          label="Pending Review"
-          value={counters.pending}
-          hint="Requires compliance action"
-          icon={<Clock className="h-5 w-5 text-amber-400" />}
-        />
-        <ConsoleKpiCard
-          label="Needs Changes"
-          value={counters.needsChanges}
-          hint="Waiting for applicant"
-          icon={<AlertTriangle className="h-5 w-5 text-yellow-400" />}
-        />
-        <ConsoleKpiCard
-          label="Approved Entities"
-          value={counters.approved}
-          hint="Unlocked for publishing & payouts"
-          icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
-        />
-        <ConsoleKpiCard
-          label="Rejected"
-          value={counters.rejected}
-          hint="Failed verification"
-          icon={<XCircle className="h-5 w-5 text-rose-400" />}
-        />
+      {/* Primary Section Switcher */}
+      <div className="flex items-center gap-3 border-b border-white/10 pb-3">
+        <button
+          onClick={() => {
+            setSection("kyc");
+            setActiveTab("pending");
+          }}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition ${
+            section === "kyc"
+              ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow"
+              : "text-slate-400 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <ShieldCheck className="h-4 w-4" />
+          <span>Identity Verification</span>
+          {counters.pending > 0 && (
+            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-300">
+              {counters.pending}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => {
+            setSection("payout_accounts");
+            setActiveTab("pending");
+          }}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition ${
+            section === "payout_accounts"
+              ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow"
+              : "text-slate-400 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <CreditCard className="h-4 w-4" />
+          <span>Payout Accounts</span>
+          {payoutCounters.pending > 0 && (
+            <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-300">
+              {payoutCounters.pending}
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* Main Review Queue Console Card */}
-      <ConsoleCard
-        title="Applicant Queue"
-        subtitle="Review, verify, and audit producer and provider identity credentials"
-        action={
-          <button
-            onClick={fetchQueue}
-            disabled={loading}
-            className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10 transition"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
-          </button>
-        }
-      >
-        <div className="space-y-4">
-          {/* Tabs */}
-          <div className="flex border-b border-white/10 gap-2 overflow-x-auto pb-1">
-            {[
-              { id: "pending", label: "Pending", count: counters.pending },
-              { id: "needs_changes", label: "Needs Changes", count: counters.needsChanges },
-              { id: "approved", label: "Approved", count: counters.approved },
-              { id: "rejected", label: "Rejected", count: counters.rejected },
-              { id: "all", label: "All Records", count: counters.total },
-            ].map((tab) => (
+      {section === "kyc" ? (
+        <>
+          {/* KYC KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <ConsoleKpiCard
+              label="Pending Review"
+              value={counters.pending}
+              hint="Requires compliance action"
+              icon={<Clock className="h-5 w-5 text-amber-400" />}
+            />
+            <ConsoleKpiCard
+              label="Needs Changes"
+              value={counters.needsChanges}
+              hint="Waiting for applicant"
+              icon={<AlertTriangle className="h-5 w-5 text-yellow-400" />}
+            />
+            <ConsoleKpiCard
+              label="Approved Entities"
+              value={counters.approved}
+              hint="Unlocked for publishing & payouts"
+              icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
+            />
+            <ConsoleKpiCard
+              label="Rejected"
+              value={counters.rejected}
+              hint="Failed verification"
+              icon={<XCircle className="h-5 w-5 text-rose-400" />}
+            />
+          </div>
+
+          {/* KYC Main Review Queue */}
+          <ConsoleCard
+            title="Applicant Queue"
+            subtitle="Review, verify, and audit producer and provider identity credentials"
+            action={
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs sm:text-sm font-semibold transition ${
-                  activeTab === tab.id
-                    ? "border-cyan-400 text-cyan-400"
-                    : "border-transparent text-slate-400 hover:text-white"
-                }`}
+                onClick={fetchQueue}
+                disabled={loading}
+                className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10 transition"
               >
-                <span>{tab.label}</span>
-                <span
-                  className={`rounded-full px-1.5 py-0.2 text-[10px] ${
-                    activeTab === tab.id ? "bg-cyan-500/20 text-cyan-300" : "bg-white/5 text-slate-400"
-                  }`}
-                >
-                  {tab.count}
-                </span>
+                <RefreshCw className={`h-3.5 w-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
               </button>
-            ))}
+            }
+          >
+            <div className="space-y-4">
+              {/* Tabs */}
+              <div className="flex border-b border-white/10 gap-2 overflow-x-auto pb-1">
+                {[
+                  { id: "pending", label: "Pending", count: counters.pending },
+                  { id: "needs_changes", label: "Needs Changes", count: counters.needsChanges },
+                  { id: "approved", label: "Approved", count: counters.approved },
+                  { id: "rejected", label: "Rejected", count: counters.rejected },
+                  { id: "all", label: "All Records", count: counters.total },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs sm:text-sm font-semibold transition ${
+                      activeTab === tab.id
+                        ? "border-cyan-400 text-cyan-400"
+                        : "border-transparent text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={`rounded-full px-1.5 py-0.2 text-[10px] ${
+                        activeTab === tab.id ? "bg-cyan-500/20 text-cyan-300" : "bg-white/5 text-slate-400"
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Search and Filters */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search name, email, reg, ID..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-black/40 pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Filter className="h-3.5 w-3.5 text-slate-400" />
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                    className="rounded-xl border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-slate-200 focus:outline-none"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="producer_personal">Producer (Personal)</option>
+                    <option value="producer_business">Producer (Business)</option>
+                    <option value="provider_corporate">Provider (Corporate)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Table */}
+              {loading ? (
+                <div className="py-12 text-center text-xs text-slate-400">Loading queue...</div>
+              ) : items.length === 0 ? (
+                <div className="py-12 text-center text-xs text-slate-400">
+                  No applications match the current tab or search criteria.
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+                  <table className="w-full text-left text-xs text-slate-300">
+                    <thead className="border-b border-white/10 bg-white/5 text-[11px] uppercase tracking-wider text-slate-400">
+                      <tr>
+                        <th className="px-4 py-3">Applicant Entity</th>
+                        <th className="px-4 py-3">Type</th>
+                        <th className="px-4 py-3">Country</th>
+                        <th className="px-4 py-3">Verification Checks</th>
+                        <th className="px-4 py-3">Risk</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {items.map((item) => (
+                        <tr key={item.uid} className="hover:bg-white/[0.02] transition">
+                          <td className="px-4 py-3">
+                            <div className="font-semibold text-white">{item.legalName}</div>
+                            <div className="text-[11px] text-slate-500 font-mono">{item.uid}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="rounded-lg bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 text-[10px] text-cyan-300">
+                              {item.kycType === "producer_personal"
+                                ? "Personal"
+                                : item.kycType === "producer_business"
+                                  ? "Producer Biz"
+                                  : "Provider Corp"}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 font-semibold text-slate-200">{item.kycCountry}</td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1.5 text-[11px]">
+                              <span
+                                className={item.autoChecks.idValid ? "text-emerald-400" : "text-amber-400"}
+                                title="ID Format Valid"
+                              >
+                                ✓ ID
+                              </span>
+                              <span>•</span>
+                              <span
+                                className={item.autoChecks.regValid ? "text-emerald-400" : "text-amber-400"}
+                                title="Registration Check"
+                              >
+                                ✓ Reg
+                              </span>
+                              <span>•</span>
+                              <span
+                                className={item.hasFaceCapture ? "text-cyan-400" : "text-slate-500"}
+                                title="Biometric Face Liveness"
+                              >
+                                Face
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                                item.riskScore > 50
+                                  ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                                  : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                              }`}
+                            >
+                              Score {item.riskScore}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <ConsoleStatusBadge
+                              status={
+                                item.kycStatus === "approved"
+                                  ? "active"
+                                  : item.kycStatus === "rejected"
+                                    ? "failed"
+                                    : item.kycStatus === "needs_changes"
+                                      ? "warning"
+                                      : "pending"
+                              }
+                              label={item.kycStatus.replace(/_/g, " ").toUpperCase()}
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <button
+                              onClick={() => openDetail(item.uid)}
+                              className="rounded-xl bg-cyan-500/10 border border-cyan-500/30 px-3 py-1.5 text-xs font-semibold text-cyan-300 hover:bg-cyan-500/20 transition flex items-center gap-1 ml-auto"
+                            >
+                              <span>Review</span>
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </ConsoleCard>
+        </>
+      ) : (
+        <>
+          {/* Payout Accounts KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <ConsoleKpiCard
+              label="Pending Payout Accounts"
+              value={payoutCounters.pending}
+              hint="Requires verification approval"
+              icon={<Clock className="h-5 w-5 text-amber-400" />}
+            />
+            <ConsoleKpiCard
+              label="Approved Accounts"
+              value={payoutCounters.approved}
+              hint="Verified and locked for wire transfer"
+              icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
+            />
+            <ConsoleKpiCard
+              label="Rejected Accounts"
+              value={payoutCounters.rejected}
+              hint="Requires corrected bank details"
+              icon={<XCircle className="h-5 w-5 text-rose-400" />}
+            />
+            <ConsoleKpiCard
+              label="Total Payout Profiles"
+              value={payoutCounters.total}
+              hint="All registered bank profiles"
+              icon={<Building className="h-5 w-5 text-cyan-400" />}
+            />
           </div>
 
-          {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search name, email, reg, ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-xl border border-white/10 bg-black/40 pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Filter className="h-3.5 w-3.5 text-slate-400" />
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="rounded-xl border border-white/10 bg-black/40 px-3 py-1.5 text-xs text-slate-200 focus:outline-none"
+          {/* Payout Accounts Queue */}
+          <ConsoleCard
+            title="Payout Accounts Queue"
+            subtitle="Verify bank statement proof of account, validate bank/IBAN formats, and approve for wire transfers"
+            action={
+              <button
+                onClick={fetchPayoutAccounts}
+                disabled={payoutLoading}
+                className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-300 hover:bg-white/10 transition"
               >
-                <option value="all">All Types</option>
-                <option value="producer_personal">Producer (Personal)</option>
-                <option value="producer_business">Producer (Business)</option>
-                <option value="provider_corporate">Provider (Corporate)</option>
-              </select>
-            </div>
-          </div>
+                <RefreshCw className={`h-3.5 w-3.5 ${payoutLoading ? "animate-spin" : ""}`} /> Refresh
+              </button>
+            }
+          >
+            <div className="space-y-4">
+              {/* Tabs */}
+              <div className="flex border-b border-white/10 gap-2 overflow-x-auto pb-1">
+                {[
+                  { id: "pending", label: "Pending", count: payoutCounters.pending },
+                  { id: "approved", label: "Approved", count: payoutCounters.approved },
+                  { id: "rejected", label: "Rejected", count: payoutCounters.rejected },
+                  { id: "all", label: "All Records", count: payoutCounters.total },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2 border-b-2 px-3 py-2 text-xs sm:text-sm font-semibold transition ${
+                      activeTab === tab.id
+                        ? "border-cyan-400 text-cyan-400"
+                        : "border-transparent text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={`rounded-full px-1.5 py-0.2 text-[10px] ${
+                        activeTab === tab.id ? "bg-cyan-500/20 text-cyan-300" : "bg-white/5 text-slate-400"
+                      }`}
+                    >
+                      {tab.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
 
-          {/* Table */}
-          {loading ? (
-            <div className="py-12 text-center text-xs text-slate-400">Loading queue...</div>
-          ) : items.length === 0 ? (
-            <div className="py-12 text-center text-xs text-slate-400">
-              No applications match the current tab or search criteria.
-            </div>
-          ) : (
-            <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
-              <table className="w-full text-left text-xs text-slate-300">
-                <thead className="border-b border-white/10 bg-white/5 text-[11px] uppercase tracking-wider text-slate-400">
-                  <tr>
-                    <th className="px-4 py-3">Applicant Entity</th>
-                    <th className="px-4 py-3">Type</th>
-                    <th className="px-4 py-3">Country</th>
-                    <th className="px-4 py-3">Verification Checks</th>
-                    <th className="px-4 py-3">Risk</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {items.map((item) => (
-                    <tr key={item.uid} className="hover:bg-white/[0.02] transition">
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-white">{item.legalName}</div>
-                        <div className="text-[11px] text-slate-500 font-mono">{item.uid}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="rounded-lg bg-cyan-500/10 border border-cyan-500/20 px-2 py-0.5 text-[10px] text-cyan-300">
-                          {item.kycType === "producer_personal"
-                            ? "Personal"
-                            : item.kycType === "producer_business"
-                              ? "Producer Biz"
-                              : "Provider Corp"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-slate-200">{item.kycCountry}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5 text-[11px]">
-                          <span
-                            className={item.autoChecks.idValid ? "text-emerald-400" : "text-amber-400"}
-                            title="ID Format Valid"
-                          >
-                            ✓ ID
-                          </span>
-                          <span>•</span>
-                          <span
-                            className={item.autoChecks.regValid ? "text-emerald-400" : "text-amber-400"}
-                            title="Registration Check"
-                          >
-                            ✓ Reg
-                          </span>
-                          <span>•</span>
-                          <span
-                            className={item.hasFaceCapture ? "text-cyan-400" : "text-slate-500"}
-                            title="Biometric Face Liveness"
-                          >
-                            Face
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                            item.riskScore > 50
-                              ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
-                              : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                          }`}
-                        >
-                          Score {item.riskScore}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <ConsoleStatusBadge
-                          status={
-                            item.kycStatus === "approved"
-                              ? "active"
-                              : item.kycStatus === "rejected"
-                                ? "failed"
-                                : item.kycStatus === "needs_changes"
-                                  ? "warning"
-                                  : "pending"
-                          }
-                          label={item.kycStatus.toUpperCase()}
-                        />
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          onClick={() => openDetail(item.uid)}
-                          className="rounded-xl bg-cyan-500/20 border border-cyan-500/40 px-3 py-1.5 text-xs font-semibold text-cyan-300 hover:bg-cyan-500 hover:text-black transition"
-                        >
-                          Review File
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      </ConsoleCard>
+              {/* Search */}
+              <div className="relative w-full sm:w-80">
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search beneficiary, bank, country..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-xl border border-white/10 bg-black/40 pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                />
+              </div>
 
-      {/* Review Slide-over Modal */}
+              {/* Table */}
+              {payoutLoading ? (
+                <div className="py-12 text-center text-xs text-slate-400">Loading payout accounts...</div>
+              ) : payoutItems.length === 0 ? (
+                <div className="py-12 text-center text-xs text-slate-400">
+                  No payout accounts match the current tab or search criteria.
+                </div>
+              ) : (
+                <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/20">
+                  <table className="w-full text-left text-xs text-slate-300">
+                    <thead className="border-b border-white/10 bg-white/5 text-[11px] uppercase tracking-wider text-slate-400">
+                      <tr>
+                        <th className="px-4 py-3">Beneficiary Entity</th>
+                        <th className="px-4 py-3">Bank Details</th>
+                        <th className="px-4 py-3">Account Number</th>
+                        <th className="px-4 py-3">Verification Checks</th>
+                        <th className="px-4 py-3">Proof Document</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {payoutItems.map((p) => (
+                        <tr key={p.uid} className="hover:bg-white/[0.02] transition">
+                          <td className="px-4 py-3">
+                            <div className="font-semibold text-white">{p.beneficiaryName}</div>
+                            <div className="text-[11px] text-slate-500 font-mono">{p.uid}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="font-semibold text-slate-200">{p.bankName}</div>
+                            <div className="text-[11px] text-slate-400">{p.bankCountry} • {p.swiftBic}</div>
+                          </td>
+                          <td className="px-4 py-3 font-mono">
+                            <div className="text-white">{p.accountNumberMasked}</div>
+                            <div className="text-[11px] text-slate-400">{p.currency} • {p.accountType}</div>
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-col gap-1 text-[10px]">
+                              <span
+                                className={p.checks?.nameMatch ? "text-emerald-400" : "text-amber-400"}
+                                title="KYC Name Match"
+                              >
+                                {p.checks?.nameMatch ? "✓ Name Match" : "⚠ Name Differs"}
+                              </span>
+                              <span
+                                className={p.checks?.duplicateDetected ? "text-rose-400 font-bold" : "text-emerald-400"}
+                                title="Duplicate Account Check"
+                              >
+                                {p.checks?.duplicateDetected ? "⚠ Duplicate Account!" : "✓ Unique"}
+                              </span>
+                              <span
+                                className={p.checks?.countryMatch ? "text-emerald-400" : "text-rose-400"}
+                                title="Country Lock Check"
+                              >
+                                {p.checks?.countryMatch ? "✓ Country Match" : "✗ Country Mismatch"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3">
+                            {p.proofViewerUrl ? (
+                              <a
+                                href={p.proofViewerUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-2 py-1 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-500/20"
+                              >
+                                <FileText className="h-3 w-3" />
+                                <span>View Statement</span>
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            ) : (
+                              <span className="text-slate-500 italic text-[11px]">No proof file</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-col gap-1">
+                              <ConsoleStatusBadge
+                                status={
+                                  p.verificationStatus === "approved"
+                                    ? "active"
+                                    : p.verificationStatus === "rejected"
+                                      ? "failed"
+                                      : "pending"
+                                }
+                                label={p.verificationStatus.toUpperCase()}
+                              />
+                              {p.isLocked && (
+                                <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400">
+                                  <Lock className="h-2.5 w-2.5" /> Locked
+                                </span>
+                              )}
+                              {p.payoutsPaused && (
+                                <span className="text-[10px] text-amber-400">
+                                  Paused
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {p.verificationStatus !== "approved" && (
+                                <button
+                                  onClick={() => handleApprovePayout(p.uid)}
+                                  className="rounded-lg bg-emerald-500/20 border border-emerald-500/40 px-2.5 py-1 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/30 transition"
+                                >
+                                  Approve
+                                </button>
+                              )}
+                              {p.verificationStatus !== "rejected" && (
+                                <button
+                                  onClick={() => handleRejectPayout(p.uid)}
+                                  className="rounded-lg bg-rose-500/20 border border-rose-500/40 px-2.5 py-1 text-xs font-semibold text-rose-300 hover:bg-rose-500/30 transition"
+                                >
+                                  Reject
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </ConsoleCard>
+        </>
+      )}
+
+      {/* Review Slide-over Modal (KYC Detail) */}
       {selectedUid && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/80 backdrop-blur-sm">
           <div className="w-full max-w-3xl h-full bg-[#0a1533] border-l border-white/10 shadow-2xl flex flex-col overflow-hidden text-white">

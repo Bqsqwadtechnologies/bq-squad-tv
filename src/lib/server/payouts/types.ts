@@ -1,4 +1,13 @@
 export type AccountType = "checking" | "savings" | "current";
+export type PayoutVerificationStatus = "pending" | "approved" | "rejected";
+
+export interface PayoutAccountChecks {
+  nameMatch: boolean;
+  formatValid: boolean;
+  currencyValid: boolean;
+  countryMatch: boolean;
+  duplicateDetected: boolean;
+}
 
 export interface PayoutProfileRecord {
   uid: string;
@@ -20,6 +29,16 @@ export interface PayoutProfileRecord {
   taxIdMasked?: string | null;
   isManualBank: boolean;
   status: "active" | "flagged_for_review";
+  verificationStatus: PayoutVerificationStatus;
+  isLocked: boolean;
+  payoutsPaused: boolean;
+  rejectionReason?: string | null;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
+  proofDocumentPath?: string | null;
+  proofDocumentFileName?: string | null;
+  proofDocumentUploadedAt?: string | null;
+  checks?: PayoutAccountChecks;
   createdAt: string;
   updatedAt: string;
 }
