@@ -33,6 +33,7 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.*
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
 import com.bqsqwad.tv.data.auth.AuthRepository
 import com.bqsqwad.tv.BuildConfig
 import com.bqsqwad.tv.ui.player.PlayerScreen
