@@ -189,6 +189,11 @@ export function GoogleSignInButton({
           </svg>
           <span>Continue with Google</span>
         </button>
+        <p className="max-w-[320px] text-center text-xs text-amber-200/90" role="status">
+          {!clientId
+            ? "Google sign-in is not configured for this website deployment."
+            : "Google sign-in could not load. Check your connection and retry."}
+        </p>
         <button
           type="button"
           onClick={() => {
