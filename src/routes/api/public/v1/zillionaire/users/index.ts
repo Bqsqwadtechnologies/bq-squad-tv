@@ -15,6 +15,32 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
           const url = new URL(request.url);
           const search = url.searchParams.get("q")?.toLowerCase().trim();
 
+          // Numeric account references resolve through a direct index lookup,
+          // avoiding the previous first-100-users search limitation.
+          if (search && /^\d{7,12}$/.test(search)) {
+            const index = await fs.getDoc("accountIdIndex/" + search);
+            const uid = typeof index?.["uid"] === "string" ? index["uid"] : null;
+            const matched = uid ? await fs.getDoc("users/" + uid) : null;
+            if (matched && uid) {
+              return Response.json({
+                users: [{
+                  id: uid,
+                  accountId: search,
+                  email: matched["email"] || "",
+                  displayName: matched["displayName"] || "Viewer",
+                  phone: matched["phone"] || null,
+                  walletId: matched["walletId"] || null,
+                  accountStatus: matched["accountStatus"] || (matched["suspended"] ? "SUSPENDED" : "ACTIVE"),
+                  suspended: Boolean(matched["suspended"] || matched["accountStatus"] === "SUSPENDED" || matched["accountStatus"] === "BANNED"),
+                  createdAt: matched["createdAt"] || null,
+                  roleTags: Array.isArray(matched["roleTags"]) ? matched["roleTags"] : [],
+                  riskScore: Number(matched["riskScore"] || 0),
+                }],
+              });
+            }
+            return Response.json({ users: [] });
+          }
+
           const allUsers = await fs.query("users", { limit: 100 });
           let filtered = allUsers;
           if (search) {
@@ -33,6 +59,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
           return Response.json({
             users: filtered.map((u) => ({
               id: u.__id || u["id"] || u["uid"],
+              accountId: u["accountId"] || null,
               email: u["email"] || "",
               displayName: u["displayName"] || "Viewer",
               phone: u["phone"] || null,
