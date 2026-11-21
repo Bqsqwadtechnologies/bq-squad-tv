@@ -243,7 +243,7 @@ export async function getWebAccount(): Promise<{
     headers: { authorization: `Bearer ${idToken}`, ...(await getWebAppCheckHeaders()) },
     cache: "no-store",
   });
-  if (response.status === 401 || response.status === 403) return null;
+  if (response.status === 401) return null;
   if (!response.ok) throw new Error("The account session could not be verified. Please retry.");
   const account = (await response.json()) as ConsoleAccount;
   if (typeof account.uid !== "string" || !account.uid || account.emailVerified !== true) return null;
