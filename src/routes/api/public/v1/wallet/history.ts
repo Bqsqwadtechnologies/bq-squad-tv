@@ -21,7 +21,7 @@ export const Route = createFileRoute("/api/public/v1/wallet/history")({
             {
               items: payments.map((payment) => {
                 const currency =
-                  typeof payment["currency"] === "string" ? (payment["currency"] as string) : "NGN";
+                  typeof payment["currency"] === "string" ? (payment["currency"] as string) : "USD";
                 const amountMinor =
                   typeof payment["amountMinor"] === "number" &&
                   Number.isSafeInteger(payment["amountMinor"])

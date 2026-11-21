@@ -285,6 +285,7 @@ function ProviderDashboardInner({
         </div>
 
         {/* Partner Onboarding Checklist & Sandbox Flow */}
+        <div id="verification" />
         {(isOnboardingOpen || partnerStatus === "pending_approval") && (
           <div className="rounded-3xl border border-cyan-500/30 bg-[#061138]/90 p-6 backdrop-blur-xl shadow-2xl space-y-6">
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -392,7 +393,7 @@ function ProviderDashboardInner({
         </div>
 
         {/* Live Stream Monitor Grid */}
-        <div className="rounded-3xl border border-white/10 bg-[#07143d] p-6 shadow-xl space-y-6">
+        <div id="playback" className="rounded-3xl border border-white/10 bg-[#07143d] p-6 shadow-xl space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
             <div>
               <h2 className="text-lg font-bold text-white flex items-center gap-2">

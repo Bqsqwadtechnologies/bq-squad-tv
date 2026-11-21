@@ -41,6 +41,33 @@ function CommentsInner({
 }) {
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [moderatingId, setModeratingId] = useState<string | null>(null);
+
+  async function handleModerate(commentId: string, approved: boolean) {
+    setModeratingId(commentId);
+    try {
+      const res = await fetch(`/api/public/v1/zillionaire/content-comments/${commentId}/moderate`, {
+        method: "POST",
+        headers: {
+          ...(await getWebAuthHeaders(token)),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          approved,
+          reason: approved ? "Approved by compliance moderator" : "Hidden by compliance moderator",
+        }),
+      });
+      if (res.ok) {
+        setComments((prev) =>
+          prev.map((c) => (c.id === commentId ? { ...c, status: approved ? "APPROVED" : "REJECTED" } : c))
+        );
+      }
+    } catch {
+      // quiet fallback
+    } finally {
+      setModeratingId(null);
+    }
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -122,11 +149,21 @@ function CommentsInner({
                     <p className="text-[10px] text-slate-400">Rating: {"★".repeat(c.rating || 5)}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20">
-                      Approve
+                    <button
+                      type="button"
+                      disabled={moderatingId === c.id}
+                      onClick={() => void handleModerate(c.id, true)}
+                      className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/20 disabled:opacity-50"
+                    >
+                      {c.status === "APPROVED" ? "Approved" : "Approve"}
                     </button>
-                    <button className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/20">
-                      Hide
+                    <button
+                      type="button"
+                      disabled={moderatingId === c.id}
+                      onClick={() => void handleModerate(c.id, false)}
+                      className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 disabled:opacity-50"
+                    >
+                      {c.status === "REJECTED" || c.status === "HIDDEN" ? "Hidden" : "Hide"}
                     </button>
                   </div>
                 </div>

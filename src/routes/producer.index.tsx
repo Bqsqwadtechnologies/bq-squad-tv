@@ -300,7 +300,7 @@ function ProducerDashboardInner({
         )}
 
         {/* KYC Verification Status Banner */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg">
+        <section id="verification" className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
               <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${
@@ -588,7 +588,7 @@ function ProducerDashboardInner({
         </div>
 
         {/* Top-Performing Content List */}
-        <div className="rounded-3xl border border-white/10 bg-[#07143d] p-6 shadow-xl">
+        <div id="uploads" className="rounded-3xl border border-white/10 bg-[#07143d] p-6 shadow-xl">
           <div className="flex items-center justify-between pb-4 border-b border-white/10">
             <div>
               <h2 className="text-lg font-bold text-white">Top-Performing Content</h2>
@@ -699,7 +699,7 @@ function ProducerDashboardInner({
             )}
           </section>
 
-          <section className="rounded-3xl border border-white/10 bg-[#07143d] p-6">
+          <section id="schedule" className="rounded-3xl border border-white/10 bg-[#07143d] p-6">
             <h2 className="text-base font-bold text-white pb-4 border-b border-white/10">
               Studio Workspace Tools
             </h2>

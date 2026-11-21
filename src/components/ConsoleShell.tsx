@@ -85,7 +85,7 @@ export interface ConsoleNavItem {
   id: string;
   label: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }> | React.ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
   module?: string;
   external?: boolean;
@@ -716,7 +716,7 @@ export function ConsoleShell({
           {
             id: "provider-playback",
             label: "Playback Monitor",
-            href: "/provider",
+            href: "/provider#playback",
             icon: PlayCircle,
           },
           {
@@ -1445,7 +1445,7 @@ export interface ConsoleKpiCardProps {
   change?: string | { value: string; positive?: boolean };
   trend?: "up" | "down" | "neutral";
   gradient?: KpiVariant;
-  icon: React.ComponentType<{ className?: string }> | React.ReactNode;
+  icon: React.ComponentType<{ className?: string }>;
   variant?: KpiVariant;
   onClick?: () => void;
 }

@@ -1272,7 +1272,12 @@ function AuditIntegrityPanel({ token }: { token: string }) {
             placeholder="Filter by target ID"
             className="rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white"
           />
-          <button className="rounded-lg bg-white/10 px-4 py-2 text-sm font-semibold text-white">
+          <button
+            type="submit"
+            onClick={() => void load()}
+            disabled={busy}
+            className="rounded-lg bg-cyan-500/20 border border-cyan-500/40 px-4 py-2 text-sm font-semibold text-cyan-300 hover:bg-cyan-500/30 transition disabled:opacity-50"
+          >
             Search
           </button>
           <button

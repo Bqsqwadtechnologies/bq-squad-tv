@@ -48,7 +48,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/webhook")
             return Response.json({ received: true });
           }
           const currency =
-            typeof payment["currency"] === "string" ? (payment["currency"] as string) : "NGN";
+            typeof payment["currency"] === "string" ? (payment["currency"] as string) : ((payment["walletCurrency"] as string) || "USD");
           const verified = await fetchPaystackVerification(reference);
           const metadata = verified["metadata"] as Record<string, unknown> | undefined;
           if (

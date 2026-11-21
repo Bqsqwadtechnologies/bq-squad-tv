@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { ArrowLeft, Bell, CheckCheck, LoaderCircle } from "lucide-react";
+import { ArrowLeft, Bell, Check, CheckCheck, LoaderCircle, Sliders } from "lucide-react";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 
 type Notice = {

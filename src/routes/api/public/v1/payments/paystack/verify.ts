@@ -25,7 +25,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/verify")(
             throw new ApiError(404, "PAYMENT_NOT_FOUND", "This payment could not be found.");
           }
           const currency =
-            typeof payment["currency"] === "string" ? (payment["currency"] as string) : "NGN";
+            typeof payment["currency"] === "string" ? (payment["currency"] as string) : ((payment["walletCurrency"] as string) || "USD");
           const verified = await fetchPaystackVerification(reference);
           if (
             verified["status"] !== "success" ||

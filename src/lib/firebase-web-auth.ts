@@ -1,3 +1,12 @@
+export type ConsoleAccount = {
+  uid: string;
+  email: string | null;
+  emailVerified: boolean;
+  roles?: string[];
+  modules?: string[];
+  isOwner?: boolean;
+};
+
 import { firebaseApiKey, firebaseProjectId } from "./firebase-config";
 import { getWebAppCheckHeaders } from "./firebase-web-app-check";
 

@@ -58,7 +58,7 @@ export function ProfileAccountHub() {
     window.location.href = "/";
   }
 
-  const userInitial = account?.email ? account.email[0].toUpperCase() : "U";
+  const userInitial = account?.email ? (account.email.charAt(0).toUpperCase() || "U") : "U";
   const userDisplayName = account?.email ? account.email.split("@")[0] : "Viewer Account";
 
   return (

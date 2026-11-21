@@ -44,7 +44,26 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payments/")({
             );
           }
 
+          const secretKey = process.env["PAYSTACK_SECRET_KEY"];
+          const isConfigured = Boolean(secretKey && secretKey.length > 5);
+          const isLive = Boolean(secretKey && secretKey.startsWith("sk_live_"));
+          const isTest = Boolean(secretKey && secretKey.startsWith("sk_test_"));
+
+          const gatewayHealth = {
+            provider: "paystack",
+            configured: isConfigured,
+            mode: isLive ? "live" : isTest ? "test" : isConfigured ? "custom" : "not_configured",
+            keyPrefix: isLive ? "sk_live_***" : isTest ? "sk_test_***" : isConfigured ? "configured_***" : "none",
+            webhookUrl: "/api/public/v1/payments/paystack/webhook",
+            supportedCurrencies: ["NGN", "GHS", "ZAR", "KES", "USD", "XOF"],
+            status: isConfigured ? "HEALTHY" : "NEEDS_CONFIGURATION",
+            guidance: isConfigured
+              ? "Paystack integration is configured. Ensure webhook endpoint is registered in Paystack dashboard."
+              : "PAYSTACK_SECRET_KEY secret is required on server for payment processing.",
+          };
+
           return Response.json({
+            gatewayHealth,
             payments: filtered.map((p) => {
               const paymentId = String(p.__id || p["id"] || "");
               const isReversed = Boolean(p["reversed"] || p["status"] === "REVERSED");
@@ -52,7 +71,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payments/")({
                 id: paymentId,
                 uid: p["uid"] || "",
                 amountMinor: Number(p["amountMinor"] || 0),
-                currency: p["currency"] || "NGN",
+                currency: p["currency"] || "USD",
                 gateway: p["gateway"] || (paymentId.startsWith("paystack_") ? "paystack" : "googleplay"),
                 reference: p["reference"] || paymentId,
                 status: isReversed ? "REVERSED" : (p["status"] || "COMPLETED"),

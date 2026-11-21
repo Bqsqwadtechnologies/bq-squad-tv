@@ -1,3 +1,4 @@
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -16,25 +17,6 @@ import {
   verifyEmailCode,
 } from "@/lib/firebase-web-auth";
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (options: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-          }) => void;
-          renderButton: (
-            element: HTMLElement,
-            options: { theme: "filled_blue"; size: "large"; shape: "pill"; width: number },
-          ) => void;
-        };
-      };
-    };
-  }
-}
-
 export const Route = createFileRoute("/account")({
   component: AccountPage,
   head: () => ({
@@ -45,7 +27,7 @@ export const Route = createFileRoute("/account")({
   }),
 });
 
-import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+let cachedGoogleClientId: string | null = null;
 
 function AccountPage() {
   const [email, setEmail] = useState("");

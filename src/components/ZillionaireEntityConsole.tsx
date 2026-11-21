@@ -242,6 +242,10 @@ export function ZillionaireEntityConsole<T extends Record<string, any>>({
                       <td className="px-4 py-3 text-right">
                         <button
                           type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedItem(item);
+                          }}
                           className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-semibold"
                         >
                           <span>Manage</span>

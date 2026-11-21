@@ -356,7 +356,7 @@ function WalletPage() {
                 <div>
                   <p className="text-sm text-blue-100/60">Available balance</p>
                   <p className="mt-2 text-4xl font-black tabular-nums">
-                    {formatMoney(wallet ? wallet.balanceMinor : 0, wallet?.currency || "NGN")}
+                    {formatMoney(wallet ? wallet.balanceMinor : 0, wallet?.currency || "USD")}
                   </p>
                   {email ? <p className="mt-2 break-all text-xs text-blue-100/45">{email}</p> : null}
                 </div>
@@ -587,7 +587,7 @@ function WalletPage() {
                     }
                   >
                     {item.amountMinor >= 0 ? "+" : "−"}
-                    {formatMoney(Math.abs(item.amountMinor), wallet?.currency ?? "NGN")}
+                    {formatMoney(Math.abs(item.amountMinor), (item as any).currency ?? wallet?.currency ?? "USD")}
                   </p>
                 </div>
               ))}

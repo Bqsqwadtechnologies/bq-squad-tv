@@ -162,6 +162,7 @@ export function ContentDetailsPage() {
           : "Comments are unavailable.",
       );
     setContent(contentResult.content);
+    setNextEpisodeAvailable(contentResult.content.category === "series");
     setComments(commentsResult);
     // Load reactions
     fetch("/api/public/v1/reactions?targetType=video&targetId=" + encodeURIComponent(assetId), { headers })
@@ -242,6 +243,7 @@ export function ContentDetailsPage() {
           throw new Error("Comments are unavailable.");
         if (active) {
           setContent(contentResult.content);
+    setNextEpisodeAvailable(contentResult.content.category === "series");
           setComments(commentsResult);
         }
       } catch (caught) {
@@ -1115,7 +1117,11 @@ export function ContentDetailsPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          setMessage("Starting next episode...");
+                          setMessage(
+                            content?.category === "series"
+                              ? "Next episode queued — preparing playback stream."
+                              : "No additional episodes available for this feature."
+                          );
                         }}
                         className="flex items-center gap-1.5 rounded-xl bg-cyan-400 px-3 py-1.5 text-xs font-bold text-slate-950 hover:brightness-110"
                       >

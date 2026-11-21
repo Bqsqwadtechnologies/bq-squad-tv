@@ -1,8 +1,8 @@
 import { FormDiscardButton } from "@/components/FormDiscardButton";
 import React, { useState, useEffect } from "react";
 import { AlertCircle, CheckCircle2, Lock, ShieldAlert, UploadCloud, FileText, Check } from "lucide-react";
-import { PayoutAccountType, PayoutProfileRecord } from "@/lib/server/payouts/types";
-import { getBanksForCountry, isNubanFormat, validateIban } from "@/lib/server/payouts/bank-directory";
+import { AccountType, PayoutProfileRecord } from "@/lib/server/payouts/types";
+import { getBanksForCountry, validateNuban, validateIban } from "@/lib/server/payouts/bank-directory";
 
 interface PayoutAccountFormProps {
   countryCode: string;
@@ -32,9 +32,9 @@ export function PayoutAccountForm({
   const [iban, setIban] = useState(existingAccount?.iban || "");
   const [beneficiaryName, setBeneficiaryName] = useState(existingAccount?.beneficiaryName || "");
   const [beneficiaryAddress, setBeneficiaryAddress] = useState(existingAccount?.beneficiaryAddress || "");
-  const [accountType, setAccountType] = useState<PayoutAccountType>(existingAccount?.accountType || "checking");
+  const [accountType, setAccountType] = useState<AccountType>(existingAccount?.accountType || "checking");
   const [currency, setCurrency] = useState(existingAccount?.currency || defaultCurrency);
-  const [swiftBic, setSwiftBic] = useState(existingAccount?.swiftBic || (availableBanks[0]?.swiftCode ?? ""));
+  const [swiftBic, setSwiftBic] = useState(existingAccount?.swiftBic || (availableBanks[0]?.swiftBic ?? ""));
   const [routingCode, setRoutingCode] = useState(existingAccount?.routingCode || "");
   const [purposeOfPayment, setPurposeOfPayment] = useState(
     existingAccount?.purposeOfPayment || "Platform content licensing earnings settlement"
@@ -59,7 +59,7 @@ export function PayoutAccountForm({
     const found = availableBanks.find((b) => b.name === name);
     if (found) {
       setBankAddress(found.address);
-      setSwiftBic(found.swiftCode);
+      setSwiftBic(found.swiftBic);
     }
   };
 
@@ -96,7 +96,7 @@ export function PayoutAccountForm({
       return;
     }
 
-    if (isNigeria && !isNubanFormat(accountNumber)) {
+    if (isNigeria && !validateNuban(accountNumber)) {
       setError("Nigerian bank account number must be exactly 10 digits (NUBAN format).");
       return;
     }
@@ -321,7 +321,7 @@ export function PayoutAccountForm({
                   >
                     {availableBanks.map((b) => (
                       <option key={b.name} value={b.name}>
-                        {b.name} ({b.swiftCode})
+                        {b.name} ({b.swiftBic})
                       </option>
                     ))}
                   </select>

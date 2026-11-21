@@ -938,15 +938,16 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
                         {previewText.body}
                       </div>
                       <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          className="rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-bold text-slate-950"
+                        <a
+                          href={deepLink || "/"}
+                          className="rounded-lg bg-cyan-400 px-3 py-1.5 text-xs font-bold text-slate-950 inline-block"
                         >
                           View Now
-                        </button>
+                        </a>
                         <button
                           type="button"
-                          className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300"
+                          onClick={() => setPreviewChannel("push")}
+                          className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/20"
                         >
                           Dismiss
                         </button>
@@ -973,12 +974,12 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
                     <p>{previewText.body}</p>
                   </div>
                   <div className="text-center">
-                    <button
-                      type="button"
-                      className="rounded-xl bg-[#030b2a] px-5 py-2.5 text-xs font-bold text-white"
+                    <a
+                      href={deepLink || "/"}
+                      className="inline-block rounded-xl bg-[#030b2a] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#061652]"
                     >
                       Open in BQ SQWAD TV
-                    </button>
+                    </a>
                   </div>
                   <div className="mt-6 border-t border-slate-100 pt-3 text-center text-[10px] text-slate-400">
                     BQ SQWAD TV • Unsubscribe • Lagos, Nigeria

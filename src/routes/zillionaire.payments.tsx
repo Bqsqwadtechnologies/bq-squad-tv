@@ -78,6 +78,7 @@ function ZillionairePaymentsPage({
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [health, setHealth] = useState<any>(null);
 
   // Reversal Double-Confirmation Modal
   const [reverseTarget, setReverseTarget] = useState<PaymentItem | null>(null);
@@ -100,6 +101,9 @@ function ZillionairePaymentsPage({
       if (res.ok) {
         const data = await res.json();
         setPayments(data.payments || []);
+        if (data.gatewayHealth) {
+          setHealth(data.gatewayHealth);
+        }
       }
     } catch {
       // fallback
@@ -185,7 +189,7 @@ function ZillionairePaymentsPage({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <ConsoleKpiCard
             title="Total Inflow Volume"
-            value={formatMoney(stats.totalVolumeMinor, "NGN")}
+            value={formatMoney(stats.totalVolumeMinor, (stats as any).currency || "USD")}
             change="Net completed top-ups"
             icon={<ArrowDownLeft className="w-5 h-5" />}
             color="green"
@@ -211,6 +215,45 @@ function ZillionairePaymentsPage({
             icon={<RotateCcw className="w-5 h-5" />}
             color="gold"
           />
+        </div>
+
+        {/* Paystack Gateway Status & Diagnostics */}
+        <div className="rounded-2xl border border-white/10 bg-[#07143D] p-5 shadow-lg">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                health?.configured ? "bg-emerald-500/20 text-emerald-400" : "bg-amber-500/20 text-amber-400"
+              }`}>
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-white">Paystack Gateway Health</h3>
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    health?.configured
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : "bg-amber-500/20 text-amber-300"
+                  }`}>
+                    {health?.configured ? `ACTIVE (${health.mode.toUpperCase()})` : "KEY PENDING"}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {health?.guidance || "Checking payment gateway status…"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-slate-400">Webhook:</span>
+              <code className="rounded bg-black/40 px-2 py-1 font-mono text-[11px] text-cyan-300 border border-white/5">
+                {health?.webhookUrl || "/api/public/v1/payments/paystack/webhook"}
+              </code>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-4 text-[11px] text-slate-400">
+            <span>Key status: <strong className="text-white font-mono">{health?.keyPrefix || "sk_***"}</strong></span>
+            <span>•</span>
+            <span>Supported currencies: <strong className="text-cyan-300 font-mono">{health?.supportedCurrencies?.join(", ") || "NGN, GHS, ZAR, KES, USD, XOF"}</strong></span>
+          </div>
         </div>
 
         {/* Filters and Search */}

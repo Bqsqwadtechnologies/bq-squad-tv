@@ -1,3 +1,4 @@
+import { FormDiscardButton } from "@/components/FormDiscardButton";
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Sparkles, Plus, Tag, Calendar, Percent, CheckCircle2, Sliders } from "lucide-react";
@@ -42,6 +43,62 @@ function PromotionsInner({
 }) {
   const [promotions, setPromotions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  // Form fields
+  const [code, setCode] = useState("");
+  const [discountType, setDiscountType] = useState<"percent" | "fixed_credits">("percent");
+  const [discountValue, setDiscountValue] = useState<number>(20);
+  const [maxUses, setMaxUses] = useState<number>(1000);
+  const [expiresAt, setExpiresAt] = useState("2026-12-31T23:59:59Z");
+
+  function resetForm() {
+    setCode("");
+    setDiscountType("percent");
+    setDiscountValue(20);
+    setMaxUses(1000);
+    setExpiresAt("2026-12-31T23:59:59Z");
+    setFormError(null);
+    setModalOpen(false);
+  }
+
+  async function handleCreatePromotion(e: React.FormEvent) {
+    e.preventDefault();
+    setFormError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/public/v1/zillionaire/promotions/", {
+        method: "POST",
+        headers: {
+          ...(await getWebAuthHeaders(token)),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: code.trim().toUpperCase(),
+          discountType,
+          discountValue: Number(discountValue),
+          startsAt: new Date().toISOString(),
+          expiresAt: new Date(expiresAt).toISOString(),
+          maxUses: Number(maxUses),
+          featuredPlacement: false,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || data.error || "Failed to create promotion");
+      }
+      if (data.promotion) {
+        setPromotions((prev) => [data.promotion, ...prev]);
+      }
+      resetForm();
+    } catch (err: any) {
+      setFormError(err.message || "Failed to create campaign");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -97,7 +154,11 @@ function PromotionsInner({
           title="Active Promotional Campaigns"
           subtitle="Real-time discount codes and bonus programs"
           action={
-            <button className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] hover:brightness-110">
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] hover:brightness-110"
+            >
               <Plus className="h-4 w-4" />
               <span>Create Campaign</span>
             </button>
@@ -126,6 +187,111 @@ function PromotionsInner({
             </div>
           )}
         </ConsoleCard>
+
+        {/* Create Campaign Modal */}
+        {modalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="max-w-md w-full rounded-3xl border border-white/10 bg-[#07143D] p-6 shadow-2xl">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Sparkles size={18} className="text-cyan-400" />
+                  <span>New Promotional Campaign</span>
+                </h3>
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="rounded-lg p-1 text-slate-400 hover:text-white hover:bg-white/10"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {formError && (
+                <div className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300">
+                  {formError}
+                </div>
+              )}
+
+              <form onSubmit={handleCreatePromotion} className="space-y-4 text-xs">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Campaign Code *</label>
+                  <input
+                    type="text"
+                    required
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.toUpperCase())}
+                    placeholder="e.g. SUMMER2026"
+                    className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-white font-mono uppercase focus:border-cyan-400 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Discount Type *</label>
+                    <select
+                      value={discountType}
+                      onChange={(e) => setDiscountType(e.target.value as any)}
+                      className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                    >
+                      <option value="percent">Percentage (%)</option>
+                      <option value="fixed_credits">Fixed Credits</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">
+                      {discountType === "percent" ? "Discount Value (%)" : "Credits Value"} *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      max={discountType === "percent" ? 100 : 100000}
+                      value={discountValue}
+                      onChange={(e) => setDiscountValue(Number(e.target.value))}
+                      className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Maximum Uses *</label>
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      max={1000000}
+                      value={maxUses}
+                      onChange={(e) => setMaxUses(Number(e.target.value))}
+                      className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">Expires At *</label>
+                    <input
+                      type="date"
+                      required
+                      value={expiresAt.slice(0, 10)}
+                      onChange={(e) => setExpiresAt(e.target.value + "T23:59:59Z")}
+                      className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-white focus:border-cyan-400 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+                  <FormDiscardButton onDiscard={resetForm} label="Discard" />
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="rounded-xl bg-cyan-400 px-4 py-2 font-bold text-[#030e28] hover:brightness-110 disabled:opacity-50"
+                  >
+                    {submitting ? "Creating…" : "Save Campaign"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </ConsoleShell>
   );
