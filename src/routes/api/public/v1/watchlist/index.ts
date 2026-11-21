@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { Firestore } from "@/lib/server/firebase-admin";
-import { errorBody, parseBody, requireUser } from "@/lib/server/api";
+import { errorBody, parseBody } from "@/lib/server/api";
+import { requireVerifiedViewer } from "@/lib/server/access";
 
 const addSchema = z
   .object({
@@ -16,7 +17,7 @@ export const Route = createFileRoute("/api/public/v1/watchlist/")({
     handlers: {
       GET: async ({ request }) => {
         try {
-          const user = await requireUser(request);
+          const { user } = await requireVerifiedViewer(request);
           const fs = await Firestore.create();
           const items = await fs.query("watchlist", {
             filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
