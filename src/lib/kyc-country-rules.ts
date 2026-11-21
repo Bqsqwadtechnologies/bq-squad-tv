@@ -556,7 +556,10 @@ export function getGenericRule(code: string, name: string, dialCode: string, cur
  * Retrieves the data-driven KYC rule for a given country code.
  * Falls back safely to generic rule so no country is ever blocked.
  */
-export function getCountryRule(countryCode: string): KycCountryRule {
+export function getCountryRule(
+  countryCode: string,
+  customOverrides?: Record<string, Partial<KycCountryRule>>
+): KycCountryRule {
   const upper = (countryCode || '').toUpperCase().trim();
   const found = ALL_COUNTRIES.find((c) => c.code === upper) || {
     code: upper || 'XX',
@@ -567,24 +570,29 @@ export function getCountryRule(countryCode: string): KycCountryRule {
 
   const generic = getGenericRule(found.code, found.name, found.dialCode, found.defaultCurrency);
   const tailored = TAILORED_COUNTRY_RULES[upper];
-  if (!tailored) {
+  const custom = customOverrides?.[upper];
+
+  if (!tailored && !custom) {
     return generic;
   }
 
   return {
     ...generic,
-    ...tailored,
+    ...(tailored || {}),
     code: found.code,
     name: found.name,
     flag: getFlagEmoji(found.code),
-    dialCode: found.dialCode,
-    defaultCurrency: found.defaultCurrency,
-    isGeneric: false,
+    dialCode: tailored?.dialCode || found.dialCode,
+    defaultCurrency: tailored?.defaultCurrency || found.defaultCurrency,
+    isGeneric: !tailored && !custom,
+    ...(custom || {}),
   };
 }
 
-export function getAllCountryRules(): KycCountryRule[] {
-  return ALL_COUNTRIES.map((c) => getCountryRule(c.code));
+export function getAllCountryRules(
+  customOverrides?: Record<string, Partial<KycCountryRule>>
+): KycCountryRule[] {
+  return ALL_COUNTRIES.map((c) => getCountryRule(c.code, customOverrides));
 }
 
 export function validateIdFormat(
@@ -648,3 +656,5 @@ export function validateCompanyRegistryFormat(
   }
   return { valid: true };
 }
+
+export { validateCompanyRegistryFormat as validateCompanyRegistrationFormat };

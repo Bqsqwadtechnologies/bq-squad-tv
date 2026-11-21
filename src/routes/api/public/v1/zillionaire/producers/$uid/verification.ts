@@ -1,3 +1,4 @@
+import { reviewKycProfile } from "@/lib/server/kyc/persistence";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
@@ -205,6 +206,18 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/producers/$uid/
               toStatus: nextStatus,
             },
           });
+          if (nextStatus === "APPROVED" || nextStatus === "REJECTED") {
+            await reviewKycProfile(fs, {
+              uid,
+              reviewerUid: reviewer.uid,
+              status: nextStatus === "APPROVED" ? "approved" : "rejected",
+              reason: body.reason,
+              notes: "Producer verification review action: " + action,
+            }).catch((err) => {
+              console.warn("[KYC] Profile review mirror warning:", err);
+            });
+          }
+
           return Response.json({ uid, verificationStatus: nextStatus, action, reviewedAt: now });
         } catch (error) {
           return errorBody(error);

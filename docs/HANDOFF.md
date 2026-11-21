@@ -1,5 +1,5 @@
-Last verified work: v6-05-A1 key hardening; v6-05-A2 country directory and provider picker enhancements are partial.
-Next batch: v6-05-A2 — finish producer country-first KYC and owner-editable country rules.
-Known gaps: no persistent KYC/private-storage/viewer integration; provider picker is now searchable but A2 flow/rules editing are incomplete.
-Files touched: src/components/KycCountryPicker.tsx, src/components/ProviderRegistrationFlow.tsx, src/test/kyc-country-picker.test.tsx, docs/DECISIONS.md, docs/HANDOFF.md, docs/PUSH-LOG.md.
-Checks run: A1 utility tests 5 passed; A2 tests 8 passed; changed-file lint clean; build and public-text scan clean; repo typecheck has pre-existing errors.
+Last verified work: v6-05-A1 persistence & viewer, v6-05-A2 producer flow & owner rules, v6-05-A3 Brevo phone OTP.
+Next batch: v6-05-A4 — KYC status gate on producer content uploads and provider channel publishing.
+Known gaps: Live SMS requires production BREVO_API_KEY / BREVO_SMS_SENDER; KYC gating on upload pipelines is next.
+Files touched: src/lib/server/kyc/persistence.ts, src/routes/api/public/v1/zillionaire/kyc/view-doc.ts, src/routes/api/public/v1/zillionaire/kyc/country-rules.ts, src/routes/api/public/v1/kyc/otp.ts, src/lib/server/kyc/sms-brevo.ts, src/components/ProducerKycFlow.tsx, src/components/KycPhoneVerification.tsx, src/routes/producer.index.tsx, src/routes/zillionaire.geo-rules.tsx, src/test/*.test.ts.
+Checks run: 22 vitest tests in 6 test files passed; build succeeded; scan:public-text clean; security fail-closed verified.

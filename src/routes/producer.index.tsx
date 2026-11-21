@@ -1,3 +1,4 @@
+import { ProducerKycFlow } from "@/components/ProducerKycFlow";
 import { getNextPayoutWindow } from "@/lib/payout-calendar";
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
 import { ConsoleShell, ConsoleKpiCard } from "@/components/ConsoleShell";
@@ -13,6 +14,7 @@ import {
   Users,
   Wallet,
   Clock,
+  ShieldCheck,
   TrendingUp,
   UploadCloud,
   Download,
@@ -119,6 +121,7 @@ function ProducerDashboardInner({
   const [selectedPeriod, setSelectedPeriod] = useState<"24h" | "7d" | "30d" | "12m">("30d");
   const payoutWindow = getNextPayoutWindow();
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
+  const [showKycModal, setShowKycModal] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
@@ -289,6 +292,80 @@ function ProducerDashboardInner({
             >
               Open Zillionaire Dashboard →
             </a>
+          </div>
+        )}
+
+        {/* KYC Verification Status Banner */}
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                summary?.producerStatus === "APPROVED"
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : summary?.producerStatus === "PENDING"
+                  ? "bg-amber-500/20 text-amber-400"
+                  : "bg-cyan-500/20 text-cyan-400"
+              }`}>
+                {summary?.producerStatus === "APPROVED" ? (
+                  <BadgeCheck className="h-6 w-6" />
+                ) : summary?.producerStatus === "PENDING" ? (
+                  <Clock className="h-6 w-6" />
+                ) : (
+                  <ShieldCheck className="h-6 w-6" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-white">Identity & Payout Verification</h3>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    summary?.producerStatus === "APPROVED"
+                      ? "bg-emerald-500/20 text-emerald-400"
+                      : summary?.producerStatus === "PENDING"
+                      ? "bg-amber-500/20 text-amber-400"
+                      : "bg-slate-800 text-slate-300"
+                  }`}>
+                    {summary?.producerStatus === "APPROVED"
+                      ? "Verified"
+                      : summary?.producerStatus === "PENDING"
+                      ? "Under Compliance Review"
+                      : "Verification Required"}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {summary?.producerStatus === "APPROVED"
+                    ? "Your identity is verified. Royalty payouts are active for your registered settlement account."
+                    : summary?.producerStatus === "PENDING"
+                    ? "Your verification documents are being reviewed by compliance. Payouts unlock upon approval."
+                    : "Complete country-first identity verification and phone OTP to unlock earnings and payout distributions."}
+                </p>
+              </div>
+            </div>
+
+            {summary?.producerStatus !== "APPROVED" && (
+              <button
+                type="button"
+                onClick={() => setShowKycModal(true)}
+                className="rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-[#031039] transition hover:bg-cyan-400 shadow-md"
+              >
+                {summary?.producerStatus === "PENDING" ? "Update Verification" : "Start Country-First Verification →"}
+              </button>
+            )}
+          </div>
+        </section>
+
+        {/* KYC Modal Overlay */}
+        {showKycModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm overflow-y-auto">
+            <div className="relative my-8 w-full max-w-2xl">
+              <ProducerKycFlow
+                authToken={token}
+                onCancel={() => setShowKycModal(false)}
+                onSuccess={() => {
+                  setShowKycModal(false);
+                  void load(token);
+                }}
+              />
+            </div>
           </div>
         )}
 

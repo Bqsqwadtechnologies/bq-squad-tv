@@ -140,6 +140,7 @@ import { Route as ApiPublicV1EpgIndexRouteImport } from './routes/api/public/v1/
 import { Route as ApiPublicV1EpgRemindRouteImport } from './routes/api/public/v1/epg/remind'
 import { Route as ApiPublicV1ErrorsBeaconRouteImport } from './routes/api/public/v1/errors/beacon'
 import { Route as ApiPublicV1ErrorsReportRouteImport } from './routes/api/public/v1/errors/report'
+import { Route as ApiPublicV1KycOtpRouteImport } from './routes/api/public/v1/kyc/otp'
 import { Route as ApiPublicV1LegalAcceptanceRouteImport } from './routes/api/public/v1/legal/acceptance'
 import { Route as ApiPublicV1LegalConsentRouteImport } from './routes/api/public/v1/legal/consent'
 import { Route as ApiPublicV1LegalRequiredRouteImport } from './routes/api/public/v1/legal/required'
@@ -264,6 +265,8 @@ import { Route as ApiPublicV1ZillionaireCopyrightCasesIndexRouteImport } from '.
 import { Route as ApiPublicV1ZillionaireDeliveryIndexRouteImport } from './routes/api/public/v1/zillionaire/delivery/index'
 import { Route as ApiPublicV1ZillionaireEmailTestRouteImport } from './routes/api/public/v1/zillionaire/email/test'
 import { Route as ApiPublicV1ZillionaireErrorsIndexRouteImport } from './routes/api/public/v1/zillionaire/errors/index'
+import { Route as ApiPublicV1ZillionaireKycCountryRulesRouteImport } from './routes/api/public/v1/zillionaire/kyc/country-rules'
+import { Route as ApiPublicV1ZillionaireKycViewDocRouteImport } from './routes/api/public/v1/zillionaire/kyc/view-doc'
 import { Route as ApiPublicV1ZillionaireLiveChannelsIndexRouteImport } from './routes/api/public/v1/zillionaire/live-channels/index'
 import { Route as ApiPublicV1ZillionaireLiveChatIndexRouteImport } from './routes/api/public/v1/zillionaire/live-chat/index'
 import { Route as ApiPublicV1ZillionaireMigrationZillionaireRouteImport } from './routes/api/public/v1/zillionaire/migration/zillionaire'
@@ -1041,6 +1044,11 @@ const ApiPublicV1ErrorsReportRoute = ApiPublicV1ErrorsReportRouteImport.update({
   path: '/api/public/v1/errors/report',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1KycOtpRoute = ApiPublicV1KycOtpRouteImport.update({
+  id: '/api/public/v1/kyc/otp',
+  path: '/api/public/v1/kyc/otp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1LegalAcceptanceRoute =
   ApiPublicV1LegalAcceptanceRouteImport.update({
     id: '/api/public/v1/legal/acceptance',
@@ -1776,6 +1784,18 @@ const ApiPublicV1ZillionaireErrorsIndexRoute =
     path: '/api/public/v1/zillionaire/errors/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireKycCountryRulesRoute =
+  ApiPublicV1ZillionaireKycCountryRulesRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/country-rules',
+    path: '/api/public/v1/zillionaire/kyc/country-rules',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireKycViewDocRoute =
+  ApiPublicV1ZillionaireKycViewDocRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/view-doc',
+    path: '/api/public/v1/zillionaire/kyc/view-doc',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireLiveChannelsIndexRoute =
   ApiPublicV1ZillionaireLiveChannelsIndexRouteImport.update({
     id: '/api/public/v1/zillionaire/live-channels/',
@@ -2451,6 +2471,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/epg/remind': typeof ApiPublicV1EpgRemindRoute
   '/api/public/v1/errors/beacon': typeof ApiPublicV1ErrorsBeaconRoute
   '/api/public/v1/errors/report': typeof ApiPublicV1ErrorsReportRoute
+  '/api/public/v1/kyc/otp': typeof ApiPublicV1KycOtpRoute
   '/api/public/v1/legal/acceptance': typeof ApiPublicV1LegalAcceptanceRoute
   '/api/public/v1/legal/consent': typeof ApiPublicV1LegalConsentRoute
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
@@ -2570,6 +2591,8 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
+  '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
+  '/api/public/v1/zillionaire/kyc/view-doc': typeof ApiPublicV1ZillionaireKycViewDocRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
   '/api/public/v1/zillionaire/pages/publish': typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -2799,6 +2822,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/epg/remind': typeof ApiPublicV1EpgRemindRoute
   '/api/public/v1/errors/beacon': typeof ApiPublicV1ErrorsBeaconRoute
   '/api/public/v1/errors/report': typeof ApiPublicV1ErrorsReportRoute
+  '/api/public/v1/kyc/otp': typeof ApiPublicV1KycOtpRoute
   '/api/public/v1/legal/acceptance': typeof ApiPublicV1LegalAcceptanceRoute
   '/api/public/v1/legal/consent': typeof ApiPublicV1LegalConsentRoute
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
@@ -2917,6 +2941,8 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
+  '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
+  '/api/public/v1/zillionaire/kyc/view-doc': typeof ApiPublicV1ZillionaireKycViewDocRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
   '/api/public/v1/zillionaire/pages/publish': typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -3147,6 +3173,7 @@ export interface FileRoutesById {
   '/api/public/v1/epg/remind': typeof ApiPublicV1EpgRemindRoute
   '/api/public/v1/errors/beacon': typeof ApiPublicV1ErrorsBeaconRoute
   '/api/public/v1/errors/report': typeof ApiPublicV1ErrorsReportRoute
+  '/api/public/v1/kyc/otp': typeof ApiPublicV1KycOtpRoute
   '/api/public/v1/legal/acceptance': typeof ApiPublicV1LegalAcceptanceRoute
   '/api/public/v1/legal/consent': typeof ApiPublicV1LegalConsentRoute
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
@@ -3266,6 +3293,8 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
+  '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
+  '/api/public/v1/zillionaire/kyc/view-doc': typeof ApiPublicV1ZillionaireKycViewDocRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
   '/api/public/v1/zillionaire/pages/publish': typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -3497,6 +3526,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/epg/remind'
     | '/api/public/v1/errors/beacon'
     | '/api/public/v1/errors/report'
+    | '/api/public/v1/kyc/otp'
     | '/api/public/v1/legal/acceptance'
     | '/api/public/v1/legal/consent'
     | '/api/public/v1/legal/required'
@@ -3616,6 +3646,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/pricing'
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
+    | '/api/public/v1/zillionaire/kyc/country-rules'
+    | '/api/public/v1/zillionaire/kyc/view-doc'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
     | '/api/public/v1/zillionaire/pages/publish'
@@ -3845,6 +3877,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/epg/remind'
     | '/api/public/v1/errors/beacon'
     | '/api/public/v1/errors/report'
+    | '/api/public/v1/kyc/otp'
     | '/api/public/v1/legal/acceptance'
     | '/api/public/v1/legal/consent'
     | '/api/public/v1/legal/required'
@@ -3963,6 +3996,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/pricing'
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
+    | '/api/public/v1/zillionaire/kyc/country-rules'
+    | '/api/public/v1/zillionaire/kyc/view-doc'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
     | '/api/public/v1/zillionaire/pages/publish'
@@ -4192,6 +4227,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/epg/remind'
     | '/api/public/v1/errors/beacon'
     | '/api/public/v1/errors/report'
+    | '/api/public/v1/kyc/otp'
     | '/api/public/v1/legal/acceptance'
     | '/api/public/v1/legal/consent'
     | '/api/public/v1/legal/required'
@@ -4311,6 +4347,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/pricing'
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
+    | '/api/public/v1/zillionaire/kyc/country-rules'
+    | '/api/public/v1/zillionaire/kyc/view-doc'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
     | '/api/public/v1/zillionaire/pages/publish'
@@ -4540,6 +4578,7 @@ export interface RootRouteChildren {
   ApiPublicV1EpgRemindRoute: typeof ApiPublicV1EpgRemindRoute
   ApiPublicV1ErrorsBeaconRoute: typeof ApiPublicV1ErrorsBeaconRoute
   ApiPublicV1ErrorsReportRoute: typeof ApiPublicV1ErrorsReportRoute
+  ApiPublicV1KycOtpRoute: typeof ApiPublicV1KycOtpRoute
   ApiPublicV1LegalAcceptanceRoute: typeof ApiPublicV1LegalAcceptanceRoute
   ApiPublicV1LegalConsentRoute: typeof ApiPublicV1LegalConsentRoute
   ApiPublicV1LegalRequiredRoute: typeof ApiPublicV1LegalRequiredRoute
@@ -4641,6 +4680,8 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireConfigPricingRoute: typeof ApiPublicV1ZillionaireConfigPricingRoute
   ApiPublicV1ZillionaireConfigSettingsRoute: typeof ApiPublicV1ZillionaireConfigSettingsRoute
   ApiPublicV1ZillionaireEmailTestRoute: typeof ApiPublicV1ZillionaireEmailTestRoute
+  ApiPublicV1ZillionaireKycCountryRulesRoute: typeof ApiPublicV1ZillionaireKycCountryRulesRoute
+  ApiPublicV1ZillionaireKycViewDocRoute: typeof ApiPublicV1ZillionaireKycViewDocRoute
   ApiPublicV1ZillionaireMigrationZillionaireRoute: typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   ApiPublicV1ZillionaireOperationsLiveRoute: typeof ApiPublicV1ZillionaireOperationsLiveRoute
   ApiPublicV1ZillionairePagesPublishRoute: typeof ApiPublicV1ZillionairePagesPublishRoute
@@ -5647,6 +5688,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ErrorsReportRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/kyc/otp': {
+      id: '/api/public/v1/kyc/otp'
+      path: '/api/public/v1/kyc/otp'
+      fullPath: '/api/public/v1/kyc/otp'
+      preLoaderRoute: typeof ApiPublicV1KycOtpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/legal/acceptance': {
       id: '/api/public/v1/legal/acceptance'
       path: '/api/public/v1/legal/acceptance'
@@ -6513,6 +6561,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/zillionaire/errors'
       fullPath: '/api/public/v1/zillionaire/errors/'
       preLoaderRoute: typeof ApiPublicV1ZillionaireErrorsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/kyc/country-rules': {
+      id: '/api/public/v1/zillionaire/kyc/country-rules'
+      path: '/api/public/v1/zillionaire/kyc/country-rules'
+      fullPath: '/api/public/v1/zillionaire/kyc/country-rules'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycCountryRulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/kyc/view-doc': {
+      id: '/api/public/v1/zillionaire/kyc/view-doc'
+      path: '/api/public/v1/zillionaire/kyc/view-doc'
+      fullPath: '/api/public/v1/zillionaire/kyc/view-doc'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycViewDocRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/zillionaire/live-channels/': {
@@ -7551,6 +7613,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1EpgRemindRoute: ApiPublicV1EpgRemindRoute,
   ApiPublicV1ErrorsBeaconRoute: ApiPublicV1ErrorsBeaconRoute,
   ApiPublicV1ErrorsReportRoute: ApiPublicV1ErrorsReportRoute,
+  ApiPublicV1KycOtpRoute: ApiPublicV1KycOtpRoute,
   ApiPublicV1LegalAcceptanceRoute: ApiPublicV1LegalAcceptanceRoute,
   ApiPublicV1LegalConsentRoute: ApiPublicV1LegalConsentRoute,
   ApiPublicV1LegalRequiredRoute: ApiPublicV1LegalRequiredRoute,
@@ -7687,6 +7750,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ZillionaireConfigSettingsRoute:
     ApiPublicV1ZillionaireConfigSettingsRoute,
   ApiPublicV1ZillionaireEmailTestRoute: ApiPublicV1ZillionaireEmailTestRoute,
+  ApiPublicV1ZillionaireKycCountryRulesRoute:
+    ApiPublicV1ZillionaireKycCountryRulesRoute,
+  ApiPublicV1ZillionaireKycViewDocRoute: ApiPublicV1ZillionaireKycViewDocRoute,
   ApiPublicV1ZillionaireMigrationZillionaireRoute:
     ApiPublicV1ZillionaireMigrationZillionaireRoute,
   ApiPublicV1ZillionaireOperationsLiveRoute:

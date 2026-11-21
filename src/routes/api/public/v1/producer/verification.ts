@@ -1,3 +1,4 @@
+import { saveKycProfile } from "@/lib/server/kyc/persistence";
 import { createFileRoute } from "@tanstack/react-router";
 import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
 import { z } from "zod";
@@ -199,6 +200,21 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
               evidenceCount: paths.length,
             },
           });
+          const docPaths: Record<string, string> = {};
+          paths.forEach((p, i) => {
+            docPaths["evidence_doc_" + (i + 1)] = p;
+          });
+          await saveKycProfile(fs, {
+            uid: user.uid,
+            role: "producer",
+            kycType: (body.entityType === "registered_business" || body.entityType === "company") ? "business" : "individual",
+            kycCountry: body.countryCode,
+            documentVaultPaths: docPaths,
+            status: "pending",
+          }).catch((err) => {
+            console.warn("[KYC] Profile mirror sync warning:", err);
+          });
+
           return Response.json(
             { verificationStatus: "PENDING", submittedAt: now },
             { status: 202 },
