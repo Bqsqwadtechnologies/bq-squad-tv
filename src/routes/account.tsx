@@ -27,14 +27,11 @@ export const Route = createFileRoute("/account")({
   }),
 });
 
-let cachedGoogleClientId: string | null = null;
-
 function AccountPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [code, setCode] = useState("");
-  const [googleClientId, setGoogleClientId] = useState("");
   const [createAccount, setCreateAccount] = useState(false);
   const [verificationPending, setVerificationPending] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
@@ -91,19 +88,6 @@ function AccountPage() {
     document.documentElement.classList.toggle("dark", initialTheme === "dark");
     document.documentElement.classList.toggle("light", initialTheme === "light");
     let active = true;
-    if (cachedGoogleClientId !== null) {
-      setGoogleClientId(cachedGoogleClientId);
-    } else {
-      void fetch("/api/public/v1/auth/web/config", { cache: "no-store" })
-        .then((response) => response.json() as Promise<{ googleClientId?: string }>)
-        .then((config) => {
-          cachedGoogleClientId = config.googleClientId ?? "";
-          if (active) setGoogleClientId(cachedGoogleClientId);
-        })
-        .catch(() => {
-          if (active) setGoogleClientId("");
-        });
-    }
     void (async () => {
       const token = await restoreWebSession();
       if (!token || !active) return;
@@ -986,19 +970,8 @@ function AccountPage() {
                   />
                 </label>
                 <GoogleSignInButton
-                  clientId={googleClientId || undefined}
                   onCredential={handleGoogleCredential}
                   disabled={busy}
-                  onRetry={() => {
-                    cachedGoogleClientId = null;
-                    void fetch("/api/public/v1/auth/web/config", { cache: "no-store" })
-                      .then((r) => r.json() as Promise<{ googleClientId?: string }>)
-                      .then((c) => {
-                        cachedGoogleClientId = c.googleClientId ?? "";
-                        setGoogleClientId(cachedGoogleClientId);
-                      })
-                      .catch(() => setGoogleClientId(""));
-                  }}
                 />
                 <button
                   type="submit"
