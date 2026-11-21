@@ -59,8 +59,12 @@ export interface SaveKycInput {
   documentVaultPaths?: Record<string, string>;
   faceCaptureVaultPath?: string;
   riskScore?: number;
+  riskLevel?: "low" | "medium" | "high";
+  requiresFourEyes?: boolean;
+  riskFactors?: string[];
   riskFlags?: string[];
   verifierResult?: KycVerifierResult;
+  payoutTier?: 0 | 1 | 2;
   status?: KycStatus;
   providerId?: string;
 }
@@ -206,7 +210,11 @@ export async function saveKycProfile(
     },
     ...(input.faceCaptureVaultPath ? { faceCaptureVaultPath: input.faceCaptureVaultPath } : (existing?.faceCaptureVaultPath ? { faceCaptureVaultPath: existing.faceCaptureVaultPath } : {})),
     riskScore: input.riskScore ?? existing?.riskScore ?? 0,
+    riskLevel: input.riskLevel ?? existing?.riskLevel ?? "low",
+    requiresFourEyes: input.requiresFourEyes ?? existing?.requiresFourEyes ?? false,
+    riskFactors: input.riskFactors ?? existing?.riskFactors ?? [],
     riskFlags: input.riskFlags ?? existing?.riskFlags ?? [],
+    payoutTier: input.payoutTier ?? existing?.payoutTier ?? (existing?.kycStatus === "approved" ? 1 : 0),
     ...(input.verifierResult ? { verifierResult: input.verifierResult } : (existing?.verifierResult ? { verifierResult: existing.verifierResult } : {})),
     ...(input.legalName ? { legalName: input.legalName } : existing?.legalName ? { legalName: existing.legalName } : {}),
     ...(input.businessName ? { businessName: input.businessName } : existing?.businessName ? { businessName: existing.businessName } : {}),
@@ -286,13 +294,15 @@ export async function reviewKycProfile(
     notes: input.notes,
   };
 
+  const updatedTier = input.status === "approved" ? (profile.payoutTier === 2 ? 2 : 1) : 0;
   const updated: KycProfile = {
     ...profile,
     kycStatus: input.status,
+    payoutTier: updatedTier,
     kycVersion: nextVersion,
     kycReviewedAt: now,
     kycReviewedBy: input.reviewerUid,
-    kycRejectionReason: input.status === 'rejected' ? input.reason : undefined,
+    kycRejectionReason: input.status === "rejected" ? input.reason : undefined,
     kycHistory: [...profile.kycHistory, entry],
   };
 
@@ -302,6 +312,7 @@ export async function reviewKycProfile(
   if (profile.role === 'producer') {
     await fs.patchDoc(`producers/${input.uid}`, {
       kycStatus: input.status,
+      payoutTier: updatedTier,
       verificationStatus: input.status === 'approved' ? 'APPROVED' : 'REJECTED',
       reviewedAt: now,
       rejectionReason: input.status === 'rejected' ? input.reason : null,
@@ -309,6 +320,7 @@ export async function reviewKycProfile(
   } else if (profile.role === 'provider') {
     await fs.patchDoc(`providers/${input.uid}`, {
       kycStatus: input.status,
+      payoutTier: updatedTier,
       status: input.status === 'approved' ? 'active' : 'rejected',
       reviewedAt: now,
       rejectionReason: input.status === 'rejected' ? input.reason : null,

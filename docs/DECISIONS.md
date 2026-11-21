@@ -761,3 +761,33 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - Integrated verification provider checks into both producer (`/api/public/v1/producer/verification`) and provider (`/api/public/v1/provider/verification`) submission endpoints.
   - Exposed automated checks and advisory notices in the Zillionaire detail API (`/api/public/v1/zillionaire/kyc/detail`).
   - Documented configuration secrets and failure handling in `docs/OWNER-ACTIONS.md`.
+
+## Batch C2 — Risk Tiers, Velocity Limits, and Four-Eyes Dual Approval
+
+- **Status**: Implemented & Verified
+- **Date**: 2026-11-21
+- **Scope & Rationale**:
+  - Implemented automated risk scoring engine (`src/lib/server/kyc/risk-scoring.ts`):
+    - Base risk score begins at 10 (low).
+    - FATF high-risk jurisdictions (+50 score) and monitoring jurisdictions (+20 score).
+    - Cross-account duplicate ID number (+35 score), duplicate phone (+20 score), duplicate bank (+30 score).
+    - Name mismatch between applicant legal identity and payout beneficiary (+25 score via Levenshtein distance).
+    - Expiries, high submission velocity, and sub-threshold document quality indicators.
+    - Automatic classification: Low (<40), Medium (40-69), High (>=70). Any high-risk case flags `requiresFourEyes = true`.
+  - Implemented owner-editable risk and tier settings (`src/lib/server/kyc/risk-settings.ts`):
+    - Configured default Tier 1 cumulative payout limits: $10,000 USD (1,000,000 cents) and ₦15,000,000 NGN (1,500,000,000 kobo).
+    - High-risk threshold score default 70; four-eyes policy flag default true.
+    - Owner settings endpoint GET/PATCH at `/api/public/v1/zillionaire/kyc/risk-settings` with mandatory reasoned audit logs.
+  - Enforced 3-Tier cumulative payout limits in producer payout requests (`src/routes/api/public/v1/producer/payouts/request.ts`):
+    - Tier 0: Unverified applicants cannot request payouts (403 `KYC_NOT_APPROVED`).
+    - Tier 1: Approved applicants can request cumulative payouts up to the owner-configured limit ($10,000 / ₦15,000,000). Requests exceeding the cumulative threshold fail closed with 403 `TIER_LIMIT_EXCEEDED` requiring Tier 2 verification.
+    - Tier 2: Enhanced verification unlocked for higher disbursements.
+  - Implemented Tier 2 Enhanced KYC submission endpoint (`src/routes/api/public/v1/producer/tier2-verification.ts`):
+    - Validates approved Tier 1 status.
+    - Accepts proof of address vault path, source of income vault path, and income declaration.
+    - Sets `tier2Status = "pending_review"` and writes audit trail.
+  - Enforced Four-Eyes Dual Reviewer policy on high-risk KYC applications (`src/routes/api/public/v1/zillionaire/kyc/detail.ts`):
+    - When `requiresFourEyes = true` or `riskLevel === "high"`, the first compliance reviewer approval records partial approval (`firstReviewerUid`, `firstReviewedAt`, `requiresSecondApproval = true`) and retains `kycStatus = "pending"`.
+    - The first reviewer cannot approve a second time (fails closed with 400 `FOUR_EYES_DIFFERENT_REVIEWER`).
+    - A second distinct reviewer must review and approve to finalize `kycStatus = "approved"` and unlock `payoutTier = 1`.
+  - Verified with 10 unit and integration tests (`src/test/batch-c2-risk-tiers-limits.test.ts`), 104 passing tests overall, 368 routes verified, clean public-text scan, and clean production build.

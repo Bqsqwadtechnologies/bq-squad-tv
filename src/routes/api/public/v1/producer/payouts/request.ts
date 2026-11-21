@@ -1,3 +1,4 @@
+import { getKycRiskSettings } from "@/lib/server/kyc/risk-settings";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
@@ -68,7 +69,41 @@ export const Route = createFileRoute("/api/public/v1/producer/payouts/request")(
             );
           }
 
-          // 3. Minimum Payout Check per Currency
+          // 3. Tier 1 Cumulative Limit Check (Batch C2)
+          const currentTier = typeof kycDoc?.["payoutTier"] === "number" ? kycDoc["payoutTier"] : 1;
+          if (currentTier < 2) {
+            const riskSettings = await getKycRiskSettings(fs);
+            const tier1Limit =
+              currency === "NGN"
+                ? riskSettings.tier1CumulativeLimitNgnMinor
+                : riskSettings.tier1CumulativeLimitUsdMinor;
+
+            // Query existing payouts for cumulative calculation
+            const allUserPayouts = await fs.query("payouts", { limit: 500 }).catch(() => []);
+            let cumulativePaidMinor = 0;
+            for (const p of allUserPayouts) {
+              if (p["uid"] === user.uid && p["currency"] === currency && (p["status"] === "PAID" || p["status"] === "APPROVED")) {
+                cumulativePaidMinor += (typeof p["amountMinor"] === "number" ? p["amountMinor"] : 0);
+              }
+            }
+
+            if (cumulativePaidMinor + body.amountMinor > tier1Limit) {
+              const limitFormatted =
+                currency === "USD"
+                  ? `$${(tier1Limit / 100).toLocaleString()}`
+                  : currency === "NGN"
+                    ? `₦${(tier1Limit / 100).toLocaleString()}`
+                    : `${(tier1Limit / 100).toLocaleString()} ${currency}`;
+
+              throw new ApiError(
+                403,
+                "TIER_LIMIT_EXCEEDED",
+                `Cumulative payouts exceed the Tier 1 threshold of ${limitFormatted}. Tier 2 Enhanced KYC (proof of address and source of income) is required to unlock higher payouts.`,
+              );
+            }
+          }
+
+          // 4. Minimum Payout Check per Currency
           const rules = await getPayoutRules(fs);
           const minPayout = getMinimumPayoutForCurrency(rules, currency);
           if (body.amountMinor < minPayout) {

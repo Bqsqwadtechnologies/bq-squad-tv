@@ -121,3 +121,5 @@ PUSH BADGE #71 SUCCESSFUL — v6-05-B7 — Email status and notification outbox 
 PUSH BADGE #72 SUCCESSFUL — v6-05-B8 — Verification and payout master regression testing, security checklist, and handoff (91 tests across 18 test files passing, storage and encryption verification, payout safety rules and currency thresholds, dual-delivery outbox validation, brand guardrails, route integrity 366 routes, public-text scan clean, production build clean).
 
 PUSH BADGE #73 SUCCESSFUL — v6-05-C1 — Verification provider adapter and automated checks (clean KycVerifier interface, ManualKycVerifier default, ExternalKycVerifierAdapter with non-blocking fallback to manual review on timeout or error, owner final approval authority, verifierResult persistence, Zillionaire automated checks readout, and 94 passing tests).
+
+PUSH BADGE #74 SUCCESSFUL — v6-05-C2 — Risk tiers, cumulative velocity limits, enhanced Tier 2 verification, automated risk scoring, and four-eyes dual reviewer approval for high-risk KYC submissions.

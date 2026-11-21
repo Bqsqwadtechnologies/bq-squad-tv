@@ -136,6 +136,17 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
                 duplicateTaxDetected: duplicateTaxWarning,
                 duplicateBankDetected: duplicateBankWarning,
                 sanctionsCleared: false, // requires manual clearance in reviewer UI
+                riskScore: profile.riskScore ?? 0,
+                riskLevel: profile.riskLevel ?? ((profile.riskScore && profile.riskScore >= 70) ? "high" : "low"),
+                requiresFourEyes: profile.requiresFourEyes ?? ((profile.riskScore && profile.riskScore >= 70) ? true : false),
+                riskFactors: profile.riskFactors ?? [],
+                firstReviewerUid: profile.firstReviewerUid ?? null,
+                firstReviewerEmail: profile.firstReviewerEmail ?? null,
+                firstReviewedAt: profile.firstReviewedAt ?? null,
+                secondReviewerUid: profile.secondReviewerUid ?? null,
+                secondReviewerEmail: profile.secondReviewerEmail ?? null,
+                secondReviewedAt: profile.secondReviewedAt ?? null,
+                payoutTier: profile.payoutTier ?? (profile.kycStatus === "approved" ? 1 : 0),
                 verifierResult: profile.verifierResult || null,
                 verifierNotice:
                   profile.verifierResult?.ownerNotice ||
@@ -189,11 +200,88 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
           else if (body.action === "request_changes") (newStatus as any) = "needs_changes";
           else if (body.action === "force_rekyc") newStatus = "unsubmitted";
 
-          if (body.action === "approve" || body.action === "reject") {
+          if (body.action === "approve") {
+            const isHighRisk = existingProfile.requiresFourEyes === true || existingProfile.riskLevel === "high" || (existingProfile.riskScore && existingProfile.riskScore >= 70);
+
+            if (isHighRisk) {
+              if (!existingProfile.firstReviewerUid) {
+                // First reviewer approval recorded
+                await fs.patchDoc(`kycProfiles/${body.uid}`, {
+                  firstReviewerUid: user.uid,
+                  firstReviewerEmail: user.email || "",
+                  firstReviewedAt: now,
+                  firstReviewerNotes: body.notes || "",
+                  requiresSecondApproval: true,
+                  updatedAt: now,
+                });
+                await writeAuditLog(fs, {
+                  action: "kyc.first_approval_recorded",
+                  actorUid: user.uid,
+                  actorEmail: user.email || "",
+                  targetType: "user",
+                  targetId: body.uid,
+                  reason: body.notes || "First compliance approval recorded for high-risk KYC case under four-eyes policy.",
+                });
+                return Response.json({
+                  ok: true,
+                  partialApproval: true,
+                  requiresFourEyes: true,
+                  message: "First reviewer approval recorded. High-risk cases require a second different reviewer (four-eyes) to finalize approval.",
+                  profile: {
+                    ...existingProfile,
+                    firstReviewerUid: user.uid,
+                    firstReviewerEmail: user.email || "",
+                    firstReviewedAt: now,
+                  },
+                });
+              } else {
+                // Second reviewer approval attempt
+                if (existingProfile.firstReviewerUid === user.uid) {
+                  throw new ApiError(
+                    400,
+                    "FOUR_EYES_DIFFERENT_REVIEWER",
+                    "High-risk cases require a second different reviewer to approve.",
+                  );
+                }
+                // Second reviewer is different
+                await reviewKycProfile(fs, {
+                  uid: body.uid,
+                  reviewerUid: user.uid,
+                  status: "approved",
+                  notes: body.notes,
+                });
+                await fs.patchDoc(`kycProfiles/${body.uid}`, {
+                  secondReviewerUid: user.uid,
+                  secondReviewerEmail: user.email || "",
+                  secondReviewedAt: now,
+                  secondReviewerNotes: body.notes || "",
+                  requiresSecondApproval: false,
+                  payoutTier: 1,
+                  updatedAt: now,
+                });
+                await writeAuditLog(fs, {
+                  action: "kyc.second_approval_finalized",
+                  actorUid: user.uid,
+                  actorEmail: user.email || "",
+                  targetType: "user",
+                  targetId: body.uid,
+                  reason: body.notes || "Second compliance approval finalized under four-eyes policy.",
+                });
+              }
+            } else {
+              // Standard low/medium risk case: single reviewer approval
+              await reviewKycProfile(fs, {
+                uid: body.uid,
+                reviewerUid: user.uid,
+                status: "approved",
+                notes: body.notes,
+              });
+            }
+          } else if (body.action === "reject") {
             await reviewKycProfile(fs, {
               uid: body.uid,
               reviewerUid: user.uid,
-              status: body.action === "approve" ? "approved" : "rejected",
+              status: "rejected",
               reason: body.reason,
               notes: body.notes,
             });

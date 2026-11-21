@@ -1,3 +1,5 @@
+import { calculateKycRiskScore } from "@/lib/server/kyc/risk-scoring";
+import { maskIdNumber } from "@/lib/server/kyc/types";
 import { getKycVerifier } from "@/lib/server/kyc/verifier";
 import { saveKycProfile, deleteKycDraft } from "@/lib/server/kyc/persistence";
 import { isAge18OrOlder } from "@/lib/kyc-country-rules";
@@ -308,6 +310,34 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
               ? "producer_business"
               : "producer_personal";
 
+          // Batch C2: Calculate Risk Score and Duplicate Checks
+          const existingPayout = await fs.getDoc(`payoutProfiles/${user.uid}`).catch(() => null);
+          const payoutAccountName = existingPayout
+            ? (existingPayout["beneficiaryName"] || existingPayout["accountName"] || "")
+            : undefined;
+
+          let duplicateIdFound = false;
+          let duplicatePhoneFound = false;
+          const otherProfiles = await fs.query("kycProfiles", { limit: 100 }).catch(() => []);
+          for (const other of otherProfiles) {
+            if (other["uid"] === user.uid) continue;
+            if (body.idNumber && other["maskedIdNumber"] && other["maskedIdNumber"] === maskIdNumber(body.idNumber)) {
+              duplicateIdFound = true;
+            }
+            if (body.phone && other["phone"] === body.phone) {
+              duplicatePhoneFound = true;
+            }
+          }
+
+          const riskResult = calculateKycRiskScore({
+            applicantUid: user.uid,
+            country: body.countryCode,
+            applicantName: body.legalName || body.businessName || "",
+            payoutAccountName,
+            duplicateIdFound,
+            duplicatePhoneFound,
+          });
+
           const verifier = getKycVerifier();
           const verifierResult = await verifier.evaluateCase({
             uid: user.uid,
@@ -351,6 +381,10 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
             documentVaultPaths: docPaths,
             status: "pending",
             verifierResult,
+            riskScore: riskResult.riskScore,
+            riskLevel: riskResult.riskLevel,
+            requiresFourEyes: riskResult.requiresFourEyes,
+            riskFactors: riskResult.factors.map((f) => f.code),
           }).catch((err) => {
             console.warn("[KYC] Profile mirror sync warning:", err);
           });

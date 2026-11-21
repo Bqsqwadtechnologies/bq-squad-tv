@@ -1,3 +1,5 @@
+import { calculateKycRiskScore } from "@/lib/server/kyc/risk-scoring";
+import { maskIdNumber } from "@/lib/server/kyc/types";
 import { getKycVerifier } from "@/lib/server/kyc/verifier";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
@@ -280,6 +282,34 @@ export const Route = createFileRoute("/api/public/v1/provider/verification")({
           const providerUser = await fs.getDoc(`providerUsers/${user.uid}`);
           const providerId = (providerUser?.["providerId"] as string) || `prov_${Date.now()}`;
 
+          // Batch C2: Risk Scoring and Duplicate Checks
+          const existingPayout = await fs.getDoc(`payoutProfiles/${user.uid}`).catch(() => null);
+          const payoutAccountName = existingPayout
+            ? (existingPayout["beneficiaryName"] || existingPayout["accountName"] || "")
+            : undefined;
+
+          let duplicateIdFound = false;
+          let duplicatePhoneFound = false;
+          const otherProfiles = await fs.query("kycProfiles", { limit: 100 }).catch(() => []);
+          for (const other of otherProfiles) {
+            if (other["uid"] === user.uid) continue;
+            if (body.representative.idNumber && other["maskedIdNumber"] && other["maskedIdNumber"] === maskIdNumber(body.representative.idNumber)) {
+              duplicateIdFound = true;
+            }
+            if (body.businessPhone && other["phone"] === body.businessPhone) {
+              duplicatePhoneFound = true;
+            }
+          }
+
+          const riskResult = calculateKycRiskScore({
+            applicantUid: user.uid,
+            country: countryCode,
+            applicantName: body.legalCompanyName,
+            payoutAccountName,
+            duplicateIdFound,
+            duplicatePhoneFound,
+          });
+
           // 7. Evaluate with KYC verification adapter
           const verifier = getKycVerifier();
           const verifierResult = await verifier.evaluateCase({
@@ -329,6 +359,10 @@ export const Route = createFileRoute("/api/public/v1/provider/verification")({
             documentVaultPaths: docPaths,
             status: "pending",
             verifierResult,
+            riskScore: riskResult.riskScore,
+            riskLevel: riskResult.riskLevel,
+            requiresFourEyes: riskResult.requiresFourEyes,
+            riskFactors: riskResult.factors.map((f) => f.code),
           });
 
           // Mark upload sessions consumed

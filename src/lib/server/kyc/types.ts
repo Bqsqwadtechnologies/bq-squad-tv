@@ -87,8 +87,33 @@ export interface KycProfile {
   documentVaultPaths?: Record<string, string>;
   faceCaptureVaultPath?: string;
   riskScore?: number;
+  riskLevel?: "low" | "medium" | "high";
+  requiresFourEyes?: boolean;
+  riskFactors?: string[];
   riskFlags?: string[];
   verifierResult?: KycVerifierResult;
+
+  // Tier & Enhanced KYC
+  payoutTier?: 0 | 1 | 2;
+  tier2Status?: "unsubmitted" | "pending_review" | "approved" | "rejected";
+  tier2SubmittedAt?: string;
+  tier2ReviewedAt?: string;
+  tier2ReviewedBy?: string;
+  tier2Documents?: {
+    proofOfAddressVaultPath?: string;
+    sourceOfIncomeVaultPath?: string;
+    sourceOfIncomeDescription?: string;
+  };
+
+  // Four-Eyes Dual Reviewer Metadata
+  firstReviewerUid?: string;
+  firstReviewerEmail?: string;
+  firstReviewedAt?: string;
+  firstReviewerNotes?: string;
+  secondReviewerUid?: string;
+  secondReviewerEmail?: string;
+  secondReviewedAt?: string;
+  secondReviewerNotes?: string;
 }
 
 /**

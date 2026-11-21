@@ -30,7 +30,8 @@ export type ZillionaireModule =
   | "finance"
   | "catalog"
   | "live_approvals"
-  | "rights_review";
+  | "rights_review"
+  | "compliance";
 
 // Backward-compatible type alias during migration
 export type AdminModule = ZillionaireModule;
@@ -75,6 +76,7 @@ export const ZILLIONAIRE_MODULES: ZillionaireModule[] = [
   "catalog",
   "live_approvals",
   "rights_review",
+  "compliance",
 ];
 
 // Backward-compatible constant alias
