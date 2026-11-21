@@ -68,6 +68,20 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-proof-uploa
           const arrayBuffer = await file.arrayBuffer();
           const fileBuffer = Buffer.from(arrayBuffer);
 
+          if (fileBuffer.length === 0) {
+            throw new ApiError(400, "FILE_EMPTY", "Uploaded file cannot be empty.");
+          }
+
+          // Validate magic bytes for accepted formats
+          const isPdf = fileBuffer.length >= 4 && fileBuffer.subarray(0, 4).toString("ascii") === "%PDF";
+          const isJpg = fileBuffer.length >= 3 && fileBuffer[0] === 0xFF && fileBuffer[1] === 0xD8 && fileBuffer[2] === 0xFF;
+          const isPng = fileBuffer.length >= 4 && fileBuffer[0] === 0x89 && fileBuffer[1] === 0x50 && fileBuffer[2] === 0x4E && fileBuffer[3] === 0x47;
+          const isWebp = fileBuffer.length >= 12 && fileBuffer.subarray(0, 4).toString("ascii") === "RIFF" && fileBuffer.subarray(8, 12).toString("ascii") === "WEBP";
+
+          if (!isPdf && !isJpg && !isPng && !isWebp) {
+            throw new ApiError(400, "INVALID_FILE_SIGNATURE", "File contents do not match an allowed format (PDF, JPEG, PNG, WEBP).");
+          }
+
           // Upload to Supabase Storage if configured
           try {
             const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

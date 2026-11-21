@@ -182,6 +182,13 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
 
           // Existing record check
           const existing = await fs.getDoc(`payoutProfiles/${user.uid}`);
+          if (body.proofDocumentPath) {
+            const expectedPrefix = `kyc-vault/payout-proof/${user.uid}/`;
+            if (!body.proofDocumentPath.startsWith(expectedPrefix)) {
+              throw new ApiError(400, "INVALID_PROOF_PATH", "Proof document path must belong to your account.");
+            }
+          }
+
           const wasApproved = existing?.["verificationStatus"] === "approved";
 
           // If was previously approved, modifying triggers re-review and pauses payouts
@@ -222,9 +229,11 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
 
           await fs.setDoc(`payoutProfiles/${user.uid}`, record);
 
+          const { accountNumberEncrypted: _omitted, ...safeProfile } = record;
+
           return Response.json({
             success: true,
-            profile: record,
+            profile: safeProfile,
             accountNumberMasked: masked,
             currency,
             status: record.status,

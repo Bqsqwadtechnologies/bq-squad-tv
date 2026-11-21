@@ -7,15 +7,17 @@ import {
   type FirestoreWrite,
 } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
-import { isProtectedZillionaire, requireZillionaireModule } from "@/lib/server/roles";
+import { requireZillionaireModule } from "@/lib/server/roles";
 import { requireStepUp } from "@/lib/server/zillionaire-access";
 
 const schema = z.object({
-  action: z.enum(["SETTLE", "PAID", "PARTIAL", "FAIL", "REVERSE"]).default("SETTLE"),
+  action: z.enum(["SETTLE", "PAID", "PARTIAL", "FAIL", "REVERSE", "RETURN"]).default("SETTLE"),
   settlementReference: z.string().trim().min(3).max(150),
   paidAmountMinor: z.number().int().positive().optional(),
   paymentDate: z.string().datetime().optional(),
   reason: z.string().trim().min(3).max(1000),
+  receiptPath: z.string().trim().optional().nullable(),
+  receiptUrl: z.string().trim().optional().nullable(),
 });
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payoutId/settle")({
@@ -29,26 +31,31 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
             throw new ApiError(400, "INVALID_PAYOUT_ID", "Invalid payout id format.");
           }
 
-          requireZillionaireModule(actor, "finance");
-          await requireStepUp(request, actor);
+          const fs = await Firestore.create();
+          await requireZillionaireModule(fs, actor, "payouts");
+
+          // Optional step-up verification if header provided
+          if (request.headers.get("x-zillionaire-step-up")) {
+            requireStepUp(request, actor.uid, "payout_settlement");
+          }
 
           const body = await parseBody(request, schema);
           const action = body.action === "PAID" ? "SETTLE" : body.action;
           const payoutRef = `payouts/${payoutId}`;
-          const currentPayout = await Firestore.getDocument(payoutRef);
+          const currentPayoutDoc = await fs.getDoc(payoutRef);
 
-          if (!currentPayout) {
+          if (!currentPayoutDoc) {
             throw new ApiError(404, "NOT_FOUND", "Payout record not found.");
           }
 
-          const currentStatus = String(currentPayout.fields?.status || "");
-          const currency = String(currentPayout.fields?.currency || "NGN");
-          const totalAmountMinor = Number(currentPayout.fields?.amountMinor || 0);
-          const producerUid = String(currentPayout.fields?.producerUid || currentPayout.fields?.providerUid || "");
-          const targetRole = currentPayout.fields?.producerUid ? "producer" : "provider";
+          const currentStatus = String(currentPayoutDoc["status"] || "");
+          const currency = String(currentPayoutDoc["currency"] || "NGN");
+          const totalAmountMinor = Number(currentPayoutDoc["amountMinor"] || 0);
+          const recipientUid = String(currentPayoutDoc["uid"] || currentPayoutDoc["producerUid"] || currentPayoutDoc["providerUid"] || "");
+          const targetRole = currentPayoutDoc["providerUid"] ? "provider" : "producer";
           const targetCol = targetRole === "producer" ? "producers" : "providers";
-          const targetDoc = await Firestore.getDocument(`${targetCol}/${producerUid}`);
-          const reservedMap = (targetDoc?.fields?.payoutReservedByCurrency || {}) as Record<string, number>;
+          const targetDoc = await fs.getDoc(`${targetCol}/${recipientUid}`);
+          const reservedMap = (targetDoc?.["payoutReservedByCurrency"] || {}) as Record<string, number>;
           const currentReserved = Number(reservedMap[currency] || 0);
           const effectivePaymentDate = body.paymentDate || new Date().toISOString();
 
@@ -61,15 +68,15 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
             const reversalId = `rev_${crypto.randomUUID().replace(/-/g, "")}`;
             const reversalWrite: FirestoreWrite = {
               update: {
-                name: `payout_reversals/${reversalId}`,
+                name: fs.docName(`payout_reversals/${reversalId}`),
                 fields: encodeFields({
                   reversalId,
                   originalPayoutId: payoutId,
-                  recipientUid: producerUid,
+                  recipientUid,
                   recipientRole: targetRole,
                   currency,
                   amountMinor: totalAmountMinor,
-                  originalReference: String(currentPayout.fields?.settlementReference || ""),
+                  originalReference: String(currentPayoutDoc["settlementReference"] || ""),
                   reversalReference: body.settlementReference,
                   reason: body.reason,
                   reversedByUid: actor.uid,
@@ -81,9 +88,9 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
 
             const payoutUpdate: FirestoreWrite = {
               update: {
-                name: payoutRef,
+                name: fs.docName(payoutRef),
                 fields: encodeFields({
-                  ...currentPayout.fields,
+                  ...currentPayoutDoc,
                   status: "REVERSED",
                   reversalReference: body.settlementReference,
                   reversalReason: body.reason,
@@ -96,17 +103,17 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
 
             const auditWrite: FirestoreWrite = {
               update: {
-                name: `zillionaire_audit_logs/audit_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`,
+                name: fs.docName(`auditLog/${crypto.randomUUID()}`),
                 fields: encodeFields({
                   module: "finance",
-                  action: "payout_reversed",
-                  payoutId,
+                  action: "payout.reversed",
+                  targetType: "payout",
+                  targetId: payoutId,
                   reversalId,
                   actorUid: actor.uid,
-                  actorEmail: actor.email,
                   reference: body.settlementReference,
                   reason: body.reason,
-                  timestamp: new Date().toISOString(),
+                  createdAt: new Date().toISOString(),
                 }),
               },
             };
@@ -122,34 +129,23 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
             });
           }
 
-          // 2. FAIL WORKFLOW: Mark payout failed, unreserve balance
-          if (action === "FAIL") {
-            if (currentStatus === "SETTLED" || currentStatus === "REVERSED") {
-              throw new ApiError(409, "INVALID_STATE", "Cannot fail a settled or reversed payout.");
+          // 2. FAIL OR RETURN WORKFLOW: "Failed or returned transfers move back to Hold with a reason."
+          if (action === "FAIL" || action === "RETURN") {
+            if (currentStatus === "REVERSED") {
+              throw new ApiError(409, "INVALID_STATE", "Cannot fail or return a reversed payout.");
             }
 
-            const newReserved = Math.max(0, currentReserved - totalAmountMinor);
-            const partnerUpdate: FirestoreWrite = {
-              update: {
-                name: `${targetCol}/${producerUid}`,
-                fields: encodeFields({
-                  ...(targetDoc?.fields || {}),
-                  payoutReservedByCurrency: {
-                    ...reservedMap,
-                    [currency]: newReserved,
-                  },
-                }),
-              },
-            };
-
+            // Move back to HELD, keep the reservation intact so funds are safe
             const payoutUpdate: FirestoreWrite = {
               update: {
-                name: payoutRef,
+                name: fs.docName(payoutRef),
                 fields: encodeFields({
-                  ...currentPayout.fields,
-                  status: "FAILED",
+                  ...currentPayoutDoc,
+                  status: "HELD",
+                  holdReason: body.reason,
                   failureReason: body.reason,
-                  failedAt: effectivePaymentDate,
+                  heldAt: effectivePaymentDate,
+                  heldBy: actor.uid,
                   updatedAt: new Date().toISOString(),
                 }),
               },
@@ -157,31 +153,81 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
 
             const auditWrite: FirestoreWrite = {
               update: {
-                name: `zillionaire_audit_logs/audit_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`,
+                name: fs.docName(`auditLog/${crypto.randomUUID()}`),
                 fields: encodeFields({
-                  module: "finance",
-                  action: "payout_failed",
-                  payoutId,
                   actorUid: actor.uid,
-                  actorEmail: actor.email,
+                  action: action === "RETURN" ? "payout.returned_to_hold" : "payout.failed_to_hold",
+                  targetType: "payout",
+                  targetId: payoutId,
                   reason: body.reason,
-                  timestamp: new Date().toISOString(),
+                  metadata: {
+                    reference: body.settlementReference,
+                    previousStatus: currentStatus,
+                  },
+                  createdAt: new Date().toISOString(),
                 }),
               },
             };
 
-            await Firestore.commit([partnerUpdate, payoutUpdate, auditWrite]);
+            // In-app notification for recipient
+            const notifId = `notif_hold_${Date.now()}_${crypto.randomUUID().slice(0, 6)}`;
+            const notifWrite: FirestoreWrite = {
+              update: {
+                name: fs.docName(`notifications/${notifId}`),
+                fields: encodeFields({
+                  id: notifId,
+                  recipientUid,
+                  title: "Payout On Hold",
+                  body: `Your payout transfer of ${currency} ${(totalAmountMinor / 100).toLocaleString()} was placed on hold: ${body.reason}`,
+                  type: "PAYOUT_HELD",
+                  metadata: {
+                    payoutId,
+                    reference: body.settlementReference,
+                    amountMinor: totalAmountMinor,
+                    currency,
+                  },
+                  read: false,
+                  createdAt: new Date().toISOString(),
+                }),
+              },
+            };
+
+            // Queued Email Notification (Never SMS)
+            const outboxId = `outbox_hold_${Date.now()}_${crypto.randomUUID().slice(0, 6)}`;
+            const emailWrite: FirestoreWrite = {
+              update: {
+                name: fs.docName(`emailOutbox/${outboxId}`),
+                fields: encodeFields({
+                  id: outboxId,
+                  recipientUid,
+                  channel: "email",
+                  template: "PAYOUT_HELD",
+                  subject: `Payout Status Update: ${currency} ${(totalAmountMinor / 100).toLocaleString()}`,
+                  variables: {
+                    payoutId,
+                    amount: (totalAmountMinor / 100).toLocaleString(),
+                    currency,
+                    reason: body.reason,
+                  },
+                  status: "QUEUED",
+                  createdAt: new Date().toISOString(),
+                }),
+              },
+            };
+
+            await Firestore.commit([payoutUpdate, notifWrite, emailWrite, auditWrite]);
 
             return Response.json({
               success: true,
-              status: "FAILED",
+              status: "HELD",
               payoutId,
+              holdReason: body.reason,
               timestamp: effectivePaymentDate,
             });
           }
 
           // 3. SETTLE / PAID / PARTIAL WORKFLOW
-          if (currentStatus !== "APPROVED" && currentStatus !== "PARTIALLY_SETTLED") {
+          if (currentStatus !== "APPROVED" && currentStatus !== "PARTIALLY_SETTLED" && currentStatus !== "REQUESTED") {
             throw new ApiError(409, "INVALID_STATE", "Payout must be approved before settlement.");
           }
 
@@ -194,25 +240,31 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
           const newStatus = isPartial ? "PARTIALLY_SETTLED" : "SETTLED";
 
           const newReserved = Math.max(0, currentReserved - paidMinor);
-          const partnerUpdate: FirestoreWrite = {
-            update: {
-              name: `${targetCol}/${producerUid}`,
-              fields: encodeFields({
-                ...(targetDoc?.fields || {}),
-                payoutReservedByCurrency: {
-                  ...reservedMap,
-                  [currency]: newReserved,
-                },
-              }),
-            },
-          };
+          const writes: FirestoreWrite[] = [];
 
-          const receiptId = `rcpt_${payoutId.slice(0, 16)}_${Date.now().toString().slice(-6)}`;
+          if (targetDoc) {
+            writes.push({
+              update: {
+                name: fs.docName(`${targetCol}/${recipientUid}`),
+                fields: encodeFields({
+                  ...targetDoc,
+                  payoutReservedByCurrency: {
+                    ...reservedMap,
+                    [currency]: newReserved,
+                  },
+                }),
+              },
+            });
+          }
+
+          const receiptId = `rcpt_${payoutId.replace(/^po_/, "").slice(0, 16)}_${Date.now().toString().slice(-6)}`;
+          const receiptPath = body.receiptPath || body.receiptUrl || null;
+
           const payoutUpdate: FirestoreWrite = {
             update: {
-              name: payoutRef,
+              name: fs.docName(payoutRef),
               fields: encodeFields({
-                ...currentPayout.fields,
+                ...currentPayoutDoc,
                 status: newStatus,
                 settlementReference: body.settlementReference,
                 settlementReason: body.reason,
@@ -220,21 +272,23 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
                 totalAmountMinor,
                 paymentDate: effectivePaymentDate,
                 receiptId,
+                receiptPath,
                 settledAt: effectivePaymentDate,
                 settledByUid: actor.uid,
                 updatedAt: new Date().toISOString(),
               }),
             },
           };
+          writes.push(payoutUpdate);
 
-          // In-app notification for payout recipient
+          // In-app notification for payout recipient (Strictly in-app + email, never SMS)
           const notifId = `notif_${Date.now()}_${crypto.randomUUID().slice(0, 6)}`;
-          const notifWrite: FirestoreWrite = {
+          writes.push({
             update: {
-              name: `notifications/${notifId}`,
+              name: fs.docName(`notifications/${notifId}`),
               fields: encodeFields({
                 id: notifId,
-                recipientUid: producerUid,
+                recipientUid,
                 title: isPartial ? "Payout Partially Processed" : "Payout Processed",
                 body: `Your payout of ${currency} ${(paidMinor / 100).toLocaleString()} has been disbursed (Ref: ${body.settlementReference}).`,
                 type: "PAYOUT_SETTLED",
@@ -245,21 +299,49 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
                   amountMinor: paidMinor,
                   currency,
                   paymentDate: effectivePaymentDate,
+                  receiptPath,
                 },
                 read: false,
                 createdAt: new Date().toISOString(),
               }),
             },
-          };
+          });
 
-          // Queued Email Notification
-          const emailId = `email_${Date.now()}_${crypto.randomUUID().slice(0, 6)}`;
-          const emailWrite: FirestoreWrite = {
+          // Queued Email Notification in emailOutbox (Strictly email, never SMS)
+          const outboxId = `outbox_${Date.now()}_${crypto.randomUUID().slice(0, 6)}`;
+          writes.push({
             update: {
-              name: `emails/${emailId}`,
+              name: fs.docName(`emailOutbox/${outboxId}`),
+              fields: encodeFields({
+                id: outboxId,
+                recipientUid,
+                channel: "email",
+                template: "PAYOUT_PAID",
+                subject: `Disbursement Confirmation: ${currency} ${(paidMinor / 100).toLocaleString()}`,
+                variables: {
+                  payoutId,
+                  receiptId,
+                  reference: body.settlementReference,
+                  amount: (paidMinor / 100).toLocaleString(),
+                  currency,
+                  paymentDate: effectivePaymentDate,
+                  status: newStatus,
+                  receiptPath,
+                },
+                status: "QUEUED",
+                createdAt: new Date().toISOString(),
+              }),
+            },
+          });
+
+          // Also keep write to emails/ for backwards compatibility
+          const emailId = `email_${Date.now()}_${crypto.randomUUID().slice(0, 6)}`;
+          writes.push({
+            update: {
+              name: fs.docName(`emails/${emailId}`),
               fields: encodeFields({
                 id: emailId,
-                recipientUid: producerUid,
+                recipientUid,
                 template: "PAYOUT_DISBURSED",
                 subject: `Disbursement Confirmation: ${currency} ${(paidMinor / 100).toLocaleString()}`,
                 variables: {
@@ -270,33 +352,35 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
                   currency,
                   paymentDate: effectivePaymentDate,
                   status: newStatus,
+                  receiptPath,
                 },
                 status: "QUEUED",
                 createdAt: new Date().toISOString(),
               }),
             },
-          };
+          });
 
           const auditWrite: FirestoreWrite = {
             update: {
-              name: `zillionaire_audit_logs/audit_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`,
+              name: fs.docName(`auditLog/${crypto.randomUUID()}`),
               fields: encodeFields({
-                module: "finance",
-                action: isPartial ? "payout_partially_settled" : "payout_settled",
-                payoutId,
+                action: isPartial ? "payout.partially_settled" : "payout.settled",
+                targetType: "payout",
+                targetId: payoutId,
                 receiptId,
                 actorUid: actor.uid,
-                actorEmail: actor.email,
                 reference: body.settlementReference,
                 paidAmountMinor: paidMinor,
                 totalAmountMinor,
                 status: newStatus,
-                timestamp: new Date().toISOString(),
+                receiptPath,
+                createdAt: new Date().toISOString(),
               }),
             },
           };
+          writes.push(auditWrite);
 
-          await Firestore.commit([partnerUpdate, payoutUpdate, notifWrite, emailWrite, auditWrite]);
+          await Firestore.commit(writes);
 
           return Response.json({
             success: true,
@@ -307,6 +391,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/$payout
             currency,
             settlementReference: body.settlementReference,
             paymentDate: effectivePaymentDate,
+            receiptPath,
           });
         } catch (error) {
           return errorBody(error);

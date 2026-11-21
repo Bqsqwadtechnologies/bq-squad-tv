@@ -107,3 +107,5 @@ PUSH BADGE #64 SUCCESSFUL — v6-05-A8 — KYC approval enforcement across produ
 PUSH BADGE #65 SUCCESSFUL — v6-05-B1 — Country-locked payout bank account form, bank directory lookup, IBAN/NUBAN checksum validation, and encrypted storage.
 
 PUSH BADGE #66 SUCCESSFUL — v6-05-B2 — Proof of account and verification (bank statement upload, duplicate account detection, Zillionaire payout queue tab, and account lock on approval).
+
+PUSH BADGE #67 SUCCESSFUL — v6-05-B3 — Payout transfer sheet, 11-field ALAT copy order, batch CSV export grouped by Local and International, audited views/copies, settlement marking with receipt, and return-to-hold.

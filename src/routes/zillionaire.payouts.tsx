@@ -30,6 +30,12 @@ import {
   Calendar,
   ExternalLink,
   FileText,
+  Copy,
+  Check,
+  FileSpreadsheet,
+  Eye,
+  CheckSquare,
+  Square,
 } from "lucide-react";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
 import { formatMinorCurrency as formatMoney } from "@/lib/format-money";
@@ -134,6 +140,19 @@ function ZillionairePayoutsPage({
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
+  // Transfer Details Panel state
+  const [transferTarget, setTransferTarget] = useState<PayoutItem | null>(null);
+  const [transferDetails, setTransferDetails] = useState<any | null>(null);
+  const [loadingTransfer, setLoadingTransfer] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Selected payouts for batch actions
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [exportingBatch, setExportingBatch] = useState(false);
+
+  // Settle receipt URL/path
+  const [settleReceiptPath, setSettleReceiptPath] = useState("");
+
   // Live Calculator State
   const [calcGrossRevenue, setCalcGrossRevenue] = useState<number>(1000000); // 1,000,000 NGN
   const [calcProducerSplit, setCalcProducerSplit] = useState<number>(70); // 70%
@@ -191,6 +210,96 @@ function ZillionairePayoutsPage({
     }
   };
 
+  const openTransferDetails = async (p: PayoutItem) => {
+    setTransferTarget(p);
+    setLoadingTransfer(true);
+    setTransferDetails(null);
+    try {
+      const headers = await getWebAuthHeaders();
+      const res = await fetch(`/api/public/v1/zillionaire/payouts/${p.id}/transfer-details`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setTransferDetails(data);
+      } else {
+        setFeedback("Failed to load transfer details.");
+      }
+    } catch {
+      setFeedback("Error loading transfer details.");
+    } finally {
+      setLoadingTransfer(false);
+    }
+  };
+
+  const copyTransferField = async (key: string, value: string, payoutId: string) => {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
+
+      const headers = await getWebAuthHeaders();
+      fetch(`/api/public/v1/zillionaire/payouts/${payoutId}/audit-copy`, {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ field: key }),
+      }).catch(() => {});
+    } catch {
+      // clipboard fallback
+    }
+  };
+
+  const handleBatchExport = async (group: "LOCAL" | "INTERNATIONAL" | "ALL") => {
+    setExportingBatch(true);
+    try {
+      const headers = await getWebAuthHeaders();
+      const payload: { group: string; payoutIds?: string[] } = { group };
+      if (selectedIds.size > 0) {
+        payload.payoutIds = Array.from(selectedIds);
+      }
+      const res = await fetch("/api/public/v1/zillionaire/payouts/export", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (res.ok && data.csv) {
+        const blob = new Blob([data.csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `payouts_${group.toLowerCase()}_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setFeedback(`Exported ${data.totalExported} payout records as CSV.`);
+      } else {
+        setFeedback(`Batch export failed: ${data.message || data.error || "No records"}`);
+      }
+    } catch (e: unknown) {
+      setFeedback(e instanceof Error ? e.message : "Error exporting batch.");
+    } finally {
+      setExportingBatch(false);
+    }
+  };
+
+  const toggleSelectAllApproved = () => {
+    const approved = payouts.filter((p) => p.status === "APPROVED");
+    if (selectedIds.size === approved.length && approved.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(approved.map((p) => p.id)));
+    }
+  };
+
+  const toggleSelectPayout = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   const openSettleModal = (p: PayoutItem) => {
     setSettleTarget(p);
     setSettleAction("SETTLE");
@@ -198,6 +307,7 @@ function ZillionairePayoutsPage({
     setSettleDate(new Date().toISOString());
     setSettlementRef("");
     setSettleReason("");
+    setSettleReceiptPath("");
   };
 
   const executeSettle = async () => {
@@ -211,6 +321,7 @@ function ZillionairePayoutsPage({
         settlementReference: settlementRef.trim(),
         reason: settleReason.trim(),
         paymentDate: settleDate || new Date().toISOString(),
+        receiptPath: settleReceiptPath.trim() || undefined,
       };
       if (settleAction === "PARTIAL") {
         payload.paidAmountMinor = settleAmountMinor;
@@ -229,6 +340,7 @@ function ZillionairePayoutsPage({
         setSettleTarget(null);
         setSettlementRef("");
         setSettleReason("");
+        setSettleReceiptPath("");
         await fetchPayouts();
       } else {
         setFeedback(`Settlement failed: ${data.message || data.error}`);
@@ -515,6 +627,61 @@ function ZillionairePayoutsPage({
           </div>
         </div>
 
+        {/* Batch Export & Selection Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-950/60 border border-slate-800 rounded-xl">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleSelectAllApproved}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs text-slate-200 font-medium"
+            >
+              {selectedIds.size > 0 && selectedIds.size === payouts.filter((p) => p.status === "APPROVED").length ? (
+                <CheckSquare className="w-4 h-4 text-cyan-400" />
+              ) : (
+                <Square className="w-4 h-4 text-slate-400" />
+              )}
+              <span>Select Approved ({selectedIds.size})</span>
+            </button>
+            {selectedIds.size > 0 && (
+              <span className="text-[11px] text-cyan-400 font-mono">
+                {selectedIds.size} payout(s) selected
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mr-1">
+              Batch Export:
+            </span>
+            <button
+              disabled={exportingBatch}
+              onClick={() => handleBatchExport("LOCAL")}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 text-xs font-semibold disabled:opacity-50"
+              title="Download NGN bank transfer batch CSV"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Export Local (NGN)</span>
+            </button>
+            <button
+              disabled={exportingBatch}
+              onClick={() => handleBatchExport("INTERNATIONAL")}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-cyan-950 hover:bg-cyan-900 border border-cyan-800 text-cyan-300 text-xs font-semibold disabled:opacity-50"
+              title="Download USD/Foreign wire transfer batch CSV"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Export International (USD)</span>
+            </button>
+            <button
+              disabled={exportingBatch}
+              onClick={() => handleBatchExport("ALL")}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-medium disabled:opacity-50"
+              title="Export all selected or approved payouts"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>All CSV</span>
+            </button>
+          </div>
+        </div>
+
         {/* Payouts Table */}
         <ConsoleCard title={`Disbursement Ledger Records (${payouts.length})`}>
           {payouts.length === 0 ? (
@@ -524,6 +691,7 @@ function ZillionairePayoutsPage({
           ) : (
             <ConsoleTable
               columns={[
+                { key: "select", header: "Select" },
                 { key: "payout", header: "Payout & Recipient" },
                 { key: "amount", header: "Amount" },
                 { key: "bank", header: "Banking Details" },
@@ -533,6 +701,19 @@ function ZillionairePayoutsPage({
               ]}
               data={payouts.map((p) => ({
                 id: p.id,
+                select: (
+                  <button
+                    onClick={() => toggleSelectPayout(p.id)}
+                    className="p-1 hover:text-white"
+                    title="Select payout for batch export"
+                  >
+                    {selectedIds.has(p.id) ? (
+                      <CheckSquare className="w-4 h-4 text-cyan-400" />
+                    ) : (
+                      <Square className="w-4 h-4 text-slate-600 hover:text-slate-400" />
+                    )}
+                  </button>
+                ),
                 payout: (
                   <div className="text-xs space-y-1">
                     <div className="font-mono font-bold text-white flex items-center gap-1.5">
@@ -645,13 +826,37 @@ function ZillionairePayoutsPage({
                       </>
                     )}
 
-                    {/* Settle: Mark as PAID (when APPROVED) */}
+                    {/* Approved Actions: Transfer Details & Mark PAID */}
                     {p.status === "APPROVED" && (
+                      <>
+                        <button
+                          onClick={() => openTransferDetails(p)}
+                          className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-cyan-300 font-semibold rounded flex items-center gap-1 shadow"
+                          title="Open transfer details panel in bank form order"
+                        >
+                          <Eye className="w-3 h-3" /> Transfer Details
+                        </button>
+                        <button
+                          onClick={() => openSettleModal(p)}
+                          className="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded flex items-center gap-1 shadow-lg shadow-cyan-950"
+                        >
+                          <Send className="w-3 h-3" /> Mark PAID
+                        </button>
+                      </>
+                    )}
+
+                    {/* Return to Hold: For Failed or Returned Transfers */}
+                    {(p.status === "FAILED" || p.status === "REVERSED") && (
                       <button
-                        onClick={() => openSettleModal(p)}
-                        className="px-2.5 py-1 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded flex items-center gap-1 shadow-lg shadow-cyan-950"
+                        onClick={() => {
+                          setHoldTarget(p);
+                          setHoldAction("HOLD");
+                          setHoldReason("Transfer returned or failed; moved back to hold for review.");
+                        }}
+                        className="px-2 py-1 bg-amber-950/70 hover:bg-amber-900 border border-amber-800 text-amber-300 rounded font-semibold flex items-center gap-1 text-[11px]"
+                        title="Move returned or failed transfer back to Hold"
                       >
-                        <Send className="w-3 h-3" /> Mark PAID
+                        <RotateCcw className="w-3 h-3" /> Return to Hold
                       </button>
                     )}
 
@@ -715,6 +920,142 @@ function ZillionairePayoutsPage({
             />
           )}
         </ConsoleCard>
+
+        {/* Modal: Transfer Details (Panel matching exact transfer form order with one-tap copy) */}
+        {transferTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-cyan-500/30 rounded-xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl text-xs overflow-hidden">
+              <div className="flex items-center justify-between border-b border-slate-800 p-4 bg-slate-950/60">
+                <div className="flex items-center gap-2">
+                  <Building className="w-5 h-5 text-cyan-400" />
+                  <div>
+                    <h3 className="text-sm font-bold text-white">Transfer Details — Wire Settlement</h3>
+                    <p className="text-[11px] text-slate-400">
+                      Exact fields in ALAT / bank transfer order with one-tap copy for owner. All views and copies are audited.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setTransferTarget(null);
+                    setTransferDetails(null);
+                  }}
+                  className="text-slate-400 hover:text-white p-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-4 overflow-y-auto space-y-4">
+                {loadingTransfer ? (
+                  <div className="text-center py-12 text-slate-400">Loading transfer details...</div>
+                ) : !transferDetails ? (
+                  <div className="text-center py-12 text-rose-400">Failed to load transfer details.</div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-slate-950 border border-slate-800 rounded-xl text-[11px]">
+                      <div>
+                        <span className="text-slate-400 block">Payout ID:</span>
+                        <span className="font-mono text-cyan-300 font-bold">{transferDetails.payoutId}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Transfer Amount:</span>
+                        <span className="font-mono text-emerald-400 font-bold text-sm">
+                          {transferDetails.currency} {transferDetails.amountFormatted}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 block">Route Type:</span>
+                        <span className="font-semibold text-slate-200">
+                          {transferDetails.isLocal ? "Local (Nigeria NGN)" : "International (SWIFT USD)"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h4 className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                        Transfer Form Fields (Click to copy):
+                      </h4>
+                      <div className="space-y-2">
+                        {transferDetails.orderedFields?.map((field: any, idx: number) => (
+                          <div
+                            key={field.key}
+                            className="flex items-center justify-between gap-3 p-2.5 bg-slate-950/80 border border-slate-800 hover:border-slate-700 rounded-lg transition"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[10px] text-slate-400 font-medium block">
+                                {idx + 1}. {field.label}
+                              </span>
+                              <span className="font-mono text-slate-100 text-xs font-semibold select-all break-all">
+                                {field.value || "—"}
+                              </span>
+                            </div>
+                            {field.value && (
+                              <button
+                                type="button"
+                                onClick={() => copyTransferField(field.key, field.value, transferDetails.payoutId)}
+                                className={`px-2.5 py-1 rounded text-[11px] font-semibold flex items-center gap-1 transition shrink-0 ${
+                                  copiedKey === field.key
+                                    ? "bg-emerald-600 text-white"
+                                    : "bg-slate-800 hover:bg-slate-700 text-cyan-300"
+                                }`}
+                              >
+                                {copiedKey === field.key ? (
+                                  <>
+                                    <Check className="w-3 h-3" />
+                                    <span>Copied</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="w-3 h-3" />
+                                    <span>Copy</span>
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between border-t border-slate-800 p-3 bg-slate-950/60">
+                <span className="text-[10px] text-slate-400">
+                  Account numbers unmasked for owner only. Copies are logged in audit ledger.
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTransferTarget(null);
+                      setTransferDetails(null);
+                    }}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded font-semibold text-xs"
+                  >
+                    Close
+                  </button>
+                  {transferTarget.status === "APPROVED" && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const target = transferTarget;
+                        setTransferTarget(null);
+                        setTransferDetails(null);
+                        openSettleModal(target);
+                      }}
+                      className="px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded flex items-center gap-1 text-xs"
+                    >
+                      <Send className="w-3 h-3" />
+                      <span>Proceed to Mark PAID</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Modal: Review (Approve / Reject) */}
         {reviewTarget && (
@@ -868,17 +1209,33 @@ function ZillionairePayoutsPage({
               <div className="space-y-3">
                 <div>
                   <label className="block font-semibold text-slate-300 mb-1">
-                    Settlement / Transfer Reference (min 4 chars)
+                    Bank / ALAT Transfer Reference (min 4 chars)
                   </label>
                   <input
                     type="text"
                     value={settlementRef}
                     onChange={(e) => setSettlementRef(e.target.value)}
-                    placeholder="e.g. NIP-20261119-9821829 or WIRE-REF-0912"
+                    placeholder="e.g. WEMA-ALAT-20261120-9812 or SWIFT-WIRE-00129"
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono"
                   />
                   <p className="text-[10px] text-slate-400 mt-0.5">
                     This reference will be emailed to the creator and logged in the immutable money ledger.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1">
+                    Optional Bank Receipt Path / Link:
+                  </label>
+                  <input
+                    type="text"
+                    value={settleReceiptPath}
+                    onChange={(e) => setSettleReceiptPath(e.target.value)}
+                    placeholder="e.g. receipts/wema_wire_confirmation_202611.pdf"
+                    className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-[11px]"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    Optional bank confirmation or wire advice receipt to attach to the payout email.
                   </p>
                 </div>
 
