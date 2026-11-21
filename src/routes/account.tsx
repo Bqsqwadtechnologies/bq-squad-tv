@@ -986,7 +986,7 @@ function AccountPage() {
                   />
                 </label>
                 <GoogleSignInButton
-                  clientId={googleClientId}
+                  clientId={googleClientId || undefined}
                   onCredential={handleGoogleCredential}
                   disabled={busy}
                   onRetry={() => {
