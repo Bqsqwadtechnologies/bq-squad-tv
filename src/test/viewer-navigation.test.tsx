@@ -80,12 +80,15 @@ describe("Viewer Navigation & Account Hub (V5-05 Batch 1)", () => {
       uid: "firebase-user-1",
       email: "viewer@example.com",
       emailVerified: true,
+      roles: ["viewer"],
     });
     render(<ProfileAccountHub />);
     screen.getByRole("button", { name: /Open Account Hub/i }).click();
     expect(await screen.findByText("viewer@example.com")).toBeInTheDocument();
     expect(screen.getByText("Sign Out")).toBeInTheDocument();
     expect(screen.getByText("Wallet & Balance")).toBeInTheDocument();
+    expect(screen.queryByText("Producer Console")).not.toBeInTheDocument();
+    expect(screen.queryByText("Provider Console")).not.toBeInTheDocument();
   });
 
   it("does not show signed-in links when session verification fails", async () => {
