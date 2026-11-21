@@ -149,7 +149,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                                 continueAfterLegalCheck()
                             }
                         } catch (error: Exception) {
-                            message = ErrorMessages.SIGN_IN_FAILED
+                            message = error.message?.takeIf { it.isNotBlank() } ?: ErrorMessages.SIGN_IN_FAILED
                         } finally {
                             busy = false
                         }
@@ -165,7 +165,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                 onClick = {},
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(if (googleConfigLoading) "Google sign-in loading…" else "Continue with Google")
+                Text(if (googleConfigLoading) "Google sign-in loading…" else "Google sign-in not configured")
             }
             if (googleConfigError || (!googleConfigLoading && googleClientId.isBlank())) {
                 TextButton(onClick = { loadGoogleConfig() }, enabled = !googleConfigLoading) {
@@ -317,7 +317,7 @@ fun SignInScreen(onAuthenticated: () -> Unit) {
                                 message = "The code could not be verified. Request another code."
                             }
                         } catch (error: Exception) {
-                            message = ErrorMessages.VERIFICATION_FAILED
+                            message = error.message?.takeIf { it.isNotBlank() } ?: ErrorMessages.VERIFICATION_FAILED
                         } finally {
                             busy = false
                         }
