@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
-import { errorBody, requireUser } from "@/lib/server/api";
+import { errorBody } from "@/lib/server/api";
+import { requireVerifiedViewer } from "@/lib/server/access";
 
 function requireRecentAuthentication(authTime: number): void {
   const nowSeconds = Math.floor(Date.now() / 1000);
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/api/public/v1/account/delete")({
     handlers: {
       POST: async ({ request }) => {
         try {
-          const user = await requireUser(request);
+          const { user } = await requireVerifiedViewer(request);
           requireRecentAuthentication(user.authTime);
 
           const fs = await Firestore.create();
