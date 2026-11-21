@@ -1,3 +1,4 @@
+import { getKycVerifier } from "@/lib/server/kyc/verifier";
 import { saveKycProfile, deleteKycDraft } from "@/lib/server/kyc/persistence";
 import { isAge18OrOlder } from "@/lib/kyc-country-rules";
 import { createFileRoute } from "@tanstack/react-router";
@@ -307,6 +308,29 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
               ? "producer_business"
               : "producer_personal";
 
+          const verifier = getKycVerifier();
+          const verifierResult = await verifier.evaluateCase({
+            uid: user.uid,
+            role: "producer",
+            fullName: body.legalName || body.businessName || "",
+            countryCode: body.countryCode,
+            idNumber: body.idNumber,
+            companyRegNumber: body.companyRegNumber,
+            documentVaultPaths: docPaths,
+            dateOfBirth: body.dateOfBirth,
+          }).catch((err) => ({
+            provider: verifier.name,
+            status: "manual_review_required" as const,
+            overallScore: 0,
+            reasons: ["Verification evaluator error, falling back to manual review."],
+            checks: {},
+            performedAt: new Date().toISOString(),
+            fallbackToManual: true,
+            fallbackReason: "automatic check unavailable",
+            manualReviewRequired: true,
+            ownerNotice: "automatic check unavailable",
+          }));
+
           await saveKycProfile(fs, {
             uid: user.uid,
             role: "producer",
@@ -326,6 +350,7 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
             rawDateOfBirth: body.dateOfBirth,
             documentVaultPaths: docPaths,
             status: "pending",
+            verifierResult,
           }).catch((err) => {
             console.warn("[KYC] Profile mirror sync warning:", err);
           });

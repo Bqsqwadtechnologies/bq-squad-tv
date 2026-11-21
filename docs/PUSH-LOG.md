@@ -119,3 +119,5 @@ PUSH BADGE #70 SUCCESSFUL — v6-05-B6 — Data protection & trust page (/help/d
 PUSH BADGE #71 SUCCESSFUL — v6-05-B7 — Email status and notification outbox (durable outbox with retry/backoff, dual delivery to user email and in-app notices, no SMS except phone OTP, Zillionaire outbox management & manual resend with audit logging, and documented AI assistant hook with stable event schemas).
 
 PUSH BADGE #72 SUCCESSFUL — v6-05-B8 — Verification and payout master regression testing, security checklist, and handoff (91 tests across 18 test files passing, storage and encryption verification, payout safety rules and currency thresholds, dual-delivery outbox validation, brand guardrails, route integrity 366 routes, public-text scan clean, production build clean).
+
+PUSH BADGE #73 SUCCESSFUL — v6-05-C1 — Verification provider adapter and automated checks (clean KycVerifier interface, ManualKycVerifier default, ExternalKycVerifierAdapter with non-blocking fallback to manual review on timeout or error, owner final approval authority, verifierResult persistence, Zillionaire automated checks readout, and 94 passing tests).

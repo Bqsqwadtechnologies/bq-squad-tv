@@ -1,3 +1,4 @@
+import type { KycVerifierResult } from "./verifier/types";
 import { Firestore, ApiError } from '../firebase-admin';
 import {
   type KycProfile,
@@ -59,6 +60,7 @@ export interface SaveKycInput {
   faceCaptureVaultPath?: string;
   riskScore?: number;
   riskFlags?: string[];
+  verifierResult?: KycVerifierResult;
   status?: KycStatus;
   providerId?: string;
 }
@@ -205,6 +207,7 @@ export async function saveKycProfile(
     ...(input.faceCaptureVaultPath ? { faceCaptureVaultPath: input.faceCaptureVaultPath } : (existing?.faceCaptureVaultPath ? { faceCaptureVaultPath: existing.faceCaptureVaultPath } : {})),
     riskScore: input.riskScore ?? existing?.riskScore ?? 0,
     riskFlags: input.riskFlags ?? existing?.riskFlags ?? [],
+    ...(input.verifierResult ? { verifierResult: input.verifierResult } : (existing?.verifierResult ? { verifierResult: existing.verifierResult } : {})),
     ...(input.legalName ? { legalName: input.legalName } : existing?.legalName ? { legalName: existing.legalName } : {}),
     ...(input.businessName ? { businessName: input.businessName } : existing?.businessName ? { businessName: existing.businessName } : {}),
     ...(input.officialEmail ? { officialEmail: input.officialEmail } : existing?.officialEmail ? { officialEmail: existing.officialEmail } : {}),

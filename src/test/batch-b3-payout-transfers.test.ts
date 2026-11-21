@@ -3,7 +3,7 @@ import * as apiModule from "@/lib/server/api";
 import { encryptSensitiveField } from "@/lib/server/kyc/types";
 
 // In-memory mock database
-const mockDb = new Map<string, any>();
+const mockDb: Map<string, any> = ((globalThis as any).__sharedTestFirestore ??= new Map<string, any>());
 
 vi.mock("@/lib/server/firebase-admin", () => {
   return {
@@ -32,18 +32,32 @@ vi.mock("@/lib/server/firebase-admin", () => {
           const results: any[] = [];
           for (const [key, val] of mockDb.entries()) {
             if (key.startsWith(`${col}/`)) {
-              if (options?.filters) {
-                const match = options.filters.every((f: any) => {
-                  if (f.op === "EQUAL") return val[f.field] === f.value;
-                  return true;
-                });
-                if (match) results.push({ __id: key.slice(col.length + 1), ...val });
-              } else {
-                results.push({ __id: key.slice(col.length + 1), ...val });
-              }
+              results.push({ __id: key.slice(col.length + 1), ...val });
             }
           }
           return results;
+        }),
+        transact: vi.fn(async (paths: string[], fn: (docs: any[]) => any) => {
+          const docs = paths.map((p) => mockDb.get(p) || null);
+          const res = await fn(docs);
+          const writes = res?.writes || [];
+          for (const w of writes) {
+            if (w.update) {
+              const name = w.update.name;
+              const fields = w.update.fields || {};
+              mockDb.set(name, { ...(mockDb.get(name) || {}), ...fields });
+            }
+          }
+          return res?.result;
+        }),
+        commit: vi.fn(async (writes: any[]) => {
+          for (const w of writes) {
+            if (w.update) {
+              const name = w.update.name;
+              const fields = w.update.fields || {};
+              mockDb.set(name, { ...(mockDb.get(name) || {}), ...fields });
+            }
+          }
         }),
       })),
       commit: vi.fn(async (writes: any[]) => {

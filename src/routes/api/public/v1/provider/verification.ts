@@ -1,3 +1,4 @@
+import { getKycVerifier } from "@/lib/server/kyc/verifier";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
@@ -279,7 +280,30 @@ export const Route = createFileRoute("/api/public/v1/provider/verification")({
           const providerUser = await fs.getDoc(`providerUsers/${user.uid}`);
           const providerId = (providerUser?.["providerId"] as string) || `prov_${Date.now()}`;
 
-          // 7. Persist KYC profile with encrypted fields
+          // 7. Evaluate with KYC verification adapter
+          const verifier = getKycVerifier();
+          const verifierResult = await verifier.evaluateCase({
+            uid: user.uid,
+            role: "provider",
+            fullName: body.legalCompanyName,
+            countryCode,
+            idNumber: body.representative.idNumber,
+            companyRegNumber: body.registrationNumber,
+            documentVaultPaths: docPaths,
+          }).catch((err) => ({
+            provider: verifier.name,
+            status: "manual_review_required" as const,
+            overallScore: 0,
+            reasons: ["Verification evaluator error, falling back to manual review."],
+            checks: {},
+            performedAt: new Date().toISOString(),
+            fallbackToManual: true,
+            fallbackReason: "automatic check unavailable",
+            manualReviewRequired: true,
+            ownerNotice: "automatic check unavailable",
+          }));
+
+          // Persist KYC profile with encrypted fields and verifier output
           const profile = await saveKycProfile(fs, {
             uid: user.uid,
             providerId,
@@ -304,6 +328,7 @@ export const Route = createFileRoute("/api/public/v1/provider/verification")({
             rawRepresentativeIdNumber: body.representative.idNumber,
             documentVaultPaths: docPaths,
             status: "pending",
+            verifierResult,
           });
 
           // Mark upload sessions consumed

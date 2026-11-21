@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as apiModule from "@/lib/server/api";
 
 // In-memory mock database
-const mockDb = new Map<string, any>();
+const mockDb: Map<string, any> = ((globalThis as any).__sharedTestFirestore ??= new Map<string, any>());
 
 vi.mock("@/lib/server/firebase-admin", () => {
   return {
@@ -17,6 +17,7 @@ vi.mock("@/lib/server/firebase-admin", () => {
     },
     Firestore: {
       create: vi.fn(async () => ({
+        docName: (p: string) => p,
         getDoc: vi.fn(async (path: string) => mockDb.get(path) || null),
         setDoc: vi.fn(async (path: string, data: any) => {
           mockDb.set(path, { ...data });
@@ -25,23 +26,36 @@ vi.mock("@/lib/server/firebase-admin", () => {
           const current = mockDb.get(path) || {};
           mockDb.set(path, { ...current, ...data });
         }),
-        query: vi.fn(async (col: string) => {
+        query: vi.fn(async (col: string, options?: any) => {
           const results: any[] = [];
           for (const [key, val] of mockDb.entries()) {
             if (key.startsWith(`${col}/`)) {
-              results.push(val);
+              results.push({ __id: key.slice(col.length + 1), ...val });
             }
           }
           return results;
         }),
-        listCollection: vi.fn(async (col: string) => {
-          const results: any[] = [];
-          for (const [key, val] of mockDb.entries()) {
-            if (key.startsWith(`${col}/`)) {
-              results.push(val);
+        transact: vi.fn(async (paths: string[], fn: (docs: any[]) => any) => {
+          const docs = paths.map((p) => mockDb.get(p) || null);
+          const res = await fn(docs);
+          const writes = res?.writes || [];
+          for (const w of writes) {
+            if (w.update) {
+              const name = w.update.name;
+              const fields = w.update.fields || {};
+              mockDb.set(name, { ...(mockDb.get(name) || {}), ...fields });
             }
           }
-          return results;
+          return res?.result;
+        }),
+        commit: vi.fn(async (writes: any[]) => {
+          for (const w of writes) {
+            if (w.update) {
+              const name = w.update.name;
+              const fields = w.update.fields || {};
+              mockDb.set(name, { ...(mockDb.get(name) || {}), ...fields });
+            }
+          }
         }),
       })),
     },
@@ -53,7 +67,11 @@ vi.mock("@/lib/server/rate-limit", () => ({
 }));
 
 vi.mock("@/lib/server/audit", () => ({
-  writeAuditLog: vi.fn(async () => true),
+  writeAuditLog: vi.fn(async (_fs: any, input: any) => {
+    const id = "mock_audit_" + Math.random().toString(36).substring(2, 9);
+    mockDb.set("auditLog/" + id, { ...input, createdAt: new Date().toISOString() });
+    return id;
+  }),
 }));
 
 describe("Batch B2 — Payout Account Verification and Review Flow", () => {

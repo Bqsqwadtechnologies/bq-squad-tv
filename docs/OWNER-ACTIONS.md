@@ -314,3 +314,13 @@ When deploying with an external audiovisual content matching provider (e.g. Audi
 
 1. `KYC_FIELD_ENCRYPTION_KEY`: Required server-only, base64-encoded 32-byte key for AES-256-GCM field encryption. Until configured in the deployment secret manager, sensitive KYC encryption fails closed; no fallback key is used.
 2. `KYC_VAULT_SIGNING_SECRET`: Required server-only high-entropy secret (at least 32 bytes) for HMAC-SHA256 KYC viewer request signatures. Until configured, viewer request signing fails closed. The viewer endpoint must also authenticate, authorize and audit each request; signing alone does not grant access.
+
+## Batch C1 — Verification Provider Adapter (External KYC Verifier)
+
+1. `FEATURE_EXTERNAL_KYC_VERIFIER`: Boolean feature flag (`true` or `false`, defaults to `false`). When `false`, all KYC cases default to the built-in manual verification flow. When `true`, automated preliminary checks (document authenticity, facial similarity, liveness, sanctions/PEP screening) run through the external verification provider adapter.
+2. `KYC_VERIFIER_API_KEY`: Secret API key for the external verification provider.
+3. `KYC_VERIFIER_ENDPOINT`: (Optional) Base URL of external verification provider API (defaults to internal production verification gateway `https://api.verifypay.internal/v1/kyc`).
+
+### Safety and Owner Decision Guarantees
+- **No User Blocking on Adapter Failure**: If the external verification provider is unreachable, times out, or returns a 5xx error, the system **never blocks the applicant**. The case automatically transitions to manual review with a visible badge `"automatic check unavailable"` in the Zillionaire queue.
+- **Owner Final Authority**: External adapter results (status, score, confidence, anomaly flags) are advisory signals stored on the case record. The human platform owner/compliance officer retains final authority to approve, reject, or request changes on all KYC submissions.

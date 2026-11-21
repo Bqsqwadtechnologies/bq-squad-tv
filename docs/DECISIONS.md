@@ -747,3 +747,17 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - Payout Rules & Currency: verified owner-configurable minimum payout thresholds ($500 USD and ₦500,000 NGN default) and conversion rates; verified hold evaluation when KYC or account approval is pending; dual approval threshold enforcement for high-value disbursements; mandatory audited reason logging on rule modifications.
   - Outbox & Dual Delivery: confirmed dual-notification dispatch (in-app notice + outbox email record) for all 12 operational lifecycle events; verified exponential backoff progression (1m -> 5m -> 15m -> 60m).
   - Brand and Policy Guardrails: verified 0 occurrences of "admin" in route paths or user-visible copy; verified strict adherence to "KYC, never KYB"; confirmed SMS transport is strictly prohibited for KYC/payout notices (email and in-app only; SMS exclusively reserved for phone OTP).
+
+## Batch C1 — KYC Verification Provider Adapter & Automated Checks
+
+- **Status**: Implemented & Verified
+- **Date**: 2026-11-21
+- **Scope & Rationale**:
+  - Implemented the `KycVerifier` interface contract (`src/lib/server/kyc/verifier/types.ts`) supporting document authenticity analysis, facial similarity scoring, liveness verification, and sanctions/PEP screening.
+  - Implemented `ManualKycVerifier` as the zero-dependency, fail-safe default implementation, funneling cases directly to the manual compliance review queue.
+  - Implemented `ExternalKycVerifierAdapter` (`src/lib/server/kyc/verifier/index.ts`) behind the `FEATURE_EXTERNAL_KYC_VERIFIER` environment feature flag and `KYC_VERIFIER_API_KEY` credential.
+  - Configured resilient fail-open/manual-fallback mechanics: external adapter timeouts or network failures never block applicant onboarding; cases gracefully transition to manual review with an explicit `automatedCheckUnavailable: true` notice in the Zillionaire queue.
+  - Advisory external result objects (`status`, `overallScore`, `subChecks`, `reasons`) are persisted with `KycProfile` in Firestore without overriding human judgment: the human owner/compliance officer retains final approval authority on all cases.
+  - Integrated verification provider checks into both producer (`/api/public/v1/producer/verification`) and provider (`/api/public/v1/provider/verification`) submission endpoints.
+  - Exposed automated checks and advisory notices in the Zillionaire detail API (`/api/public/v1/zillionaire/kyc/detail`).
+  - Documented configuration secrets and failure handling in `docs/OWNER-ACTIONS.md`.

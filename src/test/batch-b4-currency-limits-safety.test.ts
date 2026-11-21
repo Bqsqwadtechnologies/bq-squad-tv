@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as apiModule from "@/lib/server/api";
 
-const mockDb = new Map<string, any>();
+const mockDb: Map<string, any> = ((globalThis as any).__sharedTestFirestore ??= new Map<string, any>());
 
 vi.mock("@/lib/server/firebase-admin", () => {
   return {
@@ -37,15 +37,16 @@ vi.mock("@/lib/server/firebase-admin", () => {
         }),
         transact: vi.fn(async (paths: string[], fn: (docs: any[]) => any) => {
           const docs = paths.map((p) => mockDb.get(p) || null);
-          const { result, writes } = await fn(docs);
+          const res = await fn(docs);
+          const writes = res?.writes || [];
           for (const w of writes) {
             if (w.update) {
               const name = w.update.name;
-              const fields = w.update.fields;
+              const fields = w.update.fields || {};
               mockDb.set(name, { ...(mockDb.get(name) || {}), ...fields });
             }
           }
-          return result;
+          return res?.result;
         }),
       })),
       commit: vi.fn(async (writes: any[]) => {

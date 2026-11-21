@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as apiModule from "@/lib/server/api";
 
-const mockDb = new Map<string, any>();
+const mockDb: Map<string, any> = ((globalThis as any).__sharedTestFirestore ??= new Map<string, any>());
 
 vi.mock("@/lib/server/firebase-admin", () => {
   return {
@@ -18,6 +18,13 @@ vi.mock("@/lib/server/firebase-admin", () => {
       create: vi.fn(async () => ({
         docName: (p: string) => p,
         getDoc: vi.fn(async (path: string) => mockDb.get(path) || null),
+        setDoc: vi.fn(async (path: string, data: any) => {
+          mockDb.set(path, { ...data });
+        }),
+        patchDoc: vi.fn(async (path: string, data: any) => {
+          const current = mockDb.get(path) || {};
+          mockDb.set(path, { ...current, ...data });
+        }),
         query: vi.fn(async (col: string, options?: any) => {
           const results: any[] = [];
           for (const [key, val] of mockDb.entries()) {
@@ -25,15 +32,29 @@ vi.mock("@/lib/server/firebase-admin", () => {
               results.push({ __id: key.slice(col.length + 1), ...val });
             }
           }
-          if (options?.filters) {
-            return results.filter((item) => {
-              return options.filters.every((f: any) => {
-                if (f.op === "EQUAL") return item[f.field] === f.value;
-                return true;
-              });
-            });
-          }
           return results;
+        }),
+        transact: vi.fn(async (paths: string[], fn: (docs: any[]) => any) => {
+          const docs = paths.map((p) => mockDb.get(p) || null);
+          const res = await fn(docs);
+          const writes = res?.writes || [];
+          for (const w of writes) {
+            if (w.update) {
+              const name = w.update.name;
+              const fields = w.update.fields || {};
+              mockDb.set(name, { ...(mockDb.get(name) || {}), ...fields });
+            }
+          }
+          return res?.result;
+        }),
+        commit: vi.fn(async (writes: any[]) => {
+          for (const w of writes) {
+            if (w.update) {
+              const name = w.update.name;
+              const fields = w.update.fields || {};
+              mockDb.set(name, { ...(mockDb.get(name) || {}), ...fields });
+            }
+          }
         }),
       })),
     },

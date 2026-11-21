@@ -136,6 +136,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
                 duplicateTaxDetected: duplicateTaxWarning,
                 duplicateBankDetected: duplicateBankWarning,
                 sanctionsCleared: false, // requires manual clearance in reviewer UI
+                verifierResult: profile.verifierResult || null,
+                verifierNotice:
+                  profile.verifierResult?.ownerNotice ||
+                  (profile.verifierResult?.fallbackToManual ? "automatic check unavailable" : null),
               },
             },
           });

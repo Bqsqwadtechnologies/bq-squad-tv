@@ -1,3 +1,4 @@
+import type { KycVerifierResult } from "./verifier/types";
 import * as crypto from 'node:crypto';
 
 export type KycStatus = 'unsubmitted' | 'pending' | 'approved' | 'rejected';
@@ -87,6 +88,7 @@ export interface KycProfile {
   faceCaptureVaultPath?: string;
   riskScore?: number;
   riskFlags?: string[];
+  verifierResult?: KycVerifierResult;
 }
 
 /**
