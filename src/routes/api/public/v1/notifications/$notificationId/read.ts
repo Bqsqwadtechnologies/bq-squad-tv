@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
-import { errorBody, requireUser } from "@/lib/server/api";
+import { errorBody } from "@/lib/server/api";
+import { requireVerifiedViewer } from "@/lib/server/access";
 
 export const Route = createFileRoute("/api/public/v1/notifications/$notificationId/read")({
   server: {
     handlers: {
       POST: async ({ request, params }) => {
         try {
-          const user = await requireUser(request);
+          const { user } = await requireVerifiedViewer(request);
           if (!/^[A-Za-z0-9_-]{1,100}$/.test(params.notificationId)) {
             throw new ApiError(400, "NOTIFICATION_ID_INVALID", "The notification id is invalid.");
           }
