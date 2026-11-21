@@ -5,6 +5,7 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { isProtectedZillionaire, requireZillionaireModule } from "@/lib/server/roles";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { requireStepUp } from "@/lib/server/zillionaire-access";
+import { currencyForCountry } from "@/lib/server/currency";
 
 const actionSchema = z.discriminatedUnion("action", [
   z.object({
@@ -123,10 +124,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/")({
           return Response.json({
             profile: {
               id: uid,
+              accountId: userDoc["accountId"] || null,
               email: userDoc["email"] || "",
               displayName: userDoc["displayName"] || "Viewer",
               phone: userDoc["phone"] || null,
-              country: userDoc["country"] || "NG",
+              country: userDoc["countryCode"] || userDoc["country"] || null,
               createdAt: userDoc["createdAt"] || null,
               accountStatus:
                 userDoc["accountStatus"] || (userDoc["suspended"] ? "SUSPENDED" : "ACTIVE"),
@@ -137,7 +139,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/")({
             },
             wallet: {
               balanceMinor: Number(walletDoc["balanceMinor"] || 0),
-              currency: (walletDoc["currency"] as string) || "NGN",
+              currency: (walletDoc["currency"] as string) || (userDoc["preferredCurrency"] as string) || currencyForCountry(userDoc["countryCode"] || userDoc["country"]) || "USD",
               ledger: ledgerEntries.map((e) => ({
                 id: e.__id || e["id"],
                 kind: e["kind"] || "adjustment",
