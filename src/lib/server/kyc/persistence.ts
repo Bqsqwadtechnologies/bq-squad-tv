@@ -1,3 +1,5 @@
+import { computeNextReverificationDate } from "@/lib/server/kyc/lifecycle";
+import { KycConsentRecord } from "@/lib/server/kyc/types";
 import type { KycVerifierResult } from "./verifier/types";
 import { Firestore, ApiError } from '../firebase-admin';
 import {
@@ -65,6 +67,7 @@ export interface SaveKycInput {
   riskFlags?: string[];
   verifierResult?: KycVerifierResult;
   payoutTier?: 0 | 1 | 2;
+  consentLog?: KycConsentRecord[];
   status?: KycStatus;
   providerId?: string;
 }
@@ -228,6 +231,27 @@ export async function saveKycProfile(
     ...(input.representative ? { representative: input.representative } : existing?.representative ? { representative: existing.representative } : {}),
     ...(input.residentialAddress ? { residentialAddress: input.residentialAddress } : existing?.residentialAddress ? { residentialAddress: existing.residentialAddress } : {}),
     ...(input.businessAddress ? { businessAddress: input.businessAddress } : existing?.businessAddress ? { businessAddress: existing.businessAddress } : {}),
+    consentLog: input.consentLog ?? existing?.consentLog ?? [
+      {
+        consentType: "data_protection_policy",
+        noticeVersion: "2026-v1.0",
+        noticeUrl: "/help/data-protection",
+        acceptedAt: now,
+      },
+      {
+        consentType: "id_document_processing",
+        noticeVersion: "2026-v1.0",
+        noticeUrl: "/help/data-protection#retention",
+        acceptedAt: now,
+      },
+      {
+        consentType: "face_biometric",
+        noticeVersion: "2026-v1.0",
+        noticeUrl: "/help/data-protection#biometrics",
+        acceptedAt: now,
+      },
+    ],
+    nextReverificationDueAt: existing?.nextReverificationDueAt || computeNextReverificationDate(input.riskLevel || existing?.riskLevel || "low"),
   };
 
   await fs.setDoc(`kycProfiles/${input.uid}`, profile as any);

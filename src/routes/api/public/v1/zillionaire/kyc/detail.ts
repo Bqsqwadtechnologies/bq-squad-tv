@@ -428,6 +428,40 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
               reason: effectiveRejectionReason,
               notes: body.notes,
             });
+          } else if (body.action === "force_rekyc") {
+            const rekycReason = body.reason || body.notes || "Periodic regulatory identity re-verification mandated.";
+            await fs.patchDoc(`kycProfiles/${body.uid}`, {
+              kycStatus: "rekyc_required",
+              forceRekycReason: rekycReason,
+              forceRekycAt: now,
+              forceRekycBy: user.uid,
+              payoutTier: 0,
+              updatedAt: now,
+            });
+
+            if (existingProfile.role === "producer") {
+              await fs.patchDoc(`producers/${body.uid}`, {
+                kycStatus: "rekyc_required",
+                verificationStatus: "UNVERIFIED",
+              }).catch(() => {});
+            } else if (existingProfile.role === "provider") {
+              await fs.patchDoc(`providers/${body.uid}`, {
+                kycStatus: "rekyc_required",
+                verificationStatus: "UNVERIFIED",
+              }).catch(() => {});
+            }
+
+            await writeAuditLog(fs, {
+              action: "kyc.forced_rekyc",
+              actorUid: user.uid,
+              actorEmail: user.email || "",
+              targetType: "user",
+              targetId: body.uid,
+              reason: rekycReason,
+              metadata: {
+                previousStatus: existingProfile.kycStatus,
+              },
+            });
           } else {
             // Update custom status transition
             await fs.patchDoc(`kycProfiles/${body.uid}`, {

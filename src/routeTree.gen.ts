@@ -223,6 +223,7 @@ import { Route as ApiPublicV1PaymentsPaystackInitializeRouteImport } from './rou
 import { Route as ApiPublicV1PaymentsPaystackVerifyRouteImport } from './routes/api/public/v1/payments/paystack/verify'
 import { Route as ApiPublicV1PaymentsPaystackWebhookRouteImport } from './routes/api/public/v1/payments/paystack/webhook'
 import { Route as ApiPublicV1ProducerCollaborationsIndexRouteImport } from './routes/api/public/v1/producer/collaborations/index'
+import { Route as ApiPublicV1ProducerLifecycleNameChangeRouteImport } from './routes/api/public/v1/producer/lifecycle/name-change'
 import { Route as ApiPublicV1ProducerPayoutsRequestRouteImport } from './routes/api/public/v1/producer/payouts/request'
 import { Route as ApiPublicV1ProducerVerificationDraftRouteImport } from './routes/api/public/v1/producer/verification/draft'
 import { Route as ApiPublicV1ProducerVerificationUploadIntentRouteImport } from './routes/api/public/v1/producer/verification/upload-intent'
@@ -361,6 +362,11 @@ import { Route as ApiPublicV1ZillionaireContentAssetsAssetIdRevokeTokensRouteImp
 import { Route as ApiPublicV1ZillionaireContentAssetsAssetIdRightsRouteImport } from './routes/api/public/v1/zillionaire/content-assets/$assetId/rights'
 import { Route as ApiPublicV1ZillionaireContentCommentsCommentIdModerateRouteImport } from './routes/api/public/v1/zillionaire/content-comments/$commentId/moderate'
 import { Route as ApiPublicV1ZillionaireEmailOutboxIndexRouteImport } from './routes/api/public/v1/zillionaire/email/outbox/index'
+import { Route as ApiPublicV1ZillionaireKycLifecycleAccountClosureRouteImport } from './routes/api/public/v1/zillionaire/kyc/lifecycle/account-closure'
+import { Route as ApiPublicV1ZillionaireKycLifecycleErasureRequestRouteImport } from './routes/api/public/v1/zillionaire/kyc/lifecycle/erasure-request'
+import { Route as ApiPublicV1ZillionaireKycLifecycleNameChangeRouteImport } from './routes/api/public/v1/zillionaire/kyc/lifecycle/name-change'
+import { Route as ApiPublicV1ZillionaireKycLifecycleScanExpiriesRouteImport } from './routes/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries'
+import { Route as ApiPublicV1ZillionaireKycRetentionLegalHoldRouteImport } from './routes/api/public/v1/zillionaire/kyc/retention/legal-hold'
 import { Route as ApiPublicV1ZillionaireMoviesCurationIndexRouteImport } from './routes/api/public/v1/zillionaire/movies/curation/index'
 import { Route as ApiPublicV1ZillionairePaymentsPaymentIdReverseRouteImport } from './routes/api/public/v1/zillionaire/payments/$paymentId/reverse'
 import { Route as ApiPublicV1ZillionairePayoutsPayoutIdAuditCopyRouteImport } from './routes/api/public/v1/zillionaire/payouts/$payoutId/audit-copy'
@@ -1552,6 +1558,12 @@ const ApiPublicV1ProducerCollaborationsIndexRoute =
     path: '/api/public/v1/producer/collaborations/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ProducerLifecycleNameChangeRoute =
+  ApiPublicV1ProducerLifecycleNameChangeRouteImport.update({
+    id: '/api/public/v1/producer/lifecycle/name-change',
+    path: '/api/public/v1/producer/lifecycle/name-change',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ProducerPayoutsRequestRoute =
   ApiPublicV1ProducerPayoutsRequestRouteImport.update({
     id: '/request',
@@ -2380,6 +2392,36 @@ const ApiPublicV1ZillionaireEmailOutboxIndexRoute =
     path: '/api/public/v1/zillionaire/email/outbox/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireKycLifecycleAccountClosureRoute =
+  ApiPublicV1ZillionaireKycLifecycleAccountClosureRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/lifecycle/account-closure',
+    path: '/api/public/v1/zillionaire/kyc/lifecycle/account-closure',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireKycLifecycleErasureRequestRoute =
+  ApiPublicV1ZillionaireKycLifecycleErasureRequestRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request',
+    path: '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireKycLifecycleNameChangeRoute =
+  ApiPublicV1ZillionaireKycLifecycleNameChangeRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/lifecycle/name-change',
+    path: '/api/public/v1/zillionaire/kyc/lifecycle/name-change',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireKycLifecycleScanExpiriesRoute =
+  ApiPublicV1ZillionaireKycLifecycleScanExpiriesRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries',
+    path: '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireKycRetentionLegalHoldRoute =
+  ApiPublicV1ZillionaireKycRetentionLegalHoldRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/retention/legal-hold',
+    path: '/api/public/v1/zillionaire/kyc/retention/legal-hold',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireMoviesCurationIndexRoute =
   ApiPublicV1ZillionaireMoviesCurationIndexRouteImport.update({
     id: '/api/public/v1/zillionaire/movies/curation/',
@@ -2708,6 +2750,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
   '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
+  '/api/public/v1/producer/lifecycle/name-change': typeof ApiPublicV1ProducerLifecycleNameChangeRoute
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
   '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
@@ -2847,6 +2890,11 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens': typeof ApiPublicV1ZillionaireContentAssetsAssetIdRevokeTokensRoute
   '/api/public/v1/zillionaire/content-assets/$assetId/rights': typeof ApiPublicV1ZillionaireContentAssetsAssetIdRightsRoute
   '/api/public/v1/zillionaire/content-comments/$commentId/moderate': typeof ApiPublicV1ZillionaireContentCommentsCommentIdModerateRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/account-closure': typeof ApiPublicV1ZillionaireKycLifecycleAccountClosureRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request': typeof ApiPublicV1ZillionaireKycLifecycleErasureRequestRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/name-change': typeof ApiPublicV1ZillionaireKycLifecycleNameChangeRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries': typeof ApiPublicV1ZillionaireKycLifecycleScanExpiriesRoute
+  '/api/public/v1/zillionaire/kyc/retention/legal-hold': typeof ApiPublicV1ZillionaireKycRetentionLegalHoldRoute
   '/api/public/v1/zillionaire/payments/$paymentId/reverse': typeof ApiPublicV1ZillionairePaymentsPaymentIdReverseRoute
   '/api/public/v1/zillionaire/payouts/$payoutId/audit-copy': typeof ApiPublicV1ZillionairePayoutsPayoutIdAuditCopyRoute
   '/api/public/v1/zillionaire/payouts/$payoutId/review': typeof ApiPublicV1ZillionairePayoutsPayoutIdReviewRoute
@@ -3080,6 +3128,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
   '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
+  '/api/public/v1/producer/lifecycle/name-change': typeof ApiPublicV1ProducerLifecycleNameChangeRoute
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
   '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
@@ -3219,6 +3268,11 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens': typeof ApiPublicV1ZillionaireContentAssetsAssetIdRevokeTokensRoute
   '/api/public/v1/zillionaire/content-assets/$assetId/rights': typeof ApiPublicV1ZillionaireContentAssetsAssetIdRightsRoute
   '/api/public/v1/zillionaire/content-comments/$commentId/moderate': typeof ApiPublicV1ZillionaireContentCommentsCommentIdModerateRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/account-closure': typeof ApiPublicV1ZillionaireKycLifecycleAccountClosureRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request': typeof ApiPublicV1ZillionaireKycLifecycleErasureRequestRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/name-change': typeof ApiPublicV1ZillionaireKycLifecycleNameChangeRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries': typeof ApiPublicV1ZillionaireKycLifecycleScanExpiriesRoute
+  '/api/public/v1/zillionaire/kyc/retention/legal-hold': typeof ApiPublicV1ZillionaireKycRetentionLegalHoldRoute
   '/api/public/v1/zillionaire/payments/$paymentId/reverse': typeof ApiPublicV1ZillionairePaymentsPaymentIdReverseRoute
   '/api/public/v1/zillionaire/payouts/$payoutId/audit-copy': typeof ApiPublicV1ZillionairePayoutsPayoutIdAuditCopyRoute
   '/api/public/v1/zillionaire/payouts/$payoutId/review': typeof ApiPublicV1ZillionairePayoutsPayoutIdReviewRoute
@@ -3454,6 +3508,7 @@ export interface FileRoutesById {
   '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
   '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
+  '/api/public/v1/producer/lifecycle/name-change': typeof ApiPublicV1ProducerLifecycleNameChangeRoute
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
   '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
@@ -3593,6 +3648,11 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens': typeof ApiPublicV1ZillionaireContentAssetsAssetIdRevokeTokensRoute
   '/api/public/v1/zillionaire/content-assets/$assetId/rights': typeof ApiPublicV1ZillionaireContentAssetsAssetIdRightsRoute
   '/api/public/v1/zillionaire/content-comments/$commentId/moderate': typeof ApiPublicV1ZillionaireContentCommentsCommentIdModerateRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/account-closure': typeof ApiPublicV1ZillionaireKycLifecycleAccountClosureRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request': typeof ApiPublicV1ZillionaireKycLifecycleErasureRequestRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/name-change': typeof ApiPublicV1ZillionaireKycLifecycleNameChangeRoute
+  '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries': typeof ApiPublicV1ZillionaireKycLifecycleScanExpiriesRoute
+  '/api/public/v1/zillionaire/kyc/retention/legal-hold': typeof ApiPublicV1ZillionaireKycRetentionLegalHoldRoute
   '/api/public/v1/zillionaire/payments/$paymentId/reverse': typeof ApiPublicV1ZillionairePaymentsPaymentIdReverseRoute
   '/api/public/v1/zillionaire/payouts/$payoutId/audit-copy': typeof ApiPublicV1ZillionairePayoutsPayoutIdAuditCopyRoute
   '/api/public/v1/zillionaire/payouts/$payoutId/review': typeof ApiPublicV1ZillionairePayoutsPayoutIdReviewRoute
@@ -3829,6 +3889,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/payments/paystack/initialize'
     | '/api/public/v1/payments/paystack/verify'
     | '/api/public/v1/payments/paystack/webhook'
+    | '/api/public/v1/producer/lifecycle/name-change'
     | '/api/public/v1/producer/payouts/request'
     | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
@@ -3968,6 +4029,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens'
     | '/api/public/v1/zillionaire/content-assets/$assetId/rights'
     | '/api/public/v1/zillionaire/content-comments/$commentId/moderate'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/account-closure'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/name-change'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries'
+    | '/api/public/v1/zillionaire/kyc/retention/legal-hold'
     | '/api/public/v1/zillionaire/payments/$paymentId/reverse'
     | '/api/public/v1/zillionaire/payouts/$payoutId/audit-copy'
     | '/api/public/v1/zillionaire/payouts/$payoutId/review'
@@ -4201,6 +4267,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/payments/paystack/initialize'
     | '/api/public/v1/payments/paystack/verify'
     | '/api/public/v1/payments/paystack/webhook'
+    | '/api/public/v1/producer/lifecycle/name-change'
     | '/api/public/v1/producer/payouts/request'
     | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
@@ -4340,6 +4407,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens'
     | '/api/public/v1/zillionaire/content-assets/$assetId/rights'
     | '/api/public/v1/zillionaire/content-comments/$commentId/moderate'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/account-closure'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/name-change'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries'
+    | '/api/public/v1/zillionaire/kyc/retention/legal-hold'
     | '/api/public/v1/zillionaire/payments/$paymentId/reverse'
     | '/api/public/v1/zillionaire/payouts/$payoutId/audit-copy'
     | '/api/public/v1/zillionaire/payouts/$payoutId/review'
@@ -4574,6 +4646,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/payments/paystack/initialize'
     | '/api/public/v1/payments/paystack/verify'
     | '/api/public/v1/payments/paystack/webhook'
+    | '/api/public/v1/producer/lifecycle/name-change'
     | '/api/public/v1/producer/payouts/request'
     | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
@@ -4713,6 +4786,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens'
     | '/api/public/v1/zillionaire/content-assets/$assetId/rights'
     | '/api/public/v1/zillionaire/content-comments/$commentId/moderate'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/account-closure'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/name-change'
+    | '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries'
+    | '/api/public/v1/zillionaire/kyc/retention/legal-hold'
     | '/api/public/v1/zillionaire/payments/$paymentId/reverse'
     | '/api/public/v1/zillionaire/payouts/$payoutId/audit-copy'
     | '/api/public/v1/zillionaire/payouts/$payoutId/review'
@@ -4933,6 +5011,7 @@ export interface RootRouteChildren {
   ApiPublicV1PaymentsPaystackInitializeRoute: typeof ApiPublicV1PaymentsPaystackInitializeRoute
   ApiPublicV1PaymentsPaystackVerifyRoute: typeof ApiPublicV1PaymentsPaystackVerifyRoute
   ApiPublicV1PaymentsPaystackWebhookRoute: typeof ApiPublicV1PaymentsPaystackWebhookRoute
+  ApiPublicV1ProducerLifecycleNameChangeRoute: typeof ApiPublicV1ProducerLifecycleNameChangeRoute
   ApiPublicV1SecurityIntegrityChallengeRoute: typeof ApiPublicV1SecurityIntegrityChallengeRoute
   ApiPublicV1SessionsSessionIdEndRoute: typeof ApiPublicV1SessionsSessionIdEndRoute
   ApiPublicV1SessionsSessionIdHeartbeatRoute: typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
@@ -5052,6 +5131,11 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireContentAssetsAssetIdRevokeTokensRoute: typeof ApiPublicV1ZillionaireContentAssetsAssetIdRevokeTokensRoute
   ApiPublicV1ZillionaireContentAssetsAssetIdRightsRoute: typeof ApiPublicV1ZillionaireContentAssetsAssetIdRightsRoute
   ApiPublicV1ZillionaireContentCommentsCommentIdModerateRoute: typeof ApiPublicV1ZillionaireContentCommentsCommentIdModerateRoute
+  ApiPublicV1ZillionaireKycLifecycleAccountClosureRoute: typeof ApiPublicV1ZillionaireKycLifecycleAccountClosureRoute
+  ApiPublicV1ZillionaireKycLifecycleErasureRequestRoute: typeof ApiPublicV1ZillionaireKycLifecycleErasureRequestRoute
+  ApiPublicV1ZillionaireKycLifecycleNameChangeRoute: typeof ApiPublicV1ZillionaireKycLifecycleNameChangeRoute
+  ApiPublicV1ZillionaireKycLifecycleScanExpiriesRoute: typeof ApiPublicV1ZillionaireKycLifecycleScanExpiriesRoute
+  ApiPublicV1ZillionaireKycRetentionLegalHoldRoute: typeof ApiPublicV1ZillionaireKycRetentionLegalHoldRoute
   ApiPublicV1ZillionairePaymentsPaymentIdReverseRoute: typeof ApiPublicV1ZillionairePaymentsPaymentIdReverseRoute
   ApiPublicV1ZillionairePayoutsPayoutIdAuditCopyRoute: typeof ApiPublicV1ZillionairePayoutsPayoutIdAuditCopyRoute
   ApiPublicV1ZillionairePayoutsPayoutIdReviewRoute: typeof ApiPublicV1ZillionairePayoutsPayoutIdReviewRoute
@@ -6572,6 +6656,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProducerCollaborationsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/producer/lifecycle/name-change': {
+      id: '/api/public/v1/producer/lifecycle/name-change'
+      path: '/api/public/v1/producer/lifecycle/name-change'
+      fullPath: '/api/public/v1/producer/lifecycle/name-change'
+      preLoaderRoute: typeof ApiPublicV1ProducerLifecycleNameChangeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/producer/payouts/request': {
       id: '/api/public/v1/producer/payouts/request'
       path: '/request'
@@ -7538,6 +7629,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireEmailOutboxIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/kyc/lifecycle/account-closure': {
+      id: '/api/public/v1/zillionaire/kyc/lifecycle/account-closure'
+      path: '/api/public/v1/zillionaire/kyc/lifecycle/account-closure'
+      fullPath: '/api/public/v1/zillionaire/kyc/lifecycle/account-closure'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycLifecycleAccountClosureRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request': {
+      id: '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request'
+      path: '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request'
+      fullPath: '/api/public/v1/zillionaire/kyc/lifecycle/erasure-request'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycLifecycleErasureRequestRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/kyc/lifecycle/name-change': {
+      id: '/api/public/v1/zillionaire/kyc/lifecycle/name-change'
+      path: '/api/public/v1/zillionaire/kyc/lifecycle/name-change'
+      fullPath: '/api/public/v1/zillionaire/kyc/lifecycle/name-change'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycLifecycleNameChangeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries': {
+      id: '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries'
+      path: '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries'
+      fullPath: '/api/public/v1/zillionaire/kyc/lifecycle/scan-expiries'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycLifecycleScanExpiriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/kyc/retention/legal-hold': {
+      id: '/api/public/v1/zillionaire/kyc/retention/legal-hold'
+      path: '/api/public/v1/zillionaire/kyc/retention/legal-hold'
+      fullPath: '/api/public/v1/zillionaire/kyc/retention/legal-hold'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycRetentionLegalHoldRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/movies/curation/': {
       id: '/api/public/v1/zillionaire/movies/curation/'
       path: '/api/public/v1/zillionaire/movies/curation'
@@ -8183,6 +8309,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1PaymentsPaystackVerifyRoute,
   ApiPublicV1PaymentsPaystackWebhookRoute:
     ApiPublicV1PaymentsPaystackWebhookRoute,
+  ApiPublicV1ProducerLifecycleNameChangeRoute:
+    ApiPublicV1ProducerLifecycleNameChangeRoute,
   ApiPublicV1SecurityIntegrityChallengeRoute:
     ApiPublicV1SecurityIntegrityChallengeRoute,
   ApiPublicV1SessionsSessionIdEndRoute: ApiPublicV1SessionsSessionIdEndRoute,
@@ -8400,6 +8528,16 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireContentAssetsAssetIdRightsRoute,
   ApiPublicV1ZillionaireContentCommentsCommentIdModerateRoute:
     ApiPublicV1ZillionaireContentCommentsCommentIdModerateRoute,
+  ApiPublicV1ZillionaireKycLifecycleAccountClosureRoute:
+    ApiPublicV1ZillionaireKycLifecycleAccountClosureRoute,
+  ApiPublicV1ZillionaireKycLifecycleErasureRequestRoute:
+    ApiPublicV1ZillionaireKycLifecycleErasureRequestRoute,
+  ApiPublicV1ZillionaireKycLifecycleNameChangeRoute:
+    ApiPublicV1ZillionaireKycLifecycleNameChangeRoute,
+  ApiPublicV1ZillionaireKycLifecycleScanExpiriesRoute:
+    ApiPublicV1ZillionaireKycLifecycleScanExpiriesRoute,
+  ApiPublicV1ZillionaireKycRetentionLegalHoldRoute:
+    ApiPublicV1ZillionaireKycRetentionLegalHoldRoute,
   ApiPublicV1ZillionairePaymentsPaymentIdReverseRoute:
     ApiPublicV1ZillionairePaymentsPaymentIdReverseRoute,
   ApiPublicV1ZillionairePayoutsPayoutIdAuditCopyRoute:

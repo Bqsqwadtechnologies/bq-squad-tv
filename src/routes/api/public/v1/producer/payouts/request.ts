@@ -44,6 +44,14 @@ export const Route = createFileRoute("/api/public/v1/producer/payouts/request")(
             );
           }
 
+          if (kycDoc?.["legalHold"] === true) {
+            throw new ApiError(
+              403,
+              "ACCOUNT_ON_LEGAL_HOLD",
+              "Payouts are temporarily paused while an active regulatory legal hold is in effect on this account.",
+            );
+          }
+
           // 2. Payout Account Status Check
           const payoutProfile = await fs.getDoc(`payoutProfiles/${user.uid}`);
           if (!payoutProfile) {

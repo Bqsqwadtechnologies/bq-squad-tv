@@ -1,5 +1,15 @@
-Last verified work: v6-05-C3 — Compliance role, reviewer operations, SLA, watermarked 60s viewer, and step-up export.
-Next batch: v6-05-C4 — Case files, retention, legal holds, data subject requests, and consent.
-Known gaps: None.
-Files touched: src/lib/server/roles.ts, src/lib/server/zillionaire-access.ts, src/lib/server/kyc/compliance.ts, src/lib/server/kyc/persistence.ts, src/routes/api/public/v1/zillionaire/users/$uid/permissions.ts, src/routes/api/public/v1/zillionaire/access/step-up.ts, src/routes/api/public/v1/zillionaire/kyc/detail.ts, src/routes/api/public/v1/zillionaire/kyc/view-doc.ts, src/routes/api/public/v1/zillionaire/kyc/reveal.ts, src/routes/api/public/v1/zillionaire/kyc/operations.ts, src/routes/api/public/v1/zillionaire/kyc/bulk-action.ts, src/routes/api/public/v1/zillionaire/kyc/export-case.ts, src/routeTree.gen.ts, src/test/batch-c3-compliance-reviewers-sla-stepup.test.ts, docs/DECISIONS.md, docs/HANDOFF.md, docs/PUSH-LOG.md.
-Checks run: 122 tests passed across 20 test files; bun run check:route-integrity (371 routes) clean; bun run scan:public-text clean; bun run build clean.
+# Handoff State
+
+## Most Recent Completed Batch
+- **Batch C4 — Case File Dossier, Configurable Retention, Legal Hold, and Full Lifecycle**
+- **Date**: 2026-11-21
+- **Status**: Completed and fully verified across all tests and production build.
+
+## Verified Test & Build Status
+- **Automated Tests**: 132 tests passing across 21 test files (`src/test/batch-*.test.ts`).
+- **Route Integrity**: 381 route files verified.
+- **Security & Public-Text Scan**: Passed (no forbidden KYB, no exposed internal endpoints, fail-closed auth).
+- **Production Compilation**: Clean Vite client and SSR build (`bun run build`).
+
+## Next Batch
+- **Batch C5 & C6**: Applicant UX polish (timeline, field help, accessible upload) & Comprehensive Deny-by-Default Matrix / Final Verification.

@@ -828,3 +828,39 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
     - Enforces step-up MFA/re-authentication token with scope `kyc_case_export`.
     - Mandatory audit logging (`kyc.case_file_exported`) with legal justification reason.
   - Verified with 18 dedicated tests (`src/test/batch-c3-compliance-reviewers-sla-stepup.test.ts`), 122 passing tests overall across 20 test files, 371 routes verified, clean public-text scan, and clean production build.
+
+### Batch C4 — Case File Dossier, Configurable Retention, Legal Hold, and Full Lifecycle (2026-11-21)
+- **Scope & Context**:
+  - Implements complete case file dossier export with step-up verification, print-ready layout, and audit trail.
+  - Implements configurable statutory retention schedules per country AML legislation (e.g. 5-7 years).
+  - Implements legal hold placement and removal with immediate fail-closed payout suspension.
+  - Implements automatic document expiry monitoring with 30-day/7-day email reminders and auto-expiry.
+  - Implements forced re-KYC workflows resetting verification status and blocking payouts until re-verified.
+  - Implements legal name change workflow with compliance review and audit trail.
+  - Implements account closure and GDPR/NDPR data subject erasure requests with ledger preservation and retention checks.
+  - Implements KYC consent records logging accepted notice versions and biometrics terms.
+- **Key Architectural & Implementation Decisions**:
+  - Statutory Retention Rules (`src/lib/server/kyc/retention.ts`):
+    - Configured statutory retention periods per jurisdiction (NG: 5y, GB: 5y, US: 7y, EU: 5y, default: 5y FATF standard).
+    - Exposes helper `isRetentionPeriodActive(createdAtIso, countryCode)`.
+  - Expiry & Reverification Logic (`src/lib/server/kyc/lifecycle.ts`):
+    - Scheduled reverification calculation based on risk level (high risk 12 months, low/medium risk 24 months).
+    - `scanAndProcessDocumentExpiries` evaluates days remaining to expiry; dispatches 30-day and 7-day notification events; automatically transitions expired profiles to `expired` status and UNVERIFIED role.
+  - Legal Hold Guard & Payout Suspension (`src/routes/api/public/v1/zillionaire/kyc/retention/legal-hold.ts`, `src/routes/api/public/v1/producer/payouts/request.ts`):
+    - Compliance officers can place or release a legal hold (`legalHold: true`) with audit event `kyc.legal_hold_placed` / `kyc.legal_hold_removed`.
+    - Payout requests fail closed immediately with 403 `ACCOUNT_ON_LEGAL_HOLD` when a legal hold is active.
+  - Forced Re-KYC Workflow (`src/routes/api/public/v1/zillionaire/kyc/detail.ts`):
+    - Adds `action: "force_rekyc"` requiring justification reason, resetting KYC status to `rekyc_required`, resetting payout tier to 0, resetting user verification to `UNVERIFIED`, and auditing `kyc.forced_rekyc`.
+  - Legal Name Change Workflow (`src/routes/api/public/v1/producer/lifecycle/name-change.ts`, `src/routes/api/public/v1/zillionaire/kyc/lifecycle/name-change.ts`):
+    - Producers can submit a formal name change request with supporting proof.
+    - Compliance reviews, approves, or rejects with audit history and update to `nameChangeHistory`.
+  - Account Closure & Data Subject Erasure (`src/routes/api/public/v1/zillionaire/kyc/lifecycle/account-closure.ts`, `src/routes/api/public/v1/zillionaire/kyc/lifecycle/erasure-request.ts`):
+    - Account closure validates that no pending payouts exist before setting account status to `CLOSED`.
+    - Erasure requests block if a legal hold is active. If within active statutory retention, applies privacy-preserving partial redaction of contact details while preserving ledger, audit, and transaction history.
+  - Case File Dossier HTML/PDF Export (`src/routes/api/public/v1/zillionaire/kyc/export-case.ts`, `src/lib/server/kyc/case-dossier.ts`):
+    - Restricted to platform owner with step-up verification (`kyc_case_export`).
+    - Produces print-ready dossier with applicant profile, verification timeline, risk score, reviewer history, consent records, and full access audit log.
+- **Verification**:
+  - 10 dedicated automated tests in `src/test/batch-c4-case-file-retention-lifecycle.test.ts`.
+  - 132 automated tests passing across 21 test files.
+  - Clean production build with 381 route files and clean public text scan.

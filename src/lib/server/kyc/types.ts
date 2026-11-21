@@ -1,3 +1,21 @@
+export interface KycConsentRecord {
+  consentType: "face_biometric" | "id_document_processing" | "data_protection_policy";
+  noticeVersion: string;
+  noticeUrl: string;
+  acceptedAt: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
+export interface NameChangeEntry {
+  previousName: string;
+  newName: string;
+  proofDocumentPath: string;
+  reason: string;
+  reviewedBy: string;
+  reviewedAt: string;
+  status: "approved" | "rejected";
+}
 import type { KycVerifierResult } from "./verifier/types";
 import * as crypto from 'node:crypto';
 
@@ -114,6 +132,26 @@ export interface KycProfile {
   secondReviewerEmail?: string;
   secondReviewedAt?: string;
   secondReviewerNotes?: string;
+  // Lifecycle, Retention & Legal Hold
+  legalHold?: boolean;
+  legalHoldReason?: string;
+  legalHoldPlacedAt?: string;
+  legalHoldPlacedBy?: string;
+  consentLog?: KycConsentRecord[];
+  nextReverificationDueAt?: string;
+  nameChangeHistory?: NameChangeEntry[];
+  forceRekycReason?: string;
+  forceRekycAt?: string;
+  forceRekycBy?: string;
+  accountStatus?: "ACTIVE" | "SUSPENDED" | "CLOSED";
+  closedAt?: string;
+  closedReason?: string;
+  erasureRequestedAt?: string;
+  erasureProcessedAt?: string;
+  idExpiryDate?: string;
+  expiryReminder30DaySent?: boolean;
+  expiryReminder7DaySent?: boolean;
+  rejectionReason?: string;
 }
 
 /**
