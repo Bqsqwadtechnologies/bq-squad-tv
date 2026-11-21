@@ -12,6 +12,8 @@ import {
 
 type Wallet = {
   balanceMinor: number;
+  accountId?: string | null;
+  countryCode?: string | null;
   currency: string;
   dailySpendLimitMinor: number | null;
   spentTodayMinor: number;
@@ -33,10 +35,6 @@ type Topup = {
   creditMinor: number;
   currency: string;
 };
-
-const STANDARD_NGN_AMOUNTS: number[] = [
-  200, 500, 1000, 1500, 2000, 2500, 5000, 10000, 15000, 20000, 100000, 200000,
-];
 
 export const Route = createFileRoute("/wallet")({
   component: WalletPage,
@@ -243,7 +241,7 @@ function WalletPage() {
     if (isCustom || pkgId === "custom") {
       const parsed = Number(customAmountNgn);
       if (isNaN(parsed) || parsed < 200) {
-        setError("Minimum custom top-up amount is ₦200.");
+        setError("Minimum custom top-up amount is ₦200 for NGN wallets.");
         return;
       }
       customMinor = Math.round(parsed * 100);
@@ -359,6 +357,12 @@ function WalletPage() {
                     {formatMoney(wallet ? wallet.balanceMinor : 0, wallet?.currency || "USD")}
                   </p>
                   {email ? <p className="mt-2 break-all text-xs text-blue-100/45">{email}</p> : null}
+                  {wallet?.accountId ? (
+                    <p className="mt-2 flex flex-wrap items-center gap-2 text-xs text-cyan-200/80">
+                      Account ID: <span className="font-mono font-bold text-cyan-100">{wallet.accountId}</span>
+                      <button type="button" onClick={() => void navigator.clipboard?.writeText(wallet.accountId || "")} className="underline hover:text-white">Copy</button>
+                    </p>
+                  ) : null}
                 </div>
                 <a
                   href="/account"
@@ -394,69 +398,74 @@ function WalletPage() {
                 <div id="topups" className="mt-8 scroll-mt-6">
                   <h2 className="text-lg font-bold">Add wallet credits</h2>
                   <p className="mt-1 text-xs text-blue-100/60">
-                    Select a top-up amount below or enter a custom amount (minimum ₦200).
+                    Top-up amounts are displayed in your wallet currency ({wallet.currency}).
                   </p>
 
-                  {/* Standard Top-up Chip Grid */}
+                  {/* Currency-specific top-up offers supplied by the wallet API */}
                   <div className="mt-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-cyan-300/80 mb-2">
-                      Choose amount
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-cyan-300/80">
+                      Choose amount · {wallet.currency}
                     </p>
-                    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-                      {STANDARD_NGN_AMOUNTS.map((amt) => {
-                        const pkgId = `ngn_${amt}`;
-                        const isSelected = !isCustom && selectedPackageId === pkgId;
-                        return (
-                          <button
-                            key={amt}
-                            type="button"
-                            onClick={() => {
-                              setSelectedPackageId(pkgId);
-                              setIsCustom(false);
-                            }}
-                            className={`rounded-xl border p-3 text-center transition-all ${
-                              isSelected
-                                ? "border-cyan-300 bg-cyan-400/20 text-white font-bold ring-2 ring-cyan-400/30"
-                                : "border-white/10 bg-[#030b2a]/60 text-blue-100/80 hover:border-white/20 hover:bg-white/5"
-                            }`}
-                          >
-                            <span className="text-xs sm:text-sm font-extrabold">₦{amt.toLocaleString("en-NG")}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Custom Amount Option */}
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-[#030b2a]/40 p-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isCustom}
-                        onChange={(e) => setIsCustom(e.target.checked)}
-                        className="rounded border-white/20 bg-black/40 text-cyan-400 focus:ring-cyan-400"
-                      />
-                      <span className="text-sm font-semibold text-white">Enter a custom amount (₦200 minimum)</span>
-                    </label>
-
-                    {isCustom ? (
-                      <div className="mt-3 flex flex-wrap items-center gap-3">
-                        <div className="relative">
-                          <span className="absolute left-3 top-2.5 text-sm font-bold text-slate-400">₦</span>
-                          <input
-                            type="number"
-                            min="200"
-                            step="50"
-                            value={customAmountNgn}
-                            onChange={(e) => setCustomAmountNgn(e.target.value)}
-                            placeholder="e.g. 750"
-                            className="w-40 rounded-xl border border-white/15 bg-black/50 py-2 pl-8 pr-3 text-sm font-bold text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
-                          />
-                        </div>
-                        <span className="text-xs text-blue-100/50">Minimum ₦200</span>
+                    {topups.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                        {topups.map((offer) => {
+                          const isSelected = !isCustom && selectedPackageId === offer.packageId;
+                          return (
+                            <button
+                              key={offer.packageId}
+                              type="button"
+                              onClick={() => {
+                                setSelectedPackageId(offer.packageId);
+                                setIsCustom(false);
+                              }}
+                              className={isSelected
+                                ? "rounded-xl border border-cyan-300 bg-cyan-400/20 p-3 text-center font-bold text-white ring-2 ring-cyan-400/30"
+                                : "rounded-xl border border-white/10 bg-[#030b2a]/60 p-3 text-center text-blue-100/80 hover:border-white/20 hover:bg-white/5"}
+                            >
+                              <span className="text-xs font-extrabold sm:text-sm">
+                                {formatMoney(offer.amountMinor, offer.currency)}
+                              </span>
+                            </button>
+                          );
+                        })}
                       </div>
-                    ) : null}
+                    ) : (
+                      <p className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-sm text-amber-100">
+                        Top-ups are not configured for {wallet.currency} yet. No other currency will be substituted.
+                      </p>
+                    )}
                   </div>
+
+                  {wallet.currency === "NGN" ? (
+                    <div className="mt-4 rounded-2xl border border-white/10 bg-[#030b2a]/40 p-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={isCustom}
+                          onChange={(e) => setIsCustom(e.target.checked)}
+                          className="rounded border-white/20 bg-black/40 text-cyan-400 focus:ring-cyan-400"
+                        />
+                        <span className="text-sm font-semibold text-white">Enter a custom amount (₦200 minimum)</span>
+                      </label>
+                      {isCustom ? (
+                        <div className="mt-3 flex flex-wrap items-center gap-3">
+                          <div className="relative">
+                            <span className="absolute left-3 top-2.5 text-sm font-bold text-slate-400">₦</span>
+                            <input
+                              type="number"
+                              min="200"
+                              step="50"
+                              value={customAmountNgn}
+                              onChange={(e) => setCustomAmountNgn(e.target.value)}
+                              placeholder="e.g. 750"
+                              className="w-40 rounded-xl border border-white/15 bg-black/50 py-2 pl-8 pr-3 text-sm font-bold text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                            />
+                          </div>
+                          <span className="text-xs text-blue-100/50">Minimum ₦200</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   {/* Primary Checkout Button */}
                   <div className="mt-5">
