@@ -47,110 +47,20 @@ type LiveChannel = {
   isLive: boolean;
 };
 
-const mockChannels: LiveChannel[] = [
-  {
-    id: "demo",
-    name: "BQ SQWAD Prime Live",
-    category: "Entertainment",
-    currentShow: "Prime Global Showcase — Live Concert",
-    nextShow: "Late Night African Beats",
-    viewersCount: 2480,
-    thumbnailUrl: "/brand/og-image.png",
-    isLive: true,
-  },
-  {
-    id: "news24",
-    name: "Apex Africa News 24/7",
-    category: "News",
-    currentShow: "World Business & Financial Markets",
-    nextShow: "Pan-African Evening News Bulletin",
-    viewersCount: 1840,
-    thumbnailUrl: "/brand/og-image.png",
-    isLive: true,
-  },
-  {
-    id: "sports-live",
-    name: "Super League Football",
-    category: "Sports",
-    currentShow: "Champions Matchday Pre-Game Live",
-    nextShow: "Lagos Cup Quarter Final Kickoff",
-    viewersCount: 5120,
-    thumbnailUrl: "/brand/og-image.png",
-    isLive: true,
-  },
-  {
-    id: "pulse-music",
-    name: "Pulse Music Television",
-    category: "Music",
-    currentShow: "Top 20 Chart Countdown",
-    nextShow: "Afrobeats Gold Legends",
-    viewersCount: 960,
-    thumbnailUrl: "/brand/og-image.png",
-    isLive: true,
-  },
-  {
-    id: "nollywood-cinema",
-    name: "Nollywood Premiere Channel",
-    category: "Movies",
-    currentShow: "Lagos Nights (Blockbuster Premiere)",
-    nextShow: "Royal Destiny Episode 12",
-    viewersCount: 3290,
-    thumbnailUrl: "/brand/og-image.png",
-    isLive: true,
-  },
-];
-
-const mockUpcomingSchedule = [
-  {
-    id: "sch-1",
-    channelId: "sports-live",
-    channelName: "BQ SQWAD Prime Live",
-    title: "Late Night African Beats",
-    time: "22:00 – 23:30",
-    category: "Entertainment",
-    synopsis:
-      "The hottest Afrobeat records, exclusive artist freestyles, and street dance choreography.",
-  },
-  {
-    id: "sch-2",
-    channelId: "news24",
-    channelName: "Apex Africa News 24/7",
-    title: "Pan-African Evening News Bulletin",
-    time: "21:00 – 22:00",
-    category: "News",
-    synopsis: "Comprehensive continental roundup covering governance, tech ecosystems, and trade.",
-  },
-  {
-    id: "sch-3",
-    channelId: "sports-live",
-    channelName: "Super League Football",
-    title: "Lagos Cup Quarter Final Kickoff",
-    time: "20:30 – 22:30",
-    category: "Sports",
-    synopsis: "Live stadium coverage, high-intensity play, and pitchside commentary.",
-  },
-  {
-    id: "sch-4",
-    channelId: "pulse-music",
-    channelName: "Pulse Music Television",
-    title: "Afrobeats Gold Legends",
-    time: "23:00 – 00:30",
-    category: "Music",
-    synopsis: "Celebrating classic pioneers and chart-toppers with restored master audio.",
-  },
-  {
-    id: "sch-5",
-    channelId: "nollywood-cinema",
-    channelName: "Nollywood Premiere Channel",
-    title: "Royal Destiny Episode 12",
-    time: "21:30 – 22:45",
-    category: "Movies",
-    synopsis: "The dramatic confrontation at the royal court unfolds in high drama.",
-  },
-];
+type ScheduleItem = {
+  id: string;
+  channelId: string;
+  channelName: string;
+  title: string;
+  time: string;
+  category: string;
+  synopsis: string;
+};
 
 function LiveTvPage() {
-  const [channels] = useState<LiveChannel[]>(mockChannels);
+  const [channels, setChannels] = useState<LiveChannel[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "guide">("grid");
@@ -168,6 +78,38 @@ function LiveTvPage() {
     } catch {
       // Ignore localStorage errors
     }
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const res = await fetch("/api/public/v1/catalog/home", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (active && Array.isArray(data.channels)) {
+            const liveChannels: LiveChannel[] = data.channels.map((c: any) => ({
+              id: c.id,
+              name: c.name || c.title || "Live Channel",
+              category: c.category || "General",
+              currentShow: c.currentShow || "Live Broadcast",
+              nextShow: c.nextShow || "Upcoming Broadcast",
+              viewersCount: typeof c.currentViewers === "number" ? c.currentViewers : (typeof c.viewersCount === "number" ? c.viewersCount : 0),
+              thumbnailUrl: c.thumbnailUrl || "/brand/og-image.png",
+              isLive: true,
+            }));
+            setChannels(liveChannels);
+          }
+        }
+      } catch {
+        // Fallback or offline
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -224,7 +166,7 @@ function LiveTvPage() {
     return matchesCategory && matchesSearch;
   });
 
-  const filteredSchedule = mockUpcomingSchedule.filter((item) => {
+  const filteredSchedule = schedule.filter((item) => {
     const matchesCategory = selectedCategory === "All" || item.category === selectedCategory;
     const matchesSearch =
       item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -421,6 +363,26 @@ function LiveTvPage() {
 
         {/* View Mode: Channel Grid */}
         {viewMode === "grid" && (
+          filteredChannels.length === 0 ? (
+            <div
+              data-testid="empty-live-channels"
+              className="rounded-3xl border border-white/10 bg-[#07143D]/60 p-12 text-center backdrop-blur-xl shadow-xl space-y-4"
+            >
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 text-slate-400">
+                <Tv2 className="h-8 w-8 text-slate-500" />
+              </div>
+              <h3 className="text-base font-bold text-white">No live channels available right now</h3>
+              <p className="max-w-sm mx-auto text-xs text-slate-400 leading-relaxed">
+                Check back soon for upcoming live broadcasts, sports events, and cultural shows.
+              </p>
+              <Link
+                to="/"
+                className="inline-flex items-center gap-2 rounded-2xl bg-cyan-400 px-6 py-2.5 text-xs font-bold text-[#030e28] shadow-md shadow-cyan-400/20 hover:brightness-110"
+              >
+                <span>Return to Home</span>
+              </Link>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredChannels.map((channel) => (
               <div
@@ -521,6 +483,7 @@ function LiveTvPage() {
               </div>
             ))}
           </div>
+          )
         )}
 
         {/* View Mode: Programme Guide */}

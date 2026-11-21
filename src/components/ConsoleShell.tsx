@@ -48,6 +48,7 @@ import {
   TrendingDown,
   RefreshCw,
   Eye,
+  Trash2,
   CheckCircle2,
   Calendar,
   PlayCircle,
@@ -521,6 +522,13 @@ export function ConsoleShell({
             href: "/zillionaire/storage",
             icon: Database,
             module: "storage",
+          },
+          {
+            id: "cleanup-sample",
+            label: "Clean up sample content",
+            href: "/zillionaire/cleanup-sample",
+            icon: Trash2,
+            module: "system",
           },
           {
             id: "delivery",

@@ -70,6 +70,13 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/storage/seed")(
       POST: async ({ request }) => {
         try {
           const user = await requireUser(request);
+          if (process.env.NODE_ENV === "production" && !process.env.ALLOW_SAMPLE_SEED) {
+            throw new ApiError(
+              403,
+              "SEED_LOCKED_IN_PRODUCTION",
+              "Sample storage destination seeding is locked in production. Use Clean up sample content instead.",
+            );
+          }
           const body = await parseBody(request, bodySchema);
           const fs = await Firestore.create();
           const access = await requireZillionaireModule(fs, user, "system");

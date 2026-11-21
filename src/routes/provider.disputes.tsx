@@ -75,40 +75,7 @@ function ProviderDisputesInner({
           })),
         );
       } else {
-        // Fallback default dispute for UI demonstration
-        setDisputes([
-          {
-            id: "disp_demo_01",
-            subject: "Discrepancy in CDN Egress Deductible for March 2026",
-            category: "Deductible Costs Discrepancy",
-            statementId: "stmt_prov_2026_03",
-            claimedAmountMinor: 35000,
-            claimedAmountCurrency: "USD",
-            evidenceFileName: "edge-egress-log-march.csv",
-            status: "resolved",
-            createdAt: "2026-03-24T09:15:00Z",
-            updatedAt: "2026-03-25T14:30:00Z",
-            messages: [
-              {
-                sender: "provider",
-                text: "The CDN delivery cost deducted ($1,450.00) exceeds our origin server logs ($1,100.00). Please review bandwidth measurements.",
-                timestamp: "2026-03-24T09:15:00Z",
-              },
-              {
-                sender: "platform",
-                text: "We audited our Tier 1 edge egress telemetry. A re-calibration was performed and an adjustment of $350.00 has been credited.",
-                timestamp: "2026-03-25T14:30:00Z",
-              },
-            ],
-            resolution: {
-              decision: "accept",
-              acceptedAmountMinor: 35000,
-              adjustmentStatementPeriod: "April 2026 Statement",
-              resolutionNotes: "Origin log disparity verified by edge infrastructure team. Credit applied.",
-              resolvedAt: "2026-03-25T14:30:00Z",
-            },
-          },
-        ]);
+        setDisputes([]);
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error loading disputes");

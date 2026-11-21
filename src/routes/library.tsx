@@ -46,52 +46,10 @@ export type LibraryItem = {
   isPurchased?: boolean;
 };
 
-const defaultItems: LibraryItem[] = [
-  {
-    id: "mov_lagos_nights",
-    title: "Lagos Nights: Shadows of Victoria Island",
-    type: "movie",
-    genre: "Thriller",
-    posterUrl: "/brand/og-image.png",
-    progressPercent: 45,
-    addedAt: "2026-03-28",
-    isPurchased: true,
-  },
-  {
-    id: "ser_abidjan_hustle",
-    title: "Abidjan Hustle Season 1",
-    type: "series",
-    genre: "Drama",
-    posterUrl: "/brand/og-image.png",
-    progressPercent: 80,
-    addedAt: "2026-03-25",
-    isPurchased: false,
-  },
-  {
-    id: "mov_golden_savannah",
-    title: "Golden Savannah Documentary",
-    type: "movie",
-    genre: "Documentary",
-    posterUrl: "/brand/og-image.png",
-    addedAt: "2026-03-20",
-    isPurchased: true,
-  },
-  {
-    id: "mov_super_eagles_triumph",
-    title: "Super Eagles: African Kings",
-    type: "movie",
-    genre: "Sports",
-    posterUrl: "/brand/og-image.png",
-    progressPercent: 20,
-    addedAt: "2026-03-15",
-    isPurchased: false,
-  },
-];
-
 function LibraryPage() {
   const [activeTab, setActiveTab] = useState<"watchlist" | "continue" | "purchases" | "liked">("watchlist");
   const [likedItems, setLikedItems] = useState<LibraryItem[]>([]);
-  const [items, setItems] = useState<LibraryItem[]>(defaultItems);
+  const [items, setItems] = useState<LibraryItem[]>([]);
   const [typeFilter, setTypeFilter] = useState("all");
   const [genreFilter, setGenreFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"recent" | "title" | "progress">("recent");
@@ -147,7 +105,7 @@ function LibraryPage() {
 
   const genres = ["all", "Thriller", "Drama", "Documentary", "Sports"];
 
-  const baseList = activeTab === "liked" ? (likedItems.length ? likedItems : defaultItems.slice(0, 2)) : items;
+  const baseList = activeTab === "liked" ? likedItems : items;
   const filteredItems = baseList
     .filter((item) => {
       if (activeTab === "continue") {
