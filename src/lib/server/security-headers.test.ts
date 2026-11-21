@@ -12,6 +12,10 @@ describe("response security headers", () => {
     expect(response.headers.get("content-security-policy-report-only")).toContain(
       "frame-ancestors 'none'",
     );
+    const csp = response.headers.get("content-security-policy") ?? "";
+    expect(csp).toContain("https://accounts.google.com");
+    expect(csp).toContain("https://identitytoolkit.googleapis.com");
+    expect(csp).toContain("frame-src 'self' https://accounts.google.com");
   });
 
   it("preserves explicitly configured response headers", () => {
