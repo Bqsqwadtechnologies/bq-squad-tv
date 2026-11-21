@@ -17,6 +17,29 @@ export interface SaveKycInput {
   role: 'producer' | 'provider';
   kycType: KycType;
   kycCountry: string;
+  legalName?: string;
+  businessName?: string;
+  phone?: string;
+  phoneVerified?: boolean;
+  idTypeId?: string;
+  companyRegNumber?: string;
+  directorName?: string;
+  residentialAddress?: {
+    line1: string;
+    line2?: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
+  businessAddress?: {
+    line1: string;
+    line2?: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
   // Raw sensitive fields to be encrypted
   rawIdNumber?: string;
   rawTaxNumber?: string;
@@ -158,6 +181,15 @@ export async function saveKycProfile(
     ...(input.faceCaptureVaultPath ? { faceCaptureVaultPath: input.faceCaptureVaultPath } : (existing?.faceCaptureVaultPath ? { faceCaptureVaultPath: existing.faceCaptureVaultPath } : {})),
     riskScore: input.riskScore ?? existing?.riskScore ?? 0,
     riskFlags: input.riskFlags ?? existing?.riskFlags ?? [],
+    ...(input.legalName ? { legalName: input.legalName } : existing?.legalName ? { legalName: existing.legalName } : {}),
+    ...(input.businessName ? { businessName: input.businessName } : existing?.businessName ? { businessName: existing.businessName } : {}),
+    ...(input.phone ? { phone: input.phone } : existing?.phone ? { phone: existing.phone } : {}),
+    ...(typeof input.phoneVerified === 'boolean' ? { phoneVerified: input.phoneVerified } : typeof existing?.phoneVerified === 'boolean' ? { phoneVerified: existing.phoneVerified } : {}),
+    ...(input.idTypeId ? { idTypeId: input.idTypeId } : existing?.idTypeId ? { idTypeId: existing.idTypeId } : {}),
+    ...(input.companyRegNumber ? { companyRegNumber: input.companyRegNumber } : existing?.companyRegNumber ? { companyRegNumber: existing.companyRegNumber } : {}),
+    ...(input.directorName ? { directorName: input.directorName } : existing?.directorName ? { directorName: existing.directorName } : {}),
+    ...(input.residentialAddress ? { residentialAddress: input.residentialAddress } : existing?.residentialAddress ? { residentialAddress: existing.residentialAddress } : {}),
+    ...(input.businessAddress ? { businessAddress: input.businessAddress } : existing?.businessAddress ? { businessAddress: existing.businessAddress } : {}),
   };
 
   await fs.setDoc(`kycProfiles/${input.uid}`, profile as any);
@@ -251,4 +283,41 @@ export async function reviewKycProfile(
   }).catch(() => {});
 
   return updatedProfile;
+}
+
+export async function saveKycDraft(
+  fs: Firestore,
+  uid: string,
+  draft: Record<string, unknown>
+): Promise<void> {
+  if (!uid || !/^[A-Za-z0-9_-]{1,128}$/.test(uid)) {
+    throw new ApiError(400, 'INVALID_UID', 'Invalid user identifier for KYC draft.');
+  }
+  await fs.setDoc(`kycDrafts/${uid}`, {
+    uid,
+    draft,
+    updatedAt: new Date().toISOString(),
+  });
+}
+
+export async function getKycDraft(
+  fs: Firestore,
+  uid: string
+): Promise<Record<string, unknown> | null> {
+  if (!uid || !/^[A-Za-z0-9_-]{1,128}$/.test(uid)) {
+    throw new ApiError(400, 'INVALID_UID', 'Invalid user identifier for KYC draft.');
+  }
+  const doc = await fs.getDoc(`kycDrafts/${uid}`);
+  if (!doc) return null;
+  return (doc['draft'] as Record<string, unknown>) || null;
+}
+
+export async function deleteKycDraft(
+  fs: Firestore,
+  uid: string
+): Promise<void> {
+  if (!uid || !/^[A-Za-z0-9_-]{1,128}$/.test(uid)) {
+    throw new ApiError(400, 'INVALID_UID', 'Invalid user identifier for KYC draft.');
+  }
+  await fs.deleteDoc(`kycDrafts/${uid}`).catch(() => {});
 }

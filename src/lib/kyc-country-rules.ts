@@ -658,3 +658,59 @@ export function validateCompanyRegistryFormat(
 }
 
 export { validateCompanyRegistryFormat as validateCompanyRegistrationFormat };
+
+/**
+ * Validates that a date of birth string (YYYY-MM-DD) represents an individual who is 18 years or older.
+ */
+export function isAge18OrOlder(dobString: string): boolean {
+  if (!dobString || !/^\d{4}-\d{2}-\d{2}$/.test(dobString.trim())) return false;
+  const parts = dobString.trim().split("-").map(Number);
+  const birthYear = parts[0]!;
+  const birthMonth = parts[1]!;
+  const birthDay = parts[2]!;
+  if (birthMonth < 1 || birthMonth > 12 || birthDay < 1 || birthDay > 31) return false;
+
+  const today = new Date();
+  const currentYear = today.getUTCFullYear();
+  const currentMonth = today.getUTCMonth() + 1;
+  const currentDay = today.getUTCDate();
+
+  let age = currentYear - birthYear;
+  if (currentMonth < birthMonth || (currentMonth === birthMonth && currentDay < birthDay)) {
+    age--;
+  }
+  return age >= 18;
+}
+
+/**
+ * Fuzzy name matching for payout account vs KYC legal entity verification.
+ * Returns true if at least 50% of the significant words match.
+ */
+export function fuzzyNameMatch(
+  nameA: string,
+  nameB: string
+): { matches: boolean; score: number } {
+  const wordsA = (nameA || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const wordsB = (nameB || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (wordsA.length === 0 || wordsB.length === 0) {
+    return { matches: false, score: 0 };
+  }
+
+  let matched = 0;
+  for (const word of wordsA) {
+    if (wordsB.includes(word)) matched++;
+  }
+  const score = matched / Math.max(wordsA.length, wordsB.length);
+  return { matches: score >= 0.5, score };
+}

@@ -4,6 +4,7 @@ import json
 import base64
 import os
 import sys
+import tempfile
 
 CONN_ID = "std_01m6qbgfv3e40rca3wtk7ekhjq"
 REPO = "Bqsqwadtechnologies/bq-squad-tv"
@@ -12,9 +13,20 @@ def call_gh(endpoint, method="GET", data=None):
     cmd = ["lovable", "connections", "call", CONN_ID, endpoint, "--json"]
     if method != "GET":
         cmd.extend(["-X", method])
+    temp_path = None
     if data is not None:
-        cmd.extend(["-d", json.dumps(data)])
-    res = subprocess.run(cmd, capture_output=True, text=True)
+        with tempfile.NamedTemporaryFile("w", delete=False, suffix=".json") as tf:
+            tf.write(json.dumps(data))
+            temp_path = tf.name
+        cmd.extend(["-d", f"@{temp_path}"])
+    try:
+        res = subprocess.run(cmd, capture_output=True, text=True)
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
     if res.returncode != 0:
         raise RuntimeError(f"CLI error (exit {res.returncode}): {res.stderr}\n{res.stdout}")
     try:

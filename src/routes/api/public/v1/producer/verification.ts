@@ -1,4 +1,5 @@
-import { saveKycProfile } from "@/lib/server/kyc/persistence";
+import { saveKycProfile, deleteKycDraft } from "@/lib/server/kyc/persistence";
+import { isAge18OrOlder } from "@/lib/kyc-country-rules";
 import { createFileRoute } from "@tanstack/react-router";
 import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
 import { z } from "zod";
@@ -19,6 +20,35 @@ const schema = z
       .min(1)
       .max(5),
     declarationAccepted: z.literal(true),
+    // Optional extended KYC fields
+    phone: z.string().trim().max(30).optional(),
+    phoneVerified: z.boolean().optional(),
+    idTypeId: z.string().trim().max(50).optional(),
+    idNumber: z.string().trim().max(64).optional(),
+    taxId: z.string().trim().max(64).optional(),
+    dateOfBirth: z.string().trim().max(30).optional(),
+    companyRegNumber: z.string().trim().max(64).optional(),
+    directorName: z.string().trim().max(160).optional(),
+    residentialAddress: z
+      .object({
+        line1: z.string().trim().max(200),
+        line2: z.string().trim().max(200).optional(),
+        city: z.string().trim().max(100),
+        state: z.string().trim().max(100).optional(),
+        postalCode: z.string().trim().max(30).optional(),
+        country: z.string().trim().max(100).optional(),
+      })
+      .optional(),
+    businessAddress: z
+      .object({
+        line1: z.string().trim().max(200),
+        line2: z.string().trim().max(200).optional(),
+        city: z.string().trim().max(100),
+        state: z.string().trim().max(100).optional(),
+        postalCode: z.string().trim().max(30).optional(),
+        country: z.string().trim().max(100).optional(),
+      })
+      .optional(),
   })
   .superRefine((value, context) => {
     if (new Set(value.evidenceUploadIds).size !== value.evidenceUploadIds.length) {
@@ -33,6 +63,63 @@ const schema = z
 export const Route = createFileRoute("/api/public/v1/producer/verification")({
   server: {
     handlers: {
+      GET: async ({ request }) => {
+        try {
+          const user = await requireUser(request);
+          const fs = await Firestore.create();
+          const [producerDoc, kycDoc, draftDoc] = await Promise.all([
+            fs.getDoc("producers/" + user.uid),
+            fs.getDoc("kycProfiles/" + user.uid),
+            fs.getDoc("kycDrafts/" + user.uid),
+          ]);
+
+          const verificationStatus =
+            producerDoc?.["verificationStatus"] || (kycDoc as any)?.kycStatus?.toUpperCase() || "NOT_SUBMITTED";
+          const rejectionReason =
+            producerDoc?.["verificationRejectionReason"] ||
+            (kycDoc as any)?.kycRejectionReason ||
+            null;
+          const submittedAt =
+            producerDoc?.["verificationSubmittedAt"] ||
+            (kycDoc as any)?.kycSubmittedAt ||
+            null;
+          const reviewedAt =
+            producerDoc?.["verificationReviewedAt"] ||
+            (kycDoc as any)?.kycReviewedAt ||
+            null;
+
+          return Response.json({
+            verificationStatus,
+            rejectionReason,
+            submittedAt,
+            reviewedAt,
+            kycProfile: kycDoc
+              ? {
+                  kycStatus: (kycDoc as any).kycStatus,
+                  kycType: (kycDoc as any).kycType,
+                  kycCountry: (kycDoc as any).kycCountry,
+                  maskedIdNumber: (kycDoc as any).maskedIdNumber,
+                  maskedTaxNumber: (kycDoc as any).maskedTaxNumber,
+                  maskedDateOfBirth: (kycDoc as any).maskedDateOfBirth,
+                  maskedAccountNumber: (kycDoc as any).maskedAccountNumber,
+                  legalName: (kycDoc as any).legalName,
+                  businessName: (kycDoc as any).businessName,
+                  phone: (kycDoc as any).phone,
+                  phoneVerified: (kycDoc as any).phoneVerified,
+                  idTypeId: (kycDoc as any).idTypeId,
+                  companyRegNumber: (kycDoc as any).companyRegNumber,
+                  directorName: (kycDoc as any).directorName,
+                  residentialAddress: (kycDoc as any).residentialAddress,
+                  businessAddress: (kycDoc as any).businessAddress,
+                }
+              : null,
+            draft: draftDoc?.["draft"] || null,
+          });
+        } catch (error) {
+          return errorBody(error);
+        }
+      },
+
       POST: async ({ request }) => {
         try {
           const user = await requireUser(request);
@@ -43,6 +130,16 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
               "Verify your email before submitting producer verification.",
             );
           const body = await parseBody(request, schema);
+
+          // 18+ age verification check for individual producers
+          if (body.dateOfBirth && !isAge18OrOlder(body.dateOfBirth)) {
+            throw new ApiError(
+              400,
+              "AGE_RESTRICTED",
+              "Producer verification requires an age of 18 or older.",
+            );
+          }
+
           const fs = await Firestore.create();
           await assertLegalAcceptance(fs, user.uid, "producer");
           await enforceRateLimit(fs, "producer-verification:" + user.uid, {
@@ -204,16 +301,37 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
           paths.forEach((p, i) => {
             docPaths["evidence_doc_" + (i + 1)] = p;
           });
+
+          const kycType =
+            body.entityType === "registered_business" || body.entityType === "company"
+              ? "producer_business"
+              : "producer_personal";
+
           await saveKycProfile(fs, {
             uid: user.uid,
             role: "producer",
-            kycType: (body.entityType === "registered_business" || body.entityType === "company") ? "business" : "individual",
+            kycType,
             kycCountry: body.countryCode,
+            legalName: body.legalName,
+            businessName: body.businessName,
+            phone: body.phone,
+            phoneVerified: body.phoneVerified,
+            idTypeId: body.idTypeId,
+            companyRegNumber: body.companyRegNumber,
+            directorName: body.directorName,
+            residentialAddress: body.residentialAddress,
+            businessAddress: body.businessAddress,
+            rawIdNumber: body.idNumber,
+            rawTaxNumber: body.taxId,
+            rawDateOfBirth: body.dateOfBirth,
             documentVaultPaths: docPaths,
             status: "pending",
           }).catch((err) => {
             console.warn("[KYC] Profile mirror sync warning:", err);
           });
+
+          // Clear draft on successful submission
+          await deleteKycDraft(fs, user.uid);
 
           return Response.json(
             { verificationStatus: "PENDING", submittedAt: now },

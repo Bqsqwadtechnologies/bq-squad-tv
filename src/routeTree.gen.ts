@@ -218,6 +218,7 @@ import { Route as ApiPublicV1PaymentsPaystackVerifyRouteImport } from './routes/
 import { Route as ApiPublicV1PaymentsPaystackWebhookRouteImport } from './routes/api/public/v1/payments/paystack/webhook'
 import { Route as ApiPublicV1ProducerCollaborationsIndexRouteImport } from './routes/api/public/v1/producer/collaborations/index'
 import { Route as ApiPublicV1ProducerPayoutsRequestRouteImport } from './routes/api/public/v1/producer/payouts/request'
+import { Route as ApiPublicV1ProducerVerificationDraftRouteImport } from './routes/api/public/v1/producer/verification/draft'
 import { Route as ApiPublicV1ProducerVerificationUploadIntentRouteImport } from './routes/api/public/v1/producer/verification/upload-intent'
 import { Route as ApiPublicV1SecurityIntegrityChallengeRouteImport } from './routes/api/public/v1/security/integrity/challenge'
 import { Route as ApiPublicV1SessionsSessionIdEndRouteImport } from './routes/api/public/v1/sessions/$sessionId/end'
@@ -1502,6 +1503,12 @@ const ApiPublicV1ProducerPayoutsRequestRoute =
     path: '/request',
     getParentRoute: () => ApiPublicV1ProducerPayoutsRoute,
   } as any)
+const ApiPublicV1ProducerVerificationDraftRoute =
+  ApiPublicV1ProducerVerificationDraftRouteImport.update({
+    id: '/draft',
+    path: '/draft',
+    getParentRoute: () => ApiPublicV1ProducerVerificationRoute,
+  } as any)
 const ApiPublicV1ProducerVerificationUploadIntentRoute =
   ApiPublicV1ProducerVerificationUploadIntentRouteImport.update({
     id: '/upload-intent',
@@ -2551,6 +2558,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
   '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
+  '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
@@ -2901,6 +2909,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
   '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
+  '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
@@ -3253,6 +3262,7 @@ export interface FileRoutesById {
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
   '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
+  '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
@@ -3606,6 +3616,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/payments/paystack/verify'
     | '/api/public/v1/payments/paystack/webhook'
     | '/api/public/v1/producer/payouts/request'
+    | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
@@ -3956,6 +3967,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/payments/paystack/verify'
     | '/api/public/v1/payments/paystack/webhook'
     | '/api/public/v1/producer/payouts/request'
+    | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
@@ -4307,6 +4319,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/payments/paystack/verify'
     | '/api/public/v1/payments/paystack/webhook'
     | '/api/public/v1/producer/payouts/request'
+    | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
@@ -6234,6 +6247,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProducerPayoutsRequestRouteImport
       parentRoute: typeof ApiPublicV1ProducerPayoutsRoute
     }
+    '/api/public/v1/producer/verification/draft': {
+      id: '/api/public/v1/producer/verification/draft'
+      path: '/draft'
+      fullPath: '/api/public/v1/producer/verification/draft'
+      preLoaderRoute: typeof ApiPublicV1ProducerVerificationDraftRouteImport
+      parentRoute: typeof ApiPublicV1ProducerVerificationRoute
+    }
     '/api/public/v1/producer/verification/upload-intent': {
       id: '/api/public/v1/producer/verification/upload-intent'
       path: '/upload-intent'
@@ -7366,11 +7386,14 @@ const ApiPublicV1ProducerPayoutsRouteWithChildren =
   )
 
 interface ApiPublicV1ProducerVerificationRouteChildren {
+  ApiPublicV1ProducerVerificationDraftRoute: typeof ApiPublicV1ProducerVerificationDraftRoute
   ApiPublicV1ProducerVerificationUploadIntentRoute: typeof ApiPublicV1ProducerVerificationUploadIntentRoute
 }
 
 const ApiPublicV1ProducerVerificationRouteChildren: ApiPublicV1ProducerVerificationRouteChildren =
   {
+    ApiPublicV1ProducerVerificationDraftRoute:
+      ApiPublicV1ProducerVerificationDraftRoute,
     ApiPublicV1ProducerVerificationUploadIntentRoute:
       ApiPublicV1ProducerVerificationUploadIntentRoute,
   }

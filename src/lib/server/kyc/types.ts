@@ -47,6 +47,31 @@ export interface KycProfile {
   maskedAccountNumber?: string;
   maskedDateOfBirth?: string;
 
+  // Entity and contact metadata
+  legalName?: string;
+  businessName?: string;
+  phone?: string;
+  phoneVerified?: boolean;
+  idTypeId?: string;
+  companyRegNumber?: string;
+  directorName?: string;
+  residentialAddress?: {
+    line1: string;
+    line2?: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
+  businessAddress?: {
+    line1: string;
+    line2?: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+  };
+
   // Documents
   documentVaultPaths?: Record<string, string>;
   faceCaptureVaultPath?: string;
