@@ -15,8 +15,9 @@ export const Route = createFileRoute("/api/public/v1/auth/web/config")({
           process.env["firebase_web_app_id"]?.trim() ||
           "";
         return Response.json(
-          { googleClientId: clientId, recaptchaSiteKey, firebaseWebAppId },
-          { headers: { "cache-control": "public, max-age=300" } },
+          { googleClientId: clientId, googleConfigured: clientId.length > 0, recaptchaSiteKey, firebaseWebAppId },
+          // OAuth configuration changes must be visible immediately after deployment.
+          { headers: { "cache-control": "no-store" } },
         );
       },
     },
