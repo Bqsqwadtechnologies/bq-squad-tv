@@ -367,6 +367,9 @@ function WalletPage() {
                       <button type="button" onClick={() => void navigator.clipboard?.writeText(wallet.accountId || "")} className="underline hover:text-white">Copy</button>
                     </p>
                   ) : null}
+                  {wallet?.countryCode ? (
+                    <p className="mt-1 text-xs text-blue-100/50">Country: {wallet.countryCode} · Wallet currency: {wallet.currency}</p>
+                  ) : null}
                 </div>
                 <a
                   href="/account"
