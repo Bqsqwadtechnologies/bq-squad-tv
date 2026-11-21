@@ -1,5 +1,5 @@
-Last verified work: v6-05-B4 — Payout currency & safety rules (owner USD/NGN minimums, $500 default, conversion rate, dual-approval two-reviewer flow for >=$5,000, step-up >=$1,000, and KYC expiry/payout account/risk safety holds).
-Next batch: v6-05-B5 — Producer and provider earnings screens (own-only amounts, downloadable monthly statements, no gross/margin disclosure, strict trust copy).
+Last verified work: v6-05-B5 — Producer and provider screens & statements (own-only amounts, no gross/margin disclosure, downloadable monthly statements, payout history with references, locked payout account gating until KYC approval, calm trust copy).
+Next batch: v6-05-B6 — Data protection & trust page (/help/data-protection with plain-language policy, security guarantees, no vendor/storage claims, linked from KYC/payout screens).
 Known gaps: Live bank direct gateway webhook integration pending production host bank onboarding.
-Files touched: src/lib/server/payouts/rules.ts, src/routes/api/public/v1/producer/payouts/request.ts, src/routes/api/public/v1/zillionaire/payouts/rules.ts, src/routes/api/public/v1/zillionaire/payouts/$payoutId/review.ts, src/routes/zillionaire.payouts.tsx, src/test/batch-b4-currency-limits-safety.test.ts, src/routeTree.gen.ts, docs/HANDOFF.md, docs/PUSH-LOG.md.
-Checks run: 68 tests passed across 14 test files (batch-a* + batch-b*); bun run scan:public-text clean; bun run build clean.
+Files touched: src/components/StatementsSettlementView.tsx, src/routes/producer.index.tsx, src/routes/provider.statements.tsx, src/test/batch-b5-producer-provider-screens.test.ts, docs/HANDOFF.md, docs/PUSH-LOG.md.
+Checks run: 70 tests passed across 15 test files (batch-a* + batch-b*); bun run scan:public-text clean; bun run build clean.

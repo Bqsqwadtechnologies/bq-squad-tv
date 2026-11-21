@@ -14,7 +14,7 @@ import {
   Users,
   Wallet,
   Clock,
-  ShieldCheck,
+  ShieldCheck, Shield, Lock, AlertTriangle, CheckCircle2,
   TrendingUp,
   UploadCloud,
   Download,
@@ -73,7 +73,10 @@ type Earnings = {
     currency: string;
     status: string;
     createdAt: string | null;
+    settledAt?: string | null;
+    settlementReference?: string | null;
   }>;
+  reservedPayoutsByCurrency?: Record<string, number>;
 };
 
 function money(value: number, currency: string) {
@@ -756,25 +759,166 @@ function ProducerDashboardInner({
           </div>
         </div>
 
-        {/* Shared Statements & Settlements View (Producer Mode) */}
-        <div id="earnings" className="pt-2">
+        {/* Producer Earnings & Payouts Hub */}
+        <div id="earnings" className="pt-2 space-y-6">
+          {/* Calm Trust Notice Banner */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#07143d] px-4 py-3.5 text-xs text-slate-300">
+            <div className="flex items-center gap-2.5">
+              <Shield className="h-4 w-4 text-cyan-400 shrink-0" />
+              <span>Your payout details are encrypted and protected.</span>
+            </div>
+            <a
+              href="/help/data-protection"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-300 hover:text-cyan-200"
+            >
+              <span>Learn more</span>
+              <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+
+          {/* Earnings KPI Cards & Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Available Balance</span>
+              <p className="mt-2 font-mono text-2xl font-black text-white">
+                {summary ? money(summary.earningsBalanceMinor, summary.currency) : "—"}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-400">
+                Minimum payout is $500. Payments are made by bank wire transfer.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Reserved / In Payout</span>
+              <p className="mt-2 font-mono text-2xl font-black text-amber-300">
+                {summary && earnings?.reservedPayoutsByCurrency
+                  ? money(earnings.reservedPayoutsByCurrency[summary.currency] || 0, summary.currency)
+                  : money(0, summary?.currency || "USD")}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-400">
+                Held during settlement processing
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-[#07143d] p-5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Lifetime Net Earnings</span>
+              <p className="mt-2 font-mono text-2xl font-black text-emerald-400">
+                {summary ? money(summary.earningsLifetimeMinor, summary.currency) : "—"}
+              </p>
+              <p className="mt-1 text-[11px] text-slate-400">
+                Total net distributions accumulated
+              </p>
+            </div>
+          </div>
+
+          {/* Payout Account Management Section */}
+          <div className="rounded-2xl border border-white/10 bg-[#07143d] p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <Wallet className="h-5 w-5 text-cyan-400" />
+                  <span>Settlement Bank Account</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-1">
+                  Disbursements are made by bank wire transfer to your verified settlement account.
+                </p>
+              </div>
+              <div>
+                {isKycComplete ? (
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById("payout-account-form");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/20 px-4 py-2 text-xs font-bold text-cyan-200 hover:bg-cyan-500/30 transition"
+                  >
+                    <span>Manage Payout Account</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShowKycModal(true)}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-400 hover:bg-white/10 transition"
+                  >
+                    <Lock className="h-3.5 w-3.5" />
+                    <span>Locked — Verify Identity First</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Payout History Table */}
+          <div className="rounded-2xl border border-white/10 bg-[#07143d] p-6 space-y-4">
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <Clock className="h-5 w-5 text-cyan-400" />
+              <span>Payout History</span>
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-white/10 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <tr>
+                    <th className="py-3 px-3">Date Requested</th>
+                    <th className="py-3 px-3">Amount</th>
+                    <th className="py-3 px-3">Method</th>
+                    <th className="py-3 px-3">Status</th>
+                    <th className="py-3 px-3">Reference</th>
+                    <th className="py-3 px-3 text-right">Settled</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {!earnings?.payouts || earnings.payouts.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="py-6 text-center text-slate-400">
+                        No payout requests recorded. Minimum payout is $500. Payments are made by bank wire transfer.
+                      </td>
+                    </tr>
+                  ) : (
+                    earnings.payouts.map((po) => (
+                      <tr key={po.id} className="hover:bg-white/[0.02]">
+                        <td className="py-3.5 px-3 text-slate-300">
+                          {po.createdAt ? new Date(po.createdAt).toLocaleDateString() : "—"}
+                        </td>
+                        <td className="py-3.5 px-3 font-mono font-bold text-white">
+                          {money(po.amountMinor, po.currency)}
+                        </td>
+                        <td className="py-3.5 px-3 text-slate-400">Bank wire transfer</td>
+                        <td className="py-3.5 px-3">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                            po.status === "PAID"
+                              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                              : po.status === "REJECTED"
+                              ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                              : po.status === "HELD"
+                              ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                              : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                          }`}>
+                            {po.status === "PAID" ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                            {po.status}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3 font-mono text-slate-300">
+                          {po.settlementReference || "—"}
+                        </td>
+                        <td className="py-3.5 px-3 text-right text-slate-400">
+                          {po.settledAt ? new Date(po.settledAt).toLocaleDateString() : "—"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Monthly Settlement Statements */}
           <StatementsSettlementView
             mode="producer"
             title="Producer Monthly Settlement Statements"
+            kycApproved={isKycComplete}
             statements={[
               {
                 id: "stmt_prod_2026_03",
                 period: "March 2026",
                 status: "Processing",
                 currency: summary?.currency || "USD",
-                grossWatchTimeMinutes: analytics?.totalWatchMinutes || 43200,
-                grossRevenueMinor: (analytics?.totalEarningsMinor || 45000) * 4,
-                deductibleCosts: {
-                  cdnDeliveryMinor: 18000,
-                  paymentProcessingMinor: 12000,
-                  infrastructureMinor: 8500,
-                  totalDeductibleMinor: 38500,
-                },
                 netPayoutMinor: summary?.earningsBalanceMinor || 141500,
                 paymentReference: "PAY-PROD-202603-7721",
                 paidAt: null,
@@ -785,14 +929,6 @@ function ProducerDashboardInner({
                 period: "February 2026",
                 status: "Paid",
                 currency: summary?.currency || "USD",
-                grossWatchTimeMinutes: 38400,
-                grossRevenueMinor: 480000,
-                deductibleCosts: {
-                  cdnDeliveryMinor: 14000,
-                  paymentProcessingMinor: 9600,
-                  infrastructureMinor: 6400,
-                  totalDeductibleMinor: 30000,
-                },
                 netPayoutMinor: 120000,
                 paymentReference: "WIRE-PROD-20260228",
                 paidAt: "2026-03-05T11:00:00Z",
