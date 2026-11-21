@@ -22,16 +22,26 @@ import { getWebAccount, signOutWeb, type ConsoleAccount } from "@/lib/firebase-w
 export function ProfileAccountHub() {
   const [isOpen, setIsOpen] = useState(false);
   const [account, setAccount] = useState<ConsoleAccount | null>(null);
+  const [authState, setAuthState] = useState<"loading" | "authenticated" | "anonymous" | "error">("loading");
+  const [authMessage, setAuthMessage] = useState("");
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     let active = true;
-    void getWebAccount().then((acc) => {
-      if (active && acc) {
+    setAuthState("loading");
+    void getWebAccount()
+      .then((acc) => {
+        if (!active) return;
         setAccount(acc);
-      }
-    });
+        setAuthState(acc?.uid ? "authenticated" : "anonymous");
+      })
+      .catch(() => {
+        if (!active) return;
+        setAccount(null);
+        setAuthState("error");
+        setAuthMessage("We could not verify your session. Please sign in again.");
+      });
     return () => {
       active = false;
     };
@@ -53,13 +63,20 @@ export function ProfileAccountHub() {
   }, [isOpen]);
 
   async function handleSignOut() {
-    await signOutWeb();
-    setIsOpen(false);
-    window.location.href = "/";
+    setAuthMessage("");
+    try {
+      await signOutWeb();
+      setAccount(null);
+      setAuthState("anonymous");
+      setIsOpen(false);
+      window.location.assign("/");
+    } catch {
+      setAuthMessage("Sign out could not be completed. Check your connection and retry.");
+    }
   }
 
   const userInitial = account?.email ? (account.email.charAt(0).toUpperCase() || "U") : "U";
-  const userDisplayName = account?.email ? account.email.split("@")[0] : "Viewer Account";
+  const userDisplayName = account?.email ? account.email.split("@")[0] : "Account";
 
   return (
     <div className="relative" ref={menuRef}>
@@ -85,7 +102,7 @@ export function ProfileAccountHub() {
               </div>
               <div className="truncate">
                 <p className="text-sm font-bold text-white truncate">{userDisplayName}</p>
-                <p className="text-xs text-slate-400 truncate">{account?.email || "viewer@bqsqwad.tv"}</p>
+                <p className="text-xs text-slate-400 truncate">{authState === "loading" ? "Checking session…" : account?.email ?? "Not signed in"}</p>
               </div>
             </div>
             <button
@@ -96,7 +113,11 @@ export function ProfileAccountHub() {
             </button>
           </div>
 
-          {/* Navigation Links */}
+          {authMessage ? <p role="alert" className="mt-3 rounded-lg bg-rose-500/10 p-2 text-xs text-rose-200">{authMessage}</p> : null}
+          {authState === "loading" ? (
+            <p role="status" className="mt-3 px-3 py-4 text-sm text-slate-300">Checking your account…</p>
+          ) : authState === "authenticated" && account ? (
+          /* Navigation Links for a confirmed Firebase account */
           <div className="mt-3 space-y-1 text-xs">
             <Link
               to="/wallet"
@@ -224,6 +245,23 @@ export function ProfileAccountHub() {
               </button>
             </div>
           </div>
+          ) : (
+            <div className="mt-3 space-y-2">
+              <p className="px-3 py-2 text-xs text-slate-300">
+                {authState === "error" ? "Your sign-in status could not be confirmed." : "You are browsing as a guest."}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  void navigate({ to: "/account" });
+                }}
+                className="w-full rounded-xl bg-cyan-400 px-3 py-3 text-sm font-bold text-[#031039] hover:bg-cyan-300"
+              >
+                Sign In / Create Account
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
