@@ -135,6 +135,7 @@ function WalletPage() {
 
       const loadedWallet = walletData as Wallet;
       setWallet(loadedWallet);
+      if (loadedWallet.currency !== "NGN") setIsCustom(false);
       try {
         localStorage.setItem("bqtv_cached_wallet", JSON.stringify(loadedWallet));
       } catch {}
@@ -143,8 +144,11 @@ function WalletPage() {
 
       if (topupsRes.ok && Array.isArray(topupData)) {
         setTopups(topupData as Topup[]);
-        if (topupData.length > 0 && !selectedPackageId) {
+        if (topupData.length > 0 && (!selectedPackageId || !topupData.some((offer: Topup) => offer.packageId === selectedPackageId))) {
           setSelectedPackageId(topupData[0].packageId);
+        } else if (topupData.length === 0) {
+          setSelectedPackageId("");
+          setIsCustom(false);
         }
       }
     } catch (caught) {
