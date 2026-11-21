@@ -166,6 +166,7 @@ import { Route as ApiPublicV1ProviderDisputesRouteImport } from './routes/api/pu
 import { Route as ApiPublicV1ProviderRegisterRouteImport } from './routes/api/public/v1/provider/register'
 import { Route as ApiPublicV1ProviderStatementsRouteImport } from './routes/api/public/v1/provider/statements'
 import { Route as ApiPublicV1ProviderTeamRouteImport } from './routes/api/public/v1/provider/team'
+import { Route as ApiPublicV1ProviderVerificationRouteImport } from './routes/api/public/v1/provider/verification'
 import { Route as ApiPublicV1QualitySettingsRouteImport } from './routes/api/public/v1/quality/settings'
 import { Route as ApiPublicV1RecommendationsIndexRouteImport } from './routes/api/public/v1/recommendations/index'
 import { Route as ApiPublicV1SearchV2RouteImport } from './routes/api/public/v1/search/v2'
@@ -220,6 +221,7 @@ import { Route as ApiPublicV1ProducerCollaborationsIndexRouteImport } from './ro
 import { Route as ApiPublicV1ProducerPayoutsRequestRouteImport } from './routes/api/public/v1/producer/payouts/request'
 import { Route as ApiPublicV1ProducerVerificationDraftRouteImport } from './routes/api/public/v1/producer/verification/draft'
 import { Route as ApiPublicV1ProducerVerificationUploadIntentRouteImport } from './routes/api/public/v1/producer/verification/upload-intent'
+import { Route as ApiPublicV1ProviderVerificationDraftRouteImport } from './routes/api/public/v1/provider/verification/draft'
 import { Route as ApiPublicV1SecurityIntegrityChallengeRouteImport } from './routes/api/public/v1/security/integrity/challenge'
 import { Route as ApiPublicV1SessionsSessionIdEndRouteImport } from './routes/api/public/v1/sessions/$sessionId/end'
 import { Route as ApiPublicV1SessionsSessionIdHeartbeatRouteImport } from './routes/api/public/v1/sessions/$sessionId/heartbeat'
@@ -1195,6 +1197,12 @@ const ApiPublicV1ProviderTeamRoute = ApiPublicV1ProviderTeamRouteImport.update({
   path: '/api/public/v1/provider/team',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1ProviderVerificationRoute =
+  ApiPublicV1ProviderVerificationRouteImport.update({
+    id: '/api/public/v1/provider/verification',
+    path: '/api/public/v1/provider/verification',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1QualitySettingsRoute =
   ApiPublicV1QualitySettingsRouteImport.update({
     id: '/api/public/v1/quality/settings',
@@ -1514,6 +1522,12 @@ const ApiPublicV1ProducerVerificationUploadIntentRoute =
     id: '/upload-intent',
     path: '/upload-intent',
     getParentRoute: () => ApiPublicV1ProducerVerificationRoute,
+  } as any)
+const ApiPublicV1ProviderVerificationDraftRoute =
+  ApiPublicV1ProviderVerificationDraftRouteImport.update({
+    id: '/draft',
+    path: '/draft',
+    getParentRoute: () => ApiPublicV1ProviderVerificationRoute,
   } as any)
 const ApiPublicV1SecurityIntegrityChallengeRoute =
   ApiPublicV1SecurityIntegrityChallengeRouteImport.update({
@@ -2503,6 +2517,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/provider/register': typeof ApiPublicV1ProviderRegisterRoute
   '/api/public/v1/provider/statements': typeof ApiPublicV1ProviderStatementsRoute
   '/api/public/v1/provider/team': typeof ApiPublicV1ProviderTeamRoute
+  '/api/public/v1/provider/verification': typeof ApiPublicV1ProviderVerificationRouteWithChildren
   '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
   '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
@@ -2560,6 +2575,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
   '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
+  '/api/public/v1/provider/verification/draft': typeof ApiPublicV1ProviderVerificationDraftRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
   '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
@@ -2855,6 +2871,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/provider/register': typeof ApiPublicV1ProviderRegisterRoute
   '/api/public/v1/provider/statements': typeof ApiPublicV1ProviderStatementsRoute
   '/api/public/v1/provider/team': typeof ApiPublicV1ProviderTeamRoute
+  '/api/public/v1/provider/verification': typeof ApiPublicV1ProviderVerificationRouteWithChildren
   '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
   '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
@@ -2911,6 +2928,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
   '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
+  '/api/public/v1/provider/verification/draft': typeof ApiPublicV1ProviderVerificationDraftRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
   '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
@@ -3207,6 +3225,7 @@ export interface FileRoutesById {
   '/api/public/v1/provider/register': typeof ApiPublicV1ProviderRegisterRoute
   '/api/public/v1/provider/statements': typeof ApiPublicV1ProviderStatementsRoute
   '/api/public/v1/provider/team': typeof ApiPublicV1ProviderTeamRoute
+  '/api/public/v1/provider/verification': typeof ApiPublicV1ProviderVerificationRouteWithChildren
   '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
   '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
@@ -3264,6 +3283,7 @@ export interface FileRoutesById {
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
   '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
+  '/api/public/v1/provider/verification/draft': typeof ApiPublicV1ProviderVerificationDraftRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
   '/api/public/v1/sessions/$sessionId/heartbeat': typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
@@ -3561,6 +3581,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/provider/register'
     | '/api/public/v1/provider/statements'
     | '/api/public/v1/provider/team'
+    | '/api/public/v1/provider/verification'
     | '/api/public/v1/quality/settings'
     | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
@@ -3618,6 +3639,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/payouts/request'
     | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
+    | '/api/public/v1/provider/verification/draft'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
     | '/api/public/v1/sessions/$sessionId/heartbeat'
@@ -3913,6 +3935,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/provider/register'
     | '/api/public/v1/provider/statements'
     | '/api/public/v1/provider/team'
+    | '/api/public/v1/provider/verification'
     | '/api/public/v1/quality/settings'
     | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
@@ -3969,6 +3992,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/payouts/request'
     | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
+    | '/api/public/v1/provider/verification/draft'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
     | '/api/public/v1/sessions/$sessionId/heartbeat'
@@ -4264,6 +4288,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/provider/register'
     | '/api/public/v1/provider/statements'
     | '/api/public/v1/provider/team'
+    | '/api/public/v1/provider/verification'
     | '/api/public/v1/quality/settings'
     | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
@@ -4321,6 +4346,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/payouts/request'
     | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
+    | '/api/public/v1/provider/verification/draft'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
     | '/api/public/v1/sessions/$sessionId/heartbeat'
@@ -4615,6 +4641,7 @@ export interface RootRouteChildren {
   ApiPublicV1ProviderRegisterRoute: typeof ApiPublicV1ProviderRegisterRoute
   ApiPublicV1ProviderStatementsRoute: typeof ApiPublicV1ProviderStatementsRoute
   ApiPublicV1ProviderTeamRoute: typeof ApiPublicV1ProviderTeamRoute
+  ApiPublicV1ProviderVerificationRoute: typeof ApiPublicV1ProviderVerificationRouteWithChildren
   ApiPublicV1QualitySettingsRoute: typeof ApiPublicV1QualitySettingsRoute
   ApiPublicV1SearchV2Route: typeof ApiPublicV1SearchV2Route
   ApiPublicV1SessionsStartRoute: typeof ApiPublicV1SessionsStartRoute
@@ -5883,6 +5910,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProviderTeamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/provider/verification': {
+      id: '/api/public/v1/provider/verification'
+      path: '/api/public/v1/provider/verification'
+      fullPath: '/api/public/v1/provider/verification'
+      preLoaderRoute: typeof ApiPublicV1ProviderVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/quality/settings': {
       id: '/api/public/v1/quality/settings'
       path: '/api/public/v1/quality/settings'
@@ -6260,6 +6294,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/v1/producer/verification/upload-intent'
       preLoaderRoute: typeof ApiPublicV1ProducerVerificationUploadIntentRouteImport
       parentRoute: typeof ApiPublicV1ProducerVerificationRoute
+    }
+    '/api/public/v1/provider/verification/draft': {
+      id: '/api/public/v1/provider/verification/draft'
+      path: '/draft'
+      fullPath: '/api/public/v1/provider/verification/draft'
+      preLoaderRoute: typeof ApiPublicV1ProviderVerificationDraftRouteImport
+      parentRoute: typeof ApiPublicV1ProviderVerificationRoute
     }
     '/api/public/v1/security/integrity/challenge': {
       id: '/api/public/v1/security/integrity/challenge'
@@ -7403,6 +7444,21 @@ const ApiPublicV1ProducerVerificationRouteWithChildren =
     ApiPublicV1ProducerVerificationRouteChildren,
   )
 
+interface ApiPublicV1ProviderVerificationRouteChildren {
+  ApiPublicV1ProviderVerificationDraftRoute: typeof ApiPublicV1ProviderVerificationDraftRoute
+}
+
+const ApiPublicV1ProviderVerificationRouteChildren: ApiPublicV1ProviderVerificationRouteChildren =
+  {
+    ApiPublicV1ProviderVerificationDraftRoute:
+      ApiPublicV1ProviderVerificationDraftRoute,
+  }
+
+const ApiPublicV1ProviderVerificationRouteWithChildren =
+  ApiPublicV1ProviderVerificationRoute._addFileChildren(
+    ApiPublicV1ProviderVerificationRouteChildren,
+  )
+
 interface ApiPublicV1ZillionaireChannelsChannelIdScheduleRouteChildren {
   ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute: typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute
 }
@@ -7663,6 +7719,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ProviderRegisterRoute: ApiPublicV1ProviderRegisterRoute,
   ApiPublicV1ProviderStatementsRoute: ApiPublicV1ProviderStatementsRoute,
   ApiPublicV1ProviderTeamRoute: ApiPublicV1ProviderTeamRoute,
+  ApiPublicV1ProviderVerificationRoute:
+    ApiPublicV1ProviderVerificationRouteWithChildren,
   ApiPublicV1QualitySettingsRoute: ApiPublicV1QualitySettingsRoute,
   ApiPublicV1SearchV2Route: ApiPublicV1SearchV2Route,
   ApiPublicV1SessionsStartRoute: ApiPublicV1SessionsStartRoute,

@@ -714,3 +714,39 @@ export function fuzzyNameMatch(
   const score = matched / Math.max(wordsA.length, wordsB.length);
   return { matches: score >= 0.5, score };
 }
+
+export const FREEMAIL_DOMAINS = new Set([
+  'gmail.com',
+  'googlemail.com',
+  'yahoo.com',
+  'yahoo.co.uk',
+  'ymail.com',
+  'hotmail.com',
+  'outlook.com',
+  'live.com',
+  'msn.com',
+  'icloud.com',
+  'me.com',
+  'mac.com',
+  'aol.com',
+  'proton.me',
+  'protonmail.com',
+  'zoho.com',
+  'yandex.com',
+  'mail.com',
+  'gmx.com',
+  'gmx.net',
+  'fastmail.com',
+]);
+
+/**
+ * Validates that an email address belongs to a business domain and not a consumer freemail provider.
+ */
+export function isBusinessDomainEmail(email: string): boolean {
+  if (!email || typeof email !== 'string') return false;
+  const parts = email.trim().toLowerCase().split('@');
+  if (parts.length !== 2 || !parts[0] || !parts[1]) return false;
+  const domain = parts[1];
+  if (!domain.includes('.') || domain.startsWith('.') || domain.endsWith('.')) return false;
+  return !FREEMAIL_DOMAINS.has(domain);
+}

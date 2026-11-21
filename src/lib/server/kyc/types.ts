@@ -40,21 +40,31 @@ export interface KycProfile {
   encryptedTaxNumber?: EncryptedField;
   encryptedDateOfBirth?: EncryptedField;
   encryptedAccountNumber?: EncryptedField;
+  encryptedRepresentativeIdNumber?: EncryptedField;
 
   // Masked values for list display
   maskedIdNumber?: string;
   maskedTaxNumber?: string;
   maskedAccountNumber?: string;
   maskedDateOfBirth?: string;
+  maskedRepresentativeIdNumber?: string;
 
   // Entity and contact metadata
   legalName?: string;
   businessName?: string;
+  officialEmail?: string;
+  officialEmailVerified?: boolean;
   phone?: string;
   phoneVerified?: boolean;
   idTypeId?: string;
   companyRegNumber?: string;
   directorName?: string;
+  representative?: {
+    fullName: string;
+    title: string;
+    idTypeId: string;
+    idNumberMasked?: string;
+  };
   residentialAddress?: {
     line1: string;
     line2?: string;

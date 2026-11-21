@@ -95,3 +95,5 @@ PUSH BADGE #58 SUCCESSFUL — v6-05-A1 security correction — c627870c00e757a16
 PUSH BADGE #59 SUCCESSFUL — v6-05-A1-A3 — Connected KYC persistence and authenticated document viewer with fail-closed HMAC, integrated producer country-first onboarding with phone OTP, and wired owner-editable country compliance rules in Zillionaire.
 
 PUSH BADGE #60 SUCCESSFUL — v6-05-A4 — Producer KYC onboarding flow with individual (18+ age enforcement, verified phone, residential address, ID front/back, selfie) and business (company registration, tax ID, business address, director details, certificate) paths, draft auto-save/resume, country-specific rules, fuzzy payout name matching, and authenticated submission.
+
+PUSH BADGE #61 SUCCESSFUL — v6-05-A5 — Provider Corporate KYC verification API and draft endpoints with mandatory business-domain email verification, corporate registration/tax format validation, representative identification, fuzzy corporate payout account name matching, and private vault upload validation.

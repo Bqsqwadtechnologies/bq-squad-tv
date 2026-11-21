@@ -19,11 +19,19 @@ export interface SaveKycInput {
   kycCountry: string;
   legalName?: string;
   businessName?: string;
+  officialEmail?: string;
+  officialEmailVerified?: boolean;
   phone?: string;
   phoneVerified?: boolean;
   idTypeId?: string;
   companyRegNumber?: string;
   directorName?: string;
+  representative?: {
+    fullName: string;
+    title: string;
+    idTypeId: string;
+    idNumberMasked?: string;
+  };
   residentialAddress?: {
     line1: string;
     line2?: string;
@@ -45,12 +53,14 @@ export interface SaveKycInput {
   rawTaxNumber?: string;
   rawDateOfBirth?: string;
   rawAccountNumber?: string;
+  rawRepresentativeIdNumber?: string;
   // Documents and face captures
   documentVaultPaths?: Record<string, string>;
   faceCaptureVaultPath?: string;
   riskScore?: number;
   riskFlags?: string[];
   status?: KycStatus;
+  providerId?: string;
 }
 
 export async function getKycProfile(
@@ -79,6 +89,9 @@ export async function getKycProfile(
       }
       if (profile.encryptedAccountNumber) {
         (profile as any).decryptedAccountNumber = decryptSensitiveField(profile.encryptedAccountNumber);
+      }
+      if (profile.encryptedRepresentativeIdNumber) {
+        (profile as any).decryptedRepresentativeIdNumber = decryptSensitiveField(profile.encryptedRepresentativeIdNumber);
       }
     } catch (err) {
       // If decryption fails (e.g. key rotated or missing), keep masked fields and log
@@ -117,7 +130,8 @@ export async function saveKycProfile(
     input.rawIdNumber ||
     input.rawTaxNumber ||
     input.rawDateOfBirth ||
-    input.rawAccountNumber
+    input.rawAccountNumber ||
+    input.rawRepresentativeIdNumber
   );
 
   const encKey = process.env['KYC_FIELD_ENCRYPTION_KEY'];
@@ -141,6 +155,10 @@ export async function saveKycProfile(
     ? encryptSensitiveField(input.rawAccountNumber)
     : existing?.encryptedAccountNumber;
 
+  const encryptedRepresentativeIdNumber = input.rawRepresentativeIdNumber
+    ? encryptSensitiveField(input.rawRepresentativeIdNumber)
+    : existing?.encryptedRepresentativeIdNumber;
+
   const maskedIdNumber = input.rawIdNumber
     ? maskIdNumber(input.rawIdNumber)
     : existing?.maskedIdNumber;
@@ -157,6 +175,10 @@ export async function saveKycProfile(
     ? maskAccountNumber(input.rawAccountNumber)
     : existing?.maskedAccountNumber;
 
+  const maskedRepresentativeIdNumber = input.rawRepresentativeIdNumber
+    ? maskIdNumber(input.rawRepresentativeIdNumber)
+    : existing?.maskedRepresentativeIdNumber;
+
   const profile: KycProfile = {
     uid: input.uid,
     role: input.role,
@@ -170,10 +192,12 @@ export async function saveKycProfile(
     ...(encryptedTaxNumber ? { encryptedTaxNumber } : {}),
     ...(encryptedDateOfBirth ? { encryptedDateOfBirth } : {}),
     ...(encryptedAccountNumber ? { encryptedAccountNumber } : {}),
+    ...(encryptedRepresentativeIdNumber ? { encryptedRepresentativeIdNumber } : {}),
     ...(maskedIdNumber ? { maskedIdNumber } : {}),
     ...(maskedTaxNumber ? { maskedTaxNumber } : {}),
     ...(maskedDateOfBirth ? { maskedDateOfBirth } : {}),
     ...(maskedAccountNumber ? { maskedAccountNumber } : {}),
+    ...(maskedRepresentativeIdNumber ? { maskedRepresentativeIdNumber } : {}),
     documentVaultPaths: {
       ...(existing?.documentVaultPaths || {}),
       ...(input.documentVaultPaths || {}),
@@ -183,11 +207,14 @@ export async function saveKycProfile(
     riskFlags: input.riskFlags ?? existing?.riskFlags ?? [],
     ...(input.legalName ? { legalName: input.legalName } : existing?.legalName ? { legalName: existing.legalName } : {}),
     ...(input.businessName ? { businessName: input.businessName } : existing?.businessName ? { businessName: existing.businessName } : {}),
+    ...(input.officialEmail ? { officialEmail: input.officialEmail } : existing?.officialEmail ? { officialEmail: existing.officialEmail } : {}),
+    ...(typeof input.officialEmailVerified === 'boolean' ? { officialEmailVerified: input.officialEmailVerified } : typeof existing?.officialEmailVerified === 'boolean' ? { officialEmailVerified: existing.officialEmailVerified } : {}),
     ...(input.phone ? { phone: input.phone } : existing?.phone ? { phone: existing.phone } : {}),
     ...(typeof input.phoneVerified === 'boolean' ? { phoneVerified: input.phoneVerified } : typeof existing?.phoneVerified === 'boolean' ? { phoneVerified: existing.phoneVerified } : {}),
     ...(input.idTypeId ? { idTypeId: input.idTypeId } : existing?.idTypeId ? { idTypeId: existing.idTypeId } : {}),
     ...(input.companyRegNumber ? { companyRegNumber: input.companyRegNumber } : existing?.companyRegNumber ? { companyRegNumber: existing.companyRegNumber } : {}),
     ...(input.directorName ? { directorName: input.directorName } : existing?.directorName ? { directorName: existing.directorName } : {}),
+    ...(input.representative ? { representative: input.representative } : existing?.representative ? { representative: existing.representative } : {}),
     ...(input.residentialAddress ? { residentialAddress: input.residentialAddress } : existing?.residentialAddress ? { residentialAddress: existing.residentialAddress } : {}),
     ...(input.businessAddress ? { businessAddress: input.businessAddress } : existing?.businessAddress ? { businessAddress: existing.businessAddress } : {}),
   };
@@ -203,11 +230,18 @@ export async function saveKycProfile(
       verificationStatus: newStatus === 'approved' ? 'APPROVED' : newStatus === 'rejected' ? 'REJECTED' : 'PENDING',
     }).catch(() => {});
   } else if (input.role === 'provider') {
-    await fs.patchDoc(`providers/${input.uid}`, {
-      kycStatus: newStatus,
-      kycCountry: profile.kycCountry,
-      kycSubmittedAt: now,
-    }).catch(() => {});
+    const providerTargets = [input.uid];
+    if (input.providerId && input.providerId !== input.uid) {
+      providerTargets.push(input.providerId);
+    }
+    for (const pTarget of providerTargets) {
+      await fs.patchDoc(`providers/${pTarget}`, {
+        kycStatus: newStatus,
+        kycCountry: profile.kycCountry,
+        kycSubmittedAt: now,
+        status: newStatus === 'approved' ? 'active' : newStatus === 'rejected' ? 'rejected' : 'pending_approval',
+      }).catch(() => {});
+    }
   }
 
   // Also sync to user doc
@@ -224,57 +258,57 @@ export async function reviewKycProfile(
   input: {
     uid: string;
     reviewerUid: string;
-    status: 'approved' | 'rejected';
+    status: "approved" | "rejected";
     reason?: string;
     notes?: string;
   }
 ): Promise<KycProfile> {
-  const existing = await getKycProfile(fs, input.uid);
-  if (!existing) {
-    throw new ApiError(404, 'KYC_PROFILE_NOT_FOUND', 'KYC profile does not exist.');
+  if (input.status === "rejected" && (!input.reason || input.reason.trim().length < 3)) {
+    throw new ApiError(400, "REJECTION_REASON_REQUIRED", "A rejection reason of at least 3 characters is required.");
   }
-
-  if (input.status === 'rejected' && (!input.reason || input.reason.trim().length < 3)) {
-    throw new ApiError(400, 'REJECTION_REASON_REQUIRED', 'A rejection reason of at least 3 characters is required.');
+  const profile = await getKycProfile(fs, input.uid);
+  if (!profile) {
+    throw new ApiError(404, 'PROFILE_NOT_FOUND', 'KYC profile not found for review.');
   }
 
   const now = new Date().toISOString();
-  const currentVersion = existing.kycVersion + 1;
+  const nextVersion = profile.kycVersion + 1;
 
-  const historyEntry: KycHistoryEntry = {
-    version: currentVersion,
+  const entry: KycHistoryEntry = {
+    version: nextVersion,
     status: input.status,
     timestamp: now,
     reviewerUid: input.reviewerUid,
-    rejectionReason: input.reason?.trim(),
-    notes: input.notes?.trim(),
+    rejectionReason: input.reason,
+    notes: input.notes,
   };
 
-  const updatedProfile: KycProfile = {
-    ...existing,
+  const updated: KycProfile = {
+    ...profile,
     kycStatus: input.status,
-    kycVersion: currentVersion,
+    kycVersion: nextVersion,
     kycReviewedAt: now,
     kycReviewedBy: input.reviewerUid,
-    kycRejectionReason: input.status === 'rejected' ? input.reason?.trim() : undefined,
-    kycHistory: [...existing.kycHistory, historyEntry],
+    kycRejectionReason: input.status === 'rejected' ? input.reason : undefined,
+    kycHistory: [...profile.kycHistory, entry],
   };
 
-  await fs.setDoc(`kycProfiles/${input.uid}`, updatedProfile as any);
+  await fs.setDoc(`kycProfiles/${input.uid}`, updated as any);
 
-  // Synchronize status
-  if (existing.role === 'producer') {
+  // Sync to role collection
+  if (profile.role === 'producer') {
     await fs.patchDoc(`producers/${input.uid}`, {
       kycStatus: input.status,
       verificationStatus: input.status === 'approved' ? 'APPROVED' : 'REJECTED',
-      verificationReviewedAt: now,
-      verificationReviewedBy: input.reviewerUid,
-      verificationReviewReason: input.reason?.trim() ?? null,
+      reviewedAt: now,
+      rejectionReason: input.status === 'rejected' ? input.reason : null,
     }).catch(() => {});
-  } else if (existing.role === 'provider') {
+  } else if (profile.role === 'provider') {
     await fs.patchDoc(`providers/${input.uid}`, {
       kycStatus: input.status,
       status: input.status === 'approved' ? 'active' : 'rejected',
+      reviewedAt: now,
+      rejectionReason: input.status === 'rejected' ? input.reason : null,
     }).catch(() => {});
   }
 
@@ -282,7 +316,7 @@ export async function reviewKycProfile(
     kycStatus: input.status,
   }).catch(() => {});
 
-  return updatedProfile;
+  return updated;
 }
 
 export async function saveKycDraft(
