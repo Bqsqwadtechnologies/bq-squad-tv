@@ -11,7 +11,9 @@ import { assertRiskStepUp, recordRiskSignal } from "@/lib/server/risk-engine";
 
 const schema = z.object({
   packageId: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
-  customAmountMinor: z.number().int().min(20000).optional(),
+  // Currency-specific minimum validation is performed by getPaystackTopup.
+  // Do not hard-code the NGN ₦200 minor-unit threshold for other currencies.
+  customAmountMinor: z.number().int().positive().optional(),
 });
 
 async function markPaymentStatus(
