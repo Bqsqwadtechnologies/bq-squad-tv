@@ -10,7 +10,7 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("@/components/BrandLogo", () => ({ BrandLogo: () => <div>BQ SQWAD TV</div> }));
 vi.mock("@/lib/firebase-web-auth", () => ({
   getActiveWebIdToken: vi.fn().mockResolvedValue("id-token"),
-  getWebAccount: vi.fn().mockResolvedValue({ email: "viewer@example.com", emailVerified: true }),
+  getWebAccount: vi.fn().mockResolvedValue({ uid: "viewer-1", email: "viewer@example.com", emailVerified: true }),
   getWebAuthHeaders: vi.fn().mockResolvedValue({ Authorization: "Bearer id-token" }),
   restoreWebSession: vi.fn().mockResolvedValue("id-token"),
 }));
