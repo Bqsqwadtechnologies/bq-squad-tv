@@ -33,7 +33,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/export"
 
           if (body.payoutIds && body.payoutIds.length > 0) {
             const requestedSet = new Set(body.payoutIds);
-            candidates = candidates.filter((c) => requestedSet.has(c.__id || c["id"]));
+            candidates = candidates.filter((c) => requestedSet.has(String(c.__id || c["id"] || "")));
           }
 
           if (candidates.length === 0) {
@@ -43,7 +43,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/payouts/export"
           // Enrich records with payout account / KYC details
           const enriched = await Promise.all(
             candidates.map(async (p) => {
-              const pid = p.__id || p["id"];
+              const pid = String(p.__id || p["id"] || "");
               const uid = (p["uid"] as string) || "";
               const [payoutProfile, kycProfile] = await Promise.all([
                 fs.getDoc(`payoutProfiles/${uid}`),

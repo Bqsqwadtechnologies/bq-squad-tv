@@ -152,6 +152,15 @@ export interface KycProfile {
   expiryReminder30DaySent?: boolean;
   expiryReminder7DaySent?: boolean;
   rejectionReason?: string;
+  assignedReviewerUid?: string;
+  assignedReviewerEmail?: string;
+  assignedAt?: string;
+  slaDueAt?: string;
+  escalatedTo?: string;
+  escalationReason?: string;
+  escalatedAt?: string;
+  internalNotes?: any;
+  createdAt?: string;
 }
 
 /**

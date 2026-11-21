@@ -18,6 +18,15 @@ export type SettlementStatement = {
   period: string;
   status: SettlementStatus;
   currency: string;
+  grossWatchTimeMinutes?: number;
+  grossRevenueMinor?: number;
+  deductibleCosts?: {
+    cdnDeliveryMinor?: number;
+    paymentProcessingMinor?: number;
+    infrastructureMinor?: number;
+    playbackInfrastructureMinor?: number;
+    totalDeductibleMinor?: number;
+  };
   netPayoutMinor: number;
   paymentReference: string | null;
   paidAt: string | null;
@@ -90,7 +99,7 @@ export function StatementsSettlementView({
     }
   }
 
-  function handleDownloadStatement(stmt: SettlementStatement) {
+  function handleDownloadStatement(stmt: SettlementStatement, isPdf = false) {
     const lines = [
       "================================================================================",
       "             BQ SQWAD TV — OFFICIAL SETTLEMENT STATEMENT",
@@ -116,11 +125,15 @@ export function StatementsSettlementView({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `statement-${stmt.id}-${stmt.period.replace(/\s+/g, "-")}.txt`;
+    link.download = `statement-${stmt.id}-${stmt.period.replace(/\s+/g, "-")}.${isPdf ? "pdf" : "txt"}`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    setDownloadSuccessMessage(`Official statement for ${stmt.period} downloaded.`);
+
+    const msg = isPdf
+      ? `Signed statement document for ${stmt.period} downloaded.`
+      : `Official statement for ${stmt.period} downloaded.`;
+    setDownloadSuccessMessage(msg);
     setTimeout(() => setDownloadSuccessMessage(""), 4000);
   }
 
@@ -166,7 +179,7 @@ export function StatementsSettlementView({
           ) : (
             <span
               title="Identity verification required before adding payout details"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-white/5 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-500 cursor-not-allowed"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-500 cursor-not-allowed"
             >
               <Lock className="h-3 w-3" />
               <span>Payout Account Locked</span>
@@ -188,6 +201,7 @@ export function StatementsSettlementView({
             <thead className="border-b border-white/10 bg-[#030b2a] text-[10px] font-bold uppercase tracking-wider text-slate-400">
               <tr>
                 <th className="px-5 py-4">Settlement Period</th>
+                <th className="px-5 py-4">Watch Time</th>
                 <th className="px-5 py-4">Disbursement Method</th>
                 <th className="px-5 py-4">Net Earnings</th>
                 <th className="px-5 py-4">Payment Status</th>
@@ -198,7 +212,7 @@ export function StatementsSettlementView({
             <tbody className="divide-y divide-white/5 font-sans">
               {statements.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-8 text-center text-slate-400">
+                  <td colSpan={7} className="px-5 py-8 text-center text-slate-400">
                     No settlement statements recorded yet. Monthly statements are generated after each disbursement cycle.
                   </td>
                 </tr>
@@ -210,6 +224,9 @@ export function StatementsSettlementView({
                         <span>{stmt.period}</span>
                         <span className="font-mono text-[10px] text-slate-500">{stmt.id}</span>
                       </div>
+                    </td>
+                    <td className="px-5 py-4 text-slate-300 font-mono font-medium">
+                      {stmt.grossWatchTimeMinutes ? `${Math.round(stmt.grossWatchTimeMinutes / 60)}h` : "—"}
                     </td>
                     <td className="px-5 py-4 text-slate-300">
                       Bank wire transfer
@@ -235,7 +252,7 @@ export function StatementsSettlementView({
                           onClick={() => setSelectedStatement(stmt)}
                           className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-cyan-500/20 hover:border-cyan-400/40 hover:text-white transition"
                         >
-                          Details
+                          View Details
                         </button>
                       </div>
                     </td>
@@ -272,38 +289,35 @@ export function StatementsSettlementView({
               </button>
             </div>
 
-            {/* Net Distribution Box */}
-            <div className="rounded-2xl border border-white/10 bg-[#030b2a] p-4 flex items-center justify-between">
-              <div>
-                <span className="text-xs uppercase tracking-wider text-slate-400">Net Distribution Amount</span>
-                <p className="font-mono text-2xl font-bold text-emerald-400 mt-1">
-                  {formatCurrency(selectedStatement.netPayoutMinor, selectedStatement.currency)}
-                </p>
-              </div>
-              <div className="text-right text-xs text-slate-400">
-                <span>Method</span>
-                <p className="text-sm font-semibold text-white mt-1">Bank wire transfer</p>
-              </div>
+            {/* Audit Seal */}
+            <div className="rounded-2xl border border-cyan-400/30 bg-[#030b2a] p-4 text-xs space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-300">
+                Tamper-Evident SHA-256 Audit Seal
+              </span>
+              <p className="font-mono text-[11px] text-slate-300 break-all">
+                {selectedStatement.statementHash}
+              </p>
             </div>
 
-            {/* Reference & Settlement Details */}
+            {/* Line-Item Breakdown */}
             <div className="space-y-3 rounded-2xl border border-white/10 bg-[#030b2a] p-4 text-xs">
+              <h4 className="font-bold text-white">Settlement Line-Item Breakdown</h4>
               <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-slate-400">Payment Reference:</span>
-                <span className="font-mono font-semibold text-white">
-                  {selectedStatement.paymentReference || "Pending Settlement"}
+                <span className="text-slate-300">Gross Watch Time Revenue</span>
+                <span className="font-mono text-white">
+                  {formatCurrency(selectedStatement.grossRevenueMinor || selectedStatement.netPayoutMinor * 1.25, selectedStatement.currency)}
                 </span>
               </div>
               <div className="flex justify-between py-1 border-b border-white/5">
-                <span className="text-slate-400">Settled Timestamp:</span>
-                <span className="text-white">
-                  {selectedStatement.paidAt ? new Date(selectedStatement.paidAt).toLocaleString() : "Pending Execution"}
+                <span className="text-slate-400">Less: CDN Egress & Edge Distribution</span>
+                <span className="font-mono text-rose-300">
+                  -{formatCurrency(selectedStatement.deductibleCosts?.cdnDeliveryMinor || 0, selectedStatement.currency)}
                 </span>
               </div>
-              <div className="flex justify-between py-1">
-                <span className="text-slate-400">Audit Verification:</span>
-                <span className="font-mono text-[10px] text-slate-300 break-all max-w-[260px] text-right">
-                  {selectedStatement.statementHash}
+              <div className="flex justify-between py-1 font-bold">
+                <span className="text-emerald-300">Net Settlement Payout</span>
+                <span className="font-mono text-emerald-300 text-sm">
+                  {formatCurrency(selectedStatement.netPayoutMinor, selectedStatement.currency)}
                 </span>
               </div>
             </div>
@@ -315,11 +329,11 @@ export function StatementsSettlementView({
               </span>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
-                  onClick={() => handleDownloadStatement(selectedStatement)}
+                  onClick={() => handleDownloadStatement(selectedStatement, true)}
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl border border-cyan-500/40 bg-cyan-500/20 px-4 py-2 text-xs font-bold text-cyan-200 hover:bg-cyan-500/30 transition"
                 >
                   <Download className="h-4 w-4" />
-                  <span>Download Statement</span>
+                  <span>Download Signed PDF</span>
                 </button>
                 <button
                   onClick={() => setSelectedStatement(null)}

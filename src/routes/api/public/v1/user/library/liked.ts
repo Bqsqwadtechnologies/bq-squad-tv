@@ -10,17 +10,19 @@ export const Route = createFileRoute("/api/public/v1/user/library/liked")({
           const user = await requireUser(request);
           const fs = await Firestore.create();
 
-          const likedDocs = await fs.listDocs(`users/${user.uid}/liked_items`);
+          const raw = typeof (fs as any).listDocs === "function"
+            ? (await (fs as any).listDocs(`users/${user.uid}/liked_items`)).map((d: any) => ({ ...(d.data || {}), __id: d.id, id: d.id }))
+            : await fs.query(`users/${user.uid}/liked_items`);
+          const likedDocs = raw as Array<Record<string, unknown> & { __id?: string }>;
           const items = likedDocs
-            .map((doc) => doc.data)
-            .filter((item) => item["active"] !== false)
-            .sort((a, b) => {
+            .filter((item: Record<string, unknown>) => item["active"] !== false)
+            .sort((a: Record<string, unknown>, b: Record<string, unknown>) => {
               const aTime = typeof a["likedAt"] === "string" ? new Date(a["likedAt"]).getTime() : 0;
               const bTime = typeof b["likedAt"] === "string" ? new Date(b["likedAt"]).getTime() : 0;
               return bTime - aTime;
             })
-            .map((item) => ({
-              id: String(item["id"] || ""),
+            .map((item: Record<string, unknown> & { __id: string }) => ({
+              id: String(item["id"] || item.__id || ""),
               targetType: String(item["targetType"] || "video"),
               targetId: String(item["targetId"] || ""),
               title: String(item["title"] || "Liked title"),

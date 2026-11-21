@@ -284,13 +284,13 @@ Configure the following four secrets in your CI/CD environment or local build co
    - **Financial info**: In-app purchase history and wallet balance transactions managed via Google Play Billing and server-side verification.
    - **App activity & analytics**: Video views, watch duration, and crash logs collected for platform analytics and service reliability.
    - **Device or other IDs**: Device security tokens and Firebase Cloud Messaging tokens for notification delivery and fraud prevention.
-   - **Account Deletion**: Viewers can request immediate account and data deletion in-app and on the web at `https://bqsqwad.com/account-deletion`.
+   - **Account Deletion**: Viewers can request immediate account and data deletion in-app and on the web at `https://tv.bqsqwad.com/account-deletion`.
 3. **Content Rating (IARC)**:
    - Category: Entertainment / Streaming.
    - Age gating: Tiered rating system (All ages, 7+, 13+, 16+, 18+). 18+ content requires age verification; kids profiles restrict mature titles.
    - User interactions: Video commenting, watch-together party rooms, and community reports.
 4. **Privacy Policy URL**:
-   - Canonical URL: `https://bqsqwad.com/legal/privacy-policy`
+   - Canonical URL: `https://tv.bqsqwad.com/legal/privacy-policy`
 
 ### Sandbox Build Note
 Bytecode assembly tasks (`bundleRelease`, `assembleRelease`) require a Java Runtime Environment (JDK 17+) and Android SDK command-line tools. In cloud sandbox environments lacking JDK/Android SDK binaries, Gradle builds cannot execute bytecode compilation directly. The Android Gradle definitions, release signing configurations, ProGuard obfuscation profiles, and store compliance specifications are verified and ready for CI/CD or local machine execution.

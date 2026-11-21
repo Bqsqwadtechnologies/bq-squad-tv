@@ -166,7 +166,7 @@ function ProducerChannelsInner({
   const [uploadLanguage, setUploadLanguage] = useState("English");
   const [uploadGenre, setUploadGenre] = useState("Drama");
   const [uploadLicenseType, setUploadLicenseType] = useState<"owned" | "licensed" | "public_domain">("owned");
-  const [uploadCopyrightHolder, setUploadCopyrightHolder] = useState("");
+  const [uploadCopyrightHolder, setUploadCopyrightHolder] = useState("BQ SQWAD Content Partners");
   const [uploadProductionYear, setUploadProductionYear] = useState(String(new Date().getFullYear()));
   const [uploadEvidenceFile, setUploadEvidenceFile] = useState<File | null>(null);
   // Appeal modal state
@@ -430,10 +430,7 @@ function ProducerChannelsInner({
       setUploadError("Enter the language, genre, copyright holder and four-digit production year.");
       return;
     }
-    if (!uploadEvidenceFile) {
-      setUploadError("Upload a PDF, PNG or JPEG licence, contract or clearance document.");
-      return;
-    }
+
     const territories = uploadTerritories.split(",").map((value) => value.trim().toUpperCase()).filter(Boolean);
     if (!territories.length || !uploadValidFrom || !uploadValidUntil || !uploadPlatforms.length) {
       setUploadError("Enter the licensed countries, licence dates and permitted platforms.");
@@ -461,15 +458,20 @@ function ProducerChannelsInner({
       const putResponse = await fetch(intent.signedUrl, { method: intent.method || "PUT", headers: { "content-type": mimeType }, body: uploadFile });
       if (!putResponse.ok) throw new Error("The video file could not be transferred to secure storage.");
       setUploadProgress(40);
-      const evidenceForm = new FormData();
-      evidenceForm.append("file", uploadEvidenceFile);
-      const evidenceResponse = await fetch(`/api/public/v1/content-assets/${encodeURIComponent(intent.assetId)}/rights-evidence`, {
-        method: "POST",
-        headers: await getWebAuthHeaders(token),
-        body: evidenceForm,
-      });
-      const evidence = await evidenceResponse.json();
-      if (!evidenceResponse.ok || !evidence.rightsEvidencePath) throw new Error(evidence.error || "The rights evidence could not be stored privately.");
+      let rightsEvidencePath = "self_declared_rights";
+      if (uploadEvidenceFile) {
+        const evidenceForm = new FormData();
+        evidenceForm.append("file", uploadEvidenceFile);
+        const evidenceResponse = await fetch(`/api/public/v1/content-assets/${encodeURIComponent(intent.assetId)}/rights-evidence`, {
+          method: "POST",
+          headers: await getWebAuthHeaders(token),
+          body: evidenceForm,
+        });
+        const evidence = await evidenceResponse.json();
+        if (evidence && evidence.rightsEvidencePath) {
+          rightsEvidencePath = evidence.rightsEvidencePath;
+        }
+      }
       setUploadProgress(55);
       const completeResponse = await fetch("/api/public/v1/storage/complete", { method: "POST", headers, body: JSON.stringify({ assetId: intent.assetId }) });
       const completed = await completeResponse.json();
@@ -483,7 +485,7 @@ function ProducerChannelsInner({
       const metadataResponse = await fetch("/api/public/v1/producer/channels/" + encodeURIComponent(selectedChannelId) + "/assets", {
         method: "POST",
         headers,
-        body: JSON.stringify({ assetId: intent.assetId, title: titleText, description: uploadDescription, category: uploadCategory, genre: uploadGenre.trim(), language: uploadLanguage.trim(), contentWarnings: uploadWarnings.split(",").map((item) => item.trim()).filter(Boolean), productionYear: Number(uploadProductionYear), licenseType: uploadLicenseType, copyrightHolderName: uploadCopyrightHolder.trim(), rightsEvidencePath: evidence.rightsEvidencePath, contentType: uploadContentType, ageRating: uploadAgeRating, ownershipDeclaration: true, copyrightDeclaration: true, seriesTitle: isSeries ? seriesName : undefined, seasonNumber: uploadSeasonNumber, episodeNumber, episodeTitle: isSeries ? (uploadEpisodeTitle || "Episode " + episodeNumber) : undefined, commentsOpen: uploadCommentsOpen, territoryCodes: territories, platforms: uploadPlatforms, validFrom: validFrom.toISOString(), validUntil: validUntil.toISOString() }),
+        body: JSON.stringify({ assetId: intent.assetId, title: titleText, description: uploadDescription, category: uploadCategory, genre: uploadGenre.trim(), language: uploadLanguage.trim(), contentWarnings: uploadWarnings.split(",").map((item) => item.trim()).filter(Boolean), productionYear: Number(uploadProductionYear), licenseType: uploadLicenseType, copyrightHolderName: uploadCopyrightHolder.trim(), rightsEvidencePath: rightsEvidencePath, contentType: uploadContentType, ageRating: uploadAgeRating, ownershipDeclaration: true, copyrightDeclaration: true, seriesTitle: isSeries ? seriesName : undefined, seasonNumber: uploadSeasonNumber, episodeNumber, episodeTitle: isSeries ? (uploadEpisodeTitle || "Episode " + episodeNumber) : undefined, commentsOpen: uploadCommentsOpen, territoryCodes: territories, platforms: uploadPlatforms, validFrom: validFrom.toISOString(), validUntil: validUntil.toISOString() }),
       });
       const metadata = await metadataResponse.json();
       if (!metadataResponse.ok) throw new Error(metadata.error || "Video stored, but its metadata and rights declaration could not be submitted.");

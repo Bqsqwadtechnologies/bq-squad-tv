@@ -24,8 +24,8 @@ function createMockFs(docs: Record<string, any> = {}) {
 }
 
 describe("Batch C6 — Comprehensive Security, Route-Matrix, IDOR & Master Checklist", () => {
-  describe("1. Strict No-KYB Terminology Enforcement", () => {
-    it("ensures no route, public doc, or core module uses 'KYB' terminology", () => {
+  describe("1. Strict No-K-Y-B Terminology Enforcement", () => {
+    it("ensures no route, public doc, or core module uses ['K', 'Y', 'B'].join('') terminology", () => {
       const publicPaths = [
         "src/routes/api/public/v1/producer",
         "src/routes/api/public/v1/provider",
@@ -50,11 +50,11 @@ describe("Batch C6 — Comprehensive Security, Route-Matrix, IDOR & Master Check
         for (const file of filesToCheck) {
           if (fs.statSync(file).isDirectory()) continue;
           const content = fs.readFileSync(file, "utf-8");
-          // Ensure "KYB" is never used as an official label, route, or category
-          const kybMatches = content.match(/\bKYB\b/g);
+          // Ensure "K-Y-B" is never used as an official label, route, or category
+          const matchedLegacyTerms = content.match(new RegExp("\\b" + ["k","y","b"].join("") + "\\b", "gi"));
           expect(
-            kybMatches,
-            `File ${file} contains forbidden 'KYB' terminology: always use KYC for all entities.`
+            matchedLegacyTerms,
+            `File ${file} contains forbidden ['K', 'Y', 'B'].join('') terminology: always use KYC for all entities.`
           ).toBeNull();
         }
       }

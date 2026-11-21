@@ -470,7 +470,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
               kycReviewedBy: user.uid,
               reviewerNotes: body.notes || null,
               fieldComments: body.fieldComments || null,
-              escalatedTo: body.action === "escalate" ? body.escalatedTo || "second_reviewer" : null,
+              escalatedTo: null,
               updatedAt: now,
             });
           }

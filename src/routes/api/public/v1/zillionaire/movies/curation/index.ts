@@ -37,21 +37,21 @@ export interface FeaturedHero {
 
 export interface MovieCurationOverride {
   assetId: string;
-  pinRank?: number;
-  tags?: string[];
-  categories?: string[];
-  similarTitleIds?: string[];
+  pinRank?: number | undefined;
+  tags?: string[] | undefined;
+  categories?: string[] | undefined;
+  similarTitleIds?: string[] | undefined;
   regionAvailability?: {
     mode: "GLOBAL" | "WHITELIST" | "BLACKLIST";
     countries: string[];
     availableFrom: string | null;
     availableTo: string | null;
-  };
+  } | undefined;
   pricingOverride?: {
     pricePerMinute: number | null;
     freePreviewMinutes: number;
     currency: string;
-  };
+  } | undefined;
   updatedAt: string;
 }
 
@@ -176,23 +176,30 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/movies/curation
           // 1. Fetch Shelves
           const shelvesDoc = await fs.getDoc("curation/shelves");
           let shelves: ShelfDefinition[] = DEFAULT_SHELVES;
-          if (shelvesDoc.exists && shelvesDoc.data && Array.isArray(shelvesDoc.data.items)) {
-            shelves = shelvesDoc.data.items as ShelfDefinition[];
+          const shelfItems = shelvesDoc ? (shelvesDoc["items"] || (shelvesDoc["data"] as any)?.items) : null;
+          if (Array.isArray(shelfItems)) {
+            shelves = shelfItems as ShelfDefinition[];
           }
 
           // 2. Fetch Featured Hero items
           const heroesDoc = await fs.getDoc("curation/hero_rotation");
           let heroes: FeaturedHero[] = [];
-          if (heroesDoc.exists && heroesDoc.data && Array.isArray(heroesDoc.data.items)) {
-            heroes = heroesDoc.data.items as FeaturedHero[];
+          const heroItems = heroesDoc ? (heroesDoc["items"] || (heroesDoc["data"] as any)?.items) : null;
+          if (Array.isArray(heroItems)) {
+            heroes = heroItems as FeaturedHero[];
           }
 
           // 3. Fetch Movie Overrides
-          const overridesSnap = await fs.list("movie_curation_overrides");
+          const overridesSnap = typeof (fs as any).list === "function"
+            ? (await (fs as any).list("movie_curation_overrides")).map((r: any) => ({ ...(r.data || {}), __id: r.id, id: r.id }))
+            : typeof (fs as any).query === "function"
+            ? await fs.query("movie_curation_overrides")
+            : [];
           const overrides: Record<string, MovieCurationOverride> = {};
           for (const item of overridesSnap) {
-            if (item.data) {
-              overrides[item.id] = item.data as MovieCurationOverride;
+            const key = String((item as any).__id || (item as any).id || "");
+            if (key) {
+              overrides[key] = item as unknown as MovieCurationOverride;
             }
           }
 
@@ -236,11 +243,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/movies/curation
             });
 
             await writeAuditLog(fs, {
-              actor: user.uid,
+              actorUid: user.uid,
               action: "MOVIES_CURATION_UPDATE_SHELVES",
-              target: "curation/shelves",
+              targetType: "curation",
+              targetId: "shelves",
               reason: body.reason,
-              details: {
+              metadata: {
                 shelfCount: sanitizedShelves.length,
                 shelfNames: sanitizedShelves.map((s) => s.name),
               },
@@ -278,11 +286,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/movies/curation
             });
 
             await writeAuditLog(fs, {
-              actor: user.uid,
+              actorUid: user.uid,
               action: "MOVIES_CURATION_UPDATE_HERO_ROTATION",
-              target: "curation/hero_rotation",
+              targetType: "curation",
+              targetId: "hero_rotation",
               reason: body.reason,
-              details: {
+              metadata: {
                 heroCount: sanitizedHeroes.length,
                 heroTitles: sanitizedHeroes.map((h) => h.title),
               },
@@ -297,8 +306,9 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/movies/curation
           if (body.action === "DELETE_HERO") {
             const heroesDoc = await fs.getDoc("curation/hero_rotation");
             let items: FeaturedHero[] = [];
-            if (heroesDoc.exists && heroesDoc.data && Array.isArray(heroesDoc.data.items)) {
-              items = heroesDoc.data.items as FeaturedHero[];
+            const heroItems = heroesDoc ? (heroesDoc["items"] || (heroesDoc["data"] as any)?.items) : null;
+            if (Array.isArray(heroItems)) {
+              items = heroItems as FeaturedHero[];
             }
 
             const updatedItems = items.filter((h) => h.id !== body.heroId);
@@ -310,11 +320,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/movies/curation
             });
 
             await writeAuditLog(fs, {
-              actor: user.uid,
+              actorUid: user.uid,
               action: "MOVIES_CURATION_DELETE_HERO",
-              target: `curation/hero_rotation/${body.heroId}`,
+              targetType: "curation",
+              targetId: `hero_rotation/${body.heroId}`,
               reason: body.reason,
-              details: { heroId: body.heroId },
+              metadata: { heroId: body.heroId },
             });
 
             return new Response(
@@ -335,11 +346,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/movies/curation
             await fs.setDoc(`movie_curation_overrides/${assetId}`, record as unknown as Record<string, unknown>, { merge: true });
 
             await writeAuditLog(fs, {
-              actor: user.uid,
+              actorUid: user.uid,
               action: "MOVIES_CURATION_SET_ASSET_OVERRIDE",
-              target: `movie_curation_overrides/${assetId}`,
+              targetType: "movie_curation_overrides",
+              targetId: assetId,
               reason: body.reason,
-              details: {
+              metadata: {
                 assetId,
                 hasPricing: Boolean(overrides.pricingOverride),
                 hasRegions: Boolean(overrides.regionAvailability),

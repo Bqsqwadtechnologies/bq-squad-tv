@@ -22,6 +22,7 @@ export const PUBLIC_ROUTE_ALLOWLIST = new Set([
   "/api/public/v1/search/v2",
   "/api/public/v1/legal/consent",
   "/api/public/v1/monitoring/client-errors",
+  "/api/public/v1/kyc/handoff/resolve",
 ]);
 
 function getFiles(dir) {
@@ -146,7 +147,7 @@ export function classifyRoute(filePath, content) {
   }
 
   // Check Provider
-  if (content.includes("requireProvider") || content.includes("providerUsers/")) {
+  if (content.includes("requireProvider") || content.includes("providerUsers/") || content.includes("requireApprovedProvider")) {
     return {
       type: "provider",
       guard: "requireProvider",

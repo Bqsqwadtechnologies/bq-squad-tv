@@ -298,6 +298,34 @@ export class Firestore {
     return `projects/${this.projectId}/databases/(default)/documents/${path}`;
   }
 
+  async get(path: string): Promise<Record<string, unknown> | null> {
+    return this.getDoc(path);
+  }
+
+  async set(
+    path: string,
+    fields: Record<string, unknown>,
+    options?: { merge?: boolean; mustNotExist?: boolean },
+  ): Promise<void> {
+    if (options?.merge) {
+      return this.patchDoc(path, fields);
+    }
+    return this.setDoc(path, fields, options);
+  }
+
+  async listDocs(
+    collectionId: string,
+    options?: number | { limit?: number },
+  ): Promise<Array<Record<string, unknown> & { id: string; __id: string; data: Record<string, unknown> }>> {
+    const limit = typeof options === "number" ? options : options?.limit;
+    const rows = await this.query(collectionId, limit ? { limit } : undefined);
+    return rows.map((r) => ({
+      ...r,
+      id: r.__id,
+      data: r,
+    }));
+  }
+
   async getDoc(path: string): Promise<Record<string, unknown> | null> {
     const response = await fetch(`${this.documentsUrl()}/${path}`, { headers: this.headers() });
     if (response.status === 404) return null;
@@ -313,8 +341,9 @@ export class Firestore {
   async setDoc(
     path: string,
     fields: Record<string, unknown>,
-    options?: { mustNotExist?: boolean },
+    options?: { merge?: boolean; mustNotExist?: boolean },
   ): Promise<void> {
+    if (options?.merge) return this.patchDoc(path, fields);
     const write: FirestoreWrite = {
       update: { name: this.docName(path), fields: encodeFields(fields) },
       ...(options?.mustNotExist ? { currentDocument: { exists: false } } : {}),
@@ -331,8 +360,28 @@ export class Firestore {
     ]);
   }
 
+  async delete(path: string): Promise<void> {
+    return this.deleteDoc(path);
+  }
+
+  async getCollection(
+    collectionId: string,
+    options?: number | { limit?: number },
+  ): Promise<Array<Record<string, unknown> & { id: string; __id: string; data: Record<string, unknown> }>> {
+    return this.listDocs(collectionId, options);
+  }
+
+  async createDoc(path: string, fields: Record<string, unknown>): Promise<void> {
+    return this.setDoc(path, fields, { mustNotExist: true });
+  }
+
   async deleteDoc(path: string): Promise<void> {
     await this.commit([{ delete: this.docName(path) }]);
+  }
+
+  static async commit(writes: FirestoreWrite[], transaction?: string): Promise<void> {
+    const fs = await Firestore.create();
+    return fs.commit(writes, transaction);
   }
 
   async commit(writes: FirestoreWrite[], transaction?: string): Promise<void> {
@@ -353,7 +402,7 @@ export class Firestore {
   async query(
     collectionId: string,
     options?: {
-      filters?: QueryFilter[];
+      filters?: QueryFilter[] | undefined;
       orderByField?: string;
       descending?: boolean;
       limit?: number;

@@ -125,7 +125,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/config/settings
 
           if (body.action === "test_email") {
             const settings = await getPlatformSettings(fs);
-            const target = body.recipientEmail || settings.supportEmail || user.email;
+            const target = body.recipientEmail || settings.supportEmail || user.email || "owner@bqsqwad.tv";
 
             await writeAuditLog(fs, {
               actorUid: user.uid,

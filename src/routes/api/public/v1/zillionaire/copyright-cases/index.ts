@@ -95,7 +95,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/copyright-cases
               counterNoticeActive: enriched.filter(
                 (c) =>
                   c.status === "under_review" &&
-                  c.counterNoticeDeadline &&
+                  typeof c.counterNoticeDeadline === "string" &&
                   new Date(c.counterNoticeDeadline).getTime() > now,
               ).length,
             },

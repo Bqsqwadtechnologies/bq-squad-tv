@@ -152,10 +152,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/config/pricing"
           
           const url = new URL(request.url);
           if (url.searchParams.get("history") === "true") {
-            const historyDocs = await fs.listDocs("pricing_history", 50);
+            const historyDocs = await fs.query("pricing_history", { limit: 50 });
             return Response.json({
               history: historyDocs.map((d) => ({
-                id: d.id,
+                id: String(d["id"] || d.__id || ""),
                 version: d["version"],
                 savedAt: d["savedAt"],
                 savedBy: d["savedBy"],

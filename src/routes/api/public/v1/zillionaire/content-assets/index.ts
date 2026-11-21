@@ -113,18 +113,18 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
             const updates: Record<string, unknown> = { updatedAt: now };
 
             if (body.action === "bulk_block") {
-              updates.status = "BLOCKED";
-              updates.blockedAt = now;
-              updates.blockedBy = actor.uid;
-              updates.blockedReason = body.reason;
+              updates["status"] = "BLOCKED";
+              updates["blockedAt"] = now;
+              updates["blockedBy"] = actor.uid;
+              updates["blockedReason"] = body.reason;
             } else if (body.action === "bulk_unpublish") {
-              updates.contentStatus = "unpublished";
-              updates.unpublishedAt = now;
-              updates.unpublishReason = body.reason;
+              updates["contentStatus"] = "unpublished";
+              updates["unpublishedAt"] = now;
+              updates["unpublishReason"] = body.reason;
             } else if (body.action === "bulk_change_category" && body.category) {
-              updates.category = body.category;
+              updates["category"] = body.category;
             } else if (body.action === "bulk_change_age_rating" && body.ageRating) {
-              updates.ageRating = body.ageRating;
+              updates["ageRating"] = body.ageRating;
             }
 
             await fs.set(`contentAssets/${id}`, { ...asset, ...updates });

@@ -631,28 +631,10 @@ export function ConsoleShell({
             icon: Tv,
           },
           {
-            id: "producer-videos",
-            label: "Uploads & Content",
-            href: "/producer#uploads",
-            icon: UploadCloud,
-          },
-          {
-            id: "producer-schedule",
-            label: "Schedule & EPG",
-            href: "/producer#schedule",
-            icon: Calendar,
-          },
-          {
-            id: "producer-earnings",
-            label: "Earnings & Payouts",
-            href: "/producer#earnings",
-            icon: Wallet,
-          },
-          {
-            id: "producer-verification",
-            label: "Verification Status",
-            href: "/producer#verification",
-            icon: BadgeCheck,
+            id: "producer-collaborations",
+            label: "Collaborations",
+            href: "/producer/collaborations",
+            icon: Briefcase,
           },
           {
             id: "producer-team",

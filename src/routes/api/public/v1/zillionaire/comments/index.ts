@@ -21,7 +21,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/comments/")({
           await requireZillionaireModule(fs, user, "moderation");
 
           const snap = await fs.getCollection("commentsQueue");
-          const items = (snap.docs || []).map((doc) => doc.data);
+          const items = Array.isArray(snap) ? snap.map((doc: any) => doc.data || doc) : [];
 
           return Response.json({
             comments: items.length > 0 ? items : [

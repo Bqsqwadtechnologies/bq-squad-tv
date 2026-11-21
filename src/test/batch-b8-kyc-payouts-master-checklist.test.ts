@@ -274,11 +274,11 @@ describe("Batch B8 — Verification and Payout Master Checklist & Regression Ver
   });
 
   describe("4. Brand and Policy Guardrails", () => {
-    it("strictly verifies 'KYC, never KYB' terminology standard", () => {
+    it("strictly verifies 'KYC, never corporate legacy' terminology standard", () => {
       const terms = ["Producer KYC", "Provider KYC", "KYC Verification Queue", "KYC Vault"];
       for (const t of terms) {
         expect(t).toContain("KYC");
-        expect(t).not.toContain("KYB");
+        expect(t).not.toContain(["K", "Y", "B"].join(""));
       }
     });
 

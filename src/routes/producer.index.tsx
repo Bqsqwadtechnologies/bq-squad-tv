@@ -125,6 +125,7 @@ function ProducerDashboardInner({
   const [selectedPeriod, setSelectedPeriod] = useState<"24h" | "7d" | "30d" | "12m">("30d");
   const payoutWindow = getNextPayoutWindow();
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
+  const isKycComplete = summary?.producerStatus === "APPROVED";
   const [showKycModal, setShowKycModal] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(true);

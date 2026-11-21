@@ -6,6 +6,19 @@ import {
   type SettlementStatement,
 } from "@/components/StatementsSettlementView";
 
+
+vi.mock("@tanstack/react-router", () => ({
+  createFileRoute: () => (config: any) => ({ options: config, ...config }),
+  useNavigate: () => vi.fn(),
+  Link: ({ children, to, ...props }: any) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+  useRouterState: () => ({ location: { pathname: "/provider/statements" } }),
+  useRouter: () => ({ navigate: vi.fn(), state: { location: { pathname: "/provider/statements" } } }),
+}));
+
 // Mock ConsolePageGuard for route test
 vi.mock("@/components/ConsolePageGuard", () => ({
   ConsolePageGuard: ({ children }: any) =>

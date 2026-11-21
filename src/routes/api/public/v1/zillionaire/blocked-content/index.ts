@@ -36,8 +36,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/blocked-content
                 (a["__id"] as string)?.toLowerCase().includes(q) ||
                 (a["channelId"] as string)?.toLowerCase().includes(q) ||
                 (a["blockedReason"] as string)?.toLowerCase().includes(q) ||
-                notice.claimant?.toLowerCase().includes(q) ||
-                notice.complaintRef?.toLowerCase().includes(q)
+                notice["claimant"]?.toLowerCase().includes(q) ||
+                notice["complaintRef"]?.toLowerCase().includes(q)
               );
             });
           }

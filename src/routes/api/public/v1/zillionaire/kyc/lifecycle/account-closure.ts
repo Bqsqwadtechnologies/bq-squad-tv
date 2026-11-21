@@ -34,9 +34,9 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/lifecycle/a
 
           // Check if there are any pending payouts that must be cleared
           const pendingPayouts = await fs.query("payoutRequests", {
-            where: [
-              { field: "producerUid", op: "==", value: body.uid },
-              { field: "status", op: "==", value: "pending" },
+            filters: [
+              { field: "producerUid", op: "EQUAL", value: body.uid },
+              { field: "status", op: "EQUAL", value: "pending" },
             ],
             limit: 10,
           }).catch(() => []);

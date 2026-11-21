@@ -26,7 +26,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/promotions/")({
           await requireZillionaireModule(fs, user, "ads");
 
           const snap = await fs.getCollection("promotions");
-          const promotions = (snap.docs || []).map((doc) => doc.data);
+          const promotions = Array.isArray(snap) ? snap.map((doc: any) => doc.data || doc) : [];
 
           return Response.json({
             promotions: promotions.length > 0 ? promotions : [

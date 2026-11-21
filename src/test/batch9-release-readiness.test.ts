@@ -45,8 +45,8 @@ describe("Batch 9: Release Readiness & Play Store Compliance", () => {
     expect(doc).toContain("ANDROID_KEYSTORE_PASSWORD");
     expect(doc).toContain("ANDROID_KEY_ALIAS");
     expect(doc).toContain("ANDROID_KEY_PASSWORD");
-    expect(doc).toContain("https://bqsqwad.com/account-deletion");
-    expect(doc).toContain("https://bqsqwad.com/legal/privacy-policy");
+    expect(doc).toContain("https://tv.bqsqwad.com/account-deletion");
+    expect(doc).toContain("https://tv.bqsqwad.com/legal/privacy-policy");
     expect(doc).toContain("`compileSdk`: 36");
     expect(doc).toContain("`targetSdk`: 36");
     expect(doc).toContain("Content Rating (IARC)");

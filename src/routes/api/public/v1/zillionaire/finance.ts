@@ -13,8 +13,8 @@ export type AnomalyFlag = {
   description: string;
   detectedAt: string;
   status: "OPEN" | "DISMISSED";
-  dismissedBy?: string;
-  dismissedReason?: string;
+  dismissedBy?: string | undefined;
+  dismissedReason?: string | undefined;
 };
 
 export type ReconciliationException = {
@@ -30,9 +30,9 @@ export type ReconciliationException = {
   chargebackNotes?: Array<{ note: string; authorUid: string; createdAt: string }>;
   status: "PENDING" | "RESOLVED" | "UNDER_REVIEW";
   createdAt: string;
-  resolvedAt?: string;
-  resolvedBy?: string;
-  resolutionNote?: string;
+  resolvedAt?: string | undefined;
+  resolvedBy?: string | undefined;
+  resolutionNote?: string | undefined;
 };
 
 export type LockedPeriod = {

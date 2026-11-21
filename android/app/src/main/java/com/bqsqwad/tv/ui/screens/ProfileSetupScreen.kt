@@ -58,9 +58,9 @@ fun ProfileSetupScreen(
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             Checkbox(checked = legalAccepted, onCheckedChange = { legalAccepted = it })
             Text("I have read and accept the ")
-            TextButton(onClick = { uriHandler.openUri("https://bqsqwad.com/legal/terms") }) { Text("Terms") }
+            TextButton(onClick = { uriHandler.openUri("https://tv.bqsqwad.com/legal/terms") }) { Text("Terms") }
             Text(" and ")
-            TextButton(onClick = { uriHandler.openUri("https://bqsqwad.com/legal/privacy-policy") }) { Text("Privacy Policy") }
+            TextButton(onClick = { uriHandler.openUri("https://tv.bqsqwad.com/legal/privacy-policy") }) { Text("Privacy Policy") }
         }
         Button(enabled = !busy && legalAccepted && dob.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) && (pin.isBlank() || pin.length in 4..6), onClick = {
             scope.launch {

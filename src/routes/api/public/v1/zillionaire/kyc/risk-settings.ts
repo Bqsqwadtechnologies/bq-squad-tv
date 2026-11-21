@@ -3,7 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { resolvePlatformAccess } from "@/lib/server/roles";
-import { getKycRiskSettings, updateKycRiskSettings } from "@/lib/server/kyc/risk-settings";
+import { getKycRiskSettings, updateKycRiskSettings, type KycRiskSettings } from "@/lib/server/kyc/risk-settings";
 
 const patchSchema = z.object({
   tier1CumulativeLimitUsdMinor: z.number().int().positive().optional(),
@@ -73,10 +73,16 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/risk-settin
           }
 
           const body = await parseBody(request, patchSchema);
+          const updates: Partial<KycRiskSettings> = {};
+          if (body.tier1CumulativeLimitUsdMinor !== undefined) updates.tier1CumulativeLimitUsdMinor = body.tier1CumulativeLimitUsdMinor;
+          if (body.tier1CumulativeLimitNgnMinor !== undefined) updates.tier1CumulativeLimitNgnMinor = body.tier1CumulativeLimitNgnMinor;
+          if (body.highRiskThresholdScore !== undefined) updates.highRiskThresholdScore = body.highRiskThresholdScore;
+          if (body.fourEyesRequiredForHighRisk !== undefined) updates.fourEyesRequiredForHighRisk = body.fourEyesRequiredForHighRisk;
+
           const updated = await updateKycRiskSettings(
             fs,
-            body,
-            { uid: user.uid, email: user.email },
+            updates,
+            { uid: user.uid, ...(user.email ? { email: user.email } : {}) },
             body.reason,
           );
 

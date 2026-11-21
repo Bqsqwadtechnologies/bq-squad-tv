@@ -46,10 +46,48 @@ export type LibraryItem = {
   isPurchased?: boolean;
 };
 
+
+const DEFAULT_LIBRARY_ITEMS: LibraryItem[] = [
+  {
+    id: "mov_lagos_nights",
+    title: "Lagos Nights: Shadows of Victoria Island",
+    type: "movie",
+    genre: "Drama",
+    posterUrl: "/brand/og-image.png",
+    progressPercent: 45,
+    addedAt: "2026-11-20T12:00:00Z",
+    isPurchased: false,
+  },
+  {
+    id: "ser_abidjan_hustle",
+    title: "Abidjan Hustle Season 1",
+    type: "series",
+    genre: "Action",
+    posterUrl: "/brand/og-image.png",
+    progressPercent: 80,
+    addedAt: "2026-11-20T11:00:00Z",
+    isPurchased: false,
+  },
+  {
+    id: "doc_golden_savannah",
+    title: "Golden Savannah Documentary",
+    type: "movie",
+    genre: "Documentary",
+    posterUrl: "/brand/og-image.png",
+    addedAt: "2026-11-20T10:00:00Z",
+    isPurchased: true,
+  },
+];
 function LibraryPage() {
   const [activeTab, setActiveTab] = useState<"watchlist" | "continue" | "purchases" | "liked">("watchlist");
   const [likedItems, setLikedItems] = useState<LibraryItem[]>([]);
-  const [items, setItems] = useState<LibraryItem[]>([]);
+  const [items, setItems] = useState<LibraryItem[]>(() => {
+    try {
+      const s = typeof localStorage !== "undefined" && localStorage.getItem("bq_viewer_library");
+      if (s) return JSON.parse(s);
+    } catch {}
+    return DEFAULT_LIBRARY_ITEMS;
+  });
   const [typeFilter, setTypeFilter] = useState("all");
   const [genreFilter, setGenreFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"recent" | "title" | "progress">("recent");

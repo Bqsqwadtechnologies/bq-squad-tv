@@ -345,7 +345,7 @@ describe("Batch C2 — Risk Tiers, Velocity Limits, and Four-Eyes Dual Approval"
         }),
       });
 
-      const res1 = await KycDetailRoute.options.server!.handlers!.POST!({ request: req1 } as any);
+      const res1 = await (KycDetailRoute.options.server!.handlers as any).POST({ request: req1 } as any);
       expect(res1.status).toBe(200);
       const json1 = await res1.json();
       expect(json1.partialApproval).toBe(true);
@@ -369,7 +369,7 @@ describe("Batch C2 — Risk Tiers, Velocity Limits, and Four-Eyes Dual Approval"
         }),
       });
 
-      const res2 = await KycDetailRoute.options.server!.handlers!.POST!({ request: req2 } as any);
+      const res2 = await (KycDetailRoute.options.server!.handlers as any).POST({ request: req2 } as any);
       expect(res2.status).toBe(400);
       const json2 = await res2.json();
       expect(json2.code).toBe("FOUR_EYES_DIFFERENT_REVIEWER");
@@ -396,7 +396,7 @@ describe("Batch C2 — Risk Tiers, Velocity Limits, and Four-Eyes Dual Approval"
         }),
       });
 
-      const res3 = await KycDetailRoute.options.server!.handlers!.POST!({ request: req3 } as any);
+      const res3 = await (KycDetailRoute.options.server!.handlers as any).POST({ request: req3 } as any);
       expect(res3.status).toBe(200);
 
       const finalProfile = mockDb.get("kycProfiles/applicant_high_risk");

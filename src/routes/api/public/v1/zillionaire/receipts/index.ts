@@ -136,7 +136,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/receipts/")({
             sentCount: 1,
           };
 
-          await fs.set(`receipts/${receiptId}`, record);
+          await fs.set(`receipts/${receiptId}`, record as unknown as Record<string, unknown>);
 
           await fs.set(`auditLog/${crypto.randomUUID()}`, {
             actorUid: actor.uid,

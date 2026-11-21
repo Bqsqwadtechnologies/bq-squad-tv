@@ -78,7 +78,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/lifecycle/n
           };
 
           if (body.action === "approve") {
-            patchData.legalName = pending.newName;
+            patchData["legalName"] = pending.newName;
             // Also update producer document
             await fs.patchDoc(`producers/${body.uid}`, {
               name: pending.newName,

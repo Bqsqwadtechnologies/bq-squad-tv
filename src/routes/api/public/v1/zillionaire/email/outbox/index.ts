@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/email/outbox/")
           }
 
           const rawDocs = await fs.query("email_outbox", {
-            filters: filters.length > 0 ? filters : undefined,
+            ...(filters.length > 0 ? { filters } : {}),
             limit: 200,
           }).catch(() => []);
 

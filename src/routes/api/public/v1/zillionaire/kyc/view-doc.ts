@@ -145,7 +145,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/view-doc")(
             );
           }
 
-          return new Response(fileBuffer, {
+          return new Response(new Uint8Array(fileBuffer), {
             status: 200,
             headers: {
               "content-type": mimeType,

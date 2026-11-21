@@ -254,7 +254,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               published: true,
               isLive: false,
               streamStatus: "OFFLINE",
-              approvalStatus: "ended",
               submissionStatus: "APPROVED",
               playbackHealth: null,
               createdAt: now,
@@ -326,7 +325,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               id: body.channelId,
               isLive: false,
               streamStatus: "OFFLINE",
-              approvalStatus: "ended",
               liveEndedAt: now,
               updatedAt: now,
             };
@@ -384,7 +382,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               status: "REJECTED",
               isLive: false,
               streamStatus: "OFFLINE",
-              approvalStatus: "ended",
               updatedAt: now,
             };
             await fs.setDoc(`channels/${body.channelId}`, updated);

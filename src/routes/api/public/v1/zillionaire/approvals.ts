@@ -26,7 +26,7 @@ export type ApprovalItem = {
   title: string;
   submitterUid: string;
   submitterName: string;
-  submitterEmail?: string;
+  submitterEmail?: string | undefined;
   submittedAt: string;
   slaDeadline: string;
   slaHours: number;
@@ -213,8 +213,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
               title: String(asset["title"] || (isArtwork ? "Artwork Asset" : "Untitled Media")),
               submitterUid: String(asset["ownerUid"] || asset["producerUid"] || "unknown"),
               submitterName: String(asset["ownerName"] || "Channel Producer"),
-              submitterEmail:
-                typeof asset["ownerEmail"] === "string" ? asset["ownerEmail"] : undefined,
+              ...(typeof asset["ownerEmail"] === "string" && asset["ownerEmail"] ? { submitterEmail: asset["ownerEmail"] } : {}),
               submittedAt,
               slaDeadline,
               slaHours,
@@ -280,8 +279,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                   title: `Live Stream: ${ch["name"] || ch["title"] || ch.__id}`,
                   submitterUid: String(ch["ownerUid"] || ch["producerUid"] || "unknown"),
                   submitterName: String(ch["ownerName"] || ch["name"] || "Broadcaster"),
-                  submitterEmail:
-                    typeof ch["ownerEmail"] === "string" ? ch["ownerEmail"] : undefined,
+                  ...(typeof ch["ownerEmail"] === "string" && ch["ownerEmail"] ? { submitterEmail: ch["ownerEmail"] } : {}),
                   submittedAt,
                   slaDeadline,
                   slaHours,
@@ -356,8 +354,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
               title: `Channel Submission: ${ch["name"] || ch["title"] || ch.__id}`,
               submitterUid: String(ch["ownerUid"] || ch["producerUid"] || "unknown"),
               submitterName: String(ch["ownerName"] || ch["name"] || "Creator"),
-              submitterEmail:
-                typeof ch["ownerEmail"] === "string" ? ch["ownerEmail"] : undefined,
+              ...(typeof ch["ownerEmail"] === "string" && ch["ownerEmail"] ? { submitterEmail: ch["ownerEmail"] } : {}),
               submittedAt,
               slaDeadline,
               slaHours,
@@ -433,7 +430,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
               title: `Producer Identity Verification: ${prod["displayName"] || prod["companyName"] || prod.__id}`,
               submitterUid: String(prod.__id),
               submitterName: String(prod["displayName"] || prod["companyName"] || "Producer"),
-              submitterEmail: typeof prod["email"] === "string" ? prod["email"] : undefined,
+              ...(typeof prod["email"] === "string" && prod["email"] ? { submitterEmail: prod["email"] } : {}),
               submittedAt,
               slaDeadline,
               slaHours,
@@ -480,7 +477,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
               title: `Provider Stream Access: ${prov["email"] || prov.__id}`,
               submitterUid: String(prov.__id),
               submitterName: String(prov["organization"] || prov["email"] || "Provider Partner"),
-              submitterEmail: typeof prov["email"] === "string" ? prov["email"] : undefined,
+              ...(typeof prov["email"] === "string" && prov["email"] ? { submitterEmail: prov["email"] } : {}),
               submittedAt,
               slaDeadline,
               slaHours,
@@ -627,7 +624,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
               title: `Ad Creative Review: ${ad["name"] || ad["title"] || ad.__id}`,
               submitterUid: String(ad["advertiserUid"] || ad["ownerUid"] || "unknown"),
               submitterName: String(ad["advertiserName"] || ad["companyName"] || "Advertiser"),
-              submitterEmail: typeof ad["email"] === "string" ? ad["email"] : undefined,
+              ...(typeof ad["email"] === "string" && ad["email"] ? { submitterEmail: ad["email"] } : {}),
               submittedAt,
               slaDeadline,
               slaHours,
@@ -696,7 +693,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
               title: `Legal Acceptance Issue: ${issue["documentName"] || issue["policyName"] || issue.__id}`,
               submitterUid: String(issue["userUid"] || "unknown"),
               submitterName: String(issue["userName"] || "Viewer"),
-              submitterEmail: typeof issue["email"] === "string" ? issue["email"] : undefined,
+              ...(typeof issue["email"] === "string" && issue["email"] ? { submitterEmail: issue["email"] } : {}),
               submittedAt,
               slaDeadline,
               slaHours,
@@ -741,8 +738,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
               title: String(ca["title"] || "General Approval Review"),
               submitterUid: String(ca["submitterUid"] || "creator"),
               submitterName: String(ca["submitterName"] || "Partner"),
-              submitterEmail:
-                typeof ca["submitterEmail"] === "string" ? ca["submitterEmail"] : undefined,
+              ...(typeof ca["submitterEmail"] === "string" && ca["submitterEmail"] ? { submitterEmail: ca["submitterEmail"] } : {}),
               submittedAt,
               slaDeadline,
               slaHours,
@@ -842,27 +838,27 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
               if (body.action === "assign") {
                 const assignee = body.assignedTo!.trim();
                 if (type === "video" || type === "episode" || type === "artwork") {
-                  await fs.patchDoc("contentAssets", rawId, { assignedTo: assignee });
+                  await fs.patchDoc(`contentAssets/${rawId}`, { assignedTo: assignee });
                 } else if (type === "channel" || type === "live_stream") {
-                  await fs.patchDoc("channels", rawId, { assignedTo: assignee });
+                  await fs.patchDoc(`channels/${rawId}`, { assignedTo: assignee });
                 } else if (type === "producer") {
-                  await fs.patchDoc("producers", rawId, { assignedTo: assignee });
+                  await fs.patchDoc(`producers/${rawId}`, { assignedTo: assignee });
                 } else if (type === "provider") {
-                  await fs.patchDoc("providerAllowlist", rawId, { assignedTo: assignee });
+                  await fs.patchDoc(`providerAllowlist/${rawId}`, { assignedTo: assignee });
                 } else if (type === "payout") {
-                  await fs.patchDoc("payouts", rawId, { assignedTo: assignee });
+                  await fs.patchDoc(`payouts/${rawId}`, { assignedTo: assignee });
                 } else if (type === "content_report") {
-                  await fs.patchDoc("contentReports", rawId, { assignedTo: assignee });
+                  await fs.patchDoc(`contentReports/${rawId}`, { assignedTo: assignee });
                 } else if (type === "ad_creative") {
-                  await fs.patchDoc("adCampaigns", rawId, { assignedTo: assignee });
+                  await fs.patchDoc(`adCampaigns/${rawId}`, { assignedTo: assignee });
                 } else if (type === "legal_issue") {
-                  await fs.patchDoc("legalAcceptanceIssues", rawId, { assignedTo: assignee });
+                  await fs.patchDoc(`legalAcceptanceIssues/${rawId}`, { assignedTo: assignee });
                 } else {
-                  await fs.patchDoc("approvals", rawId, { assignedTo: assignee });
+                  await fs.patchDoc(`approvals/${rawId}`, { assignedTo: assignee });
                 }
               } else if (body.action === "request_changes") {
                 if (type === "video" || type === "episode" || type === "artwork") {
-                  await fs.patchDoc("contentAssets", rawId, {
+                  await fs.patchDoc(`contentAssets/${rawId}`, {
                     status: "changes_requested",
                     contentStatus: "changes_requested",
                     rightsReviewStatus: "changes_requested",
@@ -873,7 +869,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                     changesRequestedBy: user.uid,
                   });
                 } else if (type === "channel") {
-                  await fs.patchDoc("channels", rawId, {
+                  await fs.patchDoc(`channels/${rawId}`, {
                     status: "changes_requested",
                     verificationStatus: "changes_requested",
                     requestChangesNotes: notes,
@@ -881,21 +877,21 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                     changesRequestedBy: user.uid,
                   });
                 } else if (type === "live_stream") {
-                  await fs.patchDoc("channels", rawId, {
+                  await fs.patchDoc(`channels/${rawId}`, {
                     liveApprovalStatus: "changes_requested",
                     requestChangesNotes: notes,
                     changesRequestedAt: now,
                     changesRequestedBy: user.uid,
                   });
                 } else if (type === "producer") {
-                  await fs.patchDoc("producers", rawId, {
+                  await fs.patchDoc(`producers/${rawId}`, {
                     verificationStatus: "changes_requested",
                     requestChangesNotes: notes,
                     changesRequestedAt: now,
                     changesRequestedBy: user.uid,
                   });
                 } else if (type === "ad_creative") {
-                  await fs.patchDoc("adCampaigns", rawId, {
+                  await fs.patchDoc(`adCampaigns/${rawId}`, {
                     creativeReviewStatus: "changes_requested",
                     status: "changes_requested",
                     requestChangesNotes: notes,
@@ -903,7 +899,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                     changesRequestedBy: user.uid,
                   });
                 } else {
-                  await fs.patchDoc("approvals", rawId, {
+                  await fs.patchDoc(`approvals/${rawId}`, {
                     status: "changes_requested",
                     requestChangesNotes: notes,
                     changesRequestedAt: now,
@@ -916,7 +912,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
 
                 if (type === "video" || type === "episode" || type === "artwork") {
                   if (isApprove) {
-                    await fs.patchDoc("contentAssets", rawId, {
+                    await fs.patchDoc(`contentAssets/${rawId}`, {
                       contentStatus: "ready",
                       rightsReviewStatus: "verified",
                       approvalStatus: "approved",
@@ -928,7 +924,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                       reviewNotes: notes,
                     });
                   } else {
-                    await fs.patchDoc("contentAssets", rawId, {
+                    await fs.patchDoc(`contentAssets/${rawId}`, {
                       status: "rejected",
                       contentStatus: "rejected",
                       rightsReviewStatus: "rejected",
@@ -942,7 +938,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                     });
                   }
                 } else if (type === "channel") {
-                  await fs.patchDoc("channels", rawId, {
+                  await fs.patchDoc(`channels/${rawId}`, {
                     status: isApprove ? "active" : "rejected",
                     verificationStatus: isApprove ? "verified" : "rejected",
                     reviewNotes: notes,
@@ -950,7 +946,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                     reviewedBy: user.uid,
                   });
                 } else if (type === "live_stream") {
-                  await fs.patchDoc("channels", rawId, {
+                  await fs.patchDoc(`channels/${rawId}`, {
                     liveApprovalStatus: isApprove ? "approved" : "rejected",
                     streamStatus: isApprove ? "active" : "disabled",
                     liveReviewNotes: notes,
@@ -958,7 +954,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                     liveReviewedBy: user.uid,
                   });
                 } else if (type === "producer") {
-                  await fs.patchDoc("producers", rawId, {
+                  await fs.patchDoc(`producers/${rawId}`, {
                     verified: isApprove,
                     verificationStatus: isApprove ? "approved" : "rejected",
                     reviewNotes: notes,
@@ -967,28 +963,28 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                     reviewedBy: user.uid,
                   });
                 } else if (type === "provider") {
-                  await fs.patchDoc("providerAllowlist", rawId, {
+                  await fs.patchDoc(`providerAllowlist/${rawId}`, {
                     status: isApprove ? "approved" : "rejected",
                     notes,
                     reviewedAt: now,
                     reviewedBy: user.uid,
                   });
                 } else if (type === "payout") {
-                  await fs.patchDoc("payouts", rawId, {
+                  await fs.patchDoc(`payouts/${rawId}`, {
                     status: isApprove ? "approved" : "rejected",
                     auditNote: notes,
                     reviewedAt: now,
                     reviewedBy: user.uid,
                   });
                 } else if (type === "content_report") {
-                  await fs.patchDoc("contentReports", rawId, {
+                  await fs.patchDoc(`contentReports/${rawId}`, {
                     status: isApprove ? "resolved" : "dismissed",
                     resolutionNotes: notes,
                     resolvedAt: now,
                     resolvedBy: user.uid,
                   });
                 } else if (type === "ad_creative") {
-                  await fs.patchDoc("adCampaigns", rawId, {
+                  await fs.patchDoc(`adCampaigns/${rawId}`, {
                     creativeReviewStatus: isApprove ? "approved" : "rejected",
                     status: isApprove ? "active" : "rejected",
                     reviewNotes: notes,
@@ -996,14 +992,14 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                     reviewedBy: user.uid,
                   });
                 } else if (type === "legal_issue") {
-                  await fs.patchDoc("legalAcceptanceIssues", rawId, {
+                  await fs.patchDoc(`legalAcceptanceIssues/${rawId}`, {
                     status: isApprove ? "resolved" : "rejected",
                     resolutionNotes: notes,
                     resolvedAt: now,
                     resolvedBy: user.uid,
                   });
                 } else {
-                  await fs.patchDoc("approvals", rawId, {
+                  await fs.patchDoc(`approvals/${rawId}`, {
                     status: isApprove ? "approved" : "rejected",
                     decisionNotes: notes,
                     resolvedAt: now,

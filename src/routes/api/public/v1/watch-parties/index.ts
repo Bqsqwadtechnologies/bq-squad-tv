@@ -55,8 +55,8 @@ export const Route = createFileRoute("/api/public/v1/watch-parties/")({
 
           const user = await requireUser(request);
           // Return user active parties
-          const userParties = await fs.listDocs(`users/${user.uid}/watch_parties`).catch(() => []);
-          return Response.json(userParties.map((d) => d.data));
+          const userParties = await fs.query(`users/${user.uid}/watch_parties`).catch(() => []);
+          return Response.json(userParties);
         } catch (error) {
           return errorBody(error);
         }

@@ -1,3 +1,11 @@
+function unwrapDoc(doc: any): Record<string, unknown> | null {
+  if (!doc) return null;
+  if (typeof doc === "object" && "data" in doc && doc.data && typeof doc.data === "object") {
+    return doc.data as Record<string, unknown>;
+  }
+  return doc as Record<string, unknown>;
+}
+
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
@@ -18,12 +26,12 @@ export type EpisodeRecord = {
   title: string;
   description: string;
   durationMinutes: number;
-  videoAssetId?: string;
-  skipIntroSeconds?: number;
-  nextEpisodeOffsetSeconds?: number;
-  ageRatingOverride?: string;
+  videoAssetId?: string | undefined;
+  skipIntroSeconds?: number | undefined;
+  nextEpisodeOffsetSeconds?: number | undefined;
+  ageRatingOverride?: string | undefined;
   status: "DRAFT" | "READY" | "PUBLISHED" | "COMING_SOON";
-  scheduledReleaseAt?: string;
+  scheduledReleaseAt?: string | undefined;
   createdAt: string;
   updatedAt: string;
 };
@@ -33,7 +41,7 @@ export type SeasonRecord = {
   seriesId: string;
   seasonNumber: number;
   title: string;
-  description?: string;
+  description?: string | undefined;
   episodes: EpisodeRecord[];
   createdAt: string;
 };
@@ -45,13 +53,13 @@ export type SeriesRecord = {
   channelId: string;
   genre: string;
   ageRating: string;
-  posterUrl?: string;
-  backdropUrl?: string;
-  trailerUrl?: string;
+  posterUrl?: string | undefined;
+  backdropUrl?: string | undefined;
+  trailerUrl?: string | undefined;
   cast: CastCrewMember[];
   crew: CastCrewMember[];
   status: "DRAFT" | "PUBLISHED" | "COMING_SOON" | "ARCHIVED";
-  scheduledReleaseAt?: string;
+  scheduledReleaseAt?: string | undefined;
   seasons: SeasonRecord[];
   createdAt: string;
   updatedAt: string;
@@ -190,11 +198,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
           const fs = await Firestore.create();
           await requireZillionaireModule(fs, user, "content");
 
-          const seriesSnap = await fs.list("series");
+          const seriesSnap = await fs.query("series");
           const seriesList: SeriesRecord[] = [];
 
           for (const doc of seriesSnap) {
-            const data = doc.data as any;
+            const data = doc as any;
             if (!data) continue;
 
             const seasons = (data.seasons || []) as SeasonRecord[];
@@ -275,14 +283,14 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
           }
 
           if (body.action === "UPDATE_SERIES") {
-            const seriesDoc = await fs.getDoc(`series/${body.seriesId}`);
-            if (!seriesDoc.exists) {
+            const seriesDoc = unwrapDoc(await fs.getDoc(`series/${body.seriesId}`));
+            if (!seriesDoc) {
               throw new ApiError(404, "SERIES_NOT_FOUND", "Series not found.");
             }
 
             const now = new Date().toISOString();
             const updated = {
-              ...seriesDoc.data,
+              ...seriesDoc,
               ...body.changes,
               updatedAt: now,
             };
@@ -295,7 +303,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
               targetType: "series",
               targetId: body.seriesId,
               reason: body.reason,
-              before: seriesDoc.data,
+              before: seriesDoc,
               after: updated,
             });
 
@@ -303,8 +311,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
           }
 
           if (body.action === "DELETE_SERIES") {
-            const seriesDoc = await fs.getDoc(`series/${body.seriesId}`);
-            if (!seriesDoc.exists) {
+            const seriesDoc = unwrapDoc(await fs.getDoc(`series/${body.seriesId}`));
+            if (!seriesDoc) {
               throw new ApiError(404, "SERIES_NOT_FOUND", "Series not found.");
             }
 
@@ -316,19 +324,19 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
               targetType: "series",
               targetId: body.seriesId,
               reason: body.reason,
-              before: seriesDoc.data,
+              before: seriesDoc,
             });
 
             return Response.json({ success: true, seriesId: body.seriesId });
           }
 
           if (body.action === "CREATE_SEASON") {
-            const seriesDoc = await fs.getDoc(`series/${body.seriesId}`);
-            if (!seriesDoc.exists) {
+            const seriesDoc = unwrapDoc(await fs.getDoc(`series/${body.seriesId}`));
+            if (!seriesDoc) {
               throw new ApiError(404, "SERIES_NOT_FOUND", "Series not found.");
             }
 
-            const seasons = (seriesDoc.data?.seasons || []) as SeasonRecord[];
+            const seasons = ((seriesDoc["seasons"] as any) || []) as SeasonRecord[];
             const seasonId = `season_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
             const newSeason: SeasonRecord = {
               id: seasonId,
@@ -358,12 +366,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
           }
 
           if (body.action === "REORDER_SEASONS") {
-            const seriesDoc = await fs.getDoc(`series/${body.seriesId}`);
-            if (!seriesDoc.exists) {
+            const seriesDoc = unwrapDoc(await fs.getDoc(`series/${body.seriesId}`));
+            if (!seriesDoc) {
               throw new ApiError(404, "SERIES_NOT_FOUND", "Series not found.");
             }
 
-            const seasons = (seriesDoc.data?.seasons || []) as SeasonRecord[];
+            const seasons = ((seriesDoc["seasons"] as any) || []) as SeasonRecord[];
             const seasonMap = new Map(seasons.map((s) => [s.id, s]));
             const reordered: SeasonRecord[] = [];
 
@@ -397,12 +405,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
           }
 
           if (body.action === "CREATE_EPISODE") {
-            const seriesDoc = await fs.getDoc(`series/${body.seriesId}`);
-            if (!seriesDoc.exists) {
+            const seriesDoc = unwrapDoc(await fs.getDoc(`series/${body.seriesId}`));
+            if (!seriesDoc) {
               throw new ApiError(404, "SERIES_NOT_FOUND", "Series not found.");
             }
 
-            const seasons = (seriesDoc.data?.seasons || []) as SeasonRecord[];
+            const seasons = ((seriesDoc["seasons"] as any) || []) as SeasonRecord[];
             const season = seasons.find((s) => s.id === body.seasonId);
             if (!season) {
               throw new ApiError(404, "SEASON_NOT_FOUND", "Season not found.");
@@ -446,12 +454,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
           }
 
           if (body.action === "BULK_CREATE_EPISODES") {
-            const seriesDoc = await fs.getDoc(`series/${body.seriesId}`);
-            if (!seriesDoc.exists) {
+            const seriesDoc = unwrapDoc(await fs.getDoc(`series/${body.seriesId}`));
+            if (!seriesDoc) {
               throw new ApiError(404, "SERIES_NOT_FOUND", "Series not found.");
             }
 
-            const seasons = (seriesDoc.data?.seasons || []) as SeasonRecord[];
+            const seasons = ((seriesDoc["seasons"] as any) || []) as SeasonRecord[];
             const season = seasons.find((s) => s.id === body.seasonId);
             if (!season) {
               throw new ApiError(404, "SEASON_NOT_FOUND", "Season not found.");
@@ -501,12 +509,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
           }
 
           if (body.action === "REORDER_EPISODES") {
-            const seriesDoc = await fs.getDoc(`series/${body.seriesId}`);
-            if (!seriesDoc.exists) {
+            const seriesDoc = unwrapDoc(await fs.getDoc(`series/${body.seriesId}`));
+            if (!seriesDoc) {
               throw new ApiError(404, "SERIES_NOT_FOUND", "Series not found.");
             }
 
-            const seasons = (seriesDoc.data?.seasons || []) as SeasonRecord[];
+            const seasons = ((seriesDoc["seasons"] as any) || []) as SeasonRecord[];
             const season = seasons.find((s) => s.id === body.seasonId);
             if (!season) {
               throw new ApiError(404, "SEASON_NOT_FOUND", "Season not found.");
@@ -546,12 +554,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
           }
 
           if (body.action === "UPDATE_EPISODE") {
-            const seriesDoc = await fs.getDoc(`series/${body.seriesId}`);
-            if (!seriesDoc.exists) {
+            const seriesDoc = unwrapDoc(await fs.getDoc(`series/${body.seriesId}`));
+            if (!seriesDoc) {
               throw new ApiError(404, "SERIES_NOT_FOUND", "Series not found.");
             }
 
-            const seasons = (seriesDoc.data?.seasons || []) as SeasonRecord[];
+            const seasons = ((seriesDoc["seasons"] as any) || []) as SeasonRecord[];
             const season = seasons.find((s) => s.id === body.seasonId);
             if (!season) {
               throw new ApiError(404, "SEASON_NOT_FOUND", "Season not found.");
@@ -584,12 +592,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
           }
 
           if (body.action === "DELETE_EPISODE") {
-            const seriesDoc = await fs.getDoc(`series/${body.seriesId}`);
-            if (!seriesDoc.exists) {
+            const seriesDoc = unwrapDoc(await fs.getDoc(`series/${body.seriesId}`));
+            if (!seriesDoc) {
               throw new ApiError(404, "SERIES_NOT_FOUND", "Series not found.");
             }
 
-            const seasons = (seriesDoc.data?.seasons || []) as SeasonRecord[];
+            const seasons = ((seriesDoc["seasons"] as any) || []) as SeasonRecord[];
             const season = seasons.find((s) => s.id === body.seasonId);
             if (!season) {
               throw new ApiError(404, "SEASON_NOT_FOUND", "Season not found.");

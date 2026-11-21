@@ -236,39 +236,39 @@ fun SettingsScreen(
         ListItem(
             headlineContent = { Text("Account deletion") },
             supportingContent = { Text("Permanently delete account and associated data") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/account-deletion") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/account-deletion") },
         )
         ListItem(
             headlineContent = { Text("Help & support") },
             supportingContent = { Text("Get help with your account") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/help") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/help") },
         )
         ListItem(
             headlineContent = { Text("Contact us") },
             supportingContent = { Text("Send a message to the support team") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/contact") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/contact") },
         )
         ListItem(
             headlineContent = { Text("About BQ SQWAD TV") },
             supportingContent = { Text("Bq Sqwad Technologies") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/about") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/about") },
         )
         ListItem(
             headlineContent = { Text("Privacy notice") },
             supportingContent = { Text("Review the current publication status") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/legal/privacy-policy") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/legal/privacy-policy") },
         )
         ListItem(
             headlineContent = { Text("Cookie notice") },
             supportingContent = { Text("How we use necessary cookies and similar settings") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/legal/cookie") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/legal/cookie") },
         )
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Text("Consoles", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp, bottom = 4.dp))
         ListItem(
             headlineContent = { Text("Producer Console") },
             supportingContent = { Text("Manage channel catalog, content and analytics") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/producer") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/producer") },
         )
         ListItem(
             headlineContent = { Text("Provider Console") },
@@ -278,7 +278,7 @@ fun SettingsScreen(
         ListItem(
             headlineContent = { Text("Terms of service") },
             supportingContent = { Text("Review the current publication status") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/legal/terms") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/legal/terms") },
         )
     }
 }
@@ -320,11 +320,11 @@ fun AccountScreen(
         ProfileAction("Notifications", "Account and programme updates", onNotifications)
         ProfileAction("Producer Console", "Manage your channels", onProducer)
         ProfileAction("Provider Console", "Licensed channel distribution", { uriHandler.openUri("https://tv.bqsqwad.com/provider") })
-        ProfileAction("Terms of service", "Platform terms and conditions", { uriHandler.openUri("https://bqsqwad.com/legal/terms") })
-        ProfileAction("Privacy notice", "Privacy policy and personal data notice", { uriHandler.openUri("https://bqsqwad.com/legal/privacy-policy") })
-        ProfileAction("Account deletion", "Permanently delete account and data", { uriHandler.openUri("https://bqsqwad.com/account-deletion") })
-        ProfileAction("Help & support", "Get help with your account", { uriHandler.openUri("https://bqsqwad.com/help") })
-        ProfileAction("About BQ SQWAD TV", "Bq Sqwad Technologies", { uriHandler.openUri("https://bqsqwad.com/about") })
+        ProfileAction("Terms of service", "Platform terms and conditions", { uriHandler.openUri("https://tv.bqsqwad.com/legal/terms") })
+        ProfileAction("Privacy notice", "Privacy policy and personal data notice", { uriHandler.openUri("https://tv.bqsqwad.com/legal/privacy-policy") })
+        ProfileAction("Account deletion", "Permanently delete account and data", { uriHandler.openUri("https://tv.bqsqwad.com/account-deletion") })
+        ProfileAction("Help & support", "Get help with your account", { uriHandler.openUri("https://tv.bqsqwad.com/help") })
+        ProfileAction("About BQ SQWAD TV", "Bq Sqwad Technologies", { uriHandler.openUri("https://tv.bqsqwad.com/about") })
         ProfileAction("Settings", "Playback and notifications", onSettings)
         Spacer(Modifier.height(18.dp))
         OutlinedButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth()) { Text("Log out") }

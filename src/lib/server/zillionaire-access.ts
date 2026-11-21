@@ -341,7 +341,7 @@ export async function requireZillionaireUnlock(
 export const STEP_UP_TTL_SECONDS = 5 * 60;
 export const ZILLIONAIRE_STEP_UP_HEADER = "x-zillionaire-step-up";
 export type StepUpScope =
-  "wallet_adjust" | "payment_reversal" | "permanent_delete" | "team_manage" | "payout_settlement" | "kyc_case_export";
+  "wallet_adjust" | "payment_reversal" | "permanent_delete" | "team_manage" | "payout_settlement" | "payout_review" | "kyc_case_export";
 
 export function createStepUpToken(
   uid: string,

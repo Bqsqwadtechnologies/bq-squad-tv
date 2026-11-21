@@ -2,6 +2,7 @@ import { ApiError, type Firestore, encodeFields } from "./firebase-admin";
 
 export type AuditInput = {
   actorUid: string;
+  actorEmail?: string | null | undefined;
   action: string;
   targetType: string;
   targetId: string;
@@ -67,6 +68,7 @@ export async function writeAuditLog(fs: Firestore, input: AuditInput): Promise<s
         : 1;
     const entry = {
       actorUid: input.actorUid,
+      ...(input.actorEmail ? { actorEmail: input.actorEmail } : {}),
       action: input.action,
       targetType: input.targetType,
       targetId: input.targetId,

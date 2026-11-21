@@ -30,9 +30,9 @@ describe("Batch 8: Web and Android Parity", () => {
 
   it("ensures Account and Settings screens provide account deletion and legal navigation", () => {
     const browseSource = fs.readFileSync(browseScreensPath, "utf-8");
-    expect(browseSource).toContain("https://bqsqwad.com/account-deletion");
-    expect(browseSource).toContain("https://bqsqwad.com/legal/terms");
-    expect(browseSource).toContain("https://bqsqwad.com/legal/privacy-policy");
+    expect(browseSource).toContain("https://tv.bqsqwad.com/account-deletion");
+    expect(browseSource).toContain("https://tv.bqsqwad.com/legal/terms");
+    expect(browseSource).toContain("https://tv.bqsqwad.com/legal/privacy-policy");
   });
 
   it("ensures WalletScreen provides back navigation and balance synchronization messaging", () => {

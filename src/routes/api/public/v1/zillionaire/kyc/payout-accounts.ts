@@ -84,8 +84,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/payout-acco
             let proofViewerUrl: string | null = null;
             if (p.proofDocumentPath && viewerSecret) {
               try {
-                const signed = generateShortLivedViewerUrl(p.proofDocumentPath, user.uid, 15);
-                proofViewerUrl = `/api/public/v1/zillionaire/kyc/view-doc?path=${encodeURIComponent(p.proofDocumentPath)}&reviewerUid=${encodeURIComponent(user.uid)}&expires=${signed.expires}&sig=${signed.signature}`;
+                const signed = generateShortLivedViewerUrl(p.proofDocumentPath, user.uid);
+                proofViewerUrl = signed.signedUrl;
               } catch (e) {
                 // fall through
               }

@@ -294,8 +294,8 @@ export async function reviewKycProfile(
     uid: string;
     reviewerUid: string;
     status: "approved" | "rejected";
-    reason?: string;
-    notes?: string;
+    reason?: string | undefined;
+    notes?: string | undefined;
   }
 ): Promise<KycProfile> {
   if (input.status === "rejected" && (!input.reason || input.reason.trim().length < 3)) {

@@ -44,7 +44,7 @@ android {
         buildConfigField(
             "String",
             "API_BASE_URL",
-            quoted("API_BASE_URL", "https://bqsqwad.com/api/public"),
+            quoted("API_BASE_URL", "https://tv.bqsqwad.com/api/public"),
         )
         buildConfigField(
             "String",
@@ -54,7 +54,7 @@ android {
         buildConfigField(
             "String",
             "PRODUCER_CONSOLE_URL",
-            quoted("PRODUCER_CONSOLE_URL", "https://bqsqwad.com/producer"),
+            quoted("PRODUCER_CONSOLE_URL", "https://tv.bqsqwad.com/producer"),
         )
     }
 

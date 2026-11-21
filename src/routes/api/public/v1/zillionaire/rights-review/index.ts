@@ -30,7 +30,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/rights-review/"
           const url = new URL(request.url);
           const filter = url.searchParams.get("filter") || "all";
 
-          const allAssets = await fs.listDocs("contentAssets", { limit: 200 });
+          const allAssets = await fs.query("contentAssets", { limit: 200 });
 
           const queueItems = [];
           for (const a of allAssets) {
@@ -60,8 +60,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/rights-review/"
               const matched = await fs.getDoc("contentAssets/" + a["duplicateOfAssetId"]);
               if (matched) {
                 matchedAsset = {
-                  assetId: matched.id,
-                  title: matched["title"] || matched.id,
+                  assetId: String(matched["id"] || matched.__id || ""),
+                  title: matched["title"] || String(matched["id"] || matched.__id || ""),
                   channelId: matched["channelId"] || null,
                   ownerUid: matched["ownerUid"] || null,
                   contentStatus: matched["contentStatus"] || matched["status"] || null,
@@ -79,8 +79,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/rights-review/"
               null;
 
             queueItems.push({
-              assetId: a.id,
-              title: a["title"] || a.id,
+              assetId: String(a["id"] || a.__id || ""),
+              title: a["title"] || String(a["id"] || a.__id || ""),
               channelId: a["channelId"] || null,
               ownerUid: a["ownerUid"] || a["uploadedBy"] || null,
               ownerName: a["ownerName"] || null,

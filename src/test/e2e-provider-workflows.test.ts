@@ -400,6 +400,18 @@ describe("Batch 13: Workflow End-to-End Suite (workflow-e2e)", () => {
       expect(balances["USD"]).toBe(earnedAmountMinor);
 
       // 7. Producer A requests payout
+      store.set(`kycProfiles/${producerA.uid}`, {
+        userId: producerA.uid,
+        kycStatus: "approved",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+        tier: 2,
+      });
+      store.set(`payoutProfiles/${producerA.uid}`, {
+        producerId: producerA.uid,
+        status: "APPROVED",
+        verificationStatus: "APPROVED",
+        payoutsPaused: false,
+      });
       vi.spyOn(apiModule, "requireUser").mockResolvedValue(producerA);
       const payoutPost = getPostHandler(PayoutRequestRoute);
       const payoutReq = new Request(
@@ -436,6 +448,18 @@ describe("Batch 13: Workflow End-to-End Suite (workflow-e2e)", () => {
         earningsLifetimeByCurrency: { USD: 0 },
         payoutReservedByCurrency: { USD: 0 },
         updatedAt: nowIso,
+      });
+      store.set(`kycProfiles/${producerB.uid}`, {
+        userId: producerB.uid,
+        kycStatus: "approved",
+        expiresAt: "2030-01-01T00:00:00.000Z",
+        tier: 2,
+      });
+      store.set(`payoutProfiles/${producerB.uid}`, {
+        producerId: producerB.uid,
+        status: "APPROVED",
+        verificationStatus: "APPROVED",
+        payoutsPaused: false,
       });
       vi.spyOn(apiModule, "requireUser").mockResolvedValue(producerB);
       const crossPayoutReq = new Request(

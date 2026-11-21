@@ -147,3 +147,11 @@ PUSH BADGE #77 SUCCESSFUL — v6-07-Q2 — Sample content cleanup, storage seed 
 PUSH BADGE #78 SUCCESSFUL — v6-08-X1 — 846ac5b6de7cd319fb7ec1d8a8e7c7bc4d7b47bf — Stop disguising access states as 404 in ConsolePageGuard, distinct provider/producer/neutral sign-in screens, back navigation, and form discard button.
 
 PUSH BADGE #79 SUCCESSFUL — v6-08-X2-X8 — Runtime crash fixes, route smoke suite (105 routes), dead buttons & anchors wired, form discard buttons, currency policy enforced, embedded Paystack diagnostics, and Paystack checkout tests.
+
+PUSH BADGE #80 SUCCESSFUL — fix: Producer Console 404 navigation, Android Apex URLs, TypeScript & test blockers, and Debug APK workflow
+- Fixed Producer Console navigation: removed orphaned anchor links (#uploads, #schedule, #earnings, #verification) and linked active console routes.
+- Updated Android URLs from apex bqsqwad.com to tv.bqsqwad.com across BrowseScreens, SignInScreen, ProfileSetupScreen, build config, and documentation.
+- Resolved TypeScript and full test suite blockers across routes, Firestore queries, and KYC/payout mocks; 146 test files and 4,332 tests passing cleanly (100%).
+- Verified GitHub Actions Debug APK workflow (.github/workflows/android-debug-apk.yml) with automatic fingerprint extraction and artifact upload.
+- Public-text scan passed cleanly; production build passed cleanly.
+- Preserved ZILLIONAIRE_EMAIL as sole owner secret with zero ADMIN_EMAIL fallback.

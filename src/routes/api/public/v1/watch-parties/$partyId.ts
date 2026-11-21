@@ -24,9 +24,8 @@ export const Route = createFileRoute("/api/public/v1/watch-parties/$partyId")({
           }
 
           // Fetch recent chat messages
-          const chatDocs = await fs.listDocs(`watch_parties/${partyId}/chat`).catch(() => []);
+          const chatDocs = await fs.query(`watch_parties/${partyId}/chat`).catch(() => []);
           const messages = chatDocs
-            .map((d) => d.data)
             .sort((a, b) => new Date(String(a["createdAt"] || "")).getTime() - new Date(String(b["createdAt"] || "")).getTime())
             .slice(-50);
 

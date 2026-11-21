@@ -29,10 +29,10 @@ export async function generateSequentialReceiptNumber(
   fs: Firestore,
   prefix: "REC" | "PAY" | "REF" = "REC",
 ): Promise<string> {
-  const counterDoc = (await fs.get("counters/receipts")) || {};
+  const counterDoc = (await fs.getDoc("counters/receipts")) || {};
   const currentVal = Number(counterDoc["seq"] || 0);
   const nextVal = currentVal + 1;
-  await fs.set("counters/receipts", {
+  await fs.setDoc("counters/receipts", {
     seq: nextVal,
     updatedAt: new Date().toISOString(),
   });
