@@ -288,6 +288,8 @@ function WalletPage() {
     }
   }
 
+  const currentCurrency = wallet?.currency || "USD";
+
   // Check whether signed in (token, email, or cached wallet)
   const isSignedIn = Boolean(email || wallet || !busy);
 
@@ -368,7 +370,7 @@ function WalletPage() {
                     </p>
                   ) : null}
                   {wallet?.countryCode ? (
-                    <p className="mt-1 text-xs text-blue-100/50">Country: {wallet.countryCode} · Wallet currency: {wallet.currency}</p>
+                    <p className="mt-1 text-xs text-blue-100/50">Country: {wallet.countryCode} · Wallet currency: {currentCurrency}</p>
                   ) : null}
                 </div>
                 <a
@@ -443,7 +445,7 @@ function WalletPage() {
                     )}
                   </div>
 
-                  {wallet.currency === "NGN" ? (
+                  {currentCurrency === "NGN" ? (
                     <div className="mt-4 rounded-2xl border border-white/10 bg-[#030b2a]/40 p-4">
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
