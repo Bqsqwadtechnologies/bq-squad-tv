@@ -14,7 +14,8 @@ describe("Google authentication configuration", () => {
     const response = await route.options.server.handlers.GET();
     const body = await response.json();
     expect(body.googleClientId).toBe("web-client-id.apps.googleusercontent.com");
-    expect(response.headers.get("cache-control")).toContain("max-age=300");
+    expect(body.googleConfigured).toBe(true);
+    expect(response.headers.get("cache-control")).toBe("no-store");
     vi.unstubAllEnvs();
   });
 });
