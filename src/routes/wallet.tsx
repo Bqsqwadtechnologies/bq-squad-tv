@@ -407,13 +407,13 @@ function WalletPage() {
                 <div id="topups" className="mt-8 scroll-mt-6">
                   <h2 className="text-lg font-bold">Add wallet credits</h2>
                   <p className="mt-1 text-xs text-blue-100/60">
-                    Top-up amounts are displayed in your wallet currency ({wallet.currency}).
+                    Top-up amounts are displayed in your wallet currency ({currentCurrency}).
                   </p>
 
                   {/* Currency-specific top-up offers supplied by the wallet API */}
                   <div className="mt-4">
                     <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-cyan-300/80">
-                      Choose amount · {wallet.currency}
+                      Choose amount · {currentCurrency}
                     </p>
                     {topups.length > 0 ? (
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
@@ -440,7 +440,7 @@ function WalletPage() {
                       </div>
                     ) : (
                       <p className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-sm text-amber-100">
-                        Top-ups are not configured for {wallet.currency} yet. No other currency will be substituted.
+                        Top-ups are not configured for {currentCurrency} yet. No other currency will be substituted.
                       </p>
                     )}
                   </div>
@@ -561,7 +561,7 @@ function WalletPage() {
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <p className="text-xs uppercase tracking-wider text-blue-100/55">Spent today</p>
                 <p className="mt-2 text-2xl font-black tabular-nums">
-                  {formatMoney(wallet.spentTodayMinor, wallet.currency)}
+                  {formatMoney(wallet.spentTodayMinor, currentCurrency)}
                 </p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
@@ -569,7 +569,7 @@ function WalletPage() {
                 <p className="mt-2 text-2xl font-black tabular-nums">
                   {wallet.dailySpendLimitMinor === null
                     ? "No limit set"
-                    : formatMoney(wallet.dailySpendLimitMinor, wallet.currency)}
+                    : formatMoney(wallet.dailySpendLimitMinor, currentCurrency)}
                 </p>
               </div>
             </div>
