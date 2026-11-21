@@ -208,9 +208,16 @@ export async function signInWithGoogleCredential(
   );
   const result = (await response.json()) as FirebaseAuthResponse;
   if (!response.ok || !result.idToken || !result.refreshToken) {
-    throw new Error(
-      "Google sign-in could not be completed. Check that Google is enabled in Firebase Authentication.",
-    );
+    const code = result.error?.message ?? "";
+    const messages: Record<string, string> = {
+      OPERATION_NOT_ALLOWED: "Google sign-in is disabled. Enable the Google provider in Firebase Authentication.",
+      INVALID_IDP_RESPONSE: "Google did not return a valid identity response. Check the OAuth web client configuration.",
+      FEDERATED_USER_ID_ALREADY_LINKED: "This Google account is already linked to another BQ SQWAD TV account. Sign in with the linked account.",
+      CREDENTIAL_TOO_OLD_LOGIN_AGAIN: "Your Google sign-in expired. Please try again.",
+      INVALID_LOGIN_CREDENTIALS: "Google could not verify this sign-in. Check the OAuth client and authorized domain settings.",
+      ADMIN_ONLY_OPERATION: "This Firebase project currently restricts account creation. Contact the administrator.",
+    };
+    throw new Error(messages[code] ?? "Firebase could not complete Google sign-in. Check the Google provider, OAuth client ID, authorized domain and Firebase API configuration.");
   }
   const idToken = await establishWebSession(result.idToken, result.refreshToken);
   return { idToken, email: result.email ?? "" };
