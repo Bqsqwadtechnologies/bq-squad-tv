@@ -1015,29 +1015,33 @@ export function ConsolePageGuard({
               headers,
               cache: "no-store",
             });
-            if (statusRes.ok) {
-              const statusData = (await statusRes.json()) as {
-                configured: boolean;
-                unlocked: boolean;
-                lockedOut: boolean;
-                mfaEnabled?: boolean;
-                remainingLockSeconds?: number;
-              };
-              if (!statusData.configured) {
-                if (active) setState({ status: "setup_required" });
-                return;
-              }
-              if (!statusData.unlocked) {
-                if (active)
-                  setState({
-                    status: "locked",
-                    token,
-                    mfaEnabled: Boolean(statusData.mfaEnabled),
-                    lockedOut: statusData.lockedOut,
-                    remainingLockSeconds: statusData.remainingLockSeconds,
-                  });
-                return;
-              }
+            if (!statusRes.ok) {
+              // Fail closed: an unavailable owner-security endpoint must never unlock
+              // the Zillionaire console.
+              if (active) setState({ status: "denied", token, account });
+              return;
+            }
+            const statusData = (await statusRes.json()) as {
+              configured: boolean;
+              unlocked: boolean;
+              lockedOut: boolean;
+              mfaEnabled?: boolean;
+              remainingLockSeconds?: number;
+            };
+            if (!statusData.configured) {
+              if (active) setState({ status: "setup_required" });
+              return;
+            }
+            if (!statusData.unlocked) {
+              if (active)
+                setState({
+                  status: "locked",
+                  token,
+                  mfaEnabled: Boolean(statusData.mfaEnabled),
+                  lockedOut: statusData.lockedOut,
+                  remainingLockSeconds: statusData.remainingLockSeconds,
+                });
+              return;
             }
             authorized = true;
           } else if (account.needsOwnerVerification) {
@@ -1053,14 +1057,16 @@ export function ConsolePageGuard({
         } else if (role === "producer") {
           authorized = Boolean(
             account.isOwner ||
-            (Array.isArray(account.roles) &&
+            (account.emailVerified === true &&
+              Array.isArray(account.roles) &&
               account.roles.includes("producer") &&
-              account.producerPlanActive !== false),
+              account.producerPlanActive === true),
           );
         } else if (role === "provider") {
           authorized = Boolean(
             account.isOwner ||
-            (Array.isArray(account.roles) &&
+            (account.emailVerified === true &&
+              Array.isArray(account.roles) &&
               account.roles.includes("provider") &&
               Boolean(account.providerId)),
           );
