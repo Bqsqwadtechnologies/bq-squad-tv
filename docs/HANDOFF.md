@@ -1,15 +1,8 @@
-# Handoff State
+# Project Handoff
 
-## Most Recent Completed Batch
-- **Batch C4 — Case File Dossier, Configurable Retention, Legal Hold, and Full Lifecycle**
-- **Date**: 2026-11-21
-- **Status**: Completed and fully verified across all tests and production build.
-
-## Verified Test & Build Status
-- **Automated Tests**: 132 tests passing across 21 test files (`src/test/batch-*.test.ts`).
-- **Route Integrity**: 381 route files verified.
-- **Security & Public-Text Scan**: Passed (no forbidden KYB, no exposed internal endpoints, fail-closed auth).
-- **Production Compilation**: Clean Vite client and SSR build (`bun run build`).
-
-## Next Batch
-- **Batch C5 & C6**: Applicant UX polish (timeline, field help, accessible upload) & Comprehensive Deny-by-Default Matrix / Final Verification.
+## Current Status
+- Latest completed and verified batch: Batch C5 — Applicant UX, Cross-Device Draft Handoff, Field Help, and Support Linkage.
+- Next pending batch: Batch C6 — Route Matrix, Security Auditing, Deny-by-Default Tests, and Master Checklist.
+- Test suite status: 142 automated tests passing across 22 test files.
+- Route integrity: 384 route files generated and registered.
+- Standing check compliance: Public-text scan passed (no "admin" routes or forbidden tokens, no Zillionaire in applicant screens, no committed secrets).

@@ -864,3 +864,34 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - 10 dedicated automated tests in `src/test/batch-c4-case-file-retention-lifecycle.test.ts`.
   - 132 automated tests passing across 21 test files.
   - Clean production build with 381 route files and clean public text scan.
+
+### Batch C5 — Applicant UX, Cross-Device Draft Handoff, Field Help, and Support Linkage (2026-11-21)
+- **Scope & Context**:
+  - Implements complete applicant experience polish and cross-device continuity during identity verification.
+  - Implements secure QR / link handoff allowing applicants to start on desktop/laptop and complete camera captures seamlessly on mobile without losing draft state.
+  - Implements applicant-facing status timeline with email notification history timestamps ("Submitted -> Under review -> Approved/Changes requested").
+  - Implements localized, plain-language field help tailored to applicant country (e.g. Nigeria NIN slip vs plastic card vs CAC status report; UK UTR vs CRN; US SSN vs EIN).
+  - Implements client-side image compression for low-bandwidth connections to optimize document and camera uploads.
+  - Implements camera and file-upload fallbacks.
+  - Implements accessible, RTL-ready copy string dictionary with owner-editable strings interface in Zillionaire console.
+  - Implements direct support ticket modal linked to the applicant's active KYC case reference.
+  - Enforces zero exposure of internal storage buckets, vendor names, or reviewer user IDs in applicant copy.
+- **Key Architectural & Implementation Decisions**:
+  - KYC Copy Dictionary & Owner Editor (`src/lib/kyc-strings.ts`, `src/routes/api/public/v1/kyc/strings.ts`, `src/components/kyc/KycStringsEditor.tsx`):
+    - Centralized copy dictionary with interpolation support (`getKycString(key, custom, params)`).
+    - Owner and compliance officers can edit strings in Zillionaire with mandatory audit reason via `POST /api/public/v1/kyc/strings`.
+  - Client-Side Image Compression (`src/lib/kyc-compression.ts`):
+    - Automatically resizes raster images exceeding 400KB to 1920px max dimension and 82% quality when low-bandwidth mode is active, avoiding timeouts while preserving document legibility.
+    - Gracefully skips non-raster files (e.g. PDFs) and handles canvas errors without blocking user progress.
+  - Cross-Device Handoff (`src/routes/api/public/v1/kyc/handoff/create.ts`, `src/routes/api/public/v1/kyc/handoff/resolve.ts`):
+    - Authenticated applicants generate a signed, time-limited (15m) handoff token with HMAC-SHA256 signature.
+    - Resolution route verifies signature with timing-safe comparison and checks token expiration before returning the draft for continuation on mobile.
+  - Applicant Progress & Controls (`src/components/kyc/KycProgressTracker.tsx`, `src/components/kyc/KycFieldHelp.tsx`, `src/components/kyc/KycSupportModal.tsx`):
+    - ARIA-compliant progress bar with step status announced.
+    - Low-bandwidth toggle, draft saving indicators, and modal support launcher.
+  - Support Ticket KYC Linkage (`src/routes/api/public/v1/support/tickets.ts`):
+    - Extended support ticket schema to accept `category: "verification"` and `kycCaseRef: "..."` linking tickets directly to compliance cases.
+- **Verification**:
+  - 10 dedicated automated tests in `src/test/batch-c5-applicant-ux.test.ts`.
+  - 142 automated tests passing across 22 test files.
+  - Clean production build with 384 route files and clean public text scan.

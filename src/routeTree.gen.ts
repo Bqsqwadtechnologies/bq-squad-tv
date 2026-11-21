@@ -143,6 +143,7 @@ import { Route as ApiPublicV1EpgRemindRouteImport } from './routes/api/public/v1
 import { Route as ApiPublicV1ErrorsBeaconRouteImport } from './routes/api/public/v1/errors/beacon'
 import { Route as ApiPublicV1ErrorsReportRouteImport } from './routes/api/public/v1/errors/report'
 import { Route as ApiPublicV1KycOtpRouteImport } from './routes/api/public/v1/kyc/otp'
+import { Route as ApiPublicV1KycStringsRouteImport } from './routes/api/public/v1/kyc/strings'
 import { Route as ApiPublicV1LegalAcceptanceRouteImport } from './routes/api/public/v1/legal/acceptance'
 import { Route as ApiPublicV1LegalConsentRouteImport } from './routes/api/public/v1/legal/consent'
 import { Route as ApiPublicV1LegalRequiredRouteImport } from './routes/api/public/v1/legal/required'
@@ -218,6 +219,8 @@ import { Route as ApiPublicV1ChannelsChannelIdChatRouteImport } from './routes/a
 import { Route as ApiPublicV1ContentAssetsAssetIdCommentsRouteImport } from './routes/api/public/v1/content-assets/$assetId/comments'
 import { Route as ApiPublicV1ContentAssetsAssetIdRatingRouteImport } from './routes/api/public/v1/content-assets/$assetId/rating'
 import { Route as ApiPublicV1ContentAssetsAssetIdRightsEvidenceRouteImport } from './routes/api/public/v1/content-assets/$assetId/rights-evidence'
+import { Route as ApiPublicV1KycHandoffCreateRouteImport } from './routes/api/public/v1/kyc/handoff/create'
+import { Route as ApiPublicV1KycHandoffResolveRouteImport } from './routes/api/public/v1/kyc/handoff/resolve'
 import { Route as ApiPublicV1NotificationsNotificationIdReadRouteImport } from './routes/api/public/v1/notifications/$notificationId/read'
 import { Route as ApiPublicV1PaymentsPaystackInitializeRouteImport } from './routes/api/public/v1/payments/paystack/initialize'
 import { Route as ApiPublicV1PaymentsPaystackVerifyRouteImport } from './routes/api/public/v1/payments/paystack/verify'
@@ -1087,6 +1090,11 @@ const ApiPublicV1KycOtpRoute = ApiPublicV1KycOtpRouteImport.update({
   path: '/api/public/v1/kyc/otp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1KycStringsRoute = ApiPublicV1KycStringsRouteImport.update({
+  id: '/api/public/v1/kyc/strings',
+  path: '/api/public/v1/kyc/strings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1LegalAcceptanceRoute =
   ApiPublicV1LegalAcceptanceRouteImport.update({
     id: '/api/public/v1/legal/acceptance',
@@ -1527,6 +1535,18 @@ const ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute =
     id: '/rights-evidence',
     path: '/rights-evidence',
     getParentRoute: () => ApiPublicV1ContentAssetsAssetIdRoute,
+  } as any)
+const ApiPublicV1KycHandoffCreateRoute =
+  ApiPublicV1KycHandoffCreateRouteImport.update({
+    id: '/api/public/v1/kyc/handoff/create',
+    path: '/api/public/v1/kyc/handoff/create',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1KycHandoffResolveRoute =
+  ApiPublicV1KycHandoffResolveRouteImport.update({
+    id: '/api/public/v1/kyc/handoff/resolve',
+    path: '/api/public/v1/kyc/handoff/resolve',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1NotificationsNotificationIdReadRoute =
   ApiPublicV1NotificationsNotificationIdReadRouteImport.update({
@@ -2668,6 +2688,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/errors/beacon': typeof ApiPublicV1ErrorsBeaconRoute
   '/api/public/v1/errors/report': typeof ApiPublicV1ErrorsReportRoute
   '/api/public/v1/kyc/otp': typeof ApiPublicV1KycOtpRoute
+  '/api/public/v1/kyc/strings': typeof ApiPublicV1KycStringsRoute
   '/api/public/v1/legal/acceptance': typeof ApiPublicV1LegalAcceptanceRoute
   '/api/public/v1/legal/consent': typeof ApiPublicV1LegalConsentRoute
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
@@ -2746,6 +2767,8 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
   '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
   '/api/public/v1/content-assets/$assetId/rights-evidence': typeof ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute
+  '/api/public/v1/kyc/handoff/create': typeof ApiPublicV1KycHandoffCreateRoute
+  '/api/public/v1/kyc/handoff/resolve': typeof ApiPublicV1KycHandoffResolveRoute
   '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
   '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
@@ -3047,6 +3070,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/errors/beacon': typeof ApiPublicV1ErrorsBeaconRoute
   '/api/public/v1/errors/report': typeof ApiPublicV1ErrorsReportRoute
   '/api/public/v1/kyc/otp': typeof ApiPublicV1KycOtpRoute
+  '/api/public/v1/kyc/strings': typeof ApiPublicV1KycStringsRoute
   '/api/public/v1/legal/acceptance': typeof ApiPublicV1LegalAcceptanceRoute
   '/api/public/v1/legal/consent': typeof ApiPublicV1LegalConsentRoute
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
@@ -3124,6 +3148,8 @@ export interface FileRoutesByTo {
   '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
   '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
   '/api/public/v1/content-assets/$assetId/rights-evidence': typeof ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute
+  '/api/public/v1/kyc/handoff/create': typeof ApiPublicV1KycHandoffCreateRoute
+  '/api/public/v1/kyc/handoff/resolve': typeof ApiPublicV1KycHandoffResolveRoute
   '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
   '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
@@ -3426,6 +3452,7 @@ export interface FileRoutesById {
   '/api/public/v1/errors/beacon': typeof ApiPublicV1ErrorsBeaconRoute
   '/api/public/v1/errors/report': typeof ApiPublicV1ErrorsReportRoute
   '/api/public/v1/kyc/otp': typeof ApiPublicV1KycOtpRoute
+  '/api/public/v1/kyc/strings': typeof ApiPublicV1KycStringsRoute
   '/api/public/v1/legal/acceptance': typeof ApiPublicV1LegalAcceptanceRoute
   '/api/public/v1/legal/consent': typeof ApiPublicV1LegalConsentRoute
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
@@ -3504,6 +3531,8 @@ export interface FileRoutesById {
   '/api/public/v1/content-assets/$assetId/comments': typeof ApiPublicV1ContentAssetsAssetIdCommentsRoute
   '/api/public/v1/content-assets/$assetId/rating': typeof ApiPublicV1ContentAssetsAssetIdRatingRoute
   '/api/public/v1/content-assets/$assetId/rights-evidence': typeof ApiPublicV1ContentAssetsAssetIdRightsEvidenceRoute
+  '/api/public/v1/kyc/handoff/create': typeof ApiPublicV1KycHandoffCreateRoute
+  '/api/public/v1/kyc/handoff/resolve': typeof ApiPublicV1KycHandoffResolveRoute
   '/api/public/v1/notifications/$notificationId/read': typeof ApiPublicV1NotificationsNotificationIdReadRoute
   '/api/public/v1/payments/paystack/initialize': typeof ApiPublicV1PaymentsPaystackInitializeRoute
   '/api/public/v1/payments/paystack/verify': typeof ApiPublicV1PaymentsPaystackVerifyRoute
@@ -3807,6 +3836,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/errors/beacon'
     | '/api/public/v1/errors/report'
     | '/api/public/v1/kyc/otp'
+    | '/api/public/v1/kyc/strings'
     | '/api/public/v1/legal/acceptance'
     | '/api/public/v1/legal/consent'
     | '/api/public/v1/legal/required'
@@ -3885,6 +3915,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/content-assets/$assetId/comments'
     | '/api/public/v1/content-assets/$assetId/rating'
     | '/api/public/v1/content-assets/$assetId/rights-evidence'
+    | '/api/public/v1/kyc/handoff/create'
+    | '/api/public/v1/kyc/handoff/resolve'
     | '/api/public/v1/notifications/$notificationId/read'
     | '/api/public/v1/payments/paystack/initialize'
     | '/api/public/v1/payments/paystack/verify'
@@ -4186,6 +4218,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/errors/beacon'
     | '/api/public/v1/errors/report'
     | '/api/public/v1/kyc/otp'
+    | '/api/public/v1/kyc/strings'
     | '/api/public/v1/legal/acceptance'
     | '/api/public/v1/legal/consent'
     | '/api/public/v1/legal/required'
@@ -4263,6 +4296,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/content-assets/$assetId/comments'
     | '/api/public/v1/content-assets/$assetId/rating'
     | '/api/public/v1/content-assets/$assetId/rights-evidence'
+    | '/api/public/v1/kyc/handoff/create'
+    | '/api/public/v1/kyc/handoff/resolve'
     | '/api/public/v1/notifications/$notificationId/read'
     | '/api/public/v1/payments/paystack/initialize'
     | '/api/public/v1/payments/paystack/verify'
@@ -4564,6 +4599,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/errors/beacon'
     | '/api/public/v1/errors/report'
     | '/api/public/v1/kyc/otp'
+    | '/api/public/v1/kyc/strings'
     | '/api/public/v1/legal/acceptance'
     | '/api/public/v1/legal/consent'
     | '/api/public/v1/legal/required'
@@ -4642,6 +4678,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/content-assets/$assetId/comments'
     | '/api/public/v1/content-assets/$assetId/rating'
     | '/api/public/v1/content-assets/$assetId/rights-evidence'
+    | '/api/public/v1/kyc/handoff/create'
+    | '/api/public/v1/kyc/handoff/resolve'
     | '/api/public/v1/notifications/$notificationId/read'
     | '/api/public/v1/payments/paystack/initialize'
     | '/api/public/v1/payments/paystack/verify'
@@ -4942,6 +4980,7 @@ export interface RootRouteChildren {
   ApiPublicV1ErrorsBeaconRoute: typeof ApiPublicV1ErrorsBeaconRoute
   ApiPublicV1ErrorsReportRoute: typeof ApiPublicV1ErrorsReportRoute
   ApiPublicV1KycOtpRoute: typeof ApiPublicV1KycOtpRoute
+  ApiPublicV1KycStringsRoute: typeof ApiPublicV1KycStringsRoute
   ApiPublicV1LegalAcceptanceRoute: typeof ApiPublicV1LegalAcceptanceRoute
   ApiPublicV1LegalConsentRoute: typeof ApiPublicV1LegalConsentRoute
   ApiPublicV1LegalRequiredRoute: typeof ApiPublicV1LegalRequiredRoute
@@ -5008,6 +5047,8 @@ export interface RootRouteChildren {
   ApiPublicV1AuthWebConfigRoute: typeof ApiPublicV1AuthWebConfigRoute
   ApiPublicV1AuthWebMeRoute: typeof ApiPublicV1AuthWebMeRoute
   ApiPublicV1AuthWebSessionRoute: typeof ApiPublicV1AuthWebSessionRouteWithChildren
+  ApiPublicV1KycHandoffCreateRoute: typeof ApiPublicV1KycHandoffCreateRoute
+  ApiPublicV1KycHandoffResolveRoute: typeof ApiPublicV1KycHandoffResolveRoute
   ApiPublicV1PaymentsPaystackInitializeRoute: typeof ApiPublicV1PaymentsPaystackInitializeRoute
   ApiPublicV1PaymentsPaystackVerifyRoute: typeof ApiPublicV1PaymentsPaystackVerifyRoute
   ApiPublicV1PaymentsPaystackWebhookRoute: typeof ApiPublicV1PaymentsPaystackWebhookRoute
@@ -6096,6 +6137,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1KycOtpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/kyc/strings': {
+      id: '/api/public/v1/kyc/strings'
+      path: '/api/public/v1/kyc/strings'
+      fullPath: '/api/public/v1/kyc/strings'
+      preLoaderRoute: typeof ApiPublicV1KycStringsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/legal/acceptance': {
       id: '/api/public/v1/legal/acceptance'
       path: '/api/public/v1/legal/acceptance'
@@ -6620,6 +6668,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/v1/content-assets/$assetId/rights-evidence'
       preLoaderRoute: typeof ApiPublicV1ContentAssetsAssetIdRightsEvidenceRouteImport
       parentRoute: typeof ApiPublicV1ContentAssetsAssetIdRoute
+    }
+    '/api/public/v1/kyc/handoff/create': {
+      id: '/api/public/v1/kyc/handoff/create'
+      path: '/api/public/v1/kyc/handoff/create'
+      fullPath: '/api/public/v1/kyc/handoff/create'
+      preLoaderRoute: typeof ApiPublicV1KycHandoffCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/kyc/handoff/resolve': {
+      id: '/api/public/v1/kyc/handoff/resolve'
+      path: '/api/public/v1/kyc/handoff/resolve'
+      fullPath: '/api/public/v1/kyc/handoff/resolve'
+      preLoaderRoute: typeof ApiPublicV1KycHandoffResolveRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/notifications/$notificationId/read': {
       id: '/api/public/v1/notifications/$notificationId/read'
@@ -8226,6 +8288,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ErrorsBeaconRoute: ApiPublicV1ErrorsBeaconRoute,
   ApiPublicV1ErrorsReportRoute: ApiPublicV1ErrorsReportRoute,
   ApiPublicV1KycOtpRoute: ApiPublicV1KycOtpRoute,
+  ApiPublicV1KycStringsRoute: ApiPublicV1KycStringsRoute,
   ApiPublicV1LegalAcceptanceRoute: ApiPublicV1LegalAcceptanceRoute,
   ApiPublicV1LegalConsentRoute: ApiPublicV1LegalConsentRoute,
   ApiPublicV1LegalRequiredRoute: ApiPublicV1LegalRequiredRoute,
@@ -8303,6 +8366,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1AuthWebConfigRoute: ApiPublicV1AuthWebConfigRoute,
   ApiPublicV1AuthWebMeRoute: ApiPublicV1AuthWebMeRoute,
   ApiPublicV1AuthWebSessionRoute: ApiPublicV1AuthWebSessionRouteWithChildren,
+  ApiPublicV1KycHandoffCreateRoute: ApiPublicV1KycHandoffCreateRoute,
+  ApiPublicV1KycHandoffResolveRoute: ApiPublicV1KycHandoffResolveRoute,
   ApiPublicV1PaymentsPaystackInitializeRoute:
     ApiPublicV1PaymentsPaystackInitializeRoute,
   ApiPublicV1PaymentsPaystackVerifyRoute:

@@ -125,3 +125,4 @@ PUSH BADGE #73 SUCCESSFUL — v6-05-C1 — Verification provider adapter and aut
 PUSH BADGE #74 SUCCESSFUL — v6-05-C2 — Risk tiers, cumulative velocity limits, enhanced Tier 2 verification, automated risk scoring, and four-eyes dual reviewer approval for high-risk KYC submissions.
 
 PUSH BADGE #75 SUCCESSFUL — v6-05-C3 — Compliance role, reviewer operations, 24h SLA timers, reviewer daily counts, canned rejection reasons, bulk actions with four-eyes guardrails, watermarked 60-second document viewer with anti-download cache headers & rate limits, masked field reveal auditing, and owner step-up MFA re-authentication for KYC case file export.
+- Batch C4: remote `419f152f023edb62384ba21d1ac6c3b19550de7e` (local `80b33eea37c444d53df99b682e8217e11f3cd0b8`): case file dossier, configurable retention, legal hold, document expiry automation, and lifecycle workflows.

@@ -1,3 +1,8 @@
+import { KycProgressTracker } from "@/components/kyc/KycProgressTracker";
+import { KycFieldHelp } from "@/components/kyc/KycFieldHelp";
+import { KycSupportModal } from "@/components/kyc/KycSupportModal";
+import { compressImageClientSide } from "@/lib/kyc-compression";
+import { getKycString } from "@/lib/kyc-strings";
 import { KycCameraCapture, type CaptureMode } from "@/components/kyc/KycCameraCapture";
 import { Camera } from "lucide-react";
 import React, { useState, useEffect } from "react";
@@ -56,6 +61,9 @@ export function ProducerKycFlow({
   initialCountry = "US",
 }: ProducerKycFlowProps) {
   const [step, setStep] = useState<number>(1);
+  const [lowBandwidth, setLowBandwidth] = useState(false);
+  const [compressionNotice, setCompressionNotice] = useState<string | null>(null);
+  const [showSupportModal, setShowSupportModal] = useState(false);
   const [countryCode, setCountryCode] = useState<string>(initialCountry);
   const [entityType, setEntityType] = useState<"individual" | "registered_business">("individual");
 
@@ -101,6 +109,27 @@ export function ProducerKycFlow({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+
+  async function handleHandoffRequest(): Promise<{ resumeUrl: string; token: string }> {
+    const headers: Record<string, string> = {};
+    if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
+    const res = await fetch("/api/public/v1/kyc/handoff/create", { method: "POST", headers });
+    if (!res.ok) throw new Error("Failed to generate mobile handoff link.");
+    return res.json();
+  }
+
+  async function handleFileCompression(file: File, setter: (f: File) => void) {
+    if (lowBandwidth) {
+      const res = await compressImageClientSide(file, { enabled: true });
+      if (res.wasCompressed) {
+        setCompressionNotice(`Optimized ${file.name}: saved ${res.compressionRatio}% bandwidth.`);
+        setTimeout(() => setCompressionNotice(null), 4000);
+        setter(res.file);
+        return;
+      }
+    }
+    setter(file);
+  }
   const countryRule = getCountryRule(countryCode);
 
   // Sync accepted ID types when country changes
@@ -444,6 +473,28 @@ export function ProducerKycFlow({
 
   return (
     <div className="mx-auto max-w-2xl rounded-2xl border border-slate-800 bg-slate-900/95 p-6 text-white shadow-2xl">
+            {/* Progress Tracker & Controls */}
+      <div className="mb-5">
+        <KycProgressTracker
+          currentStep={step}
+          totalSteps={4}
+          onSaveDraft={handleSaveDraft}
+          isSavingDraft={savingDraft}
+          lastSavedAt={draftSavedMessage}
+          lowBandwidthEnabled={lowBandwidth}
+          onToggleLowBandwidth={setLowBandwidth}
+          onOpenSupport={() => setShowSupportModal(true)}
+          onRequestHandoff={handleHandoffRequest}
+        />
+      </div>
+
+      {compressionNotice && (
+        <div className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-950/40 p-2.5 text-xs text-emerald-300 flex items-center justify-between">
+          <span>{compressionNotice}</span>
+          <span className="text-[10px] text-emerald-400 font-mono">Low-Bandwidth Mode Active</span>
+        </div>
+      )}
+
       {/* Calm Trust Notice Panel */}
       <div className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-cyan-500/30 bg-cyan-950/30 p-3.5 text-xs text-slate-300">
         <div className="flex items-center gap-2.5">
@@ -617,9 +668,15 @@ export function ProducerKycFlow({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-300">
-                  {countryRule.companyRegistryConfig?.registryName || "Company Registry"} Number
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-medium text-slate-300">
+                    {countryRule.companyRegistryConfig?.registryName || "Company Registry"} Number
+                  </label>
+                  <KycFieldHelp
+                    helpKey={countryCode === "NG" ? "kyc.help.cac" : countryCode === "GB" ? "kyc.help.crn" : "kyc.help.ein"}
+                    title="Registration Number Help"
+                  />
+                </div>
                 <input
                   type="text"
                   value={companyRegNumber}
@@ -729,7 +786,13 @@ export function ProducerKycFlow({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300">ID Document Number</label>
+              <div className="flex items-center justify-between">
+                <label className="block text-xs font-medium text-slate-300">ID Document Number</label>
+                <KycFieldHelp
+                  helpKey={countryCode === "NG" ? "kyc.help.nin" : countryCode === "GB" ? "kyc.help.nino" : countryCode === "US" ? "kyc.help.passport" : "kyc.help.passport"}
+                  title="ID Number Help"
+                />
+              </div>
               <input
                 type="text"
                 value={idNumber}
@@ -997,6 +1060,12 @@ export function ProducerKycFlow({
           }}
           onUploadFileInstead={() => setActiveCameraMode(null)}
           onClose={() => setActiveCameraMode(null)}
+        />
+      )}
+      {showSupportModal && (
+        <KycSupportModal
+          onClose={() => setShowSupportModal(false)}
+          authToken={authToken}
         />
       )}
     </div>

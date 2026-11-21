@@ -1,3 +1,4 @@
+import { KycStringsEditor } from "@/components/kyc/KycStringsEditor";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -117,7 +118,7 @@ interface PayoutAccountItem {
 }
 
 function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }) {
-  const [section, setSection] = useState<"kyc" | "payout_accounts">("kyc");
+  const [section, setSection] = useState<"kyc" | "payout_accounts" | "applicant_copy">("kyc");
   const [activeTab, setActiveTab] = useState<string>("pending");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -371,6 +372,20 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
             </span>
           )}
         </button>
+
+        <button
+          onClick={() => {
+            setSection("applicant_copy");
+          }}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition ${
+            section === "applicant_copy"
+              ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 shadow"
+              : "text-slate-400 hover:text-white hover:bg-white/5"
+          }`}
+        >
+          <Sliders className="h-4 w-4" />
+          <span>Applicant Copy & Help Strings</span>
+        </button>
       </div>
 
       {section === "kyc" ? (
@@ -581,7 +596,7 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
             </div>
           </ConsoleCard>
         </>
-      ) : (
+      ) : section === "payout_accounts" ? (
         <>
           {/* Payout Accounts KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -794,6 +809,8 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
             </div>
           </ConsoleCard>
         </>
+      ) : (
+        <KycStringsEditor token={token} />
       )}
 
       {/* Review Slide-over Modal (KYC Detail) */}

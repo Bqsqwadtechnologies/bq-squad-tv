@@ -5,9 +5,11 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 
 const schema = z
   .object({
-    category: z.enum(["billing", "playback", "account", "content", "other"]),
-    ref: z.string().trim().max(30).optional(),
+    category: z.enum(["billing", "playback", "account", "content", "verification", "other"]),
+    ref: z.string().trim().max(100).optional(),
+    kycCaseRef: z.string().trim().max(100).optional(),
     message: z.string().trim().min(5).max(2000),
+    metadata: z.record(z.string(), z.any()).optional(),
   })
   .strict();
 
@@ -42,8 +44,10 @@ export const Route = createFileRoute("/api/public/v1/support/tickets")({
             uid: user.uid,
             email: user.email ?? "unknown",
             category: body.category,
-            ref: body.ref ?? null,
+            ref: body.ref ?? body.kycCaseRef ?? null,
+            kycCaseRef: body.kycCaseRef ?? null,
             message: body.message,
+            metadata: body.metadata ?? {},
             status: "open",
             createdAt: now,
             updatedAt: now,
