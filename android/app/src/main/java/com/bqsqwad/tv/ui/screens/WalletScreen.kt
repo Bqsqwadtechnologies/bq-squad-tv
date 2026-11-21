@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.bqsqwad.tv.data.wallet.*
@@ -17,6 +19,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun WalletScreen(onBack: () -> Unit) {
     val context = LocalContext.current
+    val clipboard = LocalClipboardManager.current
     val activity = context as? Activity
     val scope = rememberCoroutineScope()
     val repo = remember { WalletRepository() }
@@ -74,6 +77,24 @@ fun WalletScreen(onBack: () -> Unit) {
                                 money(w.spentTodayMinor ?: 0, w.currency),
                             style = MaterialTheme.typography.bodySmall,
                         )
+                    }
+                }
+            }
+        }
+        wallet?.accountId?.let { accountId ->
+            Spacer(Modifier.height(10.dp))
+            Card(Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column {
+                        Text("BQ SQWAD TV ACCOUNT ID", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(accountId, style = MaterialTheme.typography.titleMedium)
+                        wallet?.countryCode?.let { Text("Account country: $it", style = MaterialTheme.typography.bodySmall) }
+                    }
+                    TextButton(onClick = { clipboard.setText(AnnotatedString(accountId)) }) {
+                        Text("Copy ID")
                     }
                 }
             }
