@@ -5,6 +5,8 @@ export type ConsoleAccount = {
   roles?: string[];
   modules?: string[];
   isOwner?: boolean;
+  producerPlanActive?: boolean;
+  providerId?: string | null;
 };
 
 import { firebaseApiKey, firebaseProjectId } from "./firebase-config";
@@ -243,13 +245,9 @@ export async function getWebAccount(): Promise<{
   });
   if (response.status === 401 || response.status === 403) return null;
   if (!response.ok) throw new Error("The account session could not be verified. Please retry.");
-  const account = (await response.json()) as {
-    uid?: string;
-    email: string | null;
-    emailVerified: boolean;
-  };
-  if (typeof account.uid !== "string" || !account.uid) return null;
-  return { uid: account.uid, email: account.email, emailVerified: account.emailVerified };
+  const account = (await response.json()) as ConsoleAccount;
+  if (typeof account.uid !== "string" || !account.uid || account.emailVerified !== true) return null;
+  return account;
 }
 
 export async function revokeAllWebSessions(): Promise<void> {
