@@ -30,6 +30,10 @@ vi.mock("@/lib/firebase-web-auth", () => ({
   restoreWebSession: vi.fn(),
   getWebAuthHeaders: vi.fn().mockResolvedValue({ authorization: "Bearer fake-token" }),
   signInWithEmailPassword: vi.fn(),
+  signInWithGoogleCredential: vi.fn(),
+  createAccountWithEmailPassword: vi.fn(),
+  sendPasswordResetEmail: vi.fn(),
+  signOutWeb: vi.fn(),
 }));
 
 import { ConsolePageGuard } from "@/components/ConsolePageGuard";
@@ -46,7 +50,7 @@ interface MetaItem {
 
 type HeadFunction = () => { meta?: MetaItem[] };
 
-describe("Batch 08: Console Page Guards", () => {
+describe("Batch X1: Console Page Guards", () => {
   let originalFetch: typeof globalThis.fetch;
   let fetchedUrls: string[];
 
@@ -93,6 +97,18 @@ describe("Batch 08: Console Page Guards", () => {
         );
       }
 
+      if (urlString.includes("/api/public/v1/auth/web/config")) {
+        return new Response(
+          JSON.stringify({
+            googleClientId: "test-google-client-id",
+          }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      }
+
       // Default mock response for other console endpoints
       return new Response(JSON.stringify({ ok: true, data: {} }), {
         status: 200,
@@ -130,7 +146,7 @@ describe("Batch 08: Console Page Guards", () => {
       setupMockFetch(null);
     });
 
-    it("shows 404 parity on /admin and does not leak admin console", async () => {
+    it("shows neutral sign in screen on /admin and does not leak zillionaire or admin wording", async () => {
       render(
         <ConsolePageGuard role="admin">
           <div data-testid="secret-admin-console">Admin Console Content</div>
@@ -138,15 +154,17 @@ describe("Batch 08: Console Page Guards", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Page not found")).toBeInTheDocument();
+        expect(screen.getByText("Sign in to continue")).toBeInTheDocument();
       });
 
       expect(screen.queryByTestId("secret-admin-console")).not.toBeInTheDocument();
-      expect(screen.getByText(/doesn't exist or has been moved/i)).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /go home/i })).toBeInTheDocument();
+      // Ensure no leak of Zillionaire or Admin in neutral portal
+      expect(screen.queryByText(/zillionaire/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/admin console/i)).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^sign in$/i })).toBeInTheDocument();
     });
 
-    it("shows dedicated auth portal on /producer and does not leak producer console", async () => {
+    it("shows dedicated auth portal on /producer and never renders 404", async () => {
       render(
         <ConsolePageGuard role="producer">
           <div data-testid="secret-producer-console">Producer Console Content</div>
@@ -154,14 +172,15 @@ describe("Batch 08: Console Page Guards", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Producer Console Access")).toBeInTheDocument();
+        expect(screen.getByText("Producer Console Sign In")).toBeInTheDocument();
       });
 
       expect(screen.queryByTestId("secret-producer-console")).not.toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /sign in to console/i })).toBeInTheDocument();
+      expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^sign in$/i })).toBeInTheDocument();
     });
 
-    it("shows dedicated auth portal on /provider and does not leak provider console", async () => {
+    it("shows dedicated auth portal on /provider and never renders 404", async () => {
       render(
         <ConsolePageGuard role="provider">
           <div data-testid="secret-provider-console">Provider Console Content</div>
@@ -169,11 +188,12 @@ describe("Batch 08: Console Page Guards", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Provider Console Access")).toBeInTheDocument();
+        expect(screen.getByText("Provider Console Sign In")).toBeInTheDocument();
       });
 
       expect(screen.queryByTestId("secret-provider-console")).not.toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /sign in to console/i })).toBeInTheDocument();
+      expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /^sign in$/i })).toBeInTheDocument();
     });
   });
 
@@ -210,7 +230,7 @@ describe("Batch 08: Console Page Guards", () => {
       expect(screen.queryByTestId("secret-admin-console")).not.toBeInTheDocument();
     });
 
-    it("denies /producer and prompts viewer to switch account", async () => {
+    it("denies /producer with clear producer account creation path and never 404s", async () => {
       render(
         <ConsolePageGuard role="producer">
           <div data-testid="secret-producer-console">Producer Console Content</div>
@@ -218,14 +238,16 @@ describe("Batch 08: Console Page Guards", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Producer Console Access")).toBeInTheDocument();
+        expect(screen.getByText("Create your producer account")).toBeInTheDocument();
       });
 
-      expect(screen.getByText(/viewer role/i)).toBeInTheDocument();
       expect(screen.queryByTestId("secret-producer-console")).not.toBeInTheDocument();
+      expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /return to home/i })).toBeInTheDocument();
     });
 
-    it("denies /provider and prompts viewer to switch account", async () => {
+    it("denies /provider with exact message Access denied. Contact tv@bqsqwad.com and never 404s", async () => {
       render(
         <ConsolePageGuard role="provider">
           <div data-testid="secret-provider-console">Provider Console Content</div>
@@ -233,11 +255,13 @@ describe("Batch 08: Console Page Guards", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Provider Console Access")).toBeInTheDocument();
+        expect(screen.getByText("Access denied. Contact tv@bqsqwad.com")).toBeInTheDocument();
       });
 
-      expect(screen.getByText(/viewer role/i)).toBeInTheDocument();
       expect(screen.queryByTestId("secret-provider-console")).not.toBeInTheDocument();
+      expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /sign out/i })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /return to home/i })).toBeInTheDocument();
     });
   });
 
@@ -288,7 +312,7 @@ describe("Batch 08: Console Page Guards", () => {
       expect(screen.queryByTestId("secret-admin-console")).not.toBeInTheDocument();
     });
 
-    it("denies /provider for producer and shows provider portal without leaking console", async () => {
+    it("denies /provider for producer with exact message Access denied. Contact tv@bqsqwad.com and never 404s", async () => {
       render(
         <ConsolePageGuard role="provider">
           <div data-testid="secret-provider-console">Provider Console Content</div>
@@ -296,10 +320,11 @@ describe("Batch 08: Console Page Guards", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Provider Console Access")).toBeInTheDocument();
+        expect(screen.getByText("Access denied. Contact tv@bqsqwad.com")).toBeInTheDocument();
       });
 
       expect(screen.queryByTestId("secret-provider-console")).not.toBeInTheDocument();
+      expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
     });
   });
 
@@ -350,7 +375,7 @@ describe("Batch 08: Console Page Guards", () => {
       expect(screen.queryByTestId("secret-admin-console")).not.toBeInTheDocument();
     });
 
-    it("denies /producer for provider and shows producer portal without leaking console", async () => {
+    it("denies /producer for provider with create producer account path and never 404s", async () => {
       render(
         <ConsolePageGuard role="producer">
           <div data-testid="secret-producer-console">Producer Console Content</div>
@@ -358,10 +383,11 @@ describe("Batch 08: Console Page Guards", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Producer Console Access")).toBeInTheDocument();
+        expect(screen.getByText("Create your producer account")).toBeInTheDocument();
       });
 
       expect(screen.queryByTestId("secret-producer-console")).not.toBeInTheDocument();
+      expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
     });
   });
 
@@ -424,7 +450,7 @@ describe("Batch 08: Console Page Guards", () => {
       });
     });
 
-    it("denies delegate missing the required module with exact 404 parity", async () => {
+    it("denies delegate missing the required module with You do not have access to this section", async () => {
       vi.mocked(restoreWebSession).mockResolvedValue({
         uid: "delegate-123",
         email: "delegate@example.com",
@@ -448,15 +474,17 @@ describe("Batch 08: Console Page Guards", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Page not found")).toBeInTheDocument();
+        expect(screen.getByText("You do not have access to this section")).toBeInTheDocument();
       });
 
       expect(screen.queryByTestId("financials-admin-console")).not.toBeInTheDocument();
+      expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /return to dashboard/i })).toBeInTheDocument();
     });
   });
 
   describe("API Failure / Network Error Parity", () => {
-    it("renders 404 parity when server endpoint returns 500", async () => {
+    it("renders neutral sign in when server endpoint returns 500 on admin route", async () => {
       vi.mocked(restoreWebSession).mockResolvedValue({
         uid: "user-123",
         email: "user@example.com",
@@ -471,7 +499,7 @@ describe("Batch 08: Console Page Guards", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Page not found")).toBeInTheDocument();
+        expect(screen.getByText("Sign in to continue")).toBeInTheDocument();
       });
 
       expect(screen.queryByTestId("secret-admin-console")).not.toBeInTheDocument();

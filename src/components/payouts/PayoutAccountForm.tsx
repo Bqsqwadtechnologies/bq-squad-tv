@@ -1,3 +1,4 @@
+import { FormDiscardButton } from "@/components/FormDiscardButton";
 import React, { useState, useEffect } from "react";
 import { AlertCircle, CheckCircle2, Lock, ShieldAlert, UploadCloud, FileText, Check } from "lucide-react";
 import { PayoutAccountType, PayoutProfileRecord } from "@/lib/server/payouts/types";
@@ -488,6 +489,16 @@ export function PayoutAccountForm({
           </div>
 
           <div className="flex items-center justify-end gap-3 pt-2">
+            <FormDiscardButton
+              label="Discard Changes"
+              onDiscard={() => {
+                if (requestingChange) setRequestingChange(false);
+                setAccountNumber("");
+                setConfirmAccountNumber("");
+                setBeneficiaryName("");
+                setBeneficiaryAddress("");
+              }}
+            />
             {requestingChange && (
               <button
                 type="button"

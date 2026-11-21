@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { restoreWebSession, getWebAuthHeaders, signInWithEmailPassword, createAccountWithEmailPassword, sendPasswordResetEmail, signOutWeb } from "@/lib/firebase-web-auth";
+import { GoogleSignInButton } from "@/components/GoogleSignInButton";
+import { restoreWebSession, signInWithGoogleCredential, getWebAuthHeaders, signInWithEmailPassword, createAccountWithEmailPassword, sendPasswordResetEmail, signOutWeb } from "@/lib/firebase-web-auth";
 import { NotFoundView } from "@/components/NotFoundView";
 
 export type ConsoleRole = "zillionaire" | "producer" | "provider" | "admin";
@@ -457,14 +458,202 @@ function AccessPasswordUnlockView({
 }
 
 
+
+function NeutralSignInPortal() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+    setBusy(true);
+    setError("");
+    try {
+      await signInWithEmailPassword(email.trim(), password);
+      window.location.reload();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Invalid sign-in credentials.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#070e22] px-4 py-12 text-white">
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0a1435] p-8 shadow-2xl">
+        <div className="text-center">
+          <h1 className="text-2xl font-black text-white">Sign in to continue</h1>
+          <p className="mt-2 text-xs text-blue-100/70">
+            Please enter your credentials to access this area.
+          </p>
+        </div>
+
+        {error && (
+          <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/15 p-3 text-xs text-rose-300 text-center">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSignIn} className="mt-6 space-y-4">
+          <label className="block text-xs font-bold uppercase tracking-wider text-blue-200">
+            Email Address
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="name@example.com"
+              className="mt-1 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300"
+            />
+          </label>
+          <label className="block text-xs font-bold uppercase tracking-wider text-blue-200">
+            Password
+            <input
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="mt-1 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-sm text-white outline-none focus:border-cyan-300"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={busy}
+            className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 py-3 font-extrabold text-[#030718] transition hover:brightness-110 disabled:opacity-50"
+          >
+            {busy ? "Signing in…" : "Sign In"}
+          </button>
+        </form>
+
+        <div className="mt-6 border-t border-white/10 pt-4 text-center">
+          <a href="/" className="text-xs text-blue-200/60 hover:text-white transition">
+            Return to Home
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProviderAccessDeniedView() {
+  const [busy, setBusy] = useState(false);
+
+  const handleSignOut = async () => {
+    setBusy(true);
+    try {
+      await signOutWeb();
+      window.location.reload();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#070e22] px-4 py-12 text-white">
+      <div className="w-full max-w-md rounded-3xl border border-rose-500/20 bg-[#0a1435] p-8 text-center shadow-2xl">
+        <div className="flex justify-center mb-6">
+          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-10 w-auto" />
+        </div>
+        <span className="inline-block rounded-full bg-rose-400/10 px-3 py-1 text-xs font-bold tracking-widest text-rose-300 uppercase">
+          Provider Console
+        </span>
+        <h1 className="mt-4 text-xl font-bold text-white">Access denied. Contact tv@bqsqwad.com</h1>
+        <p className="mt-3 text-xs text-blue-100/70 leading-relaxed">
+          Your account is not approved as an authorized provider. If you have a distribution agreement, contact support for provisioning.
+        </p>
+        <div className="mt-6 flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={busy}
+            className="w-full rounded-xl bg-rose-500/20 border border-rose-500/40 py-2.5 text-xs font-bold text-rose-200 hover:bg-rose-500/30 transition disabled:opacity-50"
+          >
+            {busy ? "Signing out…" : "Sign out"}
+          </button>
+          <a
+            href="/"
+            className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 text-xs font-bold text-white hover:bg-white/10 transition block text-center"
+          >
+            Return to Home
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProducerAccessDeniedView() {
+  const [busy, setBusy] = useState(false);
+  const [showPortal, setShowPortal] = useState(false);
+
+  const handleSignOut = async () => {
+    setBusy(true);
+    try {
+      await signOutWeb();
+      window.location.reload();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (showPortal) {
+    return <ConsoleAuthPortal role="producer" initialTab="register" />;
+  }
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#070e22] px-4 py-12 text-white">
+      <div className="w-full max-w-md rounded-3xl border border-cyan-500/20 bg-[#0a1435] p-8 text-center shadow-2xl">
+        <div className="flex justify-center mb-6">
+          <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-10 w-auto" />
+        </div>
+        <span className="inline-block rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold tracking-widest text-cyan-300 uppercase">
+          Producer Console
+        </span>
+        <h1 className="mt-4 text-xl font-bold text-white">Create your producer account</h1>
+        <p className="mt-3 text-xs text-blue-100/70 leading-relaxed">
+          You are currently signed in as a viewer. A producer account is required to access the Producer Console.
+        </p>
+        <div className="mt-6 flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={() => setShowPortal(true)}
+            className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 py-3 text-xs font-extrabold text-[#030718] transition hover:brightness-110"
+          >
+            Create Producer Account
+          </button>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            disabled={busy}
+            className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 text-xs font-bold text-white hover:bg-white/10 transition"
+          >
+            {busy ? "Signing out…" : "Sign out"}
+          </button>
+          <a
+            href="/"
+            className="text-xs text-blue-200/60 hover:text-white transition"
+          >
+            Return to Home
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ConsoleAuthPortal({
   role,
   currentAccount,
+  initialTab,
 }: {
   role: ConsoleRole;
   currentAccount?: ConsoleAccount;
+  initialTab?: "signin" | "register" | "reset";
 }) {
-  const [tab, setTab] = useState<"signin" | "register" | "reset">("signin");
+  const [tab, setTab] = useState<"signin" | "register" | "reset">(initialTab || "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -473,6 +662,21 @@ function ConsoleAuthPortal({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const consoleTitle = role === "producer" ? "Producer Console" : "Provider Console";
+
+  const handleGoogleCredential = async (credential: string) => {
+    setBusy(true);
+    setError("");
+    setSuccess("");
+    try {
+      await signInWithGoogleCredential(credential);
+      window.location.reload();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Google sign-in could not be completed.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -563,7 +767,7 @@ function ConsoleAuthPortal({
           <span className="inline-block rounded-full bg-cyan-400/10 px-3 py-1 text-xs font-bold tracking-widest text-cyan-300 uppercase">
             {consoleTitle}
           </span>
-          <h1 className="mt-3 text-2xl font-black">{consoleTitle} Access</h1>
+          <h1 className="mt-3 text-2xl font-black">{role === "producer" ? "Producer Console Sign In" : "Provider Console Sign In"}</h1>
           <p className="mt-2 text-xs text-blue-100/70">
             Dedicated creator & partner management. Viewer sessions cannot open management consoles.
           </p>
@@ -763,7 +967,8 @@ export function ConsolePageGuard({
 }: ConsolePageGuardProps) {
   const [state, setState] = useState<
     | { status: "checking" }
-    | { status: "denied"; token?: string; account?: ConsoleAccount }
+    | { status: "signed_out" }
+    | { status: "denied"; token: string; account: ConsoleAccount }
     | { status: "unverified_owner"; token: string; email: string }
     | { status: "setup_required" }
     | { status: "mfa_setup"; token: string }
@@ -786,7 +991,7 @@ export function ConsolePageGuard({
       try {
         const token = await restoreWebSession();
         if (!token) {
-          if (active) setState({ status: "denied" });
+          if (active) setState({ status: "signed_out" });
           return;
         }
 
@@ -797,7 +1002,7 @@ export function ConsolePageGuard({
         });
 
         if (!response.ok) {
-          if (active) setState({ status: "denied" });
+          if (active) setState({ status: "signed_out" });
           return;
         }
 
@@ -806,7 +1011,6 @@ export function ConsolePageGuard({
 
         if (isZillionaireRoute) {
           if (account.isOwner) {
-            // Check password unlock status
             const statusRes = await fetch("/api/public/v1/zillionaire/access/status", {
               headers,
               cache: "no-store",
@@ -863,10 +1067,14 @@ export function ConsolePageGuard({
         }
 
         if (active) {
-          setState(authorized ? { status: "authorized", token, account } : { status: "denied", token, account });
+          setState(
+            authorized
+              ? { status: "authorized", token, account }
+              : { status: "denied", token, account },
+          );
         }
       } catch {
-        if (active) setState({ status: "denied" });
+        if (active) setState({ status: "signed_out" });
       }
     })();
 
@@ -875,55 +1083,33 @@ export function ConsolePageGuard({
     };
   }, [role, requiredModule, isZillionaireRoute]);
 
-  useEffect(() => {
-    if (state.status !== "authorized" || !state.account.isOwner || !isZillionaireRoute) return;
-    let idleTimer: ReturnType<typeof setTimeout>;
-    const lockForInactivity = () => {
-      window.location.reload();
-    };
-    const resetIdle = () => {
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(lockForInactivity, 15 * 60 * 1000);
-    };
-    const events: Array<keyof WindowEventMap> = [
-      "pointerdown",
-      "keydown",
-      "mousemove",
-      "touchstart",
-      "wheel",
-    ];
-    events.forEach((event) => window.addEventListener(event, resetIdle, { passive: true }));
-    resetIdle();
-    const absoluteTimer = setTimeout(lockForInactivity, 8 * 60 * 60 * 1000);
-    return () => {
-      clearTimeout(idleTimer);
-      clearTimeout(absoluteTimer);
-      events.forEach((event) => window.removeEventListener(event, resetIdle));
-    };
-  }, [state, isZillionaireRoute]);
-
   const handleLock = async () => {
     try {
-      if (state.status === "authorized") {
-        const headers = await getWebAuthHeaders(state.token);
+      const token = await restoreWebSession();
+      if (token) {
+        const headers = await getWebAuthHeaders(token);
         await fetch("/api/public/v1/zillionaire/access/lock", {
           method: "POST",
           headers,
         });
       }
-    } finally {
-      window.location.reload();
+    } catch {
+      // Best-effort
     }
+    window.location.reload();
   };
 
   if (state.status === "checking") {
     return (
       <div
-        className="flex min-h-screen items-center justify-center bg-background"
+        className="flex min-h-screen items-center justify-center bg-[#070e22]"
         aria-busy="true"
         data-testid="console-loading-shell"
       >
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent" />
+          <span className="text-xs text-blue-200/60 font-medium">Loading session…</span>
+        </div>
       </div>
     );
   }
@@ -944,7 +1130,7 @@ export function ConsolePageGuard({
     return (
       <AccessPasswordUnlockView
         token={state.token}
-        mfaEnabled={state.mfaEnabled}
+        mfaEnabled={state.mfaEnabled ?? false}
         onUnlocked={() => window.location.reload()}
         initialLockedOut={state.lockedOut}
         initialRemainingSeconds={state.remainingLockSeconds}
@@ -952,16 +1138,54 @@ export function ConsolePageGuard({
     );
   }
 
+  if (state.status === "signed_out") {
+    if (isZillionaireRoute) {
+      return <NeutralSignInPortal />;
+    }
+    return <ConsoleAuthPortal role={role} />;
+  }
+
   if (state.status === "denied") {
     if (isZillionaireRoute) {
+      const isDelegate =
+        state.account.isOwner ||
+        (Array.isArray(state.account.modules) && state.account.modules.length > 0);
+      if (isDelegate) {
+        return (
+          <div className="flex min-h-screen items-center justify-center bg-[#070e22] px-4 text-white">
+            <div className="w-full max-w-md rounded-3xl border border-amber-500/20 bg-[#0a1435] p-8 text-center shadow-2xl">
+              <h1 className="text-xl font-black text-amber-300">You do not have access to this section</h1>
+              <p className="mt-3 text-xs text-blue-100/70 leading-relaxed">
+                Your account does not hold the permissions required for this specific module ({requiredModule || "restricted"}). Please contact the platform owner to request access.
+              </p>
+              <div className="mt-6 flex flex-col gap-2">
+                <a
+                  href="/zillionaire"
+                  className="rounded-xl bg-cyan-400 py-2.5 text-xs font-bold text-slate-950 transition hover:brightness-110"
+                >
+                  Return to Dashboard
+                </a>
+                <a
+                  href="/"
+                  className="rounded-xl border border-white/10 bg-white/5 py-2.5 text-xs font-bold text-white transition hover:bg-white/10"
+                >
+                  Return to Home
+                </a>
+              </div>
+            </div>
+          </div>
+        );
+      }
       return <NotFoundView />;
     }
-    return <ConsoleAuthPortal role={role} currentAccount={state.account} />;
+    if (role === "provider") {
+      return <ProviderAccessDeniedView />;
+    }
+    return <ProducerAccessDeniedView />;
   }
 
   return (
     <>
-
       {typeof children === "function"
         ? children({ token: state.token, account: state.account, onLock: handleLock })
         : children}

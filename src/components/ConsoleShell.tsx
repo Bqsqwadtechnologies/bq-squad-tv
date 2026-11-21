@@ -716,7 +716,7 @@ export function ConsoleShell({
           {
             id: "provider-playback",
             label: "Playback Monitor",
-            href: "/provider#playback",
+            href: "/provider",
             icon: PlayCircle,
           },
           {
@@ -957,7 +957,7 @@ export function ConsoleShell({
               >
                 {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
-              {activePath && !["/zillionaire", "/producer", "/provider"].includes(activePath) && (
+              {activePath && !["/zillionaire", "/producer", "/provider"].includes(activePath) ? (
                 <BackButton
                   to={
                     consoleType === "producer"
@@ -967,7 +967,13 @@ export function ConsoleShell({
                         : "/zillionaire"
                   }
                   label="Back"
-                  className="hidden sm:inline-flex"
+                  className="inline-flex"
+                />
+              ) : (
+                <BackButton
+                  to="/"
+                  label="App"
+                  className="inline-flex"
                 />
               )}
               <div>
