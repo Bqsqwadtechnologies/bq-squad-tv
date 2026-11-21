@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 declare global {
   interface Window {
@@ -50,7 +50,7 @@ export function GoogleSignInButton({
   );
   const [buttonState, setButtonState] = useState<ButtonState>("idle");
 
-  async function loadConfig() {
+  const loadConfig = useCallback(async () => {
     setConfigState("loading");
     setButtonState("idle");
     try {
@@ -64,7 +64,7 @@ export function GoogleSignInButton({
     } catch {
       setConfigState("error");
     }
-  }
+  }, []);
 
   useEffect(() => {
     if (propClientId !== undefined) {
@@ -79,7 +79,7 @@ export function GoogleSignInButton({
       return;
     }
     void loadConfig();
-  }, [propClientId]);
+  }, [propClientId, loadConfig]);
 
   useEffect(() => {
     if (configState !== "ready" || !clientId || disabled) return;
@@ -119,17 +119,18 @@ export function GoogleSignInButton({
     if (window.google) {
       render();
     } else if (script) {
-      script.addEventListener("load", render, { once: true });
+      script.addEventListener("load", () => { script!.dataset["loaded"] = "true"; render(); }, { once: true });
       script.addEventListener("error", onScriptError, { once: true });
       // Existing script tags can have completed unsuccessfully before listeners attached.
       if (script.dataset["loadFailed"] === "true") onScriptError();
+      else if (script.dataset["loaded"] === "true" && !window.google) onScriptError();
     } else {
       script = document.createElement("script");
       script.src = "https://accounts.google.com/gsi/client";
       script.async = true;
       script.defer = true;
       script.dataset["googleIdentity"] = "true";
-      script.addEventListener("load", render, { once: true });
+      script.addEventListener("load", () => { script!.dataset["loaded"] = "true"; render(); }, { once: true });
       script.addEventListener("error", () => {
         script!.dataset["loadFailed"] = "true";
         onScriptError();
