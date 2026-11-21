@@ -273,7 +273,7 @@ fun SettingsScreen(
         ListItem(
             headlineContent = { Text("Provider Console") },
             supportingContent = { Text("Manage licensed channels and statements") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://bqsqwad.com/provider") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/provider") },
         )
         ListItem(
             headlineContent = { Text("Terms of service") },
@@ -319,7 +319,7 @@ fun AccountScreen(
         ProfileAction("Watch history", "Recent viewing sessions", onHistory)
         ProfileAction("Notifications", "Account and programme updates", onNotifications)
         ProfileAction("Producer Console", "Manage your channels", onProducer)
-        ProfileAction("Provider Console", "Licensed channel distribution", { uriHandler.openUri("https://bqsqwad.com/provider") })
+        ProfileAction("Provider Console", "Licensed channel distribution", { uriHandler.openUri("https://tv.bqsqwad.com/provider") })
         ProfileAction("Terms of service", "Platform terms and conditions", { uriHandler.openUri("https://bqsqwad.com/legal/terms") })
         ProfileAction("Privacy notice", "Privacy policy and personal data notice", { uriHandler.openUri("https://bqsqwad.com/legal/privacy-policy") })
         ProfileAction("Account deletion", "Permanently delete account and data", { uriHandler.openUri("https://bqsqwad.com/account-deletion") })

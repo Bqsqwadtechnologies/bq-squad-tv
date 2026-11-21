@@ -8,6 +8,16 @@ describe("Batch 8: Web and Android Parity", () => {
   const walletScreenPath = path.resolve(process.cwd(), "android/app/src/main/java/com/bqsqwad/tv/ui/screens/WalletScreen.kt");
   const signInScreenPath = path.resolve(process.cwd(), "android/app/src/main/java/com/bqsqwad/tv/ui/screens/SignInScreen.kt");
 
+  it("opens both Provider Console entry points on the live TV website", () => {
+    const browseSource = fs.readFileSync(browseScreensPath, "utf-8");
+    const providerUrls = [...browseSource.matchAll(/openUri\("(https:\/\/[^\"]+\/provider)"\)/g)]
+      .map((match) => match[1]);
+    expect(providerUrls).toEqual([
+      "https://tv.bqsqwad.com/provider",
+      "https://tv.bqsqwad.com/provider",
+    ]);
+  });
+
   it("ensures BqSqwadTvApp defines composables for all essential views including history, notifications, and wallet", () => {
     const appSource = fs.readFileSync(androidAppPath, "utf-8");
     expect(appSource).toContain('composable("history")');
