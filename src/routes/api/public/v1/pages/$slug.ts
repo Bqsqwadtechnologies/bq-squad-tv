@@ -167,7 +167,15 @@ export const Route = createFileRoute("/api/public/v1/pages/$slug")({
                   title: page["title"],
                   body: fillPlaceholders(page["body"], dynamicSettings),
                   version: page["version"] ?? 1,
-                  effectiveAt: page["effectiveAt"] ?? now,
+                  // Firestore legacy records may contain numeric 0, which JavaScript
+                  // interprets as 1 January 1970. Treat epoch/invalid values as
+                  // unknown rather than publishing a misleading legal effective date.
+                  effectiveAt:
+                    typeof page["effectiveAt"] === "string" &&
+                    Number.isFinite(Date.parse(page["effectiveAt"])) &&
+                    Date.parse(page["effectiveAt"]) > 0
+                      ? page["effectiveAt"]
+                      : null,
                   audience: page["audience"] ?? "public",
                   status: "published",
                   published: true,
