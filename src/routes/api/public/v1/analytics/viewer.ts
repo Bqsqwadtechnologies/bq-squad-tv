@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { errorBody } from "@/lib/server/api";
-import { requireViewer } from "@/lib/server/access";
+import { requireVerifiedViewer } from "@/lib/server/access";
 
 export const Route = createFileRoute("/api/public/v1/analytics/viewer")({
   server: {
     handlers: {
       GET: async ({ request }) => {
         try {
-          const { user, fs } = await requireViewer(request);
+          const { user, fs } = await requireVerifiedViewer(request);
 
           const sessions = await fs
             .query("sessions", {
