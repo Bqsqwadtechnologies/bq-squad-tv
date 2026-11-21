@@ -234,12 +234,15 @@ export async function getWebAccount(): Promise<{
     headers: { authorization: `Bearer ${idToken}`, ...(await getWebAppCheckHeaders()) },
     cache: "no-store",
   });
-  if (!response.ok) return null;
-  return response.json() as Promise<{
-    uid: string;
+  if (response.status === 401 || response.status === 403) return null;
+  if (!response.ok) throw new Error("The account session could not be verified. Please retry.");
+  const account = (await response.json()) as {
+    uid?: string;
     email: string | null;
     emailVerified: boolean;
-  }>;
+  };
+  if (typeof account.uid !== "string" || !account.uid) return null;
+  return { uid: account.uid, email: account.email, emailVerified: account.emailVerified };
 }
 
 export async function revokeAllWebSessions(): Promise<void> {
@@ -260,12 +263,13 @@ export async function revokeAllWebSessions(): Promise<void> {
 
 export async function signOutWeb(): Promise<void> {
   try {
-    await fetch("/api/public/v1/auth/web/session/logout", {
+    const response = await fetch("/api/public/v1/auth/web/session/logout", {
       method: "POST",
       credentials: "same-origin",
       headers: { "content-type": "application/json", ...(await getWebAppCheckHeaders()) },
       body: "{}",
     });
+    if (!response.ok) throw new Error("The server could not end your website session.");
   } finally {
     activeIdToken = null;
     activeIdTokenExpiresAt = 0;
