@@ -115,3 +115,5 @@ PUSH BADGE #68 SUCCESSFUL — v6-05-B4 — Payout currency & safety rules (owner
 PUSH BADGE #69 SUCCESSFUL — v6-05-B5 — Producer and provider screens & statements (own-only net earnings display with no gross pool or margin disclosures, downloadable monthly settlement statements, payout history with transaction references and settlement dates, locked payout account controls until identity verification approval, and calm data-protection trust notices).
 
 PUSH BADGE #70 SUCCESSFUL — v6-05-B6 — Data protection & trust page (/help/data-protection with 7 detailed in-page anchor sections, plain-language security policy without vendor or storage claims, sitemap and footer navigation links, and calm trust panels with consent links across camera capture, producer verification, and payout account screens).
+
+PUSH BADGE #71 SUCCESSFUL — v6-05-B7 — Email status and notification outbox (durable outbox with retry/backoff, dual delivery to user email and in-app notices, no SMS except phone OTP, Zillionaire outbox management & manual resend with audit logging, and documented AI assistant hook with stable event schemas).

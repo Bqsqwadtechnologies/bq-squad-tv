@@ -710,3 +710,29 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
 - Removed deterministic development encryption and signing fallbacks. Missing or malformed deployment secrets now cause cryptographic helpers to fail closed.
 - The viewer helper only creates a signed request descriptor; no KYC viewer endpoint currently authenticates, authorizes, or audits access. Do not treat this helper as document-access control.
 - A1 storage and KYC schema helpers are not yet connected to persistent profile records or private object storage. Complete those integrations before collecting real identity data.
+
+## Batch B7 — Email Status and Notification Outbox & AI Assistant Hook
+
+- **Status**: Implemented & Verified
+- **Date**: 2026-11-21
+- **Scope & Rationale**:
+  - Payment and identity verification notifications are strictly sent to user's registered EMAIL and IN-APP notification feed. SMS transport is completely barred from payment and KYC notices (SMS remains exclusively reserved for short-lived phone verification OTP).
+  - Every status change triggers dual delivery: an in-app notice (`users/{uid}/notifications/{notifId}`) and a durable outbox record (`email_outbox/{id}`).
+  - Standardized all 12 operational lifecycle events:
+    1. `kyc_submitted`: KYC submission confirmation.
+    2. `kyc_under_review`: KYC active review notice.
+    3. `kyc_needs_changes`: KYC requires user changes (mandates owner reason).
+    4. `kyc_approved`: KYC approval & unlocks payout configuration.
+    5. `kyc_rejected`: KYC rejection (with compliance reason).
+    6. `payout_account_approved`: Registered bank account approved.
+    7. `payout_account_rejected`: Bank account review rejected (with reason).
+    8. `payout_requested`: Payout request received.
+    9. `payout_approved`: Payout approved for wire transfer.
+    10. `payout_on_hold`: Payout placed on compliance hold (with reason).
+    11. `payout_paid`: Payout paid (includes currency, amount, payment reference, and PDF receipt download link).
+    12. `payout_failed_or_returned`: Payout failed or returned (funds credited back to creator earnings balance).
+  - Both Earnings and Verification screens present current status, and outbound emails repeat the exact same status and next actionable step.
+  - Built durable email outbox engine (`src/lib/server/email/outbox.ts`) with retry and exponential backoff (1 min, 5 min, 15 min, 60 min).
+  - Implemented Zillionaire management API (`GET /api/public/v1/zillionaire/email/outbox` and `POST /api/public/v1/zillionaire/email/outbox/$outboxId/resend`) with audit logging.
+  - Added Email Outbox tab in Zillionaire Notifications Console (`/zillionaire/notifications`) with status filters, delivery tracking, payload inspection, and audited manual resend.
+  - **AI Assistant Hook**: Documented and exported `prepareAiAssistantEmailPayload()` with stable payload contract `AiAssistantEmailEvent` (`hookVersion: "1.0"`). Future AI agents/workers can intercept outbound events to generate personalized summaries, draft context-specific responses, or translate email templates without breaking core delivery mechanics.

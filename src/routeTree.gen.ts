@@ -355,6 +355,7 @@ import { Route as ApiPublicV1ZillionaireContentAssetsAssetIdReprocessRouteImport
 import { Route as ApiPublicV1ZillionaireContentAssetsAssetIdRevokeTokensRouteImport } from './routes/api/public/v1/zillionaire/content-assets/$assetId/revoke-tokens'
 import { Route as ApiPublicV1ZillionaireContentAssetsAssetIdRightsRouteImport } from './routes/api/public/v1/zillionaire/content-assets/$assetId/rights'
 import { Route as ApiPublicV1ZillionaireContentCommentsCommentIdModerateRouteImport } from './routes/api/public/v1/zillionaire/content-comments/$commentId/moderate'
+import { Route as ApiPublicV1ZillionaireEmailOutboxIndexRouteImport } from './routes/api/public/v1/zillionaire/email/outbox/index'
 import { Route as ApiPublicV1ZillionaireMoviesCurationIndexRouteImport } from './routes/api/public/v1/zillionaire/movies/curation/index'
 import { Route as ApiPublicV1ZillionairePaymentsPaymentIdReverseRouteImport } from './routes/api/public/v1/zillionaire/payments/$paymentId/reverse'
 import { Route as ApiPublicV1ZillionairePayoutsPayoutIdAuditCopyRouteImport } from './routes/api/public/v1/zillionaire/payouts/$payoutId/audit-copy'
@@ -372,6 +373,7 @@ import { Route as ApiPublicV1ZillionaireUsersUidRiskRouteImport } from './routes
 import { Route as ApiPublicV1ZillionaireUsersUidStatusRouteImport } from './routes/api/public/v1/zillionaire/users/$uid/status'
 import { Route as ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRouteImport } from './routes/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
 import { Route as ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRouteImport } from './routes/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
+import { Route as ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRouteImport } from './routes/api/public/v1/zillionaire/email/outbox/$outboxId/resend'
 import { Route as ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRouteImport } from './routes/api/public/v1/zillionaire/storage/groups/$groupId/budget'
 
 const IndexRoute = IndexRouteImport.update({
@@ -2337,6 +2339,12 @@ const ApiPublicV1ZillionaireContentCommentsCommentIdModerateRoute =
     path: '/api/public/v1/zillionaire/content-comments/$commentId/moderate',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireEmailOutboxIndexRoute =
+  ApiPublicV1ZillionaireEmailOutboxIndexRouteImport.update({
+    id: '/api/public/v1/zillionaire/email/outbox/',
+    path: '/api/public/v1/zillionaire/email/outbox/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireMoviesCurationIndexRoute =
   ApiPublicV1ZillionaireMoviesCurationIndexRouteImport.update({
     id: '/api/public/v1/zillionaire/movies/curation/',
@@ -2438,6 +2446,12 @@ const ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute =
     id: '/$programmeId',
     path: '/$programmeId',
     getParentRoute: () => ApiPublicV1ZillionaireChannelsChannelIdScheduleRoute,
+  } as any)
+const ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRoute =
+  ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRouteImport.update({
+    id: '/api/public/v1/zillionaire/email/outbox/$outboxId/resend',
+    path: '/api/public/v1/zillionaire/email/outbox/$outboxId/resend',
+    getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute =
   ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRouteImport.update({
@@ -2806,10 +2820,12 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/users/$uid/permissions': typeof ApiPublicV1ZillionaireUsersUidPermissionsRoute
   '/api/public/v1/zillionaire/users/$uid/risk': typeof ApiPublicV1ZillionaireUsersUidRiskRoute
   '/api/public/v1/zillionaire/users/$uid/status': typeof ApiPublicV1ZillionaireUsersUidStatusRoute
+  '/api/public/v1/zillionaire/email/outbox/': typeof ApiPublicV1ZillionaireEmailOutboxIndexRoute
   '/api/public/v1/zillionaire/movies/curation/': typeof ApiPublicV1ZillionaireMoviesCurationIndexRoute
   '/api/public/v1/zillionaire/users/$uid/': typeof ApiPublicV1ZillionaireUsersUidIndexRoute
   '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
   '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute
+  '/api/public/v1/zillionaire/email/outbox/$outboxId/resend': typeof ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRoute
   '/api/public/v1/zillionaire/storage/groups/$groupId/budget': typeof ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute
 }
 export interface FileRoutesByTo {
@@ -3171,10 +3187,12 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/users/$uid/permissions': typeof ApiPublicV1ZillionaireUsersUidPermissionsRoute
   '/api/public/v1/zillionaire/users/$uid/risk': typeof ApiPublicV1ZillionaireUsersUidRiskRoute
   '/api/public/v1/zillionaire/users/$uid/status': typeof ApiPublicV1ZillionaireUsersUidStatusRoute
+  '/api/public/v1/zillionaire/email/outbox': typeof ApiPublicV1ZillionaireEmailOutboxIndexRoute
   '/api/public/v1/zillionaire/movies/curation': typeof ApiPublicV1ZillionaireMoviesCurationIndexRoute
   '/api/public/v1/zillionaire/users/$uid': typeof ApiPublicV1ZillionaireUsersUidIndexRoute
   '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
   '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute
+  '/api/public/v1/zillionaire/email/outbox/$outboxId/resend': typeof ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRoute
   '/api/public/v1/zillionaire/storage/groups/$groupId/budget': typeof ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute
 }
 export interface FileRoutesById {
@@ -3538,10 +3556,12 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/users/$uid/permissions': typeof ApiPublicV1ZillionaireUsersUidPermissionsRoute
   '/api/public/v1/zillionaire/users/$uid/risk': typeof ApiPublicV1ZillionaireUsersUidRiskRoute
   '/api/public/v1/zillionaire/users/$uid/status': typeof ApiPublicV1ZillionaireUsersUidStatusRoute
+  '/api/public/v1/zillionaire/email/outbox/': typeof ApiPublicV1ZillionaireEmailOutboxIndexRoute
   '/api/public/v1/zillionaire/movies/curation/': typeof ApiPublicV1ZillionaireMoviesCurationIndexRoute
   '/api/public/v1/zillionaire/users/$uid/': typeof ApiPublicV1ZillionaireUsersUidIndexRoute
   '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
   '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute
+  '/api/public/v1/zillionaire/email/outbox/$outboxId/resend': typeof ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRoute
   '/api/public/v1/zillionaire/storage/groups/$groupId/budget': typeof ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute
 }
 export interface FileRouteTypes {
@@ -3906,10 +3926,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/users/$uid/permissions'
     | '/api/public/v1/zillionaire/users/$uid/risk'
     | '/api/public/v1/zillionaire/users/$uid/status'
+    | '/api/public/v1/zillionaire/email/outbox/'
     | '/api/public/v1/zillionaire/movies/curation/'
     | '/api/public/v1/zillionaire/users/$uid/'
     | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
     | '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
+    | '/api/public/v1/zillionaire/email/outbox/$outboxId/resend'
     | '/api/public/v1/zillionaire/storage/groups/$groupId/budget'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -4271,10 +4293,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/users/$uid/permissions'
     | '/api/public/v1/zillionaire/users/$uid/risk'
     | '/api/public/v1/zillionaire/users/$uid/status'
+    | '/api/public/v1/zillionaire/email/outbox'
     | '/api/public/v1/zillionaire/movies/curation'
     | '/api/public/v1/zillionaire/users/$uid'
     | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
     | '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
+    | '/api/public/v1/zillionaire/email/outbox/$outboxId/resend'
     | '/api/public/v1/zillionaire/storage/groups/$groupId/budget'
   id:
     | '__root__'
@@ -4637,10 +4661,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/users/$uid/permissions'
     | '/api/public/v1/zillionaire/users/$uid/risk'
     | '/api/public/v1/zillionaire/users/$uid/status'
+    | '/api/public/v1/zillionaire/email/outbox/'
     | '/api/public/v1/zillionaire/movies/curation/'
     | '/api/public/v1/zillionaire/users/$uid/'
     | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
     | '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
+    | '/api/public/v1/zillionaire/email/outbox/$outboxId/resend'
     | '/api/public/v1/zillionaire/storage/groups/$groupId/budget'
   fileRoutesById: FileRoutesById
 }
@@ -4969,8 +4995,10 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireUsersUidPermissionsRoute: typeof ApiPublicV1ZillionaireUsersUidPermissionsRoute
   ApiPublicV1ZillionaireUsersUidRiskRoute: typeof ApiPublicV1ZillionaireUsersUidRiskRoute
   ApiPublicV1ZillionaireUsersUidStatusRoute: typeof ApiPublicV1ZillionaireUsersUidStatusRoute
+  ApiPublicV1ZillionaireEmailOutboxIndexRoute: typeof ApiPublicV1ZillionaireEmailOutboxIndexRoute
   ApiPublicV1ZillionaireMoviesCurationIndexRoute: typeof ApiPublicV1ZillionaireMoviesCurationIndexRoute
   ApiPublicV1ZillionaireUsersUidIndexRoute: typeof ApiPublicV1ZillionaireUsersUidIndexRoute
+  ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRoute: typeof ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRoute
   ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute: typeof ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute
 }
 
@@ -7398,6 +7426,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireContentCommentsCommentIdModerateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/email/outbox/': {
+      id: '/api/public/v1/zillionaire/email/outbox/'
+      path: '/api/public/v1/zillionaire/email/outbox'
+      fullPath: '/api/public/v1/zillionaire/email/outbox/'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireEmailOutboxIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/movies/curation/': {
       id: '/api/public/v1/zillionaire/movies/curation/'
       path: '/api/public/v1/zillionaire/movies/curation'
@@ -7516,6 +7551,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
       preLoaderRoute: typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRouteImport
       parentRoute: typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleRoute
+    }
+    '/api/public/v1/zillionaire/email/outbox/$outboxId/resend': {
+      id: '/api/public/v1/zillionaire/email/outbox/$outboxId/resend'
+      path: '/api/public/v1/zillionaire/email/outbox/$outboxId/resend'
+      fullPath: '/api/public/v1/zillionaire/email/outbox/$outboxId/resend'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/zillionaire/storage/groups/$groupId/budget': {
       id: '/api/public/v1/zillionaire/storage/groups/$groupId/budget'
@@ -8269,10 +8311,14 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireUsersUidRiskRoute,
   ApiPublicV1ZillionaireUsersUidStatusRoute:
     ApiPublicV1ZillionaireUsersUidStatusRoute,
+  ApiPublicV1ZillionaireEmailOutboxIndexRoute:
+    ApiPublicV1ZillionaireEmailOutboxIndexRoute,
   ApiPublicV1ZillionaireMoviesCurationIndexRoute:
     ApiPublicV1ZillionaireMoviesCurationIndexRoute,
   ApiPublicV1ZillionaireUsersUidIndexRoute:
     ApiPublicV1ZillionaireUsersUidIndexRoute,
+  ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRoute:
+    ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRoute,
   ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute:
     ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute,
 }

@@ -111,7 +111,18 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
   const [data, setData] = useState<NotificationsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"compose" | "history" | "templates" | "rules">("compose");
+  const [activeTab, setActiveTab] = useState<"compose" | "history" | "templates" | "rules" | "outbox">("compose");
+
+  // Outbox State
+  const [outboxItems, setOutboxItems] = useState<any[]>([]);
+  const [outboxSummary, setOutboxSummary] = useState<any>({ total: 0, queued: 0, sent: 0, failed: 0, retried: 0 });
+  const [outboxLoading, setOutboxLoading] = useState(false);
+  const [outboxStatusFilter, setOutboxStatusFilter] = useState<string>("all");
+  const [outboxSearch, setOutboxSearch] = useState("");
+  const [resendModalItem, setResendModalItem] = useState<any | null>(null);
+  const [resendReason, setResendReason] = useState("");
+  const [resending, setResending] = useState(false);
+  const [viewDetailItem, setViewDetailItem] = useState<any | null>(null);
 
   // Compose State
   const [targetType, setTargetType] = useState<"all" | "segment" | "single">("all");
@@ -155,6 +166,62 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
+
+  const fetchOutbox = useCallback(async () => {
+    setOutboxLoading(true);
+    try {
+      const q = new URLSearchParams();
+      if (outboxStatusFilter !== "all") q.set("status", outboxStatusFilter);
+      if (outboxSearch) q.set("recipient", outboxSearch);
+      const res = await fetch(`/api/public/v1/zillionaire/email/outbox?${q.toString()}`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const json = await res.json();
+        setOutboxItems(json.items || []);
+        if (json.summary) setOutboxSummary(json.summary);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setOutboxLoading(false);
+    }
+  }, [token, outboxStatusFilter, outboxSearch]);
+
+  useEffect(() => {
+    if (activeTab === "outbox") {
+      void fetchOutbox();
+    }
+  }, [activeTab, fetchOutbox]);
+
+  const handleResend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resendModalItem || !resendReason.trim()) return;
+    setResending(true);
+    try {
+      const res = await fetch(`/api/public/v1/zillionaire/email/outbox/${resendModalItem.id}/resend`, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${token}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ reason: resendReason.trim() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFeedbackMessage({ text: `Email resend processed (status: ${data.status}).`, type: "success" });
+        setResendModalItem(null);
+        setResendReason("");
+        void fetchOutbox();
+      } else {
+        setFeedbackMessage({ text: data.message || "Resend failed", type: "error" });
+      }
+    } catch (err: any) {
+      setFeedbackMessage({ text: err.message || "Resend failed", type: "error" });
+    } finally {
+      setResending(false);
+    }
+  };
 
   // Apply template
   const handleSelectTemplate = (templateId: string) => {
@@ -413,6 +480,23 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
         >
           <FileText className="h-4 w-4" />
           System Templates ({data?.templates.length ?? 8})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("outbox")}
+          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+            activeTab === "outbox"
+              ? "bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/20"
+              : "bg-white/5 text-slate-300 hover:bg-white/10"
+          }`}
+        >
+          <Mail className="h-4 w-4" />
+          Email Outbox
+          {outboxSummary?.queued > 0 && (
+            <span className="ml-1.5 rounded-full bg-amber-400 px-1.5 py-0.5 text-[10px] font-black text-slate-950">
+              {outboxSummary.queued}
+            </span>
+          )}
         </button>
         <button
           type="button"
@@ -1109,6 +1193,245 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
               </div>
             </div>
           </ConsoleCard>
+        </div>
+      )}
+
+      {activeTab === "outbox" && (
+        <div className="space-y-6">
+          {/* Outbox KPI Cards */}
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+              <span className="text-xs text-slate-400">Queued</span>
+              <div className="mt-1 text-2xl font-black text-amber-400">{outboxSummary.queued}</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+              <span className="text-xs text-slate-400">Delivered (Sent)</span>
+              <div className="mt-1 text-2xl font-black text-emerald-400">{outboxSummary.sent}</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+              <span className="text-xs text-slate-400">Retried (Backoff)</span>
+              <div className="mt-1 text-2xl font-black text-cyan-400">{outboxSummary.retried}</div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
+              <span className="text-xs text-slate-400">Failed</span>
+              <div className="mt-1 text-2xl font-black text-rose-400">{outboxSummary.failed}</div>
+            </div>
+          </div>
+
+          <ConsoleCard
+            title="Durable Email Outbox"
+            subtitle="Status change notifications, retry queue, exponential backoff, and manual resend"
+            headerAction={
+              <button
+                type="button"
+                onClick={fetchOutbox}
+                disabled={outboxLoading}
+                className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/10"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 text-cyan-400 ${outboxLoading ? "animate-spin" : ""}`} />
+                Refresh Outbox
+              </button>
+            }
+          >
+            {/* Filter controls */}
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                {["all", "queued", "sent", "retried", "failed"].map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => setOutboxStatusFilter(st)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-bold capitalize transition ${
+                      outboxStatusFilter === st
+                        ? "bg-cyan-500 text-slate-950"
+                        : "bg-white/5 text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                placeholder="Filter by recipient email..."
+                value={outboxSearch}
+                onChange={(e) => setOutboxSearch(e.target.value)}
+                className="rounded-xl border border-white/15 bg-slate-900 px-3 py-1.5 text-xs text-white outline-none focus:border-cyan-400 w-64"
+              />
+            </div>
+
+            {/* Table */}
+            {outboxItems.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-white/10 p-8 text-center text-xs text-slate-400">
+                {outboxLoading ? "Loading email outbox..." : "No email outbox items match the current filter."}
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/40">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="border-b border-white/10 bg-white/5 text-[11px] font-semibold text-slate-400 uppercase">
+                    <tr>
+                      <th className="px-4 py-3">Event Type</th>
+                      <th className="px-4 py-3">Recipient</th>
+                      <th className="px-4 py-3">Subject</th>
+                      <th className="px-4 py-3">Status</th>
+                      <th className="px-4 py-3">Attempts</th>
+                      <th className="px-4 py-3">Last / Next Attempt</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {outboxItems.map((item) => (
+                      <tr key={item.id} className="hover:bg-white/5 transition">
+                        <td className="px-4 py-3 font-mono font-medium text-cyan-300 text-[11px]">
+                          {item.eventType}
+                        </td>
+                        <td className="px-4 py-3 text-slate-200">
+                          {item.recipientEmail}
+                        </td>
+                        <td className="px-4 py-3 text-slate-300 max-w-xs truncate">
+                          {item.subject}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              item.status === "sent"
+                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                : item.status === "queued"
+                                ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                                : item.status === "retried"
+                                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30"
+                                : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-400 font-mono">
+                          {item.attempts || 0} / {item.maxAttempts || 5}
+                        </td>
+                        <td className="px-4 py-3 text-[11px] text-slate-400">
+                          {item.sentAt
+                            ? `Sent: ${new Date(item.sentAt).toLocaleTimeString()}`
+                            : item.nextAttemptAt
+                            ? `Next: ${new Date(item.nextAttemptAt).toLocaleTimeString()}`
+                            : item.lastAttemptAt
+                            ? `Tried: ${new Date(item.lastAttemptAt).toLocaleTimeString()}`
+                            : "Queued"}
+                        </td>
+                        <td className="px-4 py-3 text-right space-x-2">
+                          <button
+                            type="button"
+                            onClick={() => setViewDetailItem(item)}
+                            className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-medium text-slate-300 hover:bg-white/10 transition"
+                          >
+                            View
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setResendModalItem(item);
+                              setResendReason("");
+                            }}
+                            className="rounded-lg bg-cyan-500 px-2.5 py-1 text-[11px] font-bold text-slate-950 hover:bg-cyan-400 transition"
+                          >
+                            Resend
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </ConsoleCard>
+        </div>
+      )}
+
+      {/* Resend Modal */}
+      {resendModalItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/15 bg-slate-950 p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-white">Resend Outbox Email</h3>
+            <p className="text-xs text-slate-300">
+              Trigger an immediate redelivery attempt for <span className="font-mono text-cyan-300">{resendModalItem.recipientEmail}</span> ({resendModalItem.eventType}).
+            </p>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-300">Mandatory Reason (Audited)</label>
+              <textarea
+                value={resendReason}
+                onChange={(e) => setResendReason(e.target.value)}
+                placeholder="Reason for manual resend (e.g., Creator requested updated statement notification)..."
+                rows={3}
+                className="w-full rounded-xl border border-white/15 bg-slate-900 p-2.5 text-xs text-white outline-none focus:border-cyan-400"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setResendModalItem(null)}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-300 hover:bg-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resending || !resendReason.trim()}
+                className="rounded-xl bg-cyan-500 px-4 py-2 text-xs font-bold text-slate-950 hover:bg-cyan-400 disabled:opacity-50"
+              >
+                {resending ? "Sending..." : "Confirm & Resend"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Detail Modal */}
+      {viewDetailItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-xl max-h-[85vh] flex flex-col rounded-2xl border border-white/15 bg-slate-950 shadow-2xl overflow-hidden">
+            <div className="p-5 border-b border-white/10 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-white">{viewDetailItem.subject}</h3>
+                <p className="text-xs text-slate-400">To: {viewDetailItem.recipientEmail} &bull; Event: {viewDetailItem.eventType}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewDetailItem(null)}
+                className="rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-white"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="p-5 overflow-y-auto space-y-4 text-xs text-slate-300">
+              {viewDetailItem.lastError && (
+                <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-rose-300">
+                  <strong>Last Error:</strong> {viewDetailItem.lastError}
+                </div>
+              )}
+              <div>
+                <span className="font-bold text-slate-400 uppercase text-[10px] block mb-1">Plain Text Preview</span>
+                <pre className="rounded-xl border border-white/10 bg-slate-900 p-3 whitespace-pre-wrap font-mono text-[11px] text-slate-300">
+                  {viewDetailItem.textContent}
+                </pre>
+              </div>
+              <div>
+                <span className="font-bold text-slate-400 uppercase text-[10px] block mb-1">AI Assistant Hook Payload</span>
+                <pre className="rounded-xl border border-white/10 bg-slate-900 p-3 whitespace-pre-wrap font-mono text-[11px] text-cyan-300">
+                  {JSON.stringify(viewDetailItem.aiHookMetadata || {}, null, 2)}
+                </pre>
+              </div>
+            </div>
+            <div className="p-4 border-t border-white/10 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setViewDetailItem(null)}
+                className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-300 hover:bg-white/10"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </ConsoleShell>
