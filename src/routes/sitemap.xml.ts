@@ -6,6 +6,7 @@ const publicPaths = [
   "/movies",
   "/series",
   "/help",
+  "/help/data-protection",
   "/about",
   "/contact",
   "/legal/terms",

@@ -41,6 +41,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as ChannelsChannelIdRouteImport } from './routes/channels.$channelId'
 import { Route as ContentAssetIdRouteImport } from './routes/content.$assetId'
+import { Route as HelpDataProtectionRouteImport } from './routes/help.data-protection'
 import { Route as LegalSlugRouteImport } from './routes/legal.$slug'
 import { Route as ProducerIndexRouteImport } from './routes/producer.index'
 import { Route as ProducerChannelsRouteImport } from './routes/producer.channels'
@@ -532,6 +533,11 @@ const ContentAssetIdRoute = ContentAssetIdRouteImport.update({
   id: '/content/$assetId',
   path: '/content/$assetId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const HelpDataProtectionRoute = HelpDataProtectionRouteImport.update({
+  id: '/data-protection',
+  path: '/data-protection',
+  getParentRoute: () => HelpRoute,
 } as any)
 const LegalSlugRoute = LegalSlugRouteImport.update({
   id: '/legal/$slug',
@@ -2449,7 +2455,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/copyright-report': typeof CopyrightReportRoute
   '/downloads': typeof DownloadsRoute
-  '/help': typeof HelpRoute
+  '/help': typeof HelpRouteWithChildren
   '/high-demand': typeof HighDemandRoute
   '/history': typeof HistoryRoute
   '/library': typeof LibraryRoute
@@ -2473,6 +2479,7 @@ export interface FileRoutesByFullPath {
   '/wallet': typeof WalletRoute
   '/channels/$channelId': typeof ChannelsChannelIdRoute
   '/content/$assetId': typeof ContentAssetIdRoute
+  '/help/data-protection': typeof HelpDataProtectionRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
@@ -2814,7 +2821,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/copyright-report': typeof CopyrightReportRoute
   '/downloads': typeof DownloadsRoute
-  '/help': typeof HelpRoute
+  '/help': typeof HelpRouteWithChildren
   '/high-demand': typeof HighDemandRoute
   '/history': typeof HistoryRoute
   '/library': typeof LibraryRoute
@@ -2838,6 +2845,7 @@ export interface FileRoutesByTo {
   '/wallet': typeof WalletRoute
   '/channels/$channelId': typeof ChannelsChannelIdRoute
   '/content/$assetId': typeof ContentAssetIdRoute
+  '/help/data-protection': typeof HelpDataProtectionRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
@@ -3179,7 +3187,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/copyright-report': typeof CopyrightReportRoute
   '/downloads': typeof DownloadsRoute
-  '/help': typeof HelpRoute
+  '/help': typeof HelpRouteWithChildren
   '/high-demand': typeof HighDemandRoute
   '/history': typeof HistoryRoute
   '/library': typeof LibraryRoute
@@ -3203,6 +3211,7 @@ export interface FileRoutesById {
   '/wallet': typeof WalletRoute
   '/channels/$channelId': typeof ChannelsChannelIdRoute
   '/content/$assetId': typeof ContentAssetIdRoute
+  '/help/data-protection': typeof HelpDataProtectionRoute
   '/legal/$slug': typeof LegalSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
@@ -3570,6 +3579,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/channels/$channelId'
     | '/content/$assetId'
+    | '/help/data-protection'
     | '/legal/$slug'
     | '/producer/channels'
     | '/producer/collaborations'
@@ -3935,6 +3945,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/channels/$channelId'
     | '/content/$assetId'
+    | '/help/data-protection'
     | '/legal/$slug'
     | '/producer/channels'
     | '/producer/collaborations'
@@ -4299,6 +4310,7 @@ export interface FileRouteTypes {
     | '/wallet'
     | '/channels/$channelId'
     | '/content/$assetId'
+    | '/help/data-protection'
     | '/legal/$slug'
     | '/producer/channels'
     | '/producer/collaborations'
@@ -4641,7 +4653,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   CopyrightReportRoute: typeof CopyrightReportRoute
   DownloadsRoute: typeof DownloadsRoute
-  HelpRoute: typeof HelpRoute
+  HelpRoute: typeof HelpRouteWithChildren
   HighDemandRoute: typeof HighDemandRoute
   HistoryRoute: typeof HistoryRoute
   LibraryRoute: typeof LibraryRoute
@@ -5187,6 +5199,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/content/$assetId'
       preLoaderRoute: typeof ContentAssetIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/help/data-protection': {
+      id: '/help/data-protection'
+      path: '/data-protection'
+      fullPath: '/help/data-protection'
+      preLoaderRoute: typeof HelpDataProtectionRouteImport
+      parentRoute: typeof HelpRoute
     }
     '/legal/$slug': {
       id: '/legal/$slug'
@@ -7508,6 +7527,16 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface HelpRouteChildren {
+  HelpDataProtectionRoute: typeof HelpDataProtectionRoute
+}
+
+const HelpRouteChildren: HelpRouteChildren = {
+  HelpDataProtectionRoute: HelpDataProtectionRoute,
+}
+
+const HelpRouteWithChildren = HelpRoute._addFileChildren(HelpRouteChildren)
+
 interface ProducerChannelsRouteChildren {
   ProducerChannelsChannelIdTeamRoute: typeof ProducerChannelsChannelIdTeamRoute
 }
@@ -7801,7 +7830,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   CopyrightReportRoute: CopyrightReportRoute,
   DownloadsRoute: DownloadsRoute,
-  HelpRoute: HelpRoute,
+  HelpRoute: HelpRouteWithChildren,
   HighDemandRoute: HighDemandRoute,
   HistoryRoute: HistoryRoute,
   LibraryRoute: LibraryRoute,

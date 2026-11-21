@@ -444,15 +444,19 @@ export function ProducerKycFlow({
 
   return (
     <div className="mx-auto max-w-2xl rounded-2xl border border-slate-800 bg-slate-900/95 p-6 text-white shadow-2xl">
-      {/* Trust & Encryption Badge */}
-      <div className="mb-6 flex items-start justify-between gap-3 rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-4">
-        <div className="flex items-start gap-3">
-          <Lock className="h-5 w-5 shrink-0 text-cyan-400" />
-          <div className="text-xs text-slate-300">
-            <strong className="text-white">Encrypted & Protected: </strong>
-            Your identity and tax identifiers are encrypted with AES-256-GCM. We use this information solely
-            to verify your identity and disburse video streaming earnings.
-          </div>
+      {/* Calm Trust Notice Panel */}
+      <div className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-cyan-500/30 bg-cyan-950/30 p-3.5 text-xs text-slate-300">
+        <div className="flex items-center gap-2.5">
+          <ShieldCheck className="h-4 w-4 shrink-0 text-cyan-400" />
+          <span>Your information is encrypted and protected. We use it only to verify your identity and to pay you.</span>
+          <a
+            href="/help/data-protection"
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold text-cyan-300 hover:text-cyan-200 underline"
+          >
+            Learn more
+          </a>
         </div>
         <button
           type="button"
@@ -954,12 +958,19 @@ export function ProducerKycFlow({
               Continue <ArrowRight className="h-4 w-4" />
             </button>
           ) : (
-            <button
-              type="button"
-              disabled={submitting}
-              onClick={handleSubmit}
-              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-6 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
-            >
+            <div className="flex flex-col sm:flex-row items-end gap-3">
+              <p className="text-[10px] text-slate-400 max-w-xs text-right">
+                By submitting, you consent to identity verification under our{" "}
+                <a href="/help/data-protection" target="_blank" rel="noreferrer" className="text-cyan-300 underline font-medium">
+                  Data Protection &amp; Trust Policy
+                </a>.
+              </p>
+              <button
+                type="button"
+                disabled={submitting}
+                onClick={handleSubmit}
+                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-6 py-2 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-50"
+              >
               {submitting ? (
                 <RefreshCw className="h-4 w-4 animate-spin" />
               ) : (
@@ -967,6 +978,7 @@ export function ProducerKycFlow({
               )}
               Submit for Verification
             </button>
+            </div>
           )}
         </div>
       </div>

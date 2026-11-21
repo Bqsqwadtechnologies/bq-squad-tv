@@ -145,6 +145,9 @@ function RootComponent() {
             <a href="/legal/terms" className="hover:text-foreground">
               Terms
             </a>
+            <a href="/help/data-protection" className="hover:text-foreground">
+              Data protection & trust
+            </a>
             <a href="/legal/cookie" className="hover:text-foreground">
               Cookie notice
             </a>

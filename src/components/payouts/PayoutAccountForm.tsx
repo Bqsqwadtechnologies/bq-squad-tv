@@ -215,6 +215,22 @@ export function PayoutAccountForm({
         )}
       </div>
 
+      {/* Calm Trust Notice Panel */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3.5 text-xs text-slate-300">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-cyan-400" />
+          <span>Your information is encrypted and protected. We use it only to verify your identity and to pay you.</span>
+        </div>
+        <a
+          href="/help/data-protection"
+          target="_blank"
+          rel="noreferrer"
+          className="shrink-0 font-semibold text-cyan-300 hover:text-cyan-200 underline text-xs"
+        >
+          Learn more
+        </a>
+      </div>
+
       {isLocked && !requestingChange ? (
         <div className="space-y-4 text-xs">
           <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/20 p-4">

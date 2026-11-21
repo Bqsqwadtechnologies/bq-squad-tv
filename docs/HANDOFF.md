@@ -1,5 +1,5 @@
-Last verified work: v6-05-B5 — Producer and provider screens & statements (own-only amounts, no gross/margin disclosure, downloadable monthly statements, payout history with references, locked payout account gating until KYC approval, calm trust copy).
-Next batch: v6-05-B6 — Data protection & trust page (/help/data-protection with plain-language policy, security guarantees, no vendor/storage claims, linked from KYC/payout screens).
+Last verified work: v6-05-B6 — Data protection & trust page (/help/data-protection with 7 in-page sections, plain-language policy, security guarantees, no storage/vendor claims, sitemap and footer links, calm trust notices and consent links across KYC and payout screens).
+Next batch: v6-05-B7 — Email status and notification outbox (durable email-outbox with retry/backoff, user notices to email only, never SMS except phone OTP, Zillionaire resend UI, stable event payload with AI hook in docs/DECISIONS.md).
 Known gaps: Live bank direct gateway webhook integration pending production host bank onboarding.
-Files touched: src/components/StatementsSettlementView.tsx, src/routes/producer.index.tsx, src/routes/provider.statements.tsx, src/test/batch-b5-producer-provider-screens.test.ts, docs/HANDOFF.md, docs/PUSH-LOG.md.
-Checks run: 70 tests passed across 15 test files (batch-a* + batch-b*); bun run scan:public-text clean; bun run build clean.
+Files touched: src/routes/help.data-protection.tsx, src/routes/sitemap.xml.ts, src/routes/__root.tsx, src/components/kyc/KycCameraCapture.tsx, src/components/ProducerKycFlow.tsx, src/components/payouts/PayoutAccountForm.tsx, src/routeTree.gen.ts, src/test/batch-b6-data-protection-trust.test.ts, docs/HANDOFF.md, docs/PUSH-LOG.md.
+Checks run: 74 tests passed across 16 test files (batch-a* + batch-b*); bun run check:route-integrity (364 routes) clean; bun run scan:public-text clean; bun run build clean.

@@ -272,6 +272,22 @@ export function KycCameraCapture({
           )}
         </div>
 
+        {/* Calm Trust Notice Panel */}
+        <div className="flex items-center justify-between gap-3 border-b border-white/5 bg-cyan-950/30 px-5 py-2.5 text-[11px] text-slate-300">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-4 w-4 text-cyan-400 shrink-0" />
+            <span>Your information is encrypted and protected. We use it only to verify your identity and to pay you.</span>
+          </div>
+          <a
+            href="/help/data-protection"
+            target="_blank"
+            rel="noreferrer"
+            className="shrink-0 font-semibold text-cyan-300 hover:text-cyan-200 underline"
+          >
+            Learn more
+          </a>
+        </div>
+
         {/* Camera Viewport or Review / Error */}
         <div className="relative flex-1 min-h-[340px] max-h-[480px] bg-black flex items-center justify-center overflow-hidden">
           {cameraPermission === "denied" ? (
@@ -542,6 +558,14 @@ export function KycCameraCapture({
             </div>
           </div>
         )}
+
+        {/* Consent Notice */}
+        <div className="px-5 py-2.5 text-[10px] text-slate-400 bg-slate-950/70 border-t border-white/5 text-center">
+          By continuing, you consent to facial and document verification in accordance with our{" "}
+          <a href="/help/data-protection" target="_blank" rel="noreferrer" className="text-cyan-300 underline font-semibold">
+            Data Protection &amp; Trust Policy
+          </a>.
+        </div>
       </div>
     </div>
   );
