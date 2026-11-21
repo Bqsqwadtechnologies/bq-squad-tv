@@ -153,6 +153,7 @@ import { Route as ApiPublicV1ProducerAnalyticsRouteImport } from './routes/api/p
 import { Route as ApiPublicV1ProducerChannelsRouteImport } from './routes/api/public/v1/producer/channels'
 import { Route as ApiPublicV1ProducerEarningsRouteImport } from './routes/api/public/v1/producer/earnings'
 import { Route as ApiPublicV1ProducerMobileSummaryRouteImport } from './routes/api/public/v1/producer/mobile-summary'
+import { Route as ApiPublicV1ProducerPayoutProfileRouteImport } from './routes/api/public/v1/producer/payout-profile'
 import { Route as ApiPublicV1ProducerPayoutsRouteImport } from './routes/api/public/v1/producer/payouts'
 import { Route as ApiPublicV1ProducerTeamRouteImport } from './routes/api/public/v1/producer/team'
 import { Route as ApiPublicV1ProducerVerificationRouteImport } from './routes/api/public/v1/producer/verification'
@@ -1122,6 +1123,12 @@ const ApiPublicV1ProducerMobileSummaryRoute =
   ApiPublicV1ProducerMobileSummaryRouteImport.update({
     id: '/api/public/v1/producer/mobile-summary',
     path: '/api/public/v1/producer/mobile-summary',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerPayoutProfileRoute =
+  ApiPublicV1ProducerPayoutProfileRouteImport.update({
+    id: '/api/public/v1/producer/payout-profile',
+    path: '/api/public/v1/producer/payout-profile',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ProducerPayoutsRoute =
@@ -2532,6 +2539,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
+  '/api/public/v1/producer/payout-profile': typeof ApiPublicV1ProducerPayoutProfileRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -2890,6 +2898,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
+  '/api/public/v1/producer/payout-profile': typeof ApiPublicV1ProducerPayoutProfileRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -3248,6 +3257,7 @@ export interface FileRoutesById {
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
+  '/api/public/v1/producer/payout-profile': typeof ApiPublicV1ProducerPayoutProfileRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -3608,6 +3618,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
+    | '/api/public/v1/producer/payout-profile'
     | '/api/public/v1/producer/payouts'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/verification'
@@ -3966,6 +3977,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
+    | '/api/public/v1/producer/payout-profile'
     | '/api/public/v1/producer/payouts'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/verification'
@@ -4323,6 +4335,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
+    | '/api/public/v1/producer/payout-profile'
     | '/api/public/v1/producer/payouts'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/verification'
@@ -4680,6 +4693,7 @@ export interface RootRouteChildren {
   ApiPublicV1ProducerChannelsRoute: typeof ApiPublicV1ProducerChannelsRouteWithChildren
   ApiPublicV1ProducerEarningsRoute: typeof ApiPublicV1ProducerEarningsRoute
   ApiPublicV1ProducerMobileSummaryRoute: typeof ApiPublicV1ProducerMobileSummaryRoute
+  ApiPublicV1ProducerPayoutProfileRoute: typeof ApiPublicV1ProducerPayoutProfileRoute
   ApiPublicV1ProducerPayoutsRoute: typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   ApiPublicV1ProducerTeamRoute: typeof ApiPublicV1ProducerTeamRoute
   ApiPublicV1ProducerVerificationRoute: typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -5872,6 +5886,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/producer/mobile-summary'
       fullPath: '/api/public/v1/producer/mobile-summary'
       preLoaderRoute: typeof ApiPublicV1ProducerMobileSummaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/payout-profile': {
+      id: '/api/public/v1/producer/payout-profile'
+      path: '/api/public/v1/producer/payout-profile'
+      fullPath: '/api/public/v1/producer/payout-profile'
+      preLoaderRoute: typeof ApiPublicV1ProducerPayoutProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/producer/payouts': {
@@ -7789,6 +7810,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ProducerChannelsRouteWithChildren,
   ApiPublicV1ProducerEarningsRoute: ApiPublicV1ProducerEarningsRoute,
   ApiPublicV1ProducerMobileSummaryRoute: ApiPublicV1ProducerMobileSummaryRoute,
+  ApiPublicV1ProducerPayoutProfileRoute: ApiPublicV1ProducerPayoutProfileRoute,
   ApiPublicV1ProducerPayoutsRoute: ApiPublicV1ProducerPayoutsRouteWithChildren,
   ApiPublicV1ProducerTeamRoute: ApiPublicV1ProducerTeamRoute,
   ApiPublicV1ProducerVerificationRoute:
