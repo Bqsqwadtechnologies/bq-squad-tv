@@ -36,6 +36,8 @@ import {
   Eye,
   CheckSquare,
   Square,
+  ShieldCheck,
+  Sliders,
 } from "lucide-react";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
 import { formatMinorCurrency as formatMoney } from "@/lib/format-money";
@@ -291,6 +293,72 @@ function ZillionairePayoutsPage({
     }
   };
 
+  // Rules and Limits Modal state
+  const [showRulesModal, setShowRulesModal] = useState(false);
+  const [rulesMinUSD, setRulesMinUSD] = useState(500);
+  const [rulesMinNGN, setRulesMinNGN] = useState(750000);
+  const [rulesRate, setRulesRate] = useState(1500);
+  const [rulesDualUSD, setRulesDualUSD] = useState(5000);
+  const [rulesStepUpUSD, setRulesStepUpUSD] = useState(1000);
+  const [rulesReason, setRulesReason] = useState("");
+  const [savingRules, setSavingRules] = useState(false);
+
+  const fetchRules = async () => {
+    try {
+      const headers = await getWebAuthHeaders();
+      const res = await fetch("/api/public/v1/zillionaire/payouts/rules", { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.rules) {
+          setRulesMinUSD(Math.round(data.rules.minimumPayoutUSDMinor / 100));
+          setRulesMinNGN(Math.round(data.rules.minimumPayoutNGNMinor / 100));
+          setRulesRate(data.rules.usdToNgnRate);
+          setRulesDualUSD(Math.round(data.rules.dualApprovalThresholdUSDMinor / 100));
+          setRulesStepUpUSD(Math.round(data.rules.stepUpThresholdUSDMinor / 100));
+        }
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleSaveRules = async () => {
+    if (!rulesReason.trim()) {
+      setFeedback("A reason is required to update payout rules.");
+      return;
+    }
+    setSavingRules(true);
+    try {
+      const headers = await getWebAuthHeaders();
+      const res = await fetch("/api/public/v1/zillionaire/payouts/rules", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          minimumPayoutUSDMinor: rulesMinUSD * 100,
+          minimumPayoutNGNMinor: rulesMinNGN * 100,
+          usdToNgnRate: rulesRate,
+          dualApprovalThresholdUSDMinor: rulesDualUSD * 100,
+          dualApprovalThresholdNGNMinor: Math.round(rulesDualUSD * rulesRate * 100),
+          stepUpThresholdUSDMinor: rulesStepUpUSD * 100,
+          stepUpThresholdNGNMinor: Math.round(rulesStepUpUSD * rulesRate * 100),
+          reason: rulesReason.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setFeedback("Payout currency rules, limits, and safety settings updated successfully.");
+        setShowRulesModal(false);
+        setRulesReason("");
+      } else {
+        setFeedback(`Failed to update rules: ${data.message || data.error}`);
+      }
+    } catch (e: unknown) {
+      setFeedback(e instanceof Error ? e.message : "Error saving rules.");
+    } finally {
+      setSavingRules(false);
+    }
+  };
+
   const toggleSelectPayout = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -534,6 +602,20 @@ function ZillionairePayoutsPage({
           />
         </div>
 
+        {/* Top Action Bar: Rules & Safety Settings */}
+        <div className="flex justify-end">
+          <button
+            onClick={() => {
+              fetchRules();
+              setShowRulesModal(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 hover:bg-slate-800 text-xs text-cyan-300 font-semibold shadow"
+          >
+            <Sliders className="w-4 h-4 text-cyan-400" />
+            <span>Currency & Safety Rules</span>
+          </button>
+        </div>
+
         {/* Live Revenue Share Calculator Widget */}
         <ConsoleCard title="Owner Revenue Share Split Calculator (Internal Only)">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
@@ -598,7 +680,7 @@ function ZillionairePayoutsPage({
         {/* Payouts Table Filter Controls */}
         <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div className="flex flex-wrap items-center gap-2">
-            {["ALL", "REQUESTED", "APPROVED", "SETTLED", "PARTIALLY_PAID", "FAILED", "REVERSED", "HELD", "REJECTED"].map(
+            {["ALL", "REQUESTED", "PENDING_SECOND_APPROVAL", "APPROVED", "SETTLED", "PARTIALLY_PAID", "FAILED", "REVERSED", "HELD", "REJECTED"].map(
               (st) => (
                 <button
                   key={st}
@@ -759,6 +841,8 @@ function ZillionairePayoutsPage({
                       status={
                         p.status === "SETTLED"
                           ? "active"
+                          : p.status === "PENDING_SECOND_APPROVAL"
+                          ? "warning"
                           : p.status === "APPROVED"
                           ? "warning"
                           : p.status === "PARTIALLY_PAID"
@@ -800,6 +884,33 @@ function ZillionairePayoutsPage({
                 ),
                 actions: (
                   <div className="flex flex-wrap items-center gap-1 text-[11px]">
+                    {/* Dual Approval: Second Reviewer */}
+                    {p.status === "PENDING_SECOND_APPROVAL" && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setReviewTarget(p);
+                            setReviewDecision("APPROVE");
+                            setReviewReason("");
+                          }}
+                          className="px-2 py-1 bg-amber-950 hover:bg-amber-900 border border-amber-800 text-amber-300 rounded font-semibold flex items-center gap-1"
+                          title="Authorize second reviewer approval"
+                        >
+                          <ShieldCheck className="w-3 h-3" /> 2nd Approval
+                        </button>
+                        <button
+                          onClick={() => {
+                            setReviewTarget(p);
+                            setReviewDecision("REJECT");
+                            setReviewReason("");
+                          }}
+                          className="px-2 py-1 bg-red-950 hover:bg-red-900 border border-red-800 text-red-300 rounded font-semibold"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+
                     {/* Review: Approve / Reject (when REQUESTED or HELD) */}
                     {(p.status === "REQUESTED" || p.status === "HELD") && (
                       <>

@@ -109,3 +109,5 @@ PUSH BADGE #65 SUCCESSFUL — v6-05-B1 — Country-locked payout bank account fo
 PUSH BADGE #66 SUCCESSFUL — v6-05-B2 — Proof of account and verification (bank statement upload, duplicate account detection, Zillionaire payout queue tab, and account lock on approval).
 
 PUSH BADGE #67 SUCCESSFUL — v6-05-B3 — Payout transfer sheet, 11-field ALAT copy order, batch CSV export grouped by Local and International, audited views/copies, settlement marking with receipt, and return-to-hold.
+
+PUSH BADGE #68 SUCCESSFUL — v6-05-B4 — Payout currency & safety rules (owner-configurable USD/NGN minimums with $500/₦750,000 defaults, USD:NGN conversion rate setting with reasoned audit logs, two-stage dual-approval enforcement by two distinct reviewers for payouts >=$5,000, step-up authentication >=$1,000, and strict safety holds blocking payouts on expired KYC, under-review payout profiles, or open risk flags).

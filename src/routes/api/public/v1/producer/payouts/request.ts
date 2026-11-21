@@ -5,6 +5,7 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requirePlatformRole } from "@/lib/server/roles";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { requireCurrency } from "@/lib/server/currency";
+import { getPayoutRules, getMinimumPayoutForCurrency } from "@/lib/server/payouts/rules";
 
 const schema = z.object({
   amountMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
@@ -22,10 +23,68 @@ export const Route = createFileRoute("/api/public/v1/producer/payouts/request")(
           const currency = requireCurrency(body.currency);
           const fs = await Firestore.create();
           await requirePlatformRole(fs, user, "producer");
+
+          // 1. KYC Approval and Expiry Check
           const kycDoc = await fs.getDoc(`kycProfiles/${user.uid}`);
           if (kycDoc?.["kycStatus"] !== "approved") {
-            throw new ApiError(403, "KYC_NOT_APPROVED", "An approved identity verification (KYC) profile is required before requesting payouts.");
+            throw new ApiError(
+              403,
+              "KYC_NOT_APPROVED",
+              "An approved identity verification (KYC) profile is required before requesting payouts.",
+            );
           }
+          const nowIso = new Date().toISOString();
+          const expiresAt = kycDoc?.["expiresAt"] || kycDoc?.["idExpiryDate"];
+          if (typeof expiresAt === "string" && expiresAt < nowIso) {
+            throw new ApiError(
+              403,
+              "KYC_EXPIRED",
+              "Your identity verification document has expired. Re-verification is required before requesting payouts.",
+            );
+          }
+
+          // 2. Payout Account Status Check
+          const payoutProfile = await fs.getDoc(`payoutProfiles/${user.uid}`);
+          if (!payoutProfile) {
+            throw new ApiError(
+              403,
+              "PAYOUT_ACCOUNT_REQUIRED",
+              "A verified and approved bank payout account is required before requesting payouts.",
+            );
+          }
+          const profileStatus = payoutProfile["status"] || payoutProfile["verificationStatus"];
+          if (profileStatus !== "APPROVED") {
+            throw new ApiError(
+              403,
+              "PAYOUT_ACCOUNT_UNDER_REVIEW",
+              "Your payout bank account is currently under review or pending verification.",
+            );
+          }
+          if (payoutProfile["payoutsPaused"] === true) {
+            throw new ApiError(
+              403,
+              "PAYOUTS_PAUSED",
+              "Payouts are temporarily paused on your payout account.",
+            );
+          }
+
+          // 3. Minimum Payout Check per Currency
+          const rules = await getPayoutRules(fs);
+          const minPayout = getMinimumPayoutForCurrency(rules, currency);
+          if (body.amountMinor < minPayout) {
+            const minFormatted =
+              currency === "USD"
+                ? `$${(minPayout / 100).toFixed(2)}`
+                : currency === "NGN"
+                  ? `₦${(minPayout / 100).toLocaleString()}`
+                  : `${(minPayout / 100).toFixed(2)} ${currency}`;
+            throw new ApiError(
+              400,
+              "MINIMUM_PAYOUT_NOT_MET",
+              `Minimum payout is ${minFormatted} for ${currency} settlements.`,
+            );
+          }
+
           await enforceRateLimit(fs, "producer-payout-request:" + user.uid, {
             limit: 3,
             windowMs: 60 * 60_000,
@@ -43,6 +102,7 @@ export const Route = createFileRoute("/api/public/v1/producer/payouts/request")(
           const producerPath = "producers/" + user.uid;
           const ledgerPath = "ledger/" + payoutId;
           const now = new Date().toISOString();
+
           const result = await fs.transact(
             [producerPath, payoutPath, ledgerPath],
             ([producer, existingPayout, existingLedger]) => {
@@ -52,6 +112,16 @@ export const Route = createFileRoute("/api/public/v1/producer/payouts/request")(
                   "PRODUCER_ACCOUNT_REQUIRED",
                   "A verified producer account is required.",
                 );
+
+              // 4. Safety risk flags on producer
+              if (producer["payoutHold"] === true || producer["riskFlagOpen"] === true) {
+                throw new ApiError(
+                  403,
+                  "PAYOUT_HELD_RISK",
+                  "Payouts are temporarily on hold for this account due to open risk review.",
+                );
+              }
+
               if (existingPayout) {
                 if (
                   existingPayout["uid"] !== user.uid ||
@@ -116,6 +186,18 @@ export const Route = createFileRoute("/api/public/v1/producer/payouts/request")(
                 updatedAt: now,
                 ...(currency === "NGN" ? { earningsBalanceMinor: nextBalances["NGN"] } : {}),
               };
+
+              // Snapshot payout account snapshot
+              const accountSnapshot = {
+                beneficiaryName: payoutProfile["beneficiaryName"] || payoutProfile["accountName"] || "",
+                bankName: payoutProfile["bankName"] || "",
+                accountNumberMasked: payoutProfile["accountNumberMasked"] || "",
+                routingCode: payoutProfile["routingCode"] || "",
+                swiftBic: payoutProfile["swiftBic"] || "",
+                country: payoutProfile["country"] || "",
+                currency: payoutProfile["currency"] || currency,
+              };
+
               return {
                 result: {
                   payoutId,
@@ -141,6 +223,7 @@ export const Route = createFileRoute("/api/public/v1/producer/payouts/request")(
                         currency,
                         status: "REQUESTED",
                         idempotencyKey: body.idempotencyKey,
+                        payoutAccount: accountSnapshot,
                         createdAt: now,
                         updatedAt: now,
                       }),
