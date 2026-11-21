@@ -126,14 +126,14 @@ export function ZillionaireEntityConsole<T extends Record<string, any>>({
   }
 
   return (
-    <ConsoleShell activePath={typeof window !== "undefined" ? window.location.pathname : ""} account={account}>
+    <ConsoleShell consoleType="zillionaire" title={title} tagline={subtitle} activePath={typeof window !== "undefined" ? window.location.pathname : ""} account={{ ...account, email: account.email || "" }}>
       <div className="space-y-6">
         <ConsoleWelcomeBanner
           title={title}
-          subtitle={subtitle}
-          badge="Zillionaire Management"
-          badgeIcon={ModuleIcon}
-          rightContent={
+          description={subtitle}
+          badgeText="Zillionaire Management"
+        />
+          {
             <div className="flex items-center gap-2">
               {onRefresh && (
                 <button
@@ -157,7 +157,6 @@ export function ZillionaireEntityConsole<T extends Record<string, any>>({
               )}
             </div>
           }
-        />
 
         {/* KPIs */}
         {kpis.length > 0 && (
@@ -167,9 +166,9 @@ export function ZillionaireEntityConsole<T extends Record<string, any>>({
                 key={idx}
                 title={kpi.title}
                 value={String(kpi.value)}
-                subtitle={kpi.subtitle}
+                {...(kpi.subtitle !== undefined ? { subtitle: kpi.subtitle } : {})}
                 icon={kpi.icon || ModuleIcon}
-                tone={kpi.tone || "cyan"}
+                variant={kpi.tone === "emerald" ? "green" : kpi.tone === "amber" ? "gold" : kpi.tone === "rose" ? "purple" : "blue"}
               />
             ))}
           </div>
@@ -207,7 +206,7 @@ export function ZillionaireEntityConsole<T extends Record<string, any>>({
         </div>
 
         {/* Data Table */}
-        <ConsoleCard title={`${filteredItems.length} Records`} icon={ModuleIcon}>
+        <ConsoleCard title={`${filteredItems.length} Records`}>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>

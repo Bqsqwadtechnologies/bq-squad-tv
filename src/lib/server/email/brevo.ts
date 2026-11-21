@@ -202,5 +202,5 @@ export async function sendTestEmail(to: string): Promise<{ success: boolean; mes
   }
 
   const result = (await response.json()) as { messageId?: string };
-  return { success: true, messageId: result.messageId };
+  return { success: true, ...(result.messageId ? { messageId: result.messageId } : {}) };
 }

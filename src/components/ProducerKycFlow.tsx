@@ -10,6 +10,7 @@ import { KycCountryPicker } from "@/components/KycCountryPicker";
 import { KycPhoneVerification } from "@/components/KycPhoneVerification";
 import {
   getCountryRule,
+  ALL_COUNTRIES,
   validateIdFormat,
   validateTaxIdFormat,
   validateCompanyRegistrationFormat,
@@ -557,8 +558,11 @@ export function ProducerKycFlow({
 
           <div className="pt-2">
             <KycCountryPicker
-              selectedCountryCode={countryCode}
-              onSelectCountry={(c) => setCountryCode(c.code)}
+              value={countryRule.name}
+              onChange={(name) => {
+                const country = ALL_COUNTRIES.find((item) => item.name === name);
+                if (country) setCountryCode(country.code);
+              }}
               label="Country of Legal Residence / Incorporation"
             />
           </div>
@@ -569,7 +573,7 @@ export function ProducerKycFlow({
               <span>{countryRule.name} Compliance Profile</span>
             </div>
             <p className="mt-1 text-slate-400">
-              Accepted IDs: {countryRule.acceptedPersonalIdTypes.map((t) => t.name).join(", ")}.
+              Accepted IDs: {countryRule.acceptedPersonalIdTypes.map((t) => t.label).join(", ")}.
               Currency: <strong className="text-white">{countryRule.defaultCurrency}</strong>.
             </p>
           </div>
@@ -670,7 +674,7 @@ export function ProducerKycFlow({
               <div>
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-medium text-slate-300">
-                    {countryRule.companyRegistryConfig?.registryName || "Company Registry"} Number
+                    {countryRule.companyRegistry.name || "Company Registry"} Number
                   </label>
                   <KycFieldHelp
                     helpKey={countryCode === "NG" ? "kyc.help.cac" : countryCode === "GB" ? "kyc.help.crn" : "kyc.help.ein"}
@@ -681,7 +685,7 @@ export function ProducerKycFlow({
                   type="text"
                   value={companyRegNumber}
                   onChange={(e) => setCompanyRegNumber(e.target.value)}
-                  placeholder={countryRule.companyRegistryConfig?.numberLabel || "Registration number"}
+                  placeholder={countryRule.companyRegistry.label || "Registration number"}
                   className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm font-mono text-white focus:border-cyan-500 focus:outline-none"
                 />
               </div>
@@ -779,7 +783,7 @@ export function ProducerKycFlow({
               >
                 {countryRule.acceptedPersonalIdTypes.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.name}
+                    {t.label}
                   </option>
                 ))}
               </select>
@@ -797,7 +801,7 @@ export function ProducerKycFlow({
                 type="text"
                 value={idNumber}
                 onChange={(e) => setIdNumber(e.target.value)}
-                placeholder={countryRule.acceptedPersonalIdTypes.find((t) => t.id === idTypeId)?.description || "ID Number"}
+                placeholder={countryRule.acceptedPersonalIdTypes.find((t) => t.id === idTypeId)?.formatDescription || "ID Number"}
                 className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm font-mono text-white focus:border-cyan-500 focus:outline-none"
               />
             </div>
@@ -805,13 +809,13 @@ export function ProducerKycFlow({
 
           <div>
             <label className="block text-xs font-medium text-slate-300">
-              {countryRule.taxIdConfig.label} ({countryRule.taxIdConfig.requiredForPayouts ? "Required" : "Optional"})
+              {countryRule.taxId.label} ({countryRule.taxId.optional ? "Optional" : "Required"})
             </label>
             <input
               type="text"
               value={taxId}
               onChange={(e) => setTaxId(e.target.value)}
-              placeholder={countryRule.taxIdConfig.formatDescription || "Tax Identifier"}
+              placeholder={countryRule.taxId.formatDescription || "Tax Identifier"}
               className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm font-mono text-white focus:border-cyan-500 focus:outline-none"
             />
           </div>
@@ -843,7 +847,7 @@ export function ProducerKycFlow({
 
           <KycPhoneVerification
             defaultDialCode={countryRule.dialCode}
-            authToken={authToken}
+            {...(authToken ? { authToken } : {})}
             isAlreadyVerified={phoneVerified}
             onVerified={(p) => {
               setPhoneVerified(true);
@@ -1065,7 +1069,7 @@ export function ProducerKycFlow({
       {showSupportModal && (
         <KycSupportModal
           onClose={() => setShowSupportModal(false)}
-          authToken={authToken}
+          {...(authToken ? { authToken } : {})}
         />
       )}
     </div>

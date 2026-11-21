@@ -161,8 +161,8 @@ export function KycStatusTimeline({
       {showSupport && (
         <KycSupportModal
           onClose={() => setShowSupport(false)}
-          authToken={authToken}
-          applicantUid={applicantUid}
+          {...(authToken ? { authToken } : {})}
+          {...(applicantUid ? { applicantUid } : {})}
           currentStatus={currentStatus}
         />
       )}

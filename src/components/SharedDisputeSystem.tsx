@@ -184,7 +184,7 @@ export function SharedDisputeSystem({
         statementId,
         claimedAmountMinor: isNaN(claimedMinor) ? 0 : claimedMinor,
         claimedAmountCurrency: currency,
-        evidenceFileName: evidenceFileName || undefined,
+        ...(evidenceFileName ? { evidenceFileName } : {}),
         message: description,
       });
       setShowNewModal(false);

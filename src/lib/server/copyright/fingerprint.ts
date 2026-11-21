@@ -57,7 +57,8 @@ export function computePerceptualFingerprint(
     const step = Math.max(1, Math.floor(sampleBytes.length / 16));
     const subsample = [];
     for (let i = 0; i < sampleBytes.length; i += step) {
-      subsample.push(sampleBytes[i]);
+      const byte = sampleBytes[i];
+      if (byte !== undefined) subsample.push(byte);
     }
     fpHash.update(Buffer.from(subsample));
   }
@@ -93,10 +94,10 @@ export async function detectDuplicatesAndFlag(
   candidateFileHash: string,
   candidateFingerprint: string,
 ): Promise<DuplicateDetectionResult> {
-  const assets = await fs.listDocs("contentAssets", { limit: 200 });
+  const assets = await fs.query("contentAssets", { limit: 200 });
 
   for (const asset of assets) {
-    if (asset.id === candidateAssetId) continue;
+    if (asset.__id === candidateAssetId) continue;
     const existingHash = asset["fileHash"] || asset["checksumSha256"];
     const existingFingerprint = asset["perceptualFingerprint"];
     const existingTitle = (asset["title"] as string) || "Existing video";
@@ -105,7 +106,7 @@ export async function detectDuplicatesAndFlag(
     if (existingHash && existingHash === candidateFileHash) {
       return {
         duplicateDetected: true,
-        duplicateOfAssetId: asset.id,
+        duplicateOfAssetId: asset.__id,
         duplicateOfTitle: existingTitle,
         duplicateType: "exact",
         reviewQueueFlag: `Possible duplicate of ${existingTitle}`,
@@ -120,7 +121,7 @@ export async function detectDuplicatesAndFlag(
     ) {
       return {
         duplicateDetected: true,
-        duplicateOfAssetId: asset.id,
+        duplicateOfAssetId: asset.__id,
         duplicateOfTitle: existingTitle,
         duplicateType: "near_duplicate",
         reviewQueueFlag: `Possible duplicate of ${existingTitle}`,
@@ -151,9 +152,9 @@ export async function assertCanPublishWithoutDuplicateConflict(
 
   if (!fileHash && !fingerprint) return;
 
-  const allAssets = await fs.listDocs("contentAssets", { limit: 500 });
+  const allAssets = await fs.query("contentAssets", { limit: 500 });
   for (const other of allAssets) {
-    if (other.id === assetId) continue;
+    if (other.__id === assetId) continue;
     if (other["contentStatus"] !== "published" && other["status"] !== "published") continue;
 
     // If another published asset has same hash or fingerprint under a different owner
@@ -171,7 +172,7 @@ export async function assertCanPublishWithoutDuplicateConflict(
         throw new ApiError(
           409,
           "DUPLICATE_CROSS_PRODUCER_PUBLISH_BLOCKED",
-          `This video content is already published under another producer channel ("${other["title"] || other.id}"). Cross-producer re-publishing is blocked.`,
+          `This video content is already published under another producer channel ("${other["title"] || other.__id}"). Cross-producer re-publishing is blocked.`,
         );
       }
     }
@@ -196,7 +197,7 @@ export async function checkExternalCopyrightService(params: {
   filename?: string;
   sizeBytes?: number;
 }): Promise<ExternalCopyrightResult> {
-  const serviceUrl = process.env.COPYRIGHT_MATCH_SERVICE_URL;
+  const serviceUrl = process.env['COPYRIGHT_MATCH_SERVICE_URL'];
   if (!serviceUrl) {
     return { matched: false };
   }
@@ -206,8 +207,8 @@ export async function checkExternalCopyrightService(params: {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(process.env.COPYRIGHT_MATCH_API_KEY
-          ? { Authorization: `Bearer ${process.env.COPYRIGHT_MATCH_API_KEY}` }
+        ...(process.env['COPYRIGHT_MATCH_API_KEY']
+          ? { Authorization: `Bearer ${process.env['COPYRIGHT_MATCH_API_KEY']}` }
           : {}),
       },
       body: JSON.stringify(params),

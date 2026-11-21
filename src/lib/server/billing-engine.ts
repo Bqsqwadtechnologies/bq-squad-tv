@@ -173,8 +173,7 @@ export function splitRevenueExact(
   let totalAllocated = 0n;
   const results: SplitResult[] = [];
 
-  for (let i = 0; i < splits.length; i++) {
-    const s = splits[i];
+  for (const s of splits) {
     const share = (totalProducerMinor * s.shareBps) / 10_000n;
     totalAllocated += share;
     results.push({ uid: s.uid, shareBps: s.shareBps, allocatedMinor: share });
@@ -183,13 +182,9 @@ export function splitRevenueExact(
   // Allocate any rounding remainder (no lost minor units) to the primary / largest collaborator
   const remainder = totalProducerMinor - totalAllocated;
   if (remainder > 0n && results.length > 0) {
-    let maxIdx = 0;
-    for (let i = 1; i < results.length; i++) {
-      if (results[i].shareBps > results[maxIdx].shareBps) {
-        maxIdx = i;
-      }
-    }
-    results[maxIdx].allocatedMinor += remainder;
+    const largest = results.reduce<SplitResult | undefined>((max, result) =>
+      !max || result.shareBps > max.shareBps ? result : max, undefined);
+    if (largest) largest.allocatedMinor += remainder;
   }
 
   return results;

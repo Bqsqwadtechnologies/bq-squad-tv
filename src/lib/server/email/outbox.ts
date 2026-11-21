@@ -133,10 +133,10 @@ export function prepareAiAssistantEmailPayload(
     context: {
       currentStatus: payload.currentStatus,
       nextStep: payload.nextStep,
-      reason: payload.reason,
-      amountFormatted,
-      paymentReference: payload.paymentReference,
-      receiptUrl: payload.receiptUrl,
+      ...(payload.reason !== undefined ? { reason: payload.reason } : {}),
+      ...(amountFormatted !== undefined ? { amountFormatted } : {}),
+      ...(payload.paymentReference !== undefined ? { paymentReference: payload.paymentReference } : {}),
+      ...(payload.receiptUrl !== undefined ? { receiptUrl: payload.receiptUrl } : {}),
       dashboardUrl: payload.deepLink || "https://tv.bqsqwad.com/producer",
     },
     baseTemplate: {

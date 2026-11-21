@@ -36,7 +36,7 @@ export function computeDelta(
         formatted: "New",
         value: null,
         direction: "new",
-        caption: periodCaption,
+        ...(periodCaption !== undefined ? { caption: periodCaption } : {}),
       };
     }
     return {
@@ -52,7 +52,7 @@ export function computeDelta(
       formatted: null,
       value: 0,
       direction: "neutral",
-      caption: periodCaption,
+      ...(periodCaption !== undefined ? { caption: periodCaption } : {}),
     };
   }
 
@@ -64,7 +64,7 @@ export function computeDelta(
       formatted: null,
       value: 0,
       direction: "neutral",
-      caption: periodCaption,
+      ...(periodCaption !== undefined ? { caption: periodCaption } : {}),
     };
   }
 
@@ -76,6 +76,6 @@ export function computeDelta(
     value: rounded,
     direction: rounded > 0 ? "up" : "down",
     positive: rounded > 0,
-    caption: periodCaption,
+    ...(periodCaption !== undefined ? { caption: periodCaption } : {}),
   };
 }
