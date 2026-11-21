@@ -273,8 +273,11 @@ import { Route as ApiPublicV1ZillionaireCopyrightCasesIndexRouteImport } from '.
 import { Route as ApiPublicV1ZillionaireDeliveryIndexRouteImport } from './routes/api/public/v1/zillionaire/delivery/index'
 import { Route as ApiPublicV1ZillionaireEmailTestRouteImport } from './routes/api/public/v1/zillionaire/email/test'
 import { Route as ApiPublicV1ZillionaireErrorsIndexRouteImport } from './routes/api/public/v1/zillionaire/errors/index'
+import { Route as ApiPublicV1ZillionaireKycBulkActionRouteImport } from './routes/api/public/v1/zillionaire/kyc/bulk-action'
 import { Route as ApiPublicV1ZillionaireKycCountryRulesRouteImport } from './routes/api/public/v1/zillionaire/kyc/country-rules'
 import { Route as ApiPublicV1ZillionaireKycDetailRouteImport } from './routes/api/public/v1/zillionaire/kyc/detail'
+import { Route as ApiPublicV1ZillionaireKycExportCaseRouteImport } from './routes/api/public/v1/zillionaire/kyc/export-case'
+import { Route as ApiPublicV1ZillionaireKycOperationsRouteImport } from './routes/api/public/v1/zillionaire/kyc/operations'
 import { Route as ApiPublicV1ZillionaireKycPayoutAccountsRouteImport } from './routes/api/public/v1/zillionaire/kyc/payout-accounts'
 import { Route as ApiPublicV1ZillionaireKycQueueRouteImport } from './routes/api/public/v1/zillionaire/kyc/queue'
 import { Route as ApiPublicV1ZillionaireKycRevealRouteImport } from './routes/api/public/v1/zillionaire/kyc/reveal'
@@ -1849,6 +1852,12 @@ const ApiPublicV1ZillionaireErrorsIndexRoute =
     path: '/api/public/v1/zillionaire/errors/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireKycBulkActionRoute =
+  ApiPublicV1ZillionaireKycBulkActionRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/bulk-action',
+    path: '/api/public/v1/zillionaire/kyc/bulk-action',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireKycCountryRulesRoute =
   ApiPublicV1ZillionaireKycCountryRulesRouteImport.update({
     id: '/api/public/v1/zillionaire/kyc/country-rules',
@@ -1859,6 +1868,18 @@ const ApiPublicV1ZillionaireKycDetailRoute =
   ApiPublicV1ZillionaireKycDetailRouteImport.update({
     id: '/api/public/v1/zillionaire/kyc/detail',
     path: '/api/public/v1/zillionaire/kyc/detail',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireKycExportCaseRoute =
+  ApiPublicV1ZillionaireKycExportCaseRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/export-case',
+    path: '/api/public/v1/zillionaire/kyc/export-case',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireKycOperationsRoute =
+  ApiPublicV1ZillionaireKycOperationsRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/operations',
+    path: '/api/public/v1/zillionaire/kyc/operations',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ZillionaireKycPayoutAccountsRoute =
@@ -2730,8 +2751,11 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
+  '/api/public/v1/zillionaire/kyc/bulk-action': typeof ApiPublicV1ZillionaireKycBulkActionRoute
   '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
   '/api/public/v1/zillionaire/kyc/detail': typeof ApiPublicV1ZillionaireKycDetailRoute
+  '/api/public/v1/zillionaire/kyc/export-case': typeof ApiPublicV1ZillionaireKycExportCaseRoute
+  '/api/public/v1/zillionaire/kyc/operations': typeof ApiPublicV1ZillionaireKycOperationsRoute
   '/api/public/v1/zillionaire/kyc/payout-accounts': typeof ApiPublicV1ZillionaireKycPayoutAccountsRoute
   '/api/public/v1/zillionaire/kyc/queue': typeof ApiPublicV1ZillionaireKycQueueRoute
   '/api/public/v1/zillionaire/kyc/reveal': typeof ApiPublicV1ZillionaireKycRevealRoute
@@ -3099,8 +3123,11 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
+  '/api/public/v1/zillionaire/kyc/bulk-action': typeof ApiPublicV1ZillionaireKycBulkActionRoute
   '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
   '/api/public/v1/zillionaire/kyc/detail': typeof ApiPublicV1ZillionaireKycDetailRoute
+  '/api/public/v1/zillionaire/kyc/export-case': typeof ApiPublicV1ZillionaireKycExportCaseRoute
+  '/api/public/v1/zillionaire/kyc/operations': typeof ApiPublicV1ZillionaireKycOperationsRoute
   '/api/public/v1/zillionaire/kyc/payout-accounts': typeof ApiPublicV1ZillionaireKycPayoutAccountsRoute
   '/api/public/v1/zillionaire/kyc/queue': typeof ApiPublicV1ZillionaireKycQueueRoute
   '/api/public/v1/zillionaire/kyc/reveal': typeof ApiPublicV1ZillionaireKycRevealRoute
@@ -3470,8 +3497,11 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
+  '/api/public/v1/zillionaire/kyc/bulk-action': typeof ApiPublicV1ZillionaireKycBulkActionRoute
   '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
   '/api/public/v1/zillionaire/kyc/detail': typeof ApiPublicV1ZillionaireKycDetailRoute
+  '/api/public/v1/zillionaire/kyc/export-case': typeof ApiPublicV1ZillionaireKycExportCaseRoute
+  '/api/public/v1/zillionaire/kyc/operations': typeof ApiPublicV1ZillionaireKycOperationsRoute
   '/api/public/v1/zillionaire/kyc/payout-accounts': typeof ApiPublicV1ZillionaireKycPayoutAccountsRoute
   '/api/public/v1/zillionaire/kyc/queue': typeof ApiPublicV1ZillionaireKycQueueRoute
   '/api/public/v1/zillionaire/kyc/reveal': typeof ApiPublicV1ZillionaireKycRevealRoute
@@ -3842,8 +3872,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/pricing'
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
+    | '/api/public/v1/zillionaire/kyc/bulk-action'
     | '/api/public/v1/zillionaire/kyc/country-rules'
     | '/api/public/v1/zillionaire/kyc/detail'
+    | '/api/public/v1/zillionaire/kyc/export-case'
+    | '/api/public/v1/zillionaire/kyc/operations'
     | '/api/public/v1/zillionaire/kyc/payout-accounts'
     | '/api/public/v1/zillionaire/kyc/queue'
     | '/api/public/v1/zillionaire/kyc/reveal'
@@ -4211,8 +4244,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/pricing'
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
+    | '/api/public/v1/zillionaire/kyc/bulk-action'
     | '/api/public/v1/zillionaire/kyc/country-rules'
     | '/api/public/v1/zillionaire/kyc/detail'
+    | '/api/public/v1/zillionaire/kyc/export-case'
+    | '/api/public/v1/zillionaire/kyc/operations'
     | '/api/public/v1/zillionaire/kyc/payout-accounts'
     | '/api/public/v1/zillionaire/kyc/queue'
     | '/api/public/v1/zillionaire/kyc/reveal'
@@ -4581,8 +4617,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/pricing'
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
+    | '/api/public/v1/zillionaire/kyc/bulk-action'
     | '/api/public/v1/zillionaire/kyc/country-rules'
     | '/api/public/v1/zillionaire/kyc/detail'
+    | '/api/public/v1/zillionaire/kyc/export-case'
+    | '/api/public/v1/zillionaire/kyc/operations'
     | '/api/public/v1/zillionaire/kyc/payout-accounts'
     | '/api/public/v1/zillionaire/kyc/queue'
     | '/api/public/v1/zillionaire/kyc/reveal'
@@ -4930,8 +4969,11 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireConfigPricingRoute: typeof ApiPublicV1ZillionaireConfigPricingRoute
   ApiPublicV1ZillionaireConfigSettingsRoute: typeof ApiPublicV1ZillionaireConfigSettingsRoute
   ApiPublicV1ZillionaireEmailTestRoute: typeof ApiPublicV1ZillionaireEmailTestRoute
+  ApiPublicV1ZillionaireKycBulkActionRoute: typeof ApiPublicV1ZillionaireKycBulkActionRoute
   ApiPublicV1ZillionaireKycCountryRulesRoute: typeof ApiPublicV1ZillionaireKycCountryRulesRoute
   ApiPublicV1ZillionaireKycDetailRoute: typeof ApiPublicV1ZillionaireKycDetailRoute
+  ApiPublicV1ZillionaireKycExportCaseRoute: typeof ApiPublicV1ZillionaireKycExportCaseRoute
+  ApiPublicV1ZillionaireKycOperationsRoute: typeof ApiPublicV1ZillionaireKycOperationsRoute
   ApiPublicV1ZillionaireKycPayoutAccountsRoute: typeof ApiPublicV1ZillionaireKycPayoutAccountsRoute
   ApiPublicV1ZillionaireKycQueueRoute: typeof ApiPublicV1ZillionaireKycQueueRoute
   ApiPublicV1ZillionaireKycRevealRoute: typeof ApiPublicV1ZillionaireKycRevealRoute
@@ -6880,6 +6922,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireErrorsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/kyc/bulk-action': {
+      id: '/api/public/v1/zillionaire/kyc/bulk-action'
+      path: '/api/public/v1/zillionaire/kyc/bulk-action'
+      fullPath: '/api/public/v1/zillionaire/kyc/bulk-action'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycBulkActionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/kyc/country-rules': {
       id: '/api/public/v1/zillionaire/kyc/country-rules'
       path: '/api/public/v1/zillionaire/kyc/country-rules'
@@ -6892,6 +6941,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/zillionaire/kyc/detail'
       fullPath: '/api/public/v1/zillionaire/kyc/detail'
       preLoaderRoute: typeof ApiPublicV1ZillionaireKycDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/kyc/export-case': {
+      id: '/api/public/v1/zillionaire/kyc/export-case'
+      path: '/api/public/v1/zillionaire/kyc/export-case'
+      fullPath: '/api/public/v1/zillionaire/kyc/export-case'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycExportCaseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/kyc/operations': {
+      id: '/api/public/v1/zillionaire/kyc/operations'
+      path: '/api/public/v1/zillionaire/kyc/operations'
+      fullPath: '/api/public/v1/zillionaire/kyc/operations'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycOperationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/zillionaire/kyc/payout-accounts': {
@@ -8180,9 +8243,15 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ZillionaireConfigSettingsRoute:
     ApiPublicV1ZillionaireConfigSettingsRoute,
   ApiPublicV1ZillionaireEmailTestRoute: ApiPublicV1ZillionaireEmailTestRoute,
+  ApiPublicV1ZillionaireKycBulkActionRoute:
+    ApiPublicV1ZillionaireKycBulkActionRoute,
   ApiPublicV1ZillionaireKycCountryRulesRoute:
     ApiPublicV1ZillionaireKycCountryRulesRoute,
   ApiPublicV1ZillionaireKycDetailRoute: ApiPublicV1ZillionaireKycDetailRoute,
+  ApiPublicV1ZillionaireKycExportCaseRoute:
+    ApiPublicV1ZillionaireKycExportCaseRoute,
+  ApiPublicV1ZillionaireKycOperationsRoute:
+    ApiPublicV1ZillionaireKycOperationsRoute,
   ApiPublicV1ZillionaireKycPayoutAccountsRoute:
     ApiPublicV1ZillionaireKycPayoutAccountsRoute,
   ApiPublicV1ZillionaireKycQueueRoute: ApiPublicV1ZillionaireKycQueueRoute,

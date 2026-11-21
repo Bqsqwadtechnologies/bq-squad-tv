@@ -15,6 +15,7 @@ const schema = z
     modules: z
       .array(z.enum(ZILLIONAIRE_MODULES as [string, ...string[]]))
       .max(ZILLIONAIRE_MODULES.length),
+    complianceExpiresAt: z.string().optional(),
     reason: z.string().trim().min(3).max(1000),
   })
   .superRefine((value, context) => {
@@ -106,6 +107,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/perm
                       zillionaireModules: modules,
                       adminModules: modules,
                       roleTags,
+                      complianceExpiresAt: body.complianceExpiresAt || null,
                       permissionsUpdatedAt: now,
                       permissionsUpdatedBy: actor.uid,
                     }),
@@ -115,6 +117,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/perm
                       "zillionaireModules",
                       "adminModules",
                       "roleTags",
+                      "complianceExpiresAt",
                       "permissionsUpdatedAt",
                       "permissionsUpdatedBy",
                     ],
@@ -133,7 +136,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/perm
             reason: body.reason,
             metadata: { modules },
           });
-          return Response.json({ updated: true, uid, modules });
+          return Response.json({ updated: true, uid, modules, complianceExpiresAt: body.complianceExpiresAt || null });
         } catch (error) {
           return errorBody(error);
         }

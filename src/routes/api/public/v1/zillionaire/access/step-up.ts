@@ -23,6 +23,7 @@ const schema = z.object({
     "permanent_delete",
     "team_manage",
     "payout_settlement",
+    "kyc_case_export",
   ]),
   reason: z.string().trim().min(3).max(500),
 });

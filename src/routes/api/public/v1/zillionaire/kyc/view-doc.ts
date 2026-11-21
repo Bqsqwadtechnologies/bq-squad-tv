@@ -1,3 +1,4 @@
+import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { createFileRoute } from "@tanstack/react-router";
 import * as crypto from "node:crypto";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
@@ -6,7 +7,7 @@ import { resolvePlatformAccess } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
 import { isSafeStoragePath } from "@/lib/server/storage/security";
 
-const MAX_VIEWER_TTL_MS = 60 * 60 * 1000; // 1 hour max link validity
+const MAX_VIEWER_TTL_MS = 65 * 1000; // 60 seconds link validity (+5s clock skew tolerance)
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/view-doc")({
   server: {
@@ -28,12 +29,18 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/view-doc")(
           const hasKycAccess =
             access.isZillionaireOwner ||
             access.zillionaireModules.some((m) =>
-              ["security", "producers", "providers", "finance"].includes(m)
+              ["security", "compliance", "producers", "providers"].includes(m)
             );
 
           if (!hasKycAccess) {
             throw new ApiError(403, "FORBIDDEN", "You do not have permission to view KYC documents.");
           }
+
+          // Rate limit document views per reviewer (max 30 views / min)
+          await enforceRateLimit(fs, "kyc-view-doc:" + user.uid, {
+            limit: 30,
+            windowMs: 60_000,
+          });
 
           const url = new URL(request.url);
           const path = url.searchParams.get("path");
@@ -117,7 +124,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/view-doc")(
             // Storage client fallback if local/mock
           }
 
-          const watermarkText = `CONFIDENTIAL BQ SQWAD TV • REVIEWER ${user.uid} • ${new Date().toISOString()} • IP ${clientIp}`;
+          const watermarkText = `CONFIDENTIAL BQ SQWAD TV - REVIEWER ${user.uid} - ${new Date().toISOString()} - IP ${clientIp}`;
 
           if (!fileBuffer) {
             // Return structured inspection metadata if physical file is mocked/pending live sync
@@ -142,8 +149,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/view-doc")(
             status: 200,
             headers: {
               "content-type": mimeType,
-              "content-disposition": `inline; filename="kyc_document"`,
-              "cache-control": "private, no-store, max-age=0",
+              "content-disposition": "inline; filename=kyc_watermarked_preview",
+              "x-content-type-options": "nosniff",
+              "cache-control": "private, no-cache, no-store, must-revalidate, max-age=0",
+              "pragma": "no-cache",
+              "expires": "0",
               "x-watermark": watermarkText,
             },
           });

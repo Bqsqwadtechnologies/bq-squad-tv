@@ -1,3 +1,8 @@
+import {
+  CANNED_REJECTION_REASONS,
+  computeSlaDueTime,
+  isSlaBreached,
+} from "@/lib/server/kyc/compliance";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
@@ -19,11 +24,22 @@ import {
 
 const actionSchema = z.object({
   uid: z.string().trim().min(1),
-  action: z.enum(["approve", "reject", "request_changes", "escalate", "force_rekyc"]),
+  action: z.enum([
+    "approve",
+    "reject",
+    "request_changes",
+    "escalate",
+    "force_rekyc",
+    "assign",
+    "add_note",
+  ]),
+  cannedReasonCode: z.string().trim().optional(),
   reason: z.string().trim().max(1000).optional(),
   notes: z.string().trim().max(2000).optional(),
   fieldComments: z.record(z.string()).optional(),
+  assignedReviewerUid: z.string().trim().max(128).optional(),
   escalatedTo: z.string().trim().max(128).optional(),
+  escalationReason: z.string().trim().max(1000).optional(),
 });
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
@@ -70,10 +86,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
           if (viewerSecret && profile.documentVaultPaths) {
             for (const [key, path] of Object.entries(profile.documentVaultPaths)) {
               try {
-                const signed = generateShortLivedViewerUrl(path, user.uid, 15);
+                const signed = generateShortLivedViewerUrl(path, user.uid);
                 signedDocuments[key] = {
                   label: key.replace(/_/g, " ").toUpperCase(),
-                  viewerUrl: `/api/public/v1/zillionaire/kyc/view-doc?path=${encodeURIComponent(path)}&reviewerUid=${encodeURIComponent(user.uid)}&expires=${signed.expires}&sig=${signed.signature}`,
+                  viewerUrl: signed.signedUrl,
                 };
               } catch (e) {
                 // skip if secret issue
@@ -84,8 +100,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
           let signedFaceCaptureUrl: string | null = null;
           if (viewerSecret && profile.faceCaptureVaultPath) {
             try {
-              const signed = generateShortLivedViewerUrl(profile.faceCaptureVaultPath, user.uid, 15);
-              signedFaceCaptureUrl = `/api/public/v1/zillionaire/kyc/view-doc?path=${encodeURIComponent(profile.faceCaptureVaultPath)}&reviewerUid=${encodeURIComponent(user.uid)}&expires=${signed.expires}&sig=${signed.signature}`;
+              const signed = generateShortLivedViewerUrl(profile.faceCaptureVaultPath, user.uid);
+              signedFaceCaptureUrl = signed.signedUrl;
             } catch (e) {
               // skip
             }
@@ -129,6 +145,15 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
             ok: true,
             profile: {
               ...profile,
+              assignedReviewerUid: profile.assignedReviewerUid ?? null,
+              assignedReviewerEmail: profile.assignedReviewerEmail ?? null,
+              assignedAt: profile.assignedAt ?? null,
+              slaDueAt: profile.slaDueAt ?? null,
+              isSlaBreached: isSlaBreached(profile.slaDueAt),
+              escalatedTo: profile.escalatedTo ?? null,
+              escalationReason: profile.escalationReason ?? null,
+              escalatedAt: profile.escalatedAt ?? null,
+              internalNotes: profile.internalNotes ?? [],
               signedDocuments,
               signedFaceCaptureUrl,
               automatedChecks: {
@@ -185,14 +210,132 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
           const body = await parseBody(request, actionSchema);
           const now = new Date().toISOString();
 
-          if (body.action === "reject" && (!body.reason || body.reason.trim().length < 3)) {
-            throw new ApiError(400, "REJECTION_REASON_REQUIRED", "A rejection reason of at least 3 characters is required.");
-          }
-
           const existingProfile = await getKycProfile(fs, body.uid);
           if (!existingProfile) {
             throw new ApiError(404, "PROFILE_NOT_FOUND", "KYC profile not found.");
           }
+
+          // Resolve canned rejection reason if supplied
+          let effectiveRejectionReason = body.reason || "";
+          if (body.cannedReasonCode && body.cannedReasonCode in CANNED_REJECTION_REASONS) {
+            effectiveRejectionReason = CANNED_REJECTION_REASONS[body.cannedReasonCode as keyof typeof CANNED_REJECTION_REASONS];
+          }
+
+          if (body.action === "reject" && (!effectiveRejectionReason || effectiveRejectionReason.trim().length < 3)) {
+            throw new ApiError(400, "REJECTION_REASON_REQUIRED", "A rejection reason of at least 3 characters or valid cannedReasonCode is required.");
+          }
+
+          if (body.action === "assign") {
+            const assignedUid = body.assignedReviewerUid || user.uid;
+            const assignedEmail = body.assignedReviewerUid ? "" : (user.email || "");
+            const slaDueAt = computeSlaDueTime(24);
+
+            await fs.patchDoc(`kycProfiles/${body.uid}`, {
+              assignedReviewerUid: assignedUid,
+              assignedReviewerEmail: assignedEmail,
+              assignedAt: now,
+              slaDueAt,
+              updatedAt: now,
+            });
+
+            await writeAuditLog(fs, {
+              action: "kyc.case_assigned",
+              actorUid: user.uid,
+              actorEmail: user.email || "",
+              targetType: "user",
+              targetId: body.uid,
+              reason: body.notes || `Case assigned to reviewer ${assignedUid} with 24h SLA`,
+              metadata: { assignedReviewerUid: assignedUid, slaDueAt },
+            });
+
+            return Response.json({
+              ok: true,
+              action: "assign",
+              assignedReviewerUid: assignedUid,
+              slaDueAt,
+              updatedAt: now,
+            });
+          }
+
+          if (body.action === "add_note") {
+            if (!body.notes || body.notes.trim().length < 2) {
+              throw new ApiError(400, "NOTE_REQUIRED", "Reviewer note text is required.");
+            }
+            const existingNotes = Array.isArray(existingProfile.internalNotes) ? existingProfile.internalNotes : [];
+            const newNote = {
+              note: body.notes.trim(),
+              authorUid: user.uid,
+              authorEmail: user.email || "",
+              createdAt: now,
+            };
+            const updatedNotes = [...existingNotes, newNote];
+
+            await fs.patchDoc(`kycProfiles/${body.uid}`, {
+              internalNotes: updatedNotes,
+              updatedAt: now,
+            });
+
+            await writeAuditLog(fs, {
+              action: "kyc.note_added",
+              actorUid: user.uid,
+              actorEmail: user.email || "",
+              targetType: "user",
+              targetId: body.uid,
+              reason: "Compliance reviewer recorded internal note on case file",
+            });
+
+            return Response.json({
+              ok: true,
+              action: "add_note",
+              internalNotes: updatedNotes,
+            });
+          }
+
+          if (body.action === "escalate") {
+            const targetEscalation = body.escalatedTo || "senior_compliance";
+            const escalationReason = body.escalationReason || body.reason || "Escalated for senior compliance review";
+
+            await fs.patchDoc(`kycProfiles/${body.uid}`, {
+              escalatedTo: targetEscalation,
+              escalationReason,
+              escalatedAt: now,
+              reviewerNotes: body.notes || escalationReason,
+              updatedAt: now,
+            });
+
+            const todayDate = now.slice(0, 10);
+            const statsPath = `reviewerDailyStats/${user.uid}_${todayDate}`;
+            const currentStats = await fs.getDoc(statsPath).catch(() => null);
+            await fs.setDoc(statsPath, {
+              reviewerUid: user.uid,
+              reviewerEmail: user.email || "",
+              date: todayDate,
+              reviewsCompleted: ((currentStats?.["reviewsCompleted"] as number) || 0) + 1,
+              approvals: (currentStats?.["approvals"] as number) || 0,
+              rejections: (currentStats?.["rejections"] as number) || 0,
+              escalations: ((currentStats?.["escalations"] as number) || 0) + 1,
+              lastActiveAt: now,
+            });
+
+            await writeAuditLog(fs, {
+              action: "kyc.case_escalated",
+              actorUid: user.uid,
+              actorEmail: user.email || "",
+              targetType: "user",
+              targetId: body.uid,
+              reason: escalationReason,
+              metadata: { escalatedTo: targetEscalation },
+            });
+
+            return Response.json({
+              ok: true,
+              action: "escalate",
+              escalatedTo: targetEscalation,
+              escalatedAt: now,
+            });
+          }
+
+
 
           let newStatus = existingProfile.kycStatus;
           if (body.action === "approve") newStatus = "approved";
@@ -282,7 +425,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
               uid: body.uid,
               reviewerUid: user.uid,
               status: "rejected",
-              reason: body.reason,
+              reason: effectiveRejectionReason,
               notes: body.notes,
             });
           } else {
@@ -295,6 +438,22 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/detail")({
               fieldComments: body.fieldComments || null,
               escalatedTo: body.action === "escalate" ? body.escalatedTo || "second_reviewer" : null,
               updatedAt: now,
+            });
+          }
+
+          if (body.action === "approve" || body.action === "reject") {
+            const todayDate = now.slice(0, 10);
+            const statsPath = `reviewerDailyStats/${user.uid}_${todayDate}`;
+            const currentStats = await fs.getDoc(statsPath).catch(() => null);
+            await fs.setDoc(statsPath, {
+              reviewerUid: user.uid,
+              reviewerEmail: user.email || "",
+              date: todayDate,
+              reviewsCompleted: ((currentStats?.["reviewsCompleted"] as number) || 0) + 1,
+              approvals: ((currentStats?.["approvals"] as number) || 0) + (body.action === "approve" ? 1 : 0),
+              rejections: ((currentStats?.["rejections"] as number) || 0) + (body.action === "reject" ? 1 : 0),
+              escalations: (currentStats?.["escalations"] as number) || 0,
+              lastActiveAt: now,
             });
           }
 

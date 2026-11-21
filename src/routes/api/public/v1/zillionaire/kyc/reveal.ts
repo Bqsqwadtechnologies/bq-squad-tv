@@ -1,3 +1,4 @@
+import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
@@ -37,12 +38,17 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/reveal")({
           const hasAccess =
             access.isZillionaireOwner ||
             access.zillionaireModules.some((m) =>
-              ["security", "compliance", "finance"].includes(m),
+              ["security", "compliance"].includes(m),
             );
 
           if (!hasAccess) {
             throw new ApiError(403, "FORBIDDEN", "Only compliance officers and platform owners can reveal sensitive KYC credentials.");
           }
+
+          await enforceRateLimit(fs, "kyc-reveal:" + user.uid, {
+            limit: 10,
+            windowMs: 60_000,
+          });
 
           const body = await parseBody(request, revealSchema);
 

@@ -791,3 +791,40 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
     - The first reviewer cannot approve a second time (fails closed with 400 `FOUR_EYES_DIFFERENT_REVIEWER`).
     - A second distinct reviewer must review and approve to finalize `kycStatus = "approved"` and unlock `payoutTier = 1`.
   - Verified with 10 unit and integration tests (`src/test/batch-c2-risk-tiers-limits.test.ts`), 104 passing tests overall, 368 routes verified, clean public-text scan, and clean production build.
+
+## Decision Record: Batch C3 — Compliance Role, Reviewer Workflows, SLA, 60-Second Watermarked Viewer, and Step-Up Case Export
+- **Date**: 2026-11-21
+- **Status**: Implemented and Verified
+- **Scope & Rationale**:
+  - Implemented delegated compliance module permission with expiring owner assignment (`src/lib/server/roles.ts`, `src/routes/api/public/v1/zillionaire/users/$uid/permissions.ts`):
+    - Separate permission module `compliance` from `finance` ensuring separation of duties.
+    - Owner can assign `compliance` to team members with an explicit expiry `complianceExpiresAt`.
+    - `resolvePlatformAccess` automatically filters out expired compliance permissions once the expiry has passed.
+  - Implemented Reviewer Operations & Workload SLA endpoint (`src/routes/api/public/v1/zillionaire/kyc/operations.ts`):
+    - Dictionary of standard canned rejection reasons.
+    - Real-time SLA breach tracking (24h target SLA), pending queue status, escalated cases count, and reviewer workload distribution.
+    - Per-reviewer daily review counts (`reviewerDailyStats`) recording completed reviews, approvals, rejections, and escalations.
+  - Enhanced Case Reviewer Workflows (`src/routes/api/public/v1/zillionaire/kyc/detail.ts`):
+    - Reviewer assignment (`action: "assign"`) with 24-hour SLA timer (`slaDueAt`) and audit event `kyc.case_assigned`.
+    - Internal case file reviewer notes (`action: "add_note"`) appending to `internalNotes` and logging `kyc.note_added`.
+    - Senior compliance escalation (`action: "escalate"`) updating `escalatedTo`, `escalationReason`, and logging `kyc.case_escalated`.
+    - Standardized canned rejection reasons via code lookup from `CANNED_REJECTION_REASONS`.
+    - Increments daily statistics per reviewer on final decisions.
+  - Implemented Bulk Reviewer Actions (`src/routes/api/public/v1/zillionaire/kyc/bulk-action.ts`):
+    - Bulk assign, bulk escalate, and bulk reject with audit trail.
+    - Bulk approve strictly honors four-eyes policy: high-risk applications are safely skipped from single-person bulk approvals to enforce dual-reviewer review.
+  - Watermarked 60-Second Document Viewer (`src/routes/api/public/v1/zillionaire/kyc/view-doc.ts`, `src/lib/server/kyc/storage.ts`):
+    - Enforces 60-second HMAC signed URLs strictly bound to the authenticated reviewer UID.
+    - Anti-download HTTP headers: `x-content-type-options: nosniff`, `cache-control: private, no-cache, no-store, must-revalidate, max-age=0`, `pragma: no-cache`, and `x-watermark` overlay.
+    - Rejects expired links (410 `LINK_EXPIRED`) or links exceeding maximum TTL.
+    - Mandatory audit logging on every document inspection (`kyc.document_viewed`).
+    - Enforced per-reviewer rate limit (30 views/min).
+  - Masked Credential Reveal Auditing (`src/routes/api/public/v1/zillionaire/kyc/reveal.ts`):
+    - Strict compliance/security module restriction (finance excluded).
+    - Requires mandatory explanation (min 3 chars).
+    - Logs audit `kyc_sensitive_field_revealed` with metadata and enforces rate limiting (10 reveals/min).
+  - Owner Step-Up Re-Authentication Case Export (`src/routes/api/public/v1/zillionaire/kyc/export-case.ts`, `src/lib/server/zillionaire-access.ts`):
+    - Complete KYC case file export restricted exclusively to verified Zillionaire platform owner.
+    - Enforces step-up MFA/re-authentication token with scope `kyc_case_export`.
+    - Mandatory audit logging (`kyc.case_file_exported`) with legal justification reason.
+  - Verified with 18 dedicated tests (`src/test/batch-c3-compliance-reviewers-sla-stepup.test.ts`), 122 passing tests overall across 20 test files, 371 routes verified, clean public-text scan, and clean production build.

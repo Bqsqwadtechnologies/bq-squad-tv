@@ -200,9 +200,18 @@ export async function resolvePlatformAccess(
       );
     }
   }
-  const configuredScopes = rawModules.filter((scope): scope is ZillionaireModule =>
-    ZILLIONAIRE_MODULES.includes(scope as ZillionaireModule),
-  );
+  const nowMs = Date.now();
+  const complianceExpiresAt =
+    typeof user?.["complianceExpiresAt"] === "string"
+      ? new Date(user["complianceExpiresAt"]).getTime()
+      : null;
+  const isComplianceExpired =
+    complianceExpiresAt !== null && !isNaN(complianceExpiresAt) && nowMs > complianceExpiresAt;
+
+  const configuredScopes = rawModules.filter((scope): scope is ZillionaireModule => {
+    if (scope === "compliance" && isComplianceExpired) return false;
+    return ZILLIONAIRE_MODULES.includes(scope as ZillionaireModule);
+  });
   const activeModules = isZillionaireOwner ? ZILLIONAIRE_MODULES : [...new Set(configuredScopes)];
 
   return {

@@ -303,7 +303,8 @@ export async function reviewKycProfile(
     kycReviewedAt: now,
     kycReviewedBy: input.reviewerUid,
     kycRejectionReason: input.status === "rejected" ? input.reason : undefined,
-    kycHistory: [...profile.kycHistory, entry],
+    rejectionReason: input.status === "rejected" ? input.reason : undefined,
+    kycHistory: [...(Array.isArray(profile.kycHistory) ? profile.kycHistory : []), entry],
   };
 
   await fs.setDoc(`kycProfiles/${input.uid}`, updated as any);

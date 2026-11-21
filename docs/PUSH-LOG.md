@@ -123,3 +123,5 @@ PUSH BADGE #72 SUCCESSFUL — v6-05-B8 — Verification and payout master regres
 PUSH BADGE #73 SUCCESSFUL — v6-05-C1 — Verification provider adapter and automated checks (clean KycVerifier interface, ManualKycVerifier default, ExternalKycVerifierAdapter with non-blocking fallback to manual review on timeout or error, owner final approval authority, verifierResult persistence, Zillionaire automated checks readout, and 94 passing tests).
 
 PUSH BADGE #74 SUCCESSFUL — v6-05-C2 — Risk tiers, cumulative velocity limits, enhanced Tier 2 verification, automated risk scoring, and four-eyes dual reviewer approval for high-risk KYC submissions.
+
+PUSH BADGE #75 SUCCESSFUL — v6-05-C3 — Compliance role, reviewer operations, 24h SLA timers, reviewer daily counts, canned rejection reasons, bulk actions with four-eyes guardrails, watermarked 60-second document viewer with anti-download cache headers & rate limits, masked field reveal auditing, and owner step-up MFA re-authentication for KYC case file export.
