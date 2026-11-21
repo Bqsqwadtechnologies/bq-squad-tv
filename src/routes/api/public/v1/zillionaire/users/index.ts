@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { requireZillionaireModule } from "@/lib/server/roles";
+import { ensureAccountId } from "@/lib/server/account-id";
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
   server: {
@@ -56,21 +57,26 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
             );
           }
 
-          return Response.json({
-            users: filtered.map((u) => ({
-              id: u.__id || u["id"] || u["uid"],
-              accountId: u["accountId"] || null,
-              email: u["email"] || "",
-              displayName: u["displayName"] || "Viewer",
-              phone: u["phone"] || null,
-              walletId: u["walletId"] || null,
-              accountStatus: u["accountStatus"] || (u["suspended"] ? "SUSPENDED" : "ACTIVE"),
-              suspended: Boolean(u["suspended"] || u["accountStatus"] === "SUSPENDED" || u["accountStatus"] === "BANNED"),
-              createdAt: u["createdAt"] || null,
-              roleTags: Array.isArray(u["roleTags"]) ? u["roleTags"] : [],
-              riskScore: Number(u["riskScore"] || 0),
-            })),
-          });
+          const users = await Promise.all(
+            filtered.map(async (u) => {
+              const uid = String(u.__id || u["id"] || u["uid"] || "");
+              const accountId = uid ? await ensureAccountId(fs, uid, u) : null;
+              return {
+                id: uid,
+                accountId,
+                email: u["email"] || "",
+                displayName: u["displayName"] || "Viewer",
+                phone: u["phone"] || null,
+                walletId: u["walletId"] || null,
+                accountStatus: u["accountStatus"] || (u["suspended"] ? "SUSPENDED" : "ACTIVE"),
+                suspended: Boolean(u["suspended"] || u["accountStatus"] === "SUSPENDED" || u["accountStatus"] === "BANNED"),
+                createdAt: u["createdAt"] || null,
+                roleTags: Array.isArray(u["roleTags"]) ? u["roleTags"] : [],
+                riskScore: Number(u["riskScore"] || 0),
+              };
+            }),
+          );
+          return Response.json({ users });
         } catch (err: unknown) {
           return errorBody(err);
         }
