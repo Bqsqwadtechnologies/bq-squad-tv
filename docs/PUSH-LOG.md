@@ -130,3 +130,10 @@ PUSH BADGE #75 SUCCESSFUL — v6-05-C3 — Compliance role, reviewer operations,
   - Local commit: `4871229145775a0386aa7b9b867e672c83689722`
   - Remote SHA on `main`: `8b75eab0fea10f9e71b4a8dcb75bb8d5337a5df5`
   - Summary: Applicant UX polish, cross-device QR handoff, field help, compression, and support linkage. 142 tests passing across 22 test files.
+
+- **Batch C6** (2026-11-21):
+  - Summary: Role matrix, security auditing, IDOR tests, deny-by-default, four-eyes rules, tier thresholds, adapter fail-safes, and master regression checklist.
+  - Test Suite: 152 automated tests passing across 23 test files.
+  - Production Build: Passing cleanly.
+  - Public text scan: Passed cleanly.
+  - Status: Prompt V6-05 (Batches A1-A8, B1-B8, C1-C6) completely implemented and verified.

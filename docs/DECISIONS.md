@@ -895,3 +895,20 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - 10 dedicated automated tests in `src/test/batch-c5-applicant-ux.test.ts`.
   - 142 automated tests passing across 22 test files.
   - Clean production build with 384 route files and clean public text scan.
+
+### Batch C6 — Role Matrix, Security Auditing, Deny-by-Default Tests, and Master Checklist
+- **Goal**:
+  - Implement role-matrix and deny-by-default tests across all verification and payout routes.
+  - Verify 403 `KYC_NOT_APPROVED` enforcement across unsubmitted, pending, rejected, and expired states.
+  - Verify strict IDOR prevention ensuring applicants and providers can only read and mutate their own data.
+  - Verify short-lived, signed, and expiring vault URLs (never public, expiring signatures).
+  - Verify adapter failure graceful fallback to manual review without blocking applicant workflows.
+  - Verify four-eyes segregation of duties for high-risk applications requiring two distinct reviewers.
+  - Verify Tier 1 cumulative payout limits ($2,000 threshold requiring Tier 2 upgrade).
+  - Verify strict "KYC" terminology (zero instances of "KYB" anywhere in routes or public docs).
+  - Pass the entire 152-test test suite, `scan:public-text`, and production build.
+- **Verification**:
+  - 10 dedicated tests in `src/test/batch-c6-security-route-matrix-master.test.ts`.
+  - 152 automated tests passing across 23 test files.
+  - Clean production build with 380 route files and zero route duplicates.
+  - Clean `bun run scan:public-text`.
