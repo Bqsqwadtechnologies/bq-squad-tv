@@ -203,35 +203,42 @@ export function ProfileAccountHub() {
               <ChevronRight size={14} className="text-slate-500" />
             </Link>
 
-            {/* Consoles Section */}
-            <div className="pt-2 pb-1 border-t border-white/10 mt-2">
-              <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                Consoles
-              </span>
-              <a
-                href="/producer"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between rounded-xl px-3 py-2 text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
-              >
-                <span className="flex items-center gap-2.5 font-medium">
-                  <Clapperboard size={15} className="text-cyan-400" />
-                  <span>Producer Console</span>
+            {/* Console shortcuts appear only when the verified account has the matching role. */}
+            {(account.isOwner ||
+              (account.roles?.includes("producer") && account.producerPlanActive) ||
+              account.roles?.includes("provider")) ? (
+              <div className="pt-2 pb-1 border-t border-white/10 mt-2">
+                <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  Consoles
                 </span>
-                <ChevronRight size={13} className="text-slate-500" />
-              </a>
-
-              <a
-                href="/provider"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between rounded-xl px-3 py-2 text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
-              >
-                <span className="flex items-center gap-2.5 font-medium">
-                  <Radio size={15} className="text-indigo-400" />
-                  <span>Provider Console</span>
-                </span>
-                <ChevronRight size={13} className="text-slate-500" />
-              </a>
-            </div>
+                {account.isOwner || (account.roles?.includes("producer") && account.producerPlanActive) ? (
+                  <a
+                    href="/producer"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center justify-between rounded-xl px-3 py-2 text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
+                  >
+                    <span className="flex items-center gap-2.5 font-medium">
+                      <Clapperboard size={15} className="text-cyan-400" />
+                      <span>Producer Console</span>
+                    </span>
+                    <ChevronRight size={13} className="text-slate-500" />
+                  </a>
+                ) : null}
+                {account.isOwner || account.roles?.includes("provider") ? (
+                  <a
+                    href="/provider"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center justify-between rounded-xl px-3 py-2 text-slate-200 transition hover:bg-white/10 hover:text-cyan-300"
+                  >
+                    <span className="flex items-center gap-2.5 font-medium">
+                      <Radio size={15} className="text-indigo-400" />
+                      <span>Provider Console</span>
+                    </span>
+                    <ChevronRight size={13} className="text-slate-500" />
+                  </a>
+                ) : null}
+              </div>
+            ) : null}
 
             {/* Sign Out */}
             <div className="pt-2 border-t border-white/10 mt-2">
