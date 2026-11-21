@@ -280,15 +280,37 @@ export function getPaystackTopup(
     );
 
   if (packageId === "custom") {
+    const minimums = config["walletTopupMinimumMinorByCurrency"];
+    const configuredMinimum =
+      minimums && typeof minimums === "object" && !Array.isArray(minimums)
+        ? (minimums as Record<string, unknown>)[currency]
+        : null;
+    // ₦200 is a legacy NGN-only minimum. Never apply naira minor units to
+    // another currency; non-NGN currencies require an explicit configured minimum.
+    const minimumMinor =
+      typeof configuredMinimum === "number" &&
+      Number.isSafeInteger(configuredMinimum) &&
+      configuredMinimum > 0
+        ? configuredMinimum
+        : currency === "NGN"
+          ? 20000
+          : null;
+    if (minimumMinor === null) {
+      throw new ApiError(
+        400,
+        "TOPUP_CURRENCY_NOT_CONFIGURED",
+        "Custom top-ups are not configured for your wallet currency yet.",
+      );
+    }
     if (
       typeof customAmountMinor !== "number" ||
       !Number.isSafeInteger(customAmountMinor) ||
-      customAmountMinor < 20000
+      customAmountMinor < minimumMinor
     ) {
       throw new ApiError(
         400,
         "TOPUP_MINIMUM_REQUIRED",
-        "The minimum custom wallet top-up is ₦200.",
+        "Enter an amount at or above the minimum for your wallet currency.",
       );
     }
     return {
