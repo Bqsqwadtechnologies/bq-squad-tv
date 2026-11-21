@@ -59,7 +59,7 @@ export function GoogleSignInButton({
       if (!response.ok) throw new Error("HTTP " + response.status);
       const cfg = (await response.json()) as { googleClientId?: string; googleConfigured?: boolean };
       const nextId = cfg.googleClientId?.trim() ?? "";
-      cachedGoogleClientId = nextId;
+      cachedGoogleClientId = nextId || null;
       setClientId(nextId);
       setConfigState(nextId && cfg.googleConfigured !== false ? "ready" : "missing");
     } catch {
