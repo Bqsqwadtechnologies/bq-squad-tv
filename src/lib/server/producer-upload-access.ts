@@ -47,5 +47,17 @@ export async function requireAuthorizedChannelUpload(
       "The channel owner must have an active, verified producer account before uploads are accepted.",
     );
   }
+
+  // A legacy producer approval flag is not sufficient: publishing requires the
+  // current KYC case itself to have reached the approved state.
+  const kycProfile = await fs.getDoc("kycProfiles/" + ownerUid);
+  if (kycProfile?.["kycStatus"] !== "approved") {
+    throw new ApiError(
+      403,
+      "KYC_NOT_APPROVED",
+      "Complete identity verification and wait for approval before uploading or publishing content.",
+    );
+  }
+
   await requireChannelPermission(fs, channelId, user.uid, "video.upload");
 }
