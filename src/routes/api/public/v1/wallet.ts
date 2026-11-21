@@ -11,9 +11,13 @@ export const Route = createFileRoute("/api/public/v1/wallet")({
           const { user } = await requireVerifiedViewer(request);
           const fs = await Firestore.create();
           const wallet = await getWallet(fs, user.uid);
+          const profile = await fs.getDoc("users/" + user.uid);
+          const accountId = typeof profile?.["accountId"] === "string" ? profile["accountId"] : null;
           return Response.json(
             {
               balanceMinor: wallet.balanceMinor,
+              accountId,
+              countryCode: profile?.["countryCode"] ?? null,
               countryCurrency: wallet.currency,
               currency: wallet.currency,
               dailySpendLimitMinor: wallet.dailySpendLimitMinor,
