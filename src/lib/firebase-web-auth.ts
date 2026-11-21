@@ -232,11 +232,7 @@ export async function getWebAuthHeaders(idToken: string): Promise<Record<string,
   };
 }
 
-export async function getWebAccount(): Promise<{
-  uid: string;
-  email: string | null;
-  emailVerified: boolean;
-} | null> {
+export async function getWebAccount(): Promise<ConsoleAccount | null> {
   const idToken = await getActiveWebIdToken();
   if (!idToken) return null;
   const response = await fetch("/api/public/v1/auth/web/me", {
