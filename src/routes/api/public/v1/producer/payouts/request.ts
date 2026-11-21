@@ -22,6 +22,10 @@ export const Route = createFileRoute("/api/public/v1/producer/payouts/request")(
           const currency = requireCurrency(body.currency);
           const fs = await Firestore.create();
           await requirePlatformRole(fs, user, "producer");
+          const kycDoc = await fs.getDoc(`kycProfiles/${user.uid}`);
+          if (kycDoc?.["kycStatus"] !== "approved") {
+            throw new ApiError(403, "KYC_NOT_APPROVED", "An approved identity verification (KYC) profile is required before requesting payouts.");
+          }
           await enforceRateLimit(fs, "producer-payout-request:" + user.uid, {
             limit: 3,
             windowMs: 60 * 60_000,

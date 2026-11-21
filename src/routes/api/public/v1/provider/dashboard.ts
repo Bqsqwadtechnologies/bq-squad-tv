@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { errorBody } from "@/lib/server/api";
-import { requireProvider } from "@/lib/server/access";
+import { requireApprovedProvider } from "@/lib/server/access";
 
 export const Route = createFileRoute("/api/public/v1/provider/dashboard")({
   server: {
     handlers: {
       GET: async ({ request }) => {
         try {
-          const { fs, providerId } = await requireProvider(request);
+          const { fs, providerId } = await requireApprovedProvider(request);
 
           // Fetch provider document and channels
           const [providerDoc, providerChannels] = await Promise.all([

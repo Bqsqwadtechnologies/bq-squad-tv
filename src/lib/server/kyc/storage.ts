@@ -133,3 +133,30 @@ export function generateShortLivedViewerUrl(
     },
   };
 }
+
+/**
+ * Validates a viewer URL's HMAC-SHA256 signature against KYC_VAULT_SIGNING_SECRET.
+ */
+export function verifyViewerUrlSignature(
+  privateVaultPath: string,
+  reviewerUid: string,
+  expiresTimestampMs: number,
+  signature: string,
+): boolean {
+  const hmacSecret = process.env['KYC_VAULT_SIGNING_SECRET'];
+  if (!hmacSecret || Buffer.byteLength(hmacSecret, 'utf8') < 32) {
+    return false;
+  }
+  const expectedSig = crypto
+    .createHmac('sha256', hmacSecret)
+    .update(`${privateVaultPath}:${reviewerUid}:${expiresTimestampMs}`)
+    .digest('hex');
+
+  try {
+    const sigBuf = Buffer.from(signature, 'hex');
+    const expBuf = Buffer.from(expectedSig, 'hex');
+    return sigBuf.length === expBuf.length && crypto.timingSafeEqual(sigBuf, expBuf);
+  } catch {
+    return false;
+  }
+}

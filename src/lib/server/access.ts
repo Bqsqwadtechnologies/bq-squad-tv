@@ -224,3 +224,48 @@ export async function requireChannelPermission(
     access,
   };
 }
+
+/**
+ * Enforces that a producer or provider has an approved identity verification (KYC) record on file.
+ * Throws 403 KYC_NOT_APPROVED if unsubmitted, pending, needs_changes, or rejected.
+ */
+export async function requireApprovedKyc(
+  fs: Firestore,
+  uid: string,
+  role: "producer" | "provider" = "producer",
+): Promise<void> {
+  const kycDoc = await fs.getDoc(`kycProfiles/${uid}`);
+  const status = (kycDoc?.["kycStatus"] || "unsubmitted") as string;
+  if (status !== "approved") {
+    throw new ApiError(
+      403,
+      "KYC_NOT_APPROVED",
+      `Your identity verification is currently ${status}. Approved KYC is required before accessing console features or requesting payouts.`,
+    );
+  }
+}
+
+/**
+ * Producer with verified platform role AND approved KYC.
+ */
+export async function requireApprovedProducer(
+  request: Request,
+  existingFs?: Firestore,
+): Promise<ProducerContext> {
+  const ctx = await requireProducer(request, existingFs);
+  await requireApprovedKyc(ctx.fs, ctx.user.uid, "producer");
+  return ctx;
+}
+
+/**
+ * Provider with verified provider role AND approved KYC.
+ */
+export async function requireApprovedProvider(
+  request: Request,
+  targetProviderId?: string,
+  existingFs?: Firestore,
+): Promise<ProviderContext> {
+  const ctx = await requireProvider(request, targetProviderId, existingFs);
+  await requireApprovedKyc(ctx.fs, ctx.user.uid, "provider");
+  return ctx;
+}

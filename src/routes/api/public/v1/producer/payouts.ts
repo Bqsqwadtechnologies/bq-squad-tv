@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { requirePlatformRole } from "@/lib/server/roles";
+import { requireApprovedKyc } from "@/lib/server/access";
 
 export const Route = createFileRoute("/api/public/v1/producer/payouts")({
   server: {
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/api/public/v1/producer/payouts")({
           const user = await requireUser(request);
           const fs = await Firestore.create();
           await requirePlatformRole(fs, user, "producer");
+          await requireApprovedKyc(fs, user.uid, "producer");
           const rows = await fs.query("payouts", {
             filters: [{ field: "uid", op: "EQUAL", value: user.uid }],
             orderByField: "createdAt",

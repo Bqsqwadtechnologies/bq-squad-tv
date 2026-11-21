@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requirePlatformRole } from "@/lib/server/roles";
+import { requireApprovedKyc } from "@/lib/server/access";
 import { encryptProviderCredential } from "@/lib/server/streaming/provider-credentials";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { writeAuditLog } from "@/lib/server/audit";
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/api/public/v1/producer/channels")({
           const user = await requireUser(request);
           const fs = await Firestore.create();
           await requirePlatformRole(fs, user, "producer");
+          await requireApprovedKyc(fs, user.uid, "producer");
           const channels = await fs.query("channels", {
             filters: [{ field: "ownerUid", op: "EQUAL", value: user.uid }],
             limit: 100,

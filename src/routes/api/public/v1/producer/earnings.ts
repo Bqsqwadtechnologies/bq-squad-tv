@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { requirePlatformRole } from "@/lib/server/roles";
+import { requireApprovedKyc } from "@/lib/server/access";
 
 function minor(value: unknown): number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : 0;
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/api/public/v1/producer/earnings")({
           const user = await requireUser(request);
           const fs = await Firestore.create();
           await requirePlatformRole(fs, user, "producer");
+          await requireApprovedKyc(fs, user.uid, "producer");
           const [producer, ledger, payouts] = await Promise.all([
             fs.getDoc("producers/" + user.uid),
             fs.query("ledger", {

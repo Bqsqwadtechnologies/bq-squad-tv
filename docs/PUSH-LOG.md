@@ -101,3 +101,5 @@ PUSH BADGE #61 SUCCESSFUL — v6-05-A5 — Provider Corporate KYC verification A
 PUSH BADGE #62 SUCCESSFUL — v6-05-A6 — Camera capture with circular face guide, active liveness challenges (centre, blink, turn, smile), progress ring, ID card/passport corner framing with glare/light warnings, desktop phone handoff QR, photo review/retake, and producer verification integration.
 
 PUSH BADGE #63 SUCCESSFUL — v6-05-A7 — Zillionaire KYC review queue with Pending/Needs Changes/Approved/Rejected tabs, filters & search, copy-protected detail drawer, audited credential reveal with reason validation, zoom/rotate document and biometric viewer, automated checklist (ID/reg/age 18+/payout duplicate checks), and compliance decision actions with notifications and audit logs.
+
+PUSH BADGE #64 SUCCESSFUL — v6-05-A8 — KYC approval enforcement across producer/provider endpoints (403 KYC_NOT_APPROVED), signature verification in vault storage, 45 passing KYC unit & integration tests across 11 files (Batches A1–A8), clean production build and public-text scan.
