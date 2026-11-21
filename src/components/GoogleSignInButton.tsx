@@ -28,7 +28,6 @@ declare global {
 type ConfigState = "loading" | "ready" | "missing" | "error";
 type ButtonState = "idle" | "loading" | "ready" | "script-error" | "render-error";
 
-let cachedGoogleClientId: string | null = null;
 
 export function GoogleSignInButton({
   clientId: propClientId,
@@ -44,10 +43,8 @@ export function GoogleSignInButton({
   const elementRef = useRef<HTMLDivElement>(null);
   const onCredentialRef = useRef(onCredential);
   onCredentialRef.current = onCredential;
-  const [clientId, setClientId] = useState(propClientId ?? cachedGoogleClientId ?? "");
-  const [configState, setConfigState] = useState<ConfigState>(
-    propClientId || cachedGoogleClientId ? "ready" : "loading",
-  );
+  const [clientId, setClientId] = useState(propClientId ?? "");
+  const [configState, setConfigState] = useState<ConfigState>(propClientId ? "ready" : "loading");
   const [buttonState, setButtonState] = useState<ButtonState>("idle");
   const [retryNonce, setRetryNonce] = useState(0);
 
@@ -59,7 +56,6 @@ export function GoogleSignInButton({
       if (!response.ok) throw new Error("HTTP " + response.status);
       const cfg = (await response.json()) as { googleClientId?: string; googleConfigured?: boolean };
       const nextId = cfg.googleClientId?.trim() ?? "";
-      cachedGoogleClientId = nextId || null;
       setClientId(nextId);
       setConfigState(nextId && cfg.googleConfigured !== false ? "ready" : "missing");
     } catch {
@@ -72,11 +68,6 @@ export function GoogleSignInButton({
       const nextId = propClientId.trim();
       setClientId(nextId);
       setConfigState(nextId ? "ready" : "missing");
-      return;
-    }
-    if (cachedGoogleClientId !== null) {
-      setClientId(cachedGoogleClientId);
-      setConfigState(cachedGoogleClientId ? "ready" : "missing");
       return;
     }
     void loadConfig();
@@ -165,7 +156,6 @@ export function GoogleSignInButton({
           type="button"
           disabled={disabled || configState === "loading"}
           onClick={() => {
-            cachedGoogleClientId = null;
             const oldScript = document.querySelector<HTMLScriptElement>("script[data-google-identity='true']");
             if (oldScript && buttonState === "script-error") oldScript.remove();
             if (onRetry) onRetry();
