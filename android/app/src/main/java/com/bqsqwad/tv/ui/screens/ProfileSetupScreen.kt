@@ -4,6 +4,7 @@ import com.bqsqwad.tv.ui.ErrorMessages
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
+import androidx.compose.ui.Alignment
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
@@ -13,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import com.bqsqwad.tv.data.auth.AuthRepository
 import kotlinx.coroutines.launch
 import java.time.LocalDate
+import java.util.Locale
 
 @Composable
 fun ProfileSetupScreen(
@@ -23,14 +25,43 @@ fun ProfileSetupScreen(
     val uriHandler = LocalUriHandler.current
     var legalAccepted by remember { mutableStateOf(false) }
     var dob by remember { mutableStateOf("") }
+    val countryCodes = remember { Locale.getISOCountries().sorted() }
+    var countryCode by remember {
+        mutableStateOf(Locale.getDefault().country.takeIf { it in countryCodes } ?: "NG")
+    }
+    var countryMenuExpanded by remember { mutableStateOf(false) }
     var pin by remember { mutableStateOf("") }
     var message by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
         Text("A little about you", style = MaterialTheme.typography.headlineMedium)
-        Text("Enter your date of birth. Your content access is determined by the server.")
+        Text("Enter your country and date of birth. Your wallet currency follows your selected country.")
         Spacer(Modifier.height(16.dp))
+        Box {
+            OutlinedButton(
+                onClick = { countryMenuExpanded = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("Country: ${Locale("", countryCode).displayCountry}")
+            }
+            DropdownMenu(
+                expanded = countryMenuExpanded,
+                onDismissRequest = { countryMenuExpanded = false },
+                modifier = Modifier.heightIn(max = 320.dp),
+            ) {
+                countryCodes.forEach { code ->
+                    DropdownMenuItem(
+                        text = { Text(Locale("", code).displayCountry) },
+                        onClick = {
+                            countryCode = code
+                            countryMenuExpanded = false
+                        },
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(12.dp))
         OutlinedTextField(
             dob,
             { dob = it },
@@ -70,7 +101,7 @@ fun ProfileSetupScreen(
                     val date = LocalDate.parse(dob)
                     require(!date.isAfter(LocalDate.now())) { "Date of birth cannot be in the future." }
                     require(repository.acceptLegalPages()) { "Please accept the current Terms and Privacy Policy before continuing." }
-                    repository.completeProfile(date.toString(), pin.ifBlank { null })
+                    repository.completeProfile(date.toString(), pin.ifBlank { null }, countryCode)
                 }.onSuccess { response ->
                     if (response.profileComplete) {
                         onComplete(response.adultEligible)
