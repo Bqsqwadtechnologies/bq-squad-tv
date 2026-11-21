@@ -1,3 +1,5 @@
+import { KycCameraCapture, type CaptureMode } from "@/components/kyc/KycCameraCapture";
+import { Camera } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { KycCountryPicker } from "@/components/KycCountryPicker";
 import { KycPhoneVerification } from "@/components/KycPhoneVerification";
@@ -35,6 +37,18 @@ export interface ProducerKycFlowProps {
   initialCountry?: string;
 }
 
+
+function dataUrlToFile(dataUrl: string, filename: string): File {
+  const arr = dataUrl.split(",");
+  const mime = arr[0]?.match(/:(.*?);/)?.[1] || "image/jpeg";
+  const bstr = atob(arr[1] || "");
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+}
 export function ProducerKycFlow({
   onSuccess,
   onCancel,
@@ -80,6 +94,7 @@ export function ProducerKycFlow({
   const [declarationAccepted, setDeclarationAccepted] = useState(false);
 
   // Status & Draft
+  const [activeCameraMode, setActiveCameraMode] = useState<CaptureMode | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftSavedMessage, setDraftSavedMessage] = useState<string | null>(null);
@@ -349,6 +364,12 @@ export function ProducerKycFlow({
         }
       }
 
+      if (filesToUpload.length > 0 && evidenceUploadIds.length === 0) {
+        throw new Error("Document upload failed. Please verify your connection and try again.");
+      }
+      if (evidenceUploadIds.length === 0) {
+        throw new Error("Please upload or capture your required verification documents.");
+      }
       // Submit verification record with collected upload IDs
       const res = await fetch("/api/public/v1/producer/verification", {
         method: "POST",
@@ -358,7 +379,7 @@ export function ProducerKycFlow({
           entityType,
           legalName: legalName.trim(),
           businessName: entityType === "registered_business" ? businessName.trim() : undefined,
-          evidenceUploadIds: evidenceUploadIds.length > 0 ? evidenceUploadIds : [`doc_${Date.now()}`],
+          evidenceUploadIds,
           declarationAccepted: true,
           phone: verifiedPhone || undefined,
           phoneVerified,
@@ -778,7 +799,16 @@ export function ProducerKycFlow({
           {entityType === "individual" ? (
             <div className="space-y-3">
               <div className="rounded-xl border border-slate-700 bg-slate-800/40 p-4">
-                <label className="block text-xs font-semibold text-white">1. ID Document Front</label>
+                <div className="flex items-center justify-between">
+      <label className="block text-xs font-semibold text-white">1. ID Document Front</label>
+      <button
+        type="button"
+        onClick={() => setActiveCameraMode("id_card_front")}
+        className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
+      >
+        <Camera className="h-3.5 w-3.5" /> Capture with Camera
+      </button>
+    </div>
                 <input
                   type="file"
                   accept="application/pdf,image/jpeg,image/png,image/webp"
@@ -791,7 +821,16 @@ export function ProducerKycFlow({
               </div>
 
               <div className="rounded-xl border border-slate-700 bg-slate-800/40 p-4">
-                <label className="block text-xs font-semibold text-white">2. ID Document Back (if applicable)</label>
+                <div className="flex items-center justify-between">
+      <label className="block text-xs font-semibold text-white">2. ID Document Back (if applicable)</label>
+      <button
+        type="button"
+        onClick={() => setActiveCameraMode("id_card_back")}
+        className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
+      >
+        <Camera className="h-3.5 w-3.5" /> Capture with Camera
+      </button>
+    </div>
                 <input
                   type="file"
                   accept="application/pdf,image/jpeg,image/png,image/webp"
@@ -804,7 +843,16 @@ export function ProducerKycFlow({
               </div>
 
               <div className="rounded-xl border border-slate-700 bg-slate-800/40 p-4">
-                <label className="block text-xs font-semibold text-white">3. Selfie Holding ID Document</label>
+                <div className="flex items-center justify-between">
+      <label className="block text-xs font-semibold text-white">3. Face Liveness & Selfie Verification</label>
+      <button
+        type="button"
+        onClick={() => setActiveCameraMode("face_liveness")}
+        className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
+      >
+        <Camera className="h-3.5 w-3.5" /> Start Face Liveness
+      </button>
+    </div>
                 <p className="text-xs text-slate-400">Ensure your face and the ID details are both clearly visible.</p>
                 <input
                   type="file"
@@ -922,6 +970,23 @@ export function ProducerKycFlow({
           )}
         </div>
       </div>
+      {activeCameraMode && (
+        <KycCameraCapture
+          mode={activeCameraMode}
+          onCapture={(result) => {
+            if (activeCameraMode === "id_card_front") {
+              setIdFrontFile(dataUrlToFile(result.dataUrl, "id-front.jpg"));
+            } else if (activeCameraMode === "id_card_back") {
+              setIdBackFile(dataUrlToFile(result.dataUrl, "id-back.jpg"));
+            } else if (activeCameraMode === "face_liveness") {
+              setSelfieFile(dataUrlToFile(result.dataUrl, "face-liveness.jpg"));
+            }
+            setActiveCameraMode(null);
+          }}
+          onUploadFileInstead={() => setActiveCameraMode(null)}
+          onClose={() => setActiveCameraMode(null)}
+        />
+      )}
     </div>
   );
 }

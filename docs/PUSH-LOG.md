@@ -97,3 +97,5 @@ PUSH BADGE #59 SUCCESSFUL — v6-05-A1-A3 — Connected KYC persistence and auth
 PUSH BADGE #60 SUCCESSFUL — v6-05-A4 — Producer KYC onboarding flow with individual (18+ age enforcement, verified phone, residential address, ID front/back, selfie) and business (company registration, tax ID, business address, director details, certificate) paths, draft auto-save/resume, country-specific rules, fuzzy payout name matching, and authenticated submission.
 
 PUSH BADGE #61 SUCCESSFUL — v6-05-A5 — Provider Corporate KYC verification API and draft endpoints with mandatory business-domain email verification, corporate registration/tax format validation, representative identification, fuzzy corporate payout account name matching, and private vault upload validation.
+
+PUSH BADGE #62 SUCCESSFUL — v6-05-A6 — Camera capture with circular face guide, active liveness challenges (centre, blink, turn, smile), progress ring, ID card/passport corner framing with glare/light warnings, desktop phone handoff QR, photo review/retake, and producer verification integration.
