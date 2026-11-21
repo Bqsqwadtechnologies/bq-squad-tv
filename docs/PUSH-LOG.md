@@ -126,3 +126,7 @@ PUSH BADGE #74 SUCCESSFUL — v6-05-C2 — Risk tiers, cumulative velocity limit
 
 PUSH BADGE #75 SUCCESSFUL — v6-05-C3 — Compliance role, reviewer operations, 24h SLA timers, reviewer daily counts, canned rejection reasons, bulk actions with four-eyes guardrails, watermarked 60-second document viewer with anti-download cache headers & rate limits, masked field reveal auditing, and owner step-up MFA re-authentication for KYC case file export.
 - Batch C4: remote `419f152f023edb62384ba21d1ac6c3b19550de7e` (local `80b33eea37c444d53df99b682e8217e11f3cd0b8`): case file dossier, configurable retention, legal hold, document expiry automation, and lifecycle workflows.
+- **Batch C5** (2026-11-21):
+  - Local commit: `4871229145775a0386aa7b9b867e672c83689722`
+  - Remote SHA on `main`: `8b75eab0fea10f9e71b4a8dcb75bb8d5337a5df5`
+  - Summary: Applicant UX polish, cross-device QR handoff, field help, compression, and support linkage. 142 tests passing across 22 test files.
