@@ -736,3 +736,14 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - Implemented Zillionaire management API (`GET /api/public/v1/zillionaire/email/outbox` and `POST /api/public/v1/zillionaire/email/outbox/$outboxId/resend`) with audit logging.
   - Added Email Outbox tab in Zillionaire Notifications Console (`/zillionaire/notifications`) with status filters, delivery tracking, payload inspection, and audited manual resend.
   - **AI Assistant Hook**: Documented and exported `prepareAiAssistantEmailPayload()` with stable payload contract `AiAssistantEmailEvent` (`hookVersion: "1.0"`). Future AI agents/workers can intercept outbound events to generate personalized summaries, draft context-specific responses, or translate email templates without breaking core delivery mechanics.
+
+## Batch B8 — KYC & Payout Master Regression Verification & Safety Checklist
+
+- **Status**: Implemented & Verified
+- **Date**: 2026-11-21
+- **Scope & Rationale**:
+  - Full automated regression test suite across the KYC and payout surface (91 tests across 18 test files passing).
+  - Storage & Encryption: verified fail-closed behavior when encryption/signing keys are missing; symmetric AES-256-GCM encryption/decryption of BVN and bank account numbers; HMAC-SHA256 URL signing with watermark payload and tamper detection; path traversal sanitization on isolated tenant vaults (`kyc-vault/tenants/{tenantId}/`); validation of file types (PDF, JPEG, PNG, WebP) and size limits (10KB to 10MB).
+  - Payout Rules & Currency: verified owner-configurable minimum payout thresholds ($500 USD and ₦500,000 NGN default) and conversion rates; verified hold evaluation when KYC or account approval is pending; dual approval threshold enforcement for high-value disbursements; mandatory audited reason logging on rule modifications.
+  - Outbox & Dual Delivery: confirmed dual-notification dispatch (in-app notice + outbox email record) for all 12 operational lifecycle events; verified exponential backoff progression (1m -> 5m -> 15m -> 60m).
+  - Brand and Policy Guardrails: verified 0 occurrences of "admin" in route paths or user-visible copy; verified strict adherence to "KYC, never KYB"; confirmed SMS transport is strictly prohibited for KYC/payout notices (email and in-app only; SMS exclusively reserved for phone OTP).

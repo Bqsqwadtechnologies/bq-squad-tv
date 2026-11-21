@@ -1,5 +1,5 @@
-Last verified work: v6-05-B7 — Email status and notification outbox (durable email-outbox with retry/backoff, status changes to user's email only, never SMS except phone OTP, Zillionaire resend UI, stable event payload with AI hook in docs/DECISIONS.md).
-Next batch: v6-05-B8 — Verification and payout testing, checklist and handoff (comprehensive automated tests across route access matrix, storage & encryption, payout rules, outbox status dual-delivery, and handoff).
-Known gaps: Live bank direct gateway webhook integration pending production host bank onboarding.
-Files touched: src/lib/server/email/outbox.ts, src/lib/server/email/brevo.ts, src/routes/api/public/v1/zillionaire/email/outbox/index.ts, src/routes/api/public/v1/zillionaire/email/outbox/$outboxId/resend.ts, src/routes/zillionaire.notifications.tsx, src/test/batch-b7-email-status-outbox.test.ts, docs/DECISIONS.md, docs/HANDOFF.md, docs/PUSH-LOG.md.
-Checks run: 80 tests passed across 17 test files (batch-a* + batch-b*); bun run check:route-integrity (366 routes) clean; bun run scan:public-text clean; bun run build clean.
+Last verified work: v6-05-B8 — Verification and payout master regression testing, security checklist, and handoff.
+Next batch: v6-05-Part-C — Production verification provider adapter, risk tiers, and compliance operations.
+Known gaps: Live banking webhook settlement triggers require production banking partner credentials; tested with authenticated settlement APIs and audited batch exports.
+Files touched: src/test/batch-b8-kyc-payouts-master-checklist.test.ts, docs/DECISIONS.md, docs/HANDOFF.md, docs/PUSH-LOG.md.
+Checks run: 91 tests passed across 18 test files (batch-a* + batch-b*); bun run check:route-integrity (366 routes) clean; bun run scan:public-text clean; bun run build clean.
