@@ -7,6 +7,7 @@ import { currencyForCountry, normalizeCountryCode } from "@/lib/server/currency"
 import { writeAuditLog } from "@/lib/server/audit";
 import { liveSessionLeases } from "@/lib/server/session-limits";
 import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
+import { ensureAccountId } from "@/lib/server/account-id";
 
 const bodySchema = z.object({
   dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "dateOfBirth must be YYYY-MM-DD"),
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           const fs = await Firestore.create();
           await assertLegalAcceptance(fs, user.uid, "public");
           const existingProfile = await fs.getDoc("users/" + user.uid);
+          const accountId = await ensureAccountId(fs, user.uid, existingProfile);
           const existingWallet = await fs.getDoc("wallets/" + user.uid);
           const requestedCountry = body.countryCode ? normalizeCountryCode(body.countryCode) : null;
           if (body.countryCode && !requestedCountry) {
@@ -125,6 +127,7 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           const verifiedAdultEligible = adultEligible && adultAgeVerified && adultIdentityVerified;
           const fields: Record<string, unknown> = {
             email: user.email,
+            accountId,
             dateOfBirth: body.dateOfBirth,
             ...(nextCountry ? { countryCode: nextCountry } : {}),
             profileComplete: true,
@@ -150,6 +153,7 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           await fs.patchDoc("users/" + user.uid, fields);
           return Response.json({
             profileComplete: true,
+            accountId,
             adultEligible: verifiedAdultEligible,
             isUnder18,
             kidsSafeMode: isUnder18 ? true : (existingProfile?.["kidsSafeMode"] === true),
