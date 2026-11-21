@@ -75,6 +75,7 @@ import { Route as ZillionaireFinanceRouteImport } from './routes/zillionaire.fin
 import { Route as ZillionaireFirebaseSchemaRouteImport } from './routes/zillionaire.firebase-schema'
 import { Route as ZillionaireFraudWatchRouteImport } from './routes/zillionaire.fraud-watch'
 import { Route as ZillionaireGeoRulesRouteImport } from './routes/zillionaire.geo-rules'
+import { Route as ZillionaireKycRouteImport } from './routes/zillionaire.kyc'
 import { Route as ZillionaireLiveTvRouteImport } from './routes/zillionaire.live-tv'
 import { Route as ZillionaireModerationRouteImport } from './routes/zillionaire.moderation'
 import { Route as ZillionaireModerationWorkloadRouteImport } from './routes/zillionaire.moderation-workload'
@@ -269,6 +270,9 @@ import { Route as ApiPublicV1ZillionaireDeliveryIndexRouteImport } from './route
 import { Route as ApiPublicV1ZillionaireEmailTestRouteImport } from './routes/api/public/v1/zillionaire/email/test'
 import { Route as ApiPublicV1ZillionaireErrorsIndexRouteImport } from './routes/api/public/v1/zillionaire/errors/index'
 import { Route as ApiPublicV1ZillionaireKycCountryRulesRouteImport } from './routes/api/public/v1/zillionaire/kyc/country-rules'
+import { Route as ApiPublicV1ZillionaireKycDetailRouteImport } from './routes/api/public/v1/zillionaire/kyc/detail'
+import { Route as ApiPublicV1ZillionaireKycQueueRouteImport } from './routes/api/public/v1/zillionaire/kyc/queue'
+import { Route as ApiPublicV1ZillionaireKycRevealRouteImport } from './routes/api/public/v1/zillionaire/kyc/reveal'
 import { Route as ApiPublicV1ZillionaireKycViewDocRouteImport } from './routes/api/public/v1/zillionaire/kyc/view-doc'
 import { Route as ApiPublicV1ZillionaireLiveChannelsIndexRouteImport } from './routes/api/public/v1/zillionaire/live-channels/index'
 import { Route as ApiPublicV1ZillionaireLiveChatIndexRouteImport } from './routes/api/public/v1/zillionaire/live-chat/index'
@@ -696,6 +700,11 @@ const ZillionaireFraudWatchRoute = ZillionaireFraudWatchRouteImport.update({
 const ZillionaireGeoRulesRoute = ZillionaireGeoRulesRouteImport.update({
   id: '/zillionaire/geo-rules',
   path: '/zillionaire/geo-rules',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZillionaireKycRoute = ZillionaireKycRouteImport.update({
+  id: '/zillionaire/kyc',
+  path: '/zillionaire/kyc',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ZillionaireLiveTvRoute = ZillionaireLiveTvRouteImport.update({
@@ -1811,6 +1820,24 @@ const ApiPublicV1ZillionaireKycCountryRulesRoute =
     path: '/api/public/v1/zillionaire/kyc/country-rules',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireKycDetailRoute =
+  ApiPublicV1ZillionaireKycDetailRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/detail',
+    path: '/api/public/v1/zillionaire/kyc/detail',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireKycQueueRoute =
+  ApiPublicV1ZillionaireKycQueueRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/queue',
+    path: '/api/public/v1/zillionaire/kyc/queue',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireKycRevealRoute =
+  ApiPublicV1ZillionaireKycRevealRouteImport.update({
+    id: '/api/public/v1/zillionaire/kyc/reveal',
+    path: '/api/public/v1/zillionaire/kyc/reveal',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireKycViewDocRoute =
   ApiPublicV1ZillionaireKycViewDocRouteImport.update({
     id: '/api/public/v1/zillionaire/kyc/view-doc',
@@ -2428,6 +2455,7 @@ export interface FileRoutesByFullPath {
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
   '/zillionaire/fraud-watch': typeof ZillionaireFraudWatchRoute
   '/zillionaire/geo-rules': typeof ZillionaireGeoRulesRoute
+  '/zillionaire/kyc': typeof ZillionaireKycRoute
   '/zillionaire/live-tv': typeof ZillionaireLiveTvRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
   '/zillionaire/moderation-workload': typeof ZillionaireModerationWorkloadRoute
@@ -2616,6 +2644,9 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
+  '/api/public/v1/zillionaire/kyc/detail': typeof ApiPublicV1ZillionaireKycDetailRoute
+  '/api/public/v1/zillionaire/kyc/queue': typeof ApiPublicV1ZillionaireKycQueueRoute
+  '/api/public/v1/zillionaire/kyc/reveal': typeof ApiPublicV1ZillionaireKycRevealRoute
   '/api/public/v1/zillionaire/kyc/view-doc': typeof ApiPublicV1ZillionaireKycViewDocRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
@@ -2782,6 +2813,7 @@ export interface FileRoutesByTo {
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
   '/zillionaire/fraud-watch': typeof ZillionaireFraudWatchRoute
   '/zillionaire/geo-rules': typeof ZillionaireGeoRulesRoute
+  '/zillionaire/kyc': typeof ZillionaireKycRoute
   '/zillionaire/live-tv': typeof ZillionaireLiveTvRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
   '/zillionaire/moderation-workload': typeof ZillionaireModerationWorkloadRoute
@@ -2969,6 +3001,9 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
+  '/api/public/v1/zillionaire/kyc/detail': typeof ApiPublicV1ZillionaireKycDetailRoute
+  '/api/public/v1/zillionaire/kyc/queue': typeof ApiPublicV1ZillionaireKycQueueRoute
+  '/api/public/v1/zillionaire/kyc/reveal': typeof ApiPublicV1ZillionaireKycRevealRoute
   '/api/public/v1/zillionaire/kyc/view-doc': typeof ApiPublicV1ZillionaireKycViewDocRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
@@ -3136,6 +3171,7 @@ export interface FileRoutesById {
   '/zillionaire/firebase-schema': typeof ZillionaireFirebaseSchemaRoute
   '/zillionaire/fraud-watch': typeof ZillionaireFraudWatchRoute
   '/zillionaire/geo-rules': typeof ZillionaireGeoRulesRoute
+  '/zillionaire/kyc': typeof ZillionaireKycRoute
   '/zillionaire/live-tv': typeof ZillionaireLiveTvRoute
   '/zillionaire/moderation': typeof ZillionaireModerationRoute
   '/zillionaire/moderation-workload': typeof ZillionaireModerationWorkloadRoute
@@ -3324,6 +3360,9 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/kyc/country-rules': typeof ApiPublicV1ZillionaireKycCountryRulesRoute
+  '/api/public/v1/zillionaire/kyc/detail': typeof ApiPublicV1ZillionaireKycDetailRoute
+  '/api/public/v1/zillionaire/kyc/queue': typeof ApiPublicV1ZillionaireKycQueueRoute
+  '/api/public/v1/zillionaire/kyc/reveal': typeof ApiPublicV1ZillionaireKycRevealRoute
   '/api/public/v1/zillionaire/kyc/view-doc': typeof ApiPublicV1ZillionaireKycViewDocRoute
   '/api/public/v1/zillionaire/migration/zillionaire': typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   '/api/public/v1/zillionaire/operations/live': typeof ApiPublicV1ZillionaireOperationsLiveRoute
@@ -3492,6 +3531,7 @@ export interface FileRouteTypes {
     | '/zillionaire/firebase-schema'
     | '/zillionaire/fraud-watch'
     | '/zillionaire/geo-rules'
+    | '/zillionaire/kyc'
     | '/zillionaire/live-tv'
     | '/zillionaire/moderation'
     | '/zillionaire/moderation-workload'
@@ -3680,6 +3720,9 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/kyc/country-rules'
+    | '/api/public/v1/zillionaire/kyc/detail'
+    | '/api/public/v1/zillionaire/kyc/queue'
+    | '/api/public/v1/zillionaire/kyc/reveal'
     | '/api/public/v1/zillionaire/kyc/view-doc'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
@@ -3846,6 +3889,7 @@ export interface FileRouteTypes {
     | '/zillionaire/firebase-schema'
     | '/zillionaire/fraud-watch'
     | '/zillionaire/geo-rules'
+    | '/zillionaire/kyc'
     | '/zillionaire/live-tv'
     | '/zillionaire/moderation'
     | '/zillionaire/moderation-workload'
@@ -4033,6 +4077,9 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/kyc/country-rules'
+    | '/api/public/v1/zillionaire/kyc/detail'
+    | '/api/public/v1/zillionaire/kyc/queue'
+    | '/api/public/v1/zillionaire/kyc/reveal'
     | '/api/public/v1/zillionaire/kyc/view-doc'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
@@ -4199,6 +4246,7 @@ export interface FileRouteTypes {
     | '/zillionaire/firebase-schema'
     | '/zillionaire/fraud-watch'
     | '/zillionaire/geo-rules'
+    | '/zillionaire/kyc'
     | '/zillionaire/live-tv'
     | '/zillionaire/moderation'
     | '/zillionaire/moderation-workload'
@@ -4387,6 +4435,9 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/kyc/country-rules'
+    | '/api/public/v1/zillionaire/kyc/detail'
+    | '/api/public/v1/zillionaire/kyc/queue'
+    | '/api/public/v1/zillionaire/kyc/reveal'
     | '/api/public/v1/zillionaire/kyc/view-doc'
     | '/api/public/v1/zillionaire/migration/zillionaire'
     | '/api/public/v1/zillionaire/operations/live'
@@ -4554,6 +4605,7 @@ export interface RootRouteChildren {
   ZillionaireFirebaseSchemaRoute: typeof ZillionaireFirebaseSchemaRoute
   ZillionaireFraudWatchRoute: typeof ZillionaireFraudWatchRoute
   ZillionaireGeoRulesRoute: typeof ZillionaireGeoRulesRoute
+  ZillionaireKycRoute: typeof ZillionaireKycRoute
   ZillionaireLiveTvRoute: typeof ZillionaireLiveTvRoute
   ZillionaireModerationRoute: typeof ZillionaireModerationRoute
   ZillionaireModerationWorkloadRoute: typeof ZillionaireModerationWorkloadRoute
@@ -4721,6 +4773,9 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireConfigSettingsRoute: typeof ApiPublicV1ZillionaireConfigSettingsRoute
   ApiPublicV1ZillionaireEmailTestRoute: typeof ApiPublicV1ZillionaireEmailTestRoute
   ApiPublicV1ZillionaireKycCountryRulesRoute: typeof ApiPublicV1ZillionaireKycCountryRulesRoute
+  ApiPublicV1ZillionaireKycDetailRoute: typeof ApiPublicV1ZillionaireKycDetailRoute
+  ApiPublicV1ZillionaireKycQueueRoute: typeof ApiPublicV1ZillionaireKycQueueRoute
+  ApiPublicV1ZillionaireKycRevealRoute: typeof ApiPublicV1ZillionaireKycRevealRoute
   ApiPublicV1ZillionaireKycViewDocRoute: typeof ApiPublicV1ZillionaireKycViewDocRoute
   ApiPublicV1ZillionaireMigrationZillionaireRoute: typeof ApiPublicV1ZillionaireMigrationZillionaireRoute
   ApiPublicV1ZillionaireOperationsLiveRoute: typeof ApiPublicV1ZillionaireOperationsLiveRoute
@@ -5271,6 +5326,13 @@ declare module '@tanstack/react-router' {
       path: '/zillionaire/geo-rules'
       fullPath: '/zillionaire/geo-rules'
       preLoaderRoute: typeof ZillionaireGeoRulesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/kyc': {
+      id: '/zillionaire/kyc'
+      path: '/zillionaire/kyc'
+      fullPath: '/zillionaire/kyc'
+      preLoaderRoute: typeof ZillionaireKycRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/live-tv': {
@@ -6631,6 +6693,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireKycCountryRulesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/kyc/detail': {
+      id: '/api/public/v1/zillionaire/kyc/detail'
+      path: '/api/public/v1/zillionaire/kyc/detail'
+      fullPath: '/api/public/v1/zillionaire/kyc/detail'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/kyc/queue': {
+      id: '/api/public/v1/zillionaire/kyc/queue'
+      path: '/api/public/v1/zillionaire/kyc/queue'
+      fullPath: '/api/public/v1/zillionaire/kyc/queue'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/kyc/reveal': {
+      id: '/api/public/v1/zillionaire/kyc/reveal'
+      path: '/api/public/v1/zillionaire/kyc/reveal'
+      fullPath: '/api/public/v1/zillionaire/kyc/reveal'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireKycRevealRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/kyc/view-doc': {
       id: '/api/public/v1/zillionaire/kyc/view-doc'
       path: '/api/public/v1/zillionaire/kyc/view-doc'
@@ -7626,6 +7709,7 @@ const rootRouteChildren: RootRouteChildren = {
   ZillionaireFirebaseSchemaRoute: ZillionaireFirebaseSchemaRoute,
   ZillionaireFraudWatchRoute: ZillionaireFraudWatchRoute,
   ZillionaireGeoRulesRoute: ZillionaireGeoRulesRoute,
+  ZillionaireKycRoute: ZillionaireKycRoute,
   ZillionaireLiveTvRoute: ZillionaireLiveTvRoute,
   ZillionaireModerationRoute: ZillionaireModerationRoute,
   ZillionaireModerationWorkloadRoute: ZillionaireModerationWorkloadRoute,
@@ -7833,6 +7917,9 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ZillionaireEmailTestRoute: ApiPublicV1ZillionaireEmailTestRoute,
   ApiPublicV1ZillionaireKycCountryRulesRoute:
     ApiPublicV1ZillionaireKycCountryRulesRoute,
+  ApiPublicV1ZillionaireKycDetailRoute: ApiPublicV1ZillionaireKycDetailRoute,
+  ApiPublicV1ZillionaireKycQueueRoute: ApiPublicV1ZillionaireKycQueueRoute,
+  ApiPublicV1ZillionaireKycRevealRoute: ApiPublicV1ZillionaireKycRevealRoute,
   ApiPublicV1ZillionaireKycViewDocRoute: ApiPublicV1ZillionaireKycViewDocRoute,
   ApiPublicV1ZillionaireMigrationZillionaireRoute:
     ApiPublicV1ZillionaireMigrationZillionaireRoute,
