@@ -11,6 +11,8 @@ data class PlayProductOffer(
 
 data class WalletSummary(
     val balanceMinor: Long,
+    val accountId: String? = null,
+    val countryCode: String? = null,
     val currency: String = "USD",
     val dailySpendLimitMinor: Long? = null,
     val spentTodayMinor: Long? = null,
