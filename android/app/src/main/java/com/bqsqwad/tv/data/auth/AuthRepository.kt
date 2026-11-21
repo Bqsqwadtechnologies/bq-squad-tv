@@ -162,10 +162,12 @@ class AuthRepository(
     suspend fun completeProfile(
         dateOfBirth: String,
         parentalPin: String?,
+        selectedCountryCode: String,
     ): CompleteProfileResponse {
-        val country = Locale.getDefault().country
-        val countryCode: String? =
-            if (country.matches(Regex("[A-Za-z]{2}"))) country.uppercase(Locale.ROOT) else null
+        val countryCode = selectedCountryCode.trim().uppercase(Locale.ROOT)
+        require(countryCode.matches(Regex("[A-Z]{2}"))) {
+            "Choose a valid country before completing your profile."
+        }
         return profileApi.completeProfile(
             currentBearerToken(),
             CompleteProfileRequest(
