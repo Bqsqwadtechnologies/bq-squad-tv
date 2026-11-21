@@ -341,7 +341,7 @@ function ProviderDashboardInner({
             title="Connected Channels"
             value={metrics ? metrics.connectedChannels.toString() : "—"}
             subtitle="Registered broadcast feeds"
-            change={{ value: "+2", positive: true }}
+            caption="Registered broadcast feeds"
             icon={Tv2}
             variant="blue"
           />
@@ -349,7 +349,7 @@ function ProviderDashboardInner({
             title="Active Ingest Streams"
             value={metrics ? metrics.activeIngestStreams.toString() : "—"}
             subtitle="Live concurrent encoders"
-            change={{ value: "100%", positive: true }}
+            caption="Live concurrent encoders"
             icon={Radio}
             variant="purple"
           />
@@ -357,7 +357,7 @@ function ProviderDashboardInner({
             title="Delivery Bandwidth"
             value={metrics ? `${metrics.deliveryBandwidthGbps} Gbps` : "—"}
             subtitle="Edge throughput peak"
-            change={{ value: "+3.2 Gbps", positive: true }}
+            caption="Edge throughput peak"
             icon={Network}
             variant="gold"
           />

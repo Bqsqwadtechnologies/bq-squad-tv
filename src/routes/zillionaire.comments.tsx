@@ -78,12 +78,20 @@ function CommentsInner({
           description="Review user feedback, moderate reported comments, manage abusive ratings, and configure per-title comment toggles."
         />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <ConsoleKpiCard title="Total Comments" value="4,821" icon={MessageSquare} variant="blue" />
-          <ConsoleKpiCard title="Pending Review" value="1" icon={Filter} variant="amber" />
-          <ConsoleKpiCard title="Approved" value="4,790" icon={CheckCircle2} variant="emerald" />
-          <ConsoleKpiCard title="Hidden / Blocked" value="30" icon={EyeOff} variant="rose" />
-        </div>
+        {(() => {
+          const totalComments = comments.length;
+          const pendingReview = comments.filter((c) => c.status === "PENDING" || c.flagged).length;
+          const approved = comments.filter((c) => c.status === "APPROVED" || (!c.status && !c.flagged)).length;
+          const hidden = comments.filter((c) => c.status === "REJECTED" || c.status === "HIDDEN").length;
+          return (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <ConsoleKpiCard title="Total Comments" value={String(totalComments)} icon={MessageSquare} variant="blue" caption="Moderation queue" />
+              <ConsoleKpiCard title="Pending Review" value={String(pendingReview)} icon={Filter} variant="gold" caption="Flagged or awaiting review" />
+              <ConsoleKpiCard title="Approved" value={String(approved)} icon={CheckCircle2} variant="green" caption="Published to content" />
+              <ConsoleKpiCard title="Hidden / Blocked" value={String(hidden)} icon={EyeOff} variant="purple" caption="Blocked from view" />
+            </div>
+          );
+        })()}
 
         <ConsoleCard
           title="Viewer Comments Stream"
@@ -93,7 +101,12 @@ function CommentsInner({
             <div className="p-8 text-center text-sm text-slate-400">Loading comments stream…</div>
           ) : (
             <div className="divide-y divide-white/5">
-              {comments.map((c) => (
+              {comments.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-500">
+                  No viewer comments submitted yet. Comments from viewers will appear here for moderation.
+                </div>
+              ) : (
+                comments.map((c) => (
                 <div key={c.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
                   <div className="space-y-1 max-w-xl">
                     <div className="flex items-center gap-2">
@@ -117,7 +130,8 @@ function CommentsInner({
                     </button>
                   </div>
                 </div>
-              ))}
+              )))
+              }
             </div>
           )}
         </ConsoleCard>

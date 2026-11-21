@@ -79,10 +79,10 @@ function ReferralsInner({
         />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <ConsoleKpiCard title="Total Referrals" value={String(data?.totalReferrals ?? 1240)} icon={Users} variant="blue" />
-          <ConsoleKpiCard title="Active Referrers" value={String(data?.activeReferrers ?? 312)} icon={Award} variant="cyan" />
-          <ConsoleKpiCard title="Pending Payouts" value={data?.pendingPayoutsTotal ?? "₦48,000"} icon={DollarSign} variant="amber" />
-          <ConsoleKpiCard title="Referrer Bonus" value={`₦${data?.referrerBonusCredits ?? 50}`} icon={Gift} variant="emerald" />
+          <ConsoleKpiCard title="Total Referrals" value={String(data?.totalReferrals ?? 0)} icon={Users} variant="blue" caption="Total verified signups" />
+          <ConsoleKpiCard title="Active Referrers" value={String(data?.activeReferrers ?? 0)} icon={Award} variant="purple" caption="Active promoters" />
+          <ConsoleKpiCard title="Pending Payouts" value={data?.pendingPayoutsTotal ?? "₦0.00"} icon={DollarSign} variant="gold" caption="Pending promoter bonuses" />
+          <ConsoleKpiCard title="Referrer Bonus" value={`₦${data?.referrerBonusCredits ?? 0}`} icon={Gift} variant="green" caption="Standard signup bonus" />
         </div>
 
         <ConsoleCard

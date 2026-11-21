@@ -79,12 +79,19 @@ function PromotionsInner({
           description="Create and monitor promotional coupons, wallet bonus grants, and campaign discount rules across all platforms."
         />
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <ConsoleKpiCard title="Active Campaigns" value={String(promotions.length || 2)} icon={Tag} variant="cyan" />
-          <ConsoleKpiCard title="Total Redemptions" value="1,232" icon={CheckCircle2} variant="emerald" />
-          <ConsoleKpiCard title="Average Discount" value="20%" icon={Percent} variant="blue" />
-          <ConsoleKpiCard title="Conversion Lift" value="+18.4%" icon={Sliders} variant="amber" />
-        </div>
+        {(() => {
+          const totalRedemptions = promotions.reduce((acc, p) => acc + (typeof p.redemptionsCount === "number" ? p.redemptionsCount : 0), 0);
+          const avgDiscount = promotions.length > 0 ? `${Math.round(promotions.reduce((acc, p) => acc + (typeof p.discountPercent === "number" ? p.discountPercent : 0), 0) / promotions.length)}%` : "0%";
+          const activeRules = promotions.filter((p) => p.active !== false).length;
+          return (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <ConsoleKpiCard title="Active Campaigns" value={String(promotions.length)} icon={Tag} variant="blue" caption="Configured promotions" />
+              <ConsoleKpiCard title="Total Redemptions" value={String(totalRedemptions)} icon={CheckCircle2} variant="green" caption="Successful redemptions" />
+              <ConsoleKpiCard title="Average Discount" value={avgDiscount} icon={Percent} variant="blue" caption="Discount average" />
+              <ConsoleKpiCard title="Campaign Rules" value={String(activeRules)} icon={Sliders} variant="gold" caption="Active rule sets" />
+            </div>
+          );
+        })()}
 
         <ConsoleCard
           title="Active Promotional Campaigns"

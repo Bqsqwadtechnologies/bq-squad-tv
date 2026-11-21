@@ -1,3 +1,4 @@
+import { DeltaResult } from "@/lib/delta";
 import { BackButton } from "./BackButton";
 import React, { useState, useEffect, useMemo, ReactNode } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -83,7 +84,7 @@ export interface ConsoleNavItem {
   id: string;
   label: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string }> | React.ReactNode;
   badge?: string | number;
   module?: string;
   external?: boolean;
@@ -112,6 +113,7 @@ export interface ChannelSwitcherConfig {
 export interface EarningsTickerConfig {
   amount: string;
   label?: string;
+  delta?: DeltaResult | null;
   changePercent?: string;
 }
 
@@ -993,6 +995,12 @@ export function ConsoleShell({
                   {earningsTicker.changePercent && (
                     <span className="text-[10px] text-emerald-400 font-bold">{earningsTicker.changePercent}</span>
                   )}
+                  {earningsTicker.delta?.formatted && earningsTicker.delta.direction === "up" && (
+                    <span className="text-[10px] text-emerald-400 font-bold">{earningsTicker.delta.formatted}</span>
+                  )}
+                  {earningsTicker.delta?.formatted && earningsTicker.delta.direction === "down" && (
+                    <span className="text-[10px] text-rose-400 font-bold">{earningsTicker.delta.formatted}</span>
+                  )}
                 </div>
               )}
 
@@ -1418,8 +1426,12 @@ export interface ConsoleKpiCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  change?: { value: string; positive?: boolean };
-  icon: React.ComponentType<{ className?: string }>;
+  delta?: DeltaResult | null;
+  caption?: string;
+  change?: string | { value: string; positive?: boolean };
+  trend?: "up" | "down" | "neutral";
+  gradient?: KpiVariant;
+  icon: React.ComponentType<{ className?: string }> | React.ReactNode;
   variant?: KpiVariant;
   onClick?: () => void;
 }
@@ -1428,11 +1440,16 @@ export function ConsoleKpiCard({
   title,
   value,
   subtitle,
+  delta,
+  caption,
   change,
+  trend,
+  gradient,
   icon: Icon,
-  variant = "blue",
+  variant,
   onClick,
 }: ConsoleKpiCardProps) {
+  const chosenVariant = variant || gradient || "blue";
   const styles = {
     blue: {
       border: "border-blue-500/20 hover:border-blue-500/40",
@@ -1458,7 +1475,11 @@ export function ConsoleKpiCard({
       iconBg: "bg-amber-600/20 text-amber-400 border border-amber-500/30",
       glow: "from-amber-600/10",
     },
-  }[variant];
+  }[chosenVariant];
+
+  const rawChangeStr = typeof change === "string" ? change : change?.value;
+  const isPositive = typeof change === "object" ? change.positive : !rawChangeStr?.startsWith("-");
+  const descriptiveCaption = caption;
 
   return (
     <div
@@ -1483,25 +1504,40 @@ export function ConsoleKpiCard({
           <p className="text-xl sm:text-2xl font-black text-white tracking-tight">{value}</p>
         </div>
         <div className={`p-2.5 rounded-xl ${styles.iconBg}`}>
-          <Icon className="h-5 w-5" />
+          {React.isValidElement(Icon) ? Icon : (typeof Icon === "function" || typeof Icon === "object" ? React.createElement(Icon as any, { className: "h-5 w-5" }) : null)}
         </div>
       </div>
 
-      {(subtitle || change) && (
+      {(subtitle || descriptiveCaption || change || (delta?.formatted && delta.direction !== "none" && delta.direction !== "neutral")) && (
         <div className="mt-3 flex items-center justify-between text-xs pt-2 border-t border-white/5">
           {change && (
-            <div
-              className={`flex items-center gap-1 font-bold text-[11px] ${
-                change.positive !== false ? "text-emerald-400" : "text-rose-400"
-              }`}
-            >
-              {change.positive !== false ? (
-                <TrendingUp className="h-3 w-3" />
-              ) : (
-                <TrendingDown className="h-3 w-3" />
-              )}
-              <span>{change.value}</span>
+            <div className={`flex items-center gap-1 font-bold text-[11px] ${isPositive ? "text-emerald-400" : "text-rose-400"}`}>
+              {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+              <span>{rawChangeStr}</span>
             </div>
+          )}
+          {delta?.formatted && delta.direction === "up" && (
+            <div className="flex items-center gap-1 font-bold text-[11px] text-emerald-400">
+              <TrendingUp className="h-3 w-3" />
+              <span>{delta.formatted}</span>
+              {delta.caption && <span className="text-[10px] text-slate-400 font-normal ml-1">{delta.caption}</span>}
+            </div>
+          )}
+          {delta?.formatted && delta.direction === "down" && (
+            <div className="flex items-center gap-1 font-bold text-[11px] text-rose-400">
+              <TrendingDown className="h-3 w-3" />
+              <span>{delta.formatted}</span>
+              {delta.caption && <span className="text-[10px] text-slate-400 font-normal ml-1">{delta.caption}</span>}
+            </div>
+          )}
+          {delta?.formatted && delta.direction === "new" && (
+            <div className="flex items-center gap-1 text-[11px] font-bold text-cyan-400">
+              <span className="rounded bg-cyan-500/10 px-1.5 py-0.5 text-[10px] font-semibold border border-cyan-500/20">New</span>
+              {delta.caption && <span className="text-[10px] text-slate-400 font-normal ml-1">{delta.caption}</span>}
+            </div>
+          )}
+          {descriptiveCaption && !delta?.formatted && (
+            <span className="text-[11px] text-slate-400">{descriptiveCaption}</span>
           )}
           {subtitle && <span className="text-[11px] text-slate-400 ml-auto">{subtitle}</span>}
         </div>

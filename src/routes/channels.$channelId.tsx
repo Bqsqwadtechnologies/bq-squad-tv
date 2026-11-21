@@ -151,35 +151,8 @@ function ChannelPage() {
         if (active) setDetails(data);
       } catch (caught) {
         if (active) {
-          // Provide fallback demo channel if mock channel is opened
-          setDetails({
-            channel: {
-              id: channelId,
-              title: channelId === "demo" ? "BQ Sqwad Sports HD" : `Channel ${channelId}`,
-              category: "Live Sports",
-              posterUrl: null,
-              isLive: true,
-              currentProgramme: "Championship Live Highlights",
-              language: "English",
-            },
-            schedule: [
-              {
-                id: "p1",
-                title: "Live Match Studio",
-                startsAt: new Date().toISOString(),
-                endsAt: new Date(Date.now() + 3600000).toISOString(),
-                description: "Pre-match analysis, player interviews and tactical breakdowns.",
-              },
-              {
-                id: "p2",
-                title: "Prime Time News",
-                startsAt: new Date(Date.now() + 3600000).toISOString(),
-                endsAt: new Date(Date.now() + 7200000).toISOString(),
-                description: "The latest breaking sports headlines and transfer updates.",
-              },
-            ],
-            replays: [],
-          });
+          setError(caught instanceof Error ? caught.message : "This channel is not available right now.");
+          setDetails(null);
         }
       } finally {
         if (active) setBusy(false);
@@ -637,7 +610,14 @@ function ChannelPage() {
               </div>
             </section>
           </div>
-        ) : null}
+        ) : busy ? (
+          <div className="mt-16 text-center text-sm text-slate-400">Loading channel…</div>
+        ) : (
+          <div className="mt-16 rounded-2xl border border-white/10 bg-[#07143D] p-8 text-center">
+            <p className="text-base font-bold text-white">{error || "Channel Unavailable"}</p>
+            <p className="mt-2 text-xs text-slate-400">This broadcast feed is currently offline or unreachable.</p>
+          </div>
+        )}
       </div>
     </main>
   );

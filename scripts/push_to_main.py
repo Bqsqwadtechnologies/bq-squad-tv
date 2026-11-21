@@ -6,7 +6,7 @@ import os
 import sys
 import tempfile
 
-CONN_ID = "std_01m6qbgfv3e40rca3wtk7ekhjq"
+CONN_ID = os.environ.get("GITHUB_CONNECTION_ID", "std_01m6zhc7xce8wba5n72mkpmyw0")
 REPO = "Bqsqwadtechnologies/bq-squad-tv"
 
 def call_gh(endpoint, method="GET", data=None):

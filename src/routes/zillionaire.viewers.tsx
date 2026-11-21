@@ -365,30 +365,30 @@ function ZillionaireViewersPage({
           <ConsoleKpiCard
             title="Total Viewers"
             value={stats.total.toLocaleString()}
-            change="+100% indexed"
+            caption="Indexed viewer accounts"
             icon={<Users className="w-5 h-5" />}
-            color="blue"
+            variant="blue"
           />
           <ConsoleKpiCard
             title="Active & Healthy"
             value={stats.active.toLocaleString()}
-            change="Standard status"
+            caption="Active status"
             icon={<CheckCircle2 className="w-5 h-5" />}
-            color="green"
+            variant="green"
           />
           <ConsoleKpiCard
             title="Suspended / Blocked"
             value={stats.suspended.toLocaleString()}
-            change="Access denied"
+            caption="Access denied"
             icon={<UserX className="w-5 h-5" />}
-            color="purple"
+            variant="purple"
           />
           <ConsoleKpiCard
             title="Elevated Risk Score"
             value={stats.highRisk.toLocaleString()}
-            change="Review recommended"
+            caption="Flagged for security review"
             icon={<AlertTriangle className="w-5 h-5" />}
-            color="gold"
+            variant="gold"
           />
         </div>
 

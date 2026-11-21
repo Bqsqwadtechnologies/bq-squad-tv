@@ -411,14 +411,14 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
         <ConsoleKpiCard
           title="Total Broadcasts"
           value={data?.stats.totalBroadcasts ?? "—"}
-          subtitle="+12% this month"
+          caption="Sent campaigns"
           icon={Bell}
           variant="blue"
         />
         <ConsoleKpiCard
           title="Total Notifications Sent"
           value={data?.stats.totalSent ? (data.stats.totalSent > 10000 ? `${(data.stats.totalSent / 1000).toFixed(1)}K` : data.stats.totalSent) : "—"}
-          subtitle="+8.4% reach"
+          caption="Total message dispatches"
           icon={Send}
           variant="purple"
         />
@@ -432,7 +432,7 @@ function NotificationsDashboard({ token, onLock }: { token: string; onLock?: () 
         <ConsoleKpiCard
           title="Average Open Rate"
           value={data?.stats.openRatePct ? `${data.stats.openRatePct}%` : "—"}
-          subtitle="+4.2% vs last month"
+          caption="Viewer engagement rate"
           icon={Eye}
           variant="gold"
         />

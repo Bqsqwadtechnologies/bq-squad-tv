@@ -103,7 +103,7 @@ const mockChannels: LiveChannel[] = [
 const mockUpcomingSchedule = [
   {
     id: "sch-1",
-    channelId: "demo",
+    channelId: "sports-live",
     channelName: "BQ SQWAD Prime Live",
     title: "Late Night African Beats",
     time: "22:00 – 23:30",
@@ -342,16 +342,18 @@ function LiveTvPage() {
                 guides
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <Link
-                to="/channels/$channelId"
-                params={{ channelId: "demo" }}
-                className="flex items-center gap-2 rounded-2xl bg-cyan-400 px-5 py-2.5 text-xs font-bold text-[#030e28] shadow-md shadow-cyan-400/20 transition hover:brightness-110"
-              >
-                <Play className="h-4 w-4 fill-current" />
-                <span>Quick Play Demo Channel</span>
-              </Link>
-            </div>
+            {channels.length > 0 && (
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/channels/$channelId"
+                  params={{ channelId: channels[0].id }}
+                  className="flex items-center gap-2 rounded-2xl bg-cyan-400 px-5 py-2.5 text-xs font-bold text-[#030e28] shadow-md shadow-cyan-400/20 transition hover:brightness-110"
+                >
+                  <Play className="h-4 w-4 fill-current" />
+                  <span>Watch Featured Channel</span>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
 

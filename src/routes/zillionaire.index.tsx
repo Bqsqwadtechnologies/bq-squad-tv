@@ -1,3 +1,4 @@
+import { computeDelta } from "@/lib/delta";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
@@ -231,27 +232,13 @@ function ZillionaireOverviewBody({
 
   const pendingPayoutsCount = overview?.attention?.pendingPayouts.count ?? 0;
 
-  // Chart data simulation / mapping
+  // Chart data mapping - real data only
   const chartPoints = useMemo(() => {
     if (analytics?.timeSeries && analytics.timeSeries.length > 0) {
       return analytics.timeSeries;
     }
-    // Default 7 days of sample points
-    const days = chartPeriod === "24h" ? 6 : chartPeriod === "7d" ? 7 : 14;
-    return Array.from({ length: days }).map((_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - (days - 1 - i));
-      const dateStr = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      const rev = 12000000 + Math.sin(i * 0.8) * 4000000 + i * 800000;
-      const watch = 1400 + Math.sin(i * 0.8) * 300 + i * 50;
-      return {
-        date: dateStr,
-        views: Math.round(watch * 1.8),
-        watchMinutes: Math.round(watch),
-        revenueMinor: Math.round(rev),
-      };
-    });
-  }, [analytics, chartPeriod]);
+    return [];
+  }, [analytics]);
 
   const maxRevenue = useMemo(() => {
     return Math.max(...chartPoints.map((p) => p.revenueMinor), 1000000);
@@ -399,7 +386,7 @@ function ZillionaireOverviewBody({
           title="Total Viewers"
           value={totalViewers}
           subtitle={`${liveViewersNow} active watching now`}
-          change={{ value: "+12.4% this week", positive: true }}
+          caption={`${liveViewersNow} active now`}
           icon={Users}
           variant="blue"
           onClick={() => {
@@ -411,7 +398,7 @@ function ZillionaireOverviewBody({
           title="Total Watch Time"
           value={totalWatchHours}
           subtitle="Hours streamed across catalog"
-          change={{ value: "+8.1% vs last week", positive: true }}
+          caption="Catalog streaming time"
           icon={Clock}
           variant="purple"
           onClick={() => {
@@ -423,7 +410,7 @@ function ZillionaireOverviewBody({
           title="Revenue (MTD / Today)"
           value={grossRevenue}
           subtitle="Gross viewer PAYG & packages"
-          change={{ value: "+15.3% this month", positive: true }}
+          caption="Gross viewer revenue"
           icon={Wallet}
           variant="green"
           onClick={() => {
@@ -435,10 +422,7 @@ function ZillionaireOverviewBody({
           title="Pending Payouts"
           value={pendingPayouts}
           subtitle={`${pendingPayoutsCount} creators awaiting settlement`}
-          change={{
-            value: pendingPayoutsCount > 0 ? "Action required" : "Settled up to date",
-            positive: pendingPayoutsCount === 0,
-          }}
+          caption={pendingPayoutsCount > 0 ? `${pendingPayoutsCount} action required` : "All settled"}
           icon={CreditCard}
           variant="gold"
           onClick={() => {
@@ -533,7 +517,12 @@ function ZillionaireOverviewBody({
           >
             <div className="h-64 flex flex-col justify-between pt-4">
               {/* SVG Area / Line Chart */}
-              <div className="relative h-48 w-full">
+              {chartPoints.length === 0 ? (
+                <div className="flex h-48 w-full items-center justify-center text-xs text-slate-500">
+                  No data yet. Revenue curves will appear as viewers stream content.
+                </div>
+              ) : (
+                <div className="relative h-48 w-full">
                 <svg className="h-full w-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
                   <defs>
                     <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
@@ -588,6 +577,7 @@ function ZillionaireOverviewBody({
                   })}
                 </svg>
               </div>
+              )}
 
               {/* X-axis labels */}
               <div className="flex items-center justify-between text-[10px] text-slate-400 border-t border-white/5 pt-2">

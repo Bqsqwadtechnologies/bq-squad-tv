@@ -239,51 +239,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/finance")({
             }
           }
 
-          // If no payments exist in test environments, provide standard baseline demo figures
-          if (grossRevenueMinor === 0) {
-            grossRevenueMinor = 285000000; // ₦2,850,000.00
-            producerShareMinor = 199500000; // ₦1,995,000.00 (70%)
-            platformShareMinor = 85500000; // ₦855,000.00 (30%)
-            if (walletLiabilityMinor === 0) walletLiabilityMinor = 42500000; // ₦425,000.00
 
-            // Baseline channel breakdown
-            channelRevMap.set("ch-movies", {
-              channelId: "ch-movies",
-              channelName: "BQ Movies Deluxe",
-              grossMinor: 140000000,
-              producerMinor: 98000000,
-              platformMinor: 42000000,
-              txCount: 380,
-            });
-            channelRevMap.set("ch-sports", {
-              channelId: "ch-sports",
-              channelName: "BQ Sports Live",
-              grossMinor: 95000000,
-              producerMinor: 66500000,
-              platformMinor: 28500000,
-              txCount: 240,
-            });
-            channelRevMap.set("ch-drama", {
-              channelId: "ch-drama",
-              channelName: "BQ Drama Plus",
-              grossMinor: 50000000,
-              producerMinor: 35000000,
-              platformMinor: 15000000,
-              txCount: 160,
-            });
-
-            // Populate mock curve across days
-            let dayIdx = 0;
-            for (const [dateStr, dEntry] of dayRevMap.entries()) {
-              dayIdx++;
-              const dailyFactor = 0.8 + 0.4 * Math.sin(dayIdx * 0.5);
-              const dayGross = Math.floor((285000000 / daysCount) * dailyFactor);
-              dEntry.grossMinor = dayGross;
-              dEntry.producerMinor = Math.floor(dayGross * 0.7);
-              dEntry.platformMinor = dayGross - dEntry.producerMinor;
-              dEntry.txCount = Math.floor(25 * dailyFactor);
-            }
-          }
 
           // 3. Ledger explorer entries
           let ledgerEntries = ledgerRaw.map((row) => ({
@@ -297,61 +253,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/finance")({
             reference: String(row["reference"] || row["paymentId"] || "N/A"),
           }));
 
-          // Baseline ledger entries if database empty
-          if (ledgerEntries.length === 0) {
-            ledgerEntries = [
-              {
-                id: "led-01",
-                uid: "usr_zillion_01",
-                description: "Viewer Wallet Top-up (Paystack)",
-                amountMinor: 500000,
-                kind: "topup",
-                currency: "NGN",
-                createdAt: new Date(now.getTime() - 20 * 60000).toISOString(),
-                reference: "PAY_NGN_89211",
-              },
-              {
-                id: "led-02",
-                uid: "usr_zillion_02",
-                description: "Live TV Stream Session Minutes",
-                amountMinor: -45000,
-                kind: "spend",
-                currency: "NGN",
-                createdAt: new Date(now.getTime() - 45 * 60000).toISOString(),
-                reference: "SES_90412",
-              },
-              {
-                id: "led-03",
-                uid: "usr_zillion_03",
-                description: "Customer Refund for Interrupted Broadcast",
-                amountMinor: 150000,
-                kind: "refund",
-                currency: "NGN",
-                createdAt: new Date(now.getTime() - 120 * 60000).toISOString(),
-                reference: "REF_00912",
-              },
-              {
-                id: "led-04",
-                uid: "usr_producer_01",
-                description: "Bi-Weekly Creator Payout Settlement",
-                amountMinor: -25000000,
-                kind: "payout",
-                currency: "NGN",
-                createdAt: new Date(now.getTime() - 360 * 60000).toISOString(),
-                reference: "SETTLE_2026_11_15",
-              },
-              {
-                id: "led-05",
-                uid: "usr_zillion_04",
-                description: "Reversal of Failed Top-up Transaction",
-                amountMinor: -200000,
-                kind: "reversal",
-                currency: "NGN",
-                createdAt: new Date(now.getTime() - 720 * 60000).toISOString(),
-                reference: "REV_66102",
-              },
-            ];
-          }
+
 
           if (ledgerQuery) {
             ledgerEntries = ledgerEntries.filter(
@@ -576,14 +478,29 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/finance")({
               );
             }
 
+            const payments = await fs.query("payments", {
+              filters: [{ field: "status", op: "EQUAL", value: "COMPLETED" }],
+            });
+            let periodGross = 0;
+            let periodProducer = 0;
+            for (const p of payments) {
+              const amt = typeof p["amountMinor"] === "number" ? p["amountMinor"] : 0;
+              const ch = typeof p["channelId"] === "string" ? p["channelId"] : null;
+              periodGross += amt;
+              if (ch && ch !== "direct") {
+                periodProducer += Math.floor(amt * 0.7);
+              }
+            }
+            const periodPlatform = periodGross - periodProducer;
+
             const record: LockedPeriod = {
               period,
               lockedAt: new Date().toISOString(),
               lockedBy: user.uid,
-              grossRevenueMinor: 285000000,
-              producerShareMinor: 199500000,
-              platformShareMinor: 85500000,
-              payoutsMinor: 199500000,
+              grossRevenueMinor: periodGross,
+              producerShareMinor: periodProducer,
+              platformShareMinor: periodPlatform,
+              payoutsMinor: periodProducer,
               reason: body.reason,
               status: "LOCKED",
             };

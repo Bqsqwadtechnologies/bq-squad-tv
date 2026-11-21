@@ -510,12 +510,13 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/support/")({
 
           if (body.action === "SAVE_SEGMENT") {
             const segmentId = `seg_${crypto.randomUUID()}`;
+            const users = await fs.query("users", {});
             const newSegment: UserSegment = {
               id: segmentId,
               name: body.name,
               description: body.description,
               criteria: body.criteria,
-              audienceCount: 150 + Math.floor(Math.random() * 500),
+              audienceCount: Array.isArray(users) ? users.length : 0,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             };

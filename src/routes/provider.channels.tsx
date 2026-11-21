@@ -175,43 +175,24 @@ function ProviderChannelsInner({
     void loadData(token);
   }, [token]);
 
-  function refreshLatencyPings() {
+  async function refreshLatencyPings() {
     setIsRefreshingLatency(true);
-    setTimeout(() => {
-      setLatencyLocations([
-        {
-          city: "Lagos",
-          region: "West Africa",
-          pingMs: Math.floor(12 + Math.random() * 4),
-          status: "Optimal",
-        },
-        {
-          city: "Johannesburg",
-          region: "Southern Africa",
-          pingMs: Math.floor(36 + Math.random() * 6),
-          status: "Optimal",
-        },
-        {
-          city: "London",
-          region: "Europe (UK)",
-          pingMs: Math.floor(82 + Math.random() * 8),
-          status: "Good",
-        },
-        {
-          city: "New York",
-          region: "North America (US East)",
-          pingMs: Math.floor(108 + Math.random() * 10),
-          status: "Good",
-        },
-        {
-          city: "Frankfurt",
-          region: "Europe (Central)",
-          pingMs: Math.floor(90 + Math.random() * 6),
-          status: "Good",
-        },
-      ]);
+    try {
+      const start = performance.now();
+      await fetch("/api/public/v1/config/client", { cache: "no-store" });
+      const measuredRtt = Math.max(1, Math.round(performance.now() - start));
+      setLatencyLocations((prev) =>
+        prev.map((loc) => ({
+          ...loc,
+          pingMs: measuredRtt,
+          status: measuredRtt < 50 ? "Optimal" : measuredRtt < 150 ? "Good" : "Degraded",
+        }))
+      );
+    } catch {
+      // keep existing readings
+    } finally {
       setIsRefreshingLatency(false);
-    }, 800);
+    }
   }
 
   // Create Channel state

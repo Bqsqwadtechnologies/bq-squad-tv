@@ -1,3 +1,4 @@
+import { computeDelta } from "@/lib/delta";
 import { ProducerKycFlow } from "@/components/ProducerKycFlow";
 import { getNextPayoutWindow } from "@/lib/payout-calendar";
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
@@ -253,7 +254,7 @@ function ProducerDashboardInner({
     ? {
         amount: money(summary.earningsBalanceMinor, summary.currency),
         label: "Available",
-        changePercent: "+14.8%",
+        delta: computeDelta(summary.earningsBalanceMinor, summary.previousEarningsBalanceMinor, "last period"),
       }
     : undefined;
 
@@ -459,7 +460,7 @@ function ProducerDashboardInner({
             title="Total Channels"
             value={summary ? summary.channelCount.toString() : "—"}
             subtitle={summary ? `${summary.publishedChannelCount} active & streaming` : "Loading..."}
-            change={{ value: "+1", positive: true }}
+            caption={summary ? `${summary.publishedChannelCount} active` : undefined}
             icon={Tv}
             variant="blue"
           />
@@ -467,7 +468,7 @@ function ProducerDashboardInner({
             title="Live Viewers"
             value={analytics ? analytics.liveViewers.toLocaleString() : "—"}
             subtitle="Real-time concurrent audience"
-            change={{ value: "+14.2%", positive: true }}
+            delta={computeDelta(analytics?.liveViewers, analytics?.previousLiveViewers, "last period")}
             icon={Radio}
             variant="purple"
           />
@@ -475,7 +476,7 @@ function ProducerDashboardInner({
             title="Watch Time"
             value={analytics ? `${analytics.totalWatchHours} hrs` : "—"}
             subtitle={analytics ? `${analytics.totalMinutesWatched} total minutes` : "Across all content"}
-            change={{ value: "+8.5%", positive: true }}
+            delta={computeDelta(analytics?.totalWatchHours, analytics?.previousWatchHours, "last period")}
             icon={Clock}
             variant="gold"
           />
@@ -483,7 +484,7 @@ function ProducerDashboardInner({
             title="Estimated Earnings"
             value={summary ? money(summary.earningsBalanceMinor, summary.currency) : "—"}
             subtitle={summary ? `Lifetime: ${money(summary.earningsLifetimeMinor, summary.currency)}` : "Net revenue"}
-            change={{ value: "+21.4%", positive: true }}
+            delta={computeDelta(summary?.earningsBalanceMinor, summary?.previousEarningsBalanceMinor, "last period")}
             icon={Wallet}
             variant="green"
           />
@@ -570,7 +571,7 @@ function ProducerDashboardInner({
                 </svg>
               ) : (
                 <div className="flex h-full items-center justify-center text-xs text-slate-500">
-                  Gathering streaming telemetry for period {selectedPeriod}...
+                  No data yet. Streaming telemetry will appear once viewers watch your channels.
                 </div>
               )}
             </div>
@@ -610,6 +611,13 @@ function ProducerDashboardInner({
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
+                {(analytics?.topContent || []).length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="py-8 text-center text-xs text-slate-500">
+                      No content items yet. Upload a movie or series to begin streaming.
+                    </td>
+                  </tr>
+                )}
                 {(analytics?.topContent || []).map((content) => (
                   <tr key={content.id} className="group hover:bg-white/5 transition">
                     <td className="py-3 pl-2">

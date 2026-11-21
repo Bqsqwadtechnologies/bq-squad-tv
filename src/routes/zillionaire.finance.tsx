@@ -379,33 +379,29 @@ export function FinanceBody({
         <ConsoleKpiCard
           title="Gross Platform Revenue"
           value={data ? formatMinorCurrency(data.metrics.grossRevenueMinor, "NGN") : "₦—"}
-          change="+28.4% vs last period"
-          trend="up"
-          gradient="blue"
+          caption="Platform aggregate gross"
+          variant="blue"
           icon={Landmark}
         />
         <ConsoleKpiCard
           title="Producer Share (Owed/Paid)"
           value={data ? formatMinorCurrency(data.metrics.producerShareMinor, "NGN") : "₦—"}
-          change="70% contractual share"
-          trend="up"
-          gradient="purple"
+          caption="70% contractual split"
+          variant="purple"
           icon={Coins}
         />
         <ConsoleKpiCard
           title="Platform Net Share"
           value={data ? formatMinorCurrency(data.metrics.platformShareMinor, "NGN") : "₦—"}
-          change="30% platform take"
-          trend="up"
-          gradient="green"
+          caption="30% platform take"
+          variant="green"
           icon={TrendingUp}
         />
         <ConsoleKpiCard
           title="Total Wallet Liability"
           value={data ? formatMinorCurrency(data.metrics.walletLiabilityMinor, "NGN") : "₦—"}
-          change="Viewer funds held in reserve"
-          trend="neutral"
-          gradient="gold"
+          caption="Viewer funds in reserve"
+          variant="gold"
           icon={Wallet}
         />
       </div>

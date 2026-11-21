@@ -348,9 +348,8 @@ function HomePage() {
               <span className="text-xl font-black tracking-tight sm:text-3xl tabular-nums">
                 {watchTimeHours} hrs
               </span>
-              <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-emerald-400">
-                <span>↑ +20%</span>
-                <span className="text-slate-300 text-[11px] font-normal">this month</span>
+              <div className="mt-1 flex items-center gap-1 text-xs text-slate-300">
+                <span className="text-[11px] font-normal">Streaming time</span>
               </div>
             </div>
           </Link>
@@ -373,9 +372,8 @@ function HomePage() {
                 {currencySymbol}
                 {balance}
               </span>
-              <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-emerald-400">
-                <span>↑ +25%</span>
-                <span className="text-slate-300 text-[11px] font-normal">wallet</span>
+              <div className="mt-1 flex items-center gap-1 text-xs text-slate-300">
+                <span className="text-[11px] font-normal">Wallet balance</span>
               </div>
             </div>
           </Link>
@@ -402,9 +400,8 @@ function HomePage() {
               <span className="text-xl font-black tracking-tight sm:text-3xl tabular-nums">
                 {rewardPoints} pts
               </span>
-              <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-emerald-300">
-                <span>↑ +30%</span>
-                <span className="text-slate-300 text-[11px] font-normal">earned</span>
+              <div className="mt-1 flex items-center gap-1 text-xs text-slate-300">
+                <span className="text-[11px] font-normal">Reward points</span>
               </div>
             </div>
           </div>
@@ -431,9 +428,8 @@ function HomePage() {
               <span className="text-xl font-black tracking-tight sm:text-3xl tabular-nums">
                 {referralCount}
               </span>
-              <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-emerald-400">
-                <span>↑ +12%</span>
-                <span className="text-slate-300 text-[11px] font-normal">active</span>
+              <div className="mt-1 flex items-center gap-1 text-xs text-slate-300">
+                <span className="text-[11px] font-normal">Friends referred</span>
               </div>
             </div>
           </div>
@@ -506,7 +502,7 @@ function HomePage() {
                     <p className="line-clamp-1 text-xs text-slate-400">{item.category}</p>
                     <Link
                       to="/channels/$channelId"
-                      params={{ channelId: item.channelId ?? "demo" }}
+                      params={{ channelId: item.channelId ?? item.id }}
                       className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-[#00D8F5] hover:underline"
                     >
                       <Play size={12} fill="currentColor" /> Resume
@@ -542,7 +538,7 @@ function HomePage() {
                 <Link
                   key={ch.id}
                   to="/channels/$channelId"
-                  params={{ channelId: ch.channelId ?? "demo" }}
+                  params={{ channelId: ch.channelId ?? ch.id }}
                   className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] p-3 transition hover:border-[#00D8F5]/50 hover:shadow-lg hover:shadow-[#0052D4]/20 active:scale-95"
                 >
                   <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-gradient-to-br from-[#0052D4]/40 to-[#030B2A] flex items-center justify-center">
@@ -591,7 +587,7 @@ function HomePage() {
                 <Link
                   key={item.id}
                   to="/channels/$channelId"
-                  params={{ channelId: "demo" }}
+                  params={{ channelId: item.channelId ?? item.id }}
                   className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] transition hover:border-[#00D8F5]/40 hover:shadow-lg hover:shadow-[#0052D4]/20 active:scale-95"
                 >
                   <div className="relative aspect-[2/3] w-full bg-gradient-to-t from-[#030B2A] via-[#0D1D45] to-[#142456] flex items-end p-3">
@@ -637,7 +633,7 @@ function HomePage() {
                 <Link
                   key={item.id}
                   to="/channels/$channelId"
-                  params={{ channelId: "demo" }}
+                  params={{ channelId: item.channelId ?? item.id }}
                   className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0C1738] p-3 transition hover:border-[#00D8F5]/40 hover:shadow-lg active:scale-95"
                 >
                   <div className="aspect-[4/3] w-full rounded-xl bg-gradient-to-br from-[#0052D4]/30 to-[#030B2A] flex items-center justify-center">

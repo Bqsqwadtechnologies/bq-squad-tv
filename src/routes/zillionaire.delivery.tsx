@@ -79,10 +79,10 @@ function DeliveryInner({
         />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <ConsoleKpiCard title="Active Streams" value={String(metrics?.activeStreams ?? 142)} icon={Activity} variant="cyan" />
-          <ConsoleKpiCard title="Current Egress" value={`${metrics?.egressBandwidthGbps ?? 12.4} Gbps`} icon={Wifi} variant="blue" />
-          <ConsoleKpiCard title="Avg Bitrate" value={`${metrics?.averageBitrateMbps ?? 4.8} Mbps`} icon={Cpu} variant="emerald" />
-          <ConsoleKpiCard title="Rebuffer Ratio" value={`${metrics?.rebufferingRatioPercent ?? 0.12}%`} icon={ShieldAlert} variant="amber" />
+          <ConsoleKpiCard title="Active Streams" value={metrics?.activeStreams !== undefined ? String(metrics.activeStreams) : "0"} icon={Activity} variant="blue" caption="Live concurrent feeds" />
+          <ConsoleKpiCard title="Current Egress" value={metrics?.egressBandwidthGbps !== undefined ? `${metrics.egressBandwidthGbps} Gbps` : "0 Gbps"} icon={Wifi} variant="blue" caption="Edge throughput" />
+          <ConsoleKpiCard title="Avg Bitrate" value={metrics?.averageBitrateMbps !== undefined ? `${metrics.averageBitrateMbps} Mbps` : "—"} icon={Cpu} variant="green" caption="HLS encoding tier" />
+          <ConsoleKpiCard title="Rebuffer Ratio" value={metrics?.rebufferingRatioPercent !== undefined ? `${metrics.rebufferingRatioPercent}%` : "0%"} icon={ShieldAlert} variant="gold" caption="Playback buffer quality" />
         </div>
 
         <ConsoleCard
