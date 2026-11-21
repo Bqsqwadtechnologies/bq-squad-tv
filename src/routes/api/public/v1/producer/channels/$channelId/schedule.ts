@@ -18,7 +18,7 @@ export const Route = createFileRoute("/api/public/v1/producer/channels/$channelI
           const fs = await Firestore.create();
           await requireChannelPermission(fs, channelId, user.uid, "channel.read");
           const scheduleList = await fs.query(`channels/${channelId}/schedule`, {
-            orderBy: [{ field: "startsAt", direction: "ASCENDING" }],
+            orderByField: "startsAt",
             limit: 100,
           }).catch(() => []);
           return Response.json({ items: scheduleList });

@@ -77,8 +77,7 @@ export const Route = createFileRoute("/api/public/v1/producer/collaborations/")(
           const fs = await Firestore.create();
           await requirePlatformRole(fs, user, "producer");
 
-          const raw = await parseBody(request);
-          const body = actionSchema.parse(raw);
+          const body = await parseBody(request, actionSchema);
           const now = new Date().toISOString();
           const userEmail = (user.email || "").toLowerCase();
 
@@ -121,6 +120,7 @@ export const Route = createFileRoute("/api/public/v1/producer/collaborations/")(
               action: "collaboration.created",
               targetType: "collaboration",
               targetId: collabId,
+              reason: "Producer created a collaboration and invited revenue stakeholders.",
               metadata: { titleId: body.titleId, totalSplits: body.splits.length },
             });
 

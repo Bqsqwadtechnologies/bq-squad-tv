@@ -213,7 +213,7 @@ export const Route = createFileRoute("/api/public/v1/provider/channels")({
             return Response.json({ error: "Invalid parameters" }, { status: 400 });
           }
           await fs
-            .updateDoc(`liveChannels/${body.channelId}`, {
+            .patchDoc(`liveChannels/${body.channelId}`, {
               bandwidthCapGbps: body.bandwidthCapGbps,
               updatedAt: new Date().toISOString(),
             })

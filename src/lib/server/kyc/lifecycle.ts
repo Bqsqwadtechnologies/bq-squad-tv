@@ -78,19 +78,20 @@ export async function scanAndProcessDocumentExpiries(fs: any): Promise<ExpirySca
       await writeAuditLog(fs, {
         action: "kyc.document_expired_auto",
         actorUid: "system_scheduler",
-        actorEmail: "compliance@bqsqwad.tv",
         targetType: "user",
         targetId: p.uid,
         reason: "Applicant government-issued identity document expired.",
         metadata: { idExpiryDate: p.idExpiryDate },
       });
 
-      if (p.email && p.email.includes("@")) {
+      if (p.officialEmail && p.officialEmail.includes("@")) {
         await dispatchNotificationEvent(fs, {
           eventType: "kyc_rejected",
           recipientUid: p.uid,
-          recipientEmail: p.email,
-          recipientName: p.legalName,
+          recipientEmail: p.officialEmail,
+          ...(p.legalName ? { recipientName: p.legalName } : {}),
+          currentStatus: "expired",
+          nextStep: "Upload renewed identity documentation for re-verification.",
           reason: "Applicant government-issued identity document has expired. Re-verification required.",
         }).catch(() => {});
       }
@@ -103,12 +104,14 @@ export async function scanAndProcessDocumentExpiries(fs: any): Promise<ExpirySca
         expiryReminder7DaySentAt: now,
       });
 
-      if (p.email && p.email.includes("@")) {
+      if (p.officialEmail && p.officialEmail.includes("@")) {
         await dispatchNotificationEvent(fs, {
           eventType: "kyc_needs_changes",
           recipientUid: p.uid,
-          recipientEmail: p.email,
-          recipientName: p.legalName,
+          recipientEmail: p.officialEmail,
+          ...(p.legalName ? { recipientName: p.legalName } : {}),
+          currentStatus: p.kycStatus,
+          nextStep: "Upload renewed identity documentation before expiry.",
           reason: `Urgent: Your ID Document expires in ${days} days. Please upload renewed documentation.`,
         }).catch(() => {});
       }
@@ -121,12 +124,14 @@ export async function scanAndProcessDocumentExpiries(fs: any): Promise<ExpirySca
         expiryReminder30DaySentAt: now,
       });
 
-      if (p.email && p.email.includes("@")) {
+      if (p.officialEmail && p.officialEmail.includes("@")) {
         await dispatchNotificationEvent(fs, {
           eventType: "kyc_needs_changes",
           recipientUid: p.uid,
-          recipientEmail: p.email,
-          recipientName: p.legalName,
+          recipientEmail: p.officialEmail,
+          ...(p.legalName ? { recipientName: p.legalName } : {}),
+          currentStatus: p.kycStatus,
+          nextStep: "Prepare renewed identity documentation before expiry.",
           reason: `Reminder: Your ID Document expires in ${days} days. Please prepare renewal documentation.`,
         }).catch(() => {});
       }

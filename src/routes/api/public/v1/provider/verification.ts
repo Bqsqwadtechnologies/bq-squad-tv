@@ -284,9 +284,7 @@ export const Route = createFileRoute("/api/public/v1/provider/verification")({
 
           // Batch C2: Risk Scoring and Duplicate Checks
           const existingPayout = await fs.getDoc(`payoutProfiles/${user.uid}`).catch(() => null);
-          const payoutAccountName = existingPayout
-            ? (existingPayout["beneficiaryName"] || existingPayout["accountName"] || "")
-            : undefined;
+          const payoutAccountName = String(existingPayout?.["beneficiaryName"] || existingPayout?.["accountName"] || "");
 
           let duplicateIdFound = false;
           let duplicatePhoneFound = false;
@@ -352,7 +350,14 @@ export const Route = createFileRoute("/api/public/v1/provider/verification")({
               title: body.representative.title,
               idTypeId: body.representative.idTypeId,
             },
-            businessAddress: body.registeredAddress,
+            businessAddress: {
+              line1: body.registeredAddress.line1,
+              city: body.registeredAddress.city,
+              country: body.registeredAddress.country,
+              ...(body.registeredAddress.line2 !== undefined ? { line2: body.registeredAddress.line2 } : {}),
+              ...(body.registeredAddress.state !== undefined ? { state: body.registeredAddress.state } : {}),
+              ...(body.registeredAddress.postalCode !== undefined ? { postalCode: body.registeredAddress.postalCode } : {}),
+            },
             rawTaxNumber: body.taxId,
             rawAccountNumber: body.settlementAccount.accountNumber,
             rawRepresentativeIdNumber: body.representative.idNumber,

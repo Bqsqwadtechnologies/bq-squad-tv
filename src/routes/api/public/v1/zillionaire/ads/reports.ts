@@ -16,7 +16,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/ads/reports")({
           const units = await fs.query("adUnits", { limit: 100 }).catch(() => []);
           const events = await fs.query("adEvents", { limit: 500 }).catch(() => []);
 
-          const byPlatform: Record<string, { impressions: number; clicks: number; revenueEstMinor: number }> = {
+          const byPlatform: Record<"web" | "android", { impressions: number; clicks: number; revenueEstMinor: number }> = {
             web: { impressions: 0, clicks: 0, revenueEstMinor: 0 },
             android: { impressions: 0, clicks: 0, revenueEstMinor: 0 },
           };

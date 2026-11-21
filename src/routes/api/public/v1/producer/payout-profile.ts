@@ -42,7 +42,7 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
           const kycCountry = String(kycDoc?.["kycCountry"] || "NG").toUpperCase();
           const kycStatus = String(kycDoc?.["kycStatus"] || "unsubmitted");
           const beneficiaryName = String(
-            kycDoc?.["fullName"] || kycDoc?.["companyName"] || kycDoc?.["directorFullName"] || user.name || "",
+            kycDoc?.["fullName"] || kycDoc?.["companyName"] || kycDoc?.["directorFullName"] || kycDoc?.["legalName"] || "",
           );
           const beneficiaryAddress = String(
             kycDoc?.["residentialAddress"] || kycDoc?.["registeredAddress"] || "",
@@ -136,7 +136,7 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
 
           // 4. Beneficiary details pre-filled from verified KYC
           const beneficiaryName = String(
-            kycDoc?.["fullName"] || kycDoc?.["companyName"] || kycDoc?.["directorFullName"] || user.name || "",
+            kycDoc?.["fullName"] || kycDoc?.["companyName"] || kycDoc?.["directorFullName"] || kycDoc?.["legalName"] || "",
           );
           const beneficiaryAddress = String(
             kycDoc?.["residentialAddress"] || kycDoc?.["registeredAddress"] || "",
@@ -165,7 +165,7 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
             if (other["uid"] === user.uid) continue;
             const sameBank = String(other["bankName"] || "").toLowerCase() === body.bankName.toLowerCase();
             const sameMasked = other["accountNumberMasked"] === masked;
-            const sameIban = body.iban && other["iban"] && other["iban"].toLowerCase() === body.iban.toLowerCase();
+            const sameIban = body.iban && typeof other["iban"] === "string" && other["iban"].toLowerCase() === body.iban.toLowerCase();
             if ((sameBank && sameMasked) || sameIban) {
               duplicateDetected = true;
               break;
@@ -213,21 +213,21 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
             routingCode: body.routingCode || null,
             purposeOfPayment: body.purposeOfPayment,
             taxResidency: kycCountry,
-            taxIdMasked: kycDoc?.["maskedTaxNumber"] || null,
+            taxIdMasked: typeof kycDoc?.["maskedTaxNumber"] === "string" ? kycDoc["maskedTaxNumber"] : null,
             isManualBank: body.isManualBank,
             status: body.isManualBank ? "flagged_for_review" : "active",
             verificationStatus,
             isLocked,
             payoutsPaused,
-            proofDocumentPath: body.proofDocumentPath || existing?.["proofDocumentPath"] || null,
-            proofDocumentFileName: body.proofDocumentFileName || existing?.["proofDocumentFileName"] || null,
-            proofDocumentUploadedAt: body.proofDocumentPath ? now : existing?.["proofDocumentUploadedAt"] || null,
+            proofDocumentPath: body.proofDocumentPath || (typeof existing?.["proofDocumentPath"] === "string" ? existing["proofDocumentPath"] : null),
+            proofDocumentFileName: body.proofDocumentFileName || (typeof existing?.["proofDocumentFileName"] === "string" ? existing["proofDocumentFileName"] : null),
+            proofDocumentUploadedAt: body.proofDocumentPath ? now : (typeof existing?.["proofDocumentUploadedAt"] === "string" ? existing["proofDocumentUploadedAt"] : null),
             checks,
-            createdAt: existing?.["createdAt"] || now,
+            createdAt: typeof existing?.["createdAt"] === "string" ? existing["createdAt"] : now,
             updatedAt: now,
           };
 
-          await fs.setDoc(`payoutProfiles/${user.uid}`, record);
+          await fs.setDoc(`payoutProfiles/${user.uid}`, { ...record });
 
           const { accountNumberEncrypted: _omitted, ...safeProfile } = record;
 

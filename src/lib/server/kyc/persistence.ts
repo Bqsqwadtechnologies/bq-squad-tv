@@ -314,8 +314,8 @@ export async function reviewKycProfile(
     status: input.status,
     timestamp: now,
     reviewerUid: input.reviewerUid,
-    rejectionReason: input.reason,
-    notes: input.notes,
+    ...(input.reason !== undefined ? { rejectionReason: input.reason } : {}),
+    ...(input.notes !== undefined ? { notes: input.notes } : {}),
   };
 
   const updatedTier = input.status === "approved" ? (profile.payoutTier === 2 ? 2 : 1) : 0;
@@ -326,10 +326,16 @@ export async function reviewKycProfile(
     kycVersion: nextVersion,
     kycReviewedAt: now,
     kycReviewedBy: input.reviewerUid,
-    kycRejectionReason: input.status === "rejected" ? input.reason : undefined,
-    rejectionReason: input.status === "rejected" ? input.reason : undefined,
     kycHistory: [...(Array.isArray(profile.kycHistory) ? profile.kycHistory : []), entry],
   };
+
+  if (input.status === "rejected" && input.reason !== undefined) {
+    updated.kycRejectionReason = input.reason;
+    updated.rejectionReason = input.reason;
+  } else {
+    delete updated.kycRejectionReason;
+    delete updated.rejectionReason;
+  }
 
   await fs.setDoc(`kycProfiles/${input.uid}`, updated as any);
 

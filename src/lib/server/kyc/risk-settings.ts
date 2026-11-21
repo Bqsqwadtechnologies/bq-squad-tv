@@ -53,9 +53,9 @@ export async function getKycRiskSettings(fs: Firestore): Promise<KycRiskSettings
         ? doc["fourEyesRequiredForHighRisk"]
         : DEFAULT_KYC_RISK_SETTINGS.fourEyesRequiredForHighRisk,
     updatedAt: typeof doc["updatedAt"] === "string" ? doc["updatedAt"] : DEFAULT_KYC_RISK_SETTINGS.updatedAt,
-    updatedByUid: typeof doc["updatedByUid"] === "string" ? doc["updatedByUid"] : undefined,
-    updatedByEmail: typeof doc["updatedByEmail"] === "string" ? doc["updatedByEmail"] : undefined,
-    reason: typeof doc["reason"] === "string" ? doc["reason"] : undefined,
+    ...(typeof doc["updatedByUid"] === "string" ? { updatedByUid: doc["updatedByUid"] } : {}),
+    ...(typeof doc["updatedByEmail"] === "string" ? { updatedByEmail: doc["updatedByEmail"] } : {}),
+    ...(typeof doc["reason"] === "string" ? { reason: doc["reason"] } : {}),
   };
 }
 
@@ -107,10 +107,11 @@ export async function updateKycRiskSettings(
   await writeAuditLog(fs, {
     action: "kyc.risk_settings.updated",
     actorUid: reviewer.uid,
-    actorEmail: reviewer.email || "",
+    targetType: "payout_rules",
     targetId: "risk_settings",
     reason: reason.trim(),
-    details: {
+    metadata: {
+      actorEmail: reviewer.email || "",
       before: current,
       after: next,
     },

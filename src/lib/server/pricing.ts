@@ -70,6 +70,14 @@ export type ContentBundle = {
 export type PricingConfig = {
   version: number;
   defaultRatePerMinuteMinor: number;
+  minimumSessionBalanceByCurrency?: Record<string, number>;
+  minimumSessionBalanceMinor?: number;
+  dailySpendLimitByCurrency?: Record<string, number>;
+  producerShareBpsByChannel?: Record<string, number>;
+  defaultProducerShareBps?: number;
+  maxConcurrentSessions?: number;
+  walletTopupsByCurrency?: Record<string, Record<string, unknown>>;
+  walletTopups?: Record<string, unknown>;
   categoryRatesMinor?: Record<string, number>;
   channelRatesPerHourMinor?: Record<string, number>;
   seriesRatesPerMinuteMinor?: Record<string, number>;

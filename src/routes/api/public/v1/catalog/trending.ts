@@ -62,7 +62,7 @@ export const Route = createFileRoute("/api/public/v1/catalog/trending")({
               rank: 0,
               viewerCount: currentViewers,
               isLive: Boolean(ch["isLive"] ?? true),
-              pricePerMinute: ch["ratePerMinuteMinor"] ? (Number(ch["ratePerMinuteMinor"]) / 100).toFixed(2) : undefined,
+              ...(ch["ratePerMinuteMinor"] ? { pricePerMinute: (Number(ch["ratePerMinuteMinor"]) / 100).toFixed(2) } : {}),
             });
           }
 
@@ -86,7 +86,7 @@ export const Route = createFileRoute("/api/public/v1/catalog/trending")({
               title: typeof a["title"] === "string" ? a["title"] : "Untitled",
               category: typeof a["category"] === "string" ? a["category"] : "Movie",
               posterUrl: typeof a["posterUrl"] === "string" ? a["posterUrl"] : null,
-              channelId: typeof a["channelId"] === "string" ? a["channelId"] : undefined,
+              ...(typeof a["channelId"] === "string" ? { channelId: a["channelId"] } : {}),
               score,
               rank: 0,
               viewerCount: uniqueViewers,

@@ -228,13 +228,14 @@ export function mergeTrendingWithPromotions(
 
     if (shouldInsertPromo) {
       const p = activePromos[promoIndex++];
+      if (!p) continue;
       result.push({
         id: p.targetId,
         targetType: p.targetType,
         title: p.title,
         category: p.category,
         posterUrl: p.posterUrl,
-        channelId: p.targetType === "channel" ? p.targetId : undefined,
+        ...(p.targetType === "channel" ? { channelId: p.targetId } : {}),
         score: 0,
         rank: result.length + 1,
         viewerCount: 0,
@@ -243,7 +244,8 @@ export function mergeTrendingWithPromotions(
         promotionBadge: "Sponsored",
       });
     } else if (organicIndex < sortedOrganic.length) {
-      result.push(sortedOrganic[organicIndex++]);
+      const organic = sortedOrganic[organicIndex++];
+      if (organic) result.push(organic);
     } else {
       break;
     }

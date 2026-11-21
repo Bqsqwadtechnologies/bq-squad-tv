@@ -12,7 +12,7 @@ export interface CaseDossierInput {
 export function renderKycCaseDossierHtml(input: CaseDossierInput): string {
   const { profile, audits, exportedBy, exportedAt, legalReason } = input;
   const retentionYears = getStatutoryRetentionYears(profile.kycCountry);
-  const retentionExpiry = computeRetentionExpiryDate(profile.createdAt || exportedAt, profile.kycCountry);
+  const retentionExpiry = computeRetentionExpiryDate(profile.kycSubmittedAt || exportedAt, profile.kycCountry);
 
   const viewAudits = audits.filter(
     (a) => a.action === "kyc.document_viewed" || a.action === "kyc_sensitive_field_revealed" || a.action === "kyc_detail_viewed"
@@ -62,7 +62,7 @@ export function renderKycCaseDossierHtml(input: CaseDossierInput): string {
     <div><div class="field-label">Entity Classification</div><div class="field-value">${profile.kycType || "N/A"}</div></div>
     <div><div class="field-label">ID Number (Masked)</div><div class="field-value">${profile.maskedIdNumber || "N/A"}</div></div>
     <div><div class="field-label">Tax ID (Masked)</div><div class="field-value">${profile.maskedTaxNumber || "N/A"}</div></div>
-    <div><div class="field-label">Official Email</div><div class="field-value">${profile.officialEmail || profile.email || "N/A"}</div></div>
+    <div><div class="field-label">Official Email</div><div class="field-value">${profile.officialEmail || "N/A"}</div></div>
     <div><div class="field-label">Phone</div><div class="field-value">${profile.phone || "N/A"}</div></div>
   </div>
 

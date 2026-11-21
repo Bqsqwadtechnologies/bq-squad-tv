@@ -1,4 +1,4 @@
-import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
+import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 
 export type ZillionaireStepUpScope =
   "wallet_adjust" | "payment_reversal" | "permanent_delete" | "team_manage" | "payout_settlement";
@@ -11,7 +11,9 @@ export async function requestZillionaireStepUp(
   if (!password) throw new Error("Step-up verification was cancelled.");
   const code = window.prompt("Enter the current six-digit authenticator code.");
   if (!code) throw new Error("Step-up verification was cancelled.");
-  const headers = await getWebAuthHeaders();
+  const session = await restoreWebSession();
+  if (!session) throw new Error("Sign in to continue.");
+  const headers = new Headers(await getWebAuthHeaders(session));
   headers.set("Content-Type", "application/json");
   const response = await fetch("/api/public/v1/zillionaire/access/step-up", {
     method: "POST",

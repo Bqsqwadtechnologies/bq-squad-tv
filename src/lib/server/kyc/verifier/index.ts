@@ -82,26 +82,31 @@ export class ManualKycVerifier implements KycVerifier {
 
   public async evaluateCase(caseData: KycCaseInput): Promise<KycVerifierResult> {
     const performedAt = new Date().toISOString();
+    const documentVaultPath = Object.values(caseData.documentVaultPaths || {})[0];
+    const documentNumber = caseData.idNumber || caseData.companyRegNumber;
+    const faceVaultPath = caseData.documentVaultPaths?.["selfie_face"];
+    const documentPhotoVaultPath = caseData.documentVaultPaths?.["id_front"];
+    const videoVaultPath = caseData.documentVaultPaths?.["liveness_video"];
 
     const [docCheck, faceMatch, liveness, sanctions] = await Promise.all([
       this.verifyDocument({
         documentType: "identity_evidence",
         countryCode: caseData.countryCode,
-        documentVaultPath: Object.values(caseData.documentVaultPaths || {})[0],
-        documentNumber: caseData.idNumber || caseData.companyRegNumber,
+        ...(documentVaultPath ? { documentVaultPath } : {}),
+        ...(documentNumber ? { documentNumber } : {}),
       }),
       this.matchFace({
-        faceVaultPath: caseData.documentVaultPaths?.["selfie_face"],
-        documentPhotoVaultPath: caseData.documentVaultPaths?.["id_front"],
+        ...(faceVaultPath ? { faceVaultPath } : {}),
+        ...(documentPhotoVaultPath ? { documentPhotoVaultPath } : {}),
       }),
       this.verifyLiveness({
-        videoVaultPath: caseData.documentVaultPaths?.["liveness_video"],
+        ...(videoVaultPath ? { videoVaultPath } : {}),
       }),
       this.screenSanctionsAndPep({
         fullName: caseData.fullName,
         countryCode: caseData.countryCode,
-        nationalIdNumber: caseData.idNumber,
-        dateOfBirth: caseData.dateOfBirth,
+        ...(caseData.idNumber ? { nationalIdNumber: caseData.idNumber } : {}),
+        ...(caseData.dateOfBirth ? { dateOfBirth: caseData.dateOfBirth } : {}),
       }),
     ]);
 
@@ -145,8 +150,8 @@ export class ExternalKycVerifierAdapter implements KycVerifier {
   private readonly timeoutMs: number;
 
   constructor(options?: { apiKey?: string; endpoint?: string; timeoutMs?: number }) {
-    this.apiKey = options?.apiKey || process.env.KYC_VERIFIER_API_KEY || "";
-    this.endpoint = options?.endpoint || process.env.KYC_VERIFIER_ENDPOINT || "https://api.verifypay.internal/v1/kyc";
+    this.apiKey = options?.apiKey || process.env['KYC_VERIFIER_API_KEY'] || "";
+    this.endpoint = options?.endpoint || process.env['KYC_VERIFIER_ENDPOINT'] || "https://api.verifypay.internal/v1/kyc";
     this.timeoutMs = options?.timeoutMs || 8000; // 8-second bounded timeout
   }
 
@@ -297,7 +302,7 @@ export class ExternalKycVerifierAdapter implements KycVerifier {
         performedAt,
         fallbackToManual: false,
         manualReviewRequired: true, // Owner always makes final decision
-        ownerNotice: response.status === "flagged" ? "Automated check flagged anomalies for review." : undefined,
+        ...(response.status === "flagged" ? { ownerNotice: "Automated check flagged anomalies for review." } : {}),
       };
     } catch (err: any) {
       // Automatic fallback to manual review on external provider failure
@@ -354,10 +359,11 @@ export class ExternalKycVerifierAdapter implements KycVerifier {
  */
 export function getKycVerifier(): KycVerifier {
   const isExternalEnabled =
-    process.env.FEATURE_EXTERNAL_KYC_VERIFIER === "true" ||
-    process.env.FEATURE_EXTERNAL_KYC_VERIFIER === "1";
+    process.env['FEATURE_EXTERNAL_KYC_VERIFIER'] === "true" ||
+    process.env['FEATURE_EXTERNAL_KYC_VERIFIER'] === "1";
 
-  const hasApiKey = Boolean(process.env.KYC_VERIFIER_API_KEY && process.env.KYC_VERIFIER_API_KEY.trim());
+  const apiKey = process.env['KYC_VERIFIER_API_KEY'];
+  const hasApiKey = Boolean(apiKey && apiKey.trim());
 
   if (isExternalEnabled && hasApiKey) {
     return new ExternalKycVerifierAdapter();

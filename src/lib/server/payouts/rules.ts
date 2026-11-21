@@ -56,9 +56,9 @@ export async function getPayoutRules(fs: Firestore): Promise<PayoutRules> {
         typeof doc["stepUpThresholdNGNMinor"] === "number"
           ? doc["stepUpThresholdNGNMinor"]
           : DEFAULT_PAYOUT_RULES.stepUpThresholdNGNMinor,
-      updatedAt: typeof doc["updatedAt"] === "string" ? doc["updatedAt"] : undefined,
-      updatedBy: typeof doc["updatedBy"] === "string" ? doc["updatedBy"] : undefined,
-      updateReason: typeof doc["updateReason"] === "string" ? doc["updateReason"] : undefined,
+      ...(typeof doc["updatedAt"] === "string" ? { updatedAt: doc["updatedAt"] } : {}),
+      ...(typeof doc["updatedBy"] === "string" ? { updatedBy: doc["updatedBy"] } : {}),
+      ...(typeof doc["updateReason"] === "string" ? { updateReason: doc["updateReason"] } : {}),
     };
   } catch {
     return { ...DEFAULT_PAYOUT_RULES };

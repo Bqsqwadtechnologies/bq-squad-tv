@@ -49,11 +49,11 @@ export const Route = createFileRoute("/api/public/v1/producer/lifecycle/name-cha
           await writeAuditLog(fs, {
             action: "kyc.name_change_requested",
             actorUid: user.uid,
-            actorEmail: user.email || "",
             targetType: "kyc_case",
             targetId: user.uid,
             reason: body.reason,
             metadata: {
+              actorEmail: user.email || "",
               previousName: profile.legalName,
               newName: body.newName,
               proofDocumentVaultPath: body.proofDocumentVaultPath,

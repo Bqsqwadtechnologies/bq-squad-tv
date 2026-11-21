@@ -60,7 +60,7 @@ export const Route = createFileRoute("/api/public/v1/producer/tier2-verification
           await writeAuditLog(fs, {
             action: "kyc.tier2_submitted",
             actorUid: user.uid,
-            actorEmail: user.email || "",
+            metadata: { actorEmail: user.email || "" },
             targetType: "user",
             targetId: user.uid,
             reason: "Producer submitted Tier 2 enhanced KYC verification documents",

@@ -50,12 +50,15 @@ export const Route = createFileRoute("/api/public/v1/producer/analytics")({
                 views: 0,
                 watchSeconds: 0,
                 revenueMinor: 0,
-                title: typeof s["assetTitle"] === "string" ? s["assetTitle"] : undefined,
+                ...(typeof s["assetTitle"] === "string" ? { title: s["assetTitle"] } : {}),
               };
             }
-            contentStats[assetId].views += 1;
-            contentStats[assetId].watchSeconds += sec;
-            contentStats[assetId].revenueMinor += rev;
+            const stats = contentStats[assetId];
+            if (stats) {
+              stats.views += 1;
+              stats.watchSeconds += sec;
+              stats.revenueMinor += rev;
+            }
           }
 
           // Build performance chart points for selected period based on real sessions

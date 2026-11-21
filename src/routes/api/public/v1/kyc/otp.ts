@@ -111,7 +111,7 @@ export const Route = createFileRoute("/api/public/v1/kyc/otp")({
             const sendResult = await sendKycOtpCode({
               recipientPhone: phone,
               code,
-              userEmail: user.email || undefined,
+              ...(user.email ? { userEmail: user.email } : {}),
             });
 
             // Persist record

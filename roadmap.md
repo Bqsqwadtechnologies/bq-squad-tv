@@ -1,5 +1,7 @@
 # BQ SQWAD TV delivery roadmap
 
+- [ ] Repair reported preview compilation errors without changing platform access rules.
+
 - [ ] Read existing Firestore collections and fields — administrator sign-in and a protected inspector are ready; requires successful database access.
 - [ ] Implement and verify the shared Firebase-backed API — waiting for the inspected schema and confirmed database permissions.
 - [ ] Implement Paystack checkout and idempotent wallet crediting — waiting for the existing payment/wallet schema.

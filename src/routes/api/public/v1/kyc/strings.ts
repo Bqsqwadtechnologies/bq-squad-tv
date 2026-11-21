@@ -44,7 +44,7 @@ export const Route = createFileRoute("/api/public/v1/kyc/strings")({
           }
 
           const now = new Date().toISOString();
-          await fs.setDoc(
+          await fs.patchDoc(
             "systemSettings/kyc_strings",
             {
               strings: body.strings,
@@ -52,17 +52,16 @@ export const Route = createFileRoute("/api/public/v1/kyc/strings")({
               updatedBy: user.uid,
               lastReason: body.reason,
             },
-            { merge: true }
           );
 
           await writeAuditLog(fs, {
             action: "kyc.string_table_updated",
             actorUid: user.uid,
-            actorEmail: user.email || "",
             targetType: "settings",
             targetId: "kyc_strings",
             reason: body.reason,
             metadata: {
+              actorEmail: user.email || "",
               keysUpdatedCount: Object.keys(body.strings).length,
             },
           });

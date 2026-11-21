@@ -38,7 +38,7 @@ describe("Batch 2: Copyright, Fingerprint & Review Queue", () => {
     it("flags an asset when exact file hash matches an existing catalog entry", async () => {
       const existingAssets = [
         {
-          id: "asset_orig",
+          __id: "asset_orig",
           title: "Original Blockbuster",
           ownerUid: "producer_1",
           fileHash: "hash_match_123",
@@ -47,7 +47,7 @@ describe("Batch 2: Copyright, Fingerprint & Review Queue", () => {
       ];
 
       const mockFs: any = {
-        listDocs: vi.fn().mockResolvedValue(existingAssets),
+        query: vi.fn().mockResolvedValue(existingAssets),
       };
 
       const result = await detectDuplicatesAndFlag(
@@ -68,7 +68,7 @@ describe("Batch 2: Copyright, Fingerprint & Review Queue", () => {
     it("flags an asset when perceptual fingerprint matches an existing entry", async () => {
       const existingAssets = [
         {
-          id: "asset_orig_2",
+          __id: "asset_orig_2",
           title: "Indie Documentary",
           ownerUid: "producer_1",
           fileHash: "hash_different",
@@ -77,7 +77,7 @@ describe("Batch 2: Copyright, Fingerprint & Review Queue", () => {
       ];
 
       const mockFs: any = {
-        listDocs: vi.fn().mockResolvedValue(existingAssets),
+        query: vi.fn().mockResolvedValue(existingAssets),
       };
 
       const result = await detectDuplicatesAndFlag(
@@ -98,7 +98,7 @@ describe("Batch 2: Copyright, Fingerprint & Review Queue", () => {
     it("returns clean result when candidate video is unique", async () => {
       const existingAssets = [
         {
-          id: "asset_orig_3",
+          __id: "asset_orig_3",
           title: "Existing Show",
           ownerUid: "producer_1",
           fileHash: "hash_old",
@@ -107,7 +107,7 @@ describe("Batch 2: Copyright, Fingerprint & Review Queue", () => {
       ];
 
       const mockFs: any = {
-        listDocs: vi.fn().mockResolvedValue(existingAssets),
+        query: vi.fn().mockResolvedValue(existingAssets),
       };
 
       const result = await detectDuplicatesAndFlag(
@@ -127,9 +127,9 @@ describe("Batch 2: Copyright, Fingerprint & Review Queue", () => {
   describe("Cross-Producer Publish Conflict Guard", () => {
     it("blocks publishing identical content under different producers", async () => {
       const mockFs: any = {
-        listDocs: vi.fn().mockResolvedValue([
+        query: vi.fn().mockResolvedValue([
           {
-            id: "asset_published_1",
+            __id: "asset_published_1",
             title: "Summer Jam Video",
             ownerUid: "producer_alice",
             contentStatus: "published",
@@ -159,9 +159,9 @@ describe("Batch 2: Copyright, Fingerprint & Review Queue", () => {
 
     it("permits publish when content belongs to the same producer or is unique", async () => {
       const mockFs: any = {
-        listDocs: vi.fn().mockResolvedValue([
+        query: vi.fn().mockResolvedValue([
           {
-            id: "asset_published_1",
+            __id: "asset_published_1",
             title: "Summer Jam Video",
             ownerUid: "producer_alice",
             contentStatus: "published",
@@ -205,8 +205,8 @@ describe("Batch 2: Copyright, Fingerprint & Review Queue", () => {
 
     beforeEach(() => {
       process.env = { ...originalEnv };
-      delete process.env.COPYRIGHT_MATCH_SERVICE_URL;
-      delete process.env.COPYRIGHT_MATCH_API_KEY;
+      delete process.env['COPYRIGHT_MATCH_SERVICE_URL'];
+      delete process.env['COPYRIGHT_MATCH_API_KEY'];
     });
 
     it("returns matched: false safely when external service is not configured", async () => {
@@ -222,8 +222,8 @@ describe("Batch 2: Copyright, Fingerprint & Review Queue", () => {
     });
 
     it("evaluates response correctly when external service returns match", async () => {
-      process.env.COPYRIGHT_MATCH_SERVICE_URL = "https://mock-copyright.local/check";
-      process.env.COPYRIGHT_MATCH_API_KEY = "test_key";
+      process.env['COPYRIGHT_MATCH_SERVICE_URL'] = "https://mock-copyright.local/check";
+      process.env['COPYRIGHT_MATCH_API_KEY'] = "test_key";
 
       const mockFetch = vi.fn().mockResolvedValue({
         ok: true,

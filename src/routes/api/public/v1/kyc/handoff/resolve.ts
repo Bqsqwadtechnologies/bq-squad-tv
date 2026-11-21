@@ -25,6 +25,9 @@ export const Route = createFileRoute("/api/public/v1/kyc/handoff/resolve")({
           }
 
           const [encoded, signature] = parts;
+          if (!encoded || !signature) {
+            return Response.json({ error: "Invalid handoff token format." }, { status: 400 });
+          }
           const expectedSig = crypto
             .createHmac("sha256", getHandoffSecret())
             .update(encoded)

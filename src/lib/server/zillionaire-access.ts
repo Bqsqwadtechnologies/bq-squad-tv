@@ -135,7 +135,6 @@ export interface UnlockTokenPayload {
   deviceHash?: string | undefined;
   sessionId?: string | undefined;
   absoluteExp?: number | undefined;
-  sessionId?: string | undefined;
 }
 
 export function createUnlockToken(

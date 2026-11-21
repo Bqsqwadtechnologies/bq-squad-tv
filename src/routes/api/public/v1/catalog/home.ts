@@ -77,9 +77,9 @@ export const Route = createFileRoute("/api/public/v1/catalog/home")({
               rank: 0,
               viewerCount: currentViewers,
               isLive: Boolean(ch["isLive"] ?? true),
-              pricePerMinute: ch["ratePerMinuteMinor"]
-                ? (Number(ch["ratePerMinuteMinor"]) / 100).toFixed(2)
-                : undefined,
+              ...(ch["ratePerMinuteMinor"]
+                ? { pricePerMinute: (Number(ch["ratePerMinuteMinor"]) / 100).toFixed(2) }
+                : {}),
             });
           }
 

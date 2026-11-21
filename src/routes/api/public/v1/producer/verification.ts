@@ -312,9 +312,7 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
 
           // Batch C2: Calculate Risk Score and Duplicate Checks
           const existingPayout = await fs.getDoc(`payoutProfiles/${user.uid}`).catch(() => null);
-          const payoutAccountName = existingPayout
-            ? (existingPayout["beneficiaryName"] || existingPayout["accountName"] || "")
-            : undefined;
+          const payoutAccountName = String(existingPayout?.["beneficiaryName"] || existingPayout?.["accountName"] || "");
 
           let duplicateIdFound = false;
           let duplicatePhoneFound = false;
@@ -344,10 +342,10 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
             role: "producer",
             fullName: body.legalName || body.businessName || "",
             countryCode: body.countryCode,
-            idNumber: body.idNumber,
-            companyRegNumber: body.companyRegNumber,
+            ...(body.idNumber ? { idNumber: body.idNumber } : {}),
+            ...(body.companyRegNumber ? { companyRegNumber: body.companyRegNumber } : {}),
             documentVaultPaths: docPaths,
-            dateOfBirth: body.dateOfBirth,
+            ...(body.dateOfBirth ? { dateOfBirth: body.dateOfBirth } : {}),
           }).catch((err) => ({
             provider: verifier.name,
             status: "manual_review_required" as const,
@@ -366,18 +364,32 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
             role: "producer",
             kycType,
             kycCountry: body.countryCode,
-            legalName: body.legalName,
-            businessName: body.businessName,
-            phone: body.phone,
-            phoneVerified: body.phoneVerified,
-            idTypeId: body.idTypeId,
-            companyRegNumber: body.companyRegNumber,
-            directorName: body.directorName,
-            residentialAddress: body.residentialAddress,
-            businessAddress: body.businessAddress,
-            rawIdNumber: body.idNumber,
-            rawTaxNumber: body.taxId,
-            rawDateOfBirth: body.dateOfBirth,
+            ...(body.legalName !== undefined ? { legalName: body.legalName } : {}),
+            ...(body.businessName !== undefined ? { businessName: body.businessName } : {}),
+            ...(body.phone !== undefined ? { phone: body.phone } : {}),
+            ...(body.phoneVerified !== undefined ? { phoneVerified: body.phoneVerified } : {}),
+            ...(body.idTypeId !== undefined ? { idTypeId: body.idTypeId } : {}),
+            ...(body.companyRegNumber !== undefined ? { companyRegNumber: body.companyRegNumber } : {}),
+            ...(body.directorName !== undefined ? { directorName: body.directorName } : {}),
+            ...(body.residentialAddress ? { residentialAddress: {
+              line1: body.residentialAddress.line1,
+              city: body.residentialAddress.city,
+              ...(body.residentialAddress.line2 !== undefined ? { line2: body.residentialAddress.line2 } : {}),
+              ...(body.residentialAddress.state !== undefined ? { state: body.residentialAddress.state } : {}),
+              ...(body.residentialAddress.postalCode !== undefined ? { postalCode: body.residentialAddress.postalCode } : {}),
+              ...(body.residentialAddress.country !== undefined ? { country: body.residentialAddress.country } : {}),
+            } } : {}),
+            ...(body.businessAddress ? { businessAddress: {
+              line1: body.businessAddress.line1,
+              city: body.businessAddress.city,
+              ...(body.businessAddress.line2 !== undefined ? { line2: body.businessAddress.line2 } : {}),
+              ...(body.businessAddress.state !== undefined ? { state: body.businessAddress.state } : {}),
+              ...(body.businessAddress.postalCode !== undefined ? { postalCode: body.businessAddress.postalCode } : {}),
+              ...(body.businessAddress.country !== undefined ? { country: body.businessAddress.country } : {}),
+            } } : {}),
+            ...(body.idNumber !== undefined ? { rawIdNumber: body.idNumber } : {}),
+            ...(body.taxId !== undefined ? { rawTaxNumber: body.taxId } : {}),
+            ...(body.dateOfBirth !== undefined ? { rawDateOfBirth: body.dateOfBirth } : {}),
             documentVaultPaths: docPaths,
             status: "pending",
             verifierResult,

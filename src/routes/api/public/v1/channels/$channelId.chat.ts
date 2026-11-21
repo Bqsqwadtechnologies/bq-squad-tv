@@ -50,11 +50,11 @@ export const Route = createFileRoute("/api/public/v1/channels/$channelId/chat")(
           if(slow>0&&typeof last==="string"&&Date.now()-Date.parse(last)<slow*1000) throw new ApiError(429,"CHAT_SLOW_MODE","Please wait before sending another message.");
           const text=clean(body.body); if(!text) throw new ApiError(400,"CHAT_EMPTY","Enter a message first.");
           if(settings["blockLinks"]===true&&/(https?:\/\/|www\.)/i.test(text)) throw new ApiError(400,"CHAT_LINK_BLOCKED","Links are not allowed in this chat.");
-          const config=await fs.getDoc("moderationConfig/keywords"); const words=Array.isArray(config?.["keywords"])?config!["keywords"] as string[]:[]; const lowered=text.toLowerCase();
+          const config=await fs.getDoc("moderationConfig/keywords"); const words=Array.isArray(config?.["keywords"])?config["keywords"] as string[]:[]; const lowered=text.toLowerCase();
           const blocked=words.some(word=>typeof word==="string"&&word.trim()&&lowered.includes(word.trim().toLowerCase()));
           const spamResult = scoreChatSpam(text, {
             recentMessages: previous.map((p) => String(p["body"] || "")).filter(Boolean),
-            lastMessageTimeMs: typeof last === "string" ? Date.parse(last) : undefined,
+            ...(typeof last === "string" ? { lastMessageTimeMs: Date.parse(last) } : {}),
           });
           if (spamResult.isSevere) {
             throw new ApiError(429, "CHAT_SPAM_DETECTED", "Message blocked by automated spam filter.");

@@ -377,7 +377,6 @@ export async function dispatchNotificationEvent(
         createdAt: now,
         createdBy: "system:email_outbox",
       },
-      { merge: true },
     )
     .catch((err) => {
       console.warn("[Outbox] In-app notification write warning:", err);
@@ -416,7 +415,7 @@ export async function dispatchNotificationEvent(
     sentAt: null,
   };
 
-  await fs.setDoc(`email_outbox/${outboxId}`, record, { merge: true });
+  await fs.setDoc(`email_outbox/${outboxId}`, { ...record });
 
   // 4. Attempt immediate delivery
   return executeOutboxDelivery(fs, outboxId);
