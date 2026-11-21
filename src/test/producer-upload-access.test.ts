@@ -136,6 +136,7 @@ describe("authorized channel uploads", () => {
     const fs = firestore({
       "channels/producer-channel": { ownerUid: "producer-1" },
       "producers/producer-1": { planStatus: "ACTIVE", verificationStatus: "APPROVED" },
+      "kycProfiles/producer-1": { kycStatus: "approved" },
       "channels/producer-channel/members/uploader": {
         status: "ACTIVE",
         role: "uploader",
