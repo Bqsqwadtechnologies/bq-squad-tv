@@ -159,6 +159,7 @@ export function classifyRoute(filePath, content) {
   if (
     content.includes("requireUser") ||
     content.includes("requireViewer") ||
+    content.includes("requireVerifiedViewer") ||
     content.includes("requireAppCheck")
   ) {
     return {
