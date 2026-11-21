@@ -49,6 +49,7 @@ export function GoogleSignInButton({
     propClientId || cachedGoogleClientId ? "ready" : "loading",
   );
   const [buttonState, setButtonState] = useState<ButtonState>("idle");
+  const [retryNonce, setRetryNonce] = useState(0);
 
   const loadConfig = useCallback(async () => {
     setConfigState("loading");
@@ -141,7 +142,7 @@ export function GoogleSignInButton({
     return () => {
       cancelled = true;
     };
-  }, [clientId, configState, disabled]);
+  }, [clientId, configState, disabled, retryNonce]);
 
   if (configState !== "ready" || buttonState !== "ready") {
     const message =
@@ -172,6 +173,7 @@ export function GoogleSignInButton({
               void loadConfig();
             } else {
               setButtonState("idle");
+              setRetryNonce((value) => value + 1);
             }
           }}
           className="text-xs text-cyan-300 hover:underline disabled:opacity-50"
