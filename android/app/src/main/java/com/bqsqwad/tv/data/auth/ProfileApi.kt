@@ -31,6 +31,12 @@ data class PublicLegalPageResponse(
     val version: Int,
 )
 
+data class ProfileCountryResponse(
+    val countryCode: String? = null,
+    val currency: String = "USD",
+    val walletCurrencyLocked: Boolean = false,
+)
+
 data class CompleteProfileRequest(
     val dateOfBirth: String,
     val parentalPin: String?,
@@ -104,6 +110,11 @@ data class AndroidVersionStatus(
 )
 
 interface ProfileApi {
+    @GET("v1/profile/country")
+    suspend fun profileCountry(
+        @Header("Authorization") bearerToken: String,
+    ): ProfileCountryResponse
+
     @GET("v1/config/client")
     suspend fun publicClientConfig(): PublicClientConfigResponse
 
