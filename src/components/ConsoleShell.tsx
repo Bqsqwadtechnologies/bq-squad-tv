@@ -194,6 +194,20 @@ export function ConsoleShell({
             icon: LayoutDashboard,
           },
           {
+            id: "pending-uploads",
+            label: "Pending uploads",
+            href: "/zillionaire/approvals?type=video",
+            icon: UploadCloud,
+            module: "content",
+          },
+          {
+            id: "change-requests",
+            label: "Change requests",
+            href: "/zillionaire/approvals?type=change_request",
+            icon: FileCheck,
+            module: "moderation",
+          },
+          {
             id: "approvals",
             label: "Approvals inbox",
             href: "/zillionaire/approvals",

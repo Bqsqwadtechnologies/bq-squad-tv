@@ -66,7 +66,24 @@ const rateRecordSchema = z.record(
   z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
 );
 
+const countryRuleSchema = z.object({
+  countryCode: z.string().regex(/^[A-Z]{2}$/),
+  currency: z.string().regex(/^[A-Z]{3}$/),
+  mode: z.enum(["automatic", "percent_adjustment", "fixed"]),
+  enabled: z.boolean().default(true),
+  multiplier: z.number().positive().max(100).optional(),
+  adjustmentPercent: z.number().min(-99).max(1000).optional(),
+  fixedRatePerMinuteMinor: z.number().int().nonnegative().optional(),
+  exchangeRateToUsd: z.number().positive().optional(),
+  minimumRateMinor: z.number().int().nonnegative().optional(),
+  maximumRateMinor: z.number().int().nonnegative().optional(),
+  roundingRule: z.enum(["none", "nearest_10", "nearest_50", "price_point_99"]).optional(),
+  effectiveFrom: z.string().datetime().optional(),
+  effectiveUntil: z.string().datetime().nullable().optional(),
+});
+
 const schema = z.object({
+  basePricePerMinuteUsdMinor: z.number().int().nonnegative().default(5),
   defaultRatePerMinuteMinor: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   minimumSessionBalanceMinor: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   defaultProducerShareBps: z.number().int().min(0).max(10_000),
@@ -139,6 +156,8 @@ const schema = z.object({
     )
     .default({}),
   googlePlayProducts: z.array(playProductSchema).max(100).default([]),
+  countryRules: z.record(z.string().regex(/^[A-Z]{2}$/), countryRuleSchema).default({}),
+  exchangeRates: z.record(z.string().regex(/^[A-Z]{3}$/), z.number().positive()).default({}),
 });
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/config/pricing")({

@@ -299,10 +299,15 @@ function ZillionaireMoviesPage({
     }
   };
 
-  const executePublicationAction = async (assetId: string, stage: "approve" | "publish") => {
-    const reason = window.prompt("Enter the reason for " + stage + ":", stage === "approve" ? "Reviewed content, age rating and rights evidence" : "Approved content published after rights verification");
-    if (!reason || reason.trim().length < 3) return;
-    setSubmittingAction(true);
+  const executePublicationAction = (assetId: string, stage: "approve" | "publish") => {
+    openPrompt({
+      title: `Confirm ${stage === "approve" ? "Approval" : "Publishing"}`,
+      description: `Enter the review and compliance reason for ${stage}:`,
+      defaultValue: stage === "approve" ? "Reviewed content, age rating and rights evidence" : "Approved content published after rights verification",
+      confirmLabel: stage === "approve" ? "Approve" : "Go Live",
+      minChars: 3,
+      onConfirm: async (reason) => {
+        setSubmittingAction(true);
     setActionFeedback(null);
     try {
       const headers = await getWebAuthHeaders();
@@ -320,13 +325,18 @@ function ZillionaireMoviesPage({
     } finally {
       setSubmittingAction(false);
     }
+      },
+    });
   };
-  const handleBulkAction = async (action: string, extra: Record<string, unknown> = {}) => {
+  const handleBulkAction = (action: string, extra: Record<string, unknown> = {}) => {
     if (selectedIds.size === 0) return;
-    const reason = prompt(`Enter reason for ${action} on ${selectedIds.size} titles:`);
-    if (!reason || reason.trim().length < 3) return;
-
-    setSubmittingAction(true);
+    openPrompt({
+      title: `Bulk ${action}`,
+      description: `Enter reason for ${action} on ${selectedIds.size} selected titles:`,
+      confirmLabel: `Execute ${action}`,
+      minChars: 3,
+      onConfirm: async (reason) => {
+        setSubmittingAction(true);
     setActionFeedback(null);
     try {
       const headers = await getWebAuthHeaders();
@@ -353,13 +363,18 @@ function ZillionaireMoviesPage({
     } finally {
       setSubmittingAction(false);
     }
+      },
+    });
   };
 
-  const handleSaveShelves = async () => {
-    const reason = prompt("Enter reason for saving shelves curation configuration:");
-    if (!reason || reason.trim().length < 3) return;
-
-    setSubmittingAction(true);
+  const handleSaveShelves = () => {
+    openPrompt({
+      title: "Save Shelves Curation",
+      description: "Enter reason for saving shelves curation configuration:",
+      confirmLabel: "Save Shelves",
+      minChars: 3,
+      onConfirm: async (reason) => {
+        setSubmittingAction(true);
     try {
       const headers = await getWebAuthHeaders();
       const res = await fetch("/api/public/v1/zillionaire/movies/curation/", {
@@ -383,13 +398,18 @@ function ZillionaireMoviesPage({
     } finally {
       setSubmittingAction(false);
     }
+      },
+    });
   };
 
-  const handleSaveHeroes = async () => {
-    const reason = prompt("Enter reason for saving featured hero rotation:");
-    if (!reason || reason.trim().length < 3) return;
-
-    setSubmittingAction(true);
+  const handleSaveHeroes = () => {
+    openPrompt({
+      title: "Save Featured Hero Rotation",
+      description: "Enter reason for saving featured hero rotation:",
+      confirmLabel: "Save Rotation",
+      minChars: 3,
+      onConfirm: async (reason) => {
+        setSubmittingAction(true);
     try {
       const headers = await getWebAuthHeaders();
       const res = await fetch("/api/public/v1/zillionaire/movies/curation/", {
@@ -413,12 +433,18 @@ function ZillionaireMoviesPage({
     } finally {
       setSubmittingAction(false);
     }
+      },
+    });
   };
 
-  const handleSaveMovieCuration = async () => {
+  const handleSaveMovieCuration = () => {
     if (!selectedMovieForOverride) return;
-    const reason = prompt(`Enter reason for updating curation on ${selectedMovieForOverride}:`);
-    if (!reason || reason.trim().length < 3) return;
+    openPrompt({
+      title: `Update Curation on ${selectedMovieForOverride}`,
+      description: "Enter reason for updating movie curation overrides:",
+      confirmLabel: "Save Curation",
+      minChars: 3,
+      onConfirm: async (reason) => {
 
     const countries = overrideCountries
       .split(",")
@@ -472,6 +498,8 @@ function ZillionaireMoviesPage({
     } finally {
       setSubmittingAction(false);
     }
+      },
+    });
   };
 
   const stats = useMemo(() => {
@@ -846,21 +874,28 @@ function ZillionaireMoviesPage({
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      const name = prompt("Enter shelf name (e.g. Action Blockbusters):");
-                      if (!name || name.trim().length < 2) return;
-                      const newShelf: ShelfDefinition = {
-                        id: `shelf_${Date.now()}`,
-                        name: name.trim(),
-                        title: name.trim(),
-                        description: "Curated collection",
-                        type: "custom",
-                        assetIds: [],
-                        pinnedAssetIds: [],
-                        enabled: true,
-                        order: shelves.length + 1,
-                        updatedAt: new Date().toISOString(),
-                      };
-                      setShelves([...shelves, newShelf]);
+                      openPrompt({
+                        title: "Create Discovery Shelf",
+                        description: "Enter shelf title (e.g. Action Blockbusters):",
+                        placeholder: "e.g. Award Winners",
+                        confirmLabel: "Create Shelf",
+                        minChars: 2,
+                        onConfirm: (name) => {
+                          const newShelf: ShelfDefinition = {
+                            id: `shelf_${Date.now()}`,
+                            name: name.trim(),
+                            title: name.trim(),
+                            description: "Curated collection",
+                            type: "custom",
+                            assetIds: [],
+                            pinnedAssetIds: [],
+                            enabled: true,
+                            order: shelves.length + 1,
+                            updatedAt: new Date().toISOString(),
+                          };
+                          setShelves([...shelves, newShelf]);
+                        },
+                      });
                     }}
                     className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-bold flex items-center gap-1.5"
                   >
@@ -1692,17 +1727,23 @@ function ZillionaireMoviesPage({
                 <button
                   type="button"
                   onClick={() => {
-                    const reason = prompt("Enter reason for editing metadata:");
-                    if (!reason || reason.trim().length < 3) return;
-                    executeAction(editingAsset.id, {
-                      action: "edit_details",
-                      title: editTitle.trim(),
-                      description: editDesc.trim(),
-                      category: editCategory.trim(),
-                      ageRating: editAgeRating,
-                      reason: reason.trim(),
+                    openPrompt({
+                      title: "Confirm Metadata Edits",
+                      description: "Enter audit reason for editing asset metadata:",
+                      confirmLabel: "Save Edits",
+                      minChars: 3,
+                      onConfirm: (reason) => {
+                        executeAction(editingAsset.id, {
+                          action: "edit_details",
+                          title: editTitle.trim(),
+                          description: editDesc.trim(),
+                          category: editCategory.trim(),
+                          ageRating: editAgeRating,
+                          reason: reason.trim(),
+                        });
+                        setEditingAsset(null);
+                      },
                     });
-                    setEditingAsset(null);
                   }}
                   className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded font-bold"
                 >

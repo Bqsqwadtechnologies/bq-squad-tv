@@ -101,3 +101,21 @@ export function notificationDeliveryStatus(result: {
   if (result.sentCount > 0) return "partial";
   return "failed";
 }
+
+export async function createInAppNotification(
+  fs: Firestore,
+  uid: string,
+  notification: { title: string; body: string; deepLink?: string; type?: string },
+): Promise<void> {
+  const notifId = "notif_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+  const now = new Date().toISOString();
+  await fs.createDoc(`users/${uid}/notifications/${notifId}`, {
+    title: notification.title,
+    body: notification.body,
+    deepLink: notification.deepLink ?? null,
+    type: notification.type ?? "general",
+    read: false,
+    deliveryStatus: "delivered",
+    createdAt: now,
+  });
+}

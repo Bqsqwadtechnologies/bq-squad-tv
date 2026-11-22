@@ -80,7 +80,8 @@ export type ApprovalType =
   | "provider"
   | "payout"
   | "content_report"
-  | "legal_issue";
+  | "legal_issue"
+  | "change_request";
 
 export type ApprovalItem = {
   id: string;
@@ -198,6 +199,8 @@ function ApprovalsInboxBody({
   const [actionBusy, setActionBusy] = useState(false);
   const [actionMessage, setActionMessage] = useState("");
   const [actionError, setActionError] = useState("");
+  const [pricingRule, setPricingRule] = useState<"global" | "custom" | "exempt">("global");
+  const [priceMinor, setPriceMinor] = useState<number>(5);
 
   const fetchItems = useCallback(
     async (isBackground = false) => {
@@ -262,7 +265,7 @@ function ApprovalsInboxBody({
   };
 
   const handleDecision = async (
-    action: "approve" | "reject" | "request_changes" | "assign",
+    action: "approve" | "reject" | "request_changes" | "assign" | "go_live",
     itemIds: string[],
   ) => {
     if (itemIds.length === 0) return;
@@ -280,9 +283,11 @@ function ApprovalsInboxBody({
         body: JSON.stringify({
           action,
           itemIds,
-          notes: actionReason.trim(),
+          notes: action === "go_live" ? "Published live by owner" : actionReason.trim(),
           reasonCode: action === "reject" ? rejectionCode : undefined,
           assignedTo: assignedMember.trim() || undefined,
+          pricingRule: action === "approve" ? pricingRule : undefined,
+          pricePerMinuteMinor: action === "approve" && pricingRule === "custom" ? priceMinor : undefined,
         }),
       });
 
@@ -811,6 +816,74 @@ function ApprovalsInboxBody({
               </div>
             )}
 
+                        {/* Batch N6: Price Before Approve for Video / Episode / Artwork */}
+            {(activeItem.itemType === "video" || activeItem.itemType === "episode" || activeItem.itemType === "artwork") && (
+              <div className="rounded-xl border border-cyan-500/30 bg-cyan-950/20 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-cyan-200">
+                    Pricing Rule before Approval <span className="text-rose-400">*</span>
+                  </label>
+                  <span className="text-[10px] text-cyan-400 font-mono">Batch N6 & N7</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPricingRule("global")}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                      pricingRule === "global"
+                        ? "bg-cyan-500 text-black border-cyan-400 font-bold"
+                        : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    Use Global Rule
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPricingRule("custom")}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                      pricingRule === "custom"
+                        ? "bg-cyan-500 text-black border-cyan-400 font-bold"
+                        : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    Custom Price
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPricingRule("exempt")}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                      pricingRule === "exempt"
+                        ? "bg-cyan-500 text-black border-cyan-400 font-bold"
+                        : "bg-white/5 text-slate-300 border-white/10 hover:bg-white/10"
+                    }`}
+                  >
+                    Free / Exempt
+                  </button>
+                </div>
+                {pricingRule === "custom" && (
+                  <div className="pt-1 space-y-1">
+                    <label className="text-[11px] text-slate-400">
+                      Rate per minute (minor units, e.g. 5 = $0.05 / min):
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={priceMinor}
+                      onChange={(e) => setPriceMinor(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-full rounded-lg border border-white/10 bg-[#030919] px-3 py-1.5 text-xs text-white"
+                    />
+                  </div>
+                )}
+                <p className="text-[10px] text-slate-400">
+                  {pricingRule === "global"
+                    ? "Applied via global country pricing engine ($0.05/min USD converted to viewer currency)."
+                    : pricingRule === "custom"
+                      ? `Custom base rate of ${priceMinor} minor units/min.`
+                      : "Zero-rate promotional / free playback."}
+                </p>
+              </div>
+            )}
+
             {/* Structured Rejection Code Selector (Only for reject) */}
             <div className="space-y-1">
               <label className="block text-xs font-semibold text-slate-300">
@@ -923,6 +996,22 @@ function ApprovalsInboxBody({
                 {actionBusy ? "Processing..." : "Reject with Reason"}
               </button>
 
+              {activeItem.status === "approved" && (
+                <button
+                  type="button"
+                  disabled={actionBusy}
+                  onClick={() =>
+                    handleDecision(
+                      "go_live",
+                      activeItem.id === "bulk" ? Array.from(selectedIds) : [activeItem.id],
+                    )
+                  }
+                  className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black text-xs font-black shadow-lg shadow-cyan-500/30 transition disabled:opacity-50"
+                >
+                  {actionBusy ? "Processing..." : "Go Live Now"}
+                </button>
+              )}
+
               <button
                 type="button"
                 disabled={actionBusy || actionReason.trim().length < 3}
@@ -932,9 +1021,11 @@ function ApprovalsInboxBody({
                     activeItem.id === "bulk" ? Array.from(selectedIds) : [activeItem.id],
                   )
                 }
+                title="Approve & Publish"
+                aria-label="Approve & Publish"
                 className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/30 transition disabled:opacity-50"
               >
-                {actionBusy ? "Processing..." : "Approve & Publish"}
+                {actionBusy ? "Processing..." : "Approve & Publish (Ready to Go Live)"}
               </button>
             </div>
           </div>

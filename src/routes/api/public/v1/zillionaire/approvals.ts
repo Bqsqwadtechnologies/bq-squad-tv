@@ -1,3 +1,5 @@
+import { applyChangeRequestGoLive } from "@/lib/server/change-requests";
+import { createInAppNotification } from "@/lib/server/notifications";
 import { createFileRoute } from "@tanstack/react-router";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
@@ -15,7 +17,8 @@ export type ApprovalType =
   | "provider"
   | "payout"
   | "content_report"
-  | "legal_issue";
+  | "legal_issue"
+  | "change_request";
 
 export type ApprovalPriority = "urgent" | "high" | "medium" | "normal";
 
@@ -77,6 +80,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
             customApprovals,
             adCampaigns,
             legalIssues,
+            changeRequests,
           ] = await Promise.all([
             fs.query("contentAssets", { limit: 100 }).catch(() => []),
             fs.query("channels", { limit: 100 }).catch(() => []),
@@ -87,6 +91,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
             fs.query("approvals", { limit: 100 }).catch(() => []),
             fs.query("adCampaigns", { limit: 100 }).catch(() => []),
             fs.query("legalAcceptanceIssues", { limit: 100 }).catch(() => []),
+            fs.query("changeRequests", { limit: 100 }).catch(() => []),
           ]);
 
           const items: ApprovalItem[] = [];
@@ -750,6 +755,60 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
             });
           }
 
+          // 9. Change Requests (Batch N19 & Rule A5)
+          for (const cr of ((changeRequests as Array<Record<string, unknown>>) || [])) {
+            const status = String(cr["status"] || "submitted").toLowerCase();
+            const isPending = status === "submitted";
+            const isChanges = status === "changes_requested";
+            const isApproved = status === "approved";
+            const isLive = status === "live";
+            const crStatus = isPending
+              ? "pending"
+              : isChanges
+                ? "changes_requested"
+                : isApproved || isLive
+                  ? "approved"
+                  : "rejected";
+
+            if (statusFilter && statusFilter !== "all" && crStatus !== statusFilter) continue;
+
+            const crId = String(cr["id"] || cr["__id"] || "");
+            const submittedAt =
+              typeof cr["createdAt"] === "string" ? cr["createdAt"] : new Date(now).toISOString();
+            const slaHours = 24;
+            const slaDeadline = new Date(
+              new Date(submittedAt).getTime() + slaHours * 3600000,
+            ).toISOString();
+            const isOverdue = now > new Date(slaDeadline).getTime() && isPending;
+
+            items.push({
+              id: `change_request:${crId}`,
+              itemType: "change_request",
+              rawId: crId,
+              title: `Change Request: ${String(cr["scope"] || "Configuration")}`,
+              submitterUid: String(cr["submitterUid"] || "partner"),
+              submitterName: String(cr["partnerId"] || cr["submitterRole"] || "Partner"),
+              submittedAt,
+              slaDeadline,
+              slaHours,
+              isOverdue,
+              status: crStatus,
+              assignedTo: typeof cr["assignedTo"] === "string" ? cr["assignedTo"] : null,
+              priority: isOverdue ? "urgent" : "high",
+              details: {
+                scope: cr["scope"],
+                targetType: cr["targetType"],
+                targetId: cr["targetId"],
+                partnerId: cr["partnerId"],
+                channelId: cr["channelId"],
+                before: cr["before"],
+                after: cr["after"],
+                autoTestResults: cr["autoTestResults"],
+                status: cr["status"],
+              },
+            });
+          }
+
           // Filter by type if requested
           const filtered = items.filter(
             (it) => !typeFilter || typeFilter === "all" || it.itemType === typeFilter,
@@ -789,7 +848,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
           await requireApprovalsReviewer(fs, user);
 
           const body = (await request.json()) as {
-            action: "approve" | "reject" | "request_changes" | "assign";
+            action: "approve" | "reject" | "request_changes" | "assign" | "go_live";
+            pricingRule?: "global" | "custom" | "exempt";
+            pricePerMinuteMinor?: number;
+            countryPricingOverrides?: Record<string, number>;
             itemIds: string[];
             notes: string;
             reasonCode?: string;
@@ -798,10 +860,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
 
           if (
             !body.action ||
-            !["approve", "reject", "request_changes", "assign"].includes(body.action)
+            !["approve", "reject", "request_changes", "assign", "go_live"].includes(body.action)
           ) {
             return Response.json(
-              { error: "Invalid action. Must be approve, reject, request_changes, or assign." },
+              { error: "Invalid action. Must be approve, reject, request_changes, assign, or go_live." },
               { status: 400 },
             );
           }
@@ -853,6 +915,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                   await fs.patchDoc(`adCampaigns/${rawId}`, { assignedTo: assignee });
                 } else if (type === "legal_issue") {
                   await fs.patchDoc(`legalAcceptanceIssues/${rawId}`, { assignedTo: assignee });
+                } else if (type === "change_request") {
+                  await fs.patchDoc(`changeRequests/${rawId}`, { assignedTo: assignee });
                 } else {
                   await fs.patchDoc(`approvals/${rawId}`, { assignedTo: assignee });
                 }
@@ -898,12 +962,40 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                     changesRequestedAt: now,
                     changesRequestedBy: user.uid,
                   });
+                } else if (type === "change_request") {
+                  await fs.patchDoc(`changeRequests/${rawId}`, {
+                    status: "changes_requested",
+                    requestChangesNotes: notes,
+                    changesRequestedAt: now,
+                    changesRequestedBy: user.uid,
+                    updatedAt: now,
+                  });
                 } else {
                   await fs.patchDoc(`approvals/${rawId}`, {
                     status: "changes_requested",
                     requestChangesNotes: notes,
                     changesRequestedAt: now,
                     changesRequestedBy: user.uid,
+                  });
+                }
+              } else if (body.action === "go_live") {
+                if (type === "change_request") {
+                  await applyChangeRequestGoLive(fs, rawId, user.uid);
+                } else if (type === "video" || type === "episode" || type === "artwork") {
+                  await fs.patchDoc(`contentAssets/${rawId}`, {
+                    status: "published",
+                    contentStatus: "published",
+                    published: true,
+                    liveAt: now,
+                    publishedAt: now,
+                    publishedBy: user.uid,
+                  });
+                } else if (type === "channel" || type === "live_stream") {
+                  await fs.patchDoc(`channels/${rawId}`, {
+                    status: "active",
+                    streamStatus: "active",
+                    published: true,
+                    liveAt: now,
                   });
                 }
               } else {
@@ -916,6 +1008,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                       contentStatus: "ready",
                       rightsReviewStatus: "verified",
                       approvalStatus: "approved",
+                      pricingRule: body.pricingRule || "global",
+                      pricePerMinuteMinor: body.pricePerMinuteMinor,
+                      countryPricingOverrides: body.countryPricingOverrides,
+                      published: false,
                       ownerReviewRequired: false,
                       duplicateDetected: false,
                       reviewQueueFlag: null,
@@ -997,6 +1093,15 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/approvals")({
                     resolutionNotes: notes,
                     resolvedAt: now,
                     resolvedBy: user.uid,
+                  });
+                } else if (type === "change_request") {
+                  await fs.patchDoc(`changeRequests/${rawId}`, {
+                    status: isApprove ? "approved" : "rejected",
+                    reviewedBy: user.uid,
+                    reviewedAt: now,
+                    reviewNotes: notes,
+                    rejectionReason: isApprove ? null : notes,
+                    updatedAt: now,
                   });
                 } else {
                   await fs.patchDoc(`approvals/${rawId}`, {
