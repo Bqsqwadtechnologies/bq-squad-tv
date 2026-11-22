@@ -105,6 +105,24 @@ describe("Paystack wallet credit validation", () => {
     );
   });
 
+  it("converts default top-up packages into supported local wallet currencies", () => {
+    expect(getPaystackTopup({}, "ngn_500", "USD")).toEqual({
+      amountMinor: 32,
+      displayAmountMinor: 32,
+      creditMinor: 32,
+    });
+    expect(getPaystackTopup({}, "ngn_500", "GHS")).toEqual({
+      amountMinor: 490,
+      displayAmountMinor: 490,
+      creditMinor: 490,
+    });
+    expect(getPaystackTopup({}, "ngn_500", "XOF")).toEqual({
+      amountMinor: 19500,
+      displayAmountMinor: 195,
+      creditMinor: 195,
+    });
+  });
+
   it("normalizes XOF's Paystack API subunits for wallet display", () => {
     const config = {
       walletTopupsByCurrency: { XOF: { starter: { amountMinor: 10000, creditMinor: 100 } } },
