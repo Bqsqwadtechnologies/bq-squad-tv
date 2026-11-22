@@ -227,7 +227,7 @@ export async function resolvePlatformAccess(
     needsOwnerVerification,
     zillionaireModules: activeModules,
     adminModules: activeModules, // Backward-compat alias
-    producerPlanActive,
+    producerPlanActive: producerPlanActive || isZillionaireOwner,
     emailVerified: isEmailVerified,
     ...(providerId ? { providerId } : {}),
   };
