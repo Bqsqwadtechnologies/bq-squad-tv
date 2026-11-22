@@ -12,6 +12,7 @@ import {
   Radio,
   Film,
   UploadCloud,
+  Trash2,
   AlertTriangle,
   Tv,
   FileCheck,
@@ -344,6 +345,16 @@ function ZillionaireOverviewBody({
           <div className="min-w-0">
             <div className="text-xs font-bold truncate">Upload Video</div>
             <div className="text-[10px] text-muted-foreground truncate">Name, upload & publish</div>
+          </div>
+        </a>
+        <a
+          href="/zillionaire/cleanup-sample"
+          className="flex items-center gap-2.5 p-3 rounded-xl border border-amber-400/25 bg-amber-400/5 hover:bg-amber-400/10 text-foreground transition"
+        >
+          <Trash2 className="h-4 w-4 text-amber-300 shrink-0" />
+          <div className="min-w-0">
+            <div className="text-xs font-bold truncate">Remove Fake Streams</div>
+            <div className="text-[10px] text-muted-foreground truncate">Review test live channels</div>
           </div>
         </a>
         <a
