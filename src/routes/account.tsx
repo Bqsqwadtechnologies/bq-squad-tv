@@ -854,7 +854,8 @@ function AccountPage() {
                 </div>
               )}
 
-              {/* Consoles Section */}
+              {/* Console shortcuts are not rendered until the account email is verified. */}
+              {signedIn ? (
               <div className="mt-6 border-t border-slate-200 dark:border-white/10 pt-5">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
                   Consoles
@@ -871,6 +872,7 @@ function AccountPage() {
                   </a>
                 </div>
               </div>
+              ) : null}
 
               {/* Sign out and Continue Buttons */}
               <div className="mt-6 space-y-3">
