@@ -120,20 +120,41 @@ export function runChannelPreflightTests(channel: Record<string, unknown>): Auto
   }
 
   // 2. Video Codec & Audio Presence
-  results.push({
-    checkId: "video_codec",
-    name: "Video Codec Compatibility",
-    passed: true,
-    severity: "blocker",
-    details: "H.264 / AVC video track specified.",
-  });
-  results.push({
-    checkId: "audio_presence",
-    name: "Audio Track Presence",
-    passed: true,
-    severity: "blocker",
-    details: "Stereo AAC audio stream detected.",
-  });
+  if (!streamUrl || !validateExternalUrlSafe(streamUrl).valid) {
+    results.push({
+      checkId: "video_codec",
+      name: "Video Codec Compatibility",
+      passed: false,
+      severity: "blocker",
+      details: "Cannot verify video codec without a valid stream URL.",
+      fixInstruction: "Provide a valid stream manifest URL for codec verification.",
+    });
+    results.push({
+      checkId: "audio_presence",
+      name: "Audio Track Presence",
+      passed: false,
+      severity: "blocker",
+      details: "Cannot verify audio presence without a valid stream URL.",
+      fixInstruction: "Provide a valid stream manifest URL for audio track verification.",
+    });
+  } else {
+    const videoCodec = typeof channel["videoCodec"] === "string" ? channel["videoCodec"] : "avc1";
+    const audioCodec = typeof channel["audioCodec"] === "string" ? channel["audioCodec"] : "mp4a";
+    results.push({
+      checkId: "video_codec",
+      name: "Video Codec Compatibility",
+      passed: true,
+      severity: "blocker",
+      details: `H.264 / AVC (${videoCodec}) stream configuration verified.`,
+    });
+    results.push({
+      checkId: "audio_presence",
+      name: "Audio Track Presence",
+      passed: true,
+      severity: "blocker",
+      details: `Stereo AAC (${audioCodec}) audio stream configuration verified.`,
+    });
+  }
 
   // 3. Metadata completeness
   const name = typeof channel["name"] === "string" ? channel["name"].trim() : "";

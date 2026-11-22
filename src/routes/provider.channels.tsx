@@ -198,6 +198,82 @@ function ProviderChannelsInner({
   }
 
 
+  // Modal states
+  const [checklistChannel, setChecklistChannel] = useState<any>(null);
+  const [previewLoadingId, setPreviewLoadingId] = useState<string | null>(null);
+
+  async function openChecklist(channelId: string) {
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const res = await fetch(`/api/public/v1/provider/channels/${channelId}/checklist`, {
+        headers,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || "Failed to load checklist");
+      setChecklistChannel(data);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to load checklist");
+    }
+  }
+
+  async function handlePrivatePreview(channelId: string) {
+    setPreviewLoadingId(channelId);
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const res = await fetch("/api/public/v1/preview/grant", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ targetType: "channel", targetId: channelId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || "Failed to grant preview");
+      if (data.previewPath) {
+        window.open(data.previewPath, "_blank");
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to generate preview link");
+    } finally {
+      setPreviewLoadingId(null);
+    }
+  }
+
+  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
+  const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
+  const [newChannelName, setNewChannelName] = useState("");
+  const [newChannelCategory, setNewChannelCategory] = useState("Entertainment");
+  const [newChannelLanguage, setNewChannelLanguage] = useState("en");
+  const [newChannelBandwidthCap, setNewChannelBandwidthCap] = useState(8.0);
+  const [creatingChannel, setCreatingChannel] = useState(false);
+
+  async function handleCreateChannel(e: FormEvent) {
+    e.preventDefault();
+    if (!newChannelName.trim()) return;
+    setCreatingChannel(true);
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const res = await fetch("/api/public/v1/provider/channels", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({
+          name: newChannelName.trim(),
+          categories: [newChannelCategory],
+          language: newChannelLanguage,
+          bandwidthCapGbps: newChannelBandwidthCap,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || "Failed to create channel");
+      setMessage(`Channel "${newChannelName}" created successfully.`);
+      setIsCreateChannelOpen(false);
+      setNewChannelName("");
+      await loadData(token);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create channel");
+    } finally {
+      setCreatingChannel(false);
+    }
+  }
+
   async function saveBandwidthCap(channelId: string) {
     setSavingCap(true);
     try {
@@ -432,13 +508,21 @@ Authorized Signatory: BQ SQWAD TV Global Operations`;
                 Per-channel ingest controls, bandwidth cap allocations, and telemetry error logs
               </p>
             </div>
-            <button
-              onClick={() => setIsAssignmentModalOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition"
-            >
-              <Tv className="h-4 w-4" />
-              <span>Channel Assignment & Policy</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsAssignmentModalOpen(true)}
+                className="flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition"
+              >
+                <Tv className="h-4 w-4" />
+                <span>Channel Assignment & Policy</span>
+              </button>
+              <button
+                onClick={() => setIsCreateChannelOpen(true)}
+                className="flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 shadow-md shadow-cyan-400/20"
+              >
+                <span>Create New Channel</span>
+              </button>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -640,6 +724,90 @@ Authorized Signatory: BQ SQWAD TV Global Operations`;
           )}
           </div>
         </div>
+
+        {/* Create Channel Modal */}
+        {isCreateChannelOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="w-full max-w-lg rounded-3xl border border-white/15 bg-[#07143d] p-6 shadow-2xl space-y-5">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div className="flex items-center gap-2">
+                  <Tv className="h-5 w-5 text-cyan-400" />
+                  <h3 className="text-base font-bold text-white">Create New Broadcast Channel</h3>
+                </div>
+                <button
+                  onClick={() => setIsCreateChannelOpen(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateChannel} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Channel Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newChannelName}
+                    onChange={(e) => setNewChannelName(e.target.value)}
+                    placeholder="e.g. Apex Cinema Global"
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={newChannelCategory}
+                      onChange={(e) => setNewChannelCategory(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
+                    >
+                      <option value="Entertainment">Entertainment</option>
+                      <option value="News">News</option>
+                      <option value="Sports">Sports</option>
+                      <option value="Music">Music</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
+                      Language
+                    </label>
+                    <select
+                      value={newChannelLanguage}
+                      onChange={(e) => setNewChannelLanguage(e.target.value)}
+                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
+                    >
+                      <option value="en">English (en)</option>
+                      <option value="fr">French (fr)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateChannelOpen(false)}
+                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creatingChannel || !newChannelName.trim()}
+                    className="rounded-xl bg-cyan-400 px-5 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 disabled:opacity-50"
+                  >
+                    {creatingChannel ? "Submitting..." : "Submit Channel"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Channel Assignment Policy Modal */}
         {isAssignmentModalOpen && (

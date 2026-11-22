@@ -4,11 +4,16 @@ import { findUnfilledLegalPlaceholders } from "../lib/server/legal-acceptance";
 
 const REQUIRED_SLUGS = [
   "about",
+  "account-deletion",
+  "age-restriction",
   "community-guidelines",
   "contact",
   "cookie",
   "copyright-dmca",
+  "data-protection",
   "help",
+  "partner-with-us",
+  "payout-policy",
   "privacy-policy",
   "producer-policy",
   "producer-privacy",
@@ -32,10 +37,10 @@ const LINKED_FOOTER_AND_NAV_SLUGS = [
 ];
 
 describe("default legal page drafts", () => {
-  it("contains all 14 required unique audiences and slugs", () => {
+  it("contains all required unique audiences and slugs", () => {
     const presentSlugs = pages.map((p) => p.slug).sort();
     expect(presentSlugs).toEqual(REQUIRED_SLUGS);
-    expect(new Set(presentSlugs).size).toBe(14);
+    expect(new Set(presentSlugs).size).toBe(19);
   });
 
   it("keeps seed pages as reviewable Markdown drafts without script tags", () => {

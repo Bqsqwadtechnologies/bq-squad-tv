@@ -14,11 +14,14 @@ export interface PreviewGrantPayload {
 }
 
 function getPreviewSecret(): string {
-  return (
-    process.env["SESSION_SECRET"] ||
-    process.env["WEB_SESSION_SECRET"] ||
-    "bqsqwad-preview-grant-secret-default"
-  );
+  const secret = process.env["SESSION_SECRET"] || process.env["WEB_SESSION_SECRET"];
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new ApiError(500, "MISSING_PREVIEW_SECRET", "Preview signing secret is not configured.");
+    }
+    return "bqsqwad-preview-grant-secret-default";
+  }
+  return secret;
 }
 
 export function generatePreviewToken(
@@ -115,12 +118,16 @@ export async function createPrivatePreviewGrant(
     previewPath = `/channels/${slug}?preview=true`;
   }
 
-  // Operator check
+  // Operator / Zillionaire check
   if (!isAuthorized) {
     const operator = await fs.getDoc(`consoleAccounts/${user.uid}`);
     if (operator) {
-      isAuthorized = true;
-      role = "operator";
+      const roles = Array.isArray(operator["roles"]) ? (operator["roles"] as string[]) : [];
+      const isOwner = Boolean(operator["isOwner"]);
+      if (isOwner || roles.includes("operator") || roles.includes("admin") || roles.includes("zillionaire") || roles.includes("super_admin")) {
+        isAuthorized = true;
+        role = "operator";
+      }
     }
   }
 

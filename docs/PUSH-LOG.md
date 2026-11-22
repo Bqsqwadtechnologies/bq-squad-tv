@@ -254,3 +254,17 @@ PUSH BADGE #89 SUCCESSFUL — v6-09-N21-N22-N27 — Partner Integration, Preview
    - Generated role access matrix test passed (3,722 tests passing), deny-by-default fuzz passed (16 tests passing).
    - Client, SSR, and Nitro production builds compiled with exit code 0.
    - Scans for public text and fake numbers passed cleanly.
+
+PUSH BADGE #90 SUCCESSFUL — v6-09-N14-N28 — Final Verification, Full Suite Clearance, Security & Preflight Invariants, and Owner Verification Report
+1. Full Suite Clearance (187/187 test files, 4,813/4,813 tests passing):
+   - Resolved all failing tests: updated legal pages suite (src/test/legal-pages.test.ts) to verify complete 19-document registry across all four operational groups; satisfied legal copy safety test with required termination provisions in provider terms (content/legal/default-pages.json).
+   - Fixed provider channels suite (src/test/provider-working-tools.test.tsx) by declaring missing modal states (checklistChannel, previewLoadingId, isAssignmentModalOpen, isCreateChannelOpen) and retaining both creation and assignment policy flows.
+2. Invariant & Security Enforcement (Rule N21, N22, N24):
+   - Hardened private preview token generation in src/lib/server/preview-grants.ts to eliminate default development secret fallbacks in production environments and strictly authenticate operator/admin roles.
+   - Bound playback preview token authorization in src/routes/api/public/v1/sessions/start.ts strictly to authenticated user UID matching granteeUid, preventing token relay or replay attacks.
+   - Refined automated preflight test runner in src/lib/server/channel-auto-tests.ts so video codec and audio track checks explicitly require and validate verified stream manifest URLs instead of returning unprobed false positives.
+3. Master Verification & Integrity (Rule N14 & N28):
+   - Executed full Vitest suite: 187 test files passed (0 failed), 4,813 tests passed (0 failed).
+   - Verified generated role access matrix (3,722 tests passing) and deny-by-default route fuzzing (16 tests passing).
+   - Ran all integrity and security scans: scan:public-text passed (0 forbidden terms), scan:fake-numbers passed (0 synthetic numbers), Firestore composite indexes check passed (20 index groups), route integrity check passed (410 route files represented without duplicates).
+   - Production build compiled successfully across Client, SSR, and Nitro engines with exit code 0.

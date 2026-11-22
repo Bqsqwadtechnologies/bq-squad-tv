@@ -315,7 +315,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
               const targetMatches =
                 (previewPayload.targetType === "channel" && previewPayload.targetId === body.channelId) ||
                 (previewPayload.targetType === "asset" && previewPayload.targetId === assetId);
-              if (targetMatches && (previewPayload.granteeUid === user.uid || previewPayload.role === "operator" || previewPayload.role === "owner")) {
+              if (targetMatches && previewPayload.granteeUid === user.uid) {
                 isPreviewGrant = true;
               }
             } catch {
