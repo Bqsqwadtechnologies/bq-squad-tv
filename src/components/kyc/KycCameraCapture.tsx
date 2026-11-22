@@ -312,7 +312,7 @@ export function KycCameraCapture({
                 >
                   Try Again
                 </button>
-                {onUploadFileInstead && (
+                {onUploadFileInstead && mode !== "face_liveness" && (
                   <button
                     onClick={onUploadFileInstead}
                     className="flex-1 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs sm:text-sm font-medium text-white hover:bg-white/15 transition"
@@ -475,7 +475,7 @@ export function KycCameraCapture({
             /* Active Capture Controls */
             <>
               <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
-                {onUploadFileInstead && cameraPermission !== "denied" && (
+                {onUploadFileInstead && mode !== "face_liveness" && cameraPermission !== "denied" && (
                   <button
                     onClick={onUploadFileInstead}
                     className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition py-1"

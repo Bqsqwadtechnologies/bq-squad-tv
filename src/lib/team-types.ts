@@ -172,3 +172,32 @@ export const PROVIDER_SCOPES: { id: ProviderScope; label: string; description: s
     description: "Review monthly distribution statements and disbursement records",
   },
 ];
+
+export type PartnerRole = "Owner" | "Manager" | "Editor" | "Viewer";
+
+export const PARTNER_ROLES: { id: PartnerRole; label: string; description: string; defaultScopes: ProviderScope[] }[] = [
+  {
+    id: "Owner",
+    label: "Owner",
+    description: "First assigned company email, full partner control",
+    defaultScopes: ["channels", "schedule", "statements"],
+  },
+  {
+    id: "Manager",
+    label: "Manager",
+    description: "Manage channel streams, programming schedules, and distribution statements",
+    defaultScopes: ["channels", "schedule", "statements"],
+  },
+  {
+    id: "Editor",
+    label: "Editor",
+    description: "Configure channel ingest, live events, and EPG schedules",
+    defaultScopes: ["channels", "schedule"],
+  },
+  {
+    id: "Viewer",
+    label: "Viewer",
+    description: "Read-only access to channel feeds and distribution statements",
+    defaultScopes: ["statements"],
+  },
+];

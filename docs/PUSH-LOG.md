@@ -163,3 +163,11 @@ PUSH BADGE #81 SUCCESSFUL — v6-09-A1-A3 — Channel creation restriction, coun
 - Partner Area & Enquiry: updated ConsolePageGuard ProviderAccessDeniedView to friendly partner portal ("Channels are created by us for approved partners. To partner with us, contact tv@bqsqwad.com.") with corporate Partner Enquiry form (company email domain validation, discard/cancel buttons) and POST /api/public/v1/partner/enquiry endpoint.
 - Automated tests: created src/test/channel-creation-restriction.test.ts verifying 403 endpoints and statically asserting no non-Zillionaire route can insert root channel documents.
 - Production build (383 routes), public-text scan, and fake-numbers scan verified cleanly.
+
+PUSH BADGE #82 SUCCESSFUL — v6-09-A6-N3 — Partner Roles (Owner, Manager, Editor, Viewer), Live-only Face KYC, Company Email Verification, and Console Form Controls
+- Partner Roles: Implemented Owner (first assigned email), Manager, Editor, and Viewer partner roles with role-to-scope defaults in src/lib/team-types.ts.
+- Provider Team Management: Updated POST /api/public/v1/provider/team and provider team UI to assign Manager/Editor/Viewer roles, audit role assignments, and return available partner roles.
+- Back navigation & Discard controls: Added "Back to Console" navigation link and "Discard" button in Provider Team console with accessible focus rings and high-contrast inputs.
+- Live-only Face KYC: Enforced live camera capture for face liveness in KycCameraCapture and ProducerKycFlow, strictly disallowing file uploads and static selfie submissions for face liveness mode.
+- Company Email Verification: Enforced corporate domain email validation on business and company producer registrations (POST /api/public/v1/producer/verification), rejecting freemail domains.
+- Automated tests: Added src/test/partner-roles-kyc-live.test.ts covering role assignment, company email validation, and live-capture static guarantees. All 21 related tests and scans passing cleanly.

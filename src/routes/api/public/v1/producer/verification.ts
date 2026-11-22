@@ -2,7 +2,7 @@ import { calculateKycRiskScore } from "@/lib/server/kyc/risk-scoring";
 import { maskIdNumber } from "@/lib/server/kyc/types";
 import { getKycVerifier } from "@/lib/server/kyc/verifier";
 import { saveKycProfile, deleteKycDraft } from "@/lib/server/kyc/persistence";
-import { isAge18OrOlder } from "@/lib/kyc-country-rules";
+import { isAge18OrOlder, isBusinessDomainEmail } from "@/lib/kyc-country-rules";
 import { createFileRoute } from "@tanstack/react-router";
 import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
 import { z } from "zod";
@@ -140,6 +140,15 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
               400,
               "AGE_RESTRICTED",
               "Producer verification requires an age of 18 or older.",
+            );
+          }
+
+          // Company email rule (Rule N3.5): business and company producers must use corporate domain email
+          if (body.entityType !== "individual" && user.email && !isBusinessDomainEmail(user.email)) {
+            throw new ApiError(
+              400,
+              "COMPANY_EMAIL_REQUIRED",
+              "Registered businesses and companies must register with a corporate domain email (freemail accounts are not accepted for licensed businesses).",
             );
           }
 

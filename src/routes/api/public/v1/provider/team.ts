@@ -4,11 +4,12 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requirePlatformRole } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
-import { PROVIDER_SCOPES, type ProviderScope } from "@/lib/team-types";
+import { PROVIDER_SCOPES, PARTNER_ROLES, type ProviderScope, type PartnerRole } from "@/lib/team-types";
 
 const inviteSchema = z.object({
   email: z.string().trim().email(),
   name: z.string().trim().min(2).max(100).optional(),
+  role: z.enum(["Manager", "Editor", "Viewer"]).default("Editor"),
   scopes: z.array(z.enum(["channels", "schedule", "statements"])).min(1),
   expiresAt: z.string().datetime().optional(),
   reason: z.string().trim().min(3).max(500),
@@ -16,6 +17,7 @@ const inviteSchema = z.object({
 
 const updateSchema = z.object({
   memberId: z.string().trim().min(5),
+  role: z.enum(["Manager", "Editor", "Viewer"]).optional(),
   scopes: z.array(z.enum(["channels", "schedule", "statements"])).optional(),
   status: z.enum(["active", "suspended"]).optional(),
   expiresAt: z.string().datetime().nullable().optional(),
@@ -48,12 +50,14 @@ export const Route = createFileRoute("/api/public/v1/provider/team")({
               id: (m.__id || m["id"]) as string,
               email: (m["email"] || "Unknown") as string,
               name: (m["name"] || "") as string,
+              role: (m["role"] || "Editor") as PartnerRole,
               scopes: (Array.isArray(m["scopes"]) ? m["scopes"] : []) as ProviderScope[],
               status: (m["status"] || "active") as string,
               expiresAt: (m["expiresAt"] || null) as string | null,
               createdAt: (m["createdAt"] || null) as string | null,
             })),
             availableScopes: PROVIDER_SCOPES,
+            availableRoles: PARTNER_ROLES,
           });
         } catch (error) {
           return errorBody(error);
@@ -93,6 +97,7 @@ export const Route = createFileRoute("/api/public/v1/provider/team")({
             providerUid: actor.uid,
             email: normalizedEmail,
             name: body.name || normalizedEmail.split("@")[0],
+            role: body.role,
             scopes: body.scopes,
             status: "active",
             expiresAt: body.expiresAt || null,
@@ -109,6 +114,7 @@ export const Route = createFileRoute("/api/public/v1/provider/team")({
             metadata: {
               providerUid: actor.uid,
               email: normalizedEmail,
+              role: body.role,
               scopes: body.scopes,
               expiresAt: body.expiresAt || null,
             },
@@ -118,6 +124,7 @@ export const Route = createFileRoute("/api/public/v1/provider/team")({
             success: true,
             memberId,
             email: normalizedEmail,
+            role: body.role,
             scopes: body.scopes,
           });
         } catch (error) {
@@ -147,6 +154,7 @@ export const Route = createFileRoute("/api/public/v1/provider/team")({
             updatedBy: actor.uid,
           };
 
+          if (body.role) updates["role"] = body.role;
           if (body.scopes) updates["scopes"] = body.scopes;
           if (body.status) updates["status"] = body.status;
           if (body.expiresAt !== undefined) updates["expiresAt"] = body.expiresAt;

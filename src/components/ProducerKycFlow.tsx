@@ -924,16 +924,14 @@ export function ProducerKycFlow({
         <Camera className="h-3.5 w-3.5" /> Start Face Liveness
       </button>
     </div>
-                <p className="text-xs text-slate-400">Ensure your face and the ID details are both clearly visible.</p>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) setSelfieFile(e.target.files[0]);
-                  }}
-                  className="mt-2 block w-full text-xs text-slate-400 file:mr-4 file:rounded-lg file:border-0 file:bg-cyan-600 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-white hover:file:bg-cyan-500"
-                />
-                {selfieFile && <p className="mt-1 text-xs text-emerald-400">Selected: {selfieFile.name}</p>}
+                <p className="text-xs text-slate-400">Live camera capture is required for face verification. File uploads and static images are strictly rejected.</p>
+                {selfieFile ? (
+                  <p className="mt-2 text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Live scan recorded: {selfieFile.name}
+                  </p>
+                ) : (
+                  <p className="mt-1.5 text-xs text-amber-400/90 font-medium">Live capture pending. Tap "Start Face Liveness" above.</p>
+                )}
               </div>
             </div>
           ) : (

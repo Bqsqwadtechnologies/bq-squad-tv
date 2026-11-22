@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, FormEvent } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 import {
   ConsoleShell,
@@ -20,9 +20,11 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  ArrowLeft,
+  Briefcase,
 } from "lucide-react";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
-import { PROVIDER_SCOPES, type ProviderScope } from "@/lib/team-types";
+import { PROVIDER_SCOPES, PARTNER_ROLES, type ProviderScope, type PartnerRole } from "@/lib/team-types";
 
 export const Route = createFileRoute("/provider/team")({
   component: ProviderTeamRoute,
@@ -38,6 +40,7 @@ interface ProviderTeamMember {
   id: string;
   email: string;
   name: string;
+  role?: PartnerRole;
   scopes: ProviderScope[];
   status: string;
   expiresAt: string | null;
@@ -68,6 +71,7 @@ function ProviderTeamContent({
   const [modalOpen, setModalOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
+  const [role, setRole] = useState<"Manager" | "Editor" | "Viewer">("Editor");
   const [selectedScopes, setSelectedScopes] = useState<ProviderScope[]>(["channels", "schedule"]);
   const [expiresAt, setExpiresAt] = useState("");
   const [reason, setReason] = useState("");
@@ -96,10 +100,29 @@ function ProviderTeamContent({
     void fetchMembers();
   }, [token]);
 
+  const handleRoleChange = (newRole: "Manager" | "Editor" | "Viewer") => {
+    setRole(newRole);
+    const def = PARTNER_ROLES.find((r) => r.id === newRole);
+    if (def) {
+      setSelectedScopes([...def.defaultScopes]);
+    }
+  };
+
   const toggleScope = (scope: ProviderScope) => {
     setSelectedScopes((prev) =>
       prev.includes(scope) ? prev.filter((s) => s !== scope) : [...prev, scope],
     );
+  };
+
+  const handleDiscard = () => {
+    setEmail("");
+    setName("");
+    setRole("Editor");
+    setSelectedScopes(["channels", "schedule"]);
+    setExpiresAt("");
+    setReason("");
+    setFormError("");
+    setModalOpen(false);
   };
 
   const handleAddMember = async (e: FormEvent) => {
@@ -120,6 +143,7 @@ function ProviderTeamContent({
         body: JSON.stringify({
           email: email.trim(),
           name: name.trim() || undefined,
+          role,
           scopes: selectedScopes,
           expiresAt: expiresAt ? new Date(expiresAt).toISOString() : undefined,
           reason: reason.trim(),
@@ -128,13 +152,8 @@ function ProviderTeamContent({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to add member");
 
-      setSuccessMessage(`Team member ${email} added successfully.`);
-      setModalOpen(false);
-      setEmail("");
-      setName("");
-      setSelectedScopes(["channels", "schedule"]);
-      setExpiresAt("");
-      setReason("");
+      setSuccessMessage(`Team member ${email} added as ${role} successfully.`);
+      handleDiscard();
       void fetchMembers();
       setTimeout(() => setSuccessMessage(""), 5000);
     } catch (err: unknown) {
@@ -200,23 +219,34 @@ function ProviderTeamContent({
   const kpis = useMemo(() => {
     const total = members.length;
     const active = members.filter((m) => m.status === "active").length;
-    const channelOperators = members.filter((m) => m.scopes.includes("channels")).length;
-    const scheduleOperators = members.filter((m) => m.scopes.includes("schedule")).length;
-    return { total, active, channelOperators, scheduleOperators };
+    const managers = members.filter((m) => m.role === "Manager").length;
+    const editors = members.filter((m) => (m.role || "Editor") === "Editor").length;
+    return { total, active, managers, editors };
   }, [members]);
 
   return (
     <ConsoleShell
       consoleType="provider"
       account={account}
-      title="Provider Team & Access Scopes"
-      subtitle="Delegate scoped access to operators for live channels, EPG scheduling, and settlement statements."
+      title="Partner Team Governance"
+      subtitle="Manage team members across Manager, Editor, and Viewer partner roles."
     >
       <div className="space-y-6">
+        {/* Back navigation */}
+        <div className="flex items-center justify-between">
+          <Link
+            to="/provider"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/80 hover:bg-zinc-700 text-zinc-300 text-xs font-medium border border-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Console</span>
+          </Link>
+        </div>
+
         <ConsoleWelcomeBanner
-          title="Provider Team Governance"
-          description="Grant team members precise scopes (channels, schedule, statements). Each operator sees only your organization's feeds and statements."
-          actionLabel="Add Provider Member"
+          title="Partner Team Governance"
+          description="Grant team members precise roles (Manager, Editor, Viewer). The first assigned company email is the account Owner."
+          actionLabel="Add Team Member"
           onAction={() => setModalOpen(true)}
           icon={Users}
         />
@@ -240,7 +270,7 @@ function ProviderTeamContent({
           <ConsoleKpiCard
             title="Total Members"
             value={kpis.total}
-            subtitle="Provider personnel"
+            subtitle="Partner team operators"
             icon={Users}
             tone="brand"
           />
@@ -252,16 +282,16 @@ function ProviderTeamContent({
             tone="success"
           />
           <ConsoleKpiCard
-            title="Channel Operators"
-            value={kpis.channelOperators}
-            subtitle="Can manage feeds"
-            icon={Radio}
+            title="Managers"
+            value={kpis.managers}
+            subtitle="Full management role"
+            icon={Briefcase}
             tone="neutral"
           />
           <ConsoleKpiCard
-            title="EPG Schedulers"
-            value={kpis.scheduleOperators}
-            subtitle="Can edit broadcast schedule"
+            title="Editors"
+            value={kpis.editors}
+            subtitle="Broadcast & EPG schedulers"
             icon={Calendar}
             tone="neutral"
           />
@@ -269,14 +299,13 @@ function ProviderTeamContent({
 
         {/* Team Table */}
         <ConsoleCard
-          title="Organization Team Members"
-          subtitle="Scoped permissions for your broadcast channels"
-          actionLabel="Add Member"
-          onAction={() => setModalOpen(true)}
+          title="Team Members & Roles"
+          subtitle="Roles define operational responsibility: Owner (Primary), Manager, Editor, or Viewer."
         >
           <ConsoleTable
             columns={[
               { key: "member", label: "Team Member" },
+              { key: "role", label: "Partner Role" },
               { key: "scopes", label: "Granted Scopes" },
               { key: "status", label: "Status" },
               { key: "expiry", label: "Expiry" },
@@ -289,6 +318,11 @@ function ProviderTeamContent({
                   <div className="font-medium text-white">{m.name || m.email}</div>
                   <div className="text-xs text-zinc-500">{m.email}</div>
                 </div>
+              ),
+              role: (
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded border border-cyan-500/30 bg-cyan-500/10 text-cyan-300 uppercase tracking-wider font-mono">
+                  {m.role || "Editor"}
+                </span>
               ),
               scopes: (
                 <div className="flex flex-wrap gap-1">
@@ -345,12 +379,12 @@ function ProviderTeamContent({
             <div className="bg-zinc-900 border border-white/10 rounded-2xl max-w-lg w-full p-6 space-y-5">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-white">Add Provider Team Member</h3>
+                  <h3 className="text-lg font-bold text-white">Add Partner Team Member</h3>
                   <p className="text-xs text-zinc-400 mt-0.5">
-                    Select the scopes this operator is authorized to manage.
+                    Assign a corporate role (Manager, Editor, or Viewer) to your team operator.
                   </p>
                 </div>
-                <button onClick={() => setModalOpen(false)} className="text-zinc-400 hover:text-white">
+                <button onClick={handleDiscard} className="text-zinc-400 hover:text-white">
                   <X className="w-5 h-5" />
                 </button>
               </div>
@@ -370,7 +404,7 @@ function ProviderTeamContent({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="broadcast@network.tv"
-                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-zinc-950 border border-zinc-800 focus:border-cyan-500 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                   />
                 </div>
 
@@ -380,9 +414,25 @@ function ProviderTeamContent({
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="John Doe"
-                    className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                    placeholder="Jane Doe"
+                    className="w-full bg-zinc-950 border border-zinc-800 focus:border-cyan-500 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-zinc-300 mb-1">Partner Role *</label>
+                  <select
+                    value={role}
+                    onChange={(e) => handleRoleChange(e.target.value as "Manager" | "Editor" | "Viewer")}
+                    className="w-full bg-zinc-950 border border-zinc-800 focus:border-cyan-500 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                  >
+                    <option value="Manager">Manager — Channels, EPG schedules, statements & team access</option>
+                    <option value="Editor">Editor — Channels, live streams & broadcast schedules</option>
+                    <option value="Viewer">Viewer — Read-only statements and feed monitoring</option>
+                  </select>
+                  <p className="text-[11px] text-zinc-400 mt-1">
+                    Roles follow the company governance structure: Manager, Editor, or Viewer.
+                  </p>
                 </div>
 
                 <div>
@@ -398,7 +448,7 @@ function ProviderTeamContent({
                           className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
                             isChecked
                               ? "bg-amber-500/10 border-amber-500/30 text-amber-200"
-                              : "bg-black/40 border-white/5 text-zinc-400 hover:border-white/10"
+                              : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:border-zinc-700"
                           }`}
                         >
                           <input
@@ -426,7 +476,7 @@ function ProviderTeamContent({
                       type="date"
                       value={expiresAt}
                       onChange={(e) => setExpiresAt(e.target.value)}
-                      className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-zinc-950 border border-zinc-800 focus:border-cyan-500 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                     />
                   </div>
                   <div>
@@ -436,8 +486,8 @@ function ProviderTeamContent({
                       required
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
-                      placeholder="e.g. Linear feed scheduler for evening broadcasts"
-                      className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
+                      placeholder="e.g. Broadcast scheduler for weekend live feed"
+                      className="w-full bg-zinc-950 border border-zinc-800 focus:border-cyan-500 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
                     />
                   </div>
                 </div>
@@ -445,15 +495,15 @@ function ProviderTeamContent({
                 <div className="flex justify-end gap-3 pt-3 border-t border-white/10">
                   <button
                     type="button"
-                    onClick={() => setModalOpen(false)}
-                    className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white"
+                    onClick={handleDiscard}
+                    className="px-4 py-2 text-xs font-medium text-zinc-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
                   >
-                    Cancel
+                    Discard
                   </button>
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-amber-500 text-black hover:bg-amber-400 transition-colors disabled:opacity-50"
+                    className="px-5 py-2 text-xs font-semibold text-black bg-amber-400 hover:bg-amber-300 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {submitting ? "Adding..." : "Add Member"}
                   </button>
