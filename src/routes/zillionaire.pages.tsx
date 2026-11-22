@@ -78,15 +78,26 @@ type LegalPageDoc = {
 };
 
 const STANDARD_PLACEHOLDERS = [
+  { key: "effective_date", label: "Effective Date", defaultVal: "To be confirmed" },
+  { key: "last_updated", label: "Last Updated", defaultVal: "To be confirmed" },
+  { key: "minimum_age", label: "Minimum Age", defaultVal: "To be confirmed" },
+  { key: "viewing_history_retention", label: "Viewing History Retention", defaultVal: "To be confirmed" },
+  { key: "evidence_retention", label: "Evidence Retention", defaultVal: "To be confirmed" },
+  { key: "security_log_retention", label: "Security Log Retention", defaultVal: "To be confirmed" },
+  { key: "dispute_window_days", label: "Dispute Window (Days)", defaultVal: "To be confirmed" },
+  { key: "wallet_refund_rule", label: "Wallet Refund Rule", defaultVal: "To be confirmed" },
+  { key: "closure_balance_rule", label: "Closure Balance Rule", defaultVal: "To be confirmed" },
+  { key: "liability_period_months", label: "Liability Period (Months)", defaultVal: "To be confirmed" },
+  { key: "governing_law", label: "Governing Law", defaultVal: "To be confirmed" },
+  { key: "jurisdiction", label: "Jurisdiction", defaultVal: "To be confirmed" },
+  { key: "postal_address_if_required", label: "Postal Address", defaultVal: "To be confirmed" },
+  { key: "revenue_basis", label: "Revenue Basis", defaultVal: "To be confirmed" },
+  { key: "revenue_change_notice_days", label: "Revenue Change Notice (Days)", defaultVal: "To be confirmed" },
+  { key: "minimum_payout", label: "Minimum Payout", defaultVal: "To be confirmed" },
+  { key: "contact_email", label: "Contact Email", defaultVal: "tv@bqsqwad.com" },
+  { key: "legal_email", label: "Legal Email", defaultVal: "tv@bqsqwad.com" },
   { key: "company_name", label: "Company Name", defaultVal: "BQ Sqwad Technologies" },
   { key: "platform_name", label: "Platform Name", defaultVal: "BQ SQWAD TV" },
-  { key: "contact_email", label: "Contact Email", defaultVal: "tv@bqsqwad.com" },
-  { key: "support_email", label: "Support Email", defaultVal: "tv@bqsqwad.com" },
-  { key: "legal_email", label: "Legal Email", defaultVal: "tv@bqsqwad.com" },
-  { key: "governing_country", label: "Governing Country", defaultVal: "Nigeria" },
-  { key: "effective_date", label: "Effective Date", defaultVal: "January 1, 2026" },
-  { key: "minimum_age", label: "Minimum Age", defaultVal: "13" },
-  { key: "minimum_payout", label: "Minimum Payout", defaultVal: "$500 USD" },
 ];
 
 function DocumentsHubRoute() {
@@ -239,8 +250,8 @@ function DocumentsHubDashboard({ token }: { token: string; account: ConsoleAccou
     setStatusMessage(null);
     setErrorMessage(null);
     try {
-      // First save draft content
-      await fetch("/api/public/v1/zillionaire/pages/", {
+      // Save the edited content first; never publish stale server-side text.
+      const draftResponse = await fetch("/api/public/v1/zillionaire/pages/", {
         method: "POST",
         headers: { ...(await getWebAuthHeaders(token)), "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -256,6 +267,8 @@ function DocumentsHubDashboard({ token }: { token: string; account: ConsoleAccou
           reason: "Owner prepared draft before publication",
         }),
       });
+      const draftData = await draftResponse.json();
+      if (!draftResponse.ok) throw new Error(draftData.error || "Could not save the edited document.");
 
       const nowIso = new Date().toISOString();
       const res = await fetch("/api/public/v1/zillionaire/pages/publish", {
