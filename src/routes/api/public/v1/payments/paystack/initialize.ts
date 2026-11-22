@@ -160,10 +160,18 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
               "initialize_failed",
             );
             await recordRiskSignal(fs, user.uid, "failed_payment");
+            const providerMessage = typeof result.message === "string" ? result.message : "";
+            if (/currency.*(not supported|unsupported|not enabled)|unsupported.*currency/i.test(providerMessage)) {
+              throw new ApiError(
+                400,
+                "PAYSTACK_CURRENCY_UNAVAILABLE",
+                "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.",
+              );
+            }
             throw new ApiError(
               502,
               "PAYSTACK_INITIALIZE_FAILED",
-              "The payment provider could not start checkout.",
+              "The payment provider could not start checkout. Please try again later.",
             );
           }
           await markPaymentStatus(fs, "payments/paystack_" + reference, user.uid, "pending");
