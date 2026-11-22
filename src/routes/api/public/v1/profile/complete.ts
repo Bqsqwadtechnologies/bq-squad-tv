@@ -124,7 +124,10 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
             email: user.email,
             accountId,
             dateOfBirth: body.dateOfBirth,
-            ...(nextCountry ? { countryCode: nextCountry } : {}),
+            ...(nextCountry ? {
+              countryCode: nextCountry,
+              countryDetectionSource: existingProfile?.["countryDetectionSource"] === "owner_test_override" ? "owner_test_override" : "ip",
+            } : {}),
             profileComplete: true,
             adultAgeVerified,
             adultIdentityVerified,
