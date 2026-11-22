@@ -142,8 +142,8 @@ function PaymentAndPayoutPolicyPage() {
             <p className="mt-3 text-xs text-slate-400">
               If your payment reference indicates "Paid" but funds have not cleared after five business
               days from the execution date, contact financial support at{" "}
-              <a href="mailto:support@bqsqwad.com" className="text-cyan-300 underline font-semibold">
-                support@bqsqwad.com
+              <a href="mailto:tv@bqsqwad.com" className="text-cyan-300 underline font-semibold">
+                tv@bqsqwad.com
               </a>{" "}
               with your statement reference ID.
             </p>
