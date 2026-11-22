@@ -37,8 +37,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/moderation/work
           // Build realistic workload per active team member
           const workloads = moderators.map((mod) => {
             const uid = mod["uid"] || mod.__id;
-            const email = mod["email"] || "moderator@bqsqwad.tv";
-            const name = String(mod["name"] || mod["displayName"] || email.split("@")[0]);
+            const email = typeof mod["email"] === "string" ? mod["email"] : "";
+            const name = String(
+              mod["name"] || mod["displayName"] || (email ? email.split("@")[0] : "Unassigned moderator"),
+            );
 
             // Count actions today by this user
             const todayStr = new Date().toISOString().slice(0, 10);
