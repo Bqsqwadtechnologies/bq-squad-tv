@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ViewerBottomNav } from "@/components/ViewerBottomNav";
@@ -10,14 +10,12 @@ import {
   Download,
   Film,
   FolderHeart,
-  History,
   Play,
   Search,
   ShoppingBag,
   SlidersHorizontal,
-  Sparkles,
-  Trash2,
   ThumbsUp,
+  Trash2,
   X,
 } from "lucide-react";
 
@@ -28,131 +26,72 @@ export const Route = createFileRoute("/library")({
       { title: "My Library — BQ SQWAD TV" },
       {
         name: "description",
-        content:
-          "View your saved watchlist, purchase history, and continue watching titles on BQ SQWAD TV.",
+        content: "Access your watchlist, continue watching queue, and saved titles on BQ SQWAD TV.",
       },
     ],
   }),
 });
 
-export type LibraryItem = {
+type LibraryItem = {
   id: string;
   title: string;
-  type: "movie" | "series" | "live";
   genre: string;
+  type: "movie" | "series";
   posterUrl: string;
   progressPercent?: number;
-  addedAt: string;
+  duration?: string;
   isPurchased?: boolean;
+  addedAt: string;
 };
 
+const STORAGE_KEY = "bq_viewer_library";
 
-const DEFAULT_LIBRARY_ITEMS: LibraryItem[] = [
-  {
-    id: "mov_lagos_nights",
-    title: "Lagos Nights: Shadows of Victoria Island",
-    type: "movie",
-    genre: "Drama",
-    posterUrl: "/brand/og-image.png",
-    progressPercent: 45,
-    addedAt: "2026-11-20T12:00:00Z",
-    isPurchased: false,
-  },
-  {
-    id: "ser_abidjan_hustle",
-    title: "Abidjan Hustle Season 1",
-    type: "series",
-    genre: "Action",
-    posterUrl: "/brand/og-image.png",
-    progressPercent: 80,
-    addedAt: "2026-11-20T11:00:00Z",
-    isPurchased: false,
-  },
-  {
-    id: "doc_golden_savannah",
-    title: "Golden Savannah Documentary",
-    type: "movie",
-    genre: "Documentary",
-    posterUrl: "/brand/og-image.png",
-    addedAt: "2026-11-20T10:00:00Z",
-    isPurchased: true,
-  },
-];
 function LibraryPage() {
-  const [activeTab, setActiveTab] = useState<"watchlist" | "continue" | "purchases" | "liked">("watchlist");
-  const [likedItems, setLikedItems] = useState<LibraryItem[]>([]);
-  const [items, setItems] = useState<LibraryItem[]>(() => {
-    try {
-      const s = typeof localStorage !== "undefined" && localStorage.getItem("bq_viewer_library");
-      if (s) return JSON.parse(s);
-    } catch {}
-    return DEFAULT_LIBRARY_ITEMS;
-  });
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [genreFilter, setGenreFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState<"watchlist" | "continue" | "purchases" | "liked">(
+    "watchlist",
+  );
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [genreFilter, setGenreFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"recent" | "title" | "progress">("recent");
+  const [items, setItems] = useState<LibraryItem[]>([]);
 
-
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await fetch("/api/public/v1/user/library/liked");
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            setLikedItems(data.map((item: any) => ({
-              id: item.targetId || item.id,
-              title: item.title,
-              type: (item.targetType === "channel" || item.targetType === "live_stream") ? "live" : "movie",
-              genre: "Liked",
-              posterUrl: item.posterUrl || "/brand/og-image.png",
-              addedAt: item.likedAt || new Date().toISOString(),
-            })));
-          }
-        }
-      } catch {
-        // Silently ignore
-      }
-    })();
-  }, []);
-
+  // Load from local storage or initialize empty
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("bq_viewer_library");
+      const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         setItems(JSON.parse(stored));
+      } else {
+        setItems([]);
       }
     } catch {
-      // Ignore localStorage error
+      setItems([]);
     }
   }, []);
 
-  const saveItems = (newItems: LibraryItem[]) => {
-    setItems(newItems);
+  function saveItems(updated: LibraryItem[]) {
+    setItems(updated);
     try {
-      localStorage.setItem("bq_viewer_library", JSON.stringify(newItems));
-    } catch {
-      // Ignore storage error
-    }
-  };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    } catch {}
+  }
 
-  const removeItem = (id: string) => {
-    const updated = items.filter((item) => item.id !== id);
-    saveItems(updated);
-  };
+  function removeItem(id: string) {
+    const next = items.filter((item) => item.id !== id);
+    saveItems(next);
+  }
 
-  const genres = ["all", "Thriller", "Drama", "Documentary", "Sports"];
+  const genres = ["all", "Action", "Drama", "Comedy", "Sci-Fi", "Romance", "Kids"];
 
-  const baseList = activeTab === "liked" ? likedItems : items;
-  const filteredItems = baseList
+  const filteredItems = items
     .filter((item) => {
-      if (activeTab === "continue") {
-        return (item.progressPercent ?? 0) > 0;
-      }
-      if (activeTab === "purchases") {
-        return item.isPurchased === true;
-      }
-      return true; // watchlist shows all saved items
+      // Tab matching
+      if (activeTab === "watchlist") return !item.progressPercent && !item.isPurchased;
+      if (activeTab === "continue")
+        return item.progressPercent !== undefined && item.progressPercent > 0;
+      if (activeTab === "purchases") return Boolean(item.isPurchased);
+      if (activeTab === "liked") return false;
+      return true;
     })
     .filter((item) => {
       if (typeFilter !== "all" && item.type !== typeFilter) return false;
@@ -167,66 +106,65 @@ function LibraryPage() {
     });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#030B2A] via-[#07143D] to-[#0A1A4A] text-white pb-24 md:pb-12">
-      {/* Background ambient lighting */}
-      <div className="pointer-events-none fixed inset-0 -z-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-72 left-1/2 h-[40rem] w-[60rem] -translate-x-1/2 rounded-full bg-[#0052D4]/20 blur-[140px]" />
-        <div className="absolute right-[-10rem] top-[24rem] h-[30rem] w-[30rem] rounded-full bg-[#00D8F5]/10 blur-[130px]" />
-      </div>
-
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-24 md:pb-12">
       {/* Top Header Bar */}
-      <header className="relative z-30 mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 pt-[calc(1rem+env(safe-area-inset-top))] sm:px-8">
-        <div className="flex items-center gap-6">
-          <Link to="/" aria-label="BQ SQWAD TV home" className="flex items-center">
-            <BrandLogo variant="horizontal" className="h-8 w-auto sm:h-9" />
-          </Link>
-          <nav className="hidden items-center gap-6 text-sm font-medium text-slate-300 md:flex">
-            <Link to="/" className="transition hover:text-[#00D8F5]">
-              Home
+      <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-8">
+          <div className="flex items-center gap-8">
+            <Link to="/" aria-label="BQ SQWAD TV home" className="flex items-center">
+              <BrandLogo variant="horizontal" className="h-8 w-auto sm:h-9" />
             </Link>
-            <Link to="/live-tv" className="transition hover:text-[#00D8F5]">
-              Live TV
-            </Link>
-            <Link to="/library" className="text-[#00D8F5] transition hover:text-white">
-              Library
-            </Link>
-            <Link to="/downloads" className="transition hover:text-[#00D8F5]">
-              Downloads
-            </Link>
-            <Link to="/settings" className="transition hover:text-[#00D8F5]">
-              Settings
-            </Link>
-          </nav>
-        </div>
+            <nav className="hidden items-center gap-6 text-sm font-semibold text-slate-600 md:flex">
+              <Link to="/" className="transition hover:text-blue-600">
+                Home
+              </Link>
+              <Link to="/movies" className="transition hover:text-blue-600">
+                Movies
+              </Link>
+              <Link to="/series" className="transition hover:text-blue-600">
+                Series
+              </Link>
+              <Link to="/library" className="text-blue-600 font-bold transition">
+                Library
+              </Link>
+              <Link to="/downloads" className="transition hover:text-blue-600">
+                Downloads
+              </Link>
+              <Link to="/settings" className="transition hover:text-blue-600">
+                Settings
+              </Link>
+            </nav>
+          </div>
 
-        <div className="flex items-center gap-3">
-          <Link
-            to="/search"
-            aria-label="Search"
-            className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
-          >
-            <Search size={18} />
-          </Link>
-          <Link
-            to="/notifications"
-            aria-label="Notifications"
-            className="relative grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white backdrop-blur-md transition hover:bg-white/20"
-          >
-            <Bell size={18} />
-          </Link>
-          <ProfileAccountHub />
+          <div className="flex items-center gap-3">
+            <Link
+              to="/search"
+              aria-label="Search"
+              className="grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200 hover:text-blue-600"
+            >
+              <Search size={18} />
+            </Link>
+            <Link
+              to="/notifications"
+              aria-label="Notifications"
+              className="relative grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200 hover:text-blue-600"
+            >
+              <Bell size={18} />
+            </Link>
+            <ProfileAccountHub />
+          </div>
         </div>
       </header>
 
       {/* Main Container */}
-      <main className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+      <main className="relative z-10 mx-auto max-w-7xl px-4 py-8 sm:px-8 space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
-            <h1 className="text-xl sm:text-3xl font-black uppercase tracking-tight text-white flex items-center gap-2">
-              <FolderHeart className="h-7 w-7 text-cyan-400" />
+            <h1 className="text-xl sm:text-3xl font-black uppercase tracking-tight text-slate-900 flex items-center gap-2">
+              <FolderHeart className="h-7 w-7 text-blue-600" />
               My Entertainment Library
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
               Manage your personal watchlist, resume video playback, and view purchased titles
             </p>
           </div>
@@ -250,8 +188,8 @@ function LibraryPage() {
                   onClick={() => setActiveTab(tab.id as "watchlist" | "continue" | "purchases" | "liked")}
                   className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-xs font-bold transition ${
                     active
-                      ? "bg-cyan-400 text-[#030e28] shadow-md shadow-cyan-400/20"
-                      : "border border-white/10 bg-white/5 text-slate-300 hover:text-white"
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   }`}
                 >
                   <Icon size={15} />
@@ -263,7 +201,7 @@ function LibraryPage() {
 
           <Link
             to="/downloads"
-            className="flex items-center gap-2 rounded-2xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-400/20 transition"
+            className="flex items-center gap-2 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100 transition"
           >
             <Download size={15} />
             <span>Downloads (Offline Viewer)</span>
@@ -271,20 +209,20 @@ function LibraryPage() {
         </div>
 
         {/* Filter Controls: Type, Genre & Sort */}
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/5 bg-[#07143D]/50 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="flex flex-wrap items-center gap-4">
             {/* Type Filters */}
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] uppercase font-bold text-slate-400">Type:</span>
+              <span className="text-[11px] uppercase font-bold text-slate-500">Type:</span>
               {["all", "movie", "series"].map((type) => (
                 <button
                   key={type}
                   type="button"
                   onClick={() => setTypeFilter(type)}
-                  className={`rounded-xl px-2.5 py-1 text-xs font-medium capitalize transition ${
+                  className={`rounded-xl px-2.5 py-1 text-xs font-semibold capitalize transition ${
                     typeFilter === type
-                      ? "bg-cyan-400 text-slate-950 font-bold"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-blue-600 text-white"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   {type}
@@ -294,17 +232,17 @@ function LibraryPage() {
 
             {/* Genre Filters */}
             <div className="flex items-center gap-1.5">
-              <span className="text-[11px] uppercase font-bold text-slate-400">Genre:</span>
+              <span className="text-[11px] uppercase font-bold text-slate-500">Genre:</span>
               <div className="flex flex-wrap gap-1">
                 {genres.map((g) => (
                   <button
                     key={g}
                     type="button"
                     onClick={() => setGenreFilter(g)}
-                    className={`rounded-xl px-2.5 py-1 text-xs font-medium capitalize transition ${
+                    className={`rounded-xl px-2.5 py-1 text-xs font-semibold capitalize transition ${
                       genreFilter === g
-                        ? "bg-white/20 text-white font-bold"
-                        : "text-slate-400 hover:text-white"
+                        ? "bg-slate-200 text-slate-900"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                     }`}
                   >
                     {g}
@@ -316,11 +254,11 @@ function LibraryPage() {
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2">
-            <span className="text-[11px] uppercase font-bold text-slate-400">Sort:</span>
+            <span className="text-[11px] uppercase font-bold text-slate-500">Sort:</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as "recent" | "title" | "progress")}
-              className="rounded-xl border border-white/10 bg-[#030b2a] px-3 py-1.5 text-xs text-white focus:outline-none focus:border-cyan-400"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-blue-500"
             >
               <option value="recent">Recently Added</option>
               <option value="title">Alphabetical (A-Z)</option>
@@ -333,32 +271,36 @@ function LibraryPage() {
         {filteredItems.length === 0 ? (
           <div
             data-testid="empty-library-state"
-            className="rounded-3xl border border-white/10 bg-[#07143D]/60 p-12 text-center backdrop-blur-xl shadow-xl space-y-4"
+            className="rounded-3xl border border-slate-200 bg-white p-12 text-center shadow-sm space-y-4"
           >
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5 text-slate-400">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
               {activeTab === "watchlist" && <Bookmark className="h-8 w-8 text-slate-500" />}
               {activeTab === "continue" && <Clock className="h-8 w-8 text-slate-500" />}
               {activeTab === "purchases" && <ShoppingBag className="h-8 w-8 text-slate-500" />}
+              {activeTab === "liked" && <ThumbsUp className="h-8 w-8 text-slate-500" />}
             </div>
-            <h3 className="text-base font-bold text-white">
+            <h3 className="text-base font-bold text-slate-900">
               {activeTab === "watchlist" && "Your watchlist is empty"}
               {activeTab === "continue" && "No unfinished videos"}
               {activeTab === "purchases" && "No purchased titles yet"}
+              {activeTab === "liked" && "No liked content yet"}
             </h3>
-            <p className="max-w-sm mx-auto text-xs text-slate-400 leading-relaxed">
+            <p className="max-w-sm mx-auto text-xs text-slate-500 leading-relaxed">
               {activeTab === "watchlist" &&
-                "Explore our catalogue of live channels, movies, and TV series, and bookmark titles to build your watchlist."}
+                "Explore our catalogue of movies and series, and bookmark titles to build your watchlist."}
               {activeTab === "continue" &&
                 "Titles you start watching will automatically appear here so you can pick up right where you left off."}
               {activeTab === "purchases" &&
                 "Titles you purchase or rent will be permanently available here for unlimited on-demand streaming."}
+              {activeTab === "liked" &&
+                "Titles you give a thumbs-up will appear here for easy access."}
             </p>
             <Link
-              to="/"
-              className="inline-flex items-center gap-2 rounded-2xl bg-cyan-400 px-6 py-2.5 text-xs font-bold text-[#030e28] shadow-md shadow-cyan-400/20 hover:brightness-110"
+              to="/movies"
+              className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700"
             >
               <Film className="h-4 w-4" />
-              <span>Browse Catalog</span>
+              <span>Browse Movies</span>
             </Link>
           </div>
         ) : (
@@ -366,32 +308,32 @@ function LibraryPage() {
             {filteredItems.map((item) => (
               <div
                 key={item.id}
-                className="group relative rounded-3xl border border-white/10 bg-[#07143D]/80 p-4 backdrop-blur-xl shadow-lg transition hover:border-cyan-400/50 hover:bg-[#0c1f54]"
+                className="group relative rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-blue-400 hover:shadow-md"
               >
                 {/* Poster & Play Action */}
-                <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-[#030b2a]">
+                <div className="relative aspect-video w-full overflow-hidden rounded-2xl bg-slate-100">
                   <img
                     src={item.posterUrl}
                     alt={item.title}
                     className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-70" />
 
                   <Link
                     to="/content/$assetId"
                     params={{ assetId: item.id }}
-                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/40"
+                    className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/30"
                   >
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-400 text-[#030e28] shadow-xl">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-white shadow-lg">
                       <Play className="h-5 w-5 fill-current ml-0.5" />
                     </div>
                   </Link>
 
                   {/* Progress bar for continue watching */}
                   {item.progressPercent !== undefined && (
-                    <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-white/20">
+                    <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-200">
                       <div
-                        className="h-full bg-cyan-400 shadow-[0_0_8px_rgba(0,216,245,0.8)]"
+                        className="h-full bg-blue-600"
                         style={{ width: `${item.progressPercent}%` }}
                       />
                     </div>
@@ -402,7 +344,7 @@ function LibraryPage() {
                     type="button"
                     onClick={() => removeItem(item.id)}
                     aria-label={`Remove ${item.title}`}
-                    className="absolute top-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-black/60 text-slate-300 opacity-0 group-hover:opacity-100 transition hover:bg-rose-600 hover:text-white"
+                    className="absolute top-2 right-2 grid h-7 w-7 place-items-center rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition hover:bg-rose-600"
                   >
                     <X size={14} />
                   </button>
@@ -410,20 +352,20 @@ function LibraryPage() {
 
                 {/* Details */}
                 <div className="mt-3 space-y-1">
-                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-blue-600">
                     <span>{item.genre}</span>
                     <span className="text-slate-400">{item.type}</span>
                   </div>
-                  <h4 className="text-sm font-bold text-white line-clamp-1 group-hover:text-cyan-300 transition">
+                  <h4 className="text-sm font-bold text-slate-900 line-clamp-1 group-hover:text-blue-600 transition">
                     {item.title}
                   </h4>
                   {item.progressPercent !== undefined && (
-                    <p className="text-[11px] text-slate-400 font-medium">
+                    <p className="text-[11px] text-slate-500 font-medium">
                       {item.progressPercent}% watched
                     </p>
                   )}
                   {item.isPurchased && (
-                    <span className="inline-block rounded-md bg-emerald-500/20 px-1.5 py-0.5 text-[9px] font-bold text-emerald-300 uppercase">
+                    <span className="inline-block rounded-md bg-emerald-50 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 border border-emerald-200 uppercase">
                       Purchased
                     </span>
                   )}

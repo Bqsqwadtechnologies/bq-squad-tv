@@ -8,19 +8,35 @@ export const Route = createFileRoute("/api/public/v1/channels/$channelId")({
     handlers: {
       GET: async ({ request, params }) => {
         try {
-          const user = await requireUser(request);
+          let user = null;
+          try {
+            user = await requireUser(request);
+          } catch {
+            // Public unauthenticated preview allowed for non-adult broadcast feeds
+          }
+
           const channelId = params.channelId;
           if (!/^[A-Za-z0-9_-]{1,80}$/.test(channelId)) {
             throw new ApiError(400, "INVALID_REQUEST", "Invalid channel id.");
           }
           const fs = await Firestore.create();
-          const profile = await getUserProfile(fs, user.uid);
           const channel = await fs.getDoc(`channels/${channelId}`);
           if (!channel || channel["published"] !== true) {
             throw new ApiError(404, "CHANNEL_NOT_FOUND", "This channel does not exist.");
           }
+
           // Age, rights and publication checks run before any channel data is returned.
-          requireAdultForContent(profile, channel["adultOnly"]);
+          if (channel["adultOnly"]) {
+            if (!user) {
+              throw new ApiError(
+                401,
+                "UNAUTHENTICATED",
+                "A Firebase sign-in token is required for adult-only channels.",
+              );
+            }
+            const profile = await getUserProfile(fs, user.uid);
+            requireAdultForContent(profile, true);
+          }
 
           const schedule = await fs.query(`channels/${channelId}/schedule`, {
             orderByField: "startsAt",
