@@ -188,6 +188,9 @@ export async function resolvePlatformAccess(
   );
   const isZillionaireOwner = isOwnerCandidate && isEmailVerified;
   const needsOwnerVerification = isOwnerCandidate && !isEmailVerified;
+  // The protected owner receives producer capabilities automatically. This
+  // virtual entitlement does not create a paid producer subscription record.
+  if (isZillionaireOwner && !roles.includes("producer")) roles.push("producer");
 
   // The Zillionaire identity is the only top-level control identity.
   // Delegated access is expressed as individual module permissions, not an administrator role.
