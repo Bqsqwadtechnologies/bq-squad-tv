@@ -111,7 +111,7 @@ export const DEFAULT_PLATFORM_SETTINGS: PlatformSettings = {
   senderName: "BQ SQWAD TV",
   senderEmail: "tv@bqsqwad.com",
   supportEmail: "tv@bqsqwad.com",
-  notificationsEmail: "notifications@bqsqwad.com",
+  notificationsEmail: "tv@bqsqwad.com",
   emailProvider: "lovable_managed",
   emailProviderConfigured: true,
 
