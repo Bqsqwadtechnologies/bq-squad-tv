@@ -225,7 +225,7 @@ describe("Batch B7 — Email Status & Notification Outbox", () => {
     });
 
     process.env.BREVO_API_KEY = "xkeysib-test-b7-key";
-    process.env.BREVO_SENDER_EMAIL = "verification@bqsqwad.com";
+    process.env.BREVO_SENDER_EMAIL = "tv@bqsqwad.com";
     process.env.BREVO_SENDER_NAME = "BQ SQWAD TV";
 
     const originalFetch = global.fetch;
