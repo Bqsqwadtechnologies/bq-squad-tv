@@ -55,4 +55,36 @@ describe("Google sign-in button diagnostics", () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
     expect(await screen.findByText(/not configured/i)).toBeInTheDocument();
   });
+
+  it("maintains a persistent container element across state changes so React does not destroy the button", async () => {
+    window.google = {
+      accounts: {
+        id: {
+          initialize: vi.fn(),
+          renderButton: vi.fn((el: HTMLElement) => {
+            const child = document.createElement("iframe");
+            child.setAttribute("data-testid", "google-iframe");
+            el.appendChild(child);
+          }),
+        },
+      },
+    };
+
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({
+        googleClientId: "test-client-id.apps.googleusercontent.com",
+        googleConfigured: true,
+      }), { status: 200, headers: { "content-type": "application/json" } }),
+    ));
+
+    const { container } = render(<GoogleSignInButton onCredential={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(window.google?.accounts.id.renderButton).toHaveBeenCalled();
+    });
+
+    const iframe = container.querySelector("[data-testid=\"google-iframe\"]");
+    expect(iframe).not.toBeNull();
+    expect(container.contains(iframe)).toBe(true);
+  });
 });

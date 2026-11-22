@@ -28,7 +28,6 @@ declare global {
 type ConfigState = "loading" | "ready" | "missing" | "error";
 type ButtonState = "idle" | "loading" | "ready" | "script-error" | "render-error";
 
-
 export function GoogleSignInButton({
   clientId: propClientId,
   onCredential,
@@ -135,44 +134,52 @@ export function GoogleSignInButton({
     };
   }, [clientId, configState, disabled, retryNonce]);
 
-  if (configState !== "ready" || buttonState !== "ready") {
-    const message =
-      configState === "loading"
-        ? "Loading Google sign-in configuration…"
-        : configState === "missing"
-          ? "Google sign-in is not configured for this website. Ask the site administrator to configure GOOGLE_WEB_CLIENT_ID."
-          : configState === "error"
-            ? "The sign-in configuration could not be reached. Check your connection and retry."
-            : buttonState === "script-error"
-              ? "Google Identity Services could not load. Check network access or your content-security policy, then retry."
-              : buttonState === "render-error"
-                ? "Google sign-in could not initialize. Verify the OAuth client ID and authorized JavaScript origin."
-                : "Preparing Google sign-in…";
-    return (
-      <div className="mt-4 flex flex-col items-center justify-center gap-2">
-        <div ref={elementRef} className="min-h-1" />
-        <p className="max-w-[320px] text-center text-xs text-amber-200/90" role="status">{message}</p>
-        <button
-          type="button"
-          disabled={disabled || configState === "loading"}
-          onClick={() => {
-            const oldScript = document.querySelector<HTMLScriptElement>("script[data-google-identity='true']");
-            if (oldScript && buttonState === "script-error") oldScript.remove();
-            if (onRetry) onRetry();
-            if (propClientId === undefined || configState === "error" || configState === "missing") {
-              void loadConfig();
-            } else {
-              setButtonState("idle");
-              setRetryNonce((value) => value + 1);
-            }
-          }}
-          className="text-xs text-cyan-300 hover:underline disabled:opacity-50"
-        >
-          Retry Google sign-in
-        </button>
-      </div>
-    );
-  }
+  const message =
+    configState === "loading"
+      ? "Loading Google sign-in configuration…"
+      : configState === "missing"
+        ? "Google sign-in is not configured for this website. Ask the site administrator to configure GOOGLE_WEB_CLIENT_ID."
+        : configState === "error"
+          ? "The sign-in configuration could not be reached. Check your connection and retry."
+          : buttonState === "script-error"
+            ? "Google Identity Services could not load. Check network access or your content-security policy, then retry."
+            : buttonState === "render-error"
+              ? "Google sign-in could not initialize. Verify the OAuth client ID and authorized JavaScript origin."
+              : "Preparing Google sign-in…";
 
-  return <div ref={elementRef} className="mt-4 flex min-h-11 justify-center" />;
+  return (
+    <div className="mt-4 flex flex-col items-center justify-center gap-2">
+      {/* Always keep the Google container mounted so React never destroys the iframe */}
+      <div
+        ref={elementRef}
+        className={`min-h-[44px] flex justify-center w-full ${buttonState === "ready" ? "block" : "hidden"}`}
+      />
+      {/* Only show loading/fallback status while waiting */}
+      {(configState !== "ready" || buttonState !== "ready") && (
+        <div className="flex flex-col items-center gap-2">
+          <p className="max-w-[320px] text-center text-xs text-amber-200/90" role="status">
+            {message}
+          </p>
+          <button
+            type="button"
+            disabled={disabled || configState === "loading"}
+            onClick={() => {
+              const oldScript = document.querySelector<HTMLScriptElement>("script[data-google-identity='true']");
+              if (oldScript && buttonState === "script-error") oldScript.remove();
+              if (onRetry) onRetry();
+              if (propClientId === undefined || configState === "error" || configState === "missing") {
+                void loadConfig();
+              } else {
+                setButtonState("idle");
+                setRetryNonce((value) => value + 1);
+              }
+            }}
+            className="text-xs text-cyan-300 hover:underline disabled:opacity-50"
+          >
+            Retry Google sign-in
+          </button>
+        </div>
+      )}
+    </div>
+  );
 }
