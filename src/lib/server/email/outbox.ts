@@ -438,7 +438,7 @@ export async function executeOutboxDelivery(
   const now = new Date();
 
   const apiKey = process.env["BREVO_API_KEY"]?.trim();
-  const senderEmail = (process.env["BREVO_SENDER_EMAIL"] ?? "verification@bqsqwad.com").trim();
+  const senderEmail = (process.env["BREVO_SENDER_EMAIL"] ?? "tv@bqsqwad.com").trim();
   const senderName = (process.env["BREVO_SENDER_NAME"] ?? "BQ SQWAD TV").trim();
 
   // If email delivery API key is not configured (e.g. test environment), mark queued or sent
