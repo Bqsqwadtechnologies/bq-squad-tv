@@ -47,6 +47,7 @@ function AccountPage() {
   const [createAccount, setCreateAccount] = useState(false);
   const [verificationPending, setVerificationPending] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  const [canOpenProducerConsole, setCanOpenProducerConsole] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [message, setMessage] = useState("");
@@ -139,7 +140,7 @@ function AccountPage() {
           } else if (active) {
             window.location.replace("/");
           }
-        } catch (error) {
+        } catch {
           // Keep the legal acceptance gate, but never expose internal
           // Firestore or publication-state details to the account holder.
           setMessage("Account setup is temporarily unavailable. Please try again later.");
@@ -853,7 +854,7 @@ function AccountPage() {
               )}
 
               {/* Console shortcuts are not rendered until the account email is verified. */}
-              {signedIn ? (
+              {canOpenProducerConsole ? (
               <div className="mt-6 border-t border-slate-200 dark:border-white/10 pt-5">
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
                   Consoles
