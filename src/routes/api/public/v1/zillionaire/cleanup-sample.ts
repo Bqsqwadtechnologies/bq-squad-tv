@@ -21,6 +21,20 @@ type SampleItem = {
   sizeBytes?: number;
 };
 
+function isKnownPlaceholderStream(value: unknown): boolean {
+  if (typeof value !== "string" || !value.trim()) return false;
+  try {
+    const url = new URL(value);
+    const host = url.hostname.toLowerCase();
+    const path = url.pathname.toLowerCase();
+    return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0" ||
+      host.endsWith(".test") || host === "example.com" || host.endsWith(".example.com") ||
+      host.endsWith(".invalid") || /(^|\\/)(demo|sample|test)(\\/|$)/.test(path) ||
+      /(?:demo|sample|test)[-_]?stream/.test(host);
+  } catch {
+    return false;
+  }
+}
 export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample")({
   server: {
     handlers: {
@@ -73,7 +87,9 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
               ch["isSample"] === true ||
               ch["seed"] === true ||
               ch["isSeeded"] === true ||
-              /demo channel|bq sqwad sports hd/i.test(title);
+              /demo channel|bq sqwad sports hd/i.test(title) ||
+              isKnownPlaceholderStream(ch["streamUrl"]) ||
+              isKnownPlaceholderStream(ch["failoverStreamUrl"]);
 
             if (isDemo) {
               channelsToDelete.push(id);
@@ -81,7 +97,9 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
                 collection: "channels",
                 id,
                 title: title || id,
-                reason: "Demo/seeded channel fixture",
+                reason: isKnownPlaceholderStream(ch["streamUrl"]) || isKnownPlaceholderStream(ch["failoverStreamUrl"])
+                  ? "Known placeholder/test live-stream URL"
+                  : "Demo/seeded channel fixture",
               });
             }
           }
