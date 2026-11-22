@@ -13,8 +13,20 @@ export const Route = createFileRoute("/api/public/v1/auth/web/me")({
         try {
           const { user, access } = await requireViewer(request);
           if (!user.emailVerified) {
+            // Keep the authenticated account visible to the UI while it is
+            // waiting for email verification; privileged access remains denied.
             return Response.json(
-              { email: user.email, emailVerified: false },
+              {
+                uid: user.uid,
+                email: user.email,
+                emailVerified: false,
+                roles: access.roles,
+                isOwner: access.isZillionaireOwner,
+                needsOwnerVerification: access.needsOwnerVerification,
+                modules: access.adminModules,
+                producerPlanActive: access.producerPlanActive,
+                providerId: access.providerId ?? null,
+              },
               { headers: { "cache-control": "no-store", pragma: "no-cache" } },
             );
           }
