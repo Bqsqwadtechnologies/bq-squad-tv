@@ -134,8 +134,11 @@ function AccountPage() {
       if (account.emailVerified) {
         try {
           const needsAcceptance = await loadLegalStatus();
-          if (needsAcceptance)
+          if (needsAcceptance) {
             setMessage("Please review and accept the updated service terms before continuing.");
+          } else if (active) {
+            window.location.replace("/");
+          }
         } catch (error) {
           setMessage(
             error instanceof Error
@@ -283,7 +286,7 @@ function AccountPage() {
       if (!response.ok || !result.accepted)
         throw new Error(result.error ?? "Your acceptance could not be saved.");
       setLegalAcceptanceRequired(false);
-      setMessage("Your acceptance has been saved. You can continue.");
+      window.location.replace("/");
     } catch (error) {
       setMessage(sanitizeViewerError(error, "Your acceptance could not be saved."));
     } finally {
