@@ -2,7 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Download, Film, Home, Settings, Tv2 } from "lucide-react";
 
 export type ViewerBottomNavProps = {
-  activeTab?: "home" | "live-tv" | "library" | "downloads" | "settings";
+  activeTab?: "home" | "live-tv" | "library" | "downloads" | "settings" | "sports";
 };
 
 export function ViewerBottomNav({ activeTab }: ViewerBottomNavProps) {

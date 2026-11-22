@@ -24,6 +24,8 @@ export const PUBLIC_ROUTE_ALLOWLIST = new Set([
   "/api/public/v1/legal/consent",
   "/api/public/v1/monitoring/client-errors",
   "/api/public/v1/kyc/handoff/resolve",
+  "/api/public/v1/sports/competitions",
+  "/api/public/v1/sports/matches",
 ]);
 
 function getFiles(dir) {

@@ -620,3 +620,139 @@ export function requireMinorUnitAmount(value: unknown, fieldName: string): numbe
   }
   return value;
 }
+
+/**
+ * Batch N7: Apply bulk percentage adjustment across specified country rules.
+ */
+export function applyBulkCountryAdjustment(
+  rules: Record<string, CountryPricingRule>,
+  paramA: number | string[],
+  paramB?: number,
+): Record<string, CountryPricingRule> {
+  let countryCodes: string[];
+  let adjustmentPercent: number;
+
+  if (typeof paramA === "number") {
+    adjustmentPercent = paramA;
+    countryCodes = Object.keys(rules);
+  } else {
+    countryCodes = Array.isArray(paramA) ? paramA : Object.keys(rules);
+    adjustmentPercent = typeof paramB === "number" ? paramB : 0;
+  }
+
+  const updated = { ...rules };
+  const now = new Date().toISOString();
+  for (const code of countryCodes) {
+    const existing = updated[code] ?? {
+      countryCode: code,
+      currency: currencyForCountry(code),
+      mode: "percent_adjustment",
+      enabled: true,
+    };
+    updated[code] = {
+      ...existing,
+      mode: "percent_adjustment",
+      adjustmentPercent,
+      updatedAt: now,
+    };
+  }
+  return updated;
+}
+
+/**
+ * Batch N7: Export country pricing rules to CSV format.
+ */
+export function exportCountryPricingRulesCsv(
+  rules: Record<string, CountryPricingRule>,
+  basePriceUsdMinor = DEFAULT_BASE_PRICE_USD_MINOR,
+  exchangeRates: Record<string, number> = DEFAULT_EXCHANGE_RATES,
+): string {
+  const headers = [
+    "countryCode",
+    "currency",
+    "mode",
+    "enabled",
+    "multiplier",
+    "adjustmentPercent",
+    "fixedRatePerMinuteMinor",
+    "exchangeRateToUsd",
+    "roundingRule",
+    "ratePerMinuteMinor",
+    "per90MinFilmMinor",
+  ];
+  const rows = Object.values(rules).map((rule) => {
+    const computed = computeCountryRatePerMinute(basePriceUsdMinor, rule, exchangeRates);
+    return [
+      rule.countryCode,
+      rule.currency,
+      rule.mode,
+      rule.enabled ? "true" : "false",
+      rule.multiplier ?? 1.0,
+      rule.adjustmentPercent ?? 0,
+      rule.fixedRatePerMinuteMinor ?? "",
+      rule.exchangeRateToUsd ?? "",
+      rule.roundingRule ?? "none",
+      computed.ratePerMinuteMinor,
+      computed.per90MinFilmMinor,
+    ].join(",");
+  });
+  return [headers.join(","), ...rows].join("\n");
+}
+
+/**
+ * Batch N7: Parse imported CSV text into CountryPricingRule objects.
+ */
+export function parseCountryPricingRulesCsv(csvText: string): Partial<CountryPricingRule>[] {
+  const lines = csvText.trim().split("\n");
+  if (lines.length < 2) return [];
+  const headerLine = lines[0].trim();
+  const headers = headerLine.split(",").map((h) => h.trim());
+  const rules: Partial<CountryPricingRule>[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const parts = line.split(",").map((p) => p.trim());
+    const row: Record<string, string> = {};
+    headers.forEach((h, idx) => {
+      row[h] = parts[idx] ?? "";
+    });
+
+    const countryCode = (row["countryCode"] || "").toUpperCase();
+    if (!/^[A-Z]{2}$/.test(countryCode)) continue;
+
+    const mode = ["automatic", "percent_adjustment", "fixed"].includes(row["mode"] || "")
+      ? (row["mode"] as CountryPricingMode)
+      : "automatic";
+
+    const rule: Partial<CountryPricingRule> = {
+      countryCode,
+      currency: (row["currency"] || currencyForCountry(countryCode)).toUpperCase(),
+      mode,
+      enabled: row["enabled"] !== "false",
+      roundingRule: (["none", "nearest_10", "nearest_50", "price_point_99"].includes(row["roundingRule"] || "")
+        ? row["roundingRule"]
+        : "none") as CountryRoundingRule,
+    };
+
+    if (row["multiplier"]) {
+      const m = parseFloat(row["multiplier"]);
+      if (!isNaN(m) && m > 0) rule.multiplier = m;
+    }
+    if (row["adjustmentPercent"]) {
+      const a = parseFloat(row["adjustmentPercent"]);
+      if (!isNaN(a)) rule.adjustmentPercent = a;
+    }
+    if (row["fixedRatePerMinuteMinor"]) {
+      const f = parseInt(row["fixedRatePerMinuteMinor"], 10);
+      if (!isNaN(f) && f >= 0) rule.fixedRatePerMinuteMinor = f;
+    }
+    if (row["exchangeRateToUsd"]) {
+      const e = parseFloat(row["exchangeRateToUsd"]);
+      if (!isNaN(e) && e > 0) rule.exchangeRateToUsd = e;
+    }
+
+    rules.push(rule);
+  }
+  return rules;
+}

@@ -261,16 +261,7 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
               : channel["license"] && typeof channel["license"] === "object"
                 ? (channel["license"] as Record<string, unknown>)
                 : null;
-          assertContentPlaybackRights({
-            contentStatus: asset["contentStatus"] ?? channel["contentStatus"] ?? "published",
-            license: rights,
-            viewerCountry,
-            platform: body.clientPlatform as PlaybackPlatform,
-            paidPlayback: channel["paid"] !== false,
-          });
-
           const pricing = await getPricingConfig(fs);
-          const paidPlayback = channel["paid"] !== false;
           const wallet = await getWallet(fs, user.uid);
           const walletCurrency = wallet.currency;
           const assetRates =
@@ -298,6 +289,33 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             configuredChannelRates[walletCurrency] ??
             assetRates[walletCurrency] ??
             channelRates[walletCurrency];
+
+          // Batch N24 "Must pay": every playback grant requires an active hold and sufficient balance,
+          // or an explicit owner-set free price rule on that title/asset/channel.
+          // Channels or assets cannot bypass billing simply by setting paid: false.
+          // Private previews (preview playback grants) are unbilled and never public.
+          const isExplicitOwnerFree =
+            currencySpecificRate === 0 ||
+            (pricing.promoPricingWindows &&
+              pricing.promoPricingWindows.some(
+                (p) =>
+                  p.active &&
+                  p.overrideRateMinor === 0 &&
+                  (p.targetType === "global" ||
+                    (p.targetType === "movie" && p.targetId === assetId) ||
+                    (p.targetType === "channel" && p.targetId === body.channelId)),
+              ));
+
+          const isPreviewGrant = (channel as Record<string, unknown>)["isPreviewGrant"] === true;
+          const paidPlayback = !isExplicitOwnerFree && !isPreviewGrant;
+
+          assertContentPlaybackRights({
+            contentStatus: asset["contentStatus"] ?? channel["contentStatus"] ?? "published",
+            license: rights,
+            viewerCountry,
+            platform: body.clientPlatform as PlaybackPlatform,
+            paidPlayback,
+          });
           const singlePriceCurrency =
             typeof asset["currency"] === "string"
               ? (asset["currency"] as string)

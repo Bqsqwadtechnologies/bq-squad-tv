@@ -912,3 +912,30 @@ V5-05 Batch 10: Recorded real release checks and unresolved full-suite/native-bu
   - 152 automated tests passing across 23 test files.
   - Clean production build with 380 route files and zero route duplicates.
   - Clean `bun run scan:public-text`.
+
+### Batch N7 — Country Per-Minute Pricing Engine
+- **Decisions**:
+  - Base USD pricing model with country-specific multipliers and fixed per-minute overrides.
+  - Multi-currency rate resolution ensures non-Nigerian viewers never fallback to NGN (fall back to USD or configured local currency).
+  - Bulk adjustment tooling allows owner to adjust regional pricing tiers (+10%, -15%) with rounding rules (nearest, ceil, 99-ending).
+  - CSV import/export allows offline audit and bulk updates of international country rate tables.
+- **Verification**:
+  - Validated by unit tests in `src/test/pricing-resolution.test.ts` and `src/test/batch-n7-n9-n24.test.ts`.
+
+### Batch N9 — Sports Hub, Tournament Brackets & Live Streaming
+- **Decisions**:
+  - Zero fake data policy: the sports hub shows clean empty states when no competitions are published; never fabricate fake fixtures or results.
+  - Supports both league formats (automatic 3-1-0 standings calculation with goal-differential tiebreakers) and tournament knockout brackets.
+  - Integrated with live TV streaming channels for real-time match broadcasting and replay assets.
+  - Owner-controlled through the Zillionaire Sports Control module (`src/routes/zillionaire.sports.tsx`) with full RBAC audit logging.
+- **Verification**:
+  - Standings and bracket computation tested in `src/test/sports.test.ts` and `src/test/batch-n7-n9-n24.test.ts`.
+
+### Batch N24 — Strict Must-Pay Playback Enforcement & Account Safeguards
+- **Decisions**:
+  - Exclusive pay-as-you-go per-minute model; no subscription plans.
+  - Every playback session grant requires an active wallet hold or an explicit owner-configured free price rule (0 rate in pricing config or active promo window). Content cannot bypass payment simply via `paid: false` channel flags.
+  - Unbilled private preview grants are strictly gated to authenticated preview tokens and never exposed publicly.
+  - Anti-scam safeguards: duplicate credit protection with transaction idempotence, new-account first-day limits, and cooling-off protection on payout modifications.
+- **Verification**:
+  - Playback session initiation and hold requirements tested in `src/test/batch-n7-n9-n24.test.ts` and `src/test/session-metering.test.ts`.

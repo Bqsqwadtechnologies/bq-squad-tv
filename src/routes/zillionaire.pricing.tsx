@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { LoaderCircle, ShieldCheck, Tag, Film, Tv, Sparkles, History, Package } from "lucide-react";
+import { LoaderCircle, ShieldCheck, Tag, Film, Tv, Sparkles, History, Package, Globe, Download, Upload } from "lucide-react";
+import { exportCountryPricingRulesCsv, parseCountryPricingRulesCsv, applyBulkCountryAdjustment, type CountryPricingRule } from "@/lib/server/pricing";
 import { getWebAuthHeaders, signInWithEmailPassword } from "@/lib/firebase-web-auth";
 
 export const Route = createFileRoute("/zillionaire/pricing")({
@@ -78,7 +79,12 @@ function AdminPricingPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
-  const [activeTab, setActiveTab] = useState<"defaults" | "content" | "channels" | "categories" | "promos" | "history">("defaults");
+  const [activeTab, setActiveTab] = useState<"defaults" | "content" | "channels" | "categories" | "promos" | "countries" | "history">("defaults");
+  const [countryRules, setCountryRules] = useState("{}");
+  const [exchangeRates, setExchangeRates] = useState("{}");
+  const [bulkMultiplier, setBulkMultiplier] = useState("1.0");
+  const [bulkTargetTier, setBulkTargetTier] = useState("all");
+  const [csvInput, setCsvInput] = useState("");
   
   const [rate, setRate] = useState("200");
   const [minimum, setMinimum] = useState("0");
@@ -133,6 +139,8 @@ function AdminPricingPage() {
     setPromoWindows(JSON.stringify(data.promoPricingWindows ?? [], null, 2));
     setBundles(JSON.stringify(data.bundles ?? [], null, 2));
     setChannelShares(JSON.stringify(data.producerShareBpsByChannel ?? {}, null, 2));
+    setCountryRules(JSON.stringify(data.countryRules ?? {}, null, 2));
+    setExchangeRates(JSON.stringify(data.exchangeRates ?? {}, null, 2));
     setDailyLimits(JSON.stringify(data.dailySpendLimitByCurrency ?? {}, null, 2));
     setProducts(JSON.stringify(data.googlePlayProducts ?? [], null, 2));
     setVersion(data.version ?? null);
@@ -220,8 +228,12 @@ function AdminPricingPage() {
       const googlePlayProducts = JSON.parse(
         products || "[]",
       ) as PricingConfig["googlePlayProducts"];
+      const parsedCountryRules = JSON.parse(countryRules || "{}");
+      const parsedExchangeRates = JSON.parse(exchangeRates || "{}");
 
       const payload = {
+        countryRules: parsedCountryRules,
+        exchangeRates: parsedExchangeRates,
         defaultRatePerMinuteMinor: Number(rate),
         minimumSessionBalanceMinor: Number(minimum),
         defaultProducerShareBps: Number(share),
@@ -409,6 +421,17 @@ function AdminPricingPage() {
                 }`}
               >
                 <Sparkles size={14} /> Promos & Bundles
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("countries")}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
+                  activeTab === "countries"
+                    ? "bg-cyan-400 text-slate-950"
+                    : "bg-white/5 text-slate-300 hover:bg-white/10"
+                }`}
+              >
+                <Globe size={14} /> Country Rules & FX
               </button>
               <button
                 type="button"

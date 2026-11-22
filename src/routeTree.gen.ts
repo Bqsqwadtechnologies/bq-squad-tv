@@ -37,6 +37,7 @@ import { Route as ProviderTermsRouteImport } from './routes/provider-terms'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SeriesRouteImport } from './routes/series'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as SportsRouteImport } from './routes/sports'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as ChannelsChannelIdRouteImport } from './routes/channels.$channelId'
@@ -104,6 +105,7 @@ import { Route as ZillionaireSecurityRouteImport } from './routes/zillionaire.se
 import { Route as ZillionaireSeriesRouteImport } from './routes/zillionaire.series'
 import { Route as ZillionaireSettingsRouteImport } from './routes/zillionaire.settings'
 import { Route as ZillionaireSplitsAuditRouteImport } from './routes/zillionaire.splits-audit'
+import { Route as ZillionaireSportsRouteImport } from './routes/zillionaire.sports'
 import { Route as ZillionaireStatusPageRouteImport } from './routes/zillionaire.status-page'
 import { Route as ZillionaireStorageRouteImport } from './routes/zillionaire.storage'
 import { Route as ZillionaireStrikesAppealsRouteImport } from './routes/zillionaire.strikes-appeals'
@@ -184,6 +186,8 @@ import { Route as ApiPublicV1QualitySettingsRouteImport } from './routes/api/pub
 import { Route as ApiPublicV1RecommendationsIndexRouteImport } from './routes/api/public/v1/recommendations/index'
 import { Route as ApiPublicV1SearchV2RouteImport } from './routes/api/public/v1/search/v2'
 import { Route as ApiPublicV1SessionsStartRouteImport } from './routes/api/public/v1/sessions/start'
+import { Route as ApiPublicV1SportsCompetitionsRouteImport } from './routes/api/public/v1/sports/competitions'
+import { Route as ApiPublicV1SportsMatchesRouteImport } from './routes/api/public/v1/sports/matches'
 import { Route as ApiPublicV1StorageCompleteRouteImport } from './routes/api/public/v1/storage/complete'
 import { Route as ApiPublicV1StorageIntentRouteImport } from './routes/api/public/v1/storage/intent'
 import { Route as ApiPublicV1SupportTicketsRouteImport } from './routes/api/public/v1/support/tickets'
@@ -333,6 +337,9 @@ import { Route as ApiPublicV1ZillionaireSecurityIncidentModeRouteImport } from '
 import { Route as ApiPublicV1ZillionaireSecurityLookupActorRouteImport } from './routes/api/public/v1/zillionaire/security/lookup-actor'
 import { Route as ApiPublicV1ZillionaireSecurityReputationRouteImport } from './routes/api/public/v1/zillionaire/security/reputation'
 import { Route as ApiPublicV1ZillionaireSeriesIndexRouteImport } from './routes/api/public/v1/zillionaire/series/index'
+import { Route as ApiPublicV1ZillionaireSportsCompetitionsRouteImport } from './routes/api/public/v1/zillionaire/sports/competitions'
+import { Route as ApiPublicV1ZillionaireSportsFixturesRouteImport } from './routes/api/public/v1/zillionaire/sports/fixtures'
+import { Route as ApiPublicV1ZillionaireSportsTeamsRouteImport } from './routes/api/public/v1/zillionaire/sports/teams'
 import { Route as ApiPublicV1ZillionaireStorageDestinationsRouteImport } from './routes/api/public/v1/zillionaire/storage/destinations'
 import { Route as ApiPublicV1ZillionaireStorageDiscoverRouteImport } from './routes/api/public/v1/zillionaire/storage/discover'
 import { Route as ApiPublicV1ZillionaireStorageHealthRouteImport } from './routes/api/public/v1/zillionaire/storage/health'
@@ -545,6 +552,11 @@ const SeriesRoute = SeriesRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SportsRoute = SportsRouteImport.update({
+  id: '/sports',
+  path: '/sports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -891,6 +903,11 @@ const ZillionaireSettingsRoute = ZillionaireSettingsRouteImport.update({
 const ZillionaireSplitsAuditRoute = ZillionaireSplitsAuditRouteImport.update({
   id: '/zillionaire/splits-audit',
   path: '/zillionaire/splits-audit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZillionaireSportsRoute = ZillionaireSportsRouteImport.update({
+  id: '/zillionaire/sports',
+  path: '/zillionaire/sports',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ZillionaireStatusPageRoute = ZillionaireStatusPageRouteImport.update({
@@ -1342,6 +1359,18 @@ const ApiPublicV1SessionsStartRoute =
   ApiPublicV1SessionsStartRouteImport.update({
     id: '/api/public/v1/sessions/start',
     path: '/api/public/v1/sessions/start',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SportsCompetitionsRoute =
+  ApiPublicV1SportsCompetitionsRouteImport.update({
+    id: '/api/public/v1/sports/competitions',
+    path: '/api/public/v1/sports/competitions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1SportsMatchesRoute =
+  ApiPublicV1SportsMatchesRouteImport.update({
+    id: '/api/public/v1/sports/matches',
+    path: '/api/public/v1/sports/matches',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1StorageCompleteRoute =
@@ -2235,6 +2264,24 @@ const ApiPublicV1ZillionaireSeriesIndexRoute =
     path: '/api/public/v1/zillionaire/series/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ZillionaireSportsCompetitionsRoute =
+  ApiPublicV1ZillionaireSportsCompetitionsRouteImport.update({
+    id: '/api/public/v1/zillionaire/sports/competitions',
+    path: '/api/public/v1/zillionaire/sports/competitions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireSportsFixturesRoute =
+  ApiPublicV1ZillionaireSportsFixturesRouteImport.update({
+    id: '/api/public/v1/zillionaire/sports/fixtures',
+    path: '/api/public/v1/zillionaire/sports/fixtures',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireSportsTeamsRoute =
+  ApiPublicV1ZillionaireSportsTeamsRouteImport.update({
+    id: '/api/public/v1/zillionaire/sports/teams',
+    path: '/api/public/v1/zillionaire/sports/teams',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ZillionaireStorageDestinationsRoute =
   ApiPublicV1ZillionaireStorageDestinationsRouteImport.update({
     id: '/api/public/v1/zillionaire/storage/destinations',
@@ -2703,6 +2750,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/series': typeof SeriesRoute
   '/settings': typeof SettingsRoute
+  '/sports': typeof SportsRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/channels/$channelId': typeof ChannelsChannelIdRoute
@@ -2767,6 +2815,7 @@ export interface FileRoutesByFullPath {
   '/zillionaire/series': typeof ZillionaireSeriesRoute
   '/zillionaire/settings': typeof ZillionaireSettingsRoute
   '/zillionaire/splits-audit': typeof ZillionaireSplitsAuditRoute
+  '/zillionaire/sports': typeof ZillionaireSportsRoute
   '/zillionaire/status-page': typeof ZillionaireStatusPageRoute
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/strikes-appeals': typeof ZillionaireStrikesAppealsRoute
@@ -2844,6 +2893,8 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
   '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
+  '/api/public/v1/sports/competitions': typeof ApiPublicV1SportsCompetitionsRoute
+  '/api/public/v1/sports/matches': typeof ApiPublicV1SportsMatchesRoute
   '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
@@ -2976,6 +3027,9 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/security/incident-mode': typeof ApiPublicV1ZillionaireSecurityIncidentModeRoute
   '/api/public/v1/zillionaire/security/lookup-actor': typeof ApiPublicV1ZillionaireSecurityLookupActorRoute
   '/api/public/v1/zillionaire/security/reputation': typeof ApiPublicV1ZillionaireSecurityReputationRoute
+  '/api/public/v1/zillionaire/sports/competitions': typeof ApiPublicV1ZillionaireSportsCompetitionsRoute
+  '/api/public/v1/zillionaire/sports/fixtures': typeof ApiPublicV1ZillionaireSportsFixturesRoute
+  '/api/public/v1/zillionaire/sports/teams': typeof ApiPublicV1ZillionaireSportsTeamsRoute
   '/api/public/v1/zillionaire/storage/destinations': typeof ApiPublicV1ZillionaireStorageDestinationsRoute
   '/api/public/v1/zillionaire/storage/discover': typeof ApiPublicV1ZillionaireStorageDiscoverRoute
   '/api/public/v1/zillionaire/storage/health': typeof ApiPublicV1ZillionaireStorageHealthRoute
@@ -3102,6 +3156,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/series': typeof SeriesRoute
   '/settings': typeof SettingsRoute
+  '/sports': typeof SportsRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/channels/$channelId': typeof ChannelsChannelIdRoute
@@ -3166,6 +3221,7 @@ export interface FileRoutesByTo {
   '/zillionaire/series': typeof ZillionaireSeriesRoute
   '/zillionaire/settings': typeof ZillionaireSettingsRoute
   '/zillionaire/splits-audit': typeof ZillionaireSplitsAuditRoute
+  '/zillionaire/sports': typeof ZillionaireSportsRoute
   '/zillionaire/status-page': typeof ZillionaireStatusPageRoute
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/strikes-appeals': typeof ZillionaireStrikesAppealsRoute
@@ -3243,6 +3299,8 @@ export interface FileRoutesByTo {
   '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
   '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
+  '/api/public/v1/sports/competitions': typeof ApiPublicV1SportsCompetitionsRoute
+  '/api/public/v1/sports/matches': typeof ApiPublicV1SportsMatchesRoute
   '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
@@ -3374,6 +3432,9 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/security/incident-mode': typeof ApiPublicV1ZillionaireSecurityIncidentModeRoute
   '/api/public/v1/zillionaire/security/lookup-actor': typeof ApiPublicV1ZillionaireSecurityLookupActorRoute
   '/api/public/v1/zillionaire/security/reputation': typeof ApiPublicV1ZillionaireSecurityReputationRoute
+  '/api/public/v1/zillionaire/sports/competitions': typeof ApiPublicV1ZillionaireSportsCompetitionsRoute
+  '/api/public/v1/zillionaire/sports/fixtures': typeof ApiPublicV1ZillionaireSportsFixturesRoute
+  '/api/public/v1/zillionaire/sports/teams': typeof ApiPublicV1ZillionaireSportsTeamsRoute
   '/api/public/v1/zillionaire/storage/destinations': typeof ApiPublicV1ZillionaireStorageDestinationsRoute
   '/api/public/v1/zillionaire/storage/discover': typeof ApiPublicV1ZillionaireStorageDiscoverRoute
   '/api/public/v1/zillionaire/storage/health': typeof ApiPublicV1ZillionaireStorageHealthRoute
@@ -3501,6 +3562,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/series': typeof SeriesRoute
   '/settings': typeof SettingsRoute
+  '/sports': typeof SportsRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
   '/channels/$channelId': typeof ChannelsChannelIdRoute
@@ -3565,6 +3627,7 @@ export interface FileRoutesById {
   '/zillionaire/series': typeof ZillionaireSeriesRoute
   '/zillionaire/settings': typeof ZillionaireSettingsRoute
   '/zillionaire/splits-audit': typeof ZillionaireSplitsAuditRoute
+  '/zillionaire/sports': typeof ZillionaireSportsRoute
   '/zillionaire/status-page': typeof ZillionaireStatusPageRoute
   '/zillionaire/storage': typeof ZillionaireStorageRoute
   '/zillionaire/strikes-appeals': typeof ZillionaireStrikesAppealsRoute
@@ -3642,6 +3705,8 @@ export interface FileRoutesById {
   '/api/public/v1/quality/settings': typeof ApiPublicV1QualitySettingsRoute
   '/api/public/v1/search/v2': typeof ApiPublicV1SearchV2Route
   '/api/public/v1/sessions/start': typeof ApiPublicV1SessionsStartRoute
+  '/api/public/v1/sports/competitions': typeof ApiPublicV1SportsCompetitionsRoute
+  '/api/public/v1/sports/matches': typeof ApiPublicV1SportsMatchesRoute
   '/api/public/v1/storage/complete': typeof ApiPublicV1StorageCompleteRoute
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
@@ -3774,6 +3839,9 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/security/incident-mode': typeof ApiPublicV1ZillionaireSecurityIncidentModeRoute
   '/api/public/v1/zillionaire/security/lookup-actor': typeof ApiPublicV1ZillionaireSecurityLookupActorRoute
   '/api/public/v1/zillionaire/security/reputation': typeof ApiPublicV1ZillionaireSecurityReputationRoute
+  '/api/public/v1/zillionaire/sports/competitions': typeof ApiPublicV1ZillionaireSportsCompetitionsRoute
+  '/api/public/v1/zillionaire/sports/fixtures': typeof ApiPublicV1ZillionaireSportsFixturesRoute
+  '/api/public/v1/zillionaire/sports/teams': typeof ApiPublicV1ZillionaireSportsTeamsRoute
   '/api/public/v1/zillionaire/storage/destinations': typeof ApiPublicV1ZillionaireStorageDestinationsRoute
   '/api/public/v1/zillionaire/storage/discover': typeof ApiPublicV1ZillionaireStorageDiscoverRoute
   '/api/public/v1/zillionaire/storage/health': typeof ApiPublicV1ZillionaireStorageHealthRoute
@@ -3902,6 +3970,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/series'
     | '/settings'
+    | '/sports'
     | '/terms'
     | '/wallet'
     | '/channels/$channelId'
@@ -3966,6 +4035,7 @@ export interface FileRouteTypes {
     | '/zillionaire/series'
     | '/zillionaire/settings'
     | '/zillionaire/splits-audit'
+    | '/zillionaire/sports'
     | '/zillionaire/status-page'
     | '/zillionaire/storage'
     | '/zillionaire/strikes-appeals'
@@ -4043,6 +4113,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/quality/settings'
     | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
+    | '/api/public/v1/sports/competitions'
+    | '/api/public/v1/sports/matches'
     | '/api/public/v1/storage/complete'
     | '/api/public/v1/storage/intent'
     | '/api/public/v1/support/tickets'
@@ -4175,6 +4247,9 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/security/incident-mode'
     | '/api/public/v1/zillionaire/security/lookup-actor'
     | '/api/public/v1/zillionaire/security/reputation'
+    | '/api/public/v1/zillionaire/sports/competitions'
+    | '/api/public/v1/zillionaire/sports/fixtures'
+    | '/api/public/v1/zillionaire/sports/teams'
     | '/api/public/v1/zillionaire/storage/destinations'
     | '/api/public/v1/zillionaire/storage/discover'
     | '/api/public/v1/zillionaire/storage/health'
@@ -4301,6 +4376,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/series'
     | '/settings'
+    | '/sports'
     | '/terms'
     | '/wallet'
     | '/channels/$channelId'
@@ -4365,6 +4441,7 @@ export interface FileRouteTypes {
     | '/zillionaire/series'
     | '/zillionaire/settings'
     | '/zillionaire/splits-audit'
+    | '/zillionaire/sports'
     | '/zillionaire/status-page'
     | '/zillionaire/storage'
     | '/zillionaire/strikes-appeals'
@@ -4442,6 +4519,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/quality/settings'
     | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
+    | '/api/public/v1/sports/competitions'
+    | '/api/public/v1/sports/matches'
     | '/api/public/v1/storage/complete'
     | '/api/public/v1/storage/intent'
     | '/api/public/v1/support/tickets'
@@ -4573,6 +4652,9 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/security/incident-mode'
     | '/api/public/v1/zillionaire/security/lookup-actor'
     | '/api/public/v1/zillionaire/security/reputation'
+    | '/api/public/v1/zillionaire/sports/competitions'
+    | '/api/public/v1/zillionaire/sports/fixtures'
+    | '/api/public/v1/zillionaire/sports/teams'
     | '/api/public/v1/zillionaire/storage/destinations'
     | '/api/public/v1/zillionaire/storage/discover'
     | '/api/public/v1/zillionaire/storage/health'
@@ -4699,6 +4781,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/series'
     | '/settings'
+    | '/sports'
     | '/terms'
     | '/wallet'
     | '/channels/$channelId'
@@ -4763,6 +4846,7 @@ export interface FileRouteTypes {
     | '/zillionaire/series'
     | '/zillionaire/settings'
     | '/zillionaire/splits-audit'
+    | '/zillionaire/sports'
     | '/zillionaire/status-page'
     | '/zillionaire/storage'
     | '/zillionaire/strikes-appeals'
@@ -4840,6 +4924,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/quality/settings'
     | '/api/public/v1/search/v2'
     | '/api/public/v1/sessions/start'
+    | '/api/public/v1/sports/competitions'
+    | '/api/public/v1/sports/matches'
     | '/api/public/v1/storage/complete'
     | '/api/public/v1/storage/intent'
     | '/api/public/v1/support/tickets'
@@ -4972,6 +5058,9 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/security/incident-mode'
     | '/api/public/v1/zillionaire/security/lookup-actor'
     | '/api/public/v1/zillionaire/security/reputation'
+    | '/api/public/v1/zillionaire/sports/competitions'
+    | '/api/public/v1/zillionaire/sports/fixtures'
+    | '/api/public/v1/zillionaire/sports/teams'
     | '/api/public/v1/zillionaire/storage/destinations'
     | '/api/public/v1/zillionaire/storage/discover'
     | '/api/public/v1/zillionaire/storage/health'
@@ -5099,6 +5188,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   SeriesRoute: typeof SeriesRoute
   SettingsRoute: typeof SettingsRoute
+  SportsRoute: typeof SportsRoute
   TermsRoute: typeof TermsRoute
   WalletRoute: typeof WalletRoute
   ChannelsChannelIdRoute: typeof ChannelsChannelIdRoute
@@ -5162,6 +5252,7 @@ export interface RootRouteChildren {
   ZillionaireSeriesRoute: typeof ZillionaireSeriesRoute
   ZillionaireSettingsRoute: typeof ZillionaireSettingsRoute
   ZillionaireSplitsAuditRoute: typeof ZillionaireSplitsAuditRoute
+  ZillionaireSportsRoute: typeof ZillionaireSportsRoute
   ZillionaireStatusPageRoute: typeof ZillionaireStatusPageRoute
   ZillionaireStorageRoute: typeof ZillionaireStorageRoute
   ZillionaireStrikesAppealsRoute: typeof ZillionaireStrikesAppealsRoute
@@ -5236,6 +5327,8 @@ export interface RootRouteChildren {
   ApiPublicV1QualitySettingsRoute: typeof ApiPublicV1QualitySettingsRoute
   ApiPublicV1SearchV2Route: typeof ApiPublicV1SearchV2Route
   ApiPublicV1SessionsStartRoute: typeof ApiPublicV1SessionsStartRoute
+  ApiPublicV1SportsCompetitionsRoute: typeof ApiPublicV1SportsCompetitionsRoute
+  ApiPublicV1SportsMatchesRoute: typeof ApiPublicV1SportsMatchesRoute
   ApiPublicV1StorageCompleteRoute: typeof ApiPublicV1StorageCompleteRoute
   ApiPublicV1StorageIntentRoute: typeof ApiPublicV1StorageIntentRoute
   ApiPublicV1SupportTicketsRoute: typeof ApiPublicV1SupportTicketsRoute
@@ -5348,6 +5441,9 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireSecurityIncidentModeRoute: typeof ApiPublicV1ZillionaireSecurityIncidentModeRoute
   ApiPublicV1ZillionaireSecurityLookupActorRoute: typeof ApiPublicV1ZillionaireSecurityLookupActorRoute
   ApiPublicV1ZillionaireSecurityReputationRoute: typeof ApiPublicV1ZillionaireSecurityReputationRoute
+  ApiPublicV1ZillionaireSportsCompetitionsRoute: typeof ApiPublicV1ZillionaireSportsCompetitionsRoute
+  ApiPublicV1ZillionaireSportsFixturesRoute: typeof ApiPublicV1ZillionaireSportsFixturesRoute
+  ApiPublicV1ZillionaireSportsTeamsRoute: typeof ApiPublicV1ZillionaireSportsTeamsRoute
   ApiPublicV1ZillionaireStorageDestinationsRoute: typeof ApiPublicV1ZillionaireStorageDestinationsRoute
   ApiPublicV1ZillionaireStorageDiscoverRoute: typeof ApiPublicV1ZillionaireStorageDiscoverRoute
   ApiPublicV1ZillionaireStorageHealthRoute: typeof ApiPublicV1ZillionaireStorageHealthRoute
@@ -5625,6 +5721,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sports': {
+      id: '/sports'
+      path: '/sports'
+      fullPath: '/sports'
+      preLoaderRoute: typeof SportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -6094,6 +6197,13 @@ declare module '@tanstack/react-router' {
       path: '/zillionaire/splits-audit'
       fullPath: '/zillionaire/splits-audit'
       preLoaderRoute: typeof ZillionaireSplitsAuditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zillionaire/sports': {
+      id: '/zillionaire/sports'
+      path: '/zillionaire/sports'
+      fullPath: '/zillionaire/sports'
+      preLoaderRoute: typeof ZillionaireSportsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/zillionaire/status-page': {
@@ -6654,6 +6764,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/sessions/start'
       fullPath: '/api/public/v1/sessions/start'
       preLoaderRoute: typeof ApiPublicV1SessionsStartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sports/competitions': {
+      id: '/api/public/v1/sports/competitions'
+      path: '/api/public/v1/sports/competitions'
+      fullPath: '/api/public/v1/sports/competitions'
+      preLoaderRoute: typeof ApiPublicV1SportsCompetitionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/sports/matches': {
+      id: '/api/public/v1/sports/matches'
+      path: '/api/public/v1/sports/matches'
+      fullPath: '/api/public/v1/sports/matches'
+      preLoaderRoute: typeof ApiPublicV1SportsMatchesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/storage/complete': {
@@ -7699,6 +7823,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ZillionaireSeriesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/zillionaire/sports/competitions': {
+      id: '/api/public/v1/zillionaire/sports/competitions'
+      path: '/api/public/v1/zillionaire/sports/competitions'
+      fullPath: '/api/public/v1/zillionaire/sports/competitions'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireSportsCompetitionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/sports/fixtures': {
+      id: '/api/public/v1/zillionaire/sports/fixtures'
+      path: '/api/public/v1/zillionaire/sports/fixtures'
+      fullPath: '/api/public/v1/zillionaire/sports/fixtures'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireSportsFixturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/sports/teams': {
+      id: '/api/public/v1/zillionaire/sports/teams'
+      path: '/api/public/v1/zillionaire/sports/teams'
+      fullPath: '/api/public/v1/zillionaire/sports/teams'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireSportsTeamsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/zillionaire/storage/destinations': {
       id: '/api/public/v1/zillionaire/storage/destinations'
       path: '/api/public/v1/zillionaire/storage/destinations'
@@ -8558,6 +8703,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   SeriesRoute: SeriesRoute,
   SettingsRoute: SettingsRoute,
+  SportsRoute: SportsRoute,
   TermsRoute: TermsRoute,
   WalletRoute: WalletRoute,
   ChannelsChannelIdRoute: ChannelsChannelIdRoute,
@@ -8621,6 +8767,7 @@ const rootRouteChildren: RootRouteChildren = {
   ZillionaireSeriesRoute: ZillionaireSeriesRoute,
   ZillionaireSettingsRoute: ZillionaireSettingsRoute,
   ZillionaireSplitsAuditRoute: ZillionaireSplitsAuditRoute,
+  ZillionaireSportsRoute: ZillionaireSportsRoute,
   ZillionaireStatusPageRoute: ZillionaireStatusPageRoute,
   ZillionaireStorageRoute: ZillionaireStorageRoute,
   ZillionaireStrikesAppealsRoute: ZillionaireStrikesAppealsRoute,
@@ -8704,6 +8851,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1QualitySettingsRoute: ApiPublicV1QualitySettingsRoute,
   ApiPublicV1SearchV2Route: ApiPublicV1SearchV2Route,
   ApiPublicV1SessionsStartRoute: ApiPublicV1SessionsStartRoute,
+  ApiPublicV1SportsCompetitionsRoute: ApiPublicV1SportsCompetitionsRoute,
+  ApiPublicV1SportsMatchesRoute: ApiPublicV1SportsMatchesRoute,
   ApiPublicV1StorageCompleteRoute: ApiPublicV1StorageCompleteRoute,
   ApiPublicV1StorageIntentRoute: ApiPublicV1StorageIntentRoute,
   ApiPublicV1SupportTicketsRoute: ApiPublicV1SupportTicketsRoute,
@@ -8877,6 +9026,12 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireSecurityLookupActorRoute,
   ApiPublicV1ZillionaireSecurityReputationRoute:
     ApiPublicV1ZillionaireSecurityReputationRoute,
+  ApiPublicV1ZillionaireSportsCompetitionsRoute:
+    ApiPublicV1ZillionaireSportsCompetitionsRoute,
+  ApiPublicV1ZillionaireSportsFixturesRoute:
+    ApiPublicV1ZillionaireSportsFixturesRoute,
+  ApiPublicV1ZillionaireSportsTeamsRoute:
+    ApiPublicV1ZillionaireSportsTeamsRoute,
   ApiPublicV1ZillionaireStorageDestinationsRoute:
     ApiPublicV1ZillionaireStorageDestinationsRoute,
   ApiPublicV1ZillionaireStorageDiscoverRoute:
