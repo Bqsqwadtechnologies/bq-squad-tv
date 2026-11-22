@@ -542,7 +542,7 @@ function SafetyCentreDashboard({ token, isOwner }: { token: string; isOwner?: bo
                   </div>
                   <p className="text-xs text-slate-400">
                     Required environment variables: <code className="text-cyan-300">BREVO email credentials</code> (mandatory),{" "}
-                    <code className="text-cyan-300">BREVO_SENDER_EMAIL</code> (default: verification@bqsqwad.com),{" "}
+                    <code className="text-cyan-300">BREVO_SENDER_EMAIL</code> (default: tv@bqsqwad.com),{" "}
                     <code className="text-cyan-300">BREVO_SENDER_NAME</code> (default: BQ SQWAD TV).
                   </p>
                 </div>
