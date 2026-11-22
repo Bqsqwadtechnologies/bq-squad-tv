@@ -117,6 +117,17 @@ export function KycCameraCapture({
     };
   }, [stream]);
 
+  useEffect(() => {
+    if (!stream || !videoRef.current) return;
+    videoRef.current.srcObject = stream;
+    const playResult = videoRef.current.play();
+    if (playResult && typeof playResult.catch === "function") {
+      void playResult.catch(() => {
+        setPermissionError("Camera is enabled, but the video preview could not start. Tap Try Again.");
+      });
+    }
+  }, [stream, cameraPermission]);
+
   // Frame analyzer for glare / low-light warnings & face simulation
   useEffect(() => {
     if (cameraPermission !== "granted" || capturedImage) return;
