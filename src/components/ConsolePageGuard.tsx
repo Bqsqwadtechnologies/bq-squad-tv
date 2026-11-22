@@ -540,6 +540,21 @@ function NeutralSignInPortal() {
 
 function ProviderAccessDeniedView() {
   const [busy, setBusy] = useState(false);
+  const [showEnquiry, setShowEnquiry] = useState(false);
+  const [formBusy, setFormBusy] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [formData, setFormData] = useState({
+    companyName: "",
+    companyEmail: "",
+    country: "",
+    phone: "",
+    representative: "",
+    website: "",
+    description: "",
+    expectedChannels: "",
+    licencesHeld: "",
+  });
 
   const handleSignOut = async () => {
     setBusy(true);
@@ -551,35 +566,193 @@ function ProviderAccessDeniedView() {
     }
   };
 
+  const handleEnquirySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormBusy(true);
+    setFormError("");
+    try {
+      const res = await fetch("/api/public/v1/partner/enquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || data.error || "Failed to submit partner enquiry.");
+      }
+      setSubmitted(true);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Failed to submit partner enquiry.");
+    } finally {
+      setFormBusy(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#070e22] px-4 py-12 text-white">
-      <div className="w-full max-w-md rounded-3xl border border-rose-500/20 bg-[#0a1435] p-8 text-center shadow-2xl">
+      <div className="w-full max-w-lg rounded-3xl border border-indigo-500/20 bg-[#0a1435] p-8 text-center shadow-2xl">
         <div className="flex justify-center mb-6">
           <img src="/brand/bq-sqwad-tv-logo.png" alt="BQ SQWAD TV" className="h-10 w-auto" />
         </div>
-        <span className="inline-block rounded-full bg-rose-400/10 px-3 py-1 text-xs font-bold tracking-widest text-rose-300 uppercase">
-          Provider Console
+        <span className="inline-block rounded-full bg-indigo-500/10 border border-indigo-400/20 px-3.5 py-1 text-xs font-bold tracking-widest text-indigo-300 uppercase">
+          Partner Area
         </span>
-        <h1 className="mt-4 text-xl font-bold text-white">Access denied. Contact tv@bqsqwad.com</h1>
-        <p className="mt-3 text-xs text-blue-100/70 leading-relaxed">
-          Your account is not approved as an authorized provider. If you have a distribution agreement, contact support for provisioning.
-        </p>
-        <div className="mt-6 flex flex-col gap-3">
-          <button
-            type="button"
-            onClick={handleSignOut}
-            disabled={busy}
-            className="w-full rounded-xl bg-rose-500/20 border border-rose-500/40 py-2.5 text-xs font-bold text-rose-200 hover:bg-rose-500/30 transition disabled:opacity-50"
-          >
-            {busy ? "Signing out…" : "Sign out"}
-          </button>
-          <a
-            href="/"
-            className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 text-xs font-bold text-white hover:bg-white/10 transition block text-center"
-          >
-            Return to Home
+        <h1 className="mt-4 text-xl font-bold text-white">Partner Access by Assignment Only</h1>
+        <p className="mt-3 text-sm text-slate-300 leading-relaxed">
+          Channels are created by us for approved partners. To partner with us, contact{" "}
+          <a href="mailto:tv@bqsqwad.com" className="font-semibold text-cyan-300 underline underline-offset-2 hover:text-cyan-200">
+            tv@bqsqwad.com
           </a>
-        </div>
+          .
+        </p>
+
+        {submitted ? (
+          <div className="mt-6 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-left">
+            <h3 className="font-bold text-emerald-300">Request received</h3>
+            <p className="mt-1 text-xs text-emerald-100/90 leading-relaxed">
+              We have received your partner enquiry. Our team will review your organisation details and notify you at your corporate email address.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSubmitted(false);
+                setShowEnquiry(false);
+              }}
+              className="mt-4 w-full rounded-xl bg-emerald-500/20 border border-emerald-500/40 py-2.5 text-xs font-bold text-emerald-200 hover:bg-emerald-500/30 transition"
+            >
+              Close
+            </button>
+          </div>
+        ) : showEnquiry ? (
+          <form onSubmit={handleEnquirySubmit} className="mt-6 text-left space-y-4">
+            <div className="border-t border-white/10 pt-4">
+              <h3 className="text-sm font-bold text-cyan-300 mb-3">Partner Enquiry</h3>
+            </div>
+            {formError ? (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200">
+                {formError}
+              </div>
+            ) : null}
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Company Name *</label>
+              <input
+                type="text"
+                required
+                value={formData.companyName}
+                onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                placeholder="Acme Broadcasting Ltd"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Corporate Email * (No free-mail)</label>
+              <input
+                type="email"
+                required
+                value={formData.companyEmail}
+                onChange={(e) => setFormData({ ...formData, companyEmail: e.target.value })}
+                className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                placeholder="licensing@acmebroadcasting.com"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Country *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.country}
+                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                  placeholder="United Kingdom"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Phone Number *</label>
+                <input
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                  placeholder="+44 20 7946 0991"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Representative Name & Title *</label>
+              <input
+                type="text"
+                required
+                value={formData.representative}
+                onChange={(e) => setFormData({ ...formData, representative: e.target.value })}
+                className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                placeholder="Jane Doe, Head of Distribution"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Corporate Website</label>
+              <input
+                type="url"
+                value={formData.website}
+                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                placeholder="https://acmebroadcasting.com"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Description & Content Scope *</label>
+              <textarea
+                required
+                rows={3}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-400"
+                placeholder="Describe your linear channels, live events, or regional rights held..."
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowEnquiry(false)}
+                className="w-1/2 rounded-xl border border-white/15 bg-white/5 py-2.5 text-xs font-bold text-slate-300 hover:bg-white/10 transition"
+              >
+                Discard
+              </button>
+              <button
+                type="submit"
+                disabled={formBusy}
+                className="w-1/2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 py-2.5 text-xs font-bold text-[#031039] hover:brightness-110 transition disabled:opacity-50"
+              >
+                {formBusy ? "Submitting…" : "Send Enquiry"}
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-6 flex flex-col gap-3">
+            <button
+              type="button"
+              onClick={() => setShowEnquiry(true)}
+              className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 py-2.5 text-xs font-bold text-[#031039] hover:brightness-110 transition shadow-lg shadow-cyan-500/20"
+            >
+              Submit Partner Enquiry
+            </button>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              disabled={busy}
+              className="w-full rounded-xl bg-rose-500/20 border border-rose-500/40 py-2.5 text-xs font-bold text-rose-200 hover:bg-rose-500/30 transition disabled:opacity-50"
+            >
+              {busy ? "Signing out…" : "Sign out"}
+            </button>
+            <a
+              href="/"
+              className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 text-xs font-bold text-white hover:bg-white/10 transition block text-center"
+            >
+              Return to Home
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

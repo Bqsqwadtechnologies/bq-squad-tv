@@ -152,6 +152,7 @@ import { Route as ApiPublicV1LegalStatusRouteImport } from './routes/api/public/
 import { Route as ApiPublicV1MonitoringClientErrorsRouteImport } from './routes/api/public/v1/monitoring/client-errors'
 import { Route as ApiPublicV1NotificationsUnreadCountRouteImport } from './routes/api/public/v1/notifications/unread-count'
 import { Route as ApiPublicV1PagesSlugRouteImport } from './routes/api/public/v1/pages/$slug'
+import { Route as ApiPublicV1PartnerEnquiryRouteImport } from './routes/api/public/v1/partner/enquiry'
 import { Route as ApiPublicV1ProducerAnalyticsRouteImport } from './routes/api/public/v1/producer/analytics'
 import { Route as ApiPublicV1ProducerChannelsRouteImport } from './routes/api/public/v1/producer/channels'
 import { Route as ApiPublicV1ProducerEarningsRouteImport } from './routes/api/public/v1/producer/earnings'
@@ -1142,6 +1143,12 @@ const ApiPublicV1PagesSlugRoute = ApiPublicV1PagesSlugRouteImport.update({
   path: '/api/public/v1/pages/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicV1PartnerEnquiryRoute =
+  ApiPublicV1PartnerEnquiryRouteImport.update({
+    id: '/api/public/v1/partner/enquiry',
+    path: '/api/public/v1/partner/enquiry',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ProducerAnalyticsRoute =
   ApiPublicV1ProducerAnalyticsRouteImport.update({
     id: '/api/public/v1/producer/analytics',
@@ -2711,6 +2718,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/monitoring/client-errors': typeof ApiPublicV1MonitoringClientErrorsRoute
   '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
+  '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
   '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
@@ -3095,6 +3103,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/monitoring/client-errors': typeof ApiPublicV1MonitoringClientErrorsRoute
   '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
+  '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
   '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
@@ -3479,6 +3488,7 @@ export interface FileRoutesById {
   '/api/public/v1/monitoring/client-errors': typeof ApiPublicV1MonitoringClientErrorsRoute
   '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
+  '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
   '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
@@ -3865,6 +3875,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/monitoring/client-errors'
     | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
+    | '/api/public/v1/partner/enquiry'
     | '/api/public/v1/producer/analytics'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
@@ -4249,6 +4260,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/monitoring/client-errors'
     | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
+    | '/api/public/v1/partner/enquiry'
     | '/api/public/v1/producer/analytics'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
@@ -4632,6 +4644,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/monitoring/client-errors'
     | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
+    | '/api/public/v1/partner/enquiry'
     | '/api/public/v1/producer/analytics'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
@@ -5014,6 +5027,7 @@ export interface RootRouteChildren {
   ApiPublicV1LegalStatusRoute: typeof ApiPublicV1LegalStatusRoute
   ApiPublicV1MonitoringClientErrorsRoute: typeof ApiPublicV1MonitoringClientErrorsRoute
   ApiPublicV1PagesSlugRoute: typeof ApiPublicV1PagesSlugRoute
+  ApiPublicV1PartnerEnquiryRoute: typeof ApiPublicV1PartnerEnquiryRoute
   ApiPublicV1ProducerAnalyticsRoute: typeof ApiPublicV1ProducerAnalyticsRoute
   ApiPublicV1ProducerChannelsRoute: typeof ApiPublicV1ProducerChannelsRouteWithChildren
   ApiPublicV1ProducerEarningsRoute: typeof ApiPublicV1ProducerEarningsRoute
@@ -6226,6 +6240,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/pages/$slug'
       fullPath: '/api/public/v1/pages/$slug'
       preLoaderRoute: typeof ApiPublicV1PagesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/partner/enquiry': {
+      id: '/api/public/v1/partner/enquiry'
+      path: '/api/public/v1/partner/enquiry'
+      fullPath: '/api/public/v1/partner/enquiry'
+      preLoaderRoute: typeof ApiPublicV1PartnerEnquiryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/producer/analytics': {
@@ -8339,6 +8360,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1MonitoringClientErrorsRoute:
     ApiPublicV1MonitoringClientErrorsRoute,
   ApiPublicV1PagesSlugRoute: ApiPublicV1PagesSlugRoute,
+  ApiPublicV1PartnerEnquiryRoute: ApiPublicV1PartnerEnquiryRoute,
   ApiPublicV1ProducerAnalyticsRoute: ApiPublicV1ProducerAnalyticsRoute,
   ApiPublicV1ProducerChannelsRoute:
     ApiPublicV1ProducerChannelsRouteWithChildren,

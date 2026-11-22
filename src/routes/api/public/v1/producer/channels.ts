@@ -52,19 +52,14 @@ export const Route = createFileRoute("/api/public/v1/producer/channels")({
           return errorBody(error);
         }
       },
-      POST: async ({ request }) => {
-        try {
-          const user = await requireUser(request);
-          const fs = await Firestore.create();
-          await requirePlatformRole(fs, user, "producer");
-          throw new ApiError(
-            403,
-            "CHANNEL_CREATION_RESTRICTED",
-            "Channel creation is restricted to provider consoles. Contact your provider or platform team.",
-          );
-        } catch (error) {
-          return errorBody(error);
-        }
+      POST: async () => {
+        return Response.json(
+          {
+            error: "CHANNEL_CREATION_RESTRICTED",
+            message: "Only we can create channels. Contact tv@bqsqwad.com.",
+          },
+          { status: 403, headers: { "cache-control": "no-store" } },
+        );
       },
     },
   },

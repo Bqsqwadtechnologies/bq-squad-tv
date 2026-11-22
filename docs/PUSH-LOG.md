@@ -155,3 +155,11 @@ PUSH BADGE #80 SUCCESSFUL — fix: Producer Console 404 navigation, Android Apex
 - Verified GitHub Actions Debug APK workflow (.github/workflows/android-debug-apk.yml) with automatic fingerprint extraction and artifact upload.
 - Public-text scan passed cleanly; production build passed cleanly.
 - Preserved ZILLIONAIRE_EMAIL as sole owner secret with zero ADMIN_EMAIL fallback.
+
+PUSH BADGE #81 SUCCESSFUL — v6-09-A1-A3 — Channel creation restriction, country lock, provider assignment-only partner area, and API route security
+- Channel creation blocked on non-Zillionaire consoles: POST /api/public/v1/producer/channels and POST /api/public/v1/provider/channels answer 403 with friendly contact message ("Only we can create channels. Contact tv@bqsqwad.com."). Removed create-channel forms/modals from Producer and Provider consoles.
+- Country lock enforced: POST /api/public/v1/profile/country answers 403 ("Your country is set automatically. If it is wrong, contact tv@bqsqwad.com.").
+- Provider assignment-only: removed self-registration POST /api/public/v1/provider/register with 403. Removed public /provider links from account hub, layout footer, and legal footer.
+- Partner Area & Enquiry: updated ConsolePageGuard ProviderAccessDeniedView to friendly partner portal ("Channels are created by us for approved partners. To partner with us, contact tv@bqsqwad.com.") with corporate Partner Enquiry form (company email domain validation, discard/cancel buttons) and POST /api/public/v1/partner/enquiry endpoint.
+- Automated tests: created src/test/channel-creation-restriction.test.ts verifying 403 endpoints and statically asserting no non-Zillionaire route can insert root channel documents.
+- Production build (383 routes), public-text scan, and fake-numbers scan verified cleanly.

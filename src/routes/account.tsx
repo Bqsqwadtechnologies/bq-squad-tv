@@ -27,6 +27,18 @@ export const Route = createFileRoute("/account")({
   }),
 });
 
+
+function sanitizeViewerError(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) {
+    const msg = error.message;
+    if (msg.includes("Firebase") || msg.includes("firestore") || msg.includes("Internal") || msg.includes("ECONNREFUSED")) {
+      return fallback;
+    }
+    return msg;
+  }
+  return fallback;
+}
+
 function AccountPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -832,7 +844,7 @@ function AccountPage() {
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
                   Consoles
                 </p>
-                <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="mt-3">
                   <a
                     href="/producer"
                     className="flex flex-col items-center justify-center rounded-xl border border-slate-200 dark:border-cyan-400/20 bg-slate-50 dark:bg-[#030b2a] p-3 text-center text-sm font-bold text-slate-800 dark:text-cyan-100 hover:border-cyan-400 dark:hover:border-cyan-300 hover:bg-cyan-50/50 dark:hover:bg-cyan-500/5 transition shadow-sm"
@@ -840,15 +852,6 @@ function AccountPage() {
                     <span>Producer Console</span>
                     <span className="mt-0.5 text-[10px] font-normal text-slate-500 dark:text-blue-100/50">
                       Content management
-                    </span>
-                  </a>
-                  <a
-                    href="/provider"
-                    className="flex flex-col items-center justify-center rounded-xl border border-slate-200 dark:border-cyan-400/20 bg-slate-50 dark:bg-[#030b2a] p-3 text-center text-sm font-bold text-slate-800 dark:text-cyan-100 hover:border-cyan-400 dark:hover:border-cyan-300 hover:bg-cyan-50/50 dark:hover:bg-cyan-500/5 transition shadow-sm"
-                  >
-                    <span>Provider Console</span>
-                    <span className="mt-0.5 text-[10px] font-normal text-slate-500 dark:text-blue-100/50">
-                      Channel licensing
                     </span>
                   </a>
                 </div>

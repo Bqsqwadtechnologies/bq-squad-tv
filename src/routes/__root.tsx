@@ -154,9 +154,6 @@ function RootComponent() {
             <a href="/producer" className="font-semibold text-primary/80 hover:text-primary">
               Producer Console
             </a>
-            <a href="/provider" className="font-semibold text-primary/80 hover:text-primary">
-              Provider Console
-            </a>
             <a href="mailto:tv@bqsqwad.com" className="hover:text-foreground">
               Contact
             </a>

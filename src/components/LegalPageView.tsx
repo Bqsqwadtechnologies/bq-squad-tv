@@ -171,9 +171,6 @@ export function LegalPageView({ slug }: { slug: string }) {
         <a href="/producer" className="hover:text-foreground">
           Producer Console
         </a>
-        <a href="/provider" className="hover:text-foreground">
-          Provider Console
-        </a>
         <a href="mailto:tv@bqsqwad.com" className="hover:text-foreground">
           Contact
         </a>
