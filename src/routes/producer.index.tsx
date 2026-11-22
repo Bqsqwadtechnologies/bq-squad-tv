@@ -309,24 +309,6 @@ function ProducerDashboardInner({
       isRefreshing={loading}
     >
       <div className="space-y-8 p-4 sm:p-6 lg:p-8">
-        {/* Owner Banner */}
-        {account?.isOwner && (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-4 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-              <span className="font-semibold text-cyan-200">
-                You are viewing Producer Console with platform owner privileges.
-              </span>
-            </div>
-            <a
-              href="/zillionaire"
-              className="rounded-xl border border-cyan-300/40 bg-cyan-400/10 px-3 py-1.5 font-bold text-cyan-200 hover:bg-cyan-400/20 transition"
-            >
-              Open Zillionaire Dashboard →
-            </a>
-          </div>
-        )}
-
         {/* KYC Verification Status Banner */}
         <section id="verification" className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg">
           <div className="flex flex-wrap items-center justify-between gap-4">
