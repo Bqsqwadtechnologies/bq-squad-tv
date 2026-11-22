@@ -21,13 +21,24 @@ export const Route = createFileRoute("/api/public/v1/auth/web/me")({
           const fs = await Firestore.create();
           const profile = await fs.getDoc("users/" + user.uid);
           const accountId = await ensureAccountId(fs, user.uid, profile);
-          const userType: PublicIdType = access.isZillionaireOwner ? "zillionaire" : "viewer";
+          let userType: PublicIdType = "viewer";
+          if (access.isZillionaireOwner) {
+            userType = "zillionaire";
+          } else if (access.roles.includes("producer")) {
+            userType = "producer";
+          } else if (access.roles.includes("provider") || access.providerId) {
+            userType = "provider";
+          }
+
           const publicId = await ensurePublicId(
             fs,
             user.uid,
             userType,
             typeof profile?.["publicId"] === "string" ? profile["publicId"] : null,
           );
+
+          // Provider invitations require explicit approval and a secure acceptance flow.
+          // Merely signing in with a matching email must never grant provider access.
           const wallet = await fs.getDoc("wallets/" + user.uid);
           return Response.json(
             {

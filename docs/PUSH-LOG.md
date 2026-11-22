@@ -189,3 +189,11 @@ PUSH BADGE #84 SUCCESSFUL — v6-09-N8-N15-N16-N20 — Universal IDs, Channel Sl
 - Universal Red Badges (Rule N20): Implemented persistent badge tracking in src/lib/server/badges.ts and GET/POST /api/public/v1/notifications/badges for review/request counts with 99+ caps.
 - Maintenance Worker Backfill: Added idempotent backfill_universal_ids task in src/routes/api/public/v1/worker/maintenance/run.ts to generate universal IDs for legacy accounts without disruption.
 - Verification & Test Pass: Verified with src/test/batch-n15-universal-ids-and-slugs.test.ts (9/9 passed), channel-creation-restriction tests (5/5 passed), public-text scan passed, and Vite client/SSR/Nitro production build passing cleanly.
+
+PUSH BADGE #85 SUCCESSFUL — v6-09-N5-N10-N17-N25 — Producer Upload Studio, Public Profiles & Partner Console Rebuild
+- Producer Upload Studio (Rule N5): Built standalone studio at /producer/upload with drag-and-drop video and rights evidence upload. Implemented server-issued signed direct upload sessions (POST /api/public/v1/producer/uploads/session) and cryptographic completion verification (POST /api/public/v1/producer/uploads/complete).
+- Channel Creation Restriction: Strict enforcement that Producers and Providers cannot create channels; only Zillionaire can create channels. Routes reject non-owner channel creation with HTTP 403 CHANNEL_CREATION_RESTRICTED and contact guidance.
+- Series & Episode Grouping (Rule N5): Structured title taxonomy grouping episodes under canonical series title collections with auto-incrementing season/episode keys.
+- Public Producer Profile (Rule N10): Delivered public page at /p/$slug with Producer Crockford Public ID (BQ-P-), verified badges, catalog rails, follower counts via Firestore transaction, and moderated viewer comments (pending review by default).
+- Provider Console Rebuild (Rule N17/N25): Rebuilt /provider with zero fabricated telemetry, real assigned channel manifests, Crockford Partner Company IDs (BQ-C-), and secure corporate email invitation assignment.
+- Build & Verification: Client, SSR, and Nitro production builds passing. Route integrity (395 routes) and fake-numbers scanners clean.

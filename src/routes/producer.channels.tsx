@@ -1,7 +1,7 @@
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
 import { ConsoleShell } from "@/components/ConsoleShell";
 import { useEffect, useState, useRef, useMemo, type FormEvent, type ChangeEvent } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import {
   Calendar as CalendarIcon,
   Check,
@@ -84,8 +84,8 @@ export const Route = createFileRoute("/producer/channels")({
   component: ProducerChannelsPage,
   head: () => ({
     meta: [
-      { title: "Producer Studio — Channels & Broadcast Tools | BQ SQWAD TV" },
-      { name: "description", content: "Schedule broadcasts, upload media, and manage channels." },
+      { title: "Producer Upload Studio | BQ SQWAD TV" },
+      { name: "description", content: "Upload movies, series, and videos to the Producer Upload Studio." },
       { name: "robots", content: "noindex, nofollow, noarchive" },
     ],
   }),
@@ -94,9 +94,7 @@ export const Route = createFileRoute("/producer/channels")({
 function ProducerChannelsPage() {
   return (
     <ConsolePageGuard role="producer">
-      {({ token, account, onLock }) => (
-        <ProducerChannelsInner token={token} account={account} onLock={onLock} />
-      )}
+      {() => <Navigate to="/producer/upload" replace />}
     </ConsolePageGuard>
   );
 }
@@ -144,7 +142,7 @@ function ProducerChannelsInner({
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [scheduleView, setScheduleView] = useState<"day" | "week" | "list">("list");
-  const [activeTab, setActiveTab] = useState<"content" | "schedule" | "upload" | "livestream">("schedule");
+  const [activeTab, setActiveTab] = useState<"content" | "schedule" | "livestream">("content");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -278,39 +276,6 @@ function ProducerChannelsInner({
       void loadSchedule(token, selectedChannelId);
     }
   }, [token, selectedChannelId]);
-
-  // Channel creation
-  async function createChannel(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setBusy(true);
-    setError("");
-    setMessage("");
-    try {
-      const response = await fetch("/api/public/v1/producer/channels", {
-        method: "POST",
-        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
-        body: JSON.stringify({
-          title,
-          category,
-          description,
-          deliveryMode,
-          ...(deliveryMode === "external" ? { providerId, providerKey } : {}),
-        }),
-      });
-      const result = (await response.json()) as { channelId?: string; error?: string };
-      if (!response.ok) throw new Error(result.error ?? "The channel could not be created.");
-      setTitle("");
-      setDescription("");
-      setProviderKey("");
-      setMessage("Channel created successfully.");
-      await loadChannels(token);
-      setActiveTab("schedule");
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "The channel could not be created.");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   // File kind validation
   const ALLOWED_VIDEO_EXTS = [".mp4", ".mov", ".mkv", ".webm"];
@@ -596,20 +561,22 @@ function ProducerChannelsInner({
       account={account}
       activePath="/producer/channels"
       onLock={onLock}
-      channelSwitcher={
-        channelSwitcherOptions.length > 0
-          ? {
-              activeChannelId: selectedChannelId || channelSwitcherOptions[0].id,
-              channels: channelSwitcherOptions,
-              onSelect: (id: string) => setSelectedChannelId(id),
-            }
-          : undefined
-      }
     >
       <div className="space-y-6 p-4 sm:p-6 lg:p-8">
         {/* Navigation Tabs */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setActiveTab("content")}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
+                activeTab === "content"
+                  ? "bg-cyan-400 text-[#030e28] shadow-md shadow-cyan-400/20"
+                  : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <Film className="h-4 w-4" />
+              <span>My Titles</span>
+            </button>
             <button
               onClick={() => setActiveTab("schedule")}
               className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
@@ -619,21 +586,7 @@ function ProducerChannelsInner({
               }`}
             >
               <CalendarIcon className="h-4 w-4" />
-              <span>Schedule Calendar</span>
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("upload");
-                setIsUploadOpen(true);
-              }}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
-                activeTab === "upload"
-                  ? "bg-cyan-400 text-[#030e28] shadow-md shadow-cyan-400/20"
-                  : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <UploadCloud className="h-4 w-4" />
-              <span>Upload Content</span>
+              <span>Schedules</span>
             </button>
             <button
               onClick={() => setActiveTab("livestream")}
@@ -644,19 +597,15 @@ function ProducerChannelsInner({
               }`}
             >
               <Radio className="h-4 w-4 text-rose-400" />
-              <span>Live-Stream Setup</span>
+              <span>Live Ingest</span>
             </button>
-            <button
-              onClick={() => setActiveTab("content")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
-                activeTab === "content"
-                  ? "bg-cyan-400 text-[#030e28] shadow-md shadow-cyan-400/20"
-                  : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
-              }`}
+            <Link
+              to="/producer/upload"
+              className="flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 shadow-md shadow-cyan-400/20 transition"
             >
-              <Film className="h-4 w-4" />
-              <span>Movies & Series Library</span>
-            </button>
+              <UploadCloud className="h-4 w-4" />
+              <span>Upload Studio</span>
+            </Link>
           </div>
 
           {/* Active Channel Indicator */}

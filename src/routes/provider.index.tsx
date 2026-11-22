@@ -32,12 +32,12 @@ import { ProviderRegistrationFlow, type SandboxCredentials } from "@/components/
 type StreamMonitor = {
   id: string;
   channelName: string;
-  status: "Healthy" | "Degraded" | "Down";
-  bitrateMbps: number;
-  fps: number;
-  latencySec: number;
-  resolution: string;
-  previewUrl: string;
+  status: "Healthy" | "Degraded" | "Down" | "Unknown";
+  bitrateMbps: number | null;
+  fps: number | null;
+  latencySec: number | null;
+  resolution: string | null;
+  previewUrl: string | null;
 };
 
 type ProviderMetrics = {
@@ -45,9 +45,8 @@ type ProviderMetrics = {
   connectedChannels: number;
   activeChannels: number;
   activeIngestStreams: number;
-  deliveryBandwidthGbps: number;
-  uptimeSlaPercent: number;
-  estimatedViewers: number;
+
+  estimatedEarningsMinor?: number;
   totalWatchMinutes: number;
   totalWatchHours: number;
   pendingPaymentsMinor: number;
@@ -60,6 +59,7 @@ type ProviderMetrics = {
 
 type ProviderInfo = {
   id: string;
+  publicId?: string;
   name: string;
   settlementCurrency: string;
 };
@@ -91,7 +91,7 @@ function ProviderPage() {
   return (
     <ConsolePageGuard role="provider">
       {({ token, account, onLock }) => (
-        <ProviderDashboardInner token={token} account={account} onLock={onLock} />
+        <ProviderDashboardInner token={token} account={{ ...account, email: account.email ?? undefined }} onLock={onLock} />
       )}
     </ConsolePageGuard>
   );
@@ -104,7 +104,7 @@ function ProviderDashboardInner({
 }: {
   token: string;
   account: ConsoleAccount;
-  onLock?: () => void;
+  onLock?: (() => void) | undefined;
 }) {
   const [provider, setProvider] = useState<ProviderInfo | null>(null);
   const [metrics, setMetrics] = useState<ProviderMetrics | null>(null);
@@ -119,6 +119,13 @@ function ProviderDashboardInner({
   const [latencyResults, setLatencyResults] = useState<Array<{ region: string; pingMs: number; status: string }>>([]);
   const [testingLatency, setTestingLatency] = useState(false);
   const [newKeyGenerated, setNewKeyGenerated] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState(false);
+
+  function copyProviderId(id: string) {
+    navigator.clipboard.writeText(id);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2500);
+  }
 
   // New stream form state
   const [streamName, setStreamName] = useState("");
@@ -169,18 +176,27 @@ function ProviderDashboardInner({
     void loadDashboard(token);
   }, [token]);
 
-  function runLatencyTest() {
+  async function runLatencyTest() {
     setTestingLatency(true);
     setLatencyResults([]);
-    setTimeout(() => {
+    try {
+      const start = performance.now();
+      await fetch("/api/public/v1/config/client", { cache: "no-store" });
+      const durationMs = Math.round(performance.now() - start);
       setLatencyResults([
-        { region: "Edge Primary (Lagos)", pingMs: 14, status: "Optimal" },
-        { region: "Edge Secondary (Johannesburg)", pingMs: 38, status: "Optimal" },
-        { region: "Edge Global (London)", pingMs: 92, status: "Good" },
-        { region: "Edge Global (Frankfurt)", pingMs: 98, status: "Good" },
+        {
+          region: "Current Ingest Gateway",
+          pingMs: durationMs,
+          status: durationMs < 80 ? "Optimal" : durationMs < 200 ? "Good" : "Elevated",
+        },
       ]);
+    } catch {
+      setLatencyResults([
+        { region: "Ingest Gateway", pingMs: 0, status: "Down" },
+      ]);
+    } finally {
       setTestingLatency(false);
-    }, 1200);
+    }
   }
 
   function rotateCredentials() {
@@ -218,7 +234,7 @@ function ProviderDashboardInner({
       consoleType="provider"
       title="Provider Console"
       tagline="Delivery Infrastructure & Ingest Telemetry"
-      account={account}
+      account={{ ...account, email: account.email ?? undefined }}
       activePath="/provider"
       onLock={onLock}
       onRefresh={() => void loadDashboard(token)}
@@ -250,23 +266,9 @@ function ProviderDashboardInner({
               <CheckCircle2 className="h-4 w-4 text-cyan-400" />
               <span>{isOnboardingOpen ? "Hide Onboarding" : "Onboarding & Sandbox"}</span>
             </button>
-            <button
-              onClick={() => setIsAddStreamOpen(true)}
-              className="flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] transition hover:brightness-110 shadow-lg shadow-cyan-400/20"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add stream</span>
-            </button>
-            <button
-              onClick={() => {
-                setIsTestLatencyOpen(true);
-                runLatencyTest();
-              }}
-              className="flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-bold text-cyan-300 transition hover:bg-cyan-400/20"
-            >
-              <Zap className="h-4 w-4" />
-              <span>Test latency</span>
-            </button>
+            <span className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs text-slate-400">
+              Stream assignment and latency telemetry are managed by the platform
+            </span>
             <a
               href="/provider/channels"
               className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10"
@@ -274,13 +276,9 @@ function ProviderDashboardInner({
               <Settings className="h-4 w-4 text-cyan-300" />
               <span>Provider settings</span>
             </a>
-            <button
-              onClick={() => setIsRotateCredsOpen(true)}
-              className="flex items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-bold text-amber-300 transition hover:bg-amber-500/20"
-            >
-              <KeyRound className="h-4 w-4" />
-              <span>Rotate credentials</span>
-            </button>
+            <span className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs text-slate-500">
+              Credential rotation is unavailable here
+            </span>
           </div>
         </div>
 
@@ -339,10 +337,10 @@ function ProviderDashboardInner({
         {/* Provider KPI Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <ConsoleKpiCard
-            title="Connected Channels"
-            value={metrics ? metrics.connectedChannels.toString() : "—"}
-            subtitle="Registered broadcast feeds"
-            caption="Registered broadcast feeds"
+            title="Assigned Channels"
+            value={metrics ? metrics.channelsCount.toString() : "—"}
+            subtitle="Channels assigned by platform administrators"
+            caption="Assigned channels"
             icon={Tv2}
             variant="blue"
           />
@@ -355,41 +353,21 @@ function ProviderDashboardInner({
             variant="purple"
           />
           <ConsoleKpiCard
-            title="Delivery Bandwidth"
-            value={metrics ? `${metrics.deliveryBandwidthGbps} Gbps` : "—"}
-            subtitle="Edge throughput peak"
-            caption="Edge throughput peak"
+            title="Connected Channels"
+            value={metrics ? metrics.connectedChannels.toString() : "—"}
+            subtitle="Connection telemetry reported by ingest"
+            caption="Connected channels"
             icon={Network}
             variant="gold"
           />
-          {/* Uptime SLA Gauge Card */}
-          <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#07143d] p-5 shadow-lg">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                Uptime SLA Gauge
-              </span>
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <Gauge className="h-4 w-4" />
-              </div>
-            </div>
-            <div className="mt-3">
-              <p className="text-2xl font-black text-white font-mono">
-                {metrics ? `${metrics.uptimeSlaPercent}%` : "99.98%"}
-              </p>
-              <p className="mt-0.5 text-xs text-emerald-300 font-medium">Commitment: 99.95% SLA</p>
-            </div>
-            {/* Visual Gauge Bar */}
-            <div className="mt-3">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-                <div className="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 w-[99.98%]" />
-              </div>
-              <div className="mt-1 flex justify-between text-[10px] text-slate-500">
-                <span>99.90%</span>
-                <span>99.95% Target</span>
-                <span className="text-emerald-400 font-bold">99.98% Actual</span>
-              </div>
-            </div>
-          </div>
+          <ConsoleKpiCard
+            title="Uptime SLA"
+            value="Not available"
+            subtitle="No verified uptime measurement is connected"
+            caption="SLA telemetry unavailable"
+            icon={Gauge}
+            variant="blue"
+          />
         </div>
 
         {/* Live Stream Monitor Grid */}
@@ -413,19 +391,28 @@ function ProviderDashboardInner({
           </div>
 
           {/* Monitors Grid */}
+          {(!metrics?.streamMonitors || metrics.streamMonitors.length === 0) ? (
+            <div className="p-12 text-center rounded-2xl border border-dashed border-white/10 bg-[#030b2a] space-y-2">
+              <Tv2 className="w-10 h-10 mx-auto text-slate-500/50 mb-2" />
+              <h3 className="text-sm font-bold text-white">No Ingest Channels Assigned</h3>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                Channels are created and assigned to verified partners by Zillionaire platform operations. Once assigned, your live stream monitors will display here.
+              </p>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {(metrics?.streamMonitors || []).map((stream) => (
+            {metrics.streamMonitors.map((stream) => (
               <div
                 key={stream.id}
                 className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#030b2a] shadow-lg transition hover:border-cyan-400/40"
               >
                 {/* Video Monitor Header & Preview */}
                 <div className="relative aspect-video w-full overflow-hidden bg-black/60">
-                  <img
-                    src={stream.previewUrl}
-                    alt={stream.channelName}
-                    className="h-full w-full object-cover opacity-80 group-hover:scale-105 transition duration-500"
-                  />
+                  {stream.previewUrl ? (
+                    <img src={stream.previewUrl} alt={stream.channelName} className="h-full w-full object-cover opacity-80 group-hover:scale-105 transition duration-500" />
+                  ) : (
+                    <div className="h-full w-full bg-gradient-to-br from-slate-900 to-[#07143d]" aria-label="No preview image reported" />
+                  )}
                   {/* Status Badge overlay */}
                   <div className="absolute top-3 left-3">
                     <span
@@ -434,7 +421,9 @@ function ProviderDashboardInner({
                           ? "bg-emerald-950/80 text-emerald-300 border border-emerald-500/40"
                           : stream.status === "Degraded"
                             ? "bg-amber-950/80 text-amber-300 border border-amber-500/40"
-                            : "bg-rose-950/80 text-rose-300 border border-rose-500/40"
+                            : stream.status === "Unknown"
+                              ? "bg-slate-950/80 text-slate-300 border border-white/20"
+                              : "bg-rose-950/80 text-rose-300 border border-rose-500/40"
                       }`}
                     >
                       <span
@@ -452,7 +441,7 @@ function ProviderDashboardInner({
 
                   {/* Resolution tag */}
                   <div className="absolute bottom-3 right-3 rounded bg-black/80 px-2 py-0.5 text-[10px] font-mono text-cyan-300 border border-white/10">
-                    {stream.resolution}
+                    {stream.resolution || "Resolution unavailable"}
                   </div>
                 </div>
 
@@ -469,17 +458,17 @@ function ProviderDashboardInner({
                     <div>
                       <p className="text-[10px] uppercase font-bold text-slate-400">Bitrate</p>
                       <p className="text-xs font-mono font-bold text-white mt-0.5">
-                        {stream.bitrateMbps} Mbps
+                        {stream.bitrateMbps == null ? "—" : `${stream.bitrateMbps} Mbps`}
                       </p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase font-bold text-slate-400">FPS</p>
-                      <p className="text-xs font-mono font-bold text-white mt-0.5">{stream.fps} fps</p>
+                      <p className="text-xs font-mono font-bold text-white mt-0.5">{stream.fps == null ? "—" : `${stream.fps} fps`}</p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase font-bold text-slate-400">Latency</p>
                       <p className="text-xs font-mono font-bold text-white mt-0.5">
-                        {stream.latencySec}s
+                        {stream.latencySec == null ? "—" : `${stream.latencySec}s`}
                       </p>
                     </div>
                   </div>
@@ -487,6 +476,7 @@ function ProviderDashboardInner({
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* Financial & Settlement Overview */}

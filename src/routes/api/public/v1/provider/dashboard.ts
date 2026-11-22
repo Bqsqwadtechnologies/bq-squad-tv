@@ -1,86 +1,94 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { errorBody } from "@/lib/server/api";
 import { requireApprovedProvider } from "@/lib/server/access";
+import { ensurePublicId } from "@/lib/server/universal-ids";
 
 export const Route = createFileRoute("/api/public/v1/provider/dashboard")({
   server: {
     handlers: {
       GET: async ({ request }) => {
         try {
-          const { fs, providerId } = await requireApprovedProvider(request);
+          const { fs, providerId, user } = await requireApprovedProvider(request);
 
-          // Fetch provider document and channels
-          const [providerDoc, providerChannels] = await Promise.all([
+          // Ensure provider public ID (BQ-C-xxxxxxxxxx)
+          const publicId = await ensurePublicId(fs, providerId, "provider");
+
+          // Fetch provider document and assigned channels
+          const [providerDoc, providerChannels, platformChannels] = await Promise.all([
             fs.getDoc(`providers/${providerId}`),
-            fs.query(`liveChannels`, {
+            fs.query(`channels`, {
               filters: [{ field: "providerId", op: "EQUAL", value: providerId }],
               limit: 100,
             }),
+            user.email
+              ? fs.query(`channels`, {
+                  filters: [{ field: "partnerEmail", op: "EQUAL", value: user.email }],
+                  limit: 100,
+                })
+              : Promise.resolve([]),
           ]);
 
-          const activeChannels = providerChannels.filter(
-            (c) => c["status"] === "published" || c["status"] === "active",
+          // Combine channels and deduplicate
+          const channelMap = new Map<string, any>();
+          for (const ch of [...providerChannels, ...platformChannels]) {
+            const id = ch.channelId || ch.__id || ch.id;
+            if (id) channelMap.set(id, ch);
+          }
+          const allAssignedChannels = Array.from(channelMap.values());
+
+          const activeChannels = allAssignedChannels.filter(
+            (c) => c["status"] === "ACTIVE" || c["published"] === true,
           ).length;
 
           const settlementCurrency = String(providerDoc?.["settlementCurrency"] || "NGN");
 
-          const estimatedMinutes = providerChannels.reduce(
+          const totalWatchMinutes = allAssignedChannels.reduce(
             (sum, c) => sum + Number(c["totalWatchMinutes"] || 0),
-            0,
-          );
-          const estimatedRevenueMinor = providerChannels.reduce(
-            (sum, c) => sum + Number(c["grossRevenueMinor"] || 0),
             0,
           );
           const estimatedEarningsMinor = Number(providerDoc?.["pendingPayoutsMinor"] || 0);
 
+          // Rule N25: Truthful stream monitors derived only from actual assigned channels
+          const streamMonitors = allAssignedChannels.map((ch: any) => {
+            const healthStatus = ["Healthy", "Degraded", "Down"].includes(String(ch.healthStatus))
+              ? String(ch.healthStatus)
+              : "Unknown";
+            const numberOrNull = (value: unknown) =>
+              typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
+            return {
+              id: ch.channelId || ch.id || ch.__id,
+              channelName: ch.title || "Assigned Channel",
+              status: healthStatus,
+              bitrateMbps: numberOrNull(ch.bitrateMbps),
+              fps: numberOrNull(ch.fps),
+              latencySec: numberOrNull(ch.latencySec),
+              resolution: typeof ch.resolution === "string" ? ch.resolution : null,
+              previewUrl: typeof ch.logoUrl === "string" ? ch.logoUrl : null,
+            };
+          });
+
           return Response.json({
             provider: {
               id: providerId,
-              name: providerDoc?.["name"] || "Channel Partner",
+              publicId,
+              name: providerDoc?.["name"] || providerDoc?.["companyName"] || "Channel Partner",
               settlementCurrency,
             },
             metrics: {
-              channelsCount: providerChannels.length,
-              connectedChannels: providerChannels.length,
+              channelsCount: allAssignedChannels.length,
+              connectedChannels: allAssignedChannels.filter((c) => c["connectionStatus"] === "connected").length,
               activeChannels,
-              activeIngestStreams: Math.max(activeChannels, providerChannels.length > 0 ? 1 : 0),
-              deliveryBandwidthGbps: 14.8,
-              uptimeSlaPercent: 99.98,
-              estimatedViewers: providerChannels.reduce(
-                (sum, c) => sum + Number(c["currentViewers"] || 0),
-                0,
-              ),
-              totalWatchMinutes: estimatedMinutes,
-              totalWatchHours: Math.round((estimatedMinutes / 60) * 10) / 10,
+              activeIngestStreams: allAssignedChannels.filter((c) => c["isLive"] === true).length,
+              // Truthful metrics: no fake 99.98% or hardcoded 14.8 Gbps
+              totalWatchMinutes,
+              totalWatchHours: Math.round((totalWatchMinutes / 60) * 10) / 10,
               estimatedEarningsMinor,
               pendingPaymentsMinor: Number(providerDoc?.["pendingPayoutsMinor"] || 0),
               completedPaymentsMinor: Number(providerDoc?.["completedPayoutsMinor"] || 0),
               currency: settlementCurrency,
               isEstimate: true,
-              periodTag: "Open Period (Estimate)",
-              streamMonitors: (providerChannels.length > 0
-                ? providerChannels
-                : [
-                    { id: "stream_1", title: "Apex Primary Main Feed", status: "active" },
-                    { id: "stream_2", title: "Apex HD Regional Relay", status: "active" },
-                    { id: "stream_3", title: "Apex Backup Edge Stream", status: "degraded" },
-                  ]
-              ).map((ch: any, idx: number) => {
-                const s = ch.status === "active" || ch.status === "published"
-                  ? idx === 2 ? "Degraded" : "Healthy"
-                  : "Down";
-                return {
-                  id: ch.id || `stream_${idx + 1}`,
-                  channelName: ch.title || ch.name || `Ingest Stream #${idx + 1}`,
-                  status: s,
-                  bitrateMbps: s === "Healthy" ? 5.8 : s === "Degraded" ? 2.4 : 0,
-                  fps: s === "Healthy" ? 60 : s === "Degraded" ? 24 : 0,
-                  latencySec: s === "Healthy" ? 1.4 : s === "Degraded" ? 4.8 : 0,
-                  resolution: s === "Healthy" ? "1080p60" : s === "Degraded" ? "720p" : "Offline",
-                  previewUrl: "/brand/bq-sqwad-tv-logo.png",
-                };
-              }),
+              periodTag: "Open Period",
+              streamMonitors,
             },
           });
         } catch (err: unknown) {

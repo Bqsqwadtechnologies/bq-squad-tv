@@ -5,27 +5,7 @@ import { errorBody, parseBody } from "@/lib/server/api";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { writeAuditLog } from "@/lib/server/audit";
 
-const FREE_EMAIL_DOMAINS = new Set([
-  "gmail.com",
-  "yahoo.com",
-  "yahoo.co.uk",
-  "outlook.com",
-  "hotmail.com",
-  "icloud.com",
-  "proton.me",
-  "protonmail.com",
-  "live.com",
-  "aol.com",
-  "mail.com",
-  "zoho.com",
-  "yandex.com",
-]);
-
-function isFreeEmailDomain(email: string): boolean {
-  const parts = email.toLowerCase().split("@");
-  if (parts.length !== 2) return false;
-  return FREE_EMAIL_DOMAINS.has(parts[1]);
-}
+import { isFreeEmailDomain } from "@/lib/server/company-email";
 
 const schema = z.object({
   companyName: z.string().trim().min(2, "Company name is required").max(120),

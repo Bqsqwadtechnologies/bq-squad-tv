@@ -43,9 +43,41 @@ export const Route = createFileRoute("/api/public/v1/catalog/search")({
                 .includes(queryText),
             );
           }
-          // Adult filtering happens before any result is returned.
           const summaries = results.map(toChannelSummary);
-          return Response.json({ results: summaries, channels: summaries });
+
+          // Rule N10: Search by producer name returns the producer page
+          let matchingProducers: Array<{
+            slug: string;
+            name: string;
+            avatarUrl: string | null;
+            verified: boolean;
+            followerCount: number;
+          }> = [];
+
+          if (queryText) {
+            const allProducers = await fs.query("producers", { limit: 100 });
+            matchingProducers = allProducers
+              .filter((p) => {
+                const name = String(p["displayName"] || p["name"] || "").toLowerCase();
+                const slug = String(p["slug"] || "").toLowerCase();
+                const publicId = String(p["publicId"] || "").toLowerCase();
+                return name.includes(queryText) || slug.includes(queryText) || publicId.includes(queryText);
+              })
+              .slice(0, 8)
+              .map((p) => ({
+                slug: (p["slug"] as string) || (p["publicId"] as string) || p.__id,
+                name: (p["displayName"] as string) || (p["name"] as string) || "Producer",
+                avatarUrl: (p["avatarUrl"] as string) || null,
+                verified: p["verificationStatus"] === "APPROVED",
+                followerCount: Math.max(0, Number(p["followerCount"]) || 0),
+              }));
+          }
+
+          return Response.json({
+            results: summaries,
+            channels: summaries,
+            producers: matchingProducers,
+          });
         } catch (error) {
           return errorBody(error);
         }

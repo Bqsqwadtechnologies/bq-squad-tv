@@ -117,6 +117,20 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
               )
             : [];
 
+          // Resolve Producer info for public profile link (Rule N10)
+          const producerUid = typeof asset["ownerUid"] === "string" ? asset["ownerUid"] : typeof asset["producerUid"] === "string" ? asset["producerUid"] : null;
+          let producerSummary: { slug: string; name: string; verified: boolean } | null = null;
+          if (producerUid) {
+            const prodDoc = await fs.getDoc("producers/" + producerUid);
+            if (prodDoc) {
+              producerSummary = {
+                slug: (prodDoc["slug"] as string) || (prodDoc["publicId"] as string) || producerUid,
+                name: (prodDoc["displayName"] as string) || (prodDoc["name"] as string) || "Producer",
+                verified: prodDoc["verificationStatus"] === "APPROVED",
+              };
+            }
+          }
+
           return Response.json({
             content: {
               id: assetId,
@@ -151,6 +165,7 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
               title: typeof channel["title"] === "string" ? channel["title"] : "Channel",
               category: typeof channel["category"] === "string" ? channel["category"] : "Channel",
             },
+            producer: producerSummary,
           });
         } catch (error) {
           return errorBody(error);

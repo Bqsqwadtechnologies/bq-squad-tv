@@ -34,6 +34,13 @@ function SearchPage() {
   const [busy, setBusy] = useState(false);
   const [searched, setSearched] = useState(false);
   const [currencySymbol, setCurrencySymbol] = useState("₦");
+  const [producers, setProducers] = useState<Array<{
+    slug: string;
+    name: string;
+    avatarUrl: string | null;
+    verified: boolean;
+    followerCount: number;
+  }>>([]);
 
   useEffect(() => {
     fetch("/api/public/v1/config/client", { cache: "no-store" })
@@ -60,11 +67,23 @@ function SearchPage() {
         { headers, cache: "no-store" },
       );
       if (response.ok) {
-        const data = (await response.json()) as { results?: SearchItem[]; channels?: SearchItem[] };
+        const data = (await response.json()) as {
+          results?: SearchItem[];
+          channels?: SearchItem[];
+          producers?: Array<{
+            slug: string;
+            name: string;
+            avatarUrl: string | null;
+            verified: boolean;
+            followerCount: number;
+          }>;
+        };
         const items = data.results || data.channels || [];
         setResults(Array.isArray(items) ? items : []);
+        setProducers(Array.isArray(data.producers) ? data.producers : []);
       } else {
         setResults([]);
+        setProducers([]);
       }
     } catch {
       setResults([]);
@@ -158,7 +177,47 @@ function SearchPage() {
         </div>
 
         {/* Results Area */}
-        <section className="mt-8">
+        <section className="mt-8 space-y-8">
+          {/* Rule N10: Matching Producers */}
+          {producers.length > 0 && (
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
+                <Users className="h-4 w-4 text-[#00D8F5]" />
+                Producers ({producers.length})
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {producers.map((p) => (
+                  <Link
+                    key={p.slug}
+                    to="/p/$slug"
+                    params={{ slug: p.slug }}
+                    className="flex items-center gap-3 p-3 rounded-2xl border border-white/10 bg-[#0C1738] hover:border-[#00D8F5]/50 transition group"
+                  >
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/20 shrink-0 flex items-center justify-center font-bold text-sm text-[#00D8F5]">
+                      {p.avatarUrl ? (
+                        <img src={p.avatarUrl} alt={p.name} className="w-full h-full object-cover" />
+                      ) : (
+                        p.name.charAt(0)
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-bold text-xs text-white truncate group-hover:text-[#00D8F5]">
+                          {p.name}
+                        </span>
+                        {p.verified && (
+                          <BadgeCheck className="w-3.5 h-3.5 fill-cyan-400 text-[#0C1738] shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 truncate">
+                        {p.followerCount} followers • View Profile
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
           {busy ? (
             <div className="flex items-center justify-center py-16">
               <LoaderCircle className="h-8 w-8 animate-spin text-[#00D8F5]" />

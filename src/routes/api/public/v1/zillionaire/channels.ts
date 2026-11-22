@@ -8,6 +8,7 @@ import { getPricingConfig, requireMinorUnitAmount } from "@/lib/server/pricing";
 import { writeAuditLog } from "@/lib/server/audit";
 import { requireCurrency } from "@/lib/server/currency";
 import { generateChannelId, slugifyChannelTitle } from "@/lib/server/universal-ids";
+import { requireCompanyEmail } from "@/lib/server/company-email";
 
 const schema = z
   .object({
@@ -16,6 +17,7 @@ const schema = z
     description: z.string().trim().max(3000).default(""),
     customSlug: z.string().trim().min(2).max(60).regex(/^[a-z0-9-]+$/).optional(),
     partnerEmail: z.string().trim().email().optional(),
+    partnerCompanyName: z.string().trim().max(100).optional(),
     partnerRole: z.enum(["Manager", "Editor", "Viewer"]).optional(),
     revenueShareBps: z.number().int().min(0).max(10000).optional(),
     language: z.string().trim().min(2).max(20).default("en"),
@@ -122,6 +124,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
             limit: 30,
             windowMs: 60 * 60_000,
           });
+
+          let validatedPartnerEmail: string | null = null;
+          if (body.partnerEmail) {
+            validatedPartnerEmail = requireCompanyEmail(body.partnerEmail, "Channel Partner");
+          }
           const pricing = await getPricingConfig(fs);
           const currency = requireCurrency(body.currency);
           const ratePerMinuteByCurrency = body.paid ? (body.ratePerMinuteByCurrency ?? {}) : {};
@@ -176,7 +183,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
               ratePerMinuteByCurrency,
               minimumBalanceMinor,
               minimumBalanceByCurrency,
-              partnerEmail: body.partnerEmail || null,
+              partnerEmail: validatedPartnerEmail || null,
               partnerRole: body.partnerRole || null,
               revenueShareBps: body.revenueShareBps ?? 0,
               producerShareBps: body.revenueShareBps ?? 0,
@@ -231,6 +238,27 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
             slug,
             createdAt: now,
           });
+
+          // Partner assignment is an invitation only. It must not activate a provider account,
+          // add a provider role, or create an approved-provider record based on an email match.
+          if (validatedPartnerEmail) {
+            const partnerOrgId = `partner_${crypto.randomUUID().replace(/-/g, "").slice(0, 20)}`;
+            await fs.setDoc(`providerInvitations/${channelId}`, {
+              invitationId: channelId,
+              email: validatedPartnerEmail,
+              providerId: partnerOrgId,
+              companyName: body.partnerCompanyName || "Partner Company",
+              role: body.partnerRole || "Manager",
+              channelId,
+              channelSlug: slug,
+              status: "pending_acceptance",
+              requiresEmailVerification: true,
+              requiresExplicitAcceptance: true,
+              invitedBy: user.uid,
+              createdAt: now,
+              expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60_000).toISOString(),
+            });
+          }
 
           await writeAuditLog(fs, {
             actorUid: user.uid,

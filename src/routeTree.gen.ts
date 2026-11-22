@@ -43,11 +43,13 @@ import { Route as ChannelsChannelIdRouteImport } from './routes/channels.$channe
 import { Route as ContentAssetIdRouteImport } from './routes/content.$assetId'
 import { Route as HelpDataProtectionRouteImport } from './routes/help.data-protection'
 import { Route as LegalSlugRouteImport } from './routes/legal.$slug'
+import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ProducerIndexRouteImport } from './routes/producer.index'
 import { Route as ProducerChannelsRouteImport } from './routes/producer.channels'
 import { Route as ProducerCollaborationsRouteImport } from './routes/producer.collaborations'
 import { Route as ProducerDocsRouteImport } from './routes/producer.docs'
 import { Route as ProducerTeamRouteImport } from './routes/producer.team'
+import { Route as ProducerUploadRouteImport } from './routes/producer.upload'
 import { Route as ProviderIndexRouteImport } from './routes/provider.index'
 import { Route as ProviderChannelsRouteImport } from './routes/provider.channels'
 import { Route as ProviderContractsRouteImport } from './routes/provider.contracts'
@@ -161,9 +163,11 @@ import { Route as ApiPublicV1ProducerMobileSummaryRouteImport } from './routes/a
 import { Route as ApiPublicV1ProducerPayoutProfileRouteImport } from './routes/api/public/v1/producer/payout-profile'
 import { Route as ApiPublicV1ProducerPayoutProofUploadRouteImport } from './routes/api/public/v1/producer/payout-proof-upload'
 import { Route as ApiPublicV1ProducerPayoutsRouteImport } from './routes/api/public/v1/producer/payouts'
+import { Route as ApiPublicV1ProducerProfileRouteImport } from './routes/api/public/v1/producer/profile'
 import { Route as ApiPublicV1ProducerTeamRouteImport } from './routes/api/public/v1/producer/team'
 import { Route as ApiPublicV1ProducerTier2VerificationRouteImport } from './routes/api/public/v1/producer/tier2-verification'
 import { Route as ApiPublicV1ProducerVerificationRouteImport } from './routes/api/public/v1/producer/verification'
+import { Route as ApiPublicV1ProducersSlugRouteImport } from './routes/api/public/v1/producers/$slug'
 import { Route as ApiPublicV1ProfileCompleteRouteImport } from './routes/api/public/v1/profile/complete'
 import { Route as ApiPublicV1ProfileCountryRouteImport } from './routes/api/public/v1/profile/country'
 import { Route as ApiPublicV1ProfilePreferencesRouteImport } from './routes/api/public/v1/profile/preferences'
@@ -232,8 +236,13 @@ import { Route as ApiPublicV1PaymentsPaystackWebhookRouteImport } from './routes
 import { Route as ApiPublicV1ProducerCollaborationsIndexRouteImport } from './routes/api/public/v1/producer/collaborations/index'
 import { Route as ApiPublicV1ProducerLifecycleNameChangeRouteImport } from './routes/api/public/v1/producer/lifecycle/name-change'
 import { Route as ApiPublicV1ProducerPayoutsRequestRouteImport } from './routes/api/public/v1/producer/payouts/request'
+import { Route as ApiPublicV1ProducerUploadsIndexRouteImport } from './routes/api/public/v1/producer/uploads/index'
+import { Route as ApiPublicV1ProducerUploadsCompleteRouteImport } from './routes/api/public/v1/producer/uploads/complete'
+import { Route as ApiPublicV1ProducerUploadsDraftRouteImport } from './routes/api/public/v1/producer/uploads/draft'
+import { Route as ApiPublicV1ProducerUploadsSessionRouteImport } from './routes/api/public/v1/producer/uploads/session'
 import { Route as ApiPublicV1ProducerVerificationDraftRouteImport } from './routes/api/public/v1/producer/verification/draft'
 import { Route as ApiPublicV1ProducerVerificationUploadIntentRouteImport } from './routes/api/public/v1/producer/verification/upload-intent'
+import { Route as ApiPublicV1ProducersSlugFollowRouteImport } from './routes/api/public/v1/producers/$slug/follow'
 import { Route as ApiPublicV1ProviderVerificationDraftRouteImport } from './routes/api/public/v1/provider/verification/draft'
 import { Route as ApiPublicV1SecurityIntegrityChallengeRouteImport } from './routes/api/public/v1/security/integrity/challenge'
 import { Route as ApiPublicV1SessionsSessionIdEndRouteImport } from './routes/api/public/v1/sessions/$sessionId/end'
@@ -346,6 +355,7 @@ import { Route as ApiPublicV1ProducerChannelsChannelIdAssetsRouteImport } from '
 import { Route as ApiPublicV1ProducerChannelsChannelIdScheduleRouteImport } from './routes/api/public/v1/producer/channels/$channelId/schedule'
 import { Route as ApiPublicV1ProducerChannelsChannelIdTeamRouteImport } from './routes/api/public/v1/producer/channels/$channelId/team'
 import { Route as ApiPublicV1ProducerContentAssetsAssetIdAppealRouteImport } from './routes/api/public/v1/producer/content-assets/$assetId/appeal'
+import { Route as ApiPublicV1ProducersSlugCommentsIndexRouteImport } from './routes/api/public/v1/producers/$slug/comments/index'
 import { Route as ApiPublicV1SessionsSessionIdReplicaNextRouteImport } from './routes/api/public/v1/sessions/$sessionId/replica/next'
 import { Route as ApiPublicV1WorkerJobsAssetIdCompleteRouteImport } from './routes/api/public/v1/worker/jobs/$assetId/complete'
 import { Route as ApiPublicV1WorkerJobsAssetIdFailRouteImport } from './routes/api/public/v1/worker/jobs/$assetId/fail'
@@ -390,6 +400,7 @@ import { Route as ApiPublicV1ZillionaireUsersUidPermissionsRouteImport } from '.
 import { Route as ApiPublicV1ZillionaireUsersUidRiskRouteImport } from './routes/api/public/v1/zillionaire/users/$uid/risk'
 import { Route as ApiPublicV1ZillionaireUsersUidStatusRouteImport } from './routes/api/public/v1/zillionaire/users/$uid/status'
 import { Route as ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRouteImport } from './routes/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
+import { Route as ApiPublicV1ProducersSlugCommentsCommentIdReportRouteImport } from './routes/api/public/v1/producers/$slug/comments/$commentId/report'
 import { Route as ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRouteImport } from './routes/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
 import { Route as ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRouteImport } from './routes/api/public/v1/zillionaire/email/outbox/$outboxId/resend'
 import { Route as ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRouteImport } from './routes/api/public/v1/zillionaire/storage/groups/$groupId/budget'
@@ -564,6 +575,11 @@ const LegalSlugRoute = LegalSlugRouteImport.update({
   path: '/legal/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PSlugRoute = PSlugRouteImport.update({
+  id: '/p/$slug',
+  path: '/p/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProducerIndexRoute = ProducerIndexRouteImport.update({
   id: '/producer/',
   path: '/producer/',
@@ -587,6 +603,11 @@ const ProducerDocsRoute = ProducerDocsRouteImport.update({
 const ProducerTeamRoute = ProducerTeamRouteImport.update({
   id: '/producer/team',
   path: '/producer/team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProducerUploadRoute = ProducerUploadRouteImport.update({
+  id: '/producer/upload',
+  path: '/producer/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProviderIndexRoute = ProviderIndexRouteImport.update({
@@ -1198,6 +1219,12 @@ const ApiPublicV1ProducerPayoutsRoute =
     path: '/api/public/v1/producer/payouts',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ProducerProfileRoute =
+  ApiPublicV1ProducerProfileRouteImport.update({
+    id: '/api/public/v1/producer/profile',
+    path: '/api/public/v1/producer/profile',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ProducerTeamRoute = ApiPublicV1ProducerTeamRouteImport.update({
   id: '/api/public/v1/producer/team',
   path: '/api/public/v1/producer/team',
@@ -1213,6 +1240,12 @@ const ApiPublicV1ProducerVerificationRoute =
   ApiPublicV1ProducerVerificationRouteImport.update({
     id: '/api/public/v1/producer/verification',
     path: '/api/public/v1/producer/verification',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducersSlugRoute =
+  ApiPublicV1ProducersSlugRouteImport.update({
+    id: '/api/public/v1/producers/$slug',
+    path: '/api/public/v1/producers/$slug',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ProfileCompleteRoute =
@@ -1618,6 +1651,30 @@ const ApiPublicV1ProducerPayoutsRequestRoute =
     path: '/request',
     getParentRoute: () => ApiPublicV1ProducerPayoutsRoute,
   } as any)
+const ApiPublicV1ProducerUploadsIndexRoute =
+  ApiPublicV1ProducerUploadsIndexRouteImport.update({
+    id: '/api/public/v1/producer/uploads/',
+    path: '/api/public/v1/producer/uploads/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerUploadsCompleteRoute =
+  ApiPublicV1ProducerUploadsCompleteRouteImport.update({
+    id: '/api/public/v1/producer/uploads/complete',
+    path: '/api/public/v1/producer/uploads/complete',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerUploadsDraftRoute =
+  ApiPublicV1ProducerUploadsDraftRouteImport.update({
+    id: '/api/public/v1/producer/uploads/draft',
+    path: '/api/public/v1/producer/uploads/draft',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerUploadsSessionRoute =
+  ApiPublicV1ProducerUploadsSessionRouteImport.update({
+    id: '/api/public/v1/producer/uploads/session',
+    path: '/api/public/v1/producer/uploads/session',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ProducerVerificationDraftRoute =
   ApiPublicV1ProducerVerificationDraftRouteImport.update({
     id: '/draft',
@@ -1629,6 +1686,12 @@ const ApiPublicV1ProducerVerificationUploadIntentRoute =
     id: '/upload-intent',
     path: '/upload-intent',
     getParentRoute: () => ApiPublicV1ProducerVerificationRoute,
+  } as any)
+const ApiPublicV1ProducersSlugFollowRoute =
+  ApiPublicV1ProducersSlugFollowRouteImport.update({
+    id: '/follow',
+    path: '/follow',
+    getParentRoute: () => ApiPublicV1ProducersSlugRoute,
   } as any)
 const ApiPublicV1ProviderVerificationDraftRoute =
   ApiPublicV1ProviderVerificationDraftRouteImport.update({
@@ -2302,6 +2365,12 @@ const ApiPublicV1ProducerContentAssetsAssetIdAppealRoute =
     path: '/api/public/v1/producer/content-assets/$assetId/appeal',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ProducersSlugCommentsIndexRoute =
+  ApiPublicV1ProducersSlugCommentsIndexRouteImport.update({
+    id: '/comments/',
+    path: '/comments/',
+    getParentRoute: () => ApiPublicV1ProducersSlugRoute,
+  } as any)
 const ApiPublicV1SessionsSessionIdReplicaNextRoute =
   ApiPublicV1SessionsSessionIdReplicaNextRouteImport.update({
     id: '/api/public/v1/sessions/$sessionId/replica/next',
@@ -2566,6 +2635,12 @@ const ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute =
     path: '/$programmeId',
     getParentRoute: () => ApiPublicV1ProducerChannelsChannelIdScheduleRoute,
   } as any)
+const ApiPublicV1ProducersSlugCommentsCommentIdReportRoute =
+  ApiPublicV1ProducersSlugCommentsCommentIdReportRouteImport.update({
+    id: '/comments/$commentId/report',
+    path: '/comments/$commentId/report',
+    getParentRoute: () => ApiPublicV1ProducersSlugRoute,
+  } as any)
 const ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute =
   ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRouteImport.update({
     id: '/$programmeId',
@@ -2620,10 +2695,12 @@ export interface FileRoutesByFullPath {
   '/content/$assetId': typeof ContentAssetIdRoute
   '/help/data-protection': typeof HelpDataProtectionRoute
   '/legal/$slug': typeof LegalSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
   '/producer/team': typeof ProducerTeamRoute
+  '/producer/upload': typeof ProducerUploadRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
@@ -2734,9 +2811,11 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/producer/payout-profile': typeof ApiPublicV1ProducerPayoutProfileRoute
   '/api/public/v1/producer/payout-proof-upload': typeof ApiPublicV1ProducerPayoutProofUploadRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  '/api/public/v1/producer/profile': typeof ApiPublicV1ProducerProfileRoute
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/tier2-verification': typeof ApiPublicV1ProducerTier2VerificationRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
+  '/api/public/v1/producers/$slug': typeof ApiPublicV1ProducersSlugRouteWithChildren
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
   '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
   '/api/public/v1/profile/preferences': typeof ApiPublicV1ProfilePreferencesRoute
@@ -2807,8 +2886,12 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
   '/api/public/v1/producer/lifecycle/name-change': typeof ApiPublicV1ProducerLifecycleNameChangeRoute
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
+  '/api/public/v1/producer/uploads/complete': typeof ApiPublicV1ProducerUploadsCompleteRoute
+  '/api/public/v1/producer/uploads/draft': typeof ApiPublicV1ProducerUploadsDraftRoute
+  '/api/public/v1/producer/uploads/session': typeof ApiPublicV1ProducerUploadsSessionRoute
   '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
+  '/api/public/v1/producers/$slug/follow': typeof ApiPublicV1ProducersSlugFollowRoute
   '/api/public/v1/provider/verification/draft': typeof ApiPublicV1ProviderVerificationDraftRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
@@ -2894,6 +2977,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/workers/$workerId': typeof ApiPublicV1ZillionaireWorkersWorkerIdRoute
   '/api/public/v1/auth/devices/': typeof ApiPublicV1AuthDevicesIndexRoute
   '/api/public/v1/producer/collaborations/': typeof ApiPublicV1ProducerCollaborationsIndexRoute
+  '/api/public/v1/producer/uploads/': typeof ApiPublicV1ProducerUploadsIndexRoute
   '/api/public/v1/zillionaire/blocked-content/': typeof ApiPublicV1ZillionaireBlockedContentIndexRoute
   '/api/public/v1/zillionaire/channels/': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/comments/': typeof ApiPublicV1ZillionaireCommentsIndexRoute
@@ -2963,10 +3047,12 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/users/$uid/permissions': typeof ApiPublicV1ZillionaireUsersUidPermissionsRoute
   '/api/public/v1/zillionaire/users/$uid/risk': typeof ApiPublicV1ZillionaireUsersUidRiskRoute
   '/api/public/v1/zillionaire/users/$uid/status': typeof ApiPublicV1ZillionaireUsersUidStatusRoute
+  '/api/public/v1/producers/$slug/comments/': typeof ApiPublicV1ProducersSlugCommentsIndexRoute
   '/api/public/v1/zillionaire/email/outbox/': typeof ApiPublicV1ZillionaireEmailOutboxIndexRoute
   '/api/public/v1/zillionaire/movies/curation/': typeof ApiPublicV1ZillionaireMoviesCurationIndexRoute
   '/api/public/v1/zillionaire/users/$uid/': typeof ApiPublicV1ZillionaireUsersUidIndexRoute
   '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
+  '/api/public/v1/producers/$slug/comments/$commentId/report': typeof ApiPublicV1ProducersSlugCommentsCommentIdReportRoute
   '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute
   '/api/public/v1/zillionaire/email/outbox/$outboxId/resend': typeof ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRoute
   '/api/public/v1/zillionaire/storage/groups/$groupId/budget': typeof ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute
@@ -3006,10 +3092,12 @@ export interface FileRoutesByTo {
   '/content/$assetId': typeof ContentAssetIdRoute
   '/help/data-protection': typeof HelpDataProtectionRoute
   '/legal/$slug': typeof LegalSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
   '/producer/team': typeof ProducerTeamRoute
+  '/producer/upload': typeof ProducerUploadRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
@@ -3120,9 +3208,11 @@ export interface FileRoutesByTo {
   '/api/public/v1/producer/payout-profile': typeof ApiPublicV1ProducerPayoutProfileRoute
   '/api/public/v1/producer/payout-proof-upload': typeof ApiPublicV1ProducerPayoutProofUploadRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  '/api/public/v1/producer/profile': typeof ApiPublicV1ProducerProfileRoute
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/tier2-verification': typeof ApiPublicV1ProducerTier2VerificationRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
+  '/api/public/v1/producers/$slug': typeof ApiPublicV1ProducersSlugRouteWithChildren
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
   '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
   '/api/public/v1/profile/preferences': typeof ApiPublicV1ProfilePreferencesRoute
@@ -3192,8 +3282,12 @@ export interface FileRoutesByTo {
   '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
   '/api/public/v1/producer/lifecycle/name-change': typeof ApiPublicV1ProducerLifecycleNameChangeRoute
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
+  '/api/public/v1/producer/uploads/complete': typeof ApiPublicV1ProducerUploadsCompleteRoute
+  '/api/public/v1/producer/uploads/draft': typeof ApiPublicV1ProducerUploadsDraftRoute
+  '/api/public/v1/producer/uploads/session': typeof ApiPublicV1ProducerUploadsSessionRoute
   '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
+  '/api/public/v1/producers/$slug/follow': typeof ApiPublicV1ProducersSlugFollowRoute
   '/api/public/v1/provider/verification/draft': typeof ApiPublicV1ProviderVerificationDraftRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
@@ -3279,6 +3373,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/workers/$workerId': typeof ApiPublicV1ZillionaireWorkersWorkerIdRoute
   '/api/public/v1/auth/devices': typeof ApiPublicV1AuthDevicesIndexRoute
   '/api/public/v1/producer/collaborations': typeof ApiPublicV1ProducerCollaborationsIndexRoute
+  '/api/public/v1/producer/uploads': typeof ApiPublicV1ProducerUploadsIndexRoute
   '/api/public/v1/zillionaire/blocked-content': typeof ApiPublicV1ZillionaireBlockedContentIndexRoute
   '/api/public/v1/zillionaire/channels': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/comments': typeof ApiPublicV1ZillionaireCommentsIndexRoute
@@ -3348,10 +3443,12 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/users/$uid/permissions': typeof ApiPublicV1ZillionaireUsersUidPermissionsRoute
   '/api/public/v1/zillionaire/users/$uid/risk': typeof ApiPublicV1ZillionaireUsersUidRiskRoute
   '/api/public/v1/zillionaire/users/$uid/status': typeof ApiPublicV1ZillionaireUsersUidStatusRoute
+  '/api/public/v1/producers/$slug/comments': typeof ApiPublicV1ProducersSlugCommentsIndexRoute
   '/api/public/v1/zillionaire/email/outbox': typeof ApiPublicV1ZillionaireEmailOutboxIndexRoute
   '/api/public/v1/zillionaire/movies/curation': typeof ApiPublicV1ZillionaireMoviesCurationIndexRoute
   '/api/public/v1/zillionaire/users/$uid': typeof ApiPublicV1ZillionaireUsersUidIndexRoute
   '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
+  '/api/public/v1/producers/$slug/comments/$commentId/report': typeof ApiPublicV1ProducersSlugCommentsCommentIdReportRoute
   '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute
   '/api/public/v1/zillionaire/email/outbox/$outboxId/resend': typeof ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRoute
   '/api/public/v1/zillionaire/storage/groups/$groupId/budget': typeof ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute
@@ -3392,10 +3489,12 @@ export interface FileRoutesById {
   '/content/$assetId': typeof ContentAssetIdRoute
   '/help/data-protection': typeof HelpDataProtectionRoute
   '/legal/$slug': typeof LegalSlugRoute
+  '/p/$slug': typeof PSlugRoute
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
   '/producer/team': typeof ProducerTeamRoute
+  '/producer/upload': typeof ProducerUploadRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
@@ -3506,9 +3605,11 @@ export interface FileRoutesById {
   '/api/public/v1/producer/payout-profile': typeof ApiPublicV1ProducerPayoutProfileRoute
   '/api/public/v1/producer/payout-proof-upload': typeof ApiPublicV1ProducerPayoutProofUploadRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  '/api/public/v1/producer/profile': typeof ApiPublicV1ProducerProfileRoute
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/tier2-verification': typeof ApiPublicV1ProducerTier2VerificationRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
+  '/api/public/v1/producers/$slug': typeof ApiPublicV1ProducersSlugRouteWithChildren
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
   '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
   '/api/public/v1/profile/preferences': typeof ApiPublicV1ProfilePreferencesRoute
@@ -3579,8 +3680,12 @@ export interface FileRoutesById {
   '/api/public/v1/payments/paystack/webhook': typeof ApiPublicV1PaymentsPaystackWebhookRoute
   '/api/public/v1/producer/lifecycle/name-change': typeof ApiPublicV1ProducerLifecycleNameChangeRoute
   '/api/public/v1/producer/payouts/request': typeof ApiPublicV1ProducerPayoutsRequestRoute
+  '/api/public/v1/producer/uploads/complete': typeof ApiPublicV1ProducerUploadsCompleteRoute
+  '/api/public/v1/producer/uploads/draft': typeof ApiPublicV1ProducerUploadsDraftRoute
+  '/api/public/v1/producer/uploads/session': typeof ApiPublicV1ProducerUploadsSessionRoute
   '/api/public/v1/producer/verification/draft': typeof ApiPublicV1ProducerVerificationDraftRoute
   '/api/public/v1/producer/verification/upload-intent': typeof ApiPublicV1ProducerVerificationUploadIntentRoute
+  '/api/public/v1/producers/$slug/follow': typeof ApiPublicV1ProducersSlugFollowRoute
   '/api/public/v1/provider/verification/draft': typeof ApiPublicV1ProviderVerificationDraftRoute
   '/api/public/v1/security/integrity/challenge': typeof ApiPublicV1SecurityIntegrityChallengeRoute
   '/api/public/v1/sessions/$sessionId/end': typeof ApiPublicV1SessionsSessionIdEndRoute
@@ -3666,6 +3771,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/workers/$workerId': typeof ApiPublicV1ZillionaireWorkersWorkerIdRoute
   '/api/public/v1/auth/devices/': typeof ApiPublicV1AuthDevicesIndexRoute
   '/api/public/v1/producer/collaborations/': typeof ApiPublicV1ProducerCollaborationsIndexRoute
+  '/api/public/v1/producer/uploads/': typeof ApiPublicV1ProducerUploadsIndexRoute
   '/api/public/v1/zillionaire/blocked-content/': typeof ApiPublicV1ZillionaireBlockedContentIndexRoute
   '/api/public/v1/zillionaire/channels/': typeof ApiPublicV1ZillionaireChannelsIndexRoute
   '/api/public/v1/zillionaire/comments/': typeof ApiPublicV1ZillionaireCommentsIndexRoute
@@ -3735,10 +3841,12 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/users/$uid/permissions': typeof ApiPublicV1ZillionaireUsersUidPermissionsRoute
   '/api/public/v1/zillionaire/users/$uid/risk': typeof ApiPublicV1ZillionaireUsersUidRiskRoute
   '/api/public/v1/zillionaire/users/$uid/status': typeof ApiPublicV1ZillionaireUsersUidStatusRoute
+  '/api/public/v1/producers/$slug/comments/': typeof ApiPublicV1ProducersSlugCommentsIndexRoute
   '/api/public/v1/zillionaire/email/outbox/': typeof ApiPublicV1ZillionaireEmailOutboxIndexRoute
   '/api/public/v1/zillionaire/movies/curation/': typeof ApiPublicV1ZillionaireMoviesCurationIndexRoute
   '/api/public/v1/zillionaire/users/$uid/': typeof ApiPublicV1ZillionaireUsersUidIndexRoute
   '/api/public/v1/producer/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRoute
+  '/api/public/v1/producers/$slug/comments/$commentId/report': typeof ApiPublicV1ProducersSlugCommentsCommentIdReportRoute
   '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId': typeof ApiPublicV1ZillionaireChannelsChannelIdScheduleProgrammeIdRoute
   '/api/public/v1/zillionaire/email/outbox/$outboxId/resend': typeof ApiPublicV1ZillionaireEmailOutboxOutboxIdResendRoute
   '/api/public/v1/zillionaire/storage/groups/$groupId/budget': typeof ApiPublicV1ZillionaireStorageGroupsGroupIdBudgetRoute
@@ -3780,10 +3888,12 @@ export interface FileRouteTypes {
     | '/content/$assetId'
     | '/help/data-protection'
     | '/legal/$slug'
+    | '/p/$slug'
     | '/producer/channels'
     | '/producer/collaborations'
     | '/producer/docs'
     | '/producer/team'
+    | '/producer/upload'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
@@ -3894,9 +4004,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/payout-profile'
     | '/api/public/v1/producer/payout-proof-upload'
     | '/api/public/v1/producer/payouts'
+    | '/api/public/v1/producer/profile'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/tier2-verification'
     | '/api/public/v1/producer/verification'
+    | '/api/public/v1/producers/$slug'
     | '/api/public/v1/profile/complete'
     | '/api/public/v1/profile/country'
     | '/api/public/v1/profile/preferences'
@@ -3967,8 +4079,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/payments/paystack/webhook'
     | '/api/public/v1/producer/lifecycle/name-change'
     | '/api/public/v1/producer/payouts/request'
+    | '/api/public/v1/producer/uploads/complete'
+    | '/api/public/v1/producer/uploads/draft'
+    | '/api/public/v1/producer/uploads/session'
     | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
+    | '/api/public/v1/producers/$slug/follow'
     | '/api/public/v1/provider/verification/draft'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
@@ -4054,6 +4170,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/workers/$workerId'
     | '/api/public/v1/auth/devices/'
     | '/api/public/v1/producer/collaborations/'
+    | '/api/public/v1/producer/uploads/'
     | '/api/public/v1/zillionaire/blocked-content/'
     | '/api/public/v1/zillionaire/channels/'
     | '/api/public/v1/zillionaire/comments/'
@@ -4123,10 +4240,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/users/$uid/permissions'
     | '/api/public/v1/zillionaire/users/$uid/risk'
     | '/api/public/v1/zillionaire/users/$uid/status'
+    | '/api/public/v1/producers/$slug/comments/'
     | '/api/public/v1/zillionaire/email/outbox/'
     | '/api/public/v1/zillionaire/movies/curation/'
     | '/api/public/v1/zillionaire/users/$uid/'
     | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
+    | '/api/public/v1/producers/$slug/comments/$commentId/report'
     | '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
     | '/api/public/v1/zillionaire/email/outbox/$outboxId/resend'
     | '/api/public/v1/zillionaire/storage/groups/$groupId/budget'
@@ -4166,10 +4285,12 @@ export interface FileRouteTypes {
     | '/content/$assetId'
     | '/help/data-protection'
     | '/legal/$slug'
+    | '/p/$slug'
     | '/producer/channels'
     | '/producer/collaborations'
     | '/producer/docs'
     | '/producer/team'
+    | '/producer/upload'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
@@ -4280,9 +4401,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/payout-profile'
     | '/api/public/v1/producer/payout-proof-upload'
     | '/api/public/v1/producer/payouts'
+    | '/api/public/v1/producer/profile'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/tier2-verification'
     | '/api/public/v1/producer/verification'
+    | '/api/public/v1/producers/$slug'
     | '/api/public/v1/profile/complete'
     | '/api/public/v1/profile/country'
     | '/api/public/v1/profile/preferences'
@@ -4352,8 +4475,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/payments/paystack/webhook'
     | '/api/public/v1/producer/lifecycle/name-change'
     | '/api/public/v1/producer/payouts/request'
+    | '/api/public/v1/producer/uploads/complete'
+    | '/api/public/v1/producer/uploads/draft'
+    | '/api/public/v1/producer/uploads/session'
     | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
+    | '/api/public/v1/producers/$slug/follow'
     | '/api/public/v1/provider/verification/draft'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
@@ -4439,6 +4566,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/workers/$workerId'
     | '/api/public/v1/auth/devices'
     | '/api/public/v1/producer/collaborations'
+    | '/api/public/v1/producer/uploads'
     | '/api/public/v1/zillionaire/blocked-content'
     | '/api/public/v1/zillionaire/channels'
     | '/api/public/v1/zillionaire/comments'
@@ -4508,10 +4636,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/users/$uid/permissions'
     | '/api/public/v1/zillionaire/users/$uid/risk'
     | '/api/public/v1/zillionaire/users/$uid/status'
+    | '/api/public/v1/producers/$slug/comments'
     | '/api/public/v1/zillionaire/email/outbox'
     | '/api/public/v1/zillionaire/movies/curation'
     | '/api/public/v1/zillionaire/users/$uid'
     | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
+    | '/api/public/v1/producers/$slug/comments/$commentId/report'
     | '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
     | '/api/public/v1/zillionaire/email/outbox/$outboxId/resend'
     | '/api/public/v1/zillionaire/storage/groups/$groupId/budget'
@@ -4551,10 +4681,12 @@ export interface FileRouteTypes {
     | '/content/$assetId'
     | '/help/data-protection'
     | '/legal/$slug'
+    | '/p/$slug'
     | '/producer/channels'
     | '/producer/collaborations'
     | '/producer/docs'
     | '/producer/team'
+    | '/producer/upload'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
@@ -4665,9 +4797,11 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/payout-profile'
     | '/api/public/v1/producer/payout-proof-upload'
     | '/api/public/v1/producer/payouts'
+    | '/api/public/v1/producer/profile'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/tier2-verification'
     | '/api/public/v1/producer/verification'
+    | '/api/public/v1/producers/$slug'
     | '/api/public/v1/profile/complete'
     | '/api/public/v1/profile/country'
     | '/api/public/v1/profile/preferences'
@@ -4738,8 +4872,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/payments/paystack/webhook'
     | '/api/public/v1/producer/lifecycle/name-change'
     | '/api/public/v1/producer/payouts/request'
+    | '/api/public/v1/producer/uploads/complete'
+    | '/api/public/v1/producer/uploads/draft'
+    | '/api/public/v1/producer/uploads/session'
     | '/api/public/v1/producer/verification/draft'
     | '/api/public/v1/producer/verification/upload-intent'
+    | '/api/public/v1/producers/$slug/follow'
     | '/api/public/v1/provider/verification/draft'
     | '/api/public/v1/security/integrity/challenge'
     | '/api/public/v1/sessions/$sessionId/end'
@@ -4825,6 +4963,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/workers/$workerId'
     | '/api/public/v1/auth/devices/'
     | '/api/public/v1/producer/collaborations/'
+    | '/api/public/v1/producer/uploads/'
     | '/api/public/v1/zillionaire/blocked-content/'
     | '/api/public/v1/zillionaire/channels/'
     | '/api/public/v1/zillionaire/comments/'
@@ -4894,10 +5033,12 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/users/$uid/permissions'
     | '/api/public/v1/zillionaire/users/$uid/risk'
     | '/api/public/v1/zillionaire/users/$uid/status'
+    | '/api/public/v1/producers/$slug/comments/'
     | '/api/public/v1/zillionaire/email/outbox/'
     | '/api/public/v1/zillionaire/movies/curation/'
     | '/api/public/v1/zillionaire/users/$uid/'
     | '/api/public/v1/producer/channels/$channelId/schedule/$programmeId'
+    | '/api/public/v1/producers/$slug/comments/$commentId/report'
     | '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
     | '/api/public/v1/zillionaire/email/outbox/$outboxId/resend'
     | '/api/public/v1/zillionaire/storage/groups/$groupId/budget'
@@ -4937,10 +5078,12 @@ export interface RootRouteChildren {
   ChannelsChannelIdRoute: typeof ChannelsChannelIdRoute
   ContentAssetIdRoute: typeof ContentAssetIdRoute
   LegalSlugRoute: typeof LegalSlugRoute
+  PSlugRoute: typeof PSlugRoute
   ProducerChannelsRoute: typeof ProducerChannelsRouteWithChildren
   ProducerCollaborationsRoute: typeof ProducerCollaborationsRoute
   ProducerDocsRoute: typeof ProducerDocsRoute
   ProducerTeamRoute: typeof ProducerTeamRoute
+  ProducerUploadRoute: typeof ProducerUploadRoute
   ProviderChannelsRoute: typeof ProviderChannelsRoute
   ProviderContractsRoute: typeof ProviderContractsRoute
   ProviderDisputesRoute: typeof ProviderDisputesRoute
@@ -5048,9 +5191,11 @@ export interface RootRouteChildren {
   ApiPublicV1ProducerPayoutProfileRoute: typeof ApiPublicV1ProducerPayoutProfileRoute
   ApiPublicV1ProducerPayoutProofUploadRoute: typeof ApiPublicV1ProducerPayoutProofUploadRoute
   ApiPublicV1ProducerPayoutsRoute: typeof ApiPublicV1ProducerPayoutsRouteWithChildren
+  ApiPublicV1ProducerProfileRoute: typeof ApiPublicV1ProducerProfileRoute
   ApiPublicV1ProducerTeamRoute: typeof ApiPublicV1ProducerTeamRoute
   ApiPublicV1ProducerTier2VerificationRoute: typeof ApiPublicV1ProducerTier2VerificationRoute
   ApiPublicV1ProducerVerificationRoute: typeof ApiPublicV1ProducerVerificationRouteWithChildren
+  ApiPublicV1ProducersSlugRoute: typeof ApiPublicV1ProducersSlugRouteWithChildren
   ApiPublicV1ProfileCompleteRoute: typeof ApiPublicV1ProfileCompleteRoute
   ApiPublicV1ProfileCountryRoute: typeof ApiPublicV1ProfileCountryRoute
   ApiPublicV1ProfilePreferencesRoute: typeof ApiPublicV1ProfilePreferencesRoute
@@ -5108,6 +5253,9 @@ export interface RootRouteChildren {
   ApiPublicV1PaymentsPaystackVerifyRoute: typeof ApiPublicV1PaymentsPaystackVerifyRoute
   ApiPublicV1PaymentsPaystackWebhookRoute: typeof ApiPublicV1PaymentsPaystackWebhookRoute
   ApiPublicV1ProducerLifecycleNameChangeRoute: typeof ApiPublicV1ProducerLifecycleNameChangeRoute
+  ApiPublicV1ProducerUploadsCompleteRoute: typeof ApiPublicV1ProducerUploadsCompleteRoute
+  ApiPublicV1ProducerUploadsDraftRoute: typeof ApiPublicV1ProducerUploadsDraftRoute
+  ApiPublicV1ProducerUploadsSessionRoute: typeof ApiPublicV1ProducerUploadsSessionRoute
   ApiPublicV1SecurityIntegrityChallengeRoute: typeof ApiPublicV1SecurityIntegrityChallengeRoute
   ApiPublicV1SessionsSessionIdEndRoute: typeof ApiPublicV1SessionsSessionIdEndRoute
   ApiPublicV1SessionsSessionIdHeartbeatRoute: typeof ApiPublicV1SessionsSessionIdHeartbeatRoute
@@ -5187,6 +5335,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireTrendingPromotionsRoute: typeof ApiPublicV1ZillionaireTrendingPromotionsRoute
   ApiPublicV1AuthDevicesIndexRoute: typeof ApiPublicV1AuthDevicesIndexRoute
   ApiPublicV1ProducerCollaborationsIndexRoute: typeof ApiPublicV1ProducerCollaborationsIndexRoute
+  ApiPublicV1ProducerUploadsIndexRoute: typeof ApiPublicV1ProducerUploadsIndexRoute
   ApiPublicV1ZillionaireBlockedContentIndexRoute: typeof ApiPublicV1ZillionaireBlockedContentIndexRoute
   ApiPublicV1ZillionaireCommentsIndexRoute: typeof ApiPublicV1ZillionaireCommentsIndexRoute
   ApiPublicV1ZillionaireContentAssetsIndexRoute: typeof ApiPublicV1ZillionaireContentAssetsIndexRoute
@@ -5492,6 +5641,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LegalSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/p/$slug': {
+      id: '/p/$slug'
+      path: '/p/$slug'
+      fullPath: '/p/$slug'
+      preLoaderRoute: typeof PSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/producer/': {
       id: '/producer/'
       path: '/producer'
@@ -5525,6 +5681,13 @@ declare module '@tanstack/react-router' {
       path: '/producer/team'
       fullPath: '/producer/team'
       preLoaderRoute: typeof ProducerTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/producer/upload': {
+      id: '/producer/upload'
+      path: '/producer/upload'
+      fullPath: '/producer/upload'
+      preLoaderRoute: typeof ProducerUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/provider/': {
@@ -6318,6 +6481,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProducerPayoutsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/producer/profile': {
+      id: '/api/public/v1/producer/profile'
+      path: '/api/public/v1/producer/profile'
+      fullPath: '/api/public/v1/producer/profile'
+      preLoaderRoute: typeof ApiPublicV1ProducerProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/producer/team': {
       id: '/api/public/v1/producer/team'
       path: '/api/public/v1/producer/team'
@@ -6337,6 +6507,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/producer/verification'
       fullPath: '/api/public/v1/producer/verification'
       preLoaderRoute: typeof ApiPublicV1ProducerVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producers/$slug': {
+      id: '/api/public/v1/producers/$slug'
+      path: '/api/public/v1/producers/$slug'
+      fullPath: '/api/public/v1/producers/$slug'
+      preLoaderRoute: typeof ApiPublicV1ProducersSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/profile/complete': {
@@ -6815,6 +6992,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProducerPayoutsRequestRouteImport
       parentRoute: typeof ApiPublicV1ProducerPayoutsRoute
     }
+    '/api/public/v1/producer/uploads/': {
+      id: '/api/public/v1/producer/uploads/'
+      path: '/api/public/v1/producer/uploads'
+      fullPath: '/api/public/v1/producer/uploads/'
+      preLoaderRoute: typeof ApiPublicV1ProducerUploadsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/uploads/complete': {
+      id: '/api/public/v1/producer/uploads/complete'
+      path: '/api/public/v1/producer/uploads/complete'
+      fullPath: '/api/public/v1/producer/uploads/complete'
+      preLoaderRoute: typeof ApiPublicV1ProducerUploadsCompleteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/uploads/draft': {
+      id: '/api/public/v1/producer/uploads/draft'
+      path: '/api/public/v1/producer/uploads/draft'
+      fullPath: '/api/public/v1/producer/uploads/draft'
+      preLoaderRoute: typeof ApiPublicV1ProducerUploadsDraftRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/uploads/session': {
+      id: '/api/public/v1/producer/uploads/session'
+      path: '/api/public/v1/producer/uploads/session'
+      fullPath: '/api/public/v1/producer/uploads/session'
+      preLoaderRoute: typeof ApiPublicV1ProducerUploadsSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/producer/verification/draft': {
       id: '/api/public/v1/producer/verification/draft'
       path: '/draft'
@@ -6828,6 +7033,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/v1/producer/verification/upload-intent'
       preLoaderRoute: typeof ApiPublicV1ProducerVerificationUploadIntentRouteImport
       parentRoute: typeof ApiPublicV1ProducerVerificationRoute
+    }
+    '/api/public/v1/producers/$slug/follow': {
+      id: '/api/public/v1/producers/$slug/follow'
+      path: '/follow'
+      fullPath: '/api/public/v1/producers/$slug/follow'
+      preLoaderRoute: typeof ApiPublicV1ProducersSlugFollowRouteImport
+      parentRoute: typeof ApiPublicV1ProducersSlugRoute
     }
     '/api/public/v1/provider/verification/draft': {
       id: '/api/public/v1/provider/verification/draft'
@@ -7613,6 +7825,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProducerContentAssetsAssetIdAppealRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/producers/$slug/comments/': {
+      id: '/api/public/v1/producers/$slug/comments/'
+      path: '/comments'
+      fullPath: '/api/public/v1/producers/$slug/comments/'
+      preLoaderRoute: typeof ApiPublicV1ProducersSlugCommentsIndexRouteImport
+      parentRoute: typeof ApiPublicV1ProducersSlugRoute
+    }
     '/api/public/v1/sessions/$sessionId/replica/next': {
       id: '/api/public/v1/sessions/$sessionId/replica/next'
       path: '/api/public/v1/sessions/$sessionId/replica/next'
@@ -7921,6 +8140,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProducerChannelsChannelIdScheduleProgrammeIdRouteImport
       parentRoute: typeof ApiPublicV1ProducerChannelsChannelIdScheduleRoute
     }
+    '/api/public/v1/producers/$slug/comments/$commentId/report': {
+      id: '/api/public/v1/producers/$slug/comments/$commentId/report'
+      path: '/comments/$commentId/report'
+      fullPath: '/api/public/v1/producers/$slug/comments/$commentId/report'
+      preLoaderRoute: typeof ApiPublicV1ProducersSlugCommentsCommentIdReportRouteImport
+      parentRoute: typeof ApiPublicV1ProducersSlugRoute
+    }
     '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId': {
       id: '/api/public/v1/zillionaire/channels/$channelId/schedule/$programmeId'
       path: '/$programmeId'
@@ -8123,6 +8349,26 @@ const ApiPublicV1ProducerVerificationRouteWithChildren =
     ApiPublicV1ProducerVerificationRouteChildren,
   )
 
+interface ApiPublicV1ProducersSlugRouteChildren {
+  ApiPublicV1ProducersSlugFollowRoute: typeof ApiPublicV1ProducersSlugFollowRoute
+  ApiPublicV1ProducersSlugCommentsIndexRoute: typeof ApiPublicV1ProducersSlugCommentsIndexRoute
+  ApiPublicV1ProducersSlugCommentsCommentIdReportRoute: typeof ApiPublicV1ProducersSlugCommentsCommentIdReportRoute
+}
+
+const ApiPublicV1ProducersSlugRouteChildren: ApiPublicV1ProducersSlugRouteChildren =
+  {
+    ApiPublicV1ProducersSlugFollowRoute: ApiPublicV1ProducersSlugFollowRoute,
+    ApiPublicV1ProducersSlugCommentsIndexRoute:
+      ApiPublicV1ProducersSlugCommentsIndexRoute,
+    ApiPublicV1ProducersSlugCommentsCommentIdReportRoute:
+      ApiPublicV1ProducersSlugCommentsCommentIdReportRoute,
+  }
+
+const ApiPublicV1ProducersSlugRouteWithChildren =
+  ApiPublicV1ProducersSlugRoute._addFileChildren(
+    ApiPublicV1ProducersSlugRouteChildren,
+  )
+
 interface ApiPublicV1ProviderVerificationRouteChildren {
   ApiPublicV1ProviderVerificationDraftRoute: typeof ApiPublicV1ProviderVerificationDraftRoute
 }
@@ -8275,10 +8521,12 @@ const rootRouteChildren: RootRouteChildren = {
   ChannelsChannelIdRoute: ChannelsChannelIdRoute,
   ContentAssetIdRoute: ContentAssetIdRoute,
   LegalSlugRoute: LegalSlugRoute,
+  PSlugRoute: PSlugRoute,
   ProducerChannelsRoute: ProducerChannelsRouteWithChildren,
   ProducerCollaborationsRoute: ProducerCollaborationsRoute,
   ProducerDocsRoute: ProducerDocsRoute,
   ProducerTeamRoute: ProducerTeamRoute,
+  ProducerUploadRoute: ProducerUploadRoute,
   ProviderChannelsRoute: ProviderChannelsRoute,
   ProviderContractsRoute: ProviderContractsRoute,
   ProviderDisputesRoute: ProviderDisputesRoute,
@@ -8392,11 +8640,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ProducerPayoutProofUploadRoute:
     ApiPublicV1ProducerPayoutProofUploadRoute,
   ApiPublicV1ProducerPayoutsRoute: ApiPublicV1ProducerPayoutsRouteWithChildren,
+  ApiPublicV1ProducerProfileRoute: ApiPublicV1ProducerProfileRoute,
   ApiPublicV1ProducerTeamRoute: ApiPublicV1ProducerTeamRoute,
   ApiPublicV1ProducerTier2VerificationRoute:
     ApiPublicV1ProducerTier2VerificationRoute,
   ApiPublicV1ProducerVerificationRoute:
     ApiPublicV1ProducerVerificationRouteWithChildren,
+  ApiPublicV1ProducersSlugRoute: ApiPublicV1ProducersSlugRouteWithChildren,
   ApiPublicV1ProfileCompleteRoute: ApiPublicV1ProfileCompleteRoute,
   ApiPublicV1ProfileCountryRoute: ApiPublicV1ProfileCountryRoute,
   ApiPublicV1ProfilePreferencesRoute: ApiPublicV1ProfilePreferencesRoute,
@@ -8465,6 +8715,11 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1PaymentsPaystackWebhookRoute,
   ApiPublicV1ProducerLifecycleNameChangeRoute:
     ApiPublicV1ProducerLifecycleNameChangeRoute,
+  ApiPublicV1ProducerUploadsCompleteRoute:
+    ApiPublicV1ProducerUploadsCompleteRoute,
+  ApiPublicV1ProducerUploadsDraftRoute: ApiPublicV1ProducerUploadsDraftRoute,
+  ApiPublicV1ProducerUploadsSessionRoute:
+    ApiPublicV1ProducerUploadsSessionRoute,
   ApiPublicV1SecurityIntegrityChallengeRoute:
     ApiPublicV1SecurityIntegrityChallengeRoute,
   ApiPublicV1SessionsSessionIdEndRoute: ApiPublicV1SessionsSessionIdEndRoute,
@@ -8605,6 +8860,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1AuthDevicesIndexRoute: ApiPublicV1AuthDevicesIndexRoute,
   ApiPublicV1ProducerCollaborationsIndexRoute:
     ApiPublicV1ProducerCollaborationsIndexRoute,
+  ApiPublicV1ProducerUploadsIndexRoute: ApiPublicV1ProducerUploadsIndexRoute,
   ApiPublicV1ZillionaireBlockedContentIndexRoute:
     ApiPublicV1ZillionaireBlockedContentIndexRoute,
   ApiPublicV1ZillionaireCommentsIndexRoute:

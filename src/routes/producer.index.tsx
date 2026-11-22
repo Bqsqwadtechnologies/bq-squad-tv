@@ -15,13 +15,14 @@ import {
   Users,
   Wallet,
   Clock,
+  Copy,
+  ExternalLink,
   ShieldCheck, Shield, Lock, AlertTriangle, CheckCircle2,
   TrendingUp,
   UploadCloud,
   Download,
   Play,
   Calendar,
-  ExternalLink,
 } from "lucide-react";
 import {
   getWebAuthHeaders,
@@ -129,6 +130,32 @@ function ProducerDashboardInner({
   const [showKycModal, setShowKycModal] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState(false);
+  const [lastPolledAt, setLastPolledAt] = useState<Date>(new Date());
+
+  function copyProducerId(id: string) {
+    navigator.clipboard.writeText(id);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2500);
+  }
+
+  // Live polling for earnings every 15s (Batch N25)
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      try {
+        const headers = await getWebAuthHeaders(token);
+        const res = await fetch("/api/public/v1/producer/earnings", { headers, cache: "no-store" });
+        if (res.ok) {
+          const freshEarnings = await res.json();
+          setEarnings(freshEarnings);
+          setLastPolledAt(new Date());
+        }
+      } catch {
+        // ignore background poll error
+      }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [token]);
 
   async function load(authToken: string, period = selectedPeriod) {
     setLoading(true);
@@ -425,25 +452,29 @@ function ProducerDashboardInner({
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
             <a
-              href="/producer/channels"
+              href="/producer/upload"
               className="flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] transition hover:brightness-110 shadow-lg shadow-cyan-400/20"
             >
               <UploadCloud className="h-4 w-4" />
-              <span>New upload</span>
+              <span>Upload Studio</span>
             </a>
+            {account.publicId && (
+              <a
+                href={`/p/${account.publicId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold text-cyan-300 transition hover:bg-white/10"
+              >
+                <ExternalLink className="h-4 w-4" />
+                <span>Public Profile</span>
+              </a>
+            )}
             <a
               href="/producer/channels"
-              className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-xs font-bold text-rose-300 transition hover:bg-rose-500/20"
+              className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
             >
-              <Play className="h-4 w-4 text-rose-400 fill-rose-400" />
-              <span>Live stream</span>
-            </a>
-            <a
-              href="/producer/channels"
-              className="flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-bold text-white transition hover:bg-white/10"
-            >
-              <Tv className="h-4 w-4 text-cyan-300" />
-              <span>View channels</span>
+              <Tv className="h-4 w-4" />
+              <span>My Titles</span>
             </a>
             <button
               onClick={exportReport}
@@ -484,10 +515,16 @@ function ProducerDashboardInner({
           <ConsoleKpiCard
             title="Estimated Earnings"
             value={summary ? money(summary.earningsBalanceMinor, summary.currency) : "—"}
-            subtitle={summary ? `Lifetime: ${money(summary.earningsLifetimeMinor, summary.currency)}` : "Net revenue"}
+            subtitle={
+              <div className="flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Live balance · Lifetime: {summary ? money(summary.earningsLifetimeMinor, summary.currency) : "—"}</span>
+              </div>
+            }
             delta={computeDelta(summary?.earningsBalanceMinor, summary?.previousEarningsBalanceMinor, "last period")}
             icon={Wallet}
             variant="green"
+            className="select-none"
           />
         </div>
 

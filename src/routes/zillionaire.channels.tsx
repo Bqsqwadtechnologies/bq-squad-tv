@@ -11,6 +11,10 @@ import {
 } from "@/components/ConsoleShell";
 import {
   Tv,
+  Plus,
+  ChevronRight,
+  ChevronLeft,
+  ShieldCheck,
   Search,
   BadgeCheck,
   Ban,
@@ -94,6 +98,86 @@ function ZillionaireChannelsPage({
   const [channels, setChannels] = useState<ChannelItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Channel Creation Wizard state (Batch N17)
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4>(1);
+  const [wizardForm, setWizardForm] = useState({
+    title: "",
+    category: "Entertainment",
+    description: "",
+    customSlug: "",
+    language: "en",
+    contentRating: "G" as "G" | "PG" | "13+" | "16+" | "18+",
+    adultOnly: false,
+    partnerCompanyName: "",
+    partnerEmail: "",
+    partnerRole: "Manager" as "Manager" | "Editor" | "Viewer",
+    paid: false,
+    currency: "USD",
+    ratePerMinuteMinor: 25,
+    revenueShareBps: 7000,
+    reason: "",
+  });
+  const [wizardSubmitting, setWizardSubmitting] = useState(false);
+  const [wizardError, setWizardError] = useState<string | null>(null);
+
+  async function handleCreateChannelSubmit() {
+    setWizardSubmitting(true);
+    setWizardError(null);
+    try {
+      if (!wizardForm.title.trim()) throw new Error("Channel title is required.");
+      if (wizardForm.reason.trim().length < 3) throw new Error("Audit reason must be at least 3 characters.");
+
+      const authHeaders = await getWebAuthHeaders(token);
+      const res = await fetch("/api/public/v1/zillionaire/channels", {
+        method: "POST",
+        headers: {
+          ...authHeaders,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          ...wizardForm,
+          ratePerMinuteMinor: wizardForm.paid ? Number(wizardForm.ratePerMinuteMinor) : 0,
+          revenueShareBps: Number(wizardForm.revenueShareBps) || 7000,
+          partnerEmail: wizardForm.partnerEmail.trim() || undefined,
+          partnerCompanyName: wizardForm.partnerCompanyName.trim() || undefined,
+          customSlug: wizardForm.customSlug.trim() || undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || data.message || "Failed to create channel.");
+      }
+
+      setActionFeedback(`Channel ${data.slug} (${data.channelId}) created successfully!`);
+      setIsWizardOpen(false);
+      setWizardStep(1);
+      setWizardForm({
+        title: "",
+        category: "Entertainment",
+        description: "",
+        customSlug: "",
+        language: "en",
+        contentRating: "G",
+        adultOnly: false,
+        partnerCompanyName: "",
+        partnerEmail: "",
+        partnerRole: "Manager",
+        paid: false,
+        currency: "USD",
+        ratePerMinuteMinor: 25,
+        revenueShareBps: 7000,
+        reason: "",
+      });
+      await loadChannels();
+    } catch (err: any) {
+      setWizardError(err.message || "Channel creation failed.");
+    } finally {
+      setWizardSubmitting(false);
+    }
+  }
   const [filterType, setFilterType] = useState<"ALL" | "VERIFIED" | "LIVE" | "SUSPENDED" | "DELETED" | "FEATURED">("ALL");
 
   // Transfer Ownership Modal
@@ -241,7 +325,23 @@ function ZillionaireChannelsPage({
         </div>
 
         {/* Search & Filter Bar */}
-        <ConsoleCard title="Channel Catalogue Browser">
+        <ConsoleCard
+          title="Channel Catalogue Browser"
+          actions={
+            <button
+              type="button"
+              onClick={() => {
+                setIsWizardOpen(true);
+                setWizardStep(1);
+                setWizardError(null);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-[#030e28] text-xs font-bold rounded-lg transition shadow-md shadow-cyan-500/20"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Create Channel Wizard</span>
+            </button>
+          }
+        >
           <div className="flex flex-col md:flex-row gap-3 items-center justify-between">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-3 top-3 w-4 h-4 text-slate-400" />
@@ -807,6 +907,390 @@ function ZillionaireChannelsPage({
             </div>
           </div>
         )}
+
+        {/* Modal: Zillionaire Channel Wizard (Batch N17) */}
+        {isWizardOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl p-6 space-y-5 shadow-2xl text-xs max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <Tv className="w-5 h-5 text-cyan-400" />
+                  <h3 className="text-base font-bold text-white">Create Channel Wizard</h3>
+                </div>
+                <button
+                  onClick={() => setIsWizardOpen(false)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Wizard Steps Stepper */}
+              <div className="grid grid-cols-4 gap-2 text-center border-b border-slate-800 pb-3">
+                {[
+                  { step: 1, label: "1. Info" },
+                  { step: 2, label: "2. Partner" },
+                  { step: 3, label: "3. Commercials" },
+                  { step: 4, label: "4. Review" },
+                ].map(({ step, label }) => (
+                  <button
+                    key={step}
+                    type="button"
+                    onClick={() => setWizardStep(step as any)}
+                    className={`py-1.5 rounded-lg font-bold text-xs transition ${
+                      wizardStep === step
+                        ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                        : wizardStep > step
+                        ? "bg-emerald-500/10 text-emerald-400"
+                        : "text-slate-500 hover:text-slate-300"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
+              {wizardError && (
+                <div className="p-3 bg-red-950/60 border border-red-800 rounded-lg text-red-300 text-xs flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
+                  <span>{wizardError}</span>
+                </div>
+              )}
+
+              {/* STEP 1: CHANNEL INFO */}
+              {wizardStep === 1 && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">Channel Title *</label>
+                    <input
+                      type="text"
+                      value={wizardForm.title}
+                      onChange={(e) => setWizardForm({ ...wizardForm, title: e.target.value })}
+                      placeholder="e.g. Action Cinema TV"
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-semibold"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-slate-300 mb-1">Category</label>
+                      <select
+                        value={wizardForm.category}
+                        onChange={(e) => setWizardForm({ ...wizardForm, category: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white"
+                      >
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Movies">Movies</option>
+                        <option value="Series">Series</option>
+                        <option value="News">News</option>
+                        <option value="Sports">Sports</option>
+                        <option value="Music">Music</option>
+                        <option value="Kids">Kids</option>
+                        <option value="Documentary">Documentary</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-300 mb-1">Custom Slug (optional)</label>
+                      <input
+                        type="text"
+                        value={wizardForm.customSlug}
+                        onChange={(e) => setWizardForm({ ...wizardForm, customSlug: e.target.value })}
+                        placeholder="e.g. action-cinema-tv"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">Description / Tagline</label>
+                    <textarea
+                      rows={2}
+                      value={wizardForm.description}
+                      onChange={(e) => setWizardForm({ ...wizardForm, description: e.target.value })}
+                      placeholder="Channel programming scope and target audience..."
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-slate-300 mb-1">Age Content Rating</label>
+                      <select
+                        value={wizardForm.contentRating}
+                        onChange={(e) =>
+                          setWizardForm({
+                            ...wizardForm,
+                            contentRating: e.target.value as any,
+                            adultOnly: e.target.value === "18+",
+                          })
+                        }
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white"
+                      >
+                        <option value="G">G - General</option>
+                        <option value="PG">PG - Parental Guidance</option>
+                        <option value="13+">13+ - Teens</option>
+                        <option value="16+">16+ - Mature</option>
+                        <option value="18+">18+ - Adult Only</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-300 mb-1">Broadcast Language</label>
+                      <input
+                        type="text"
+                        value={wizardForm.language}
+                        onChange={(e) => setWizardForm({ ...wizardForm, language: e.target.value })}
+                        placeholder="en"
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-3">
+                    <button
+                      type="button"
+                      disabled={!wizardForm.title.trim()}
+                      onClick={() => setWizardStep(2)}
+                      className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-lg font-bold flex items-center gap-1.5"
+                    >
+                      Next: Partner Assignment
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: PARTNER ASSIGNMENT */}
+              {wizardStep === 2 && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-cyan-950/40 border border-cyan-800/40 rounded-xl space-y-1">
+                    <h4 className="font-bold text-cyan-300 flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4" />
+                      Partner Governance & Domain Enforcement
+                    </h4>
+                    <p className="text-[11px] text-slate-300">
+                      Free-mail providers (Gmail, Yahoo, Outlook, etc.) are strictly rejected for partner accounts. Use official company domains.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">Partner Company Name</label>
+                    <input
+                      type="text"
+                      value={wizardForm.partnerCompanyName}
+                      onChange={(e) => setWizardForm({ ...wizardForm, partnerCompanyName: e.target.value })}
+                      placeholder="e.g. Apex Media Networks Ltd"
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">Partner Company Email *</label>
+                    <input
+                      type="email"
+                      value={wizardForm.partnerEmail}
+                      onChange={(e) => setWizardForm({ ...wizardForm, partnerEmail: e.target.value })}
+                      placeholder="e.g. distribution@apexmedia.tv"
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono"
+                    />
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Must use an official corporate domain. Personal emails are rejected.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">Partner Role Assignment</label>
+                    <select
+                      value={wizardForm.partnerRole}
+                      onChange={(e) => setWizardForm({ ...wizardForm, partnerRole: e.target.value as any })}
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white"
+                    >
+                      <option value="Manager">Manager (Full stream & content management)</option>
+                      <option value="Editor">Editor (Schedules and metadata only)</option>
+                      <option value="Viewer">Viewer (Read-only analytics)</option>
+                    </select>
+                  </div>
+
+                  <div className="flex justify-between pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setWizardStep(1)}
+                      className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg font-semibold"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWizardStep(3)}
+                      className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-bold flex items-center gap-1.5"
+                    >
+                      Next: Commercials
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: DISTRIBUTION & COMMERCIALS */}
+              {wizardStep === 3 && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-semibold text-slate-300 mb-1">Monetization Mode</label>
+                      <select
+                        value={wizardForm.paid ? "paid" : "free"}
+                        onChange={(e) => setWizardForm({ ...wizardForm, paid: e.target.value === "paid" })}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white"
+                      >
+                        <option value="free">Free Access (Ad-supported / Promo)</option>
+                        <option value="paid">Pay Per Minute Commercial</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block font-semibold text-slate-300 mb-1">Billing Currency</label>
+                      <select
+                        value={wizardForm.currency}
+                        onChange={(e) => setWizardForm({ ...wizardForm, currency: e.target.value })}
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono"
+                      >
+                        <option value="USD">USD ($)</option>
+                        <option value="NGN">NGN (₦)</option>
+                        <option value="GBP">GBP (£)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="ZAR">ZAR (R)</option>
+                        <option value="KES">KES (KSh)</option>
+                        <option value="GHS">GHS (GH₵)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {wizardForm.paid && (
+                    <div>
+                      <label className="block font-semibold text-slate-300 mb-1">
+                        Rate per Minute (Minor Units, e.g. 25 = $0.25)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={wizardForm.ratePerMinuteMinor}
+                        onChange={(e) =>
+                          setWizardForm({ ...wizardForm, ratePerMinuteMinor: parseInt(e.target.value) || 0 })
+                        }
+                        className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono"
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-xl space-y-2">
+                    <label className="block font-semibold text-amber-300">
+                      Hidden Partner Revenue Share Split (% of Net Revenue)
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={wizardForm.revenueShareBps / 100}
+                        onChange={(e) =>
+                          setWizardForm({
+                            ...wizardForm,
+                            revenueShareBps: Math.min(10000, Math.max(0, (parseFloat(e.target.value) || 0) * 100)),
+                          })
+                        }
+                        className="w-24 px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono text-sm"
+                      />
+                      <span className="text-slate-400 font-mono text-sm">%</span>
+                      <span className="text-[11px] text-slate-400">
+                        ({wizardForm.revenueShareBps} bps). Hidden from public viewer API responses.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setWizardStep(2)}
+                      className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg font-semibold"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWizardStep(4)}
+                      className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-bold flex items-center gap-1.5"
+                    >
+                      Next: Confirmation & Audit
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 4: CONFIRMATION & MANDATORY AUDIT REASON */}
+              {wizardStep === 4 && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 space-y-2">
+                    <h4 className="font-bold text-white text-sm">Review Channel Details</h4>
+                    <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
+                      <div>
+                        <span className="text-slate-500 block">Title</span>
+                        <strong className="text-white">{wizardForm.title}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block">Category</span>
+                        <span>{wizardForm.category}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block">Partner Email</span>
+                        <span className="font-mono text-cyan-300">
+                          {wizardForm.partnerEmail || "Unassigned"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block">Revenue Share</span>
+                        <span className="font-mono">{wizardForm.revenueShareBps / 100}%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-300 mb-1">
+                      Mandatory Audit Reason (min 3 chars) *
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={wizardForm.reason}
+                      onChange={(e) => setWizardForm({ ...wizardForm, reason: e.target.value })}
+                      placeholder="e.g. Channel onboarding approval for international content partner"
+                      className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white"
+                    />
+                  </div>
+
+                  <div className="flex justify-between pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setWizardStep(3)}
+                      className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg font-semibold"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="button"
+                      disabled={wizardSubmitting || wizardForm.reason.trim().length < 3}
+                      onClick={handleCreateChannelSubmit}
+                      className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg font-bold flex items-center gap-2 shadow-lg"
+                    >
+                      {wizardSubmitting ? "Creating Channel..." : "Authorize & Create Channel"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
       </div>
     </ConsoleShell>
   );
