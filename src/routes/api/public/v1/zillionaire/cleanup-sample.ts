@@ -9,6 +9,7 @@ import { rebuildStoragePoolIndex } from "@/lib/server/storage/pool-index";
 
 const bodySchema = z.object({
   dryRun: z.boolean().default(true),
+  scope: z.enum(["fake_live_streams", "all_sample_content"]).default("fake_live_streams"),
   confirmation: z.string().optional(),
   reason: z.string().trim().min(5).max(1000).optional(),
 });
@@ -80,16 +81,26 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
           for (const ch of channels) {
             const id = ch.__id;
             const title = String(ch["name"] || ch["title"] || "");
-            const isDemo =
+            const hasPlaceholderStream =
+              isKnownPlaceholderStream(ch["streamUrl"]) ||
+              isKnownPlaceholderStream(ch["failoverStreamUrl"]);
+            const isSeededChannel =
               id.startsWith("demo") ||
               id.startsWith("sample-") ||
               ch["isDemo"] === true ||
               ch["isSample"] === true ||
               ch["seed"] === true ||
               ch["isSeeded"] === true ||
-              /demo channel|bq sqwad sports hd/i.test(title) ||
-              isKnownPlaceholderStream(ch["streamUrl"]) ||
-              isKnownPlaceholderStream(ch["failoverStreamUrl"]);
+              /demo channel|bq sqwad sports hd/i.test(title);
+            const isLiveRecord =
+              ch["deliveryMode"] === "live_hls" ||
+              ch["channelType"] === "live" ||
+              ch["channelType"] === "live_tv" ||
+              Boolean(ch["streamUrl"]) ||
+              Boolean(ch["failoverStreamUrl"]);
+            const isDemo = body.scope === "fake_live_streams"
+              ? hasPlaceholderStream || (isSeededChannel && isLiveRecord)
+              : isSeededChannel || hasPlaceholderStream;
 
             if (isDemo) {
               channelsToDelete.push(id);
@@ -104,6 +115,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
             }
           }
 
+          if (body.scope === "all_sample_content") {
           // 2. Content Assets
           const contentAssets = await fs.query("contentAssets", { limit: 500 }).catch(() => []);
           const assetsToDelete: string[] = [];
@@ -228,6 +240,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
                 sizeBytes: size,
               });
             }
+          }
+
           }
 
           const totalRecordsFound =
