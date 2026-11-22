@@ -30,7 +30,7 @@ function isKnownPlaceholderStream(value: unknown): boolean {
     const path = url.pathname.toLowerCase();
     return host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0" ||
       host.endsWith(".test") || host === "example.com" || host.endsWith(".example.com") ||
-      host.endsWith(".invalid") || /(^|\\/)(demo|sample|test)(\\/|$)/.test(path) ||
+      host.endsWith(".invalid") || path.split("/").some((part) => part === "demo" || part === "sample" || part === "test") ||
       /(?:demo|sample|test)[-_]?stream/.test(host);
   } catch {
     return false;
