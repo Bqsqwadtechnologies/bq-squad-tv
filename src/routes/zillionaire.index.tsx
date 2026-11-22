@@ -3,6 +3,9 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Users,
+  Compass,
+  BookOpen,
+  DollarSign,
   Clock,
   Wallet,
   CreditCard,
@@ -329,6 +332,53 @@ function ZillionaireOverviewBody({
           window.location.href = "/zillionaire/security";
         }}
       />
+
+      {/* Quick Console Directory Shortcuts */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <a
+          href="/zillionaire/where-is-everything"
+          className="flex items-center gap-2.5 p-3 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/20 text-foreground transition"
+        >
+          <Compass className="h-4 w-4 text-primary shrink-0" />
+          <div className="min-w-0">
+            <div className="text-xs font-bold truncate">Where is Everything?</div>
+            <div className="text-[10px] text-muted-foreground truncate">Full console directory</div>
+          </div>
+        </a>
+
+        <a
+          href="/zillionaire/pages"
+          className="flex items-center gap-2.5 p-3 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition"
+        >
+          <BookOpen className="h-4 w-4 text-sky-400 shrink-0" />
+          <div className="min-w-0">
+            <div className="text-xs font-bold truncate">Documents Hub</div>
+            <div className="text-[10px] text-muted-foreground truncate">Legal policies & dates</div>
+          </div>
+        </a>
+
+        <a
+          href="/zillionaire/approvals?type=change_request"
+          className="flex items-center gap-2.5 p-3 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition"
+        >
+          <FileCheck className="h-4 w-4 text-emerald-400 shrink-0" />
+          <div className="min-w-0">
+            <div className="text-xs font-bold truncate">Change Requests</div>
+            <div className="text-[10px] text-muted-foreground truncate">Approve & go-live queue</div>
+          </div>
+        </a>
+
+        <a
+          href="/zillionaire/pricing"
+          className="flex items-center gap-2.5 p-3 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition"
+        >
+          <DollarSign className="h-4 w-4 text-amber-400 shrink-0" />
+          <div className="min-w-0">
+            <div className="text-xs font-bold truncate">Country Pricing</div>
+            <div className="text-[10px] text-muted-foreground truncate">USD rates & CSV matrix</div>
+          </div>
+        </a>
+      </div>
 
       {/* 2. System Health Status Strip */}
       <div className="rounded-2xl border border-blue-900/30 bg-[#071126]/90 p-4 backdrop-blur shadow-lg">

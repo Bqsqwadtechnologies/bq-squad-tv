@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, ReactNode } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
 import {
   LayoutDashboard,
+  Compass,
   Users,
   Briefcase,
   Radio,
@@ -193,6 +194,8 @@ export function ConsoleShell({
             label: "Overview",
             href: "/zillionaire",
             icon: LayoutDashboard,
+  Compass,
+  BookOpen,
           },
           {
             id: "pending-uploads",
@@ -533,9 +536,9 @@ export function ConsoleShell({
         items: [
           {
             id: "pages",
-            label: "Pages (legal)",
+            label: "Documents",
             href: "/zillionaire/pages",
-            icon: FileText,
+            icon: BookOpen,
             module: "settings",
           },
           {
@@ -645,6 +648,8 @@ export function ConsoleShell({
             label: "Dashboard",
             href: "/producer",
             icon: LayoutDashboard,
+  Compass,
+  BookOpen,
           },
           {
             id: "producer-channels",
@@ -692,6 +697,8 @@ export function ConsoleShell({
             label: "Portal Overview",
             href: "/provider",
             icon: LayoutDashboard,
+  Compass,
+  BookOpen,
           },
           {
             id: "provider-channels",

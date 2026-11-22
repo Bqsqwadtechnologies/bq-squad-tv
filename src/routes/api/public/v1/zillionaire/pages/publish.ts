@@ -52,14 +52,30 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/publish")
               : {};
           const sourceMarkdown = existing["body"] as string;
           const DEFAULT_CONFIG: Record<string, string> = {
-            effective_date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
-            last_updated: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
-            company_name: "BQ Sqwad Technologies",
-            platform_name: "BQ SQWAD TV",
-            contact_email: "tv@bqsqwad.com",
-            support_email: "tv@bqsqwad.com",
-            legal_email: "tv@bqsqwad.com",
-          };
+  effective_date: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
+  last_updated: new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
+  company_name: "BQ Sqwad Technologies",
+  platform_name: "BQ SQWAD TV",
+  contact_email: "tv@bqsqwad.com",
+  support_email: "tv@bqsqwad.com",
+  legal_email: "tv@bqsqwad.com",
+  governing_law: "Federal Republic of Nigeria",
+  jurisdiction: "Federal Republic of Nigeria",
+  minimum_age: "13",
+  minimum_payout: "$500 USD",
+  revenue_basis: "Pay-as-you-go viewer watch minutes",
+  revenue_change_notice_days: "30",
+  dispute_window_days: "60",
+  liability_period_months: "12",
+  wallet_refund_rule: "Eligible within 14 days for unspent wallet balances upon verified request",
+  closure_balance_rule: "Settled prior to account termination subject to statutory reserves",
+  producer_data_retention: "7 years from account closure in compliance with financial regulations",
+  provider_data_retention: "7 years from agreement termination in compliance with commercial standards",
+  viewing_history_retention: "90 days active retention",
+  security_log_retention: "1 year audit log retention",
+  evidence_retention: "5 years statutory compliance record retention",
+  postal_address_if_required: "BQ Sqwad Technologies, Lagos, Nigeria",
+};
 
           let defaultedCount = 0;
           const markdown = sourceMarkdown.replace(

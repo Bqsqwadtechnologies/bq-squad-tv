@@ -2,7 +2,7 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **366**
+Total scanned routes: **370**
 
 ### Summary by Guard Class
 
@@ -10,7 +10,7 @@ Total scanned routes: **366**
 |---|---|
 | `public` | 19 |
 | `viewer` | 123 |
-| `zillionaire module` | 187 |
+| `zillionaire module` | 191 |
 | `webhook signature` | 1 |
 | `provider` | 14 |
 | `playback token` | 2 |
@@ -42,6 +42,8 @@ Total scanned routes: **366**
 | `/api/public/v1/catalog/home` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/catalog/home.ts` |
 | `/api/public/v1/catalog/search` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/catalog/search.ts` |
 | `/api/public/v1/catalog/trending` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/catalog/trending.ts` |
+| `/api/public/v1/change-requests/` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/change-requests/index.ts` |
+| `/api/public/v1/change-requests/$id/rollback` | `zillionaire module` | requireZillionaire (Module: moderation) | `src/routes/api/public/v1/change-requests/$id/rollback.ts` |
 | `/api/public/v1/channels/$channelId` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/channels/$channelId.ts` |
 | `/api/public/v1/channels/$channelId/chat` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/channels/$channelId.chat.ts` |
 | `/api/public/v1/comment-reports` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/comment-reports.ts` |
@@ -252,6 +254,7 @@ Total scanned routes: **366**
 | `/api/public/v1/zillionaire/pages/rollback` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/pages/rollback.ts` |
 | `/api/public/v1/zillionaire/pages/seed` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/pages/seed.ts` |
 | `/api/public/v1/zillionaire/pages/settings` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/pages/settings.ts` |
+| `/api/public/v1/zillionaire/pages/unpublish` | `zillionaire module` | requireZillionaire (Module: system) | `src/routes/api/public/v1/zillionaire/pages/unpublish.ts` |
 | `/api/public/v1/zillionaire/payments/` | `zillionaire module` | requireZillionaire (Module: payments) | `src/routes/api/public/v1/zillionaire/payments/index.ts` |
 | `/api/public/v1/zillionaire/payments/$paymentId/reverse` | `zillionaire module` | requireZillionaire (Module: payments) | `src/routes/api/public/v1/zillionaire/payments/$paymentId/reverse.ts` |
 | `/api/public/v1/zillionaire/payouts/` | `zillionaire module` | requireZillionaire (Module: payouts) | `src/routes/api/public/v1/zillionaire/payouts/index.ts` |
@@ -387,3 +390,4 @@ Total scanned routes: **366**
 | `/zillionaire/video-studio` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.video-studio.tsx` |
 | `/zillionaire/viewers` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.viewers.tsx` |
 | `/zillionaire/wallets` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.wallets.tsx` |
+| `/zillionaire/where-is-everything` | `zillionaire module` | Zillionaire Owner / Delegated Module Shell (Protected console page shell) | `src/routes/zillionaire.where-is-everything.tsx` |

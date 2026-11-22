@@ -211,3 +211,25 @@ PUSH BADGE #87 SUCCESSFUL — v6-09-N7-N9-N24 — Country Per-Minute Pricing Eng
 - Strict Must-Pay Viewing Enforcement (Rule N24): Hardened playback session authorization in src/routes/api/public/v1/sessions/start.ts so all viewing requires wallet balance or explicit active owner promotion window (rateMinor = 0); verified preview exemptions are strictly scoped and audited.
 - Route Matrix & Security: Updated route access matrix and reviewed fixtures with 6 new public and Zillionaire sports routes (366 total routes).
 - Verification & Test Pass: Verified full Vitest suite (185 test files, 4,731 tests passed), client/SSR/Nitro production builds passed cleanly, and public-text and fake-numbers security scans passed with zero errors.
+
+PUSH BADGE #88 SUCCESSFUL — v6-09-N12-N13-N19 — Documents Hub, Platform Improvements, and Approve-Then-Go-Live Workflow
+1. Documents Hub & Category Registry (Rule N12):
+   - Expanded legal document collection in content/legal/default-pages.json to 19 documents covering all 4 required groups: Legal (Privacy Policy, Terms, Cookie Notice, Refund Policy, Community Guidelines, Copyright and Takedown, Age Restriction, Account Deletion), Producer documents (Producer Terms, Producer Policy, Producer Privacy, Payout Policy), Provider documents (Provider Terms, Provider Privacy, Partner with us), and Help & Trust (Help, About, Contact, Data Protection & Trust).
+   - Promoted Documents Hub in sidebar navigation (src/components/ConsoleShell.tsx) and built comprehensive UI in src/routes/zillionaire.pages.tsx displaying status, version, effective date, published date, last updated date, and scheduled publish dates directly on every card.
+   - Built owner date editing controls for effectiveAt, publishedAt, and scheduledPublishAt in both UI and backend (POST /api/public/v1/zillionaire/pages/). Added unpublish endpoint (POST /api/public/v1/zillionaire/pages/unpublish) with audit logging.
+   - Verified 1-tap Publish Defaults (POST /api/public/v1/zillionaire/pages/publish-defaults) with comprehensive default configuration fallbacks, version history, compare view, and one-click rollback.
+2. "Where is Everything" Directory (Rule N12.3):
+   - Created comprehensive directory route at src/routes/zillionaire.where-is-everything.tsx cataloging all 40+ console sections across 6 operational categories with detailed responsibilities, what lives there, required role module permissions, and instant open buttons.
+   - Added direct shortcut navigation cards on the main console overview dashboard (src/routes/zillionaire.index.tsx) and main sidebar navigation.
+3. Platform Components & Integrity (Rule N13):
+   - Built shared responsive table, filter bar, search, and slide-over detail drawer component in src/components/ConsoleDataTable.tsx with loading skeletons, empty states, and error handling.
+4. Change Requests: Approve, Then Go Live (Rule N19):
+   - Created public APIs for change requests: POST/GET /api/public/v1/change-requests/ and POST /api/public/v1/change-requests/$id/rollback.
+   - Enforced strict 2-step approval workflow: Reviewer approval marks request as "approved" without altering live target document; atomic application occurs only when operator presses "Go Live".
+   - Verified one-click rollback restoring previousSnapshot with audit reason, and automatic test failure gating blocking go-live unless explicit override reason is recorded.
+5. Verification & Tests:
+   - Created src/test/batch-n12-n13-n19.test.ts (9/9 automated tests passing).
+   - Route integrity passed (408 routes in src/routeTree.gen.ts).
+   - Route access matrix regenerated (370 routes in docs/ROUTE-ACCESS-MATRIX.md).
+   - Public-text scan passed cleanly (0 forbidden terms). Fake-numbers scan passed cleanly.
+   - Client, SSR, and Nitro production builds compiled with exit code 0.

@@ -12,9 +12,13 @@ const saveSchema = z
     title: z.string().trim().min(2).max(120),
     body: z.string().min(10).max(150000),
     audience: z.enum(["public", "producer", "provider"]).default("public"),
+    category: z.enum(["legal", "producer", "provider", "help"]).optional(),
     changeSummary: z.string().trim().min(3).max(500),
+    effectiveAt: z.string().datetime().nullable().optional(),
+    publishedAt: z.string().datetime().nullable().optional(),
     scheduledPublishAt: z.string().datetime().nullable().optional(),
     requiresReacceptance: z.boolean().default(false),
+    status: z.enum(["draft", "published", "scheduled"]).optional(),
     reason: z.string().trim().min(3).max(1000),
   })
   .strict();
@@ -41,9 +45,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/")({
               title: page.title,
               body: page.body,
               audience: page.audience ?? "public",
+              category: (page as { category?: string }).category ?? "legal",
               status: "draft",
               version: 0,
               effectiveAt: null,
+              publishedAt: null,
               scheduledPublishAt: null,
               requiresReacceptance: false,
               versions: [],
@@ -77,9 +83,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/")({
               title: p["title"],
               body: p["body"],
               audience: p["audience"] ?? "public",
+              category: p["category"] ?? "legal",
               status: p["status"] ?? "draft",
               version: p["version"] ?? 0,
               effectiveAt: p["effectiveAt"] ?? null,
+              publishedAt: p["publishedAt"] ?? (p["status"] === "published" ? p["updatedAt"] : null),
               scheduledPublishAt: p["scheduledPublishAt"] ?? null,
               requiresReacceptance: p["requiresReacceptance"] === true,
               versions: Array.isArray(p["versions"]) ? p["versions"] : [],
@@ -127,15 +135,27 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/")({
             typeof body.scheduledPublishAt === "string" &&
             new Date(body.scheduledPublishAt).getTime() > Date.now();
 
-          const status = isScheduled ? "scheduled" : (existing?.["status"] === "published" ? "draft" : (existing?.["status"] ?? "draft"));
+          let status = existing?.["status"] ?? "draft";
+          if (body.status) {
+            status = body.status;
+          } else if (isScheduled) {
+            status = "scheduled";
+          } else if (existing?.["status"] === "published") {
+            status = "draft";
+          }
+
+          const effectiveAt = body.effectiveAt !== undefined ? body.effectiveAt : (existing?.["effectiveAt"] ?? null);
+          const publishedAt = body.publishedAt !== undefined ? body.publishedAt : (existing?.["publishedAt"] ?? null);
+          const scheduledPublishAt = body.scheduledPublishAt !== undefined ? body.scheduledPublishAt : (existing?.["scheduledPublishAt"] ?? null);
 
           const versionRecord = {
             version: currentVersion,
             title: body.title,
             body: body.body,
             status,
-            effectiveAt: existing?.["effectiveAt"] ?? null,
-            scheduledPublishAt: body.scheduledPublishAt ?? null,
+            effectiveAt,
+            publishedAt,
+            scheduledPublishAt,
             changeSummary: body.changeSummary,
             createdAt: now,
             createdBy: user.uid,
@@ -148,10 +168,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/")({
             title: body.title,
             body: body.body,
             audience: body.audience,
+            category: body.category || existing?.["category"] || "legal",
             status,
             version: currentVersion,
-            effectiveAt: existing?.["effectiveAt"] ?? null,
-            scheduledPublishAt: body.scheduledPublishAt ?? null,
+            effectiveAt,
+            publishedAt,
+            scheduledPublishAt,
             changeSummary: body.changeSummary,
             requiresReacceptance: body.requiresReacceptance,
             updatedBy: user.uid,
@@ -165,7 +187,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/")({
             targetType: "sitePage",
             targetId: body.slug,
             reason: body.reason,
-            after: { status, scheduledPublishAt: body.scheduledPublishAt },
+            after: { status, effectiveAt, publishedAt, scheduledPublishAt },
           });
 
           return Response.json({
@@ -173,6 +195,9 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/pages/")({
             slug: body.slug,
             status,
             version: currentVersion,
+            effectiveAt,
+            publishedAt,
+            scheduledPublishAt,
           });
         } catch (error) {
           return errorBody(error);
