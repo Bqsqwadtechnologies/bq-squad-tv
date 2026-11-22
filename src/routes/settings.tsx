@@ -44,6 +44,7 @@ function SettingsPage() {
   const [pinPromptOpen, setPinPromptOpen] = useState(false);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const [saveToast, setSaveToast] = useState(false);
+  const [isZillionaireOwner, setIsZillionaireOwner] = useState(false);
 
   useEffect(() => {
     try {
@@ -75,6 +76,8 @@ function SettingsPage() {
       try {
         const token = await restoreWebSession();
         if (!token) return;
+        const account = await getWebAccount();
+        setIsZillionaireOwner(account?.emailVerified === true && account.isOwner === true);
         const headers = await getWebAuthHeaders(token);
         const res = await fetch("/api/public/v1/profile", { headers, cache: "no-store" });
         if (res.ok) {
@@ -200,6 +203,22 @@ function SettingsPage() {
             </span>
           ) : null}
         </div>
+
+        {isZillionaireOwner ? (
+          <Link
+            to="/zillionaire"
+            className="mt-5 flex items-center justify-between rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-foreground transition hover:bg-amber-400/15"
+          >
+            <span className="flex items-center gap-3">
+              <Shield className="text-amber-400" size={20} />
+              <span>
+                <span className="block text-sm font-bold">Zillionaire Dashboard</span>
+                <span className="block text-xs text-muted-foreground">Owner-only control centre · password protected</span>
+              </span>
+            </span>
+            <ChevronRight size={18} />
+          </Link>
+        ) : null}
 
         {/* Group 1: Appearance & Theme */}
         <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
