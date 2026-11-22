@@ -69,7 +69,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
           const wallet = await getWallet(fs, user.uid);
           const currency = wallet.currency;
           const pricing = await getPricingConfig(fs);
-          let offer;
+          let offer: ReturnType<typeof getPaystackTopup>;
           try {
             offer = getPaystackTopup(pricing, packageId, currency, customAmountMinor);
           } catch (error) {
