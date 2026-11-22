@@ -160,6 +160,7 @@ import { Route as ApiPublicV1NotificationsBadgesRouteImport } from './routes/api
 import { Route as ApiPublicV1NotificationsUnreadCountRouteImport } from './routes/api/public/v1/notifications/unread-count'
 import { Route as ApiPublicV1PagesSlugRouteImport } from './routes/api/public/v1/pages/$slug'
 import { Route as ApiPublicV1PartnerEnquiryRouteImport } from './routes/api/public/v1/partner/enquiry'
+import { Route as ApiPublicV1PreviewGrantRouteImport } from './routes/api/public/v1/preview/grant'
 import { Route as ApiPublicV1ProducerAnalyticsRouteImport } from './routes/api/public/v1/producer/analytics'
 import { Route as ApiPublicV1ProducerChannelsRouteImport } from './routes/api/public/v1/producer/channels'
 import { Route as ApiPublicV1ProducerEarningsRouteImport } from './routes/api/public/v1/producer/earnings'
@@ -369,6 +370,7 @@ import { Route as ApiPublicV1ProducerChannelsChannelIdScheduleRouteImport } from
 import { Route as ApiPublicV1ProducerChannelsChannelIdTeamRouteImport } from './routes/api/public/v1/producer/channels/$channelId/team'
 import { Route as ApiPublicV1ProducerContentAssetsAssetIdAppealRouteImport } from './routes/api/public/v1/producer/content-assets/$assetId/appeal'
 import { Route as ApiPublicV1ProducersSlugCommentsIndexRouteImport } from './routes/api/public/v1/producers/$slug/comments/index'
+import { Route as ApiPublicV1ProviderChannelsIdChecklistRouteImport } from './routes/api/public/v1/provider/channels/$id/checklist'
 import { Route as ApiPublicV1SessionsSessionIdReplicaNextRouteImport } from './routes/api/public/v1/sessions/$sessionId/replica/next'
 import { Route as ApiPublicV1WorkerJobsAssetIdCompleteRouteImport } from './routes/api/public/v1/worker/jobs/$assetId/complete'
 import { Route as ApiPublicV1WorkerJobsAssetIdFailRouteImport } from './routes/api/public/v1/worker/jobs/$assetId/fail'
@@ -1212,6 +1214,11 @@ const ApiPublicV1PartnerEnquiryRoute =
     path: '/api/public/v1/partner/enquiry',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1PreviewGrantRoute = ApiPublicV1PreviewGrantRouteImport.update({
+  id: '/api/public/v1/preview/grant',
+  path: '/api/public/v1/preview/grant',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicV1ProducerAnalyticsRoute =
   ApiPublicV1ProducerAnalyticsRouteImport.update({
     id: '/api/public/v1/producer/analytics',
@@ -2460,6 +2467,12 @@ const ApiPublicV1ProducersSlugCommentsIndexRoute =
     path: '/comments/',
     getParentRoute: () => ApiPublicV1ProducersSlugRoute,
   } as any)
+const ApiPublicV1ProviderChannelsIdChecklistRoute =
+  ApiPublicV1ProviderChannelsIdChecklistRouteImport.update({
+    id: '/$id/checklist',
+    path: '/$id/checklist',
+    getParentRoute: () => ApiPublicV1ProviderChannelsRoute,
+  } as any)
 const ApiPublicV1SessionsSessionIdReplicaNextRoute =
   ApiPublicV1SessionsSessionIdReplicaNextRouteImport.update({
     id: '/api/public/v1/sessions/$sessionId/replica/next',
@@ -2896,6 +2909,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
   '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
+  '/api/public/v1/preview/grant': typeof ApiPublicV1PreviewGrantRoute
   '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
@@ -2911,7 +2925,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
   '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
   '/api/public/v1/profile/preferences': typeof ApiPublicV1ProfilePreferencesRoute
-  '/api/public/v1/provider/channels': typeof ApiPublicV1ProviderChannelsRoute
+  '/api/public/v1/provider/channels': typeof ApiPublicV1ProviderChannelsRouteWithChildren
   '/api/public/v1/provider/contracts': typeof ApiPublicV1ProviderContractsRoute
   '/api/public/v1/provider/dashboard': typeof ApiPublicV1ProviderDashboardRoute
   '/api/public/v1/provider/disputes': typeof ApiPublicV1ProviderDisputesRoute
@@ -3109,6 +3123,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/producer/channels/$channelId/schedule': typeof ApiPublicV1ProducerChannelsChannelIdScheduleRouteWithChildren
   '/api/public/v1/producer/channels/$channelId/team': typeof ApiPublicV1ProducerChannelsChannelIdTeamRoute
   '/api/public/v1/producer/content-assets/$assetId/appeal': typeof ApiPublicV1ProducerContentAssetsAssetIdAppealRoute
+  '/api/public/v1/provider/channels/$id/checklist': typeof ApiPublicV1ProviderChannelsIdChecklistRoute
   '/api/public/v1/sessions/$sessionId/replica/next': typeof ApiPublicV1SessionsSessionIdReplicaNextRoute
   '/api/public/v1/worker/jobs/$assetId/complete': typeof ApiPublicV1WorkerJobsAssetIdCompleteRoute
   '/api/public/v1/worker/jobs/$assetId/fail': typeof ApiPublicV1WorkerJobsAssetIdFailRoute
@@ -3306,6 +3321,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
   '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
+  '/api/public/v1/preview/grant': typeof ApiPublicV1PreviewGrantRoute
   '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
@@ -3321,7 +3337,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
   '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
   '/api/public/v1/profile/preferences': typeof ApiPublicV1ProfilePreferencesRoute
-  '/api/public/v1/provider/channels': typeof ApiPublicV1ProviderChannelsRoute
+  '/api/public/v1/provider/channels': typeof ApiPublicV1ProviderChannelsRouteWithChildren
   '/api/public/v1/provider/contracts': typeof ApiPublicV1ProviderContractsRoute
   '/api/public/v1/provider/dashboard': typeof ApiPublicV1ProviderDashboardRoute
   '/api/public/v1/provider/disputes': typeof ApiPublicV1ProviderDisputesRoute
@@ -3518,6 +3534,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/producer/channels/$channelId/schedule': typeof ApiPublicV1ProducerChannelsChannelIdScheduleRouteWithChildren
   '/api/public/v1/producer/channels/$channelId/team': typeof ApiPublicV1ProducerChannelsChannelIdTeamRoute
   '/api/public/v1/producer/content-assets/$assetId/appeal': typeof ApiPublicV1ProducerContentAssetsAssetIdAppealRoute
+  '/api/public/v1/provider/channels/$id/checklist': typeof ApiPublicV1ProviderChannelsIdChecklistRoute
   '/api/public/v1/sessions/$sessionId/replica/next': typeof ApiPublicV1SessionsSessionIdReplicaNextRoute
   '/api/public/v1/worker/jobs/$assetId/complete': typeof ApiPublicV1WorkerJobsAssetIdCompleteRoute
   '/api/public/v1/worker/jobs/$assetId/fail': typeof ApiPublicV1WorkerJobsAssetIdFailRoute
@@ -3716,6 +3733,7 @@ export interface FileRoutesById {
   '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
   '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
+  '/api/public/v1/preview/grant': typeof ApiPublicV1PreviewGrantRoute
   '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
@@ -3731,7 +3749,7 @@ export interface FileRoutesById {
   '/api/public/v1/profile/complete': typeof ApiPublicV1ProfileCompleteRoute
   '/api/public/v1/profile/country': typeof ApiPublicV1ProfileCountryRoute
   '/api/public/v1/profile/preferences': typeof ApiPublicV1ProfilePreferencesRoute
-  '/api/public/v1/provider/channels': typeof ApiPublicV1ProviderChannelsRoute
+  '/api/public/v1/provider/channels': typeof ApiPublicV1ProviderChannelsRouteWithChildren
   '/api/public/v1/provider/contracts': typeof ApiPublicV1ProviderContractsRoute
   '/api/public/v1/provider/dashboard': typeof ApiPublicV1ProviderDashboardRoute
   '/api/public/v1/provider/disputes': typeof ApiPublicV1ProviderDisputesRoute
@@ -3929,6 +3947,7 @@ export interface FileRoutesById {
   '/api/public/v1/producer/channels/$channelId/schedule': typeof ApiPublicV1ProducerChannelsChannelIdScheduleRouteWithChildren
   '/api/public/v1/producer/channels/$channelId/team': typeof ApiPublicV1ProducerChannelsChannelIdTeamRoute
   '/api/public/v1/producer/content-assets/$assetId/appeal': typeof ApiPublicV1ProducerContentAssetsAssetIdAppealRoute
+  '/api/public/v1/provider/channels/$id/checklist': typeof ApiPublicV1ProviderChannelsIdChecklistRoute
   '/api/public/v1/sessions/$sessionId/replica/next': typeof ApiPublicV1SessionsSessionIdReplicaNextRoute
   '/api/public/v1/worker/jobs/$assetId/complete': typeof ApiPublicV1WorkerJobsAssetIdCompleteRoute
   '/api/public/v1/worker/jobs/$assetId/fail': typeof ApiPublicV1WorkerJobsAssetIdFailRoute
@@ -4128,6 +4147,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
     | '/api/public/v1/partner/enquiry'
+    | '/api/public/v1/preview/grant'
     | '/api/public/v1/producer/analytics'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
@@ -4341,6 +4361,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/channels/$channelId/schedule'
     | '/api/public/v1/producer/channels/$channelId/team'
     | '/api/public/v1/producer/content-assets/$assetId/appeal'
+    | '/api/public/v1/provider/channels/$id/checklist'
     | '/api/public/v1/sessions/$sessionId/replica/next'
     | '/api/public/v1/worker/jobs/$assetId/complete'
     | '/api/public/v1/worker/jobs/$assetId/fail'
@@ -4538,6 +4559,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
     | '/api/public/v1/partner/enquiry'
+    | '/api/public/v1/preview/grant'
     | '/api/public/v1/producer/analytics'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
@@ -4750,6 +4772,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/channels/$channelId/schedule'
     | '/api/public/v1/producer/channels/$channelId/team'
     | '/api/public/v1/producer/content-assets/$assetId/appeal'
+    | '/api/public/v1/provider/channels/$id/checklist'
     | '/api/public/v1/sessions/$sessionId/replica/next'
     | '/api/public/v1/worker/jobs/$assetId/complete'
     | '/api/public/v1/worker/jobs/$assetId/fail'
@@ -4947,6 +4970,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
     | '/api/public/v1/partner/enquiry'
+    | '/api/public/v1/preview/grant'
     | '/api/public/v1/producer/analytics'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
@@ -5160,6 +5184,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/channels/$channelId/schedule'
     | '/api/public/v1/producer/channels/$channelId/team'
     | '/api/public/v1/producer/content-assets/$assetId/appeal'
+    | '/api/public/v1/provider/channels/$id/checklist'
     | '/api/public/v1/sessions/$sessionId/replica/next'
     | '/api/public/v1/worker/jobs/$assetId/complete'
     | '/api/public/v1/worker/jobs/$assetId/fail'
@@ -5354,6 +5379,7 @@ export interface RootRouteChildren {
   ApiPublicV1MonitoringClientErrorsRoute: typeof ApiPublicV1MonitoringClientErrorsRoute
   ApiPublicV1PagesSlugRoute: typeof ApiPublicV1PagesSlugRoute
   ApiPublicV1PartnerEnquiryRoute: typeof ApiPublicV1PartnerEnquiryRoute
+  ApiPublicV1PreviewGrantRoute: typeof ApiPublicV1PreviewGrantRoute
   ApiPublicV1ProducerAnalyticsRoute: typeof ApiPublicV1ProducerAnalyticsRoute
   ApiPublicV1ProducerChannelsRoute: typeof ApiPublicV1ProducerChannelsRouteWithChildren
   ApiPublicV1ProducerEarningsRoute: typeof ApiPublicV1ProducerEarningsRoute
@@ -5369,7 +5395,7 @@ export interface RootRouteChildren {
   ApiPublicV1ProfileCompleteRoute: typeof ApiPublicV1ProfileCompleteRoute
   ApiPublicV1ProfileCountryRoute: typeof ApiPublicV1ProfileCountryRoute
   ApiPublicV1ProfilePreferencesRoute: typeof ApiPublicV1ProfilePreferencesRoute
-  ApiPublicV1ProviderChannelsRoute: typeof ApiPublicV1ProviderChannelsRoute
+  ApiPublicV1ProviderChannelsRoute: typeof ApiPublicV1ProviderChannelsRouteWithChildren
   ApiPublicV1ProviderContractsRoute: typeof ApiPublicV1ProviderContractsRoute
   ApiPublicV1ProviderDashboardRoute: typeof ApiPublicV1ProviderDashboardRoute
   ApiPublicV1ProviderDisputesRoute: typeof ApiPublicV1ProviderDisputesRoute
@@ -6638,6 +6664,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/partner/enquiry'
       fullPath: '/api/public/v1/partner/enquiry'
       preLoaderRoute: typeof ApiPublicV1PartnerEnquiryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/preview/grant': {
+      id: '/api/public/v1/preview/grant'
+      path: '/api/public/v1/preview/grant'
+      fullPath: '/api/public/v1/preview/grant'
+      preLoaderRoute: typeof ApiPublicV1PreviewGrantRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/producer/analytics': {
@@ -8103,6 +8136,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProducersSlugCommentsIndexRouteImport
       parentRoute: typeof ApiPublicV1ProducersSlugRoute
     }
+    '/api/public/v1/provider/channels/$id/checklist': {
+      id: '/api/public/v1/provider/channels/$id/checklist'
+      path: '/$id/checklist'
+      fullPath: '/api/public/v1/provider/channels/$id/checklist'
+      preLoaderRoute: typeof ApiPublicV1ProviderChannelsIdChecklistRouteImport
+      parentRoute: typeof ApiPublicV1ProviderChannelsRoute
+    }
     '/api/public/v1/sessions/$sessionId/replica/next': {
       id: '/api/public/v1/sessions/$sessionId/replica/next'
       path: '/api/public/v1/sessions/$sessionId/replica/next'
@@ -8640,6 +8680,21 @@ const ApiPublicV1ProducersSlugRouteWithChildren =
     ApiPublicV1ProducersSlugRouteChildren,
   )
 
+interface ApiPublicV1ProviderChannelsRouteChildren {
+  ApiPublicV1ProviderChannelsIdChecklistRoute: typeof ApiPublicV1ProviderChannelsIdChecklistRoute
+}
+
+const ApiPublicV1ProviderChannelsRouteChildren: ApiPublicV1ProviderChannelsRouteChildren =
+  {
+    ApiPublicV1ProviderChannelsIdChecklistRoute:
+      ApiPublicV1ProviderChannelsIdChecklistRoute,
+  }
+
+const ApiPublicV1ProviderChannelsRouteWithChildren =
+  ApiPublicV1ProviderChannelsRoute._addFileChildren(
+    ApiPublicV1ProviderChannelsRouteChildren,
+  )
+
 interface ApiPublicV1ProviderVerificationRouteChildren {
   ApiPublicV1ProviderVerificationDraftRoute: typeof ApiPublicV1ProviderVerificationDraftRoute
 }
@@ -8905,6 +8960,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1MonitoringClientErrorsRoute,
   ApiPublicV1PagesSlugRoute: ApiPublicV1PagesSlugRoute,
   ApiPublicV1PartnerEnquiryRoute: ApiPublicV1PartnerEnquiryRoute,
+  ApiPublicV1PreviewGrantRoute: ApiPublicV1PreviewGrantRoute,
   ApiPublicV1ProducerAnalyticsRoute: ApiPublicV1ProducerAnalyticsRoute,
   ApiPublicV1ProducerChannelsRoute:
     ApiPublicV1ProducerChannelsRouteWithChildren,
@@ -8924,7 +8980,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1ProfileCompleteRoute: ApiPublicV1ProfileCompleteRoute,
   ApiPublicV1ProfileCountryRoute: ApiPublicV1ProfileCountryRoute,
   ApiPublicV1ProfilePreferencesRoute: ApiPublicV1ProfilePreferencesRoute,
-  ApiPublicV1ProviderChannelsRoute: ApiPublicV1ProviderChannelsRoute,
+  ApiPublicV1ProviderChannelsRoute:
+    ApiPublicV1ProviderChannelsRouteWithChildren,
   ApiPublicV1ProviderContractsRoute: ApiPublicV1ProviderContractsRoute,
   ApiPublicV1ProviderDashboardRoute: ApiPublicV1ProviderDashboardRoute,
   ApiPublicV1ProviderDisputesRoute: ApiPublicV1ProviderDisputesRoute,

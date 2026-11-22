@@ -24,9 +24,11 @@ import {
   ShieldCheck,
   Sliders,
   Tv,
-  Plus,
   Wifi,
   X,
+  Eye,
+  CheckSquare,
+  ExternalLink,
 } from "lucide-react";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
 
@@ -195,65 +197,6 @@ function ProviderChannelsInner({
     }
   }
 
-  // Create Channel state
-  const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false);
-  const [newChannelName, setNewChannelName] = useState("");
-  const [newChannelCategory, setNewChannelCategory] = useState("Entertainment");
-  const [newChannelLanguage, setNewChannelLanguage] = useState("en");
-  const [newChannelBandwidthCap, setNewChannelBandwidthCap] = useState(8.0);
-  const [newChannelStreamUrl, setNewChannelStreamUrl] = useState("");
-  const [newChannelBackupUrl, setNewChannelBackupUrl] = useState("");
-  const [newChannelDescription, setNewChannelDescription] = useState("");
-  const [newChannelAgeRating, setNewChannelAgeRating] = useState("PG");
-  const [newChannelAdultOnly, setNewChannelAdultOnly] = useState(false);
-  const [newChannelStreamType, setNewChannelStreamType] = useState("hls_pull");
-  const [newChannelLicenceNumber, setNewChannelLicenceNumber] = useState("");
-  const [newChannelPolicyConfirmed, setNewChannelPolicyConfirmed] = useState(false);
-  const [newChannelTestStreamConfirmed, setNewChannelTestStreamConfirmed] = useState(false);
-  const [creatingChannel, setCreatingChannel] = useState(false);
-
-  async function handleCreateChannel(e: FormEvent) {
-    e.preventDefault();
-    if (!newChannelName.trim()) return;
-    setCreatingChannel(true);
-    try {
-      const headers = await getWebAuthHeaders(token);
-      const res = await fetch("/api/public/v1/provider/channels", {
-        method: "POST",
-        headers: { ...headers, "content-type": "application/json" },
-        body: JSON.stringify({
-          name: newChannelName.trim(),
-          categories: [newChannelCategory],
-          language: newChannelLanguage,
-          bandwidthCapGbps: newChannelBandwidthCap,
-          streamType: newChannelStreamType,
-          streamUrl: newChannelStreamUrl.trim() || undefined,
-          backupStreamUrl: newChannelBackupUrl.trim() || undefined,
-          description: newChannelDescription.trim() || undefined,
-          ageRating: newChannelAgeRating,
-          adultOnly: newChannelAdultOnly,
-          rightsEvidence: {
-            licenceNumber: newChannelLicenceNumber.trim(),
-            territories: ["NG"],
-          },
-          policyConfirmed: newChannelPolicyConfirmed,
-          testStreamConfirmed: newChannelTestStreamConfirmed,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create channel");
-      setMessage(`Channel "${newChannelName}" created successfully.`);
-      setIsCreateChannelOpen(false);
-      setNewChannelName("");
-      setNewChannelStreamUrl("");
-      setNewChannelDescription("");
-      await loadData(token);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to create channel");
-    } finally {
-      setCreatingChannel(false);
-    }
-  }
 
   async function saveBandwidthCap(channelId: string) {
     setSavingCap(true);
@@ -490,11 +433,11 @@ Authorized Signatory: BQ SQWAD TV Global Operations`;
               </p>
             </div>
             <button
-              onClick={() => setIsCreateChannelOpen(true)}
-              className="flex items-center gap-2 rounded-xl bg-cyan-400 px-4 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 shadow-md shadow-cyan-400/20"
+              onClick={() => setIsAssignmentModalOpen(true)}
+              className="flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition"
             >
-              <Plus className="h-4 w-4" />
-              <span>Create New Channel</span>
+              <Tv className="h-4 w-4" />
+              <span>Channel Assignment & Policy</span>
             </button>
           </div>
 
@@ -606,6 +549,23 @@ Authorized Signatory: BQ SQWAD TV Global Operations`;
                       </div>
 
                       <button
+                        onClick={() => openChecklist(channel.id)}
+                        className="flex items-center gap-1.5 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20 transition"
+                      >
+                        <CheckSquare className="h-4 w-4 text-cyan-400" />
+                        <span>Checklist</span>
+                      </button>
+
+                      <button
+                        onClick={() => handlePrivatePreview(channel.id)}
+                        disabled={previewLoadingId === channel.id}
+                        className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-bold text-slate-300 hover:text-white transition disabled:opacity-50"
+                      >
+                        <Eye className="h-4 w-4 text-cyan-400" />
+                        <span>{previewLoadingId === channel.id ? "Granting..." : "Preview"}</span>
+                      </button>
+
+                      <button
                         onClick={() =>
                           setExpandedLogChannelId(
                             expandedLogChannelId === channel.id ? null : channel.id,
@@ -681,106 +641,153 @@ Authorized Signatory: BQ SQWAD TV Global Operations`;
           </div>
         </div>
 
-        {/* Create Channel Modal */}
-        {isCreateChannelOpen && (
+        {/* Channel Assignment Policy Modal */}
+        {isAssignmentModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
             <div className="w-full max-w-lg rounded-3xl border border-white/15 bg-[#07143d] p-6 shadow-2xl space-y-5">
               <div className="flex items-center justify-between border-b border-white/10 pb-4">
                 <div className="flex items-center gap-2">
                   <Tv className="h-5 w-5 text-cyan-400" />
-                  <h3 className="text-base font-bold text-white">Create New Broadcast Channel</h3>
+                  <h3 className="text-base font-bold text-white">Channel Assignment Policy</h3>
                 </div>
                 <button
-                  onClick={() => setIsCreateChannelOpen(false)}
+                  onClick={() => setIsAssignmentModalOpen(false)}
                   className="rounded-lg p-1 text-slate-400 hover:text-white"
                 >
                   <X className="h-5 w-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleCreateChannel} className="space-y-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
-                    Channel Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={newChannelName}
-                    onChange={(e) => setNewChannelName(e.target.value)}
-                    placeholder="e.g. Apex Cinema Global"
-                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
-                  />
+              <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
+                <p>
+                  To maintain strict broadcast transmission standards and licensed rights compliance, broadcast channels are created exclusively by the platform engineering team and assigned to authorized partner organizations.
+                </p>
+                <div className="rounded-2xl border border-white/10 bg-[#030b2a] p-4 space-y-2">
+                  <p className="font-bold text-white uppercase text-[11px] tracking-wider">Roles and Attributions</p>
+                  <p><span className="text-slate-400">Content Owner:</span> Your licensed broadcast entity</p>
+                  <p><span className="text-slate-400">Platform Creator & Operator:</span> BQ SQWAD TV</p>
                 </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
-                      Category
-                    </label>
-                    <select
-                      value={newChannelCategory}
-                      onChange={(e) => setNewChannelCategory(e.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
-                    >
-                      <option value="Entertainment">Entertainment</option>
-                      <option value="News">News</option>
-                      <option value="Sports">Sports</option>
-                      <option value="Music">Music</option>
-                      <option value="Documentary">Documentary</option>
-                      <option value="Movies">Movies</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
-                      Language
-                    </label>
-                    <select
-                      value={newChannelLanguage}
-                      onChange={(e) => setNewChannelLanguage(e.target.value)}
-                      className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
-                    >
-                      <option value="en">English (en)</option>
-                      <option value="fr">French (fr)</option>
-                      <option value="yo">Yoruba (yo)</option>
-                      <option value="ig">Igbo (ig)</option>
-                      <option value="ha">Hausa (ha)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-300 uppercase tracking-wider mb-1">
-                    Bandwidth Cap (Gbps)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="1"
-                    max="100"
-                    value={newChannelBandwidthCap}
-                    onChange={(e) => setNewChannelBandwidthCap(Number(e.target.value))}
-                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white focus:border-cyan-400 focus:outline-none"
-                  />
-                </div>
-
-                <div className="flex items-center justify-end gap-3 pt-2 border-t border-white/10">
-                  <button
-                    type="button"
-                    onClick={() => setIsCreateChannelOpen(false)}
-                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 hover:text-white"
+                <p>
+                  To request an additional broadcast channel provisioning or add new territorial feeds, contact our team:
+                </p>
+                <div className="pt-2">
+                  <a
+                    href="mailto:tv@bqsqwad.com?subject=New%20Broadcast%20Channel%20Assignment%20Request"
+                    className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-5 py-2.5 text-xs font-bold text-[#030e28] hover:brightness-110 shadow-md shadow-cyan-400/20"
                   >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={creatingChannel || !newChannelName.trim()}
-                    className="rounded-xl bg-cyan-400 px-5 py-2 text-xs font-bold text-[#030e28] hover:brightness-110 disabled:opacity-50"
-                  >
-                    {creatingChannel ? "Submitting for Review..." : "Submit Channel for Review"}
-                  </button>
+                    <span>Email tv@bqsqwad.com</span>
+                  </a>
                 </div>
-              </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Integration Checklist Modal (Rule N21 & N22) */}
+        {checklistChannel && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+            <div className="w-full max-w-2xl my-8 rounded-3xl border border-white/15 bg-[#07143d] p-6 shadow-2xl space-y-5">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <CheckSquare className="h-5 w-5 text-cyan-400" />
+                    <h3 className="text-base font-bold text-white">{checklistChannel.channelName} — Launch Checklist</h3>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Content Owner: <span className="text-white font-medium">{checklistChannel.contentOwnerCompany}</span> • Platform Creator: <span className="text-white font-medium">{checklistChannel.platformCreator}</span>
+                  </p>
+                </div>
+                <button
+                  onClick={() => setChecklistChannel(null)}
+                  className="rounded-lg p-1 text-slate-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between p-3.5 rounded-2xl border border-white/10 bg-[#030b2a]">
+                <span className="text-xs font-bold text-slate-300">Overall Readiness:</span>
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider ${
+                    checklistChannel.canGoLive
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                      : checklistChannel.overallStatus === "Review in Progress"
+                        ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                        : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                  }`}
+                >
+                  {checklistChannel.overallStatus}
+                </span>
+              </div>
+
+              {/* Checklist items */}
+              <div className="space-y-3">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Required Launch Elements</p>
+                {checklistChannel.items?.map((item: any) => (
+                  <div
+                    key={item.key}
+                    className="flex items-start justify-between gap-4 rounded-2xl border border-white/5 bg-[#030b2a] p-3.5 text-xs"
+                  >
+                    <div className="space-y-1">
+                      <p className="font-bold text-white">{item.title}</p>
+                      <p className="text-slate-400 text-[11px]">{item.description}</p>
+                      {item.detail && <p className="text-cyan-300 text-[11px] font-mono">{item.detail}</p>}
+                      {item.actionRequired && <p className="text-amber-300 text-[11px]">{item.actionRequired}</p>}
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                        item.status === "Done"
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                          : item.status === "Waiting for review"
+                            ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                            : "bg-rose-500/20 text-rose-300 border border-rose-500/30"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Automated Technical Preflight Results */}
+              {checklistChannel.autoTestReport && (
+                <div className="space-y-3 pt-3 border-t border-white/10">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Automated Preflight Tests</p>
+                    <span className="text-[10px] font-mono text-slate-400">Ref: {checklistChannel.autoTestReport.referenceId}</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+                    {checklistChannel.autoTestReport.results?.map((res: any) => (
+                      <div
+                        key={res.checkId}
+                        className="flex items-center justify-between rounded-xl border border-white/5 bg-[#030b2a]/60 px-3 py-2 text-[11px]"
+                      >
+                        <span className="text-slate-300">{res.name}</span>
+                        <span
+                          className={`font-bold ${
+                            res.passed ? "text-emerald-400" : res.severity === "blocker" ? "text-rose-400" : "text-amber-400"
+                          }`}
+                        >
+                          {res.passed ? "✓ Passed" : res.fixInstruction || "Check Required"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-[11px] text-slate-400 italic">
+                    {checklistChannel.autoTestReport.supportHelpText}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex justify-end pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setChecklistChannel(null)}
+                  className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-xs font-bold text-slate-300 hover:text-white"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         )}

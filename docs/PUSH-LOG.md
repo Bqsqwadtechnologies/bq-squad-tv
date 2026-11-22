@@ -233,3 +233,24 @@ PUSH BADGE #88 SUCCESSFUL — v6-09-N12-N13-N19 — Documents Hub, Platform Impr
    - Route access matrix regenerated (370 routes in docs/ROUTE-ACCESS-MATRIX.md).
    - Public-text scan passed cleanly (0 forbidden terms). Fake-numbers scan passed cleanly.
    - Client, SSR, and Nitro production builds compiled with exit code 0.
+
+PUSH BADGE #89 SUCCESSFUL — v6-09-N21-N22-N27 — Partner Integration, Preview & Automatic Tests, and Partner Documents/Emails
+1. Partner Integration Completion (Rule N21):
+   - Enforced required channel onboarding elements prior to go-live: partner privacy-policy link and terms link (HTTPS only, SSRF-safe hostname validation blocking loopback and private IP space), designated contact email, broadcast licence validity windows, stream configuration, and artwork.
+   - Built partner checklist engine in src/lib/server/partner-checklist.ts with 3-state statuses ("Done", "Waiting for review", "Needs attention") and strict go-live blocking until all approvals and technical checks pass.
+   - Built partner checklist endpoint at GET /api/public/v1/provider/channels/$id/checklist with role and console account authorization.
+   - Reinforced separation of concerns: Content Owner attributed to partner organization; Platform Creator and Operator attributed to BQ SQWAD TV. Replaced self-service channel creation in src/routes/provider.channels.tsx with assignment policy guidance directing to tv@bqsqwad.com.
+2. Cryptographic Private Previews & Automated Technical Preflight (Rule N22):
+   - Implemented HMAC-SHA256 authenticated preview tokens in src/lib/server/preview-grants.ts (prev_${payloadB64}.${sig}) with short TTL (15m), strict grantee UID/role verification, and target scoping (asset/channel).
+   - Wired preview token validation into playback session authorization in src/routes/api/public/v1/sessions/start.ts, ensuring unbilled viewing is restricted exclusively to authenticated owners/operators with valid matching grants while keeping strict wallet/hold gating for viewers (Rule N24).
+   - Created grant endpoint at POST /api/public/v1/preview/grant and added private preview triggers in src/routes/provider.channels.tsx and src/routes/producer.channels.tsx.
+   - Built automated channel preflight test runner in src/lib/server/channel-auto-tests.ts with SSRF safeguards, manifest checks, reference tracking, and plain fix instructions with tv@bqsqwad.com support.
+3. Partner Documents, Legal Pages & Communication Templates (Rule N27):
+   - Updated content/legal/default-pages.json with "Partner with us" guide, refreshed Provider Terms and Provider Privacy reflecting platform-exclusive channel provisioning, partner content ownership, approval-then-go-live workflow, and preview handling.
+   - Built partner email templates in src/lib/server/partner-emails.ts for invitations, onboarding, change-request notifications, automated test failures, and monthly statements; verified zero forbidden internal terminology and universal tv@bqsqwad.com support footer.
+4. Route Matrix & Verification:
+   - Updated route fixtures (src/test/fixtures/role-matrix-routes.json) and regenerated docs/ROUTE-ACCESS-MATRIX.md covering new preview grant and checklist endpoints (372 routes verified).
+   - Authored comprehensive test suite in src/test/batch-n21-n22-n27.test.ts (13/13 tests passing).
+   - Generated role access matrix test passed (3,722 tests passing), deny-by-default fuzz passed (16 tests passing).
+   - Client, SSR, and Nitro production builds compiled with exit code 0.
+   - Scans for public text and fake numbers passed cleanly.

@@ -279,6 +279,30 @@ function ProducerChannelsInner({
     }
   }, [token, selectedChannelId]);
 
+  async function handlePreviewAsset(assetId: string) {
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const res = await fetch("/api/public/v1/preview/grant", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ targetType: "asset", targetId: assetId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.previewPath) {
+          window.open(data.previewPath, "_blank");
+        } else {
+          setMessage("Private preview link active.");
+        }
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setError(err.message || "Failed to generate preview grant.");
+      }
+    } catch (e: any) {
+      setError(e.message || "Preview error");
+    }
+  }
+
   // File kind validation
   const ALLOWED_VIDEO_EXTS = [".mp4", ".mov", ".mkv", ".webm"];
 
@@ -1373,6 +1397,15 @@ function ProducerChannelsInner({
                                   {ep.status}
                                 </span>
                               )}
+                              <button
+                                type="button"
+                                onClick={() => handlePreviewAsset(ep.id || ep.assetId)}
+                                className="flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-bold text-slate-300 hover:text-white transition"
+                                title="Private unbilled preview"
+                              >
+                                <Eye className="h-3 w-3 text-cyan-400" />
+                                <span>Preview</span>
+                              </button>
                             </div>
                             {(ep.status === "rejected" || ep.rightsReviewStatus === "rejected") && ep.rejectionMessage && (
                               <div className="w-full mt-1 rounded-xl bg-rose-950/40 border border-rose-500/20 p-2.5 text-xs text-rose-200">

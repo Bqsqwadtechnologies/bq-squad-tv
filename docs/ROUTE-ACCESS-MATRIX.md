@@ -2,14 +2,14 @@
 
 Automatically maintained by `scripts/route-access-matrix.mjs`.
 
-Total scanned routes: **370**
+Total scanned routes: **372**
 
 ### Summary by Guard Class
 
 | Guard Class | Count |
 |---|---|
 | `public` | 19 |
-| `viewer` | 123 |
+| `viewer` | 125 |
 | `zillionaire module` | 191 |
 | `webhook signature` | 1 |
 | `provider` | 14 |
@@ -81,6 +81,7 @@ Total scanned routes: **370**
 | `/api/public/v1/payments/paystack/initialize` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/payments/paystack/initialize.ts` |
 | `/api/public/v1/payments/paystack/verify` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/payments/paystack/verify.ts` |
 | `/api/public/v1/payments/paystack/webhook` | `webhook signature` | verifyPaystackSignature (HMAC-SHA512 webhook signature verification) | `src/routes/api/public/v1/payments/paystack/webhook.ts` |
+| `/api/public/v1/preview/grant` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/preview/grant.ts` |
 | `/api/public/v1/producer/analytics` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/producer/analytics.ts` |
 | `/api/public/v1/producer/channels` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/producer/channels.ts` |
 | `/api/public/v1/producer/channels/$channelId/assets` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/producer/channels/$channelId/assets.ts` |
@@ -115,6 +116,7 @@ Total scanned routes: **370**
 | `/api/public/v1/profile/preferences` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/profile/preferences.ts` |
 | `/api/public/v1/profiles/` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/profiles/index.ts` |
 | `/api/public/v1/provider/channels` | `provider` | requireProvider (Active provider license and tenant membership) | `src/routes/api/public/v1/provider/channels.ts` |
+| `/api/public/v1/provider/channels/$id/checklist` | `viewer` | requireViewer (Authenticated Firebase viewer token + active account session) | `src/routes/api/public/v1/provider/channels/$id/checklist.ts` |
 | `/api/public/v1/provider/contracts` | `provider` | requireProvider (Active provider license and tenant membership) | `src/routes/api/public/v1/provider/contracts.ts` |
 | `/api/public/v1/provider/dashboard` | `provider` | requireProvider (Active provider license and tenant membership) | `src/routes/api/public/v1/provider/dashboard.ts` |
 | `/api/public/v1/provider/disputes` | `provider` | requireProvider (Active provider license and tenant membership) | `src/routes/api/public/v1/provider/disputes.ts` |

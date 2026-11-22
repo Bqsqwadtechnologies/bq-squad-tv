@@ -1,3 +1,4 @@
+import { verifyPreviewToken } from "@/lib/server/preview-grants";
 import { requireVerifiedViewer } from "@/lib/server/access";
 import { createFileRoute } from "@tanstack/react-router";
 import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
@@ -48,6 +49,7 @@ const bodySchema = z.object({
   integrityNonce: z.string().uuid().optional(),
   integrityToken: z.string().min(1).max(20_000).optional(),
   idempotencyKey: z.string().uuid(),
+  previewToken: z.string().optional(),
 });
 
 async function makePlaybackUrl(
@@ -306,7 +308,20 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
                     (p.targetType === "channel" && p.targetId === body.channelId)),
               ));
 
-          const isPreviewGrant = (channel as Record<string, unknown>)["isPreviewGrant"] === true;
+          let isPreviewGrant = false;
+          if (body.previewToken) {
+            try {
+              const previewPayload = verifyPreviewToken(body.previewToken);
+              const targetMatches =
+                (previewPayload.targetType === "channel" && previewPayload.targetId === body.channelId) ||
+                (previewPayload.targetType === "asset" && previewPayload.targetId === assetId);
+              if (targetMatches && (previewPayload.granteeUid === user.uid || previewPayload.role === "operator" || previewPayload.role === "owner")) {
+                isPreviewGrant = true;
+              }
+            } catch {
+              isPreviewGrant = false;
+            }
+          }
           const paidPlayback = !isExplicitOwnerFree && !isPreviewGrant;
 
           assertContentPlaybackRights({
