@@ -1,5 +1,6 @@
 import { ApiError, type Firestore, encodeFields } from "./firebase-admin";
-import { isSupportedPaystackCurrency, requireCurrency } from "./currency";
+import { isSupportedPaystackCurrency, minorUnitDigits, requireCurrency } from "./currency";
+import { DEFAULT_EXCHANGE_RATES } from "./pricing";
 
 function requiredSecret(): string {
   const secret = process.env["PAYSTACK_SECRET_KEY"];
@@ -265,6 +266,41 @@ export const DEFAULT_NGN_TOPUPS: Record<
   ngn_200000: { amountMinor: 20000000, creditMinor: 20000000 },
 };
 
+function convertedDefaultTopup(
+  config: Record<string, unknown>,
+  packageId: string,
+  currency: string,
+): { amountMinor: number; creditMinor: number } | null {
+  const base = DEFAULT_NGN_TOPUPS[packageId];
+  if (!base || !isSupportedPaystackCurrency(currency)) return null;
+  const configuredRates = config["exchangeRates"];
+  const rates = {
+    ...DEFAULT_EXCHANGE_RATES,
+    ...(configuredRates && typeof configuredRates === "object" && !Array.isArray(configuredRates)
+      ? configuredRates as Record<string, number>
+      : {}),
+  };
+  const ngnRate = rates["NGN"];
+  const targetRate = rates[currency];
+  if (
+    typeof ngnRate !== "number" || !Number.isFinite(ngnRate) || ngnRate <= 0 ||
+    typeof targetRate !== "number" || !Number.isFinite(targetRate) || targetRate <= 0
+  ) return null;
+
+  // Convert the NGN package's major-unit value through the configured
+  // USD-based exchange table, then round to the target currency's ISO minor unit.
+  const ngnMajor = base.amountMinor / 100;
+  const targetMajor = (ngnMajor / ngnRate) * targetRate;
+  const digits = minorUnitDigits(currency);
+  const creditMinor = Math.max(1, Math.round(targetMajor * (10 ** digits)));
+  return {
+    // Paystack's XOF API amount is expressed in hundredths although the
+    // wallet's XOF ledger uses whole units.
+    amountMinor: currency === "XOF" ? creditMinor * 100 : creditMinor,
+    creditMinor,
+  };
+}
+
 export function getPaystackTopup(
   config: Record<string, unknown>,
   packageId: string,
@@ -334,8 +370,10 @@ export function getPaystackTopup(
         : null;
   let offer =
     offers && typeof offers === "object" ? (offers as Record<string, unknown>)[packageId] : null;
-  if ((!offer || typeof offer !== "object") && currency === "NGN" && DEFAULT_NGN_TOPUPS[packageId]) {
-    offer = DEFAULT_NGN_TOPUPS[packageId];
+  if (!offer || typeof offer !== "object") {
+    offer = currency === "NGN"
+      ? DEFAULT_NGN_TOPUPS[packageId]
+      : convertedDefaultTopup(config, packageId, currency);
   }
   if (!offer || typeof offer !== "object")
     throw new ApiError(400, "TOPUP_UNAVAILABLE", "This wallet top-up is not available.");
