@@ -680,7 +680,7 @@ function ZillionaireTeamContent({
                     required
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="operator@bqsqwad.tv"
+                    placeholder="operator@example.com"
                     className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-500"
                   />
                 </div>
