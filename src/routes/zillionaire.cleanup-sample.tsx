@@ -106,6 +106,7 @@ function CleanupSampleContentInner({
   const [password, setPassword] = useState("");
   const [typedConfirmation, setTypedConfirmation] = useState("");
   const [reason, setReason] = useState("");
+  const [cleanupScope, setCleanupScope] = useState<"fake_live_streams" | "all_sample_content">("fake_live_streams");
 
   const handleScanDryRun = async () => {
     setIsScanning(true);
@@ -118,7 +119,7 @@ function CleanupSampleContentInner({
           ...headers,
           "content-type": "application/json",
         },
-        body: JSON.stringify({ dryRun: true }),
+        body: JSON.stringify({ dryRun: true, scope: cleanupScope }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -184,6 +185,7 @@ function CleanupSampleContentInner({
           dryRun: false,
           confirmation: typedConfirmation,
           reason: reason.trim(),
+          scope: cleanupScope,
         }),
       });
 
@@ -289,6 +291,27 @@ function CleanupSampleContentInner({
           <div className="lg:col-span-2 space-y-6">
             <ConsoleCard title="Cleanup Workflow & Authorization" description="Two-step verified cleanup">
               <div className="space-y-5">
+                <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-4">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-cyan-200 mb-2">
+                    Cleanup scope
+                  </label>
+                  <select
+                    value={cleanupScope}
+                    onChange={(event) => {
+                      setCleanupScope(event.target.value as "fake_live_streams" | "all_sample_content");
+                      setScanResult(null);
+                      setCleanupResult(null);
+                    }}
+                    disabled={isScanning || isExecuting}
+                    className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2.5 text-sm text-white"
+                  >
+                    <option value="fake_live_streams">Only fake / test live streams (recommended)</option>
+                    <option value="all_sample_content">All demo content and sample storage records</option>
+                  </select>
+                  <p className="mt-2 text-xs text-slate-400">
+                    Fake-stream cleanup targets placeholder domains and clearly seeded live-channel records. Real stream URLs are left untouched.
+                  </p>
+                </div>
                 {/* Step 1: Dry run */}
                 <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
                   <div className="flex items-center justify-between">
@@ -307,8 +330,7 @@ function CleanupSampleContentInner({
                     )}
                   </div>
                   <p className="text-xs text-slate-400 leading-relaxed">
-                    Scans database collections for records with demo flags, fixture IDs, system seed titles, and
-                    mock storage destinations without modifying or deleting anything.
+                    Scans the selected cleanup scope without modifying or deleting anything. Fake-stream mode only flags known placeholder/test stream URLs and clearly seeded live-channel records.
                   </p>
                   <button
                     type="button"
