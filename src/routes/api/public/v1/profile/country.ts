@@ -23,6 +23,9 @@ export const Route = createFileRoute("/api/public/v1/profile/country")({
             fs.getDoc("users/" + user.uid),
             fs.getDoc("wallets/" + user.uid),
           ]);
+          const access = await resolvePlatformAccess(
+            fs, user.uid, user.email, user.customClaims, user.emailVerified === true,
+          );
           let countryCode = normalizeCountryCode(profile?.["countryCode"]);
           if (!countryCode) {
             countryCode = await detectCountryFromRequest(request);
@@ -40,7 +43,7 @@ export const Route = createFileRoute("/api/public/v1/profile/country")({
               ? (wallet["currency"] as string)
               : currencyForCountry(countryCode);
           return Response.json(
-            { countryCode, currency, walletCurrencyLocked: Boolean(wallet), countrySource: countryCode ? "account_or_ip" : "unavailable" },
+            { countryCode, currency, walletCurrencyLocked: Boolean(wallet), isZillionaireOwner: access.isZillionaireOwner, countrySource: countryCode ? "account_or_ip" : "unavailable" },
             { headers: { "cache-control": "no-store" } },
           );
         } catch (error) {
