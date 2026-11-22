@@ -166,7 +166,7 @@ export const SECRET_CATALOG: readonly SecretCatalogEntry[] = [
   {
     name: "BREVO_SENDER_EMAIL",
     category: "Infrastructure & Compute",
-    description: "Sender email address for verification and transactional emails (default: verification@bqsqwad.com)",
+    description: "Sender email address for verification and transactional emails (default: tv@bqsqwad.com)",
     recommendedRotationDays: 365,
     rotationReminder:
       "Confirm sender email has DKIM and SPF aligned in Brevo domain settings.",
