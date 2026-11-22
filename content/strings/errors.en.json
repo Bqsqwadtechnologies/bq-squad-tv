@@ -30,5 +30,8 @@
   "AGE_BELOW_MINIMUM": "You must be at least 13 years old to hold an account.",
   "DATE_OF_BIRTH_INVALID": "Please enter a valid date of birth within the last 120 years.",
   "PARENTAL_PIN_INCORRECT": "Incorrect parental controls PIN.",
-  "SESSION_LIMIT_EXCEEDED": "You have reached the maximum active viewing sessions for your account."
+  "SESSION_LIMIT_EXCEEDED": "You have reached the maximum active viewing sessions for your account.",
+  "PAYSTACK_CURRENCY_UNAVAILABLE": "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.",
+  "PAYMENT_CURRENCY_UNSUPPORTED": "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.",
+  "TOPUP_CURRENCY_NOT_CONFIGURED": "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet."
 }
