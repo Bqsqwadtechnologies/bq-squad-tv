@@ -26,9 +26,37 @@ export const Route = createFileRoute("/api/public/v1/profile/country")({
           const access = await resolvePlatformAccess(
             fs, user.uid, user.email, user.customClaims, user.emailVerified === true,
           );
+          const ownerOverride = profile?.["countryDetectionSource"] === "owner_test_override";
+          const detectedCountry = ownerOverride ? null : await detectCountryFromRequest(request);
           let countryCode = normalizeCountryCode(profile?.["countryCode"]);
-          if (!countryCode) {
-            countryCode = await detectCountryFromRequest(request);
+          if (detectedCountry && !ownerOverride) {
+            countryCode = detectedCountry;
+            const detectedCurrency = currencyForCountry(detectedCountry);
+            const storedCurrency = typeof wallet?.["currency"] === "string"
+              ? wallet["currency"] as string
+              : wallet ? "NGN" : null;
+            if (storedCurrency && storedCurrency !== detectedCurrency) {
+              const balance = typeof wallet?.["balanceMinor"] === "number" ? wallet["balanceMinor"] as number : 0;
+              const held = ["heldMinor", "heldBalanceMinor", "holdsMinor"].reduce(
+                (sum, key) => sum + (typeof wallet?.[key] === "number" && Number.isSafeInteger(wallet[key]) ? wallet[key] as number : 0), 0,
+              );
+              const activeSessions = await fs.getDoc("activeSessions/" + user.uid);
+              const activeIds = Object.keys(liveSessionLeases(activeSessions?.["sessions"], Date.now()));
+              if (balance === 0 && held === 0 && activeIds.length === 0) {
+                await fs.patchDoc("wallets/" + user.uid, { currency: detectedCurrency, updatedAt: new Date().toISOString() });
+              }
+            }
+            if (normalizeCountryCode(profile?.["countryCode"]) !== detectedCountry ||
+                profile?.["countryDetectionSource"] !== "ip") {
+              await fs.patchDoc("users/" + user.uid, {
+                countryCode: detectedCountry,
+                preferredCurrency: detectedCurrency,
+                countryDetectionSource: "ip",
+                countryDetectedAt: new Date().toISOString(),
+              });
+            }
+          } else if (!countryCode) {
+            countryCode = detectedCountry;
             if (countryCode) {
               await fs.patchDoc("users/" + user.uid, {
                 countryCode,
@@ -38,9 +66,10 @@ export const Route = createFileRoute("/api/public/v1/profile/country")({
               });
             }
           }
+          const refreshedWallet = wallet ? await fs.getDoc("wallets/" + user.uid) : null;
           const currency =
-            typeof wallet?.["currency"] === "string"
-              ? (wallet["currency"] as string)
+            typeof refreshedWallet?.["currency"] === "string"
+              ? (refreshedWallet["currency"] as string)
               : currencyForCountry(countryCode);
           return Response.json(
             { countryCode, currency, walletCurrencyLocked: Boolean(wallet), isZillionaireOwner: access.isZillionaireOwner, countrySource: countryCode ? "account_or_ip" : "unavailable" },
