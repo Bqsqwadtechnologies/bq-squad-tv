@@ -862,8 +862,8 @@ function ConsoleAuthPortal({
     try {
       await signInWithEmailPassword(email.trim(), password);
       window.location.reload();
-    } catch (err: any) {
-      setError(err?.message || "Invalid console credentials. Please check your email and password.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Invalid console credentials. Please check your email and password.");
     } finally {
       setBusy(false);
     }
@@ -909,8 +909,8 @@ function ConsoleAuthPortal({
       }
       setSuccess("Account created successfully. Loading your console...");
       setTimeout(() => window.location.reload(), 1000);
-    } catch (err: any) {
-      setError(err?.message || "Registration failed.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Registration failed.");
     } finally {
       setBusy(false);
     }
@@ -925,8 +925,8 @@ function ConsoleAuthPortal({
     try {
       await sendPasswordResetEmail(email.trim());
       setSuccess("Password reset instructions have been sent to your email.");
-    } catch (err: any) {
-      setError(err?.message || "Failed to send reset email.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to send reset email.");
     } finally {
       setBusy(false);
     }
