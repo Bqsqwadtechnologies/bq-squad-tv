@@ -212,7 +212,7 @@ function SettingsPage() {
             <span className="flex items-center gap-3">
               <Shield className="text-amber-400" size={20} />
               <span>
-                <span className="block text-sm font-bold">Zillionaire Dashboard</span>
+                <span className="block text-sm font-bold">Owner Dashboard</span>
                 <span className="block text-xs text-muted-foreground">Owner-only control centre · password protected</span>
               </span>
             </span>
