@@ -263,18 +263,15 @@ fun SettingsScreen(
             supportingContent = { Text("How we use necessary cookies and similar settings") },
             modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/legal/cookie") },
         )
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-        Text("Consoles", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp, bottom = 4.dp))
-        ListItem(
-            headlineContent = { Text("Producer Console") },
-            supportingContent = { Text("Manage channel catalog, content and analytics") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/producer") },
-        )
-        ListItem(
-            headlineContent = { Text("Provider Console") },
-            supportingContent = { Text("Manage licensed channels and statements") },
-            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/provider") },
-        )
+        if (FirebaseAuth.getInstance().currentUser?.isEmailVerified == true) {
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Text("Consoles", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 10.dp, bottom = 4.dp))
+            ListItem(
+                headlineContent = { Text("Producer Console") },
+                supportingContent = { Text("Manage channel catalog, content and analytics") },
+                modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/producer") },
+            )
+        }
         ListItem(
             headlineContent = { Text("Terms of service") },
             supportingContent = { Text("Review the current publication status") },
@@ -318,8 +315,9 @@ fun AccountScreen(
         ProfileAction("My purchases", "Wallet transactions", onWallet)
         ProfileAction("Watch history", "Recent viewing sessions", onHistory)
         ProfileAction("Notifications", "Account and programme updates", onNotifications)
-        ProfileAction("Producer Console", "Manage your channels", onProducer)
-        ProfileAction("Provider Console", "Licensed channel distribution", { uriHandler.openUri("https://tv.bqsqwad.com/provider") })
+        if (user?.isEmailVerified == true) {
+            ProfileAction("Producer Console", "Manage your channels", onProducer)
+        }
         ProfileAction("Terms of service", "Platform terms and conditions", { uriHandler.openUri("https://tv.bqsqwad.com/legal/terms") })
         ProfileAction("Privacy notice", "Privacy policy and personal data notice", { uriHandler.openUri("https://tv.bqsqwad.com/legal/privacy-policy") })
         ProfileAction("Account deletion", "Permanently delete account and data", { uriHandler.openUri("https://tv.bqsqwad.com/account-deletion") })
