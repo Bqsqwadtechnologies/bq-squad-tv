@@ -140,11 +140,9 @@ function AccountPage() {
             window.location.replace("/");
           }
         } catch (error) {
-          setMessage(
-            error instanceof Error
-              ? error.message
-              : "The current legal pages could not be checked.",
-          );
+          // Keep the legal acceptance gate, but never expose internal
+          // Firestore or publication-state details to the account holder.
+          setMessage("Account setup is temporarily unavailable. Please try again later.");
         }
       } else {
         setMessage("Verify your email with the six-digit code sent to your inbox.");
