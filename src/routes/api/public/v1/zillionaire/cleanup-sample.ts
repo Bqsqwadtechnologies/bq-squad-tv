@@ -78,6 +78,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
           // 1. Channels
           const channels = await fs.query("channels", { limit: 500 }).catch(() => []);
           const channelsToDelete: string[] = [];
+          const assetsToDelete: string[] = [];
+          const seriesToDelete: string[] = [];
+          const episodesToDelete: string[] = [];
+          const storageDestinationsToDelete: string[] = [];
+          const storageObjectsToDelete: string[] = [];
           for (const ch of channels) {
             const id = ch.__id;
             const title = String(ch["name"] || ch["title"] || "");
@@ -118,7 +123,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
           if (body.scope === "all_sample_content") {
           // 2. Content Assets
           const contentAssets = await fs.query("contentAssets", { limit: 500 }).catch(() => []);
-          const assetsToDelete: string[] = [];
           for (const asset of contentAssets) {
             const id = asset.__id;
             const title = String(asset["title"] || asset["name"] || "");
@@ -152,7 +156,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
 
           // 3. Series
           const series = await fs.query("series", { limit: 500 }).catch(() => []);
-          const seriesToDelete: string[] = [];
           for (const s of series) {
             const id = s.__id;
             const title = String(s["title"] || s["name"] || "");
@@ -175,7 +178,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
 
           // 4. Episodes
           const episodes = await fs.query("episodes", { limit: 500 }).catch(() => []);
-          const episodesToDelete: string[] = [];
           for (const ep of episodes) {
             const id = ep.__id;
             const title = String(ep["title"] || ep["name"] || "");
@@ -198,7 +200,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
 
           // 5. Storage Destinations
           const destinations = await fs.query("storageDestinations", { limit: 500 }).catch(() => []);
-          const storageDestinationsToDelete: string[] = [];
           for (const dest of destinations) {
             const id = dest.__id;
             const isSample =
@@ -219,7 +220,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
 
           // 6. Storage Objects
           const storageObjects = await fs.query("storageObjects", { limit: 500 }).catch(() => []);
-          const storageObjectsToDelete: string[] = [];
           for (const obj of storageObjects) {
             const id = obj.__id;
             const size = Number(obj["sizeBytes"] || obj["contentLength"] || 0);
