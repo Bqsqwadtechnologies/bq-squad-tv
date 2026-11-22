@@ -276,7 +276,7 @@ function AccountPage() {
       setLegalAcceptanceRequired(false);
       setMessage("Your acceptance has been saved. You can continue.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Your acceptance could not be saved.");
+      setMessage(sanitizeViewerError(error, "Your acceptance could not be saved."));
     } finally {
       setLegalAcceptanceBusy(false);
     }
@@ -381,7 +381,7 @@ function AccountPage() {
       }
       await continueWithEmailAccount(result.email);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not complete sign-in.");
+      setMessage(sanitizeViewerError(error, "Could not complete sign-in."));
     } finally {
       setBusy(false);
     }
@@ -395,7 +395,7 @@ function AccountPage() {
         const result = await signInWithGoogleCredential(credential);
         await continueWithEmailAccount(result.email);
       } catch (error) {
-        setMessage(error instanceof Error ? error.message : "Google sign-in failed.");
+        setMessage(sanitizeViewerError(error, "Google sign-in could not be completed."));
       } finally {
         setBusy(false);
       }
@@ -420,7 +420,7 @@ function AccountPage() {
           : "Your email is verified. You're signed in.",
       );
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Email verification failed.");
+      setMessage(sanitizeViewerError(error, "Email verification failed."));
     } finally {
       setBusy(false);
     }
@@ -446,7 +446,7 @@ function AccountPage() {
         );
       }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not resend the code.");
+      setMessage(sanitizeViewerError(error, "Could not resend the code."));
     } finally {
       setBusy(false);
     }
@@ -463,7 +463,7 @@ function AccountPage() {
       await sendPasswordResetEmail(email);
       setMessage("If the address is registered, a password-reset email has been requested.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not request password recovery.");
+      setMessage(sanitizeViewerError(error, "Could not request password recovery."));
     } finally {
       setBusy(false);
     }
@@ -480,7 +480,7 @@ function AccountPage() {
       if (!account) throw new Error("Your account is not connected yet. Please sign in again.");
       window.location.assign("/");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not open your account.");
+      setMessage(sanitizeViewerError(error, "Could not open your account."));
       setBusy(false);
     }
   }
@@ -497,7 +497,7 @@ function AccountPage() {
       setCode("");
       setMessage("All active sessions have been revoked. Sign in again on this device.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Could not revoke your sessions.");
+      setMessage(sanitizeViewerError(error, "Could not revoke your sessions."));
     } finally {
       setBusy(false);
     }
@@ -527,7 +527,7 @@ function AccountPage() {
       setAccountEmail("");
       setMessage("Your account and personal data have been deleted.");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Account deletion failed.");
+      setMessage(sanitizeViewerError(error, "Account deletion failed."));
     } finally {
       setBusy(false);
     }
@@ -549,31 +549,31 @@ function AccountPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#030b2a] px-4 py-12 text-white">
+    <main className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#030b2a] px-4 py-12 text-slate-900 dark:text-white transition-colors duration-200">
       <div className="w-full max-w-md">
         <a href="/" className="mb-8 flex justify-center" aria-label="BQ SQWAD TV home">
           <BrandLogo variant="horizontal" className="h-10 w-auto" />
         </a>
-        <label className="mb-4 block text-sm font-semibold text-blue-50">
+        <label className="mb-4 block text-sm font-semibold text-slate-700 dark:text-blue-50">
           Appearance
           <select
             value={themeMode}
             onChange={(event) => void saveThemePreference(event.target.value as "light" | "dark")}
-            className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-3 py-3 text-white"
+            className="mt-2 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-3 py-3 text-slate-900 dark:text-white shadow-sm focus:border-cyan-500 dark:focus:border-cyan-300"
             aria-label="Choose appearance"
           >
             <option value="light">White theme</option>
             <option value="dark">Dark navy theme</option>
           </select>
         </label>
-        <section className="rounded-3xl border border-cyan-200/15 bg-[#08163e] p-6 shadow-2xl shadow-blue-950/50 sm:p-8">
+        <section className="rounded-3xl border border-slate-200 dark:border-cyan-200/15 bg-white dark:bg-[#08163e] p-6 shadow-xl dark:shadow-2xl dark:shadow-blue-950/50 sm:p-8 transition-colors duration-200">
           {legalAcceptanceRequired ? (
             <>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
                 Updated terms
               </p>
-              <h1 className="mt-3 text-2xl font-black">Please review these pages</h1>
-              <p className="mt-3 text-sm leading-6 text-blue-100/70">
+              <h1 className="mt-3 text-2xl font-black text-slate-900 dark:text-white">Please review these pages</h1>
+              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-blue-100/70">
                 We have updated one or more documents. Review each current version before continuing
                 to watch.
               </p>
@@ -581,13 +581,13 @@ function AccountPage() {
                 {legalPages.map((page) => (
                   <li
                     key={page.slug}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#030b2a] p-3 text-sm"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#030b2a] p-3 text-sm text-slate-800 dark:text-white"
                   >
                     <span>
                       {page.title} · version {page.version}
                     </span>
                     <a
-                      className="font-bold text-cyan-200 underline"
+                      className="font-bold text-cyan-700 dark:text-cyan-200 underline"
                       href={"/legal/" + page.slug}
                       target="_blank"
                       rel="noreferrer"
@@ -601,92 +601,92 @@ function AccountPage() {
                 type="button"
                 onClick={() => void acceptCurrentLegalPages()}
                 disabled={legalAcceptanceBusy}
-                className="mt-6 w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 font-extrabold text-[#031039] disabled:opacity-50"
+                className="mt-6 w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 dark:from-cyan-300 dark:to-blue-400 px-4 py-3 font-extrabold text-slate-950 dark:text-[#031039] disabled:opacity-50"
               >
                 {legalAcceptanceBusy ? "Saving acceptance…" : "I have reviewed and accept"}
               </button>
             </>
           ) : signedIn ? (
             <>
-              <div className="flex items-center gap-4 border-b border-white/10 pb-5">
+              <div className="flex items-center gap-4 border-b border-slate-200 dark:border-white/10 pb-5">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-cyan-400 to-blue-600 text-2xl font-black text-[#031039] shadow-lg shadow-cyan-500/20">
                   {(accountEmail[0] || "V").toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <span className="inline-block rounded-full bg-cyan-400/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-cyan-300">
+                  <span className="inline-block rounded-full bg-cyan-100 dark:bg-cyan-400/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-300">
                     Viewer
                   </span>
-                  <h1 className="mt-1 text-xl font-black truncate">{accountEmail.split("@")[0]}</h1>
-                  <p className="text-xs text-blue-100/60 truncate">{accountEmail}</p>
+                  <h1 className="mt-1 text-xl font-black truncate text-slate-900 dark:text-white">{accountEmail.split("@")[0]}</h1>
+                  <p className="text-xs text-slate-500 dark:text-blue-100/60 truncate">{accountEmail}</p>
                 </div>
               </div>
 
               {/* Wallet Balance Card */}
-              <div className="mt-5 rounded-2xl border border-cyan-300/20 bg-gradient-to-r from-[#0d2258] to-[#07173e] p-5 shadow-inner">
+              <div className="mt-5 rounded-2xl border border-cyan-200 dark:border-cyan-300/20 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-[#0d2258] dark:to-[#07173e] p-5 shadow-sm dark:shadow-inner">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+                  <span className="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-300">
                     Available Balance
                   </span>
                   <a
                     href="/wallet"
-                    className="text-xs font-bold text-cyan-200 underline hover:text-white"
+                    className="text-xs font-bold text-cyan-700 dark:text-cyan-200 underline hover:text-cyan-900 dark:hover:text-white"
                   >
                     Top Up
                   </a>
                 </div>
-                <div className="mt-2 text-2xl font-black text-white">
+                <div className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
                   {walletBalanceMinor !== null ? (walletBalanceMinor / 100).toFixed(2) : "0.00"}{" "}
                   {walletCurrency}
                 </div>
-                <p className="mt-1 text-[11px] text-blue-100/50">
+                <p className="mt-1 text-[11px] text-slate-500 dark:text-blue-100/50">
                   Wallet currency is tied to your account country.
                 </p>
               </div>
 
               {/* Viewer Activity & Watch Time Card */}
               {viewerAnalytics && (
-                <div className="mt-5 rounded-2xl border border-cyan-400/20 bg-gradient-to-br from-[#0c1f4e] to-[#040f2e] p-5 shadow-lg">
+                <div className="mt-5 rounded-2xl border border-slate-200 dark:border-cyan-400/20 bg-slate-50 dark:bg-gradient-to-br dark:from-[#0c1f4e] dark:to-[#040f2e] p-5 shadow-sm dark:shadow-lg">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+                      <span className="h-2 w-2 rounded-full bg-cyan-500 dark:bg-cyan-400 animate-pulse" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-300">
                         My Watch Time &amp; Activity
                       </span>
                     </div>
                     <a
                       href="/history"
-                      className="text-xs font-bold text-cyan-200 underline hover:text-white"
+                      className="text-xs font-bold text-cyan-700 dark:text-cyan-200 underline hover:text-cyan-900 dark:hover:text-white"
                     >
                       Full History
                     </a>
                   </div>
                   <div className="mt-3 grid grid-cols-2 gap-3">
-                    <div className="rounded-xl border border-white/10 bg-[#030b2a] p-3">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-100/60">
+                    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#030b2a] p-3 shadow-sm">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-blue-100/60">
                         Total Watch Time
                       </span>
-                      <div className="mt-1 text-xl font-black text-white">
+                      <div className="mt-1 text-xl font-black text-slate-900 dark:text-white">
                         {viewerAnalytics.summary.totalMinutesWatched}{" "}
-                        <span className="text-xs font-normal text-cyan-300">mins</span>
+                        <span className="text-xs font-normal text-cyan-600 dark:text-cyan-300">mins</span>
                       </div>
-                      <p className="text-[10px] text-blue-100/50">
+                      <p className="text-[10px] text-slate-500 dark:text-blue-100/50">
                         {viewerAnalytics.summary.totalHoursWatched} hrs total
                       </p>
                     </div>
-                    <div className="rounded-xl border border-white/10 bg-[#030b2a] p-3">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-blue-100/60">
+                    <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#030b2a] p-3 shadow-sm">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-blue-100/60">
                         Viewing Sessions
                       </span>
-                      <div className="mt-1 text-xl font-black text-white">
+                      <div className="mt-1 text-xl font-black text-slate-900 dark:text-white">
                         {viewerAnalytics.summary.totalSessionsCount}
                       </div>
-                      <p className="text-[10px] text-blue-100/50">Streams watched</p>
+                      <p className="text-[10px] text-slate-500 dark:text-blue-100/50">Streams watched</p>
                     </div>
                   </div>
 
                   {viewerAnalytics.channels && viewerAnalytics.channels.length > 0 && (
-                    <div className="mt-4 border-t border-white/10 pt-3">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-blue-100/70">
+                    <div className="mt-4 border-t border-slate-200 dark:border-white/10 pt-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-blue-100/70">
                         Watch Time by Channel
                       </p>
                       <div className="mt-2 space-y-1.5">
@@ -695,8 +695,8 @@ function AccountPage() {
                             key={ch.channelId}
                             className="flex items-center justify-between text-xs"
                           >
-                            <span className="truncate text-white font-medium">{ch.title}</span>
-                            <span className="font-bold text-cyan-300 ml-2">
+                            <span className="truncate text-slate-800 dark:text-white font-medium">{ch.title}</span>
+                            <span className="font-bold text-cyan-700 dark:text-cyan-300 ml-2">
                               {ch.minutesWatched}m
                             </span>
                           </div>
@@ -706,8 +706,8 @@ function AccountPage() {
                   )}
 
                   {viewerAnalytics.videos && viewerAnalytics.videos.length > 0 && (
-                    <div className="mt-3 border-t border-white/10 pt-3">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-blue-100/70">
+                    <div className="mt-3 border-t border-slate-200 dark:border-white/10 pt-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-blue-100/70">
                         Watch Time by Video
                       </p>
                       <div className="mt-2 space-y-1.5">
@@ -716,8 +716,8 @@ function AccountPage() {
                             key={vid.assetId}
                             className="flex items-center justify-between text-xs"
                           >
-                            <span className="truncate text-white font-medium">{vid.title}</span>
-                            <span className="font-bold text-cyan-300 ml-2">
+                            <span className="truncate text-slate-800 dark:text-white font-medium">{vid.title}</span>
+                            <span className="font-bold text-cyan-700 dark:text-cyan-300 ml-2">
                               {vid.minutesWatched}m
                             </span>
                           </div>
@@ -732,63 +732,63 @@ function AccountPage() {
               <nav aria-label="Account shortcuts" className="mt-5 grid grid-cols-2 gap-3">
                 <a
                   href="/wallet"
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition"
+                  className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-slate-800 dark:text-blue-50 hover:border-cyan-400 dark:hover:border-cyan-300/30 transition shadow-sm"
                 >
                   <span>My Wallet</span>
-                  <span className="text-cyan-300 text-xs font-bold">›</span>
+                  <span className="text-cyan-600 dark:text-cyan-300 text-xs font-bold">›</span>
                 </a>
                 <a
                   href="/wallet#purchases"
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition"
+                  className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-slate-800 dark:text-blue-50 hover:border-cyan-400 dark:hover:border-cyan-300/30 transition shadow-sm"
                 >
                   <span>My Purchases</span>
-                  <span className="text-cyan-300 text-xs font-bold">›</span>
+                  <span className="text-cyan-600 dark:text-cyan-300 text-xs font-bold">›</span>
                 </a>
                 <a
                   href="/history"
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition"
+                  className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-slate-800 dark:text-blue-50 hover:border-cyan-400 dark:hover:border-cyan-300/30 transition shadow-sm"
                 >
                   <span>Watch History</span>
-                  <span className="text-cyan-300 text-xs font-bold">›</span>
+                  <span className="text-cyan-600 dark:text-cyan-300 text-xs font-bold">›</span>
                 </a>
                 <a
                   href="/notifications"
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition"
+                  className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-slate-800 dark:text-blue-50 hover:border-cyan-400 dark:hover:border-cyan-300/30 transition shadow-sm"
                 >
                   <span>Notifications</span>
-                  <span className="text-cyan-300 text-xs font-bold">›</span>
+                  <span className="text-cyan-600 dark:text-cyan-300 text-xs font-bold">›</span>
                 </a>
                 <button
                   type="button"
                   onClick={() => setShowSettingsView((v) => !v)}
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition text-left"
+                  className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-slate-800 dark:text-blue-50 hover:border-cyan-400 dark:hover:border-cyan-300/30 transition text-left shadow-sm"
                 >
                   <span>Settings</span>
-                  <span className="text-cyan-300 text-xs font-bold">
+                  <span className="text-cyan-600 dark:text-cyan-300 text-xs font-bold">
                     {showSettingsView ? "▴" : "▾"}
                   </span>
                 </button>
                 <a
                   href="/help"
-                  className="flex items-center justify-between rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-blue-50 hover:border-cyan-300/30 transition"
+                  className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#030b2a] px-3.5 py-3 text-sm font-bold text-slate-800 dark:text-blue-50 hover:border-cyan-400 dark:hover:border-cyan-300/30 transition shadow-sm"
                 >
                   <span>Help &amp; Support</span>
-                  <span className="text-cyan-300 text-xs font-bold">›</span>
+                  <span className="text-cyan-600 dark:text-cyan-300 text-xs font-bold">›</span>
                 </a>
               </nav>
 
               {/* Collapsible Settings view */}
               {showSettingsView && (
-                <div className="mt-4 rounded-xl border border-white/10 bg-[#030b2a]/80 p-4 space-y-4">
-                  <p className="text-xs font-bold uppercase tracking-wider text-cyan-300">
+                <div className="mt-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-[#030b2a]/80 p-4 space-y-4">
+                  <p className="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-300">
                     Settings &amp; Preferences
                   </p>
-                  <label className="block text-xs font-semibold text-blue-100/80">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-blue-100/80">
                     Account Country
                     <select
                       value={countryCode}
                       onChange={(event) => void saveAccountCountry(event.target.value)}
-                      className="mt-1.5 w-full rounded-lg border border-white/15 bg-[#030b2a] px-3 py-2 text-sm text-white"
+                      className="mt-1.5 w-full rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-3 py-2 text-sm text-slate-900 dark:text-white shadow-sm"
                     >
                       <option value="US">United States — USD</option>
                       <option value="NG">Nigeria — NGN</option>
@@ -803,7 +803,7 @@ function AccountPage() {
                       <option value="FR">France — EUR</option>
                       <option value="JP">Japan — JPY</option>
                     </select>
-                    <span className="mt-1 block text-[11px] text-blue-100/50">
+                    <span className="mt-1 block text-[11px] text-slate-500 dark:text-blue-100/50">
                       Wallet currency: {walletCurrency}. It cannot be changed after your wallet is
                       established.
                     </span>
@@ -812,7 +812,7 @@ function AccountPage() {
                     type="button"
                     disabled={busy}
                     onClick={() => void handleRevokeAllSessions()}
-                    className="w-full rounded-lg border border-cyan-300/25 px-3 py-2 text-xs font-bold text-cyan-100 hover:bg-cyan-300/5 disabled:opacity-50"
+                    className="w-full rounded-lg border border-cyan-400/40 dark:border-cyan-300/25 px-3 py-2 text-xs font-bold text-cyan-700 dark:text-cyan-100 hover:bg-cyan-50 dark:hover:bg-cyan-300/5 disabled:opacity-50"
                   >
                     {busy ? "Please wait…" : "Sign out on all devices"}
                   </button>
@@ -820,7 +820,7 @@ function AccountPage() {
                     type="button"
                     disabled={busy}
                     onClick={() => void handleDeleteAccount()}
-                    className="w-full rounded-lg border border-rose-500/30 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-500/10 disabled:opacity-50"
+                    className="w-full rounded-lg border border-rose-400/40 dark:border-rose-500/30 px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 disabled:opacity-50"
                   >
                     Delete Account &amp; Personal Data
                   </button>
@@ -828,26 +828,26 @@ function AccountPage() {
               )}
 
               {/* Consoles Section */}
-              <div className="mt-6 border-t border-white/10 pt-5">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+              <div className="mt-6 border-t border-slate-200 dark:border-white/10 pt-5">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
                   Consoles
                 </p>
                 <div className="mt-3 grid grid-cols-2 gap-3">
                   <a
                     href="/producer"
-                    className="flex flex-col items-center justify-center rounded-xl border border-cyan-400/20 bg-[#030b2a] p-3 text-center text-sm font-bold text-cyan-100 hover:border-cyan-300 hover:bg-cyan-500/5 transition"
+                    className="flex flex-col items-center justify-center rounded-xl border border-slate-200 dark:border-cyan-400/20 bg-slate-50 dark:bg-[#030b2a] p-3 text-center text-sm font-bold text-slate-800 dark:text-cyan-100 hover:border-cyan-400 dark:hover:border-cyan-300 hover:bg-cyan-50/50 dark:hover:bg-cyan-500/5 transition shadow-sm"
                   >
                     <span>Producer Console</span>
-                    <span className="mt-0.5 text-[10px] font-normal text-blue-100/50">
+                    <span className="mt-0.5 text-[10px] font-normal text-slate-500 dark:text-blue-100/50">
                       Content management
                     </span>
                   </a>
                   <a
                     href="/provider"
-                    className="flex flex-col items-center justify-center rounded-xl border border-cyan-400/20 bg-[#030b2a] p-3 text-center text-sm font-bold text-cyan-100 hover:border-cyan-300 hover:bg-cyan-500/5 transition"
+                    className="flex flex-col items-center justify-center rounded-xl border border-slate-200 dark:border-cyan-400/20 bg-slate-50 dark:bg-[#030b2a] p-3 text-center text-sm font-bold text-slate-800 dark:text-cyan-100 hover:border-cyan-400 dark:hover:border-cyan-300 hover:bg-cyan-50/50 dark:hover:bg-cyan-500/5 transition shadow-sm"
                   >
                     <span>Provider Console</span>
-                    <span className="mt-0.5 text-[10px] font-normal text-blue-100/50">
+                    <span className="mt-0.5 text-[10px] font-normal text-slate-500 dark:text-blue-100/50">
                       Channel licensing
                     </span>
                   </a>
@@ -861,7 +861,7 @@ function AccountPage() {
                   disabled={!countryReady || busy}
                   onClick={() => void handleContinue()}
                   aria-label="Continue to BQ SQWAD TV"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 text-sm font-extrabold text-[#031039] transition hover:brightness-110 disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 dark:from-cyan-300 dark:to-blue-400 px-4 py-3 text-sm font-extrabold text-slate-950 dark:text-[#031039] transition hover:brightness-105 disabled:opacity-50 shadow-md"
                 >
                   <img
                     src="/brand/bq-sqwad-tv-logo.png"
@@ -874,7 +874,7 @@ function AccountPage() {
                   type="button"
                   disabled={busy}
                   onClick={() => void handleSignOut()}
-                  className="w-full rounded-xl border border-white/15 px-4 py-2.5 text-xs font-bold text-blue-100/70 hover:text-white hover:bg-white/5 disabled:opacity-50"
+                  className="w-full rounded-xl border border-slate-300 dark:border-white/15 px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-blue-100/70 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-50"
                 >
                   {busy ? "Please wait…" : "Sign out"}
                 </button>
@@ -882,16 +882,16 @@ function AccountPage() {
             </>
           ) : verificationPending ? (
             <>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
                 Email verification
               </p>
-              <h1 className="mt-3 text-2xl font-black">Check your inbox</h1>
-              <p className="mt-3 text-sm leading-6 text-blue-100/70">
+              <h1 className="mt-3 text-2xl font-black text-slate-900 dark:text-white">Check your inbox</h1>
+              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-blue-100/70">
                 Enter the six-digit code sent to {email || accountEmail}. It expires after 10
                 minutes.
               </p>
               <form onSubmit={handleVerify} className="mt-6 space-y-4">
-                <label className="block text-sm font-semibold text-blue-50">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-blue-50">
                   Verification code
                   <input
                     value={code}
@@ -900,14 +900,14 @@ function AccountPage() {
                     autoComplete="one-time-code"
                     maxLength={6}
                     required
-                    className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-center text-2xl font-bold tracking-[0.5em] outline-none focus:border-cyan-300"
+                    className="mt-2 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-4 py-3 text-center text-2xl font-bold tracking-[0.5em] text-slate-900 dark:text-white outline-none focus:border-cyan-500 dark:focus:border-cyan-300 shadow-sm"
                     placeholder="000000"
                   />
                 </label>
                 <button
                   type="submit"
                   disabled={busy || code.length !== 6}
-                  className="w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 font-extrabold text-[#031039] disabled:opacity-50"
+                  className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 dark:from-cyan-300 dark:to-blue-400 px-4 py-3 font-extrabold text-slate-950 dark:text-[#031039] disabled:opacity-50"
                 >
                   {busy ? "Verifying…" : "Verify email"}
                 </button>
@@ -916,25 +916,25 @@ function AccountPage() {
                 type="button"
                 disabled={busy}
                 onClick={() => void handleResend()}
-                className="mt-4 w-full text-sm font-semibold text-cyan-200 hover:text-white disabled:opacity-50"
+                className="mt-4 w-full text-sm font-semibold text-cyan-700 dark:text-cyan-200 hover:text-cyan-900 dark:hover:text-white disabled:opacity-50"
               >
                 Resend code
               </button>
             </>
           ) : (
             <>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
                 Your account
               </p>
-              <h1 className="mt-3 text-2xl font-black">
+              <h1 className="mt-3 text-2xl font-black text-slate-900 dark:text-white">
                 {createAccount ? "Create your account" : "Welcome back"}
               </h1>
-              <p className="mt-3 text-sm leading-6 text-blue-100/70">
+              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-blue-100/70">
                 Sign in to continue to your BQ SQWAD TV experience.
               </p>
               <form onSubmit={handleAuthentication} className="mt-6 space-y-4">
                 {createAccount ? (
-                  <label className="block text-sm font-semibold text-blue-50">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-blue-50">
                     Date of birth
                     <input
                       type="date"
@@ -942,11 +942,11 @@ function AccountPage() {
                       onChange={(event) => setDateOfBirth(event.target.value)}
                       max={new Date().toISOString().slice(0, 10)}
                       required
-                      className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 text-white outline-none focus:border-cyan-300"
+                      className="mt-2 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-cyan-500 dark:focus:border-cyan-300 shadow-sm"
                     />
                   </label>
                 ) : null}
-                <label className="block text-sm font-semibold text-blue-50">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-blue-50">
                   Email address
                   <input
                     type="email"
@@ -954,10 +954,10 @@ function AccountPage() {
                     onChange={(event) => setEmail(event.target.value)}
                     autoComplete="email"
                     required
-                    className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 outline-none focus:border-cyan-300"
+                    className="mt-2 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-cyan-500 dark:focus:border-cyan-300 shadow-sm"
                   />
                 </label>
-                <label className="block text-sm font-semibold text-blue-50">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-blue-50">
                   Password
                   <input
                     type="password"
@@ -966,7 +966,7 @@ function AccountPage() {
                     autoComplete={createAccount ? "new-password" : "current-password"}
                     minLength={6}
                     required
-                    className="mt-2 w-full rounded-xl border border-white/15 bg-[#030b2a] px-4 py-3 outline-none focus:border-cyan-300"
+                    className="mt-2 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-cyan-500 dark:focus:border-cyan-300 shadow-sm"
                   />
                 </label>
                 <GoogleSignInButton
@@ -981,18 +981,18 @@ function AccountPage() {
                     password.length < 6 ||
                     (createAccount && (!dateOfBirth || !legalConsentAccepted))
                   }
-                  className="w-full rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-4 py-3 font-extrabold text-[#031039] disabled:opacity-50"
+                  className="w-full rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 dark:from-cyan-300 dark:to-blue-400 px-4 py-3 font-extrabold text-slate-950 dark:text-[#031039] disabled:opacity-50 shadow-md"
                 >
                   {busy ? "Please wait…" : createAccount ? "Create account" : "Sign in"}
                 </button>
               </form>
               {createAccount ? (
-                <label className="mt-3 flex items-start gap-3 text-xs leading-5 text-blue-100/70">
+                <label className="mt-3 flex items-start gap-3 text-xs leading-5 text-slate-600 dark:text-blue-100/70">
                   <input
                     type="checkbox"
                     checked={legalConsentAccepted}
                     onChange={(event) => setLegalConsentAccepted(event.target.checked)}
-                    className="mt-1 size-4 accent-cyan-300"
+                    className="mt-1 size-4 accent-cyan-500 dark:accent-cyan-300"
                     required
                   />
                   <span>
@@ -1001,7 +1001,7 @@ function AccountPage() {
                       href="/terms"
                       target="_blank"
                       rel="noreferrer"
-                      className="underline underline-offset-4 text-cyan-200"
+                      className="underline underline-offset-4 text-cyan-700 dark:text-cyan-200"
                     >
                       Terms of service
                     </a>{" "}
@@ -1010,7 +1010,7 @@ function AccountPage() {
                       href="/privacy"
                       target="_blank"
                       rel="noreferrer"
-                      className="underline underline-offset-4 text-cyan-200"
+                      className="underline underline-offset-4 text-cyan-700 dark:text-cyan-200"
                     >
                       Privacy Policy
                     </a>
@@ -1027,7 +1027,7 @@ function AccountPage() {
                     setLegalConsentAccepted(false);
                     setMessage("");
                   }}
-                  className="font-semibold text-cyan-200 hover:text-white"
+                  className="font-semibold text-cyan-700 dark:text-cyan-200 hover:underline"
                 >
                   {createAccount ? "Already registered? Sign in" : "Create an account"}
                 </button>
@@ -1035,7 +1035,7 @@ function AccountPage() {
                   type="button"
                   disabled={busy}
                   onClick={() => void handlePasswordReset()}
-                  className="text-blue-100/70 hover:text-white disabled:opacity-50"
+                  className="text-slate-500 dark:text-blue-100/70 hover:text-slate-800 dark:hover:text-white disabled:opacity-50"
                 >
                   Forgot password?
                 </button>
@@ -1045,7 +1045,7 @@ function AccountPage() {
           {message && (
             <p
               role="status"
-              className="mt-5 rounded-xl border border-cyan-200/15 bg-cyan-300/5 p-3 text-sm leading-6 text-cyan-100"
+              className="mt-5 rounded-xl border border-cyan-200 dark:border-cyan-200/15 bg-cyan-50 dark:bg-cyan-300/5 p-3 text-sm leading-6 text-cyan-900 dark:text-cyan-100"
             >
               {message}
             </p>

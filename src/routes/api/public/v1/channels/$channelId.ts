@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/public/v1/channels/$channelId")({
               throw new ApiError(
                 401,
                 "UNAUTHENTICATED",
-                "A Firebase sign-in token is required for adult-only channels.",
+                "Please sign in to verify your age for adult-only channels.",
               );
             }
             const profile = await getUserProfile(fs, user.uid);

@@ -47,7 +47,7 @@ async function firebaseAuthRequest(
   if (!response.ok || !result.idToken || !result.refreshToken) {
     const message = result.error?.message;
     if (message === "OPERATION_NOT_ALLOWED") {
-      throw new Error("Email and password sign-in is not enabled for this Firebase project.");
+      throw new Error("Email and password sign-in is temporarily unavailable. Please try again shortly.");
     }
     if (message === "EMAIL_EXISTS") throw new Error("An account already exists for this email.");
     if (
@@ -183,7 +183,7 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
     // Do not reveal whether an email address is registered.
     const result = (await response.json()) as { error?: { message?: string } };
     if (result.error?.message === "OPERATION_NOT_ALLOWED") {
-      throw new Error("Password recovery is not enabled for this Firebase project.");
+      throw new Error("Password recovery is temporarily unavailable. Please try again shortly.");
     }
   }
 }
@@ -212,14 +212,14 @@ export async function signInWithGoogleCredential(
   if (!response.ok || !result.idToken || !result.refreshToken) {
     const code = result.error?.message ?? "";
     const messages: Record<string, string> = {
-      OPERATION_NOT_ALLOWED: "Google sign-in is disabled. Enable the Google provider in Firebase Authentication.",
+      OPERATION_NOT_ALLOWED: "Google sign-in is temporarily unavailable. Please try signing in with your email or check back shortly.",
       INVALID_IDP_RESPONSE: "Google did not return a valid identity response. Check the OAuth web client configuration.",
       FEDERATED_USER_ID_ALREADY_LINKED: "This Google account is already linked to another BQ SQWAD TV account. Sign in with the linked account.",
       CREDENTIAL_TOO_OLD_LOGIN_AGAIN: "Your Google sign-in expired. Please try again.",
       INVALID_LOGIN_CREDENTIALS: "Google could not verify this sign-in. Check the OAuth client and authorized domain settings.",
-      ADMIN_ONLY_OPERATION: "This Firebase project currently restricts account creation. Contact the administrator.",
+      ADMIN_ONLY_OPERATION: "Account creation is currently restricted. Please contact support.",
     };
-    throw new Error(messages[code] ?? "Firebase could not complete Google sign-in. Check the Google provider, OAuth client ID, authorized domain and Firebase API configuration.");
+    throw new Error(messages[code] ?? "Unable to complete Google sign-in at this time. Please try signing in with your email.");
   }
   const idToken = await establishWebSession(result.idToken, result.refreshToken);
   return { idToken, email: result.email ?? "" };

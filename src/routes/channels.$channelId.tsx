@@ -614,13 +614,17 @@ function ChannelPage() {
           <div className="mt-16 text-center text-sm text-slate-400">Loading channel…</div>
         ) : (
           <div className="mt-16 rounded-3xl border border-white/10 bg-[#07143D] p-8 text-center max-w-lg mx-auto">
-            <p className="text-base font-bold text-white">{error || "Channel Unavailable"}</p>
+            <p className="text-base font-bold text-white">
+              {error?.toLowerCase().includes("sign-in") || error?.toLowerCase().includes("token") || error?.toLowerCase().includes("firebase") || error?.toLowerCase().includes("unauthenticated")
+                ? "Sign in to watch this channel"
+                : error || "Channel Unavailable"}
+            </p>
             <p className="mt-2 text-xs text-slate-400">
-              {error?.toLowerCase().includes("sign-in") || error?.toLowerCase().includes("token")
+              {error?.toLowerCase().includes("sign-in") || error?.toLowerCase().includes("token") || error?.toLowerCase().includes("firebase") || error?.toLowerCase().includes("unauthenticated")
                 ? "Sign in to your BQ SQWAD TV account to watch this broadcast feed."
                 : "This broadcast feed is currently offline or unreachable."}
             </p>
-            {error?.toLowerCase().includes("sign-in") || error?.toLowerCase().includes("token") ? (
+            {error?.toLowerCase().includes("sign-in") || error?.toLowerCase().includes("token") || error?.toLowerCase().includes("firebase") || error?.toLowerCase().includes("unauthenticated") ? (
               <a
                 href="/account"
                 className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#00D8F5] px-5 py-2.5 text-xs font-bold text-slate-950 transition hover:brightness-110"

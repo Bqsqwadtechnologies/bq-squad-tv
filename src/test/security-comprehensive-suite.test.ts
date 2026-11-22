@@ -54,6 +54,8 @@ describe("Security Test Suite (V5-03 Batch 10)", () => {
     expect(secured.headers.get("x-frame-options")).toBe("DENY");
     expect(secured.headers.get("referrer-policy")).toContain("strict-origin");
     expect(secured.headers.get("strict-transport-security")).toContain("max-age=31536000");
+    const csp = secured.headers.get("content-security-policy");
+    expect(csp).toContain("style-src 'self' 'unsafe-inline' https://accounts.google.com");
   });
 
   it("detects tampering in audit chain verification", () => {
