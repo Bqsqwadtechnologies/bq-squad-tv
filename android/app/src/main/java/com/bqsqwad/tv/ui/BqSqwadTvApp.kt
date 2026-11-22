@@ -106,7 +106,27 @@ fun BqSqwadTvApp(
         MaintenanceScreen(onRetry = { refreshPublicConfig() })
         return
     }
-    val signedInUid = FirebaseAuth.getInstance().currentUser?.uid
+    // Firebase restores its persisted user asynchronously. Do not decide that
+    // the user is signed out from the initial, possibly-not-yet-restored null.
+    var authReady by remember { mutableStateOf(false) }
+    var signedInUid by remember { mutableStateOf<String?>(null) }
+    DisposableEffect(Unit) {
+        val firebaseAuth = FirebaseAuth.getInstance()
+        val listener = FirebaseAuth.AuthStateListener { state ->
+            signedInUid = state.currentUser?.uid
+            authReady = true
+        }
+        firebaseAuth.addAuthStateListener(listener)
+        onDispose { firebaseAuth.removeAuthStateListener(listener) }
+    }
+    if (!authReady) {
+        Surface(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        return
+    }
     var launchComplete by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         delay(700)
@@ -122,7 +142,7 @@ fun BqSqwadTvApp(
     }
     val initialDestination =
         remember {
-            if (FirebaseAuth.getInstance().currentUser != null) "home" else "signin"
+            if (signedInUid != null) "home" else "signin"
         }
     val backStackEntry by nav.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
