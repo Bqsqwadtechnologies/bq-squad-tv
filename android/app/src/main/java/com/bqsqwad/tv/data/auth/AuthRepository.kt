@@ -68,6 +68,16 @@ class AuthRepository(
         ).saved
     }
 
+    private suspend fun detectCountryForCurrentAccount() {
+        try {
+            profileApi.profileCountry(currentBearerToken())
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            // Country detection is best-effort; sign-in must remain available.
+        }
+    }
+
     private suspend fun registerPushTokenIfAvailable() {
         try {
             withTimeout(8_000) {
@@ -101,6 +111,7 @@ class AuthRepository(
 
         user.reload().awaitResult()
         registerPushTokenIfAvailable()
+        detectCountryForCurrentAccount()
         val verified = user.isEmailVerified
         val verification =
             if (verified) {
@@ -141,6 +152,7 @@ class AuthRepository(
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential).awaitResult()
         registerPushTokenIfAvailable()
+        detectCountryForCurrentAccount()
     }
 
     suspend fun ensurePublicLegalPagesPublished() {
