@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { GoogleSignInButton } from "@/components/GoogleSignInButton";
-import { restoreWebSession, signInWithGoogleCredential, getWebAuthHeaders, signInWithEmailPassword, createAccountWithEmailPassword, sendPasswordResetEmail, signOutWeb } from "@/lib/firebase-web-auth";
+import { restoreWebSession, signInWithGoogleCredential, getWebAuthHeaders, signInWithEmailPassword, createAccountWithEmailPassword, sendPasswordResetEmail, sendEmailVerificationCode, signOutWeb } from "@/lib/firebase-web-auth";
 import { NotFoundView } from "@/components/NotFoundView";
 
 export type ConsoleRole = "zillionaire" | "producer" | "provider" | "admin";
@@ -896,6 +896,17 @@ function ConsoleAuthPortal({
       }
 
       await createAccountWithEmailPassword(email.trim(), password);
+      if (role === "producer") {
+        // Producer accounts must verify the email before the console can open.
+        // Send the OTP immediately, then use the account verification screen.
+        try {
+          await sendEmailVerificationCode();
+        } catch {
+          // The account page provides a safe resend action if delivery is delayed.
+        }
+        window.location.assign("/account");
+        return;
+      }
       setSuccess("Account created successfully. Loading your console...");
       setTimeout(() => window.location.reload(), 1000);
     } catch (err: any) {
@@ -1251,12 +1262,10 @@ export function ConsolePageGuard({
           } else if (account.needsOwnerVerification) {
             if (active) setState({ status: "unverified_owner", token, email: account.email || "" });
             return;
-          } else if (Array.isArray(account.modules) && account.modules.length > 0) {
-            if (requiredModule) {
-              authorized = account.modules.includes(requiredModule);
-            } else {
-              authorized = true;
-            }
+          } else if (requiredModule && Array.isArray(account.modules) && account.modules.length > 0) {
+            // Delegated operators may open only explicitly assigned modules.
+            // The Zillionaire dashboard overview itself belongs to the owner.
+            authorized = account.modules.includes(requiredModule);
           }
         } else if (role === "producer") {
           authorized = Boolean(
