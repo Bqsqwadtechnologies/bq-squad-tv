@@ -51,6 +51,7 @@ function VideoStudio() {
   const [token, setToken] = useState("");
   const [channels, setChannels] = useState<Channel[]>([]);
   const [channelId, setChannelId] = useState("");
+  const [title, setTitle] = useState("");
   const [transcodeProfile, setTranscodeProfile] = useState<"economy" | "standard" | "high">(
     "standard",
   );
@@ -256,7 +257,7 @@ function VideoStudio() {
   }
 
   async function startUpload() {
-    if (!token || !file || !channelId || busy) return;
+    if (!token || !file || !channelId || !title.trim() || busy) return;
     setBusy(true);
     setError("");
     setUpload({
@@ -272,6 +273,7 @@ function VideoStudio() {
         headers: { ...headers, "content-type": "application/json" },
         body: JSON.stringify({
           channelId,
+          title: title.trim(),
           filename: file.name,
           sizeBytes: file.size,
           mimeType: file.type,
@@ -330,6 +332,7 @@ function VideoStudio() {
             : "The private source is verified. Processing has not been confirmed; this asset remains unavailable for playback and publishing.",
       });
       setFile(null);
+      setTitle("");
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "Upload failed.";
       setError(message);
@@ -651,7 +654,8 @@ function VideoStudio() {
           />
         </section>
         <div className="mt-8 rounded-3xl border border-white/10 bg-[#07143d] p-5 sm:p-7">
-          <h2 className="text-xl font-black">Upload a movie source</h2>
+          <h2 className="text-xl font-black">Upload a video</h2>
+          <p className="mt-1 text-xs text-blue-100/55">Choose a channel, enter its name, select the video and upload. Publishing becomes available after processing and rights approval.</p>
           {loading ? (
             <p className="mt-5 text-sm text-blue-100/55">Checking your secure session…</p>
           ) : null}
@@ -698,6 +702,18 @@ function VideoStudio() {
                 </span>
               </label>
               <label className="grid gap-2 text-sm text-blue-100/70">
+                Video name
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(event) => setTitle(event.target.value)}
+                  placeholder="Enter the title viewers will see"
+                  maxLength={200}
+                  disabled={busy}
+                  className="rounded-xl border border-white/10 bg-[#030b2a] px-4 py-3 text-white"
+                />
+              </label>
+              <label className="grid gap-2 text-sm text-blue-100/70">
                 Video file (MP4, MOV, MKV or WebM · maximum 5 GB)
                 <input
                   type="file"
@@ -714,7 +730,7 @@ function VideoStudio() {
               ) : null}
               <button
                 onClick={() => void startUpload()}
-                disabled={!file || !channelId || busy || file.size > MAX_BYTES}
+                disabled={!file || !channelId || !title.trim() || busy || file.size > MAX_BYTES}
                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-300 to-blue-400 px-5 py-3 font-extrabold text-[#031039] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <UploadCloud size={18} />
