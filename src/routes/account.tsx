@@ -307,11 +307,11 @@ function AccountPage() {
       setSignedIn(true);
       setVerificationPending(false);
       const needsAcceptance = await loadLegalStatus();
-      setMessage(
-        needsAcceptance
-          ? "Please review and accept the updated service terms before continuing."
-          : "You're signed in to BQ SQWAD TV.",
-      );
+      if (needsAcceptance) {
+        setMessage("Please review and accept the updated service terms before continuing.");
+      } else {
+        window.location.replace("/");
+      }
       return;
     }
     try {
@@ -320,11 +320,11 @@ function AccountPage() {
         setSignedIn(true);
         setVerificationPending(false);
         const needsAcceptance = await loadLegalStatus();
-        setMessage(
-          needsAcceptance
-            ? "Please review and accept the updated service terms before continuing."
-            : "You're signed in to BQ SQWAD TV.",
-        );
+        if (needsAcceptance) {
+          setMessage("Please review and accept the updated service terms before continuing.");
+        } else {
+          window.location.replace("/");
+        }
       } else {
         setVerificationPending(true);
         setMessage(
