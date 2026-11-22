@@ -16,7 +16,7 @@ export function errorBody(error: unknown): Response {
   if (error instanceof ApiError) {
     const message = getFriendlyErrorMessage(error.code, error.message);
     return Response.json(
-      { code: error.code, message, error: error.message, ref },
+      { code: error.code, message, error: message, ref },
       { status: error.status },
     );
   }
