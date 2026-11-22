@@ -1185,6 +1185,7 @@ export function ConsolePageGuard({
     | { status: "signed_out" }
     | { status: "denied"; token: string; account: ConsoleAccount }
     | { status: "unverified_owner"; token: string; email: string }
+    | { status: "unverified_producer"; email: string }
     | { status: "setup_required" }
     | { status: "mfa_setup"; token: string }
     | {
@@ -1268,10 +1269,13 @@ export function ConsolePageGuard({
             authorized = account.modules.includes(requiredModule);
           }
         } else if (role === "producer") {
+          if (account.emailVerified !== true) {
+            if (active) setState({ status: "unverified_producer", email: account.email || "" });
+            return;
+          }
           authorized = Boolean(
             account.isOwner ||
-            (account.emailVerified === true &&
-              Array.isArray(account.roles) &&
+            (Array.isArray(account.roles) &&
               account.roles.includes("producer") &&
               account.producerPlanActive === true),
           );
@@ -1335,6 +1339,23 @@ export function ConsolePageGuard({
 
   if (state.status === "unverified_owner") {
     return <OwnerVerificationView token={state.token} email={state.email} />;
+  }
+
+  if (state.status === "unverified_producer") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#070e22] px-4 text-white">
+        <div className="w-full max-w-md rounded-3xl border border-cyan-500/20 bg-[#0a1435] p-8 text-center shadow-2xl">
+          <h1 className="text-xl font-black text-cyan-200">Verify your email to continue</h1>
+          <p className="mt-3 text-sm leading-6 text-slate-300">
+            {state.email ? `A verification code was sent to ${state.email}.` : "Your producer account needs email verification."}
+            {" "}Complete verification before opening the Producer Console.
+          </p>
+          <a href="/account" className="mt-6 block rounded-xl bg-cyan-400 py-3 text-sm font-extrabold text-[#030718]">
+            Continue to email verification
+          </a>
+        </div>
+      </div>
+    );
   }
 
   if (state.status === "setup_required") {
