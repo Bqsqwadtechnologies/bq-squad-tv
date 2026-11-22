@@ -4,6 +4,7 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { ageInYears, validateAccountAge, errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { hashParentalPin } from "@/lib/server/parental-pin";
 import { currencyForCountry, normalizeCountryCode } from "@/lib/server/currency";
+import { detectCountryFromRequest } from "@/lib/server/country-detection";
 import { writeAuditLog } from "@/lib/server/audit";
 import { liveSessionLeases } from "@/lib/server/session-limits";
 import { assertLegalAcceptance } from "@/lib/server/legal-acceptance";
@@ -37,16 +38,10 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           const existingProfile = await fs.getDoc("users/" + user.uid);
           const accountId = await ensureAccountId(fs, user.uid, existingProfile);
           const existingWallet = await fs.getDoc("wallets/" + user.uid);
-          const requestedCountry = body.countryCode ? normalizeCountryCode(body.countryCode) : null;
-          if (body.countryCode && !requestedCountry) {
-            throw new ApiError(
-              400,
-              "COUNTRY_CODE_INVALID",
-              "Choose a valid two-letter country code.",
-            );
-          }
+          // Country is determined by server-side IP geolocation. Ignore countryCode
+          // sent by clients; only the protected owner can use the country test endpoint.
           const currentCountry = normalizeCountryCode(existingProfile?.["countryCode"]);
-          const nextCountry = requestedCountry ?? currentCountry;
+          const nextCountry = currentCountry ?? await detectCountryFromRequest(request);
           const existingCurrency =
             typeof existingWallet?.["currency"] === "string"
               ? (existingWallet["currency"] as string)
