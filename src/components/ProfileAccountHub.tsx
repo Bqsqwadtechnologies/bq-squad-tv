@@ -235,7 +235,7 @@ export function ProfileAccountHub() {
                   >
                     <span className="flex items-center gap-2.5 font-medium">
                       <ShieldCheck size={15} className="text-amber-300" />
-                      <span>Zillionaire Dashboard</span>
+                      <span>Owner Dashboard</span>
                     </span>
                     <ChevronRight size={13} className="text-slate-500" />
                   </a>
