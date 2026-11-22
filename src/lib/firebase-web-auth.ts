@@ -31,6 +31,7 @@ type WebSessionResponse = {
 
 let activeIdToken: string | null = null;
 let activeIdTokenExpiresAt = 0;
+let refreshInFlight: Promise<string | null> | null = null;
 
 async function firebaseAuthRequest(
   operation: "signInWithPassword" | "signUp",
@@ -106,27 +107,40 @@ export async function createAccountWithEmailPassword(
 
 export async function restoreWebSession(): Promise<string | null> {
   if (activeIdToken && Date.now() < activeIdTokenExpiresAt) return activeIdToken;
-  try {
-    const response = await fetch("/api/public/v1/auth/web/session/refresh", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "content-type": "application/json", ...(await getWebAppCheckHeaders()) },
-      body: "{}",
-    });
-    const result = (await response.json()) as WebSessionResponse;
-    if (!response.ok || !result.idToken) {
-      activeIdToken = null;
-      activeIdTokenExpiresAt = 0;
+  // Several components can mount together and ask for a token. Refresh tokens
+  // rotate on every successful refresh, so serialize refreshes to prevent
+  // concurrent requests from invalidating one another's cookie.
+  if (refreshInFlight) return refreshInFlight;
+  refreshInFlight = (async () => {
+    try {
+      const response = await fetch("/api/public/v1/auth/web/session/refresh", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json", ...(await getWebAppCheckHeaders()) },
+        body: "{}",
+      });
+      const result = (await response.json()) as WebSessionResponse;
+      if (!response.ok || !result.idToken) {
+        // A temporary server/App Check failure is not proof that the user's
+        // refresh cookie is invalid. Only clear local token state on auth denial.
+        if (response.status === 401 || response.status === 403) {
+          activeIdToken = null;
+          activeIdTokenExpiresAt = 0;
+        }
+        return null;
+      }
+      activeIdToken = result.idToken;
+      activeIdTokenExpiresAt =
+        Date.now() + Math.max(60, result.expiresInSeconds ?? 3600) * 1000 - 60_000;
+      return activeIdToken;
+    } catch {
       return null;
     }
-    activeIdToken = result.idToken;
-    activeIdTokenExpiresAt =
-      Date.now() + Math.max(60, result.expiresInSeconds ?? 3600) * 1000 - 60_000;
-    return activeIdToken;
-  } catch {
-    activeIdToken = null;
-    activeIdTokenExpiresAt = 0;
-    return null;
+  })();
+  try {
+    return await refreshInFlight;
+  } finally {
+    refreshInFlight = null;
   }
 }
 
@@ -244,7 +258,7 @@ export async function getWebAccount(): Promise<ConsoleAccount | null> {
   if (response.status === 401) return null;
   if (!response.ok) throw new Error("The account session could not be verified. Please retry.");
   const account = (await response.json()) as ConsoleAccount;
-  if (typeof account.uid !== "string" || !account.uid || account.emailVerified !== true) return null;
+  if (typeof account.uid !== "string" || !account.uid) return null;
   return account;
 }
 
