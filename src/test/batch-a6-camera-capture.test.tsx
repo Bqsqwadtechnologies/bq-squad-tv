@@ -82,6 +82,11 @@ describe("Batch A6: Camera Capture, Liveness & ID Framing", () => {
       />
     );
 
+    // Permission requests must originate from a user gesture.
+    expect(screen.getByRole("button", { name: /Enable Camera/i })).toBeDefined();
+    expect(navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /Enable Camera/i }));
+
     // Wait for permission denied state
     expect(await screen.findByText(/Camera Access Required/i)).toBeDefined();
     expect(screen.getByText(/How to unblock/i)).toBeDefined();
