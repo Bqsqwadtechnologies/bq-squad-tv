@@ -240,7 +240,7 @@ Before production launch, the owner should confirm: (1) legal pages have been re
 ### Brevo Transactional Email Configuration
 1. **Hosting Secrets**:
    - `BREVO_API_KEY`: API key from Brevo dashboard (SMTP & API -> API Keys). Required for verification emails and test delivery.
-   - `BREVO_SENDER_EMAIL` (Optional): Verified sender email address in Brevo (defaults to `verification@bqsqwad.com`).
+   - `BREVO_SENDER_EMAIL` (Optional): Verified sender email address in Brevo (defaults to `tv@bqsqwad.com`).
    - `BREVO_SENDER_NAME` (Optional): Friendly sender display name (defaults to `BQ SQWAD TV`).
 2. **Testing Email Delivery**:
    - In Zillionaire Console (`/zillionaire/security`), navigate to **Email Delivery & Verification Pipeline**.
