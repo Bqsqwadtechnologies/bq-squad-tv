@@ -10,7 +10,7 @@ describe("Batch 6: Auth, Google Sign-In and Email Delivery", () => {
 
     const brevoSenderEmail = SECRET_CATALOG.find((s) => s.name === "BREVO_SENDER_EMAIL");
     expect(brevoSenderEmail).toBeDefined();
-    expect(brevoSenderEmail?.description).toContain("default: verification@bqsqwad.com");
+    expect(brevoSenderEmail?.description).toContain("default: tv@bqsqwad.com");
 
     const brevoSenderName = SECRET_CATALOG.find((s) => s.name === "BREVO_SENDER_NAME");
     expect(brevoSenderName).toBeDefined();
@@ -23,7 +23,7 @@ describe("Batch 6: Auth, Google Sign-In and Email Delivery", () => {
 
   it("sendTestEmail successfully sends via Brevo endpoint when API key is present", async () => {
     process.env.BREVO_API_KEY = "xkeysib-test-mock-key";
-    process.env.BREVO_SENDER_EMAIL = "verification@bqsqwad.com";
+    process.env.BREVO_SENDER_EMAIL = "tv@bqsqwad.com";
     process.env.BREVO_SENDER_NAME = "BQ SQWAD TV";
 
     const originalFetch = global.fetch;
