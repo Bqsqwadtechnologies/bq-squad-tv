@@ -27,7 +27,7 @@ Android uses Google Play Billing for digital credit purchases. The app sends pur
 | Variable | Value |
 |---|---|
 | `BREVO_API_KEY` | Brevo dashboard → Settings → SMTP & API → API Keys & MCP; server-only API key |
-| `BREVO_SENDER_EMAIL` | Optional email address shown as the sender of verification emails; defaults in code to `verification@bqsqwad.com` and must be verified in Brevo. This is separate from `ZILLIONAIRE_EMAIL`. |
+| `BREVO_SENDER_EMAIL` | Optional email address shown as the sender of verification emails; defaults in code to `tv@bqsqwad.com` and must be verified in Brevo. This is separate from `ZILLIONAIRE_EMAIL`. |
 | `BREVO_SENDER_NAME` | Optional display name; defaults to `BQ SQWAD TV` |
 
 The API key must never be exposed to browser or Android clients. The backend generates, hashes, expires, rate-limits and consumes six-digit email-verification codes. The current password-recovery UI still uses Firebase password-reset email links.
