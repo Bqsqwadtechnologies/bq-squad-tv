@@ -108,14 +108,14 @@ export function KycCameraCapture({
     }
   }, [mode, stream]);
 
+  // Do not request camera access from a background effect. Mobile browsers can
+  // suppress permission prompts that are not initiated by a user gesture.
+  // The explicit button below calls getUserMedia directly from the tap handler.
   useEffect(() => {
-    startCamera();
     return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-      }
+      stream?.getTracks().forEach((track) => track.stop());
     };
-  }, []);
+  }, [stream]);
 
   // Frame analyzer for glare / low-light warnings & face simulation
   useEffect(() => {
@@ -301,9 +301,9 @@ export function KycCameraCapture({
               </p>
               <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-left text-xs text-slate-400 space-y-1">
                 <p className="font-semibold text-slate-200">How to unblock:</p>
-                <p>1. Tap the lock/tune icon beside the URL in the address bar.</p>
-                <p>2. Toggle "Camera" to Allow.</p>
-                <p>3. Tap "Try Again" below or upload a file directly.</p>
+                <p>1. Tap the site controls beside the website address.</p>
+                <p>2. Open Site settings, then set Camera to Allow.</p>
+                <p>3. Return here and tap Try Again. If camera is unavailable, use another supported device or the upload option where offered.</p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <button
@@ -321,6 +321,32 @@ export function KycCameraCapture({
                   </button>
                 )}
               </div>
+            </div>
+          ) : cameraPermission === "prompt" ? (
+            <div className="p-6 text-center space-y-4 max-w-md">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+                <Camera className="h-7 w-7" />
+              </div>
+              <h3 className="text-base font-bold text-white">Allow camera access</h3>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Tap below to let this website request camera permission from your browser. Camera access is used only for this verification step.
+              </p>
+              <button
+                type="button"
+                onClick={() => void startCamera()}
+                className="w-full rounded-xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-black hover:bg-cyan-400 transition"
+              >
+                Enable Camera
+              </button>
+              {onUploadFileInstead && mode !== "face_liveness" ? (
+                <button
+                  type="button"
+                  onClick={onUploadFileInstead}
+                  className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-xs font-medium text-white hover:bg-white/15 transition"
+                >
+                  Upload File Instead
+                </button>
+              ) : null}
             </div>
           ) : capturedImage ? (
             /* Review captured photo */
