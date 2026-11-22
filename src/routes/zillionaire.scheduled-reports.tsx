@@ -28,7 +28,7 @@ const mockConfigs: ScheduledReportConfig[] = [
     reportName: "Daily Financial & Revenue Settlement Summary",
     frequency: "daily",
     format: "both",
-    recipients: ["zillionaire@bqsqwad.tv", "finance@bqsqwad.tv"],
+    recipients: ["tv@bqsqwad.com"],
     lastDispatchedAt: "2026-03-24T00:01:00Z",
     active: true,
   },
