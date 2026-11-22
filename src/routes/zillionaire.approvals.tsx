@@ -925,7 +925,7 @@ function ApprovalsInboxBody({
               </label>
               <input
                 type="text"
-                placeholder="operator@bqsqwad.tv"
+                placeholder="operator@example.com"
                 value={assignedMember}
                 onChange={(e) => setAssignedMember(e.target.value)}
                 className="w-full rounded-xl border border-white/10 bg-[#030919] px-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-cyan-400"
