@@ -323,14 +323,20 @@ export function getPaystackTopup(
         : null;
     // ₦200 is a legacy NGN-only minimum. Never apply naira minor units to
     // another currency; non-NGN currencies require an explicit configured minimum.
+    const PAYSTACK_CUSTOM_MINIMUM_MINOR: Readonly<Record<string, number>> = {
+      NGN: 20000, // BQ SQWAD TV minimum: ₦200 (above Paystack's ₦50 floor)
+      USD: 200,
+      GHS: 10,
+      ZAR: 100,
+      KES: 300,
+      XOF: 1,
+    };
     const minimumMinor =
       typeof configuredMinimum === "number" &&
       Number.isSafeInteger(configuredMinimum) &&
       configuredMinimum > 0
         ? configuredMinimum
-        : currency === "NGN"
-          ? 20000
-          : null;
+        : PAYSTACK_CUSTOM_MINIMUM_MINOR[currency] ?? null;
     if (minimumMinor === null) {
       throw new ApiError(
         400,
@@ -350,7 +356,9 @@ export function getPaystackTopup(
       );
     }
     return {
-      amountMinor: customAmountMinor,
+      // Paystack requires XOF amounts in hundredths even though the wallet
+      // ledger stores XOF as whole units.
+      amountMinor: currency === "XOF" ? customAmountMinor * 100 : customAmountMinor,
       displayAmountMinor: customAmountMinor,
       creditMinor: customAmountMinor,
     };
