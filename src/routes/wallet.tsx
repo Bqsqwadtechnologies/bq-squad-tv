@@ -195,8 +195,8 @@ function WalletPage() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ reference: ref }),
       });
-      const result = (await response.json()) as { error?: string; credited?: boolean };
-      if (!response.ok) throw new Error(result.error ?? "The payment could not be confirmed.");
+      const result = (await response.json()) as { error?: string; message?: string; credited?: boolean };
+      if (!response.ok) throw new Error(result.message ?? result.error ?? "The payment could not be confirmed.");
 
       setMessage(
         result.credited
@@ -297,6 +297,7 @@ function WalletPage() {
         authorizationUrl?: string;
         reference?: string;
         error?: string;
+        message?: string;
       };
 
       if (!response.ok || !result.authorizationUrl) {
