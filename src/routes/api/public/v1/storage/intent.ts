@@ -28,6 +28,7 @@ const mimeByExtension: Record<string, string[]> = {
 const bodySchema = z.object({
   channelId: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
   filename: z.string().min(1).max(180),
+  title: z.string().trim().min(1).max(200).optional(),
   sizeBytes: z.number().int().positive().max(MAX_SOURCE_BYTES),
   mimeType: z.string().min(1).max(100),
   transcodeProfile: z.enum(["economy", "standard", "high"]).default("standard"),
@@ -129,6 +130,9 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
                 posterDestinationId: null,
                 thumbnailDestinationId: null,
                 sourceFilename: filename,
+                title: body.title?.trim() || filename.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " "),
+                mediaType: "Movie",
+                contentStatus: "draft",
                 declaredSizeBytes: body.sizeBytes,
                 declaredMimeType: body.mimeType.toLowerCase(),
                 storageReservationId: reservation.reservationId,
