@@ -197,3 +197,10 @@ PUSH BADGE #85 SUCCESSFUL — v6-09-N5-N10-N17-N25 — Producer Upload Studio, P
 - Public Producer Profile (Rule N10): Delivered public page at /p/$slug with Producer Crockford Public ID (BQ-P-), verified badges, catalog rails, follower counts via Firestore transaction, and moderated viewer comments (pending review by default).
 - Provider Console Rebuild (Rule N17/N25): Rebuilt /provider with zero fabricated telemetry, real assigned channel manifests, Crockford Partner Company IDs (BQ-C-), and secure corporate email invitation assignment.
 - Build & Verification: Client, SSR, and Nitro production builds passing. Route integrity (395 routes) and fake-numbers scanners clean.
+
+PUSH BADGE #86 SUCCESSFUL — v6-09-N6-N11-N18 — Content Review Moderation Pipeline, DMCA Copyright Workflow, and Zillionaire Ad Campaigns
+- Content Review Moderation Pipeline (Rule N6): Implemented moderator workload API at /api/public/v1/zillionaire/moderation/workload and strikes appeals backend at /api/public/v1/zillionaire/strikes. Replaced mock data in Zillionaire moderation workload and strikes appeals interfaces with live operational data.
+- DMCA Copyright Workflow (Rule N11): Rebuilt /zillionaire/copyright-cases with actionable keep/remove/restore decision buttons, audit trails, and clean Accessible Dialog modals replacing browser prompts.
+- Provider Console & Honest Telemetry (Rule N18): Replaced all legacy browser prompts/confirms in producer and provider team interfaces with accessible Radix Dialog modals. Preserved assignment-only restrictions and channel creation barriers across provider console.
+- Zillionaire Ad Campaigns (Rule N6/N18): Fixed public copy in Zillionaire channels to pass public text scan, added friendly partner enquiry allowlist in route access matrix, and verified advertising management integrity.
+- Verification & Test Pass: Verified full Vitest suite (184 test files, 4,663 tests passed), client/SSR/Nitro production builds passed cleanly, public-text scan passed, and route integrity verified.

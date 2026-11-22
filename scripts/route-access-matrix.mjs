@@ -13,6 +13,7 @@ export const PUBLIC_ROUTE_ALLOWLIST = new Set([
   "/api/public/v1/auth/web/session/refresh",
   "/api/public/v1/config/client",
   "/api/public/v1/contact",
+  "/api/public/v1/partner/enquiry",
   "/api/public/v1/pages/$slug",
   "/api/public/firebase-schema-inspect",
   "/api/public/v1/ads/campaigns",

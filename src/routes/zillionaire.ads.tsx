@@ -159,6 +159,11 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
 
   // Create Creative Modal state
   const [showCreativeModal, setShowCreativeModal] = useState(false);
+  const [moderateTarget, setModerateTarget] = useState<{ creative: Creative; decision: "APPROVE" | "REJECT" } | null>(null);
+  const [moderateAuditReason, setModerateAuditReason] = useState("");
+  const [moderateRejectionReason, setModerateRejectionReason] = useState("");
+  const [showPolicyModal, setShowPolicyModal] = useState(false);
+  const [policyAuditReason, setPolicyAuditReason] = useState("");
   const [newCreativeTitle, setNewCreativeTitle] = useState("");
   const [newCreativeType, setNewCreativeType] = useState<"image" | "video">("image");
   const [newCreativeMediaUrl, setNewCreativeMediaUrl] = useState("");
@@ -344,13 +349,22 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
   }
 
   // Handle Moderate Creative
-  async function handleModerateCreative(c: Creative, decision: "APPROVE" | "REJECT") {
-    let rejectionReason = "";
-    if (decision === "REJECT") {
-      rejectionReason = prompt("Enter rejection reason:") || "";
+  function handleModerateCreative(c: Creative, decision: "APPROVE" | "REJECT") {
+    setModerateTarget({ creative: c, decision });
+    setModerateAuditReason("");
+    setModerateRejectionReason("");
+  }
+
+  async function confirmModerateCreative() {
+    if (!moderateTarget) return;
+    if (!moderateAuditReason.trim()) {
+      setError("Audit reason is required for creative moderation.");
+      return;
     }
-    const reason = prompt(`Enter audit reason for ${decision.toLowerCase()}ing creative "${c.title}":`);
-    if (!reason || !reason.trim()) return;
+    if (moderateTarget.decision === "REJECT" && !moderateRejectionReason.trim()) {
+      setError("Rejection reason is required when rejecting a creative.");
+      return;
+    }
 
     setBusy(true);
     try {
@@ -359,14 +373,15 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "MODERATE",
-          creativeId: c.id,
-          decision,
-          rejectionReason,
-          reason: reason.trim(),
+          creativeId: moderateTarget.creative.id,
+          decision: moderateTarget.decision,
+          rejectionReason: moderateRejectionReason.trim(),
+          reason: moderateAuditReason.trim(),
         }),
       });
       if (!res.ok) throw new Error("Moderation update failed");
-      setSuccess(`Creative marked as ${decision}.`);
+      setSuccess(`Creative marked as ${moderateTarget.decision}.`);
+      setModerateTarget(null);
       fetchData();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Moderation error");
@@ -376,10 +391,17 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
   }
 
   // Save Settings & Policy
-  async function handleSaveSettings(e: React.FormEvent) {
+  function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
-    const reason = prompt("Enter audit reason for policy update:");
-    if (!reason || !reason.trim()) return;
+    setPolicyAuditReason("");
+    setShowPolicyModal(true);
+  }
+
+  async function confirmSaveSettings() {
+    if (!policyAuditReason.trim()) {
+      setError("Audit reason is required for policy update.");
+      return;
+    }
     setBusy(true);
     try {
       const res = await fetch("/api/public/v1/zillionaire/ads/settings", {
@@ -389,11 +411,12 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
           paidViewersAdFree: settings.paidViewersAdFree,
           kidsProtectionEnabled: settings.kidsProtectionEnabled,
           adultChannelRestricted: settings.adultChannelRestricted,
-          reason: reason.trim(),
+          reason: policyAuditReason.trim(),
         }),
       });
       if (!res.ok) throw new Error("Failed to save settings");
       setSuccess("Advertising policies updated and enforced across all routes.");
+      setShowPolicyModal(false);
       fetchData();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Policy save error");
@@ -441,7 +464,7 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
   // Export CSV
   function handleExportCsv() {
     if (!reports || !reports.units.length) {
-      alert("No report data available to export.");
+      setError("No report data available to export.");
       return;
     }
     const headers = ["Unit ID", "Name", "Platform", "Placement", "Impressions", "Clicks", "CTR", "Estimated Revenue"];
@@ -1233,6 +1256,102 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Moderate Creative */}
+        {moderateTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#030b2a] p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <h3 className="font-bold text-white text-sm">
+                  {moderateTarget.decision === "APPROVE" ? "Approve Creative" : "Reject Creative"}: {moderateTarget.creative.title}
+                </h3>
+                <button onClick={() => setModerateTarget(null)} className="text-blue-200/60 hover:text-white">✕</button>
+              </div>
+              <div className="space-y-3">
+                {moderateTarget.decision === "REJECT" && (
+                  <div>
+                    <label className="block text-xs text-rose-300 mb-1">Rejection Reason for Advertiser (Required)</label>
+                    <textarea
+                      value={moderateRejectionReason}
+                      onChange={(e) => setModerateRejectionReason(e.target.value)}
+                      placeholder="e.g. Creative violates brand safety standards or quality guidelines..."
+                      rows={2}
+                      className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-white placeholder-blue-200/40 focus:border-cyan-400 focus:outline-none"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="block text-xs text-blue-200/70 mb-1">Audit Reason (Required)</label>
+                  <textarea
+                    value={moderateAuditReason}
+                    onChange={(e) => setModerateAuditReason(e.target.value)}
+                    placeholder="Enter reason for compliance audit log..."
+                    rows={2}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-white placeholder-blue-200/40 focus:border-cyan-400 focus:outline-none"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setModerateTarget(null)}
+                    className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-blue-200/70 hover:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmModerateCreative}
+                    disabled={busy || !moderateAuditReason.trim() || (moderateTarget.decision === "REJECT" && !moderateRejectionReason.trim())}
+                    className={`rounded-xl px-4 py-2 text-xs font-semibold text-white ${moderateTarget.decision === "REJECT" ? "bg-rose-600 hover:bg-rose-500" : "bg-emerald-600 hover:bg-emerald-500"} disabled:opacity-50`}
+                  >
+                    {busy ? "Processing..." : `Confirm ${moderateTarget.decision}`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Modal: Policy Audit Reason */}
+        {showPolicyModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#030b2a] p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                <h3 className="font-bold text-white text-sm">Audit Reason: Save Advertising Policy</h3>
+                <button onClick={() => setShowPolicyModal(false)} className="text-blue-200/60 hover:text-white">✕</button>
+              </div>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs text-blue-200/70 mb-1">Audit Reason (Required)</label>
+                  <textarea
+                    value={policyAuditReason}
+                    onChange={(e) => setPolicyAuditReason(e.target.value)}
+                    placeholder="e.g. Updated kids mode ad exclusion rules per compliance guidelines..."
+                    rows={3}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-white placeholder-blue-200/40 focus:border-cyan-400 focus:outline-none"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPolicyModal(false)}
+                    className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-blue-200/70 hover:bg-white/5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmSaveSettings}
+                    disabled={busy || !policyAuditReason.trim()}
+                    className="rounded-xl bg-cyan-500 px-4 py-2 text-xs font-semibold text-black hover:bg-cyan-400 disabled:opacity-50"
+                  >
+                    {busy ? "Saving..." : "Save Policy"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

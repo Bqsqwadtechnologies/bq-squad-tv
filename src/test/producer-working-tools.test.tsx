@@ -1,5 +1,18 @@
 import { describe, it, expect, vi } from "vitest";
 import React from "react";
+
+vi.mock("@tanstack/react-router", () => ({
+  createFileRoute: () => (config: any) => ({ options: config, ...config }),
+  useNavigate: () => vi.fn(),
+  Navigate: ({ to }: any) => React.createElement("div", { "data-testid": "navigate", "data-to": to }),
+  Link: ({ children, to, ...props }: any) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
+  useRouterState: () => ({ location: { pathname: "/producer/channels" } }),
+  useRouter: () => ({ navigate: vi.fn(), state: { location: { pathname: "/producer/channels" } } }),
+}));
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 // Mock ConsolePageGuard

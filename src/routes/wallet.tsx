@@ -36,6 +36,29 @@ type Topup = {
   currency: string;
 };
 
+const DEFAULT_NGN_PACKAGES: Topup[] = [
+  { packageId: "ngn_200", currency: "NGN", amountMinor: 20000, creditMinor: 20000 },
+  { packageId: "ngn_500", currency: "NGN", amountMinor: 50000, creditMinor: 50000 },
+  { packageId: "ngn_1000", currency: "NGN", amountMinor: 100000, creditMinor: 100000 },
+  { packageId: "ngn_1500", currency: "NGN", amountMinor: 150000, creditMinor: 150000 },
+  { packageId: "ngn_2000", currency: "NGN", amountMinor: 200000, creditMinor: 200000 },
+  { packageId: "ngn_2500", currency: "NGN", amountMinor: 250000, creditMinor: 250000 },
+  { packageId: "ngn_5000", currency: "NGN", amountMinor: 500000, creditMinor: 500000 },
+  { packageId: "ngn_10000", currency: "NGN", amountMinor: 1000000, creditMinor: 1000000 },
+  { packageId: "ngn_15000", currency: "NGN", amountMinor: 1500000, creditMinor: 1500000 },
+  { packageId: "ngn_20000", currency: "NGN", amountMinor: 2000000, creditMinor: 2000000 },
+  { packageId: "ngn_100000", currency: "NGN", amountMinor: 10000000, creditMinor: 10000000 },
+  { packageId: "ngn_200000", currency: "NGN", amountMinor: 20000000, creditMinor: 20000000 },
+];
+
+function formatChipAmount(amountMinor: number, currency: string) {
+  if (currency === "NGN") {
+    const whole = Math.round(amountMinor / 100);
+    return `₦${whole.toLocaleString("en-US")}`;
+  }
+  return formatMoney(amountMinor, currency);
+}
+
 export const Route = createFileRoute("/wallet")({
   component: WalletPage,
   head: () => ({
@@ -143,10 +166,16 @@ function WalletPage() {
       setLedger((ledgerData.items ?? []) as LedgerItem[]);
 
       if (topupsRes.ok && Array.isArray(topupData)) {
-        setTopups(topupData as Topup[]);
-        if (topupData.length > 0 && (!selectedPackageId || !topupData.some((offer: Topup) => offer.packageId === selectedPackageId))) {
-          setSelectedPackageId(topupData[0].packageId);
-        } else if (topupData.length === 0) {
+        const effective =
+          topupData.length > 0
+            ? (topupData as Topup[])
+            : loadedWallet.currency === "NGN"
+            ? DEFAULT_NGN_PACKAGES
+            : [];
+        setTopups(effective);
+        if (effective.length > 0 && (!selectedPackageId || !effective.some((offer: Topup) => offer.packageId === selectedPackageId))) {
+          setSelectedPackageId(effective[0].packageId);
+        } else if (effective.length === 0) {
           setSelectedPackageId("");
           setIsCustom(false);
         }
@@ -432,7 +461,7 @@ function WalletPage() {
                                 : "rounded-xl border border-white/10 bg-[#030b2a]/60 p-3 text-center text-blue-100/80 hover:border-white/20 hover:bg-white/5"}
                             >
                               <span className="text-xs font-extrabold sm:text-sm">
-                                {formatMoney(offer.amountMinor, offer.currency)}
+                                {formatChipAmount(offer.amountMinor, offer.currency)}
                               </span>
                             </button>
                           );

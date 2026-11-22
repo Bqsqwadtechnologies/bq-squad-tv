@@ -46,6 +46,38 @@ type LibraryItem = {
 
 const STORAGE_KEY = "bq_viewer_library";
 
+export const DEFAULT_LIBRARY_ITEMS: LibraryItem[] = [
+  {
+    id: "mov_lagos_nights",
+    title: "Lagos Nights: Shadows of Victoria Island",
+    type: "movie",
+    genre: "Drama",
+    posterUrl: "/brand/og-image.png",
+    progressPercent: 45,
+    addedAt: "2026-11-20T12:00:00Z",
+    isPurchased: false,
+  },
+  {
+    id: "ser_abidjan_hustle",
+    title: "Abidjan Hustle Season 1",
+    type: "series",
+    genre: "Action",
+    posterUrl: "/brand/og-image.png",
+    progressPercent: 80,
+    addedAt: "2026-11-20T11:00:00Z",
+    isPurchased: false,
+  },
+  {
+    id: "doc_golden_savannah",
+    title: "Golden Savannah Documentary",
+    type: "movie",
+    genre: "Documentary",
+    posterUrl: "/brand/og-image.png",
+    addedAt: "2026-11-20T10:00:00Z",
+    isPurchased: true,
+  },
+];
+
 function LibraryPage() {
   const [activeTab, setActiveTab] = useState<"watchlist" | "continue" | "purchases" | "liked">(
     "watchlist",
@@ -53,19 +85,25 @@ function LibraryPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [genreFilter, setGenreFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"recent" | "title" | "progress">("recent");
-  const [items, setItems] = useState<LibraryItem[]>([]);
+  const [items, setItems] = useState<LibraryItem[]>(() => {
+    try {
+      const s = typeof localStorage !== "undefined" && localStorage.getItem(STORAGE_KEY);
+      if (s) return JSON.parse(s);
+    } catch {}
+    return DEFAULT_LIBRARY_ITEMS;
+  });
 
-  // Load from local storage or initialize empty
+  // Load from local storage or initialize with default items
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         setItems(JSON.parse(stored));
       } else {
-        setItems([]);
+        setItems(DEFAULT_LIBRARY_ITEMS);
       }
     } catch {
-      setItems([]);
+      setItems(DEFAULT_LIBRARY_ITEMS);
     }
   }, []);
 
@@ -86,12 +124,11 @@ function LibraryPage() {
   const filteredItems = items
     .filter((item) => {
       // Tab matching
-      if (activeTab === "watchlist") return !item.progressPercent && !item.isPurchased;
       if (activeTab === "continue")
         return item.progressPercent !== undefined && item.progressPercent > 0;
       if (activeTab === "purchases") return Boolean(item.isPurchased);
       if (activeTab === "liked") return false;
-      return true;
+      return true; // watchlist shows all saved items
     })
     .filter((item) => {
       if (typeFilter !== "all" && item.type !== typeFilter) return false;

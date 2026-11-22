@@ -153,6 +153,12 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
   const [actionReason, setActionReason] = useState("");
   const [actionNotes, setActionNotes] = useState("");
   const [actionBusy, setActionBusy] = useState(false);
+  const [kycNotice, setKycNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [revealModalField, setRevealModalField] = useState<string | null>(null);
+  const [revealAuditReason, setRevealAuditReason] = useState("");
+  const [payoutConfirmModal, setPayoutConfirmModal] = useState<{ uid: string; action: "approve" | "reject" } | null>(null);
+  const [payoutRejectReason, setPayoutRejectReason] = useState("");
+  const [kycActionConfirm, setKycActionConfirm] = useState<"approve" | "reject" | "request_changes" | "escalate" | "force_rekyc" | null>(null);
 
   // Document viewer transform
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -218,16 +224,21 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
       const data = await res.json();
       setDetailProfile(data.profile);
     } catch (err: any) {
-      alert(err.message);
+      setKycNotice({ type: 'error', text: err.message || 'Failed to load details' });
     } finally {
       setDetailLoading(false);
     }
   };
 
-  const handleReveal = async (field: string) => {
-    const reason = prompt("Enter mandatory audit reason for revealing sensitive field:");
-    if (!reason || reason.trim().length < 3) {
-      alert("A reason of at least 3 characters is mandatory to unmask sensitive KYC records.");
+  const handleReveal = (field: string) => {
+    setRevealModalField(field);
+    setRevealAuditReason("");
+  };
+
+  const confirmReveal = async () => {
+    if (!revealModalField) return;
+    if (revealAuditReason.trim().length < 3) {
+      setKycNotice({ type: "error", text: "A reason of at least 3 characters is mandatory to unmask sensitive KYC records." });
       return;
     }
 
@@ -236,26 +247,28 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
       const res = await fetch("/api/public/v1/zillionaire/kyc/reveal", {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: selectedUid, field, reason }),
+        body: JSON.stringify({ uid: selectedUid, field: revealModalField, reason: revealAuditReason.trim() }),
       });
       if (!res.ok) throw new Error("Reveal request failed");
       const data = await res.json();
-      setRevealedFields((prev) => ({ ...prev, [field]: data.plaintext }));
+      setRevealedFields((prev) => ({ ...prev, [revealModalField]: data.plaintext }));
+      setRevealModalField(null);
     } catch (e: any) {
-      alert(e.message || "Could not decrypt field");
+      setKycNotice({ type: "error", text: e.message || "Could not decrypt field" });
     }
   };
 
-  const handleAction = async (action: "approve" | "reject" | "request_changes" | "escalate" | "force_rekyc") => {
+  const handleAction = (action: "approve" | "reject" | "request_changes" | "escalate" | "force_rekyc") => {
     if (action === "reject" && (!actionReason || actionReason.trim().length < 3)) {
-      alert("A rejection reason of at least 3 characters is mandatory.");
+      setKycNotice({ type: "error", text: "A rejection reason of at least 3 characters is mandatory." });
       return;
     }
+    setKycActionConfirm(action);
+  };
 
-    if (!confirm(`Are you sure you want to ${action.toUpperCase()} this KYC application?`)) {
-      return;
-    }
-
+  const confirmActionExecution = async () => {
+    if (!kycActionConfirm) return;
+    const action = kycActionConfirm;
     setActionBusy(true);
     try {
       const headers = await getWebAuthHeaders(token);
@@ -275,57 +288,50 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
         throw new Error(errJson.error || "Action failed");
       }
 
-      alert(`Application successfully marked: ${action}`);
+      setKycNotice({ type: "success", text: `Application successfully marked: ${action}` });
+      setKycActionConfirm(null);
       setSelectedUid(null);
       fetchQueue();
     } catch (err: any) {
-      alert(err.message);
+      setKycNotice({ type: "error", text: err.message || "Action failed" });
     } finally {
       setActionBusy(false);
     }
   };
 
-  const handleApprovePayout = async (uid: string) => {
-    if (!confirm("Approve and lock this payout bank account for verified wire transfers?")) return;
-    try {
-      const headers = await getWebAuthHeaders(token);
-      const res = await fetch("/api/public/v1/zillionaire/kyc/payout-accounts", {
-        method: "POST",
-        headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({ uid, action: "approve" }),
-      });
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || "Approval failed");
-      }
-      alert("Payout account verified and locked.");
-      fetchPayoutAccounts();
-    } catch (err: any) {
-      alert(err.message);
-    }
+  const handleApprovePayout = (uid: string) => {
+    setPayoutConfirmModal({ uid, action: "approve" });
   };
 
-  const handleRejectPayout = async (uid: string) => {
-    const reason = prompt("Enter mandatory rejection reason (sent to user):");
-    if (!reason || reason.trim().length < 3) {
-      alert("A reason of at least 3 characters is mandatory.");
+  const handleRejectPayout = (uid: string) => {
+    setPayoutRejectReason("");
+    setPayoutConfirmModal({ uid, action: "reject" });
+  };
+
+  const confirmPayoutAction = async () => {
+    if (!payoutConfirmModal) return;
+    const { uid, action } = payoutConfirmModal;
+    if (action === "reject" && (!payoutRejectReason || payoutRejectReason.trim().length < 3)) {
+      setKycNotice({ type: "error", text: "A rejection reason of at least 3 characters is mandatory." });
       return;
     }
+
     try {
       const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/zillionaire/kyc/payout-accounts", {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({ uid, action: "reject", reason }),
+        body: JSON.stringify({ uid, action, reason: payoutRejectReason.trim() }),
       });
       if (!res.ok) {
         const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error || "Rejection failed");
+        throw new Error(errJson.error || "Payout action failed");
       }
-      alert("Payout account rejected.");
+      setKycNotice({ type: "success", text: action === "approve" ? "Payout account verified and locked." : "Payout account rejected." });
+      setPayoutConfirmModal(null);
       fetchPayoutAccounts();
     } catch (err: any) {
-      alert(err.message);
+      setKycNotice({ type: "error", text: err.message || "Payout action failed" });
     }
   };
 
@@ -811,6 +817,136 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
         </>
       ) : (
         <KycStringsEditor token={token} />
+      )}
+
+      {/* Global KYC Toast Notice */}
+      {kycNotice && (
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl shadow-2xl text-xs font-semibold animate-in fade-in ${kycNotice.type === "error" ? "bg-rose-600 text-white" : "bg-emerald-600 text-white"}`}>
+          <div className="flex items-center gap-2">
+            <span>{kycNotice.text}</span>
+            <button onClick={() => setKycNotice(null)} className="ml-2 hover:opacity-80">✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* Sensitive Field Reveal Modal */}
+      {revealModalField && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0a1435] p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+              <h3 className="font-bold text-white text-sm">Unmask Sensitive Record</h3>
+              <button onClick={() => setRevealModalField(null)} className="text-blue-200/60 hover:text-white">✕</button>
+            </div>
+            <p className="text-xs text-blue-100/70">
+              Revealing <strong>{revealModalField}</strong> requires a mandatory compliance audit reason:
+            </p>
+            <textarea
+              value={revealAuditReason}
+              onChange={(e) => setRevealAuditReason(e.target.value)}
+              placeholder="e.g. Identity document verification for high-value payout..."
+              rows={3}
+              className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-white placeholder-blue-200/40 focus:border-cyan-400 focus:outline-none"
+            />
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setRevealModalField(null)}
+                className="rounded-xl border border-white/10 px-3.5 py-1.5 text-xs font-semibold text-blue-200/70 hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={revealAuditReason.trim().length < 3}
+                onClick={confirmReveal}
+                className="rounded-xl bg-cyan-500 px-3.5 py-1.5 text-xs font-semibold text-black hover:bg-cyan-400 disabled:opacity-50"
+              >
+                Decrypt &amp; Reveal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KYC Action Confirmation Modal */}
+      {kycActionConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0a1435] p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+              <h3 className="font-bold text-white text-sm">Confirm Decision: {kycActionConfirm.toUpperCase()}</h3>
+              <button onClick={() => setKycActionConfirm(null)} className="text-blue-200/60 hover:text-white">✕</button>
+            </div>
+            <p className="text-xs text-blue-100/70">
+              Are you sure you want to <strong>{kycActionConfirm}</strong> this applicant profile?
+            </p>
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setKycActionConfirm(null)}
+                className="rounded-xl border border-white/10 px-3.5 py-1.5 text-xs font-semibold text-blue-200/70 hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={actionBusy}
+                onClick={confirmActionExecution}
+                className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold text-white ${kycActionConfirm === "reject" ? "bg-rose-600 hover:bg-rose-500" : "bg-emerald-600 hover:bg-emerald-500"}`}
+              >
+                {actionBusy ? "Saving..." : `Confirm ${kycActionConfirm}`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payout Account Action Modal */}
+      {payoutConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0a1435] p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+              <h3 className="font-bold text-white text-sm">
+                {payoutConfirmModal.action === "approve" ? "Verify & Lock Payout Account" : "Reject Payout Account"}
+              </h3>
+              <button onClick={() => setPayoutConfirmModal(null)} className="text-blue-200/60 hover:text-white">✕</button>
+            </div>
+            {payoutConfirmModal.action === "approve" ? (
+              <p className="text-xs text-blue-100/70">
+                Approve and lock this bank account for verified wire payouts?
+              </p>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-xs text-blue-100/70">
+                  State mandatory rejection reason (transmitted to the applicant):
+                </p>
+                <textarea
+                  value={payoutRejectReason}
+                  onChange={(e) => setPayoutRejectReason(e.target.value)}
+                  placeholder="e.g. Account name does not match government ID..."
+                  rows={3}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-white placeholder-blue-200/40 focus:border-cyan-400 focus:outline-none"
+                />
+              </div>
+            )}
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setPayoutConfirmModal(null)}
+                className="rounded-xl border border-white/10 px-3.5 py-1.5 text-xs font-semibold text-blue-200/70 hover:bg-white/5"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={payoutConfirmModal.action === "reject" && payoutRejectReason.trim().length < 3}
+                onClick={confirmPayoutAction}
+                className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold text-white ${payoutConfirmModal.action === "reject" ? "bg-rose-600 hover:bg-rose-500" : "bg-emerald-600 hover:bg-emerald-500"}`}
+              >
+                {payoutConfirmModal.action === "approve" ? "Approve & Lock" : "Reject Account"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Review Slide-over Modal (KYC Detail) */}

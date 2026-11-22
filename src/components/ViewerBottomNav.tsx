@@ -1,8 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Clapperboard, Download, Film, Home, Settings } from "lucide-react";
+import { Download, Film, Home, Settings, Tv2 } from "lucide-react";
 
 export type ViewerBottomNavProps = {
-  activeTab?: "home" | "movies" | "series" | "library" | "downloads" | "settings";
+  activeTab?: "home" | "live-tv" | "library" | "downloads" | "settings";
 };
 
 export function ViewerBottomNav({ activeTab }: ViewerBottomNavProps) {
@@ -17,8 +17,8 @@ export function ViewerBottomNav({ activeTab }: ViewerBottomNavProps) {
     if (activeTab) return activeTab === tab;
     if (!pathname) return false;
     if (tab === "home") return pathname === "/";
-    if (tab === "movies") return pathname.startsWith("/movies");
-    if (tab === "series") return pathname.startsWith("/series");
+    if (tab === "live-tv") return pathname.startsWith("/live-tv") || pathname.startsWith("/channels");
+    if (tab === "library") return pathname.startsWith("/library") || pathname.startsWith("/movies") || pathname.startsWith("/series");
     if (tab === "downloads") return pathname.startsWith("/downloads");
     if (tab === "settings") return pathname.startsWith("/settings") || pathname.startsWith("/account");
     return false;
@@ -32,16 +32,16 @@ export function ViewerBottomNav({ activeTab }: ViewerBottomNavProps) {
       icon: Home,
     },
     {
-      id: "movies",
-      label: "Movies",
-      to: "/movies",
-      icon: Film,
+      id: "live-tv",
+      label: "Live TV",
+      to: "/live-tv",
+      icon: Tv2,
     },
     {
-      id: "series",
-      label: "Series",
-      to: "/series",
-      icon: Clapperboard,
+      id: "library",
+      label: "Library",
+      to: "/library",
+      icon: Film,
     },
     {
       id: "downloads",
@@ -71,7 +71,7 @@ export function ViewerBottomNav({ activeTab }: ViewerBottomNavProps) {
             to={item.to}
             className={`flex flex-1 flex-col items-center justify-center gap-1 py-1 text-center transition ${
               isActive
-                ? "text-blue-600 font-bold"
+                ? "text-[#00D8F5] drop-shadow-[0_0_8px_rgba(0,216,245,0.6)] font-bold"
                 : "text-slate-500 hover:text-slate-900 font-medium"
             }`}
           >

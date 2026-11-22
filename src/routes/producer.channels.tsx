@@ -94,7 +94,9 @@ export const Route = createFileRoute("/producer/channels")({
 function ProducerChannelsPage() {
   return (
     <ConsolePageGuard role="producer">
-      {() => <Navigate to="/producer/upload" replace />}
+      {({ token, account, onLock }) => (
+        <ProducerChannelsInner token={token} account={account} onLock={onLock} />
+      )}
     </ConsolePageGuard>
   );
 }
@@ -142,7 +144,7 @@ function ProducerChannelsInner({
   const [selectedChannelId, setSelectedChannelId] = useState<string>("");
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [scheduleView, setScheduleView] = useState<"day" | "week" | "list">("list");
-  const [activeTab, setActiveTab] = useState<"content" | "schedule" | "livestream">("content");
+  const [activeTab, setActiveTab] = useState<"content" | "schedule" | "upload" | "livestream">("schedule");
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -561,22 +563,20 @@ function ProducerChannelsInner({
       account={account}
       activePath="/producer/channels"
       onLock={onLock}
+      channelSwitcher={
+        channelSwitcherOptions.length > 0
+          ? {
+              activeChannelId: selectedChannelId || channelSwitcherOptions[0].id,
+              channels: channelSwitcherOptions,
+              onSelect: (id: string) => setSelectedChannelId(id),
+            }
+          : undefined
+      }
     >
       <div className="space-y-6 p-4 sm:p-6 lg:p-8">
         {/* Navigation Tabs */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setActiveTab("content")}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
-                activeTab === "content"
-                  ? "bg-cyan-400 text-[#030e28] shadow-md shadow-cyan-400/20"
-                  : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              <Film className="h-4 w-4" />
-              <span>My Titles</span>
-            </button>
             <button
               onClick={() => setActiveTab("schedule")}
               className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
@@ -586,7 +586,21 @@ function ProducerChannelsInner({
               }`}
             >
               <CalendarIcon className="h-4 w-4" />
-              <span>Schedules</span>
+              <span>Schedule Calendar</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab("upload");
+                setIsUploadOpen(true);
+              }}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
+                activeTab === "upload"
+                  ? "bg-cyan-400 text-[#030e28] shadow-md shadow-cyan-400/20"
+                  : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <UploadCloud className="h-4 w-4" />
+              <span>Upload Content</span>
             </button>
             <button
               onClick={() => setActiveTab("livestream")}
@@ -597,7 +611,18 @@ function ProducerChannelsInner({
               }`}
             >
               <Radio className="h-4 w-4 text-rose-400" />
-              <span>Live Ingest</span>
+              <span>Live-Stream Setup</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("content")}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-bold transition ${
+                activeTab === "content"
+                  ? "bg-cyan-400 text-[#030e28] shadow-md shadow-cyan-400/20"
+                  : "bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+              }`}
+            >
+              <Film className="h-4 w-4" />
+              <span>Movies & Series Library</span>
             </button>
             <Link
               to="/producer/upload"

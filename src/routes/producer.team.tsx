@@ -77,6 +77,7 @@ function ProducerTeamContent({
   const [formError, setFormError] = useState("");
 
   const [busyMemberId, setBusyMemberId] = useState<string | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<ProducerTeamMember | null>(null);
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -173,8 +174,13 @@ function ProducerTeamContent({
     }
   };
 
-  const handleRemove = async (member: ProducerTeamMember) => {
-    if (!window.confirm(`Remove ${member.email} from your studio team?`)) return;
+  const handleRemove = (member: ProducerTeamMember) => {
+    setMemberToRemove(member);
+  };
+
+  const confirmRemove = async () => {
+    if (!memberToRemove) return;
+    const member = memberToRemove;
     setBusyMemberId(member.id);
     try {
       const headers = await getWebAuthHeaders(token);
@@ -190,6 +196,7 @@ function ProducerTeamContent({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to remove member");
       setSuccessMessage(`Member ${member.email} removed.`);
+      setMemberToRemove(null);
       void fetchMembers();
       setTimeout(() => setSuccessMessage(""), 4000);
     } catch (err: unknown) {
@@ -342,6 +349,37 @@ function ProducerTeamContent({
         </ConsoleCard>
 
         {/* Modal */}
+        {memberToRemove && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0a1435] p-5 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                <h3 className="font-bold text-rose-400 text-sm">Remove Team Member</h3>
+                <button onClick={() => setMemberToRemove(null)} className="text-blue-200/60 hover:text-white">✕</button>
+              </div>
+              <p className="text-xs text-blue-100/70 leading-relaxed">
+                Remove <strong>{memberToRemove.email}</strong> from your studio team? They will immediately lose access to all channels, assets, and analytics.
+              </p>
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setMemberToRemove(null)}
+                  className="rounded-xl border border-white/10 px-3.5 py-1.5 text-xs font-semibold text-blue-200/70 hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={busyMemberId === memberToRemove.id}
+                  onClick={confirmRemove}
+                  className="rounded-xl bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
+                >
+                  {busyMemberId === memberToRemove.id ? "Removing..." : "Remove Member"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {modalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-zinc-900 border border-white/10 rounded-2xl max-w-lg w-full p-6 space-y-5">

@@ -597,6 +597,7 @@ function ProviderAccessDeniedView() {
         <span className="inline-block rounded-full bg-indigo-500/10 border border-indigo-400/20 px-3.5 py-1 text-xs font-bold tracking-widest text-indigo-300 uppercase">
           Partner Area
         </span>
+        <p className="sr-only">Access denied. Contact tv@bqsqwad.com</p>
         <h1 className="mt-4 text-xl font-bold text-white">Partner Access by Assignment Only</h1>
         <p className="mt-3 text-sm text-slate-300 leading-relaxed">
           Channels are created by us for approved partners. To partner with us, contact{" "}
@@ -834,6 +835,7 @@ function ConsoleAuthPortal({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showEmergencySignoutModal, setShowEmergencySignoutModal] = useState(false);
   const consoleTitle = role === "producer" ? "Producer Console" : "Provider Console";
 
   const handleGoogleCredential = async (credential: string) => {
@@ -1116,18 +1118,47 @@ function ConsoleAuthPortal({
 
         <div className="mt-8 border-t border-white/10 pt-4 text-center">
           <button
-            onClick={async () => {
-              if (window.confirm("Sign out of all sessions across all devices?")) {
-                await fetch("/api/public/v1/auth/devices/signout-all", { method: "POST" }).catch(() => undefined);
-                await signOutWeb();
-                window.location.reload();
-              }
-            }}
+            type="button"
+            onClick={() => setShowEmergencySignoutModal(true)}
             className="text-xs text-blue-200/50 hover:text-rose-300"
           >
             Security Emergency: Sign out everywhere
           </button>
         </div>
+
+        {showEmergencySignoutModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0a1435] p-5 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                <h3 className="font-bold text-rose-400 text-sm">Security Emergency</h3>
+                <button onClick={() => setShowEmergencySignoutModal(false)} className="text-blue-200/60 hover:text-white">✕</button>
+              </div>
+              <p className="text-xs text-blue-100/70 leading-relaxed">
+                Sign out of all active console and viewer sessions across every device?
+              </p>
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowEmergencySignoutModal(false)}
+                  className="rounded-xl border border-white/10 px-3.5 py-1.5 text-xs font-semibold text-blue-200/70 hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await fetch("/api/public/v1/auth/devices/signout-all", { method: "POST" }).catch(() => undefined);
+                    await signOutWeb();
+                    window.location.reload();
+                  }}
+                  className="rounded-xl bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-500"
+                >
+                  Sign Out Everywhere
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

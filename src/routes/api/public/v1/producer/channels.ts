@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { errorBody } from "@/lib/server/api";
+import { requireViewer } from "@/lib/server/access";
 
 const restricted = () =>
   Response.json(
@@ -10,8 +11,17 @@ const restricted = () =>
 export const Route = createFileRoute("/api/public/v1/producer/channels")({
   server: {
     handlers: {
-      GET: async () => restricted(),
-      POST: async () => restricted(),
+      GET: async ({ request }) => {
+        try {
+          await requireViewer(request);
+          return restricted();
+        } catch (err) {
+          return errorBody(err);
+        }
+      },
+      POST: async () => {
+        return restricted();
+      },
     },
   },
 });

@@ -1,68 +1,48 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Scale, CheckCircle2, XCircle, AlertTriangle, ShieldAlert } from "lucide-react";
+import { Scale, CheckCircle2, XCircle, AlertTriangle, ShieldAlert, FileText, ExternalLink, RefreshCw, Loader2 } from "lucide-react";
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
 import { ZillionaireEntityConsole, type EntityColumn, type EntityAction } from "@/components/ZillionaireEntityConsole";
 import { ConsoleStatusBadge } from "@/components/ConsoleShell";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/zillionaire/copyright-cases")({
   component: CopyrightCasesRoute,
   head: () => ({
-    meta: [{ title: "Copyright Cases | Zillionaire Control Centre" }],
+    meta: [
+      { title: "Copyright Cases | Zillionaire Control Centre" },
+      { name: "robots", content: "noindex, nofollow, noarchive" },
+    ],
   }),
 });
 
 interface CopyrightCase {
   id: string;
+  caseId: string;
   targetId: string;
   targetType: string;
+  targetTitle?: string;
+  producerUid?: string;
+  producerName?: string;
+  copyrightStrikes?: number;
   reporterName: string;
   reporterEmail: string;
   workClaimed: string;
-  status: "pending_review" | "counter_notice_open" | "content_removed" | "counter_notice_restored" | "dismissed";
-  counterNoticeReceived: boolean;
-  strikeIssued: boolean;
+  proofLinkOrPath?: string;
+  status: "under_review" | "takedown" | "dismissed" | "restored" | "counter_notice_open";
+  counterNoticeReceived?: boolean;
+  strikeIssued?: boolean;
+  notes?: string;
   createdAt: string;
 }
-
-const mockCases: CopyrightCase[] = [
-  {
-    id: "case_dmca_901",
-    targetId: "mov_lagos_nights",
-    targetType: "content_asset",
-    reporterName: "Silverbird Legal Dept",
-    reporterEmail: "legal@silverbirdgroup.com",
-    workClaimed: "The Lagos Nights Master Soundtrack",
-    status: "counter_notice_open",
-    counterNoticeReceived: true,
-    strikeIssued: false,
-    createdAt: "2026-03-22T10:15:00Z",
-  },
-  {
-    id: "case_dmca_902",
-    targetId: "mov_nollywood_action",
-    targetType: "content_asset",
-    reporterName: "FilmOne Distribution",
-    reporterEmail: "anti-piracy@filmoneng.com",
-    workClaimed: "Exclusive Theatrical Cut Trailer",
-    status: "pending_review",
-    counterNoticeReceived: false,
-    strikeIssued: false,
-    createdAt: "2026-03-24T14:30:00Z",
-  },
-  {
-    id: "case_dmca_903",
-    targetId: "chan_afrobeats_tv",
-    targetType: "channel",
-    reporterName: "Sony Music West Africa",
-    reporterEmail: "dmca@sonymusic.com",
-    workClaimed: "Unlicensed Broadcast of Live Concert",
-    status: "content_removed",
-    counterNoticeReceived: false,
-    strikeIssued: true,
-    createdAt: "2026-03-18T09:00:00Z",
-  },
-];
 
 function CopyrightCasesRoute() {
   return (
@@ -73,17 +53,32 @@ function CopyrightCasesRoute() {
 }
 
 function CopyrightCasesContent({ account }: { account: ConsoleAccount }) {
-  const [cases, setCases] = useState<CopyrightCase[]>(mockCases);
-  const [loading, setLoading] = useState(false);
+  const [cases, setCases] = useState<CopyrightCase[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Decision Modal State
+  const [activeCase, setActiveCase] = useState<CopyrightCase | null>(null);
+  const [decisionAction, setDecisionAction] = useState<"remove" | "keep" | "restore" | null>(null);
+  const [decisionNotes, setDecisionNotes] = useState("");
+  const [decisionSubmitting, setDecisionSubmitting] = useState(false);
+  const [decisionError, setDecisionError] = useState<string | null>(null);
 
   async function fetchCases() {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/public/v1/zillionaire/copyright-cases/");
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) setCases(data);
+        const list = Array.isArray(data) ? data : Array.isArray(data?.cases) ? data.cases : [];
+        setCases(list);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setError(err.message || "Failed to load copyright cases");
       }
+    } catch {
+      setError("Network error loading copyright cases.");
     } finally {
       setLoading(false);
     }
@@ -93,98 +88,188 @@ function CopyrightCasesContent({ account }: { account: ConsoleAccount }) {
     void fetchCases();
   }, []);
 
-  async function handleDecision(item: CopyrightCase, action: "remove" | "keep" | "restore", notes?: string) {
+  function openDecisionModal(item: CopyrightCase, action: "remove" | "keep" | "restore") {
+    setActiveCase(item);
+    setDecisionAction(action);
+    setDecisionNotes("");
+    setDecisionError(null);
+  }
+
+  async function handleConfirmDecision() {
+    if (!activeCase || !decisionAction) return;
+    if (decisionNotes.trim().length < 3) {
+      setDecisionError("Please provide audit notes explaining this copyright decision (at least 3 characters).");
+      return;
+    }
+
+    setDecisionSubmitting(true);
+    setDecisionError(null);
     try {
-      await fetch("/api/public/v1/zillionaire/copyright-cases/", {
+      const res = await fetch("/api/public/v1/zillionaire/copyright-cases/", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          caseId: item.id,
-          action,
-          decisionNotes: notes || `Action ${action} executed by operator ${account.email}`,
+          caseId: activeCase.caseId || activeCase.id,
+          action: decisionAction,
+          decisionNotes: decisionNotes.trim(),
         }),
       });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || data.error || "Decision failed to record");
+      }
+      setActiveCase(null);
+      setDecisionAction(null);
       await fetchCases();
-    } catch {
-      // ignore
+    } catch (err: unknown) {
+      setDecisionError(err instanceof Error ? err.message : "Error executing copyright decision");
+    } finally {
+      setDecisionSubmitting(false);
     }
   }
 
   const columns: EntityColumn<CopyrightCase>[] = [
-    { key: "id", header: "Case ID", render: (c) => <span className="font-mono font-bold text-cyan-400">{c.id}</span> },
-    { key: "targetId", header: "Target Asset", render: (c) => <span className="font-semibold text-white">{c.targetId}</span> },
-    { key: "reporter", header: "Claimant", render: (c) => <span className="text-slate-300">{c.reporterName}</span> },
-    { key: "work", header: "Work Claimed", render: (c) => <span className="truncate max-w-[200px] text-slate-400">{c.workClaimed}</span> },
+    { key: "id", header: "Case ID", render: (c) => <span className="font-mono font-bold text-primary">{c.caseId || c.id}</span> },
+    { key: "targetId", header: "Target Asset", render: (c) => <span className="font-semibold text-foreground">{c.targetTitle || c.targetId}</span> },
+    { key: "reporter", header: "Claimant", render: (c) => <span className="text-muted-foreground">{c.reporterName} ({c.reporterEmail})</span> },
+    { key: "work", header: "Work Claimed", render: (c) => <span className="truncate max-w-[200px] text-muted-foreground">{c.workClaimed}</span> },
     {
       key: "status",
       header: "Status",
       render: (c) => (
         <ConsoleStatusBadge
-          status={c.status === "content_removed" ? "inactive" : c.status === "pending_review" ? "pending" : "active"}
+          status={c.status === "takedown" ? "inactive" : c.status === "under_review" ? "pending" : "active"}
           label={c.status.replace(/_/g, " ")}
         />
       ),
     },
-    { key: "date", header: "Filed", render: (c) => <span className="text-slate-400">{new Date(c.createdAt).toLocaleDateString()}</span> },
+    { key: "date", header: "Filed", render: (c) => <span className="text-muted-foreground">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : "Recent"}</span> },
   ];
 
   const actions: EntityAction<CopyrightCase>[] = [
     {
-      label: "Uphold & Remove Video (Strike)",
+      label: "Enforce Takedown",
       variant: "destructive",
-      icon: ShieldAlert,
-      requiresNotes: true,
-      onClick: (item, notes) => handleDecision(item, "remove", notes),
+      icon: XCircle,
+      requiresNotes: false,
+      onClick: (item) => openDecisionModal(item, "remove"),
     },
     {
-      label: "Counter-Notice Restore",
+      label: "Dismiss Claim",
       variant: "success",
       icon: CheckCircle2,
-      requiresNotes: true,
-      onClick: (item, notes) => handleDecision(item, "restore", notes),
+      requiresNotes: false,
+      onClick: (item) => openDecisionModal(item, "keep"),
     },
     {
-      label: "Dismiss Claim (Keep Video)",
-      variant: "outline",
-      icon: XCircle,
-      requiresNotes: true,
-      onClick: (item, notes) => handleDecision(item, "keep", notes),
+      label: "Restore (Counter-Notice)",
+      variant: "secondary",
+      icon: Scale,
+      requiresNotes: false,
+      onClick: (item) => openDecisionModal(item, "restore"),
     },
   ];
 
+  const kpis = useMemo(() => [
+    { title: "Total Cases", value: cases.length, tone: "cyan" as const },
+    { title: "Under Review", value: cases.filter((c) => c.status === "under_review").length, tone: "amber" as const },
+    { title: "Enforced Takedowns", value: cases.filter((c) => c.status === "takedown").length, tone: "rose" as const },
+  ], [cases]);
+
   return (
-    <ZillionaireEntityConsole
-      account={account}
-      title="Copyright & DMCA Cases"
-      subtitle="Review copyright infringement notices, evaluate counter-notices, and enforce takedowns with immutable records."
-      icon={Scale}
-      items={cases}
-      columns={columns}
-      idKey="id"
-      searchFields={["id", "targetId", "reporterName", "reporterEmail", "workClaimed"]}
-      kpis={[
-        { title: "Total Cases", value: cases.length, tone: "cyan" },
-        { title: "Pending Review", value: cases.filter((c) => c.status === "pending_review").length, tone: "amber" },
-        { title: "Counter-Notices Open", value: cases.filter((c) => c.status === "counter_notice_open").length, tone: "emerald" },
-        { title: "Content Removed", value: cases.filter((c) => c.status === "content_removed").length, tone: "rose" },
-      ]}
-      tabs={[
-        { id: "all", label: "All Cases", filter: () => true },
-        { id: "pending", label: "Pending", filter: (c) => c.status === "pending_review" },
-        { id: "counter", label: "Counter-Notices", filter: (c) => c.status === "counter_notice_open" },
-        { id: "removed", label: "Removed", filter: (c) => c.status === "content_removed" },
-      ]}
-      actions={actions}
-      detailFields={[
-        { label: "Case ID", render: (c) => c.id },
-        { label: "Target ID", render: (c) => `${c.targetType} : ${c.targetId}` },
-        { label: "Claimant Name & Email", render: (c) => `${c.reporterName} (${c.reporterEmail})` },
-        { label: "Work Claimed", render: (c) => c.workClaimed },
-        { label: "Counter-Notice Status", render: (c) => (c.counterNoticeReceived ? "Counter-notice received; 14-day window open" : "None") },
-        { label: "Strike Impact", render: (c) => (c.strikeIssued ? "1 Copyright Strike Assigned" : "No Strike") },
-      ]}
-      onRefresh={fetchCases}
-      loading={loading}
-    />
+    <>
+      <ZillionaireEntityConsole
+        account={account}
+        title="DMCA & Copyright Dispute Management"
+        subtitle="Review statutory DMCA takedown requests, examine evidence, and record enforceable decisions with full audit trails."
+        icon={Scale}
+        items={cases}
+        columns={columns}
+        idKey="id"
+        searchFields={["caseId", "targetId", "targetTitle", "reporterName", "reporterEmail", "workClaimed"]}
+        kpis={kpis}
+        tabs={[
+          { id: "all", label: "All Cases", filter: () => true },
+          { id: "pending", label: "Under Review", filter: (c) => c.status === "under_review" },
+          { id: "takedown", label: "Takedowns Enforced", filter: (c) => c.status === "takedown" },
+          { id: "dismissed", label: "Dismissed", filter: (c) => c.status === "dismissed" },
+        ]}
+        actions={actions}
+        detailFields={[
+          { label: "Target Title & ID", render: (c) => `${c.targetTitle || "Video"} (${c.targetId})` },
+          { label: "Claimant Details", render: (c) => `${c.reporterName} • ${c.reporterEmail}` },
+          { label: "Work Claimed Infringed", render: (c) => c.workClaimed },
+          { label: "Producer Strikes", render: (c) => `${c.copyrightStrikes ?? 0} active copyright strikes on record` },
+          { label: "Resolution Notes", render: (c) => c.notes || "Pending formal review" },
+        ]}
+      />
+
+      {/* Accessible Decision Modal */}
+      <Dialog open={Boolean(activeCase && decisionAction)} onOpenChange={(open) => !open && setActiveCase(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {decisionAction === "remove" && <XCircle className="w-5 h-5 text-rose-500" />}
+              {decisionAction === "keep" && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+              {decisionAction === "restore" && <Scale className="w-5 h-5 text-cyan-500" />}
+              Confirm Copyright Decision:{" "}
+              {decisionAction === "remove" ? "Enforce Takedown" : decisionAction === "keep" ? "Dismiss Claim" : "Restore Content"}
+            </DialogTitle>
+            <DialogDescription>
+              {activeCase && (
+                <span>
+                  Case <strong>{activeCase.caseId || activeCase.id}</strong> targeting <strong>{activeCase.targetTitle || activeCase.targetId}</strong>.
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {decisionAction === "remove" && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-md text-xs text-rose-300">
+                Warning: Enforcing takedown will immediately remove the asset from public catalogues, unpublish active streams, and apply a copyright strike to the producer.
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="decision-notes" className="text-xs font-semibold uppercase text-muted-foreground tracking-wider block mb-1">
+                Audit Decision Notes (Required)
+              </label>
+              <textarea
+                id="decision-notes"
+                className="w-full bg-background border border-border rounded-md p-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary h-24 resize-none"
+                placeholder="State the statutory basis, investigation findings, or evidence considered..."
+                value={decisionNotes}
+                onChange={(e) => setDecisionNotes(e.target.value)}
+              />
+            </div>
+
+            {decisionError && (
+              <p className="text-xs text-rose-400 font-medium">{decisionError}</p>
+            )}
+          </div>
+
+          <DialogFooter className="flex items-center justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={decisionSubmitting}
+              onClick={() => setActiveCase(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant={decisionAction === "remove" ? "destructive" : "default"}
+              disabled={decisionSubmitting || decisionNotes.trim().length < 3}
+              onClick={handleConfirmDecision}
+            >
+              {decisionSubmitting ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+              Confirm Decision
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

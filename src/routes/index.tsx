@@ -301,7 +301,7 @@ function HomePage() {
                 to="/movies"
                 className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-bold text-blue-700 shadow-md transition hover:bg-blue-50 active:scale-95"
               >
-                <Play size={16} fill="currentColor" /> Browse Movies
+                <Play size={16} fill="currentColor" /> Start Watching
               </Link>
               <button
                 type="button"
@@ -506,6 +506,39 @@ function HomePage() {
             </div>
           </section>
         ) : null}
+
+        {/* Live Now Section */}
+        <section className="mt-10 sm:mt-12">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold sm:text-xl text-slate-900 flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse" />
+              Live Now
+            </h2>
+            <Link
+              to="/live-tv"
+              className="text-xs font-bold text-blue-600 transition hover:underline"
+            >
+              See All &gt;
+            </Link>
+          </div>
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Link
+              to="/live-tv"
+              className="group flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm hover:border-blue-400"
+            >
+              <div className="relative aspect-video w-28 shrink-0 rounded-xl bg-slate-900 overflow-hidden flex items-center justify-center">
+                <span className="absolute top-1 left-1 rounded bg-rose-600 px-1.5 py-0.5 text-[9px] font-bold text-white uppercase">
+                  Live
+                </span>
+                <Play size={16} className="text-white" fill="white" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="line-clamp-1 text-sm font-bold text-slate-900">Apex News 24/7</h3>
+                <p className="line-clamp-1 text-xs text-slate-500">Live Global Broadcast</p>
+              </div>
+            </Link>
+          </div>
+        </section>
 
         {/* Trending Now Poster Row */}
         <section className="mt-10 sm:mt-12">

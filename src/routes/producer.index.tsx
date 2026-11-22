@@ -457,6 +457,14 @@ function ProducerDashboardInner({
             >
               <UploadCloud className="h-4 w-4" />
               <span>Upload Studio</span>
+              <span className="sr-only">New upload</span>
+            </a>
+            <a
+              href="/producer/channels"
+              className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-xs font-bold text-rose-300 transition hover:bg-rose-500/20"
+            >
+              <Play className="h-4 w-4 text-rose-400 fill-rose-400" />
+              <span>Live stream</span>
             </a>
             {account.publicId && (
               <a
@@ -475,6 +483,7 @@ function ProducerDashboardInner({
             >
               <Tv className="h-4 w-4" />
               <span>My Titles</span>
+              <span className="sr-only">View channels</span>
             </a>
             <button
               onClick={exportReport}

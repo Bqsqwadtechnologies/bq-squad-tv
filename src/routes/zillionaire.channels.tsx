@@ -1203,7 +1203,7 @@ function ZillionaireChannelsPage({
                       />
                       <span className="text-slate-400 font-mono text-sm">%</span>
                       <span className="text-[11px] text-slate-400">
-                        ({wizardForm.revenueShareBps} bps). Hidden from public viewer API responses.
+                        ({wizardForm.revenueShareBps} bps). Hidden from public viewer responses.
                       </span>
                     </div>
                   </div>

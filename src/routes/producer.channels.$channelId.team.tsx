@@ -43,6 +43,8 @@ function ChannelTeamPage() {
   const [role, setRole] = useState<TeamRole>("uploader");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [removingMemberUid, setRemovingMemberUid] = useState<string | null>(null);
+  const [removalReasonInput, setRemovalReasonInput] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -113,9 +115,13 @@ function ChannelTeamPage() {
     }
   }
 
-  async function removeMember(uid: string) {
-    const removalReason = window.prompt("Reason for removing this team member:");
-    if (!removalReason?.trim()) return;
+  function removeMember(uid: string) {
+    setRemovingMemberUid(uid);
+    setRemovalReasonInput("");
+  }
+
+  async function confirmRemoveMember() {
+    if (!removingMemberUid || !removalReasonInput.trim()) return;
     setBusy(true);
     setError("");
     setMessage("");
@@ -123,9 +129,10 @@ function ChannelTeamPage() {
       await request("/api/public/v1/producer/channels/" + encodeURIComponent(channelId) + "/team", {
         method: "DELETE",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ memberUid: uid, reason: removalReason.trim() }),
+        body: JSON.stringify({ memberUid: removingMemberUid, reason: removalReasonInput.trim() }),
       });
       setMessage("Team member access removed.");
+      setRemovingMemberUid(null);
       await loadMembers();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not remove team member.");
@@ -328,6 +335,45 @@ function ChannelTeamPage() {
           </div>
         )}
       </section>
+      {removingMemberUid && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-2.5">
+              <h3 className="font-bold text-destructive text-sm">Remove Channel Team Member</h3>
+              <button onClick={() => setRemovingMemberUid(null)} className="text-muted-foreground hover:text-foreground">✕</button>
+            </div>
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">
+                State the reason for removing this member's access to this channel:
+              </p>
+              <textarea
+                value={removalReasonInput}
+                onChange={(e) => setRemovalReasonInput(e.target.value)}
+                placeholder="Reason for audit log..."
+                rows={3}
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setRemovingMemberUid(null)}
+                  className="rounded-xl border border-border px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || !removalReasonInput.trim()}
+                  onClick={confirmRemoveMember}
+                  className="rounded-xl bg-destructive px-3.5 py-1.5 text-xs font-semibold text-destructive-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  {busy ? "Removing..." : "Remove Access"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

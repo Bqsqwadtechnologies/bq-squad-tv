@@ -86,6 +86,10 @@ function PublicProducerProfilePage() {
   const [newComment, setNewComment] = useState("");
   const [commentBusy, setCommentBusy] = useState(false);
   const [reportSuccess, setReportSuccess] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<string | null>(null);
+  const [reportingCommentId, setReportingCommentId] = useState<string | null>(null);
+  const [reportReasonInput, setReportReasonInput] = useState("");
+  const [reportSubmitting, setReportSubmitting] = useState(false);
   const [commentNotice, setCommentNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -138,7 +142,8 @@ function PublicProducerProfilePage() {
 
   async function handleToggleFollow() {
     if (!token) {
-      alert("Please sign in to follow this producer.");
+      setActionNotice("Please sign in to follow this producer.");
+      setTimeout(() => setActionNotice(null), 4000);
       return;
     }
     setFollowBusy(true);
@@ -163,7 +168,8 @@ function PublicProducerProfilePage() {
   async function handlePostComment(e: React.FormEvent) {
     e.preventDefault();
     if (!token) {
-      alert("Please sign in to post a comment.");
+      setCommentNotice("Please sign in to post a comment.");
+      setTimeout(() => setCommentNotice(null), 4000);
       return;
     }
     if (!newComment.trim()) return;
@@ -190,29 +196,37 @@ function PublicProducerProfilePage() {
     }
   }
 
-  async function handleReportComment(commentId: string) {
+  function handleReportComment(commentId: string) {
     if (!token) {
-      alert("Please sign in to report a comment.");
+      setActionNotice("Please sign in to report a comment.");
+      setTimeout(() => setActionNotice(null), 4000);
       return;
     }
-    const reason = prompt("Please provide a brief reason for reporting this comment:");
-    if (!reason?.trim()) return;
+    setReportingCommentId(commentId);
+    setReportReasonInput("");
+  }
 
+  async function submitReportComment() {
+    if (!reportingCommentId || !reportReasonInput.trim()) return;
+    setReportSubmitting(true);
     try {
-      const res = await fetch(`/api/public/v1/producers/${slug}/comments/${commentId}/report`, {
+      const res = await fetch(`/api/public/v1/producers/${slug}/comments/${reportingCommentId}/report`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ reason: reason.trim() }),
+        body: JSON.stringify({ reason: reportReasonInput.trim() }),
       });
       if (res.ok) {
-        setReportSuccess("Comment has been reported for review.");
+        setReportSuccess("Comment has been reported for moderation review.");
+        setReportingCommentId(null);
         setTimeout(() => setReportSuccess(null), 4000);
       }
     } catch {
       // ignore
+    } finally {
+      setReportSubmitting(false);
     }
   }
 
@@ -224,7 +238,8 @@ function PublicProducerProfilePage() {
       }).catch(() => {});
     } else {
       navigator.clipboard.writeText(window.location.href);
-      alert("Profile link copied to clipboard!");
+      setActionNotice("Profile link copied to clipboard!");
+      setTimeout(() => setActionNotice(null), 3000);
     }
   }
 
@@ -593,6 +608,53 @@ function PublicProducerProfilePage() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        )}
+        {/* Action Notice Toast */}
+        {actionNotice && (
+          <div className="fixed bottom-6 right-6 z-50 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl shadow-2xl text-xs font-semibold animate-in fade-in slide-in-from-bottom-2">
+            {actionNotice}
+          </div>
+        )}
+
+        {/* Report Comment Dialog Modal */}
+        {reportingCommentId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2.5">
+                <h3 className="font-bold text-foreground text-sm">Report Inappropriate Comment</h3>
+                <button onClick={() => setReportingCommentId(null)} className="text-muted-foreground hover:text-foreground">✕</button>
+              </div>
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Please provide a brief reason explaining how this comment violates community guidelines:
+                </p>
+                <textarea
+                  value={reportReasonInput}
+                  onChange={(e) => setReportReasonInput(e.target.value)}
+                  placeholder="e.g. Harassment, spam, hate speech, or spoiler..."
+                  rows={3}
+                  className="w-full rounded-xl border border-border bg-background p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setReportingCommentId(null)}
+                    className="rounded-xl border border-border px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={submitReportComment}
+                    disabled={reportSubmitting || !reportReasonInput.trim()}
+                    className="rounded-xl bg-destructive px-3.5 py-1.5 text-xs font-semibold text-destructive-foreground hover:opacity-90 disabled:opacity-50"
+                  >
+                    {reportSubmitting ? "Submitting..." : "Submit Report"}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

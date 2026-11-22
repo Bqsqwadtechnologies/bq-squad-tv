@@ -118,6 +118,7 @@ function ZillionaireTeamContent({
 
   // Edit/Action state
   const [actionBusyUid, setActionBusyUid] = useState<string | null>(null);
+  const [teamActionConfirm, setTeamActionConfirm] = useState<{ member: TeamMember; action: "suspend" | "revoke" } | null>(null);
 
   const fetchTeam = async () => {
     setLoading(true);
@@ -255,64 +256,58 @@ function ZillionaireTeamContent({
     }
   };
 
-  const handleToggleSuspend = async (member: TeamMember) => {
+  const handleToggleSuspend = (member: TeamMember) => {
     if (!account.isOwner) return;
-    const nextStatus = member.status === "suspended" ? "active" : "suspended";
-    const confirmText = `Are you sure you want to ${
-      nextStatus === "suspended" ? "suspend" : "re-activate"
-    } access for ${member.email}?`;
-    if (!window.confirm(confirmText)) return;
-
-    setActionBusyUid(member.uid);
-    try {
-      const headers = await requestZillionaireStepUp(
-        "team_manage",
-        `Change access for ${member.email}`,
-      );
-      headers.set("Authorization", (await getWebAuthHeaders(token)).get("Authorization") || "");
-      const res = await fetch(`/api/public/v1/zillionaire/team/${member.uid}`, {
-        method: "PUT",
-        headers,
-        body: JSON.stringify({
-          status: nextStatus,
-          reason: `Manual status toggle to ${nextStatus} by owner`,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update member status");
-      setSuccessMessage(`Account ${member.email} set to ${nextStatus}.`);
-      void fetchTeam();
-      setTimeout(() => setSuccessMessage(""), 4000);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error updating member");
-    } finally {
-      setActionBusyUid(null);
-    }
+    setTeamActionConfirm({ member, action: "suspend" });
   };
 
-  const handleRevoke = async (member: TeamMember) => {
+  const handleRevoke = (member: TeamMember) => {
     if (!account.isOwner) return;
-    const confirmText = `REVOKE PERMISSIONS: Are you sure you want to instantly revoke all delegated modules for ${member.email}? This action is immediate and audited.`;
-    if (!window.confirm(confirmText)) return;
+    setTeamActionConfirm({ member, action: "revoke" });
+  };
 
+  const confirmTeamActionExecution = async () => {
+    if (!teamActionConfirm || !account.isOwner) return;
+    const { member, action } = teamActionConfirm;
     setActionBusyUid(member.uid);
     try {
-      const headers = await requestZillionaireStepUp(
-        "team_manage",
-        `Revoke access for ${member.email}`,
-      );
-      headers.set("Authorization", (await getWebAuthHeaders(token)).get("Authorization") || "");
-      const res = await fetch(`/api/public/v1/zillionaire/team/${member.uid}`, {
-        method: "DELETE",
-        headers,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to revoke member permissions");
-      setSuccessMessage(`All permissions revoked for ${member.email}.`);
+      if (action === "suspend") {
+        const nextStatus = member.status === "suspended" ? "active" : "suspended";
+        const headers = await requestZillionaireStepUp(
+          "team_manage",
+          `Change access for ${member.email}`,
+        );
+        headers.set("Authorization", (await getWebAuthHeaders(token)).get("Authorization") || "");
+        const res = await fetch(`/api/public/v1/zillionaire/team/${member.uid}`, {
+          method: "PUT",
+          headers,
+          body: JSON.stringify({
+            status: nextStatus,
+            reason: `Manual status toggle to ${nextStatus} by owner`,
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to update member status");
+        setSuccessMessage(`Account ${member.email} set to ${nextStatus}.`);
+      } else {
+        const headers = await requestZillionaireStepUp(
+          "team_manage",
+          `Revoke access for ${member.email}`,
+        );
+        headers.set("Authorization", (await getWebAuthHeaders(token)).get("Authorization") || "");
+        const res = await fetch(`/api/public/v1/zillionaire/team/${member.uid}`, {
+          method: "DELETE",
+          headers,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to revoke member permissions");
+        setSuccessMessage(`All permissions revoked for ${member.email}.`);
+      }
+      setTeamActionConfirm(null);
       void fetchTeam();
       setTimeout(() => setSuccessMessage(""), 4000);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error revoking permissions");
+      setError(err instanceof Error ? err.message : "Error updating permissions");
     } finally {
       setActionBusyUid(null);
     }
@@ -791,6 +786,43 @@ function ZillionaireTeamContent({
         )}
 
         {/* CUSTOM ROLE CREATION MODAL */}
+        {teamActionConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-[#0a1435] p-5 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                <h3 className="font-bold text-rose-400 text-sm">
+                  {teamActionConfirm.action === "suspend"
+                    ? `${teamActionConfirm.member.status === "suspended" ? "Reactivate" : "Suspend"} Member Access`
+                    : "Revoke Member Permissions"}
+                </h3>
+                <button onClick={() => setTeamActionConfirm(null)} className="text-blue-200/60 hover:text-white">✕</button>
+              </div>
+              <p className="text-xs text-blue-100/70 leading-relaxed">
+                {teamActionConfirm.action === "suspend"
+                  ? `Are you sure you want to ${teamActionConfirm.member.status === "suspended" ? "reactivate" : "suspend"} console access for ${teamActionConfirm.member.email}?`
+                  : `Revoke all delegated security and operations permissions for ${teamActionConfirm.member.email}? This action is immediate and will be logged.`}
+              </p>
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setTeamActionConfirm(null)}
+                  className="rounded-xl border border-white/10 px-3.5 py-1.5 text-xs font-semibold text-blue-200/70 hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={actionBusyUid === teamActionConfirm.member.uid}
+                  onClick={confirmTeamActionExecution}
+                  className="rounded-xl bg-rose-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
+                >
+                  {actionBusyUid === teamActionConfirm.member.uid ? "Processing..." : "Confirm Action"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {customRoleModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-zinc-900 border border-white/10 rounded-2xl max-w-xl w-full p-6 space-y-5 max-h-[90vh] overflow-y-auto">

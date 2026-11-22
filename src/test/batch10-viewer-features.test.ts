@@ -102,9 +102,13 @@ describe("Batch 10 Viewer features", () => {
     currentUser = {
       uid: "viewer_101",
       email: "viewer@bqsqwad.tv",
+      emailVerified: true,
+      authTime: Math.floor(Date.now() / 1000),
+      issuedAt: Math.floor(Date.now() / 1000),
+      customClaims: {},
       role: "viewer",
       claims: {},
-    };
+    } as any;
 
     vi.spyOn(apiModule, "requireUser").mockImplementation(async () => currentUser);
   });

@@ -48,6 +48,7 @@ function AccountPage() {
   const [verificationPending, setVerificationPending] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [message, setMessage] = useState("");
   const [accountEmail, setAccountEmail] = useState("");
   const [publicId, setPublicId] = useState<string | null>(null);
@@ -519,12 +520,6 @@ function AccountPage() {
   }
 
   async function handleDeleteAccount() {
-    if (
-      !window.confirm(
-        "Are you sure you want to delete your account? This action is permanent and will delete or anonymise your personal data.",
-      )
-    )
-      return;
     setBusy(true);
     setMessage("");
     try {
@@ -849,7 +844,7 @@ function AccountPage() {
                   <button
                     type="button"
                     disabled={busy}
-                    onClick={() => void handleDeleteAccount()}
+                    onClick={() => setShowDeleteModal(true)}
                     className="w-full rounded-lg border border-rose-400/40 dark:border-rose-500/30 px-3 py-2 text-xs font-bold text-rose-600 dark:text-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 disabled:opacity-50"
                   >
                     Delete Account &amp; Personal Data
@@ -1073,6 +1068,41 @@ function AccountPage() {
           )}
         </section>
       </div>
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-2.5">
+              <h3 className="font-bold text-destructive text-sm">Delete Account &amp; Personal Data</h3>
+              <button onClick={() => setShowDeleteModal(false)} className="text-muted-foreground hover:text-foreground">✕</button>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Are you sure you want to delete your account? This action is permanent and will delete or anonymise your personal profile, credentials, and playback history.
+            </p>
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setShowDeleteModal(false)}
+                className="rounded-xl border border-border px-3.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  void handleDeleteAccount();
+                  setShowDeleteModal(false);
+                }}
+                className="rounded-xl bg-destructive px-3.5 py-1.5 text-xs font-semibold text-destructive-foreground hover:opacity-90 disabled:opacity-50"
+              >
+                {busy ? "Deleting..." : "Permanently Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -91,6 +91,8 @@ function CollaborationsBody({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [disputeCollabId, setDisputeCollabId] = useState<string | null>(null);
+  const [disputeReasonInput, setDisputeReasonInput] = useState("");
   const [busy, setBusy] = useState(false);
 
   // Form state
@@ -128,11 +130,11 @@ function CollaborationsBody({
 
   const handleCreateAgreement = async () => {
     if (Math.abs(currentTotalPct - 100) > 0.001) {
-      alert(`The split percentages must total exactly 100.00%. Current total: ${currentTotalPct.toFixed(2)}%`);
+      setError(`The split percentages must total exactly 100.00%. Current total: ${currentTotalPct.toFixed(2)}%`);
       return;
     }
     if (!titleName.trim()) {
-      alert("Please provide the title name.");
+      setError("Please provide the title name.");
       return;
     }
     try {
@@ -167,7 +169,7 @@ function CollaborationsBody({
       setTitleId("");
       await loadCollabs();
     } catch (e: any) {
-      alert(e.message || "Failed to create collaboration agreement.");
+      setError(e.message || "Failed to create collaboration agreement.");
     } finally {
       setBusy(false);
     }
@@ -191,15 +193,19 @@ function CollaborationsBody({
       if (!res.ok) throw new Error("Could not confirm agreement.");
       await loadCollabs();
     } catch (e: any) {
-      alert(e.message);
+      setError(e.message);
     } finally {
       setBusy(false);
     }
   };
 
-  const handleDispute = async (collabId: string) => {
-    const reason = window.prompt("State reason for disputing this collaboration agreement:");
-    if (!reason?.trim()) return;
+  const handleDispute = (collabId: string) => {
+    setDisputeCollabId(collabId);
+    setDisputeReasonInput("");
+  };
+
+  const confirmDispute = async () => {
+    if (!disputeCollabId || !disputeReasonInput.trim()) return;
     try {
       setBusy(true);
       const res = await fetch("/api/public/v1/producer/collaborations", {
@@ -210,14 +216,15 @@ function CollaborationsBody({
         },
         body: JSON.stringify({
           action: "DISPUTE",
-          collaborationId: collabId,
-          reason: reason.trim(),
+          collaborationId: disputeCollabId,
+          reason: disputeReasonInput.trim(),
         }),
       });
       if (!res.ok) throw new Error("Could not submit dispute.");
+      setDisputeCollabId(null);
       await loadCollabs();
     } catch (e: any) {
-      alert(e.message);
+      setError(e.message);
     } finally {
       setBusy(false);
     }
@@ -354,6 +361,47 @@ function CollaborationsBody({
               </ConsoleCard>
             );
           })}
+        </div>
+      )}
+
+      {/* Modal: Dispute Collaboration Agreement */}
+      {disputeCollabId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0a1435] p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="font-bold text-white text-sm">Dispute Collaboration Agreement</h3>
+              <button onClick={() => setDisputeCollabId(null)} className="text-blue-200/60 hover:text-white">✕</button>
+            </div>
+            <div className="space-y-3">
+              <p className="text-xs text-blue-100/70">
+                State the reason or factual inaccuracy in this revenue share agreement:
+              </p>
+              <textarea
+                value={disputeReasonInput}
+                onChange={(e) => setDisputeReasonInput(e.target.value)}
+                placeholder="e.g. Unauthorised credit listing or incorrect percentage share..."
+                rows={3}
+                className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs text-white placeholder-blue-200/40 focus:border-cyan-400 focus:outline-none"
+              />
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDisputeCollabId(null)}
+                  className="rounded-xl border border-white/10 px-4 py-2 text-xs font-semibold text-blue-200/70 hover:bg-white/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDispute}
+                  disabled={busy || !disputeReasonInput.trim()}
+                  className="rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
+                >
+                  {busy ? "Submitting..." : "Submit Formal Dispute"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

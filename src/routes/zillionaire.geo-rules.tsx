@@ -71,10 +71,11 @@ function GeoRulesRoute() {
 
 function GeoRulesContent({ account }: { account: ConsoleAccount }) {
   const [activeTab, setActiveTab] = useState<"geo" | "kyc">("kyc");
-  const [geoRules, setGeoRules] = useState<GeoRule[]>(mockGeoRules);
+  const [geoRules, setGeoRules] = useState<GeoRule[]>([]);
   const [kycRules, setKycRules] = useState<KycCountryRule[]>(() => getAllCountryRules());
   const [customOverrides, setCustomOverrides] = useState<Record<string, any>>({});
   const [loadingKyc, setLoadingKyc] = useState(false);
+  const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
     async function loadCountryRules() {
@@ -99,7 +100,7 @@ function GeoRulesContent({ account }: { account: ConsoleAccount }) {
 
   async function handleUpdateKycRule(rule: KycCountryRule, reason?: string) {
     if (!reason || reason.trim().length < 3) {
-      alert("A mandatory reason of at least 3 characters is required to modify KYC rules.");
+      setNotice({ type: "error", text: "A mandatory reason of at least 3 characters is required to modify KYC rules." });
       return;
     }
 
@@ -118,11 +119,12 @@ function GeoRulesContent({ account }: { account: ConsoleAccount }) {
       });
 
       if (!res.ok) {
-        const err = await res.json();
-        alert(err.message || "Failed to update country rule.");
+        const err = await res.json().catch(() => ({}));
+        setNotice({ type: "error", text: err.message || "Failed to update country rule." });
         return;
       }
 
+      setNotice({ type: "success", text: `KYC rule updated for ${rule.name}.` });
       // Reload
       const updatedRes = await fetch("/api/public/v1/zillionaire/kyc/country-rules");
       if (updatedRes.ok) {
@@ -130,7 +132,7 @@ function GeoRulesContent({ account }: { account: ConsoleAccount }) {
         setKycRules(data.rules);
       }
     } catch (err: any) {
-      alert(err.message || "Error updating country rule.");
+      setNotice({ type: "error", text: err.message || "Error updating country rule." });
     }
   }
 
@@ -218,6 +220,12 @@ function GeoRulesContent({ account }: { account: ConsoleAccount }) {
 
   return (
     <div className="space-y-6">
+      {notice && (
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl shadow-2xl text-xs font-semibold animate-in fade-in flex items-center gap-2 ${notice.type === "error" ? "bg-rose-600 text-white" : "bg-emerald-600 text-white"}`}>
+          <span>{notice.text}</span>
+          <button onClick={() => setNotice(null)} className="ml-2 hover:opacity-80">✕</button>
+        </div>
+      )}
       {/* View Switcher Bar */}
       <div className="flex items-center gap-2 border-b border-slate-800 bg-[#030b2a] px-6 py-3">
         <button
