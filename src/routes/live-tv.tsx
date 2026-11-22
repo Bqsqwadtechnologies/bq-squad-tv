@@ -58,52 +58,9 @@ type ScheduleItem = {
 };
 
 
-const DEFAULT_CHANNELS: LiveChannel[] = [
-  {
-    id: "ch-prime",
-    name: "BQ SQWAD Prime Live",
-    category: "Entertainment",
-    currentShow: "Prime Global Showcase — Live Concert",
-    nextShow: "Late Night African Beats",
-    viewersCount: 2480,
-    thumbnailUrl: "/brand/og-image.png",
-    isLive: true,
-  },
-  {
-    id: "ch-sports",
-    name: "Super League Football",
-    category: "Sports",
-    currentShow: "Matchday Live: Lagos vs Nairobi",
-    nextShow: "Post-Match Analysis",
-    viewersCount: 1850,
-    thumbnailUrl: "/brand/og-image.png",
-    isLive: true,
-  },
-];
-
-const DEFAULT_SCHEDULE: ScheduleItem[] = [
-  {
-    id: "sch-1",
-    channelId: "ch-prime",
-    channelName: "BQ SQWAD Prime Live",
-    title: "Pan-African Evening News Bulletin",
-    time: "20:00",
-    category: "News",
-    synopsis: "Live breaking coverage and analysis across African hubs and global business.",
-  },
-  {
-    id: "sch-2",
-    channelId: "ch-sports",
-    channelName: "Super League Football",
-    title: "Super League Championship Final",
-    time: "21:30",
-    category: "Sports",
-    synopsis: "Continental championship final clash live with multi-camera replay.",
-  },
-];
 function LiveTvPage() {
-  const [channels, setChannels] = useState<LiveChannel[]>(DEFAULT_CHANNELS);
-  const [schedule, setSchedule] = useState<ScheduleItem[]>(DEFAULT_SCHEDULE);
+  const [channels, setChannels] = useState<LiveChannel[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -132,7 +89,7 @@ function LiveTvPage() {
         if (res.ok) {
           const data = await res.json();
           if (active && Array.isArray(data.channels)) {
-            const liveChannels: LiveChannel[] = data.channels.map((c: any) => ({
+            const liveChannels: LiveChannel[] = data.channels.filter((c: any) => c.isLive === true).map((c: any) => ({
               id: c.id,
               name: c.name || c.title || "Live Channel",
               category: c.category || "General",
@@ -140,7 +97,7 @@ function LiveTvPage() {
               nextShow: c.nextShow || "Upcoming Broadcast",
               viewersCount: typeof c.currentViewers === "number" ? c.currentViewers : (typeof c.viewersCount === "number" ? c.viewersCount : 0),
               thumbnailUrl: c.thumbnailUrl || "/brand/og-image.png",
-              isLive: true,
+              isLive: c.isLive === true,
             }));
             setChannels(liveChannels);
           }
