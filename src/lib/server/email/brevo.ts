@@ -1,7 +1,7 @@
 import { ApiError } from "../firebase-admin";
 
 const BREVO_EMAIL_ENDPOINT = "https://api.brevo.com/v3/smtp/email";
-const DEFAULT_SENDER_EMAIL = "verification@bqsqwad.com";
+const DEFAULT_SENDER_EMAIL = "tv@bqsqwad.com";
 const DEFAULT_SENDER_NAME = "BQ SQWAD TV";
 
 export type VerificationEmailInput = {
