@@ -301,7 +301,7 @@ function WalletPage() {
       };
 
       if (!response.ok || !result.authorizationUrl) {
-        throw new Error(result.error ?? "Could not start Paystack checkout.");
+        throw new Error(result.message ?? result.error ?? "Could not start checkout.");
       }
 
       if (result.reference) {
@@ -470,7 +470,7 @@ function WalletPage() {
                       </div>
                     ) : (
                       <p className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-sm text-amber-100">
-                        Top-ups are not configured for {currentCurrency} yet. No other currency will be substituted.
+                        Paystack cannot process top-ups in {currentCurrency} for this account. Please use the BQ SQWAD TV app to top up your wallet.
                       </p>
                     )}
                   </div>
