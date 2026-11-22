@@ -115,7 +115,7 @@ export async function creditPaystackPayment(
     throw new ApiError(
       400,
       "PAYMENT_CURRENCY_UNSUPPORTED",
-      "Paystack does not support this wallet currency.",
+      "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.",
     );
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input.reference));
   const hash = Array.from(new Uint8Array(digest), (byte) =>
@@ -335,7 +335,7 @@ export function getPaystackTopup(
       throw new ApiError(
         400,
         "TOPUP_CURRENCY_NOT_CONFIGURED",
-        "Custom top-ups are not configured for your wallet currency yet.",
+        "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.",
       );
     }
     if (
@@ -376,7 +376,7 @@ export function getPaystackTopup(
       : convertedDefaultTopup(config, packageId, currency);
   }
   if (!offer || typeof offer !== "object")
-    throw new ApiError(400, "TOPUP_UNAVAILABLE", "This wallet top-up is not available.");
+    throw new ApiError(400, "TOPUP_UNAVAILABLE", "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.");
   const row = offer as Record<string, unknown>;
   const amountMinor = row["amountMinor"];
   const creditMinor = row["creditMinor"] ?? amountMinor;
