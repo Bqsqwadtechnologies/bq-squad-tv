@@ -69,7 +69,23 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
           const wallet = await getWallet(fs, user.uid);
           const currency = wallet.currency;
           const pricing = await getPricingConfig(fs);
-          const offer = getPaystackTopup(pricing, packageId, currency, customAmountMinor);
+          let offer;
+          try {
+            offer = getPaystackTopup(pricing, packageId, currency, customAmountMinor);
+          } catch (error) {
+            if (error instanceof ApiError && (
+              error.code === "PAYMENT_CURRENCY_UNSUPPORTED" ||
+              error.code === "TOPUP_CURRENCY_NOT_CONFIGURED" ||
+              error.code === "TOPUP_UNAVAILABLE"
+            )) {
+              throw new ApiError(
+                400,
+                "PAYSTACK_CURRENCY_UNAVAILABLE",
+                "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.",
+              );
+            }
+            throw error;
+          }
           const clientIp =
             request.headers.get("cf-connecting-ip") ||
             request.headers.get("x-real-ip") ||
