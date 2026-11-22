@@ -12,9 +12,12 @@ export async function detectCountryFromRequest(request: Request): Promise<string
   if (trustedCountry) return trustedCountry;
 
   const forwarded = request.headers.get("x-forwarded-for");
+  const forwardedAddresses = forwarded?.split(",").map((part) => part.trim()).filter(Boolean) ?? [];
   const remoteIp =
+    request.headers.get("cf-connecting-ip") ??
     request.headers.get("x-real-ip") ??
-    (forwarded ? forwarded.split(",")[0]?.trim() : null);
+    forwardedAddresses.at(-1) ??
+    null;
   if (!remoteIp || !isPublicIpLiteral(remoteIp)) return null;
 
   try {
