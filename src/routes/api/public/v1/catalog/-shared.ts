@@ -12,10 +12,17 @@ export type ChannelSummary = {
   language: string | null;
 };
 
-/** Maps a Firestore channel document to the Android ChannelSummary contract. */
+/**
+ * Maps a Firestore channel document to the ChannelSummary contract.
+ * Viewers access channels strictly by their public URL slug; internal Channel IDs are never exposed.
+ */
 export function toChannelSummary(doc: ChannelDoc): ChannelSummary {
+  const publicId =
+    typeof doc["slug"] === "string" && doc["slug"].trim().length > 0
+      ? (doc["slug"] as string).trim()
+      : doc.__id;
   return {
-    id: doc.__id,
+    id: publicId,
     title: typeof doc["title"] === "string" ? (doc["title"] as string) : "Untitled channel",
     category: typeof doc["category"] === "string" ? (doc["category"] as string) : "Channel",
     posterUrl: typeof doc["posterUrl"] === "string" ? (doc["posterUrl"] as string) : null,

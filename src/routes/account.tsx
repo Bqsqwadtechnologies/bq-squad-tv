@@ -50,6 +50,7 @@ function AccountPage() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [accountEmail, setAccountEmail] = useState("");
+  const [publicId, setPublicId] = useState<string | null>(null);
   const [countryCode, setCountryCode] = useState("US");
   const [walletCurrency, setWalletCurrency] = useState("USD");
   const [walletBalanceMinor, setWalletBalanceMinor] = useState<number | null>(null);
@@ -107,6 +108,7 @@ function AccountPage() {
       if (!active || !account) return;
       setAccountEmail(account.email ?? "");
       setEmail(account.email ?? "");
+      setPublicId(account.publicId ?? null);
       void loadAccountCountry();
       try {
         const preferenceResponse = await fetch("/api/public/v1/profile/preferences", {
@@ -299,6 +301,7 @@ function AccountPage() {
     setAccountEmail(accountEmailValue);
     await loadAccountCountry();
     const account = await getWebAccount();
+    if (account?.publicId) setPublicId(account.publicId);
     if (account?.emailVerified) {
       setSignedIn(true);
       setVerificationPending(false);
@@ -630,6 +633,21 @@ function AccountPage() {
                   </span>
                   <h1 className="mt-1 text-xl font-black truncate text-slate-900 dark:text-white">{accountEmail.split("@")[0]}</h1>
                   <p className="text-xs text-slate-500 dark:text-blue-100/60 truncate">{accountEmail}</p>
+                  {publicId && (
+                    <div className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-cyan-700 dark:text-cyan-300">
+                      <span className="rounded bg-cyan-100/70 dark:bg-cyan-900/30 px-2 py-0.5 border border-cyan-300/40 dark:border-cyan-500/30">
+                        {publicId}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void navigator.clipboard?.writeText(publicId)}
+                        className="rounded bg-slate-200 dark:bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-slate-700 dark:text-slate-200 hover:bg-cyan-100 hover:text-cyan-800 dark:hover:bg-white/20 transition"
+                        title="Copy Universal ID"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

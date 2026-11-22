@@ -47,6 +47,7 @@ import {
   paymentReviewKey,
 } from "@/lib/server/payment-reconciliation";
 import { verifyAuditChain } from "@/lib/server/audit";
+import { backfillUniversalIds } from "@/lib/server/universal-ids";
 import { releaseSessionLease } from "@/lib/server/session-limits";
 import { releaseExpectedStorageEgress } from "@/lib/server/storage/expected-egress";
 import { settleSessionHold } from "@/lib/server/session-holds";
@@ -600,6 +601,19 @@ export const Route = createFileRoute("/api/public/v1/worker/maintenance/run")({
                   await fs.patchDoc(alertPath, alert);
                 });
             }
+            await fs.patchDoc(taskPath, {
+              phase: "done",
+              result,
+              completedAt: now,
+              updatedAt: now,
+            });
+            return Response.json({ done: true, ...result });
+          }
+
+          if (task["taskType"] === "backfill_universal_ids") {
+            const payload = task["payload"] as Record<string, unknown> | undefined;
+            const limit = typeof payload?.["limit"] === "number" ? payload["limit"] : 200;
+            const result = await backfillUniversalIds(fs, limit);
             await fs.patchDoc(taskPath, {
               phase: "done",
               result,

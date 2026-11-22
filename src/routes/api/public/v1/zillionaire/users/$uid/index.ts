@@ -125,6 +125,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/")({
             profile: {
               id: uid,
               accountId: userDoc["accountId"] || null,
+              publicId: userDoc["publicId"] || null,
               email: userDoc["email"] || "",
               displayName: userDoc["displayName"] || "Viewer",
               phone: userDoc["phone"] || null,

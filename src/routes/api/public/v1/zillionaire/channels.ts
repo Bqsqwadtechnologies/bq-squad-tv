@@ -7,12 +7,17 @@ import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getPricingConfig, requireMinorUnitAmount } from "@/lib/server/pricing";
 import { writeAuditLog } from "@/lib/server/audit";
 import { requireCurrency } from "@/lib/server/currency";
+import { generateChannelId, slugifyChannelTitle } from "@/lib/server/universal-ids";
 
 const schema = z
   .object({
     title: z.string().trim().min(2).max(100),
     category: z.string().trim().min(2).max(60),
     description: z.string().trim().max(3000).default(""),
+    customSlug: z.string().trim().min(2).max(60).regex(/^[a-z0-9-]+$/).optional(),
+    partnerEmail: z.string().trim().email().optional(),
+    partnerRole: z.enum(["Manager", "Editor", "Viewer"]).optional(),
+    revenueShareBps: z.number().int().min(0).max(10000).optional(),
     language: z.string().trim().min(2).max(20).default("en"),
     contentRating: z.enum(["G", "PG", "13+", "16+", "18+"]).default("G"),
     adultOnly: z.boolean().default(false),
@@ -75,13 +80,6 @@ const schema = z
       });
   });
 
-function numericChannelId(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(12));
-  let result = String((bytes[0]! % 9) + 1);
-  for (let index = 1; index < bytes.length; index += 1) result += String(bytes[index]! % 10);
-  return result;
-}
-
 export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
   server: {
     handlers: {
@@ -101,9 +99,13 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
           return Response.json({
             channels: channels.map((channel) => ({
               id: channel.__id,
+              channelId: channel["channelId"] || channel.__id,
+              slug: channel["slug"] || null,
               title: typeof channel["title"] === "string" ? channel["title"] : "Untitled channel",
               status: typeof channel["status"] === "string" ? channel["status"] : "DRAFT",
               published: channel["published"] === true,
+              partnerEmail: channel["partnerEmail"] || null,
+              partnerRole: channel["partnerRole"] || null,
             })),
           });
         } catch (error) {
@@ -139,12 +141,26 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
                   "minimumSessionBalanceMinor",
                 )
               : 0);
+
           let channelId = "";
+          let slug = "";
           let created = false;
+
           for (let attempt = 0; attempt < 8 && !created; attempt += 1) {
-            channelId = numericChannelId();
+            channelId = generateChannelId();
+            const baseSlug = body.customSlug || slugifyChannelTitle(body.title);
+            slug = body.customSlug || `${baseSlug}-${channelId.slice(-4).toLowerCase()}`;
             const now = new Date().toISOString();
+
+            // Ensure slug is not already taken
+            const existingSlug = await fs.getDoc("channelSlugs/" + slug);
+            if (existingSlug) {
+              continue;
+            }
+
             const fields = {
+              channelId,
+              slug,
               channelNumber: channelId,
               ownerUid: "platform",
               createdBy: user.uid,
@@ -160,7 +176,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
               ratePerMinuteByCurrency,
               minimumBalanceMinor,
               minimumBalanceByCurrency,
-              producerShareBps: 0,
+              partnerEmail: body.partnerEmail || null,
+              partnerRole: body.partnerRole || null,
+              revenueShareBps: body.revenueShareBps ?? 0,
+              producerShareBps: body.revenueShareBps ?? 0,
               published: false,
               status: "DRAFT",
               deliveryMode: "bq_hosted",
@@ -173,6 +192,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
               createdAt: now,
               updatedAt: now,
             };
+
             const result = await fs.transact(["channels/" + channelId], (docs) => {
               if (docs[0]) return { result: false, writes: [] };
               return {
@@ -190,12 +210,28 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
             });
             created = result;
           }
+
           if (!created)
             throw new ApiError(
               503,
               "CHANNEL_ID_GENERATION_FAILED",
-              "A unique numeric channel number could not be allocated. Please retry.",
+              "A unique channel identifier could not be allocated. Please retry.",
             );
+
+          const now = new Date().toISOString();
+          // Index slug and public ID
+          await fs.setDoc("channelSlugs/" + slug, {
+            slug,
+            channelId,
+            createdAt: now,
+          });
+          await fs.setDoc("publicIds/" + channelId, {
+            id: channelId,
+            type: "channel",
+            slug,
+            createdAt: now,
+          });
+
           await writeAuditLog(fs, {
             actorUid: user.uid,
             action: "channel.created",
@@ -203,7 +239,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
             targetId: channelId,
             reason: body.reason,
             metadata: {
-              channelNumber: channelId,
+              channelId,
+              slug,
               paid: body.paid,
               adultOnly: body.adultOnly,
               contentRating: body.contentRating,
@@ -212,9 +249,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
               ratePerMinuteByCurrency,
             },
           });
+
           return Response.json(
             {
               channelId,
+              slug,
               channelNumber: channelId,
               status: "DRAFT",
               published: false,

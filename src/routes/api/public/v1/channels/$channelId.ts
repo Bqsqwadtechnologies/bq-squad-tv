@@ -15,12 +15,35 @@ export const Route = createFileRoute("/api/public/v1/channels/$channelId")({
             // Public unauthenticated preview allowed for non-adult broadcast feeds
           }
 
-          const channelId = params.channelId;
-          if (!/^[A-Za-z0-9_-]{1,80}$/.test(channelId)) {
-            throw new ApiError(400, "INVALID_REQUEST", "Invalid channel id.");
+          const channelParam = params.channelId.trim();
+          if (!/^[A-Za-z0-9_-]{1,80}$/.test(channelParam)) {
+            throw new ApiError(400, "INVALID_REQUEST", "Invalid channel identifier.");
           }
           const fs = await Firestore.create();
-          const channel = await fs.getDoc(`channels/${channelId}`);
+
+          // Resolve channel: first check slug index, then direct ID, then query
+          let internalChannelId = channelParam;
+          let channel = await fs.getDoc(`channels/${channelParam}`);
+
+          if (!channel) {
+            const slugDoc = await fs.getDoc(`channelSlugs/${channelParam.toLowerCase()}`);
+            if (slugDoc && typeof slugDoc["channelId"] === "string") {
+              internalChannelId = slugDoc["channelId"] as string;
+              channel = await fs.getDoc(`channels/${internalChannelId}`);
+            }
+          }
+
+          if (!channel) {
+            const matches = await fs.query("channels", {
+              filters: [{ field: "slug", op: "EQUAL", value: channelParam.toLowerCase() }],
+              limit: 1,
+            });
+            if (matches.length > 0 && matches[0]) {
+              channel = matches[0];
+              internalChannelId = String(channel.__id || channel["id"] || "");
+            }
+          }
+
           if (!channel || channel["published"] !== true) {
             throw new ApiError(404, "CHANNEL_NOT_FOUND", "This channel does not exist.");
           }
@@ -38,18 +61,21 @@ export const Route = createFileRoute("/api/public/v1/channels/$channelId")({
             requireAdultForContent(profile, true);
           }
 
-          const schedule = await fs.query(`channels/${channelId}/schedule`, {
+          const schedule = await fs.query(`channels/${internalChannelId}/schedule`, {
             orderByField: "startsAt",
             limit: 50,
           });
-          const replays = await fs.query(`channels/${channelId}/replays`, {
+          const replays = await fs.query(`channels/${internalChannelId}/replays`, {
             orderByField: "createdAt",
             descending: true,
             limit: 20,
           });
 
+          // Public channel representation strictly uses the slug, never internal CH- IDs.
+          const publicSlug = (channel["slug"] as string) || internalChannelId;
+
           return Response.json({
-            channel: toChannelSummary({ ...channel, __id: channelId }),
+            channel: toChannelSummary({ ...channel, __id: publicSlug }),
             schedule: schedule.map((programme) => ({
               id: programme.__id,
               title: typeof programme["title"] === "string" ? programme["title"] : "Programme",

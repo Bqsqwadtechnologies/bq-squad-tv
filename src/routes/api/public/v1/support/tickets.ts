@@ -39,9 +39,13 @@ export const Route = createFileRoute("/api/public/v1/support/tickets")({
           const now = new Date().toISOString();
           const ticketId = `TCK-${Date.now().toString().slice(-6)}`;
 
+          const userDoc = await fs.getDoc("users/" + user.uid);
+          const publicId = typeof userDoc?.["publicId"] === "string" ? userDoc["publicId"] : null;
+
           const ticket = {
             id: ticketId,
             uid: user.uid,
+            publicId,
             email: user.email ?? "unknown",
             category: body.category,
             ref: body.ref ?? body.kycCaseRef ?? null,

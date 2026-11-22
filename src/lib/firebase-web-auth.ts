@@ -1,5 +1,7 @@
 export type ConsoleAccount = {
   uid: string;
+  accountId?: string | null;
+  publicId?: string | null;
   email: string | null;
   emailVerified: boolean;
   roles?: string[];

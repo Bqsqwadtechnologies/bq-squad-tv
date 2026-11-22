@@ -35,8 +35,11 @@ export const Route = createFileRoute("/api/public/v1/wallet/receipt/$paymentId")
             Number.isSafeInteger(payment["creditMinor"])
               ? (payment["creditMinor"] as number)
               : 0;
+          const userDoc = await fs.getDoc("users/" + user.uid);
           return Response.json(
             {
+              publicId: typeof userDoc?.["publicId"] === "string" ? userDoc["publicId"] : null,
+              accountId: typeof userDoc?.["accountId"] === "string" ? userDoc["accountId"] : null,
               receiptNumber:
                 typeof payment["reference"] === "string" ? payment["reference"] : paymentId,
               status: typeof payment["status"] === "string" ? payment["status"] : "unknown",

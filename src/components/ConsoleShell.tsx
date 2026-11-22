@@ -848,6 +848,19 @@ export function ConsoleShell({
             {account?.email && (
               <span className="text-[11px] text-slate-400 truncate">{account.email}</span>
             )}
+            {account?.publicId && (
+              <div className="mt-1 flex items-center gap-1.5 font-mono text-[10px] text-cyan-300">
+                <span>{account.publicId}</span>
+                <button
+                  type="button"
+                  onClick={() => void navigator.clipboard?.writeText(account.publicId!)}
+                  className="rounded px-1 text-[9px] bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white"
+                  title="Copy Public ID"
+                >
+                  Copy
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Navigation Items */}
@@ -1145,6 +1158,19 @@ export function ConsoleShell({
                   >
                     <div className="px-3 py-2 border-b border-white/5">
                       <p className="text-xs font-bold truncate">{account?.email || "Signed In"}</p>
+                      {account?.publicId && (
+                        <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-cyan-300">
+                          <span>{account.publicId}</span>
+                          <button
+                            type="button"
+                            onClick={() => void navigator.clipboard?.writeText(account.publicId!)}
+                            className="rounded px-1 text-[9px] bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white"
+                            title="Copy Public ID"
+                          >
+                            Copy
+                          </button>
+                        </div>
+                      )}
                       <p className="text-[10px] text-slate-400">
                         {account?.isOwner
                           ? "Platform Owner"

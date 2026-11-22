@@ -150,6 +150,7 @@ import { Route as ApiPublicV1LegalConsentRouteImport } from './routes/api/public
 import { Route as ApiPublicV1LegalRequiredRouteImport } from './routes/api/public/v1/legal/required'
 import { Route as ApiPublicV1LegalStatusRouteImport } from './routes/api/public/v1/legal/status'
 import { Route as ApiPublicV1MonitoringClientErrorsRouteImport } from './routes/api/public/v1/monitoring/client-errors'
+import { Route as ApiPublicV1NotificationsBadgesRouteImport } from './routes/api/public/v1/notifications/badges'
 import { Route as ApiPublicV1NotificationsUnreadCountRouteImport } from './routes/api/public/v1/notifications/unread-count'
 import { Route as ApiPublicV1PagesSlugRouteImport } from './routes/api/public/v1/pages/$slug'
 import { Route as ApiPublicV1PartnerEnquiryRouteImport } from './routes/api/public/v1/partner/enquiry'
@@ -1131,6 +1132,12 @@ const ApiPublicV1MonitoringClientErrorsRoute =
     id: '/api/public/v1/monitoring/client-errors',
     path: '/api/public/v1/monitoring/client-errors',
     getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1NotificationsBadgesRoute =
+  ApiPublicV1NotificationsBadgesRouteImport.update({
+    id: '/badges',
+    path: '/badges',
+    getParentRoute: () => ApiPublicV1NotificationsRoute,
   } as any)
 const ApiPublicV1NotificationsUnreadCountRoute =
   ApiPublicV1NotificationsUnreadCountRouteImport.update({
@@ -2716,6 +2723,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
   '/api/public/v1/legal/status': typeof ApiPublicV1LegalStatusRoute
   '/api/public/v1/monitoring/client-errors': typeof ApiPublicV1MonitoringClientErrorsRoute
+  '/api/public/v1/notifications/badges': typeof ApiPublicV1NotificationsBadgesRoute
   '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
   '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
@@ -3101,6 +3109,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
   '/api/public/v1/legal/status': typeof ApiPublicV1LegalStatusRoute
   '/api/public/v1/monitoring/client-errors': typeof ApiPublicV1MonitoringClientErrorsRoute
+  '/api/public/v1/notifications/badges': typeof ApiPublicV1NotificationsBadgesRoute
   '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
   '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
@@ -3486,6 +3495,7 @@ export interface FileRoutesById {
   '/api/public/v1/legal/required': typeof ApiPublicV1LegalRequiredRoute
   '/api/public/v1/legal/status': typeof ApiPublicV1LegalStatusRoute
   '/api/public/v1/monitoring/client-errors': typeof ApiPublicV1MonitoringClientErrorsRoute
+  '/api/public/v1/notifications/badges': typeof ApiPublicV1NotificationsBadgesRoute
   '/api/public/v1/notifications/unread-count': typeof ApiPublicV1NotificationsUnreadCountRoute
   '/api/public/v1/pages/$slug': typeof ApiPublicV1PagesSlugRoute
   '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
@@ -3873,6 +3883,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/legal/required'
     | '/api/public/v1/legal/status'
     | '/api/public/v1/monitoring/client-errors'
+    | '/api/public/v1/notifications/badges'
     | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
     | '/api/public/v1/partner/enquiry'
@@ -4258,6 +4269,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/legal/required'
     | '/api/public/v1/legal/status'
     | '/api/public/v1/monitoring/client-errors'
+    | '/api/public/v1/notifications/badges'
     | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
     | '/api/public/v1/partner/enquiry'
@@ -4642,6 +4654,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/legal/required'
     | '/api/public/v1/legal/status'
     | '/api/public/v1/monitoring/client-errors'
+    | '/api/public/v1/notifications/badges'
     | '/api/public/v1/notifications/unread-count'
     | '/api/public/v1/pages/$slug'
     | '/api/public/v1/partner/enquiry'
@@ -6227,6 +6240,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/v1/monitoring/client-errors'
       preLoaderRoute: typeof ApiPublicV1MonitoringClientErrorsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/notifications/badges': {
+      id: '/api/public/v1/notifications/badges'
+      path: '/badges'
+      fullPath: '/api/public/v1/notifications/badges'
+      preLoaderRoute: typeof ApiPublicV1NotificationsBadgesRouteImport
+      parentRoute: typeof ApiPublicV1NotificationsRoute
     }
     '/api/public/v1/notifications/unread-count': {
       id: '/api/public/v1/notifications/unread-count'
@@ -7947,12 +7967,14 @@ const ProducerChannelsRouteWithChildren =
   ProducerChannelsRoute._addFileChildren(ProducerChannelsRouteChildren)
 
 interface ApiPublicV1NotificationsRouteChildren {
+  ApiPublicV1NotificationsBadgesRoute: typeof ApiPublicV1NotificationsBadgesRoute
   ApiPublicV1NotificationsUnreadCountRoute: typeof ApiPublicV1NotificationsUnreadCountRoute
   ApiPublicV1NotificationsNotificationIdReadRoute: typeof ApiPublicV1NotificationsNotificationIdReadRoute
 }
 
 const ApiPublicV1NotificationsRouteChildren: ApiPublicV1NotificationsRouteChildren =
   {
+    ApiPublicV1NotificationsBadgesRoute: ApiPublicV1NotificationsBadgesRoute,
     ApiPublicV1NotificationsUnreadCountRoute:
       ApiPublicV1NotificationsUnreadCountRoute,
     ApiPublicV1NotificationsNotificationIdReadRoute:

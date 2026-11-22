@@ -1,5 +1,4 @@
 # Project Handoff
 - Branch: main
-- HEAD: af497e9f760e0b77ac383a5101ea29e669ab5b29
-- Last Badge Pushed: PUSH BADGE #83 SUCCESSFUL (v6-09-A4-A5-N2-N7-N26)
-- Next Badge to Implement: PUSH BADGE #84 (v6-09-N8-N15 / Production Hardening & Partner Workflows)
+- Last Badge Pushed: PUSH BADGE #84 SUCCESSFUL (v6-09-N8-N15-N16-N20)
+- Next Badge to Implement: PUSH BADGE #85 (v6-09-N5-N10-N17-N25 / Producer Upload Studio, Public Profiles & Partner Console Rebuild)

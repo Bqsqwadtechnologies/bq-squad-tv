@@ -3,6 +3,7 @@ import { errorBody } from "@/lib/server/api";
 import { requireViewer } from "@/lib/server/access";
 import { getConfiguredOwnerEmail } from "@/lib/server/roles";
 import { ensureAccountId } from "@/lib/server/account-id";
+import { ensurePublicId, type PublicIdType } from "@/lib/server/universal-ids";
 import { Firestore } from "@/lib/server/firebase-admin";
 
 export const Route = createFileRoute("/api/public/v1/auth/web/me")({
@@ -20,11 +21,19 @@ export const Route = createFileRoute("/api/public/v1/auth/web/me")({
           const fs = await Firestore.create();
           const profile = await fs.getDoc("users/" + user.uid);
           const accountId = await ensureAccountId(fs, user.uid, profile);
+          const userType: PublicIdType = access.isZillionaireOwner ? "zillionaire" : "viewer";
+          const publicId = await ensurePublicId(
+            fs,
+            user.uid,
+            userType,
+            typeof profile?.["publicId"] === "string" ? profile["publicId"] : null,
+          );
           const wallet = await fs.getDoc("wallets/" + user.uid);
           return Response.json(
             {
               uid: user.uid,
               accountId,
+              publicId,
               countryCode: profile?.["countryCode"] ?? null,
               currency: wallet?.["currency"] ?? profile?.["preferredCurrency"] ?? null,
               email: user.email,

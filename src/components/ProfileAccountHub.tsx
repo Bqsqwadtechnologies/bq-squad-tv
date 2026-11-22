@@ -101,6 +101,22 @@ export function ProfileAccountHub() {
               <div className="truncate">
                 <p className="text-sm font-bold text-white truncate">{userDisplayName}</p>
                 <p className="text-xs text-slate-400 truncate">{authState === "loading" ? "Checking session…" : account?.email ?? "Not signed in"}</p>
+                {account?.publicId && (
+                  <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[11px] text-cyan-300">
+                    <span>{account.publicId}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void navigator.clipboard?.writeText(account.publicId!);
+                      }}
+                      className="rounded bg-white/10 px-1 py-0.5 text-[9px] text-slate-300 hover:bg-white/20 hover:text-white"
+                      title="Copy Public ID"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <button

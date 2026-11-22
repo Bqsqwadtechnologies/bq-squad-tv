@@ -3,6 +3,7 @@ import { errorBody, requireUser } from "@/lib/server/api";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { requireZillionaireModule } from "@/lib/server/roles";
 import { ensureAccountId } from "@/lib/server/account-id";
+import { ensurePublicId, lookupByPublicId, type PublicIdType } from "@/lib/server/universal-ids";
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
   server: {
@@ -15,6 +16,33 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
 
           const url = new URL(request.url);
           const search = url.searchParams.get("q")?.toLowerCase().trim();
+
+          // Universal ID (Crockford check-char) lookup in O(1)
+          if (search && (search.startsWith("bq-") || search.startsWith("ch-"))) {
+            const lookup = await lookupByPublicId(fs, search.toUpperCase());
+            if (lookup?.uid) {
+              const matched = await fs.getDoc("users/" + lookup.uid);
+              if (matched) {
+                return Response.json({
+                  users: [{
+                    id: lookup.uid,
+                    publicId: search.toUpperCase(),
+                    accountId: matched["accountId"] || null,
+                    email: matched["email"] || "",
+                    displayName: matched["displayName"] || "Viewer",
+                    phone: matched["phone"] || null,
+                    walletId: matched["walletId"] || null,
+                    accountStatus: matched["accountStatus"] || (matched["suspended"] ? "SUSPENDED" : "ACTIVE"),
+                    suspended: Boolean(matched["suspended"] || matched["accountStatus"] === "SUSPENDED" || matched["accountStatus"] === "BANNED"),
+                    createdAt: matched["createdAt"] || null,
+                    roleTags: Array.isArray(matched["roleTags"]) ? matched["roleTags"] : [],
+                    riskScore: Number(matched["riskScore"] || 0),
+                  }],
+                });
+              }
+            }
+            return Response.json({ users: [] });
+          }
 
           // Numeric account references resolve through a direct index lookup,
           // avoiding the previous first-100-users search limitation.
@@ -61,9 +89,13 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
             filtered.map(async (u) => {
               const uid = String(u.__id || u["id"] || u["uid"] || "");
               const accountId = uid ? await ensureAccountId(fs, uid, u) : null;
+              const isOwner = u["isOwner"] === true || u["role"] === "owner";
+              const userType: PublicIdType = isOwner ? "zillionaire" : "viewer";
+              const publicId = uid ? await ensurePublicId(fs, uid, userType, u["publicId"] as string) : null;
               return {
                 id: uid,
                 accountId,
+                publicId,
                 email: u["email"] || "",
                 displayName: u["displayName"] || "Viewer",
                 phone: u["phone"] || null,
