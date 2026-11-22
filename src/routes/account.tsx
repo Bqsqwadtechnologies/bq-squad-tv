@@ -87,6 +87,7 @@ function AccountPage() {
 
   const [showSettingsView, setShowSettingsView] = useState(false);
   const [countryReady, setCountryReady] = useState(false);
+  const [canChangeCountry, setCanChangeCountry] = useState(false);
   const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
   const [legalConsentAccepted, setLegalConsentAccepted] = useState(false);
   const [legalAcceptanceRequired, setLegalAcceptanceRequired] = useState(false);
@@ -187,18 +188,11 @@ function AccountPage() {
         countryCode?: string | null;
         currency?: string;
         walletCurrencyLocked?: boolean;
+        isZillionaireOwner?: boolean;
       };
       setCountryReady(true);
-      if (data.countryCode) {
-        setCountryCode(data.countryCode);
-      } else if (!data.walletCurrencyLocked) {
-        const region = new Intl.Locale(navigator.language).region;
-        if (region && /^[A-Z]{2}$/.test(region)) {
-          setCountryCode(region);
-          await saveAccountCountry(region, token, false);
-          return;
-        }
-      }
+      setCanChangeCountry(data.isZillionaireOwner === true);
+      if (data.countryCode) setCountryCode(data.countryCode);
       setWalletCurrency(data.currency ?? "USD");
     }
     // Also load wallet balance
@@ -430,11 +424,11 @@ function AccountPage() {
       setVerificationPending(false);
       setCode("");
       const needsAcceptance = await loadLegalStatus();
-      setMessage(
-        needsAcceptance
-          ? "Please review and accept the updated service terms before continuing."
-          : "Your email is verified. You're signed in.",
-      );
+      if (needsAcceptance) {
+        setMessage("Please review and accept the updated service terms before continuing.");
+      } else {
+        window.location.replace("/");
+      }
     } catch (error) {
       setMessage(sanitizeViewerError(error, "Email verification failed."));
     } finally {
@@ -451,11 +445,11 @@ function AccountPage() {
         setSignedIn(true);
         setVerificationPending(false);
         const needsAcceptance = await loadLegalStatus();
-        setMessage(
-          needsAcceptance
-            ? "Please review and accept the updated service terms before continuing."
-            : "Your email is already verified. You're signed in.",
-        );
+        if (needsAcceptance) {
+          setMessage("Please review and accept the updated service terms before continuing.");
+        } else {
+          window.location.replace("/");
+        }
       } else {
         setMessage(
           result.sent ? "A new six-digit code has been sent." : "A new code could not be sent yet.",
@@ -808,31 +802,36 @@ function AccountPage() {
                   <p className="text-xs font-bold uppercase tracking-wider text-cyan-700 dark:text-cyan-300">
                     Settings &amp; Preferences
                   </p>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-blue-100/80">
-                    Account Country
-                    <select
-                      value={countryCode}
-                      onChange={(event) => void saveAccountCountry(event.target.value)}
-                      className="mt-1.5 w-full rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-3 py-2 text-sm text-slate-900 dark:text-white shadow-sm"
-                    >
-                      <option value="US">United States — USD</option>
-                      <option value="NG">Nigeria — NGN</option>
-                      <option value="GB">United Kingdom — GBP</option>
-                      <option value="GH">Ghana — GHS</option>
-                      <option value="KE">Kenya — KES</option>
-                      <option value="ZA">South Africa — ZAR</option>
-                      <option value="CA">Canada — CAD</option>
-                      <option value="AU">Australia — AUD</option>
-                      <option value="IN">India — INR</option>
-                      <option value="DE">Germany — EUR</option>
-                      <option value="FR">France — EUR</option>
-                      <option value="JP">Japan — JPY</option>
-                    </select>
-                    <span className="mt-1 block text-[11px] text-slate-500 dark:text-blue-100/50">
-                      Wallet currency: {walletCurrency}. It cannot be changed after your wallet is
-                      established.
-                    </span>
-                  </label>
+                  <div className="rounded-lg bg-slate-100 dark:bg-white/5 px-3 py-2 text-xs text-slate-600 dark:text-blue-100/70">
+                    Detected country: <strong>{countryCode || "Not available"}</strong>
+                    <span className="ml-2">Wallet currency: <strong>{walletCurrency}</strong></span>
+                  </div>
+                  {canChangeCountry && (
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-blue-100/80">
+                      Owner country test
+                      <select
+                        value={countryCode}
+                        onChange={(event) => void saveAccountCountry(event.target.value)}
+                        className="mt-1.5 w-full rounded-lg border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-3 py-2 text-sm text-slate-900 dark:text-white shadow-sm"
+                      >
+                        <option value="NG">Nigeria — NGN</option>
+                        <option value="US">United States — USD</option>
+                        <option value="GB">United Kingdom — GBP</option>
+                        <option value="GH">Ghana — GHS</option>
+                        <option value="KE">Kenya — KES</option>
+                        <option value="ZA">South Africa — ZAR</option>
+                        <option value="CA">Canada — CAD</option>
+                        <option value="AU">Australia — AUD</option>
+                        <option value="IN">India — INR</option>
+                        <option value="DE">Germany — EUR</option>
+                        <option value="FR">France — EUR</option>
+                        <option value="JP">Japan — JPY</option>
+                      </select>
+                      <span className="mt-1 block text-[11px] text-slate-500 dark:text-blue-100/50">
+                        This changes only the owner account for testing. Wallet currency changes require a zero balance and no active sessions.
+                      </span>
+                    </label>
+                  )}
                   <button
                     type="button"
                     disabled={busy}
