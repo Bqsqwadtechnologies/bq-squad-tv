@@ -88,10 +88,10 @@ describe("Batch N12 — Documents Hub & Where is Everything", () => {
 
     const doc = await fs.getDoc("sitePages/terms");
     expect(doc).not.toBeNull();
-    expect(doc?.effectiveAt).toBe(effectiveIso);
-    expect(doc?.publishedAt).toBe(nowIso);
-    expect(doc?.scheduledPublishAt).toBe(scheduledIso);
-    expect(doc?.requiresReacceptance).toBe(true);
+    expect(doc?.["effectiveAt"]).toBe(effectiveIso);
+    expect(doc?.["publishedAt"]).toBe(nowIso);
+    expect(doc?.["scheduledPublishAt"]).toBe(scheduledIso);
+    expect(doc?.["requiresReacceptance"]).toBe(true);
   });
 
   it("unpublishes a live document back to draft status", async () => {
@@ -108,7 +108,7 @@ describe("Batch N12 — Documents Hub & Where is Everything", () => {
     });
 
     const doc = await fs.getDoc("sitePages/privacy-policy");
-    expect(doc?.status).toBe("draft");
+    expect(doc?.["status"]).toBe("draft");
   });
 });
 
@@ -126,12 +126,12 @@ describe("Batch N19 — Change Requests: Approve, Then Go Live", () => {
     };
 
     const clean = maskSecrets(raw);
-    expect(clean.streamUrl).toBe("https://stream.example.com/live.m3u8");
-    expect(clean.channelName).toBe("African Cinema HD");
-    expect(clean.streamKey).toBe("••••••••");
-    expect(clean.authToken).toBe("••••••••");
-    expect((clean.metadata as Record<string, unknown>).password).toBe("••••••••");
-    expect((clean.metadata as Record<string, unknown>).normalField).toBe("visible");
+    expect(clean["streamUrl"]).toBe("https://stream.example.com/live.m3u8");
+    expect(clean["channelName"]).toBe("African Cinema HD");
+    expect(clean["streamKey"]).toBe("••••••••");
+    expect(clean["authToken"]).toBe("••••••••");
+    expect((clean["metadata"] as Record<string, unknown>)["password"]).toBe("••••••••");
+    expect((clean["metadata"] as Record<string, unknown>)["normalField"]).toBe("visible");
   });
 
   it("resolves target document paths across all supported scopes", () => {
@@ -192,7 +192,7 @@ describe("Batch N19 — Change Requests: Approve, Then Go Live", () => {
 
     // CRITICAL ASSERTION: The live channel still has its OLD name!
     const channelAfterApprove = await fs.getDoc(channelPath);
-    expect(channelAfterApprove?.name).toBe("Old Channel Name");
+    expect(channelAfterApprove?.["name"]).toBe("Old Channel Name");
 
     // 2. Reviewer presses Go Live
     const updatedCr = await applyChangeRequestGoLive(fs as any, requestId, "zillionaire_reviewer_1");
@@ -205,7 +205,7 @@ describe("Batch N19 — Change Requests: Approve, Then Go Live", () => {
 
     // CRITICAL ASSERTION: Now the target channel is atomically updated!
     const channelAfterGoLive = await fs.getDoc(channelPath);
-    expect(channelAfterGoLive?.name).toBe("New Brand Channel HD");
+    expect(channelAfterGoLive?.["name"]).toBe("New Brand Channel HD");
   });
 
   it("rolls back live change request with one click, restoring previous snapshot", async () => {
@@ -239,7 +239,7 @@ describe("Batch N19 — Change Requests: Approve, Then Go Live", () => {
     expect(rolledBack.notes).toContain("Stream stutter reported by viewers");
 
     const channelAfterRollback = await fs.getDoc(channelPath);
-    expect(channelAfterRollback?.name).toBe("Channel V1 Original");
+    expect(channelAfterRollback?.["name"]).toBe("Channel V1 Original");
   });
 
   it("blocks Go Live if automatic tests failed unless explicit override reason is provided", async () => {

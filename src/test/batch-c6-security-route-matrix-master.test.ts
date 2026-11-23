@@ -201,7 +201,7 @@ describe("Batch C6 — Comprehensive Security, Route-Matrix, IDOR & Master Check
       expect(isDistinctReviewer).toBe(false);
 
       const validSecondReviewer = "officer_bob";
-      expect(firstReviewer !== validSecondReviewer).toBe(true);
+      expect(validSecondReviewer).not.toBe(firstReviewer);
     });
   });
 

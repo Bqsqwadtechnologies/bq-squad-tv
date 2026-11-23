@@ -347,7 +347,7 @@ describe("Batch B2 — Payout Account Verification and Review Flow", () => {
       // Verify notification sent
       const notifs = [...mockDb.entries()].filter(([k]) => k.startsWith("notifications/notif_payout_account_user_producer_b2"));
       expect(notifs.length).toBeGreaterThan(0);
-      const notif = notifs[0][1];
+      const notif = notifs[0]?.[1];
       expect(notif.title).toMatch(/Payout Bank Account Verified/i);
     });
 

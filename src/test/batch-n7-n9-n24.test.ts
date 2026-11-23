@@ -68,8 +68,8 @@ describe("Batch N7: Country Per-Minute Pricing Engine", () => {
     };
 
     const adjusted = applyBulkCountryAdjustment(initialRules, 15);
-    expect(adjusted.CA.adjustmentPercent).toBe(15);
-    expect(adjusted.AU.adjustmentPercent).toBe(15);
+    expect(adjusted["CA"]?.adjustmentPercent).toBe(15);
+    expect(adjusted["AU"]?.adjustmentPercent).toBe(15);
 
     const csv = exportCountryPricingRulesCsv(adjusted);
     expect(csv).toContain("CA,CAD,percent_adjustment,true");
@@ -84,11 +84,11 @@ describe("Batch N7: Country Per-Minute Pricing Engine", () => {
 });
 
 describe("Batch N9: Sports Hub Standings & Brackets", () => {
-  const teams: SportsTeam[] = [
+  const teams = [
     { id: "team-a", competitionId: "comp-1", name: "Team Alpha", shortCode: "ALP", country: "Nigeria" },
     { id: "team-b", competitionId: "comp-1", name: "Team Beta", shortCode: "BET", country: "Nigeria" },
     { id: "team-c", competitionId: "comp-1", name: "Team Gamma", shortCode: "GAM", country: "Ghana" },
-  ];
+  ] satisfies [SportsTeam, SportsTeam, SportsTeam];
 
   it("computes official league standings with 3-1-0 points and GD tiebreakers", () => {
     const fixtures: SportsFixture[] = [

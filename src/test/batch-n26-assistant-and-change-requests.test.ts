@@ -68,7 +68,7 @@ describe("Rule A4 & Batch N26: Assistant Deny List & Boundaries", () => {
     });
     expect(result.valid).toBe(true);
     expect(result.requiresChangeRequest).toBe(true);
-    expect(result.sanitizedChanges.title).toBe("Corrected Title");
+    expect(result.sanitizedChanges["title"]).toBe("Corrected Title");
   });
 });
 
@@ -86,11 +86,11 @@ describe("Batch N26: Change Request Lifecycle & Secrets Masking", () => {
     };
 
     const masked = maskSecrets(raw);
-    expect(masked.channelTitle).toBe("BqSquad Prime");
-    expect(masked.streamKey).toBe("••••••••");
-    expect(masked.apiToken).toBe("••••••••");
-    expect((masked.nested as any).password).toBe("••••••••");
-    expect((masked.nested as any).publicName).toBe("Public Studio");
+    expect(masked["channelTitle"]).toBe("BqSquad Prime");
+    expect(masked["streamKey"]).toBe("••••••••");
+    expect(masked["apiToken"]).toBe("••••••••");
+    expect((masked["nested"] as any).password).toBe("••••••••");
+    expect((masked["nested"] as any).publicName).toBe("Public Studio");
   });
 
   it("resolves valid target document paths for change request scopes", () => {
@@ -122,6 +122,7 @@ describe("Rule N6: Country-Specific Pricing & Exchange Rates", () => {
       5, // $0.05
       {
         countryCode: "NG",
+        enabled: true,
         currency: "NGN",
         mode: "automatic",
         multiplier: 1.0,
@@ -139,6 +140,7 @@ describe("Rule N6: Country-Specific Pricing & Exchange Rates", () => {
       5,
       {
         countryCode: "GH",
+        enabled: true,
         currency: "GHS",
         mode: "fixed",
         fixedRatePerMinuteMinor: 80, // 0.80 GHS
@@ -154,6 +156,7 @@ describe("Rule N6: Country-Specific Pricing & Exchange Rates", () => {
       5,
       {
         countryCode: "ZA",
+        enabled: true,
         currency: "ZAR",
         mode: "percent_adjustment",
         adjustmentPercent: -20, // 20% discount

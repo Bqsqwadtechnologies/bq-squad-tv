@@ -111,7 +111,7 @@ describe("Batch B7 — Email Status & Notification Outbox", () => {
         recipientEmail: "creator@example.com",
         currentStatus: `STATUS_FOR_${eventType}`,
         nextStep: `NEXT_STEP_FOR_${eventType}`,
-        reason: eventType.includes("rejected") || eventType.includes("needs_changes") ? "Test Compliance Reason" : undefined,
+        ...(eventType.includes("rejected") || eventType.includes("needs_changes") ? { reason: "Test Compliance Reason" } : {}),
       };
 
       const rendered = renderEmailTemplate(payload);
@@ -224,9 +224,9 @@ describe("Batch B7 — Email Status & Notification Outbox", () => {
       updatedAt: new Date().toISOString(),
     });
 
-    process.env.BREVO_API_KEY = "xkeysib-test-b7-key";
-    process.env.BREVO_SENDER_EMAIL = "tv@bqsqwad.com";
-    process.env.BREVO_SENDER_NAME = "BQ SQWAD TV";
+    process.env["BREVO_API_KEY"] = "xkeysib-test-b7-key";
+    process.env["BREVO_SENDER_EMAIL"] = "tv@bqsqwad.com";
+    process.env["BREVO_SENDER_NAME"] = "BQ SQWAD TV";
 
     const originalFetch = global.fetch;
     try {
@@ -244,7 +244,7 @@ describe("Batch B7 — Email Status & Notification Outbox", () => {
       expect(updated?.["sentAt"]).toBeTruthy();
     } finally {
       global.fetch = originalFetch;
-      delete process.env.BREVO_API_KEY;
+      delete process.env["BREVO_API_KEY"];
     }
   });
 });

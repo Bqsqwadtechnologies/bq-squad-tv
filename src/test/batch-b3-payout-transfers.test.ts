@@ -203,7 +203,7 @@ describe("Batch B3 — Owner Payout Sheet, Transfer Details, Batch Export, and S
       k.startsWith("auditLog/") && v.action === "payout.transfer_details.viewed"
     );
     expect(auditEntries.length).toBeGreaterThan(0);
-    expect(auditEntries[0][1].targetId).toBe("po_abc1234567890");
+    expect(auditEntries[0]?.[1].targetId).toBe("po_abc1234567890");
   });
 
   it("audits one-tap copying of transfer fields", async () => {
@@ -233,7 +233,7 @@ describe("Batch B3 — Owner Payout Sheet, Transfer Details, Batch Export, and S
       k.startsWith("auditLog/") && v.action === "payout.transfer_details.copied"
     );
     expect(auditEntries.length).toBeGreaterThan(0);
-    expect(auditEntries[0][1].metadata.field).toBe("accountNumber");
+    expect(auditEntries[0]?.[1].metadata.field).toBe("accountNumber");
   });
 
   it("exports batch CSV grouped by Local and International with unmasked accounts and records audit", async () => {
@@ -355,7 +355,7 @@ describe("Batch B3 — Owner Payout Sheet, Transfer Details, Batch Export, and S
     // Verify In-App Notification created
     const notifs = Array.from(mockDb.entries()).filter(([k]) => k.startsWith("notifications/"));
     expect(notifs.length).toBeGreaterThan(0);
-    const inApp = notifs[0][1];
+    const inApp = notifs[0]?.[1];
     expect(inApp.recipientUid).toBe("prod_paid_recipient");
     expect(inApp.title).toContain("Payout Processed");
     expect(inApp.metadata.reference).toBe("WEMA-ALAT-20261120-89129");
@@ -363,7 +363,7 @@ describe("Batch B3 — Owner Payout Sheet, Transfer Details, Batch Export, and S
     // Verify Email Outbox queued (Strictly email, never SMS)
     const outboxes = Array.from(mockDb.entries()).filter(([k]) => k.startsWith("emailOutbox/"));
     expect(outboxes.length).toBeGreaterThan(0);
-    const emailNotice = outboxes[0][1];
+    const emailNotice = outboxes[0]?.[1];
     expect(emailNotice.channel).toBe("email");
     expect(emailNotice.recipientUid).toBe("prod_paid_recipient");
     expect(emailNotice.variables.reference).toBe("WEMA-ALAT-20261120-89129");

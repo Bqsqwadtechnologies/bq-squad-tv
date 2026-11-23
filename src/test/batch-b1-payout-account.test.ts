@@ -20,11 +20,11 @@ describe("Batch B1 — Payout Account Form & Bank Directory", () => {
 
       const usBanks = getBanksForCountry("US");
       expect(usBanks.length).toBeGreaterThan(0);
-      expect(usBanks[0].routingCodeType).toBe("routing_number");
+      expect(usBanks[0]?.routingCodeType).toBe("routing_number");
 
       const gbBanks = getBanksForCountry("GB");
       expect(gbBanks.length).toBeGreaterThan(0);
-      expect(gbBanks[0].routingCodeType).toBe("sort_code");
+      expect(gbBanks[0]?.routingCodeType).toBe("sort_code");
     });
 
     it("safely looks up bank details by id or code", () => {

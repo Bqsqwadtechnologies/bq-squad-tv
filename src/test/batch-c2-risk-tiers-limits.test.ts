@@ -177,7 +177,7 @@ describe("Batch C2 — Risk Tiers, Velocity Limits, and Four-Eyes Dual Approval"
         ([k, v]) => k.startsWith("auditLog/") && v.action === "kyc.risk_settings.updated",
       );
       expect(audits.length).toBeGreaterThan(0);
-      expect(audits[0][1].reason).toContain("holiday creator surge");
+      expect(audits[0]?.[1].reason).toContain("holiday creator surge");
     });
 
     it("rejects update when reason is missing or too short", async () => {
@@ -241,7 +241,7 @@ describe("Batch C2 — Risk Tiers, Velocity Limits, and Four-Eyes Dual Approval"
         }),
       });
 
-      const res = await PayoutRequestRoute.options.server!.handlers!.POST!({ request: req } as any);
+      const res = await (await getPostHandler(PayoutRequestRoute))({ request: req });
       expect(res.status).toBe(403);
       const json = await res.json();
       expect(json.code).toBe("TIER_LIMIT_EXCEEDED");
@@ -293,7 +293,7 @@ describe("Batch C2 — Risk Tiers, Velocity Limits, and Four-Eyes Dual Approval"
         }),
       });
 
-      const res = await PayoutRequestRoute.options.server!.handlers!.POST!({ request: req } as any);
+      const res = await (await getPostHandler(PayoutRequestRoute))({ request: req });
       expect(res.status).toBe(201);
       const json = await res.json();
       expect(json.status).toBe("REQUESTED");
@@ -443,7 +443,7 @@ describe("Batch C2 — Risk Tiers, Velocity Limits, and Four-Eyes Dual Approval"
         }),
       });
 
-      const res = await Tier2Route.options.server!.handlers!.POST!({ request: req } as any);
+      const res = await (await getPostHandler(Tier2Route))({ request: req });
       expect(res.status).toBe(202);
       const json = await res.json();
       expect(json.tier2Status).toBe("pending_review");
@@ -454,3 +454,10 @@ describe("Batch C2 — Risk Tiers, Velocity Limits, and Four-Eyes Dual Approval"
     });
   });
 });
+
+async function getPostHandler(route: unknown): Promise<(context: { request: Request }) => Promise<Response>> {
+  const candidate = route as { options?: { server?: { handlers?: unknown } } };
+  const handlers = candidate.options?.server?.handlers;
+  if (!handlers || typeof handlers !== "object" || !("POST" in handlers) || typeof handlers.POST !== "function") throw new Error("POST handler unavailable");
+  return handlers.POST as (context: { request: Request }) => Promise<Response>;
+}

@@ -187,7 +187,7 @@ describe("Batch B4 — Currency Rules, Limits, Dual Approval, and Safety Holds",
       k.startsWith("auditLog/") && v.action === "payout.rules.updated"
     );
     expect(auditEntries.length).toBeGreaterThan(0);
-    expect(auditEntries[0][1].reason).toContain("Adjusted minimums");
+    expect(auditEntries[0]?.[1].reason).toContain("Adjusted minimums");
   });
 
   it("producer payout request fails if below minimum payout limit ($500 / 50000 minor)", async () => {
