@@ -428,7 +428,12 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
 
           const channelOwnerUid =
             typeof channel["ownerUid"] === "string" ? channel["ownerUid"] : "";
-          const platformOwned = channelOwnerUid === "platform";
+          // Backward compatibility for platform live channels created before
+          // ownerUid was corrected to "platform". They must not require the
+          // Zillionaire owner personal producer settlement account.
+          const platformOwned =
+            channelOwnerUid === "platform" ||
+            (channel["type"] === "platform" && channel["deliveryMode"] === "live_hls");
           const producerUid = platformOwned ? "" : channelOwnerUid;
           if (!platformOwned && !/^[A-Za-z0-9_-]{1,128}$/.test(producerUid)) {
             throw new ApiError(
