@@ -65,7 +65,7 @@ function ZillionaireReceiptsRoute() {
       title="Receipts & Financial Documents"
       description="Sequential money documents, receipts, proof of payout, and customer lifetime spend."
     >
-      {(token, account, onLock) => (
+      {({ token, account, onLock }) => (
         <ZillionaireReceiptsPage token={token} account={account} onLock={onLock} />
       )}
     </ConsolePageGuard>
