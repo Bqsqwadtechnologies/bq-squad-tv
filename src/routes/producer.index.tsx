@@ -494,7 +494,7 @@ function ProducerDashboardInner({
           <ConsoleKpiCard
             title="Live Viewers"
             value={analytics ? analytics.liveViewers.toLocaleString() : "—"}
-            subtitle="Real-time concurrent audience"
+            subtitle="Viewers currently watching your movies and videos"
             delta={computeDelta(analytics?.liveViewers, analytics?.previousLiveViewers, "last period")}
             icon={Radio}
             variant="purple"
@@ -532,7 +532,7 @@ function ProducerDashboardInner({
                 Audience & Revenue Performance
               </h2>
               <p className="text-xs text-slate-400">
-                Detailed view count, watch duration, and revenue velocity
+                Views, watch duration and earnings from your movies, series and videos
               </p>
             </div>
             {/* Period Picker */}
@@ -604,7 +604,7 @@ function ProducerDashboardInner({
                 </svg>
               ) : (
                 <div className="flex h-full items-center justify-center text-xs text-slate-500">
-                  No data yet. Streaming telemetry will appear once viewers watch your channels.
+                  No viewing activity yet. Audience and revenue data will appear when viewers watch your movies, series and videos.
                 </div>
               )}
             </div>
