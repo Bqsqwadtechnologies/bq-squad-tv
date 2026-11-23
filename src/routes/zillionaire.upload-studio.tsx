@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Film, Video, Tv, UploadCloud, Play, Search, CheckCircle2, Clock3 } from "lucide-react";
+import { Film, Video, Tv, UploadCloud, Play, Search, CheckCircle2, Clock3, Trash2 } from "lucide-react";
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
 import { ConsoleShell, ConsoleWelcomeBanner, ConsoleCard, ConsoleStatusBadge } from "@/components/ConsoleShell";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
@@ -298,6 +298,33 @@ function UploadStudioContent({
     }
   }
 
+  async function deleteUploadedAsset(asset: UploadRecord) {
+    if (!window.confirm(`Move "${asset.title}" to the deleted-content recovery window?`)) return;
+    const reason = window.prompt("Enter why this content is being deleted (at least 3 characters):");
+    if (!reason || reason.trim().length < 3) {
+      setError("A deletion reason of at least 3 characters is required.");
+      return;
+    }
+    setError("");
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const response = await fetch(
+        "/api/public/v1/zillionaire/content-assets/" + encodeURIComponent(asset.id) + "/actions",
+        {
+          method: "POST",
+          headers: { ...headers, "content-type": "application/json" },
+          body: JSON.stringify({ action: "delete", reason: reason.trim() }),
+        },
+      );
+      const data = (await response.json()) as { message?: string; error?: string };
+      if (!response.ok) throw new Error(data.message || data.error || "Could not delete this content.");
+      setNotice(`"${asset.title}" was moved to deleted content and can be restored during the recovery window.`);
+      await loadData();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not delete this content.");
+    }
+  }
+
   async function previewUploadedAsset(assetId: string) {
     setError("");
     const previewWindow = window.open("about:blank", "_blank");
@@ -499,6 +526,9 @@ function UploadStudioContent({
                     ) : (
                       <span className="inline-flex items-center gap-1 text-[11px] text-slate-500"><Clock3 className="h-3.5 w-3.5" />Preview available when a playable manifest is ready</span>
                     )}
+                    <button type="button" onClick={() => void deleteUploadedAsset(item)} className="inline-flex items-center gap-1.5 rounded-lg border border-rose-400/30 px-3 py-2 text-xs font-bold text-rose-300 hover:bg-rose-400/10" aria-label={`Delete ${item.title}`}>
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </button>
                   </div>
                 </div>
               ))}
