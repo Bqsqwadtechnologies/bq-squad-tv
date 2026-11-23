@@ -136,7 +136,7 @@ function ZillionaireSeriesPage({
   // Form states
   const [formTitle, setFormTitle] = useState("");
   const [formDesc, setFormDesc] = useState("");
-  const [formChannelId, setFormChannelId] = useState("platform");
+  const [formChannelId, setFormChannelId] = useState("bq_sqwad_library");
   const [formGenre, setFormGenre] = useState("Drama");
   const [formAgeRating, setFormAgeRating] = useState("13+");
   const [formPosterUrl, setFormPosterUrl] = useState("");
