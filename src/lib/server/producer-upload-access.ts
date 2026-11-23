@@ -15,7 +15,12 @@ export async function requireAuthorizedChannelUpload(
   const channel = await fs.getDoc("channels/" + channelId);
   if (!channel) throw new ApiError(404, "CHANNEL_NOT_FOUND", "This channel does not exist.");
   const ownerUid = channel["ownerUid"];
-  if (ownerUid === "platform") {
+  // Legacy Zillionaire-created live channels were stamped with the owner UID
+  // despite being platform channels. Do not require a personal producer record.
+  const platformOwned =
+    ownerUid === "platform" ||
+    (channel["type"] === "platform" && channel["deliveryMode"] === "live_hls");
+  if (platformOwned) {
     const access = await resolvePlatformAccess(
       fs,
       user.uid,
