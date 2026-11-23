@@ -98,12 +98,12 @@ function LiveTvPage() {
                 id: String(channel["id"] || ""),
                 name: String(channel["name"] || channel["title"] || "Live Channel"),
                 category: String(channel["category"] || "General"),
-                currentShow: String(channel["currentShow"] || "Live Broadcast"),
-                nextShow: String(channel["nextShow"] || "Upcoming Broadcast"),
+                currentShow: String(channel["currentShow"] || channel["currentProgramme"] || "Live Broadcast"),
+                nextShow: String(channel["nextShow"] || channel["nextProgramme"] || "Upcoming Broadcast"),
                 viewersCount: typeof channel["currentViewers"] === "number"
                   ? channel["currentViewers"]
-                  : typeof channel["viewersCount"] === "number" ? channel["viewersCount"] : 0,
-                thumbnailUrl: String(channel["thumbnailUrl"] || "/brand/og-image.png"),
+                  : typeof channel["viewersCount"] === "number" ? channel["viewersCount"] : typeof channel["viewerCount"] === "number" ? channel["viewerCount"] : 0,
+                thumbnailUrl: String(channel["thumbnailUrl"] || channel["posterUrl"] || "/brand/og-image.png"),
                 isLive: channel["isLive"] === true,
               }));
             setChannels(liveChannels);
