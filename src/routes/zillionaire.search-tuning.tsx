@@ -47,7 +47,7 @@ const mockSearchRules: SearchTuningRule[] = [
 function SearchTuningRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="catalog">
-      {(account) => <SearchTuningContent account={account} />}
+      {({ account }) => <SearchTuningContent account={account} />}
     </ConsolePageGuard>
   );
 }
