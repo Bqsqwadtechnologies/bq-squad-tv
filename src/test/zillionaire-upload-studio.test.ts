@@ -68,9 +68,11 @@ describe("Zillionaire Upload Studio API", () => {
       email: "owner@bqsqwad.tv",
       customClaims: {},
       emailVerified: true,
+      authTime: Math.floor(Date.now() / 1000),
+      issuedAt: Math.floor(Date.now() / 1000),
     });
     vi.spyOn(rolesModule, "requireZillionaireModule").mockResolvedValue(undefined as never);
-    vi.spyOn(auditModule, "writeAuditLog").mockResolvedValue(undefined);
+    vi.spyOn(auditModule, "writeAuditLog").mockResolvedValue("audit-test");
   });
 
   afterEach(() => {

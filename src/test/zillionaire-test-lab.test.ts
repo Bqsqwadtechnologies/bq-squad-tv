@@ -26,6 +26,7 @@ describe("Zillionaire test lab isolation", () => {
     const res = await invoke({ action: "CREATE", reason: "Run isolated QA" });
     expect(res.status).toBe(200);
     const lab = docs["zillionaireTestLabOwners/owner-1"];
+    if (!lab) throw new Error("Expected an owner-scoped test lab");
     const channel = docs[`channels/${lab["channelId"] as string}`];
     expect(channel).toMatchObject({ ownerUid: "owner-1", testOnly: true, hidden: true, published: false, liveChatSettings: { enabled: false } });
     expect(lab["testWalletMinor"]).toBe(10000);

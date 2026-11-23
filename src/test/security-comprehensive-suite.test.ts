@@ -69,6 +69,6 @@ describe("Security Test Suite (V5-03 Batch 10)", () => {
       { id: "2", action: "step_up", previousHash: "corrupted_hash", hash: "hash2" },
     ];
 
-    expect(tamperedChain[1].previousHash).not.toBe(tamperedChain[0].hash);
+    expect(tamperedChain[1]?.previousHash).not.toBe(tamperedChain[0]?.hash);
   });
 });

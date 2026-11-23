@@ -39,6 +39,16 @@ import {
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
 
 export const Route = createFileRoute("/zillionaire/kyc")({
+  head: () => ({
+    meta: [
+      { title: "Identity & Payout Verification | BQ SQWAD TV" },
+      { name: "description", content: "BQ SQWAD TV identity, compliance and payout-account verification queue." },
+      { property: "og:title", content: "Identity & Payout Verification | BQ SQWAD TV" },
+      { property: "og:description", content: "BQ SQWAD TV identity, compliance and payout-account verification queue." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: KycQueuePage,
 });
 

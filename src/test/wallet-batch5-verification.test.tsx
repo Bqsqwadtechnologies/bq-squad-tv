@@ -70,7 +70,7 @@ describe("Wallet & Paystack Batch 5 Requirements", () => {
 
     for (const pkg of expected) {
       expect(DEFAULT_NGN_TOPUPS[pkg]).toBeDefined();
-      expect(DEFAULT_NGN_TOPUPS[pkg].amountMinor).toBeGreaterThanOrEqual(20000); // ₦200 minimum = 20,000 kobo
+      expect(DEFAULT_NGN_TOPUPS[pkg]?.amountMinor).toBeGreaterThanOrEqual(20000); // ₦200 minimum = 20,000 kobo
     }
   });
 

@@ -22,9 +22,9 @@ describe("Batch 6: Auth, Google Sign-In and Email Delivery", () => {
   });
 
   it("sendTestEmail successfully sends via Brevo endpoint when API key is present", async () => {
-    process.env.BREVO_API_KEY = "xkeysib-test-mock-key";
-    process.env.BREVO_SENDER_EMAIL = "tv@bqsqwad.com";
-    process.env.BREVO_SENDER_NAME = "BQ SQWAD TV";
+    process.env["BREVO_API_KEY"] = "xkeysib-test-mock-key";
+    process.env["BREVO_SENDER_EMAIL"] = "tv@bqsqwad.com";
+    process.env["BREVO_SENDER_NAME"] = "BQ SQWAD TV";
 
     const originalFetch = global.fetch;
     try {
@@ -45,7 +45,7 @@ describe("Batch 6: Auth, Google Sign-In and Email Delivery", () => {
       );
     } finally {
       global.fetch = originalFetch;
-      delete process.env.BREVO_API_KEY;
+      delete process.env["BREVO_API_KEY"];
     }
   });
 });

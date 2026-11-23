@@ -131,7 +131,9 @@ describe("Producer Working Tools (V5-04 Batch 4)", () => {
     // Copy actions
     const copyButtons = screen.getAllByText("Copy");
     expect(copyButtons.length).toBeGreaterThanOrEqual(2);
-    fireEvent.click(copyButtons[0]);
+    const firstButton = copyButtons[0];
+    if (!firstButton) throw new Error("Expected an actionable button");
+    fireEvent.click(firstButton);
     expect(navigator.clipboard.writeText).toHaveBeenCalled();
   });
 

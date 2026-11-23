@@ -222,8 +222,8 @@ describe("Zillionaire Live Channels Management API", () => {
     expect(approveBody.submissionStatus).toBe("APPROVED");
 
     // Verify stored channel is active
-    expect(memory.storedDocs[`channels/${channelId}`].status).toBe("ACTIVE");
-    expect(memory.storedDocs[`channels/${channelId}`].published).toBe(true);
+    expect(memory.storedDocs[`channels/${channelId}`]?.["status"]).toBe("ACTIVE");
+    expect(memory.storedDocs[`channels/${channelId}`]?.["published"]).toBe(true);
   });
 
   it("5. prevents pending or missing channels from going live", async () => {

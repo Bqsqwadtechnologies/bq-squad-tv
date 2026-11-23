@@ -9,12 +9,9 @@ export interface FilterCondition {
   value: unknown;
 }
 
-export interface QueryOptions {
-  filters?: FilterCondition[];
-  orderByField?: string;
-  descending?: boolean;
-  limit?: number;
-}
+export type QueryOptions = Omit<NonNullable<Parameters<Firestore["query"]>[1]>, "filters"> & {
+  filters?: FilterCondition[] | undefined;
+};
 
 export function createRoleIsolationStore(initialDocs: Record<string, MockDoc> = {}) {
   const store = new Map<string, MockDoc>();

@@ -144,7 +144,9 @@ describe("Statements & Settlements (V5-04 Batch 7)", () => {
     );
 
     const viewDetailsButtons = screen.getAllByText("View Details");
-    fireEvent.click(viewDetailsButtons[0]);
+    const firstButton = viewDetailsButtons[0];
+    if (!firstButton) throw new Error("Expected an actionable button");
+    fireEvent.click(firstButton);
 
     // Modal details
     expect(screen.getByText(/Statement Details — March 2026/i)).toBeDefined();

@@ -12,10 +12,10 @@ import {
 describe("Trending Scoring Algorithm", () => {
   const config: TrendingConfig = {
     ...DEFAULT_TRENDING_CONFIG,
-    weightConcurrentViewers: 0.5,
+    weightConcurrent: 0.5,
     weightWatchMinutes: 0.3,
     weightUniqueViewers: 0.2,
-    weightCompletionRate: 0.1,
+    weightCompletion: 0.1,
     weightRecency: 0.1,
     maxPromotedShare: 0.25,
   };
@@ -53,6 +53,8 @@ describe("Trending Scoring Algorithm", () => {
       category: "Sports",
       score: 100 - i * 10,
       rank: 0,
+      posterUrl: null,
+      viewerCount: 0,
     }));
 
     const now = new Date();
@@ -135,6 +137,8 @@ describe("Trending Scoring Algorithm", () => {
         category: "News",
         score: 50,
         rank: 0,
+      posterUrl: null,
+      viewerCount: 0,
       },
     ];
 

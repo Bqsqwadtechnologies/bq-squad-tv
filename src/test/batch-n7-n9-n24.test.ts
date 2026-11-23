@@ -122,19 +122,19 @@ describe("Batch N9: Sports Hub Standings & Brackets", () => {
     expect(standings.length).toBe(3);
 
     // Team Alpha: 1 played, 1 won, 3 pts, +2 GD
-    expect(standings[0].teamId).toBe("team-a");
-    expect(standings[0].points).toBe(3);
-    expect(standings[0].goalDiff).toBe(2);
+    expect(standings[0]?.teamId).toBe("team-a");
+    expect(standings[0]?.points).toBe(3);
+    expect(standings[0]?.goalDiff).toBe(2);
 
     // Team Beta: 2 played, 0 won, 1 drawn, 1 lost, 1 pt, -2 GD
     // Team Gamma: 1 played, 0 won, 1 drawn, 0 lost, 1 pt, 0 GD
-    expect(standings[1].teamId).toBe("team-c");
-    expect(standings[1].points).toBe(1);
-    expect(standings[1].goalDiff).toBe(0);
+    expect(standings[1]?.teamId).toBe("team-c");
+    expect(standings[1]?.points).toBe(1);
+    expect(standings[1]?.goalDiff).toBe(0);
 
-    expect(standings[2].teamId).toBe("team-b");
-    expect(standings[2].points).toBe(1);
-    expect(standings[2].goalDiff).toBe(-2);
+    expect(standings[2]?.teamId).toBe("team-b");
+    expect(standings[2]?.points).toBe(1);
+    expect(standings[2]?.goalDiff).toBe(-2);
   });
 
   it("computes tournament knockout bracket stages accurately", () => {
@@ -167,9 +167,9 @@ describe("Batch N9: Sports Hub Standings & Brackets", () => {
 
     const bracket = computeKnockoutBracket(fixtures);
     expect(bracket["quarter_final"]).toBeDefined();
-    expect(bracket["quarter_final"].length).toBe(1);
+    expect(bracket["quarter_final"]?.length).toBe(1);
     expect(bracket["final"]).toBeDefined();
-    expect(bracket["final"].length).toBe(1);
+    expect(bracket["final"]?.length).toBe(1);
   });
 
   it("handles zero fake data without errors", () => {
@@ -183,7 +183,7 @@ describe("Batch N9: Sports Hub Standings & Brackets", () => {
 
 describe("Batch N24: Must-Pay Playback & Account Limits", () => {
   it("enforces pay-as-you-go and denies free bypass without explicit owner rule", () => {
-    const currencySpecificRate = 200; // 200 kobo / cents
+    const currencySpecificRate = Number("200"); // 200 kobo / cents
     const isExplicitOwnerFree = currencySpecificRate === 0;
     const isPreviewGrant = false;
     const paidPlayback = !isExplicitOwnerFree && !isPreviewGrant;

@@ -101,7 +101,12 @@ describe("Zillionaire Support Desk and User Accounts", () => {
   });
 
   it("returns support tickets, segments, canned replies and recovery requests", async () => {
-    const handler = SupportRoute.options.server!.handlers;
+    const handler = (SupportRoute.options.server as unknown as {
+      handlers: {
+        GET: (ctx: { request: Request }) => Promise<Response>;
+        POST: (ctx: { request: Request }) => Promise<Response>;
+      };
+    }).handlers;
     const req = new Request("http://localhost/api/public/v1/zillionaire/support/", {
       headers: { Authorization: "Bearer test-zillionaire-token" },
     });
@@ -121,7 +126,12 @@ describe("Zillionaire Support Desk and User Accounts", () => {
   });
 
   it("updates ticket status and priority with audit logging", async () => {
-    const handler = SupportRoute.options.server!.handlers;
+    const handler = (SupportRoute.options.server as unknown as {
+      handlers: {
+        GET: (ctx: { request: Request }) => Promise<Response>;
+        POST: (ctx: { request: Request }) => Promise<Response>;
+      };
+    }).handlers;
     memFs.storedDocs["supportTickets/test_tick_1"] = {
       ticketNumber: "TICK-9001",
       status: "open",
@@ -158,7 +168,12 @@ describe("Zillionaire Support Desk and User Accounts", () => {
   });
 
   it("adds internal operator notes to tickets", async () => {
-    const handler = SupportRoute.options.server!.handlers;
+    const handler = (SupportRoute.options.server as unknown as {
+      handlers: {
+        GET: (ctx: { request: Request }) => Promise<Response>;
+        POST: (ctx: { request: Request }) => Promise<Response>;
+      };
+    }).handlers;
     memFs.storedDocs["supportTickets/test_tick_2"] = {
       ticketNumber: "TICK-9002",
       internalNotes: [],
@@ -189,7 +204,12 @@ describe("Zillionaire Support Desk and User Accounts", () => {
   });
 
   it("links ticket to user UID, payment reference and receipt ID", async () => {
-    const handler = SupportRoute.options.server!.handlers;
+    const handler = (SupportRoute.options.server as unknown as {
+      handlers: {
+        GET: (ctx: { request: Request }) => Promise<Response>;
+        POST: (ctx: { request: Request }) => Promise<Response>;
+      };
+    }).handlers;
     memFs.storedDocs["supportTickets/test_tick_3"] = {
       ticketNumber: "TICK-9003",
     };
@@ -220,7 +240,12 @@ describe("Zillionaire Support Desk and User Accounts", () => {
   });
 
   it("saves audience segment and processes account recovery without exposing passwords", async () => {
-    const handler = SupportRoute.options.server!.handlers;
+    const handler = (SupportRoute.options.server as unknown as {
+      handlers: {
+        GET: (ctx: { request: Request }) => Promise<Response>;
+        POST: (ctx: { request: Request }) => Promise<Response>;
+      };
+    }).handlers;
 
     // 1. Save user segment
     const segReq = new Request("http://localhost/api/public/v1/zillionaire/support/", {

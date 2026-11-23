@@ -85,7 +85,9 @@ describe("Live TV Screen (V5-05 Batch 3)", () => {
     const remindButtons = screen.getAllByRole("button", { name: /Remind Me/i });
     expect(remindButtons.length).toBeGreaterThan(0);
 
-    fireEvent.click(remindButtons[0]);
+    const firstButton = remindButtons[0];
+    if (!firstButton) throw new Error("Expected an actionable button");
+    fireEvent.click(firstButton);
 
     await waitFor(() => {
       expect(screen.getAllByText("Reminder Set").length).toBeGreaterThan(0);

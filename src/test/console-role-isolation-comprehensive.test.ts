@@ -216,8 +216,8 @@ describe("Console Role Isolation & Comprehensive Security (V5-04 Batch 10)", () 
       // Owner email must not contain any generic fallback admin email
       expect(ownerEmail).not.toBe("admin@example.com");
       expect(ownerEmail).not.toBe("admin@bqsqwad.tv");
-      if (process.env.ZILLIONAIRE_EMAIL) {
-        expect(ownerEmail).toBe(process.env.ZILLIONAIRE_EMAIL.toLowerCase().trim());
+      if (process.env["ZILLIONAIRE_EMAIL"]) {
+        expect(ownerEmail).toBe(process.env["ZILLIONAIRE_EMAIL"]?.toLowerCase().trim());
       }
     });
   });

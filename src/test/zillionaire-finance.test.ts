@@ -188,7 +188,7 @@ describe("Zillionaire Finance Control API", () => {
     expect(res.status).toBe(200);
 
     const updated = memFs.storedDocs["reconciliationExceptions/exc_99"];
-    expect(updated.chargebackNotes).toHaveLength(1);
+    expect(updated["chargebackNotes"]).toHaveLength(1);
     expect(auditModule.writeAuditLog).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
@@ -228,13 +228,13 @@ describe("Zillionaire Finance Control API", () => {
     expect(res.status).toBe(200);
 
     const payment = memFs.storedDocs["payments/pay_test_01"];
-    expect(payment.reversed).toBe(true);
+    expect(payment["reversed"]).toBe(true);
 
     // Verify ledger reversal entry was created
     const ledgerKey = Object.keys(memFs.storedDocs).find((k) => k.startsWith("ledger/"));
     expect(ledgerKey).toBeDefined();
-    expect(memFs.storedDocs[ledgerKey!].amountMinor).toBe(-350000);
-    expect(memFs.storedDocs[ledgerKey!].kind).toBe("refund");
+    expect((ledgerKey ? memFs.storedDocs[ledgerKey]?.["amountMinor"] : undefined)).toBe(-350000);
+    expect((ledgerKey ? memFs.storedDocs[ledgerKey]?.["kind"] : undefined)).toBe("refund");
   });
 
   it("dismisses anomaly flags with mandatory reason", async () => {
@@ -265,8 +265,8 @@ describe("Zillionaire Finance Control API", () => {
     expect(res.status).toBe(200);
 
     const anom = memFs.storedDocs["financeAnomalies/anom_test_1"];
-    expect(anom.status).toBe("DISMISSED");
-    expect(anom.dismissedReason).toBe(
+    expect(anom["status"]).toBe("DISMISSED");
+    expect(anom["dismissedReason"]).toBe(
       "Verified legitimate corporate top-up event with customer support",
     );
   });

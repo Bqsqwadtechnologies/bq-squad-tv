@@ -211,13 +211,13 @@ describe("Batch Q2 — Sample Content Cleanup System", () => {
     // Verify audit log written
     const auditKey = Object.keys(memFs.storedDocs).find((k) => k.startsWith("auditLog/"));
     expect(auditKey).toBeDefined();
-    expect(memFs.storedDocs[auditKey!].action).toBe("CLEANUP_SAMPLE_CONTENT");
+    expect((auditKey ? memFs.storedDocs[auditKey]?.["action"] : undefined)).toBe("CLEANUP_SAMPLE_CONTENT");
   });
 
   it("POST /api/public/v1/zillionaire/storage/seed is locked in production", async () => {
-    const prevNodeEnv = process.env.NODE_ENV;
-    process.env.NODE_ENV = "production";
-    delete process.env.ALLOW_SAMPLE_SEED;
+    const prevNodeEnv = process.env["NODE_ENV"];
+    process.env["NODE_ENV"] = "production";
+    delete process.env["ALLOW_SAMPLE_SEED"];
 
     try {
       vi.spyOn(apiModule, "requireUser").mockResolvedValue({ uid: "owner_user" } as any);
@@ -252,7 +252,7 @@ describe("Batch Q2 — Sample Content Cleanup System", () => {
       const body = await response.json();
       expect(body.code).toBe("SEED_LOCKED_IN_PRODUCTION");
     } finally {
-      process.env.NODE_ENV = prevNodeEnv;
+      process.env["NODE_ENV"] = prevNodeEnv;
     }
   });
 });

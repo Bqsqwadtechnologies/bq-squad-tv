@@ -62,8 +62,8 @@ describe("Batch 6 - Collaboration & Automatic Revenue Splitting", () => {
     expect(sumAllocated).toBe(totalProducerPool);
 
     // Lead gets remainder: 70000 + 1 = 70001, Collaborator gets 30000
-    expect(results[0].allocatedMinor).toBe(70_001n);
-    expect(results[1].allocatedMinor).toBe(30_000n);
+    expect(results[0]?.allocatedMinor).toBe(70_001n);
+    expect(results[1]?.allocatedMinor).toBe(30_000n);
   });
 
   it("splits producer pool with exact integer rounding (94.5 / 5.5 split)", () => {

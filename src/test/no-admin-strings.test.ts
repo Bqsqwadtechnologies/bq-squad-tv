@@ -74,7 +74,7 @@ describe("Zero-Admin Naming Enforcement & Single Owner Checklist", () => {
     const routePathMatches = [...content.matchAll(/path:\s*['"]([^'"]+)['"]/g)].map((m) => m[1]);
 
     const forbiddenAdminRoutes = routePathMatches.filter(
-      (p) => p === "/admin" || p.startsWith("/admin/"),
+      (p) => p === "/admin" || p?.startsWith("/admin/"),
     );
 
     expect(

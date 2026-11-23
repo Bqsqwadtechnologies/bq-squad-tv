@@ -73,7 +73,8 @@ describe("Provider Registration & Onboarding Flow (V5-04 Batch 9)", () => {
       expect(mockSubmit).toHaveBeenCalledTimes(1);
     });
 
-    const callArg = mockSubmit.mock.calls[0][0];
+    const callArg = mockSubmit.mock.calls[0]?.[0];
+    if (!callArg) throw new Error("Expected a registration submission");
     expect(callArg.name).toBe("Metro Global Media Ltd");
     expect(callArg.contactEmail).toBe("ops@metroglobal.com");
     expect(callArg.registrationNumber).toBe("RC-998877");

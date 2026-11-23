@@ -129,7 +129,7 @@ describe("Zillionaire Series and Episodes Pipeline API", () => {
     expect(body.season.title).toBe("Season One: The Genesis");
 
     const updated = memory.storedDocs["series/s1"];
-    expect((updated.seasons as any[]).length).toBe(1);
+    expect((updated["seasons"] as any[]).length).toBe(1);
   });
 
   it("3. creates an episode with skip-intro, next-episode offset, and age rating override", async () => {

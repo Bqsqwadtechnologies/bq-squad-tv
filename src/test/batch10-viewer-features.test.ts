@@ -202,7 +202,7 @@ describe("Batch 10 Viewer features", () => {
     const partyId = createData.party.id;
 
     // 2. Second viewer joins
-    currentUser = { uid: "friend_202", email: "friend@bqsqwad.tv", role: "viewer", claims: {} };
+    currentUser = { ...currentUser, uid: "friend_202", email: "friend@bqsqwad.tv" };
     const joinRes = await watchPartyInstance.handlers.POST({
       request: new Request(`http://localhost/api/public/v1/watch-parties/${partyId}`, {
         method: "POST",
@@ -227,7 +227,7 @@ describe("Batch 10 Viewer features", () => {
     expect(hbData.billedMinutes).toBe(1);
 
     // 4. Test Kids mode restriction: user with kidsModeLocked cannot create or join 18+ party
-    currentUser = { uid: "child_user", email: "child@bqsqwad.tv", role: "viewer", claims: {} };
+    currentUser = { ...currentUser, uid: "child_user", email: "child@bqsqwad.tv" };
     await memoryDb.setDoc("users/child_user", { isUnder18: true, kidsModeLocked: true });
 
     const kidsRestrictedRes = await watchParties.handlers.POST({
