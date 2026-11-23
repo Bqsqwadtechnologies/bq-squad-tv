@@ -265,8 +265,15 @@ export function ConsoleShell({
         ? (window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark")
         : mode;
       setTheme(resolved);
-      if (mode === "system") localStorage.removeItem("bq_console_theme");
-      else localStorage.setItem("bq_console_theme", mode);
+      if (mode === "system") {
+        localStorage.removeItem("bq-sqwad-theme");
+        localStorage.removeItem("bq_console_theme");
+      } else {
+        localStorage.setItem("bq-sqwad-theme", mode);
+        localStorage.setItem("bq_console_theme", mode);
+      }
+      document.documentElement.classList.toggle("dark", resolved === "dark");
+      document.documentElement.classList.toggle("light", resolved === "light");
     };
 
     void (async () => {
@@ -288,7 +295,7 @@ export function ConsoleShell({
       } catch {
         // Keep the locally cached preference if the profile preference endpoint is unavailable.
       }
-      const saved = localStorage.getItem("bq_console_theme");
+      const saved = localStorage.getItem("bq-sqwad-theme") || localStorage.getItem("bq_console_theme");
       applyMode(saved === "light" || saved === "dark" ? saved : "system");
     })();
     return () => { cancelled = true; };
@@ -307,7 +314,10 @@ export function ConsoleShell({
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
     setThemeMode(next);
+    localStorage.setItem("bq-sqwad-theme", next);
     localStorage.setItem("bq_console_theme", next);
+    document.documentElement.classList.toggle("dark", next === "dark");
+    document.documentElement.classList.toggle("light", next === "light");
     void (async () => {
       try {
         const idToken = await getActiveWebIdToken();
