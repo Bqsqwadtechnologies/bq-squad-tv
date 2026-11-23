@@ -18,8 +18,15 @@ export type ConsoleAccount = {
 };
 
 export interface ConsolePageGuardProps {
-  role: ConsoleRole;
+  // "role"/"module" are the current API. The requiredRole/requiredModule
+  // aliases keep older Zillionaire routes working during the route migration.
+  role?: ConsoleRole;
   module?: string;
+  requiredRole?: ConsoleRole | "viewer" | "delegate";
+  requiredModule?: string;
+  title?: string;
+  description?: string;
+  moduleName?: string;
   children:
     | ReactNode
     | ((props: { token: string; account: ConsoleAccount; onLock?: () => void }) => ReactNode);
@@ -1176,10 +1183,22 @@ function ConsoleAuthPortal({
 }
 
 export function ConsolePageGuard({
-  role,
-  module: requiredModule,
+  role: configuredRole,
+  module: configuredModule,
+  requiredRole,
+  requiredModule: legacyRequiredModule,
   children,
 }: ConsolePageGuardProps) {
+  // Every route using this guard without an explicit role is a Zillionaire
+  // module route. Producer and provider consoles always declare their roles.
+  // Legacy "viewer"/"delegate" role labels on Zillionaire routes describe
+  // delegated access, not permission to fall through to the Producer Console.
+  const role: ConsoleRole =
+    configuredRole ??
+    (requiredRole === "producer" || requiredRole === "provider"
+      ? requiredRole
+      : "zillionaire");
+  const requiredModule = configuredModule ?? legacyRequiredModule;
   const [state, setState] = useState<
     | { status: "checking" }
     | { status: "signed_out" }
