@@ -476,12 +476,12 @@ function UploadStudioContent({
                   </div>
                   <div className="flex items-center gap-3">
                     <ConsoleStatusBadge status={item.rawStatus === "failed" ? "failed" : item.rawStatus === "ready" ? "active" : "pending"} label={item.displayState} />
-                    {item.rawStatus === "ready" ? (
+                    {item.rawStatus === "ready" && item.masterPlaylistUrl ? (
                       <button type="button" onClick={() => void previewUploadedAsset(item.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-bold text-cyan-200 hover:bg-cyan-400/10">
                         <Play className="h-3.5 w-3.5" /> Preview
                       </button>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-500"><Clock3 className="h-3.5 w-3.5" />Preview after processing</span>
+                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-500"><Clock3 className="h-3.5 w-3.5" />Preview available when a playable manifest is ready</span>
                     )}
                   </div>
                 </div>
