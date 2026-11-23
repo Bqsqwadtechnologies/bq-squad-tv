@@ -49,6 +49,7 @@ type Content = {
   currency: string;
   ratePerMinuteMinor: number;
   rightsCurrent: boolean;
+  isPrivatePreview?: boolean;
 };
 type Comment = { id: string; body: string; viewerNumber: string; createdAt: string | null };
 type PlaybackState = "playing" | "paused" | "buffering" | "idle" | "ended";
@@ -71,6 +72,8 @@ export function ContentDetailsPage() {
   const [busy, setBusy] = useState(false);
   const [sessionId, setSessionId] = useState("");
   const [playbackUrl, setPlaybackUrl] = useState("");
+  const [previewToken, setPreviewToken] = useState("");
+  const [isPrivatePreview, setIsPrivatePreview] = useState(false);
 
   // Batch 5 Player Enhancements
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
@@ -141,26 +144,29 @@ export function ContentDetailsPage() {
 
   async function loadContent(idAuthToken: string) {
     const headers = await getWebAuthHeaders(idAuthToken);
-    const [contentResponse, commentsResponse] = await Promise.all([
-      fetch("/api/public/v1/content-assets/" + encodeURIComponent(assetId), {
-        headers,
-        cache: "no-store",
-      }),
-      fetch("/api/public/v1/content-assets/" + encodeURIComponent(assetId) + "/comments", {
-        headers,
-        cache: "no-store",
-      }),
-    ]);
+    const previewQuery = previewToken ? "?previewToken=" + encodeURIComponent(previewToken) : "";
+    const contentResponse = await fetch(
+      "/api/public/v1/content-assets/" + encodeURIComponent(assetId) + previewQuery,
+      { headers, cache: "no-store" },
+    );
     const contentResult = (await contentResponse.json()) as { content?: Content; error?: string };
-    const commentsResult = (await commentsResponse.json()) as Comment[] | { error?: string };
     if (!contentResponse.ok || !contentResult.content)
       throw new Error(contentResult.error ?? "This content is not available.");
-    if (!commentsResponse.ok || !Array.isArray(commentsResult))
-      throw new Error(
-        !Array.isArray(commentsResult)
-          ? (commentsResult.error ?? "Comments are unavailable.")
-          : "Comments are unavailable.",
+    let commentsResult: Comment[] = [];
+    if (!previewToken) {
+      const commentsResponse = await fetch(
+        "/api/public/v1/content-assets/" + encodeURIComponent(assetId) + "/comments",
+        { headers, cache: "no-store" },
       );
+      const parsedComments = (await commentsResponse.json()) as Comment[] | { error?: string };
+      if (!commentsResponse.ok || !Array.isArray(parsedComments))
+        throw new Error(
+          !Array.isArray(parsedComments)
+            ? (parsedComments.error ?? "Comments are unavailable.")
+            : "Comments are unavailable.",
+        );
+      commentsResult = parsedComments;
+    }
     setContent(contentResult.content);
     setNextEpisodeAvailable(contentResult.content.category === "series");
     setComments(commentsResult);
@@ -220,30 +226,39 @@ export function ContentDetailsPage() {
       try {
         const idAuthToken = await restoreWebSession();
         if (!idAuthToken) throw new Error("Sign in to view content details.");
-        if (active) setAuthToken(idAuthToken);
+        const params = new URLSearchParams(window.location.search);
+        const grantToken = params.get("preview") === "true" ? params.get("previewToken") ?? "" : "";
+        if (active) {
+          setAuthToken(idAuthToken);
+          setPreviewToken(grantToken);
+          setIsPrivatePreview(Boolean(grantToken));
+        }
         const headers = await getWebAuthHeaders(idAuthToken);
-        const [contentResponse, commentsResponse] = await Promise.all([
-          fetch("/api/public/v1/content-assets/" + encodeURIComponent(assetId), {
-            headers,
-            cache: "no-store",
-          }),
-          fetch("/api/public/v1/content-assets/" + encodeURIComponent(assetId) + "/comments", {
-            headers,
-            cache: "no-store",
-          }),
-        ]);
+        const previewQuery = grantToken ? "?previewToken=" + encodeURIComponent(grantToken) : "";
+        const contentResponse = await fetch(
+          "/api/public/v1/content-assets/" + encodeURIComponent(assetId) + previewQuery,
+          { headers, cache: "no-store" },
+        );
         const contentResult = (await contentResponse.json()) as {
           content?: Content;
           error?: string;
         };
-        const commentsResult = (await commentsResponse.json()) as Comment[] | { error?: string };
         if (!contentResponse.ok || !contentResult.content)
           throw new Error(contentResult.error ?? "This content is not available.");
-        if (!commentsResponse.ok || !Array.isArray(commentsResult))
-          throw new Error("Comments are unavailable.");
+        let commentsResult: Comment[] = [];
+        if (!grantToken) {
+          const commentsResponse = await fetch(
+            "/api/public/v1/content-assets/" + encodeURIComponent(assetId) + "/comments",
+            { headers, cache: "no-store" },
+          );
+          const parsedComments = (await commentsResponse.json()) as Comment[] | { error?: string };
+          if (!commentsResponse.ok || !Array.isArray(parsedComments))
+            throw new Error("Comments are unavailable.");
+          commentsResult = parsedComments;
+        }
         if (active) {
           setContent(contentResult.content);
-    setNextEpisodeAvailable(contentResult.content.category === "series");
+          setNextEpisodeAvailable(contentResult.content.category === "series");
           setComments(commentsResult);
         }
       } catch (caught) {
@@ -321,6 +336,7 @@ export function ContentDetailsPage() {
           contentAssetId: assetId,
           clientPlatform: "web",
           idempotencyKey: crypto.randomUUID(),
+          ...(previewToken ? { previewToken } : {}),
         }),
       });
       const id = String(result["sessionId"] ?? "");
@@ -332,7 +348,7 @@ export function ContentDetailsPage() {
       setSessionId(id);
       setPlaybackUrl(url);
       setElapsedSeconds(0);
-      setMessage("Playback session started. Charges are based on verified playback time.");
+      setMessage(isPrivatePreview ? "Private preview started. No viewing charges will be applied." : "Playback session started. Charges are based on verified playback time.");
 
       if (resumeFrom && resumeFrom > 0) {
         setTimeout(() => {
@@ -957,7 +973,7 @@ export function ContentDetailsPage() {
                     onClick={() => void startPlayback(hasPromptedResume ? 0 : savedResumeTime)}
                     className="inline-flex items-center gap-2 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-extrabold text-[#031039] disabled:opacity-50 hover:brightness-110 transition"
                   >
-                    <Play size={16} fill="currentColor" /> {busy ? "Starting…" : "Watch now"}
+                    <Play size={16} fill="currentColor" /> {busy ? "Starting…" : isPrivatePreview ? "Preview now" : "Watch now"}
                   </button>
                   {sessionId ? (
                     <button
