@@ -805,7 +805,7 @@ export function ConsoleShell({
             id: "producer-profile",
             label: "Public Profile",
             href: "/producer/profile",
-            icon: UserCircle,
+            icon: Users,
           },
           {
             id: "producer-channels",
