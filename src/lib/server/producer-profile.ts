@@ -12,6 +12,8 @@ export interface PublicProducer {
   verified: boolean;
   blueVerified: boolean;
   blueVerifiedUntil: string | null;
+  brandOverlayText: string;
+  brandOverlayLogoUrl: string | null;
   followerCount: number;
   totalTitles: number;
   joinedAt: string | null;
@@ -112,6 +114,8 @@ export function formatPublicProducer(
     verified: isKycApproved, // Identity approval is separate from the optional paid public blue tick
     blueVerified,
     blueVerifiedUntil,
+    brandOverlayText: typeof producer["brandOverlayText"] === "string" ? producer["brandOverlayText"] as string : "",
+    brandOverlayLogoUrl: null,
     followerCount: Math.max(0, Number(producer["followerCount"]) || 0),
     totalTitles,
     joinedAt: typeof producer["createdAt"] === "string" ? producer["createdAt"] : null,
