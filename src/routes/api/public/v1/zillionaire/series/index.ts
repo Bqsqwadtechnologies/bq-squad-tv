@@ -12,6 +12,7 @@ import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser, parseBody } from "@/lib/server/api";
 import { requireZillionaireModule } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
+import { ensurePlatformLibraryChannel } from "@/lib/server/producer-upload-access";
 
 export type CastCrewMember = {
   name: string;
@@ -247,13 +248,14 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
           const body = await parseBody(event.request, actionSchema);
 
           if (body.action === "CREATE_SERIES") {
+            const platformLibraryChannelId = await ensurePlatformLibraryChannel(fs, user);
             const seriesId = `series_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
             const now = new Date().toISOString();
             const newSeries: Partial<SeriesRecord> = {
               id: seriesId,
               title: body.title,
               description: body.description,
-              channelId: body.channelId,
+              channelId: platformLibraryChannelId,
               genre: body.genre,
               ageRating: body.ageRating,
               posterUrl: body.posterUrl,
