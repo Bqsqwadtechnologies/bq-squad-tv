@@ -332,6 +332,9 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             viewerCountry,
             platform: body.clientPlatform as PlaybackPlatform,
             paidPlayback,
+            privatePreview: isPreviewGrant,
+            ownershipDeclaration: asset["ownershipDeclaration"] === true,
+            copyrightDeclaration: asset["copyrightDeclaration"] === true,
           });
           const singlePriceCurrency =
             typeof asset["currency"] === "string"
