@@ -5,11 +5,12 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireZillionaireModule } from "@/lib/server/roles";
 
 const bulkActionSchema = z.object({
-  action: z.enum(["bulk_block", "bulk_unpublish", "bulk_delete", "bulk_change_category", "bulk_change_age_rating"]),
+  action: z.enum(["bulk_block", "bulk_unpublish", "bulk_delete", "bulk_feature", "bulk_change_category", "bulk_change_age_rating"]),
   assetIds: z.array(z.string().trim().min(1)).min(1).max(100),
   reason: z.string().trim().min(3).max(1000),
   category: z.string().trim().optional(),
   ageRating: z.enum(["G", "PG", "12", "15", "18"]).optional(),
+  featured: z.boolean().optional(),
 });
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/")({
@@ -128,6 +129,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
               updates["deletedBy"] = actor.uid;
               updates["deleteReason"] = body.reason;
               updates["scheduledPurgeAt"] = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+            } else if (body.action === "bulk_feature") {
+              updates["featured"] = body.featured !== false;
+              updates["featuredAt"] = body.featured === false ? null : now;
+              updates["featuredBy"] = body.featured === false ? null : actor.uid;
             } else if (body.action === "bulk_change_category" && body.category) {
               updates["category"] = body.category;
             } else if (body.action === "bulk_change_age_rating" && body.ageRating) {
