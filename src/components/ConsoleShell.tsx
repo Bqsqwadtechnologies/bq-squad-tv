@@ -906,8 +906,9 @@ export function ConsoleShell({
     ];
     const visibleExtras = extraPages.filter(
       (item) =>
-        account?.isOwner ||
-        item.requiredModules.some((module) => account?.modules?.includes(module)),
+        consoleType === "zillionaire" &&
+        (account?.isOwner ||
+          item.requiredModules.some((module) => account?.modules?.includes(module))),
     );
     return [...menuItems, ...visibleExtras];
   }, [filteredGroups, account?.isOwner, account?.modules]);
@@ -915,7 +916,7 @@ export function ConsoleShell({
   const matchingSearchItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return searchableItems.slice(0, 8);
-    const terms = query.split(/\\s+/).filter(Boolean);
+    const terms = query.split(/\s+/).filter(Boolean);
     return searchableItems
       .filter((item) => {
         const haystack = [item.label, item.description, item.keywords, item.section, item.href].join(" ").toLowerCase();
