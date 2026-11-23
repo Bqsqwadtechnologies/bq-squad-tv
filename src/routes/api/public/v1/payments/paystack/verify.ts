@@ -5,6 +5,7 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { creditPaystackPayment, fetchPaystackVerification } from "@/lib/server/paystack";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { recordRiskSignal } from "@/lib/server/risk-engine";
+import { activateProducerBlueTickPayment } from "@/lib/server/producer-blue-verification";
 
 const schema = z.object({ reference: z.string().min(8).max(100) });
 
@@ -27,14 +28,25 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/verify")(
           const currency =
             typeof payment["currency"] === "string" ? (payment["currency"] as string) : ((payment["walletCurrency"] as string) || "USD");
           const verified = await fetchPaystackVerification(reference);
+          const metadata = verified["metadata"] as Record<string, unknown> | undefined;
           if (
             verified["status"] !== "success" ||
             verified["currency"] !== currency ||
             verified["amount"] !== payment["amountMinor"] ||
-            (verified["metadata"] as Record<string, unknown> | undefined)?.["uid"] !== user.uid
+            metadata?.["uid"] !== user.uid ||
+            (payment["paymentType"] === "producer_blue_tick" && metadata?.["paymentType"] !== "producer_blue_tick")
           ) {
             await recordRiskSignal(fs, user.uid, "failed_payment");
             throw new ApiError(402, "PAYMENT_NOT_CONFIRMED", "The payment has not been confirmed.");
+          }
+          if (payment["paymentType"] === "producer_blue_tick") {
+            const activation = await activateProducerBlueTickPayment(fs, {
+              reference,
+              uid: user.uid,
+              amountMinor: payment["amountMinor"] as number,
+              currency,
+            });
+            return Response.json({ ...activation, blueVerified: true, currency });
           }
           const result = await creditPaystackPayment(fs, {
             reference,
