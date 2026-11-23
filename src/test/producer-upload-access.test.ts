@@ -39,6 +39,24 @@ describe("authorized channel uploads", () => {
     ).resolves.toBeUndefined();
   });
 
+  it("allows the verified Zillionaire owner to upload to legacy platform live channels without a producer document", async () => {
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@bqsqwad.tv");
+    const getDoc = vi.fn(async (path: string) => {
+      if (path === "channels/legacy-owner-live") return { ownerUid: "owner-uid", type: "platform", deliveryMode: "live_hls" };
+      if (path === "users/owner-uid") return { email: "owner@bqsqwad.tv" };
+      return null;
+    });
+    const fs = { getDoc } as unknown as Firestore;
+    try {
+      await expect(requireAuthorizedChannelUpload(fs, "legacy-owner-live", {
+        uid: "owner-uid", email: "owner@bqsqwad.tv", emailVerified: true,
+      })).resolves.toBeUndefined();
+      expect(getDoc).not.toHaveBeenCalledWith("producers/owner-uid");
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("does not turn a storage or role-resolution error into fallback authorization", async () => {
     const fs = {
       getDoc: vi.fn(async (path: string) => {
