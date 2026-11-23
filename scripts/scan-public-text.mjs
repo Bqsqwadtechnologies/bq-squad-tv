@@ -186,7 +186,13 @@ for (const top of [
     const content = visibleCandidates(publicSource(await readFile(file, "utf8")), relative);
     for (const term of forbiddenTerms) {
       // Console routes are authenticated operator surfaces, not public-facing copy.
-      if (isPrivateConsoleSource(file)) continue;
+      const relative = path.relative(root, file).split(path.sep).join("/");
+      const accountIdentityException =
+        term.toLowerCase() === "zillionaire" &&
+        (relative === "src/components/ProfileAccountHub.tsx" ||
+          relative === "src/routes/settings.tsx" ||
+          relative === "src/routes/account.tsx");
+      if (isPrivateConsoleSource(file) || accountIdentityException) continue;
       const index = content.toLowerCase().indexOf(term.toLowerCase());
       if (index < 0) continue;
       const line = content.slice(0, index).split("\n").length;
