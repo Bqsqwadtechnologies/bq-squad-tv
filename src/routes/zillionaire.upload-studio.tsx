@@ -290,6 +290,7 @@ function UploadStudioContent({
 
   async function previewUploadedAsset(assetId: string) {
     setError("");
+    const previewWindow = window.open("about:blank", "_blank");
     try {
       const headers = await getWebAuthHeaders(token);
       const response = await fetch("/api/public/v1/preview/grant", {
@@ -301,8 +302,14 @@ function UploadStudioContent({
       if (!response.ok || !data.previewPath) {
         throw new Error(data.error ?? "A private preview is not available yet.");
       }
-      window.open(data.previewPath, "_blank", "noopener,noreferrer");
+      if (previewWindow) {
+        previewWindow.opener = null;
+        previewWindow.location.replace(data.previewPath);
+      } else {
+        window.location.assign(data.previewPath);
+      }
     } catch (caught) {
+      previewWindow?.close();
       setError(caught instanceof Error ? caught.message : "Could not open the private preview.");
     }
   }
