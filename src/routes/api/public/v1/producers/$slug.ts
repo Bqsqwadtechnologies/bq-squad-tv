@@ -58,18 +58,22 @@ export const Route = createFileRoute("/api/public/v1/producers/$slug")({
           }));
 
           const profile = formatPublicProducer(producerDoc, uid, publishedTitles.length);
-          if (typeof producerDoc["avatarPath"] === "string" || typeof producerDoc["bannerPath"] === "string") {
+          if (typeof producerDoc["avatarPath"] === "string" || typeof producerDoc["bannerPath"] === "string" || typeof producerDoc["brandOverlayLogoPath"] === "string") {
             const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-            const [avatarSigned, bannerSigned] = await Promise.all([
+            const [avatarSigned, bannerSigned, brandLogoSigned] = await Promise.all([
               typeof producerDoc["avatarPath"] === "string"
                 ? supabaseAdmin.storage.from("bq-sqwad-source-media").createSignedUrl(producerDoc["avatarPath"] as string, 60 * 60)
                 : Promise.resolve({ data: null, error: null }),
               typeof producerDoc["bannerPath"] === "string"
                 ? supabaseAdmin.storage.from("bq-sqwad-source-media").createSignedUrl(producerDoc["bannerPath"] as string, 60 * 60)
                 : Promise.resolve({ data: null, error: null }),
+              typeof producerDoc["brandOverlayLogoPath"] === "string"
+                ? supabaseAdmin.storage.from("bq-sqwad-source-media").createSignedUrl(producerDoc["brandOverlayLogoPath"] as string, 60 * 60)
+                : Promise.resolve({ data: null, error: null }),
             ]);
             if (avatarSigned.data?.signedUrl) profile.avatarUrl = avatarSigned.data.signedUrl;
             if (bannerSigned.data?.signedUrl) profile.bannerUrl = bannerSigned.data.signedUrl;
+            if (brandLogoSigned.data?.signedUrl) profile.brandOverlayLogoUrl = brandLogoSigned.data.signedUrl;
           }
 
           return Response.json({
