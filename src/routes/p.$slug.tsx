@@ -31,6 +31,8 @@ interface ProducerData {
   bannerUrl: string | null;
   links: Array<{ title: string; url: string }>;
   verified: boolean;
+  blueVerified: boolean;
+  blueVerifiedUntil: string | null;
   followerCount: number;
   totalTitles: number;
   joinedAt: string | null;
@@ -323,6 +325,16 @@ function PublicProducerProfilePage() {
                     className="inline-flex items-center gap-1 text-cyan-400 font-semibold text-xs"
                   >
                     <BadgeCheck className="w-5 h-5 fill-cyan-400 text-background" />
+                  </span>
+                )}
+                {producer.blueVerified && (
+                  <span
+                    title="Monthly public blue-tick subscription active"
+                    aria-label="Publicly verified producer"
+                    className="inline-flex items-center gap-1 text-blue-500 font-semibold text-xs"
+                  >
+                    <BadgeCheck className="w-5 h-5 fill-blue-500 text-background" />
+                    <span>Blue verified</span>
                   </span>
                 )}
               </div>
