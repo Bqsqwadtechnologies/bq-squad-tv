@@ -48,6 +48,8 @@ function AccountPage() {
   const [verificationPending, setVerificationPending] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [canOpenProducerConsole, setCanOpenProducerConsole] = useState(false);
+  const [canOpenProviderConsole, setCanOpenProviderConsole] = useState(false);
+  const [canOpenZillionaireDashboard, setCanOpenZillionaireDashboard] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [message, setMessage] = useState("");
@@ -299,6 +301,9 @@ function AccountPage() {
     await loadAccountCountry();
     const account = await getWebAccount();
     if (account?.publicId) setPublicId(account.publicId);
+    setCanOpenProducerConsole(account?.emailVerified === true && account.isOwner !== true && account.roles?.includes("producer") === true && account.producerPlanActive === true);
+    setCanOpenProviderConsole(account?.emailVerified === true && account.isOwner !== true && account.roles?.includes("provider") === true);
+    setCanOpenZillionaireDashboard(account?.emailVerified === true && account.isOwner === true);
     if (account?.emailVerified) {
       setSignedIn(true);
       setVerificationPending(false);
@@ -853,24 +858,16 @@ function AccountPage() {
                 </div>
               )}
 
-              {/* Console shortcuts are not rendered until the account email is verified. */}
-              {canOpenProducerConsole ? (
-              <div className="mt-6 border-t border-slate-200 dark:border-white/10 pt-5">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
-                  Consoles
-                </p>
-                <div className="mt-3">
-                  <a
-                    href="/producer"
-                    className="flex flex-col items-center justify-center rounded-xl border border-slate-200 dark:border-cyan-400/20 bg-slate-50 dark:bg-[#030b2a] p-3 text-center text-sm font-bold text-slate-800 dark:text-cyan-100 hover:border-cyan-400 dark:hover:border-cyan-300 hover:bg-cyan-50/50 dark:hover:bg-cyan-500/5 transition shadow-sm"
-                  >
-                    <span>Producer Console</span>
-                    <span className="mt-0.5 text-[10px] font-normal text-slate-500 dark:text-blue-100/50">
-                      Content management
-                    </span>
-                  </a>
+              {/* Console shortcuts appear only for the matching verified identity. */}
+              {canOpenProducerConsole || canOpenProviderConsole || canOpenZillionaireDashboard ? (
+                <div className="mt-6 border-t border-slate-200 dark:border-white/10 pt-5">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">Consoles</p>
+                  <div className="mt-3 grid gap-2">
+                    {canOpenProducerConsole ? <a href="/producer" className="flex flex-col items-center justify-center rounded-xl border border-slate-200 dark:border-cyan-400/20 bg-slate-50 dark:bg-[#030b2a] p-3 text-center text-sm font-bold text-slate-800 dark:text-cyan-100 hover:border-cyan-400 transition shadow-sm"><span>Producer Console</span><span className="mt-0.5 text-[10px] font-normal text-slate-500 dark:text-blue-100/50">Content management</span></a> : null}
+                    {canOpenProviderConsole ? <a href="/provider" className="flex flex-col items-center justify-center rounded-xl border border-slate-200 dark:border-indigo-400/20 bg-slate-50 dark:bg-[#030b2a] p-3 text-center text-sm font-bold text-slate-800 dark:text-indigo-100 hover:border-indigo-400 transition shadow-sm"><span>Provider Console</span><span className="mt-0.5 text-[10px] font-normal text-slate-500 dark:text-blue-100/50">Licensed channel partner access</span></a> : null}
+                    {canOpenZillionaireDashboard ? <a href="/zillionaire" className="flex flex-col items-center justify-center rounded-xl border border-amber-300/30 bg-amber-50 dark:bg-amber-400/10 p-3 text-center text-sm font-bold text-amber-900 dark:text-amber-100 hover:border-amber-400 transition shadow-sm"><span>Zillionaire Dashboard</span><span className="mt-0.5 text-[10px] font-normal text-amber-700 dark:text-amber-200/70">Verified owner · password protected</span></a> : null}
+                  </div>
                 </div>
-              </div>
               ) : null}
 
               {/* Sign out and Continue Buttons */}
