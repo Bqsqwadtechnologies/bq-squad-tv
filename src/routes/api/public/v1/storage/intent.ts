@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
-import { requireAuthorizedChannelUpload } from "@/lib/server/producer-upload-access";
+import { ensurePlatformLibraryChannel, requireAuthorizedChannelUpload } from "@/lib/server/producer-upload-access";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSafeStoragePath } from "@/lib/server/storage/security";
 import { writeAuditLog } from "@/lib/server/audit";
@@ -26,12 +26,25 @@ const mimeByExtension: Record<string, string[]> = {
 };
 
 const bodySchema = z.object({
-  channelId: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/),
+  channelId: z.string().regex(/^[A-Za-z0-9_-]{1,80}$/).optional(),
   filename: z.string().min(1).max(180),
   title: z.string().trim().min(1).max(200).optional(),
   sizeBytes: z.number().int().positive().max(MAX_SOURCE_BYTES),
   mimeType: z.string().min(1).max(100),
   transcodeProfile: z.enum(["economy", "standard", "high"]).default("standard"),
+  mediaType: z.enum(["Movie", "Episode", "Video", "Trailer"]).default("Movie"),
+  description: z.string().trim().max(5000).default(""),
+  genre: z.string().trim().max(100).default("General"),
+  language: z.string().trim().max(50).default("English"),
+  ageRating: z.enum(["G", "TV-Y7", "PG-13", "16", "18"]).default("PG-13"),
+  seriesId: z.string().trim().max(120).optional(),
+  seasonId: z.string().trim().max(120).optional(),
+  episodeNumber: z.number().int().positive().optional(),
+  ownershipDeclaration: z.boolean().default(false),
+  copyrightDeclaration: z.boolean().default(false),
+  licenseType: z.enum(["owned", "licensed", "public_domain"]).default("owned"),
+  copyrightHolderName: z.string().trim().max(150).default(""),
+  productionYear: z.number().int().min(1888).max(new Date().getFullYear()).optional(),
 });
 
 function safeFilename(value: string): string {
@@ -58,7 +71,8 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
             limit: 10,
             windowMs: 5 * 60_000,
           });
-          await requireAuthorizedChannelUpload(fs, body.channelId, user);
+          const channelId = body.channelId ?? await ensurePlatformLibraryChannel(fs, user);
+          await requireAuthorizedChannelUpload(fs, channelId, user);
 
           const filename = safeFilename(body.filename);
           const extension = filename.toLowerCase().split(".").pop() ?? "";
@@ -69,7 +83,7 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
               "Only MP4, MOV, MKV and WebM source videos are accepted.",
             );
           }
-          const channel = await fs.getDoc("channels/" + body.channelId);
+          const channel = await fs.getDoc("channels/" + channelId);
           if (
             !channel ||
             String(channel["status"] ?? "").toUpperCase() === "SUSPENDED" ||
@@ -83,7 +97,7 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
           }
 
           const assetId = crypto.randomUUID().replace(/-/g, "");
-          const path = `producers/${user.uid}/${body.channelId}/${assetId}/${filename}`;
+          const path = `producers/${user.uid}/${channelId}/${assetId}/${filename}`;
           if (!isSafeStoragePath(path))
             throw new ApiError(400, "UPLOAD_PATH_INVALID", "The generated upload path is invalid.");
 
@@ -116,7 +130,7 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
             await fs.setDoc(
               "contentAssets/" + assetId,
               {
-                channelId: body.channelId,
+                channelId,
                 ownerUid: user.uid,
                 sourceDestinationId: reservation.destinationId,
                 sourceBucket: metadata.bucketName,
@@ -131,7 +145,20 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
                 thumbnailDestinationId: null,
                 sourceFilename: filename,
                 title: body.title?.trim() || filename.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " "),
-                mediaType: "Movie",
+                mediaType: body.mediaType,
+                description: body.description,
+                genre: body.genre,
+                language: body.language,
+                ageRating: body.ageRating,
+                contentRating: body.ageRating,
+                seriesId: body.seriesId ?? null,
+                seasonId: body.seasonId ?? null,
+                episodeNumber: body.episodeNumber ?? null,
+                ownershipDeclaration: body.ownershipDeclaration,
+                copyrightDeclaration: body.copyrightDeclaration,
+                licenseType: body.licenseType,
+                copyrightHolderName: body.copyrightHolderName || null,
+                productionYear: body.productionYear ?? null,
                 contentStatus: "draft",
                 declaredSizeBytes: body.sizeBytes,
                 declaredMimeType: body.mimeType.toLowerCase(),
@@ -153,7 +180,7 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
               targetId: assetId,
               reason: "Authorized channel source upload",
               metadata: {
-                channelId: body.channelId,
+                channelId,
                 sizeBytes: body.sizeBytes,
                 extension,
                 destinationId: reservation.destinationId,
