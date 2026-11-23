@@ -49,7 +49,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels/$chann
             await requireZillionaireModule(fs, user, "channels");
           }
           const channel = await fs.getDoc("channels/" + channelId);
-          if (!channel || channel["ownerUid"] !== "platform") {
+          const platformOwnedChannel = Boolean(
+            channel &&
+              (channel["ownerUid"] === "platform" ||
+                (channel["type"] === "platform" && channel["deliveryMode"] === "live_hls")),
+          );
+          if (!channel || !platformOwnedChannel) {
             throw new ApiError(
               404,
               "PLATFORM_CHANNEL_NOT_FOUND",
