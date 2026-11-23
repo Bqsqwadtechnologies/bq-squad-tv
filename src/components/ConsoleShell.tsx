@@ -1463,62 +1463,69 @@ export function ConsoleShell({
 
       {/* Global Search Modal */}
       {searchModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/70 backdrop-blur-sm">
-          <div
-            className={`w-full max-w-xl rounded-2xl border p-4 shadow-2xl ${
-              theme === "dark"
-                ? "bg-[#091126] border-slate-800 text-slate-100"
-                : "bg-white border-slate-200 text-slate-900"
-            }`}
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-400">
-                Global Console Search
-              </span>
-              <button
-                onClick={() => setSearchModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-white"
-              >
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center bg-black/70 px-4 pt-20 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSearchModalOpen(false);
+          }}
+        >
+          <div className={`w-full max-w-2xl rounded-2xl border p-4 shadow-2xl ${theme === "dark" ? "border-slate-800 bg-[#091126] text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}>
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div>
+                <span className="block text-xs font-bold uppercase tracking-wider text-blue-400">Search the dashboard</span>
+                <span className="mt-1 block text-[11px] text-slate-500">Search by page name, feature or what a page does.</span>
+              </div>
+              <button type="button" onClick={() => setSearchModalOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Close search">
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <form onSubmit={handleGlobalSearchSubmit} className="mt-3 flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+            <form onSubmit={handleGlobalSearchSubmit} className="mt-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                 <input
                   type="text"
                   autoFocus
+                  aria-label="Search dashboard pages and features"
                   placeholder={searchPlaceholder}
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-xl border border-slate-700/60 bg-black/40 pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  className="w-full rounded-xl border border-slate-700/60 bg-black/40 py-3 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 />
               </div>
-              <button
-                type="submit"
-                className="px-4 py-2 rounded-xl bg-blue-600 text-xs font-bold text-white hover:bg-blue-500 transition shadow"
-              >
-                Search
-              </button>
             </form>
-            <div className="mt-4 space-y-1">
-              <p className="text-[11px] font-semibold text-slate-400 mb-1">Quick Links</p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                {allItems.slice(0, 6).map((item) => (
-                  <a
-                    key={item.id}
-                    href={item.href}
-                    onClick={() => setSearchModalOpen(false)}
-                    className="p-2 rounded-lg bg-white/5 border border-white/5 hover:bg-blue-600 hover:text-white transition flex items-center gap-2"
-                  >
-                    <item.icon className="h-3.5 w-3.5 text-blue-400" />
-                    <span className="truncate">{item.label}</span>
-                  </a>
-                ))}
-              </div>
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-[11px] font-semibold text-slate-400">{searchQuery.trim() ? matchingSearchItems.length + " matching pages" : "Suggested pages"}</p>
+              <kbd className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-500">ESC to close</kbd>
+            </div>
+            <div className="mt-2 max-h-[60vh] space-y-2 overflow-y-auto">
+              {matchingSearchItems.length > 0 ? matchingSearchItems.map((item) => (
+                <a
+                  key={item.id + item.href}
+                  href={item.href}
+                  onClick={() => setSearchModalOpen(false)}
+                  className="flex items-start gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-3 transition hover:border-blue-400/40 hover:bg-blue-500/10"
+                >
+                  <span className="mt-0.5 rounded-lg bg-blue-500/10 p-2 text-blue-300"><item.icon className="h-4 w-4" /></span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2 text-xs font-bold text-white">
+                      {item.label}
+                      <span className="font-normal text-slate-500">· {item.section}</span>
+                    </span>
+                    <span className="mt-1 block text-[11px] leading-5 text-slate-400">{item.description}</span>
+                  </span>
+                  <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-500" />
+                </a>
+              )) : (
+                <div className="rounded-xl border border-dashed border-slate-700 p-6 text-center">
+                  <Search className="mx-auto h-5 w-5 text-slate-500" />
+                  <p className="mt-2 text-xs font-semibold text-slate-300">No matching dashboard pages</p>
+                  <p className="mt-1 text-[11px] text-slate-500">Try another feature name or describe what you want to do.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
+      )}
       )}
     </div>
   );
