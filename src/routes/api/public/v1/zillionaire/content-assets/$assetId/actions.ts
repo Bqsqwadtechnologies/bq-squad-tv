@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireZillionaireModule } from "@/lib/server/roles";
+import { requireStepUp } from "@/lib/server/zillionaire-access";
 
 const actionSchema = z.discriminatedUnion("action", [
   z.object({
@@ -294,6 +295,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
           }
 
           if (body.action === "hard_delete") {
+            // Irreversible deletion requires the owner's short-lived MFA-backed grant.
+            requireStepUp(request, actor.uid, "permanent_delete");
             const assetTitle = String(asset["title"] || asset["name"] || assetId);
             if (
               body.confirmName.trim().toLowerCase() !== assetTitle.trim().toLowerCase() &&
