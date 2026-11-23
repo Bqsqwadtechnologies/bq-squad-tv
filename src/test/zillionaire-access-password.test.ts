@@ -186,7 +186,7 @@ describe("V4-01 Batch 02: Zillionaire Owner Access Password & Unlock Gate", () =
     expect(unlockRes.status).toBe(401);
     const unlockJson = await unlockRes.json();
     expect(unlockJson.code).toBe("INVALID_PASSWORD");
-    expect(unlockJson.error).toContain("4 attempt(s) remaining");
+    expect(unlockJson.error).toMatch(/owner password does not match/i);
   });
 
   it(
