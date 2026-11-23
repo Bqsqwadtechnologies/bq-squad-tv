@@ -38,7 +38,7 @@ function UploadStudioRoute() {
   return (
     <ConsolePageGuard
       role="zillionaire"
-      module="content"
+      requiredModules={["content", "video"]}
       title="Upload Studio"
       description="Upload movies, videos and series episodes directly into the private BQ SQWAD TV media library."
     >
