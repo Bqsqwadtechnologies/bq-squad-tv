@@ -35,6 +35,7 @@ import {
   Bell,
 } from "lucide-react";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
+import { BrandWatermark } from "@/components/BrandWatermark";
 
 type Content = {
   id: string;
@@ -814,7 +815,7 @@ export function ContentDetailsPage() {
               </div>
             )}
             <section className="mt-7 grid gap-7 rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b286f] to-[#07143d] p-5 sm:grid-cols-[240px_1fr] sm:p-8">
-              <div className="overflow-hidden rounded-2xl bg-[#020824]">
+              <div className="relative overflow-hidden rounded-2xl bg-[#020824]">
                 {content.posterUrl ? (
                   <img
                     src={content.posterUrl}
@@ -826,6 +827,7 @@ export function ContentDetailsPage() {
                     <Tv2 size={56} />
                   </div>
                 )}
+                <BrandWatermark />
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">
@@ -948,8 +950,9 @@ export function ContentDetailsPage() {
                   </div>
                 ) : null}
                 <div className="relative overflow-hidden rounded-2xl bg-black">
+                  <BrandWatermark />
                   {content.contentRating && (
-                    <div className="absolute left-3 top-3 z-10 rounded-lg border border-white/20 bg-black/80 px-3 py-1.5 text-xs font-bold text-white">
+                    <div className="absolute right-3 top-3 z-10 rounded-lg border border-white/20 bg-black/80 px-3 py-1.5 text-xs font-bold text-white">
                       AGE RATING: {content.contentRating}
                     </div>
                   )}
