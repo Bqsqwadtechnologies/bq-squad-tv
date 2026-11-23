@@ -87,7 +87,7 @@ export async function createPrivatePreviewGrant(
   targetId: string,
 ): Promise<{ previewToken: string; expiresAt: string; streamUrl?: string; previewPath: string }> {
   let isAuthorized = false;
-  let role: "producer" | "provider" | "operator" = "producer";
+  let role: "producer" | "provider" | "operator" | "owner" = "producer";
   let streamUrl = "";
   let previewPath = "";
 
