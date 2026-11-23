@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { LoaderCircle, ShieldCheck, Tag, Film, Tv, Sparkles, History, Package, Globe, Download, Upload } from "lucide-react";
 import { exportCountryPricingRulesCsv, parseCountryPricingRulesCsv, applyBulkCountryAdjustment, type CountryPricingRule } from "@/lib/server/pricing";
 import { getWebAuthHeaders, signInWithEmailPassword } from "@/lib/firebase-web-auth";
+import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 
 export const Route = createFileRoute("/zillionaire/pricing")({
   component: AdminPricingPage,
@@ -76,9 +77,17 @@ type HistoryEntry = {
 };
 
 function AdminPricingPage() {
+  return (
+    <ConsolePageGuard role="zillionaire" module="finance" title="Pricing & rules" description="Configure viewing rates, wallet packages, currency pricing, revenue shares and promotional windows.">
+      {({ token }) => <AdminPricingContent initialToken={token} />}
+    </ConsolePageGuard>
+  );
+}
+
+function AdminPricingContent({ initialToken }: { initialToken: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(initialToken);
   const [activeTab, setActiveTab] = useState<"defaults" | "content" | "channels" | "categories" | "promos" | "countries" | "history">("defaults");
   const [countryRules, setCountryRules] = useState("{}");
   const [exchangeRates, setExchangeRates] = useState("{}");
@@ -160,6 +169,14 @@ function AdminPricingPage() {
       // History optional on load
     }
   }
+
+  useEffect(() => {
+    void loadConfig(initialToken).catch((caught) => {
+      setError(caught instanceof Error ? caught.message : "Could not load pricing settings.");
+    });
+    // loadConfig is intentionally invoked once when the authenticated guard supplies a token.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialToken]);
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
