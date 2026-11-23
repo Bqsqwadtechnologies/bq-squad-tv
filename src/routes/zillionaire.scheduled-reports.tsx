@@ -55,7 +55,7 @@ const mockConfigs: ScheduledReportConfig[] = [
 function ScheduledReportsRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="finance">
-      {(account) => <ScheduledReportsContent account={account} />}
+      {({ account }) => <ScheduledReportsContent account={account} />}
     </ConsolePageGuard>
   );
 }
