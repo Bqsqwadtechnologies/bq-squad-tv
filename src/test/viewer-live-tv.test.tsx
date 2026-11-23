@@ -121,6 +121,7 @@ describe("Live TV Screen (V5-05 Batch 3)", () => {
     const LiveTv = Route as any;
     render(<LiveTv />);
 
+    await waitFor(() => expect(screen.getAllByRole("button", { name: /Remind Me/i }).length).toBeGreaterThan(0));
     const remindButtons = screen.getAllByRole("button", { name: /Remind Me/i });
     expect(remindButtons.length).toBeGreaterThan(0);
 
