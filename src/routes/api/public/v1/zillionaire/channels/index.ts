@@ -18,7 +18,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels/")({
 
           const allChannels = await fs.query("channels", { limit: 200 });
 
-          let results = allChannels;
+          let results = allChannels.filter((channel) => channel["isSystemLibrary"] !== true);
 
           if (filter && filter !== "ALL") {
             if (filter === "VERIFIED") {
