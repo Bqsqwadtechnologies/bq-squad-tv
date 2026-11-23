@@ -53,7 +53,7 @@ const mockReleases: ScheduledRelease[] = [
 function ContentCalendarRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="content">
-      {(account) => <ContentCalendarContent account={account} />}
+      {({ account }) => <ContentCalendarContent account={account} />}
     </ConsolePageGuard>
   );
 }
