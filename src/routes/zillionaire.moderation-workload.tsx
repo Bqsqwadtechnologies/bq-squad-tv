@@ -29,7 +29,7 @@ interface ModeratorWorkload {
 function ModerationWorkloadRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="moderation">
-      {(account) => <ModerationWorkloadContent account={account} />}
+      {({ account }) => <ModerationWorkloadContent account={account} />}
     </ConsolePageGuard>
   );
 }
