@@ -47,7 +47,7 @@ interface CopyrightCase {
 function CopyrightCasesRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="moderation">
-      {(account) => <CopyrightCasesContent account={account} />}
+      {({ account }) => <CopyrightCasesContent account={account} />}
     </ConsolePageGuard>
   );
 }
