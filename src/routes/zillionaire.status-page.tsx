@@ -21,36 +21,6 @@ interface SubsystemHealth {
   lastIncidentAt?: string;
 }
 
-const mockSubsystems: SubsystemHealth[] = [
-  {
-    id: "sub_cdn",
-    name: "Video Delivery & Edge CDN",
-    description: "Global edge network delivering HLS and MP4 streams.",
-    status: "operational",
-    uptime30Days: 99.98,
-  },
-  {
-    id: "sub_pay",
-    name: "Payment Gateway & Top-Up API",
-    description: "Stripe and Paystack automated wallet funding rails.",
-    status: "operational",
-    uptime30Days: 99.95,
-  },
-  {
-    id: "sub_live",
-    name: "Live Broadcast Transcoding",
-    description: "RTMP ingestion and low-latency HLS packaging.",
-    status: "operational",
-    uptime30Days: 99.90,
-  },
-  {
-    id: "sub_auth",
-    name: "Identity & Firebase Auth",
-    description: "Credential authentication, session verification, and roles.",
-    status: "operational",
-    uptime30Days: 100.0,
-  },
-];
 
 function StatusPageEditorRoute() {
   return (
@@ -61,7 +31,7 @@ function StatusPageEditorRoute() {
 }
 
 function StatusPageContent({ account }: { account: ConsoleAccount }) {
-  const [systems, setSystems] = useState<SubsystemHealth[]>(mockSubsystems);
+  const [systems, setSystems] = useState<SubsystemHealth[]>([]);
 
   const columns: EntityColumn<SubsystemHealth>[] = [
     { key: "name", header: "Subsystem", render: (s) => <span className="font-bold text-white">{s.name}</span> },
@@ -91,7 +61,7 @@ function StatusPageContent({ account }: { account: ConsoleAccount }) {
     <ZillionaireEntityConsole
       account={account}
       title="Platform Status & Subsystem Health Editor"
-      subtitle="Publish live infrastructure component statuses and transparent maintenance disclosures."
+      subtitle="Publish live infrastructure component statuses and transparent maintenance disclosures. No live records are available from a connected service yet; sample data is intentionally not shown."
       icon={Activity}
       items={systems}
       columns={columns}
