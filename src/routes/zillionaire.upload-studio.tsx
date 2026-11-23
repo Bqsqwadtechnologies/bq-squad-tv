@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Film, Video, Tv, UploadCloud, Play, Search, CheckCircle2, Clock3, AlertCircle } from "lucide-react";
+import { Film, Video, Tv, UploadCloud, Play, Search, CheckCircle2, Clock3 } from "lucide-react";
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
 import { ConsoleShell, ConsoleWelcomeBanner, ConsoleCard, ConsoleStatusBadge } from "@/components/ConsoleShell";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
@@ -321,9 +321,9 @@ function UploadStudioContent({
     >
       <div className="space-y-6">
         <ConsoleWelcomeBanner
-          heading="Upload movies, series and videos"
+          title="Upload movies, series and videos"
           description="Choose what you are uploading, select the video file, preview it, and send it to the private media library. You do not need to select a broadcast channel."
-          badge="Media Library"
+          badgeText="Media Library"
         />
 
         <ConsoleCard title="New media upload">
