@@ -35,11 +35,42 @@ export const Route = createFileRoute("/api/public/v1/producer/uploads/complete")
             limit: 100,
             search: filename,
           });
-          if (listError) throw new ApiError(503, "UPLOAD_VERIFY_UNAVAILABLE", "We could not verify the uploaded file. Please try again.");
+          if (listError) {
+            throw new ApiError(503, "UPLOAD_VERIFY_UNAVAILABLE", "Private storage could not verify this upload. Please try again.");
+          }
           const object = objects?.find((item) => item.name === filename);
-          const actualSize = Number(object?.metadata?.size ?? object?.metadata?.contentLength ?? NaN);
-          if (!object || !Number.isFinite(actualSize) || actualSize !== Number(session["declaredSizeBytes"])) {
-            throw new ApiError(400, "UPLOAD_INCOMPLETE", "The file did not finish uploading. Please try again.");
+
+          // Storage list responses can omit size metadata for some provider responses.
+          // Ask the object-info endpoint before declaring a completed upload incomplete.
+          let metadataSize = object?.metadata?.size ?? object?.metadata?.contentLength;
+          let objectInfo: Record<string, unknown> | null = null;
+          if (!object || metadataSize === undefined || metadataSize === null) {
+            const { data: info, error: infoError } = await supabaseAdmin.storage
+              .from(bucket)
+              .info(storagePath);
+            if (!infoError && info && typeof info === "object") {
+              objectInfo = info as Record<string, unknown>;
+              const infoMetadata = objectInfo["metadata"];
+              if (metadataSize === undefined || metadataSize === null) {
+                metadataSize =
+                  (infoMetadata && typeof infoMetadata === "object"
+                    ? (infoMetadata as Record<string, unknown>)["size"] ??
+                      (infoMetadata as Record<string, unknown>)["contentLength"]
+                    : undefined) ??
+                  objectInfo["size"] ??
+                  objectInfo["contentLength"];
+              }
+            }
+          }
+          const actualSize = Number(metadataSize ?? NaN);
+          if (!object && !objectInfo) {
+            throw new ApiError(400, "UPLOAD_INCOMPLETE", "The uploaded file was not found in private storage. Please retry the upload.");
+          }
+          if (!Number.isFinite(actualSize) || actualSize < 1) {
+            throw new ApiError(503, "UPLOAD_SIZE_UNAVAILABLE", "Private storage received the file but could not confirm its size yet. Please retry verification.");
+          }
+          if (actualSize !== Number(session["declaredSizeBytes"])) {
+            throw new ApiError(400, "UPLOAD_SIZE_MISMATCH", "The uploaded file size does not match the selected file. Please upload it again.");
           }
           await fs.patchDoc(path, { status: "uploaded", uploadedAt: new Date().toISOString(), verifiedSizeBytes: actualSize });
           return Response.json({ success: true, uploadSessionId, storagePath, mediaKind: session["mediaKind"] });
