@@ -55,7 +55,7 @@ const mockMacros: SupportMacro[] = [
 function SupportMacrosRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="support">
-      {(account) => <SupportMacrosContent account={account} />}
+      {({ account }) => <SupportMacrosContent account={account} />}
     </ConsolePageGuard>
   );
 }
