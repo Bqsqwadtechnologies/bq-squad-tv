@@ -5,7 +5,7 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireZillionaireModule } from "@/lib/server/roles";
 
 const bulkActionSchema = z.object({
-  action: z.enum(["bulk_block", "bulk_unpublish", "bulk_change_category", "bulk_change_age_rating"]),
+  action: z.enum(["bulk_block", "bulk_unpublish", "bulk_delete", "bulk_change_category", "bulk_change_age_rating"]),
   assetIds: z.array(z.string().trim().min(1)).min(1).max(100),
   reason: z.string().trim().min(3).max(1000),
   category: z.string().trim().optional(),
@@ -121,6 +121,13 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
               updates["contentStatus"] = "unpublished";
               updates["unpublishedAt"] = now;
               updates["unpublishReason"] = body.reason;
+            } else if (body.action === "bulk_delete") {
+              updates["status"] = "DELETED";
+              updates["contentStatus"] = "deleted";
+              updates["deletedAt"] = now;
+              updates["deletedBy"] = actor.uid;
+              updates["deleteReason"] = body.reason;
+              updates["scheduledPurgeAt"] = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
             } else if (body.action === "bulk_change_category" && body.category) {
               updates["category"] = body.category;
             } else if (body.action === "bulk_change_age_rating" && body.ageRating) {
