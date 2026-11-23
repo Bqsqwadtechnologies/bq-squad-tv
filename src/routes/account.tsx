@@ -53,7 +53,7 @@ function AccountPage() {
   const [message, setMessage] = useState("");
   const [accountEmail, setAccountEmail] = useState("");
   const [publicId, setPublicId] = useState<string | null>(null);
-  const [countryCode, setCountryCode] = useState("US");
+  const [countryCode, setCountryCode] = useState("NG");
   const [walletCurrency, setWalletCurrency] = useState("USD");
   const [walletBalanceMinor, setWalletBalanceMinor] = useState<number | null>(null);
   type ViewerAnalyticsData = {
