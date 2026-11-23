@@ -38,6 +38,7 @@ export interface KycCameraCaptureProps {
   onCapture: (result: CapturedResult) => void;
   onUploadFileInstead?: () => void;
   onClose?: () => void;
+  initialStream?: MediaStream | null;
   title?: string;
   subtitle?: string;
   handoffUrl?: string;
@@ -78,6 +79,12 @@ export function KycCameraCapture({
   const startCamera = useCallback(async () => {
     setPermissionError(null);
     try {
+      if (!window.isSecureContext) {
+        throw new Error("SECURE_CONTEXT_REQUIRED");
+      }
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("CAMERA_API_UNAVAILABLE");
+      }
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
@@ -97,16 +104,28 @@ export function KycCameraCapture({
         const p = videoRef.current.play(); if (p && typeof p.catch === "function") await p.catch(() => {});
       }
       startTimeRef.current = Date.now();
-    } catch (err: any) {
-      console.warn("[KYC Camera] Access denied or error:", err);
+    } catch (err: unknown) {
+      const cameraError = err instanceof Error ? err : new Error("CAMERA_UNAVAILABLE");
+      console.warn("[KYC Camera] Access denied or error:", cameraError.name);
       setCameraPermission("denied");
       setPermissionError(
-        err.name === "NotAllowedError" || err.name === "PermissionDeniedError"
-          ? "Camera permission was denied. Please allow camera access in your browser settings to continue."
-          : "Could not connect to a video camera. You can finish by uploading a photo or switching to mobile.",
+        cameraError.name === "NotAllowedError" || cameraError.name === "PermissionDeniedError"
+          ? "Your browser blocked camera access. Tap Try Again and choose Allow when the browser asks. If no prompt appears, open the browser's site controls for tv.bqsqwad.com and enable Camera."
+          : cameraError.message === "SECURE_CONTEXT_REQUIRED"
+            ? "Camera verification requires the secure HTTPS website. Reopen BQ SQWAD TV using its https address."
+            : cameraError.message === "CAMERA_API_UNAVAILABLE"
+              ? "This browser does not provide camera access to this page. Open BQ SQWAD TV in Chrome or continue on your phone."
+              : "The camera could not start. Check that another app is not using it, then try again or continue on your phone.",
       );
     }
   }, [mode, stream]);
+
+  useEffect(() => {
+    if (!initialStream) return;
+    setStream(initialStream);
+    setCameraPermission("granted");
+    startTimeRef.current = Date.now();
+  }, [initialStream]);
 
   // Do not request camera access from a background effect. Mobile browsers can
   // suppress permission prompts that are not initiated by a user gesture.
