@@ -64,7 +64,7 @@ const mockRails: HomepageRail[] = [
 function TrendingRailsRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="content">
-      {(account) => <TrendingRailsContent account={account} />}
+      {({ account }) => <TrendingRailsContent account={account} />}
     </ConsolePageGuard>
   );
 }
