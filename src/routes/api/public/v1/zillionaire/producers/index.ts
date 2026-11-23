@@ -23,6 +23,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/producers/")({
             return {
               id: uid,
               displayName: String(p["displayName"] || p["legalName"] || "Producer"),
+              username: String(p["slug"] || p["publicId"] || ""),
               companyName: String(p["companyName"] || p["businessName"] || ""),
               legalName: String(p["legalName"] || ""),
               countryCode: String(p["countryCode"] || "NG"),
@@ -52,6 +53,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/producers/")({
             mapped = mapped.filter(
               (p) =>
                 p.displayName.toLowerCase().includes(q) ||
+                p.username.toLowerCase().includes(q) ||
                 p.companyName.toLowerCase().includes(q) ||
                 p.id.toLowerCase().includes(q),
             );
