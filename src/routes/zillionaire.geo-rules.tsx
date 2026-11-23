@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Globe2, Shield, Check, X, AlertCircle, Edit3, Settings } from "lucide-react";
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
+import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
 import { ZillionaireEntityConsole, type EntityColumn, type EntityAction } from "@/components/ZillionaireEntityConsole";
 import { ConsoleStatusBadge } from "@/components/ConsoleShell";
 import {
@@ -64,12 +65,12 @@ const mockGeoRules: GeoRule[] = [
 function GeoRulesRoute() {
   return (
     <ConsolePageGuard role="owner">
-      {({ account }) => <GeoRulesContent account={account} />}
+      {({ account, token }) => <GeoRulesContent account={account} token={token} />}
     </ConsolePageGuard>
   );
 }
 
-function GeoRulesContent({ account }: { account: ConsoleAccount }) {
+function GeoRulesContent({ account, token }: { account: ConsoleAccount; token: string }) {
   const [activeTab, setActiveTab] = useState<"geo" | "kyc">("kyc");
   const [geoRules, setGeoRules] = useState<GeoRule[]>([]);
   const [kycRules, setKycRules] = useState<KycCountryRule[]>(() => getAllCountryRules());
@@ -81,7 +82,7 @@ function GeoRulesContent({ account }: { account: ConsoleAccount }) {
     async function loadCountryRules() {
       try {
         setLoadingKyc(true);
-        const res = await fetch("/api/public/v1/zillionaire/kyc/country-rules");
+        const res = await fetch("/api/public/v1/zillionaire/kyc/country-rules", { headers: await getWebAuthHeaders(token) });
         if (res.ok) {
           const data = await res.json();
           if (data.rules && Array.isArray(data.rules)) {
@@ -96,7 +97,7 @@ function GeoRulesContent({ account }: { account: ConsoleAccount }) {
       }
     }
     loadCountryRules();
-  }, []);
+  }, [token]);
 
   async function handleUpdateKycRule(rule: KycCountryRule, reason?: string) {
     if (!reason || reason.trim().length < 3) {
@@ -107,7 +108,7 @@ function GeoRulesContent({ account }: { account: ConsoleAccount }) {
     try {
       const res = await fetch("/api/public/v1/zillionaire/kyc/country-rules", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { ...(await getWebAuthHeaders(token)), "Content-Type": "application/json" },
         body: JSON.stringify({
           countryCode: rule.code,
           ruleUpdate: {
@@ -126,7 +127,7 @@ function GeoRulesContent({ account }: { account: ConsoleAccount }) {
 
       setNotice({ type: "success", text: `KYC rule updated for ${rule.name}.` });
       // Reload
-      const updatedRes = await fetch("/api/public/v1/zillionaire/kyc/country-rules");
+      const updatedRes = await fetch("/api/public/v1/zillionaire/kyc/country-rules", { headers: await getWebAuthHeaders(token) });
       if (updatedRes.ok) {
         const data = await updatedRes.json();
         setKycRules(data.rules);
