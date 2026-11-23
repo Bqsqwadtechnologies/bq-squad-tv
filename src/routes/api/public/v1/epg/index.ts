@@ -20,9 +20,9 @@ export const Route = createFileRoute("/api/public/v1/epg/")({
           const scheduleItems = await fs.query("epgSchedule");
 
           const grid = activeChannels
-            .filter((c: Record<string, unknown>) => !channelId || String(c["id"] || c.__id || "") === channelId)
+            .filter((c: Record<string, unknown>) => !channelId || String(c["id"] || c["__id"] || "") === channelId)
             .map((channel: Record<string, unknown>) => {
-              const resolvedChannelId = String(channel["id"] || channel.__id || "");
+              const resolvedChannelId = String(channel["id"] || channel["__id"] || "");
               const channelPrograms = scheduleItems
                 .filter((p: Record<string, unknown>) => p["channelId"] === resolvedChannelId)
                 .sort((a: Record<string, unknown>, b: Record<string, unknown>) =>
