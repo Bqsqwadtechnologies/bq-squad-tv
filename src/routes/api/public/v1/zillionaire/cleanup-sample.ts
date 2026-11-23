@@ -9,7 +9,7 @@ import { rebuildStoragePoolIndex } from "@/lib/server/storage/pool-index";
 
 const bodySchema = z.object({
   dryRun: z.boolean().default(true),
-  scope: z.enum(["fake_live_streams", "all_sample_content"]).default("fake_live_streams"),
+  scope: z.enum(["fake_live_streams", "all_sample_content"]).default("all_sample_content"),
   confirmation: z.string().optional(),
   reason: z.string().trim().min(5).max(1000).optional(),
 });
