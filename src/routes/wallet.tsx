@@ -174,7 +174,7 @@ function WalletPage() {
             : [];
         setTopups(effective);
         if (effective.length > 0 && (!selectedPackageId || !effective.some((offer: Topup) => offer.packageId === selectedPackageId))) {
-          setSelectedPackageId(effective[0].packageId);
+          setSelectedPackageId(effective[0]?.packageId ?? "");
         } else if (effective.length === 0) {
           setSelectedPackageId("");
           setIsCustom(false);
