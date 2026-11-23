@@ -67,7 +67,26 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
           const sourceConfiguration = await loadSourceStorageConfiguration(fs, asset);
           const sourceObjectKey =
             typeof asset["sourceObjectKey"] === "string" ? asset["sourceObjectKey"] : path;
-          const inspected = await inspectStorageObject(sourceConfiguration, sourceObjectKey);
+          let inspected: Awaited<ReturnType<typeof inspectStorageObject>> | null = null;
+          let lastInspectionError: unknown = null;
+          for (let attempt = 0; attempt < 8; attempt++) {
+            try {
+              inspected = await inspectStorageObject(sourceConfiguration, sourceObjectKey);
+              break;
+            } catch (error) {
+              lastInspectionError = error;
+              const code = error instanceof ApiError ? error.code : "";
+              const retryable = [
+                "UPLOAD_OBJECT_MISSING",
+                "STORAGE_SIZE_UNAVAILABLE",
+                "STORAGE_OBJECT_UNAVAILABLE",
+              ].includes(code);
+              if (!retryable || attempt === 7) throw error;
+              // Signed PUT success can precede object visibility at the storage edge.
+              await new Promise((resolve) => setTimeout(resolve, Math.min(350 + attempt * 250, 2_000)));
+            }
+          }
+          if (!inspected) throw lastInspectionError ?? new ApiError(503, "STORAGE_OBJECT_UNAVAILABLE", "The uploaded video could not be verified.");
           const actualSize = inspected.sizeBytes;
           if (actualSize !== expectedSize) {
             throw new ApiError(
