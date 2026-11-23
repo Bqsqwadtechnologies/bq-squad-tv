@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { Firestore } from "@/lib/server/firebase-admin";
+import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, requireUser } from "@/lib/server/api";
 import { getRequiredLegalPages, type LegalAudience } from "@/lib/server/legal-acceptance";
 
@@ -60,6 +60,12 @@ export const Route = createFileRoute("/api/public/v1/legal/status")({
             },
           );
         } catch (error) {
+          if (error instanceof ApiError && (error.code === "LEGAL_PAGES_NOT_READY" || error.code === "LEGAL_PAGE_INCOMPLETE")) {
+            return Response.json(
+              { pages: [], acceptanceRequired: false, documentsUnavailable: true },
+              { headers: { "cache-control": "no-store", pragma: "no-cache" } },
+            );
+          }
           return errorBody(error);
         }
       },
