@@ -50,6 +50,15 @@ type Content = {
   ratePerMinuteMinor: number;
   rightsCurrent: boolean;
   isPrivatePreview?: boolean;
+  bqOriginalMark?: boolean;
+  producer?: {
+    slug: string;
+    name: string;
+    verified: boolean;
+    blueVerified: boolean;
+    brandOverlayText: string;
+    brandOverlayLogoUrl: string | null;
+  } | null;
 };
 type Comment = { id: string; body: string; viewerNumber: string; createdAt: string | null };
 type PlaybackState = "playing" | "paused" | "buffering" | "idle" | "ended";
@@ -960,12 +969,27 @@ export function ContentDetailsPage() {
                     </button>
                   )}
 
-                  <img
-                    src="/brand/bq-sqwad-tv-logo.png"
-                    alt=""
-                    aria-hidden="true"
-                    className="pointer-events-none absolute right-4 top-4 w-20 opacity-40"
-                  />
+                  {content.bqOriginalMark && (
+                    <a
+                      href="/pages/bq-sqwad-originals"
+                      className="absolute left-3 top-3 z-20 inline-flex items-center gap-2 rounded-lg border border-white/15 bg-black/45 px-2.5 py-1.5 opacity-80 transition hover:opacity-100"
+                      aria-label="BQ SQWAD TV Original. Learn more about the originality mark."
+                    >
+                      <img src="/brand/bq-sqwad-tv-logo.png" alt="" aria-hidden="true" className="h-5 w-auto max-w-12 object-contain" />
+                      <span className="text-[9px] font-extrabold uppercase tracking-wider text-white">BQ SQWAD TV Original</span>
+                      <span className="text-[9px] font-semibold text-cyan-200 underline">Learn more</span>
+                    </a>
+                  )}
+                  {content.producer && (content.producer.brandOverlayLogoUrl || content.producer.brandOverlayText) && (
+                    <div className="pointer-events-none absolute right-3 top-3 z-20 flex max-w-[38%] items-center justify-end gap-2 rounded-lg border border-white/10 bg-black/35 px-2.5 py-1.5 opacity-70">
+                      {content.producer.brandOverlayLogoUrl && (
+                        <img src={content.producer.brandOverlayLogoUrl} alt="" className="max-h-9 max-w-16 object-contain" />
+                      )}
+                      {content.producer.brandOverlayText && (
+                        <span className="truncate text-[10px] font-bold text-white drop-shadow">{content.producer.brandOverlayText}</span>
+                      )}
+                    </div>
+                  )}
                   {sessionId && (
                     <div className="pointer-events-none absolute bottom-4 left-4 z-10 select-none opacity-30">
                       <span className="font-mono text-[10px] font-semibold text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">
