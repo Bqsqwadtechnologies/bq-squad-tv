@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, getWallet, parseBody, requireUser } from "@/lib/server/api";
-import { getPricingConfig } from "@/lib/server/pricing";
+import { getPricingConfig, getDefaultPricingConfig } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { getPaystackTopup } from "@/lib/server/paystack";
 import { assertRiskStepUp, recordRiskSignal } from "@/lib/server/risk-engine";
@@ -68,7 +68,12 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
           await assertRiskStepUp(fs, user.uid, user.authTime);
           const wallet = await getWallet(fs, user.uid);
           const currency = wallet.currency;
-          const pricing = await getPricingConfig(fs);
+          let pricing;
+          try {
+            pricing = await getPricingConfig(fs);
+          } catch {
+            pricing = getDefaultPricingConfig();
+          }
           let offer: ReturnType<typeof getPaystackTopup>;
           try {
             offer = getPaystackTopup(pricing, packageId, currency, customAmountMinor);
