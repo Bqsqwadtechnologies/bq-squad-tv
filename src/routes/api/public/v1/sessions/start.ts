@@ -193,10 +193,26 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
             await consumeIntegrityChallenge(fs, body.integrityNonce, user.uid);
           }
 
+          let isPreviewGrant = false;
+          if (body.previewToken) {
+            try {
+              const previewPayload = verifyPreviewToken(body.previewToken);
+              const targetMatches =
+                (previewPayload.targetType === "channel" && previewPayload.targetId === body.channelId) ||
+                (previewPayload.targetType === "asset" && previewPayload.targetId === body.contentAssetId);
+              isPreviewGrant =
+                targetMatches &&
+                previewPayload.granteeUid === user.uid &&
+                previewPayload.isPreview === true;
+            } catch {
+              isPreviewGrant = false;
+            }
+          }
+
           const channel = await fs.getDoc("channels/" + body.channelId);
           if (
             !channel ||
-            channel["published"] !== true ||
+            (channel["published"] !== true && !isPreviewGrant) ||
             String(channel["status"] ?? "").toUpperCase() === "SUSPENDED"
           ) {
             throw new ApiError(
@@ -308,20 +324,6 @@ export const Route = createFileRoute("/api/public/v1/sessions/start")({
                     (p.targetType === "channel" && p.targetId === body.channelId)),
               ));
 
-          let isPreviewGrant = false;
-          if (body.previewToken) {
-            try {
-              const previewPayload = verifyPreviewToken(body.previewToken);
-              const targetMatches =
-                (previewPayload.targetType === "channel" && previewPayload.targetId === body.channelId) ||
-                (previewPayload.targetType === "asset" && previewPayload.targetId === assetId);
-              if (targetMatches && previewPayload.granteeUid === user.uid) {
-                isPreviewGrant = true;
-              }
-            } catch {
-              isPreviewGrant = false;
-            }
-          }
           const paidPlayback = !isExplicitOwnerFree && !isPreviewGrant;
 
           assertContentPlaybackRights({
