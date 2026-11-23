@@ -195,7 +195,7 @@ function AccountPage() {
       setCountryReady(true);
       setCanChangeCountry(data.isZillionaireOwner === true);
       if (data.countryCode) setCountryCode(data.countryCode);
-      setWalletCurrency(data.currency ?? "USD");
+      setWalletCurrency(data.currency ?? "NGN");
     }
     // Also load wallet balance
     try {
@@ -243,10 +243,10 @@ function AccountPage() {
       return;
     }
     setCountryCode(nextCountry);
-    setWalletCurrency(result.currency ?? "USD");
+    setWalletCurrency(result.currency ?? "NGN");
     setCountryReady(true);
     if (showStatus)
-      setMessage("Country saved. Your wallet uses " + (result.currency ?? "USD") + ".");
+      setMessage("Country saved. Your wallet uses " + (result.currency ?? "NGN") + ".");
   }
 
   async function loadLegalStatus() {
