@@ -143,15 +143,28 @@ export const Route = createFileRoute("/api/public/v1/producer/profile")({
               throw new ApiError(409, "SLUG_TAKEN", "This custom slug is already reserved by another producer.");
             }
 
-            // Reserve new slug
-            await fs.setDoc(`producerSlugs/${body.slug}`, {
-              uid: user.uid,
-              createdAt: now,
-            });
+            // Reserve new slug without allowing a concurrent producer to overwrite it.
+            if (!existingSlugDoc) {
+              try {
+                await fs.setDoc(`producerSlugs/${body.slug}`, {
+                  uid: user.uid,
+                  createdAt: now,
+                }, { mustNotExist: true });
+              } catch (error) {
+                if (!(error instanceof ApiError) || error.status !== 409) throw error;
+                const raced = await fs.getDoc(`producerSlugs/${body.slug}`);
+                if (raced?.["uid"] !== user.uid) {
+                  throw new ApiError(409, "SLUG_TAKEN", "This custom slug is already reserved by another producer.");
+                }
+              }
+            }
 
-            // If changing from an old custom slug, remove the old mapping
+            // Remove only this producer's previous mapping.
             if (currentSlug && currentSlug !== body.slug) {
-              await fs.deleteDoc(`producerSlugs/${currentSlug}`).catch(() => {});
+              const oldSlugDoc = await fs.getDoc(`producerSlugs/${currentSlug}`);
+              if (oldSlugDoc?.["uid"] === user.uid) {
+                await fs.deleteDoc(`producerSlugs/${currentSlug}`).catch(() => undefined);
+              }
             }
 
             updates["slug"] = body.slug;
