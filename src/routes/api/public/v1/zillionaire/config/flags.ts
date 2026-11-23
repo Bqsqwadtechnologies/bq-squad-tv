@@ -24,6 +24,7 @@ const schema = z
         reminders: z.boolean(),
         modalSpendGuard: z.boolean(),
         deliveryProxyFallback: z.boolean().optional(),
+        followedProducerReleaseNotifications: z.boolean().optional(),
       })
       .strict(),
     reason: z.string().trim().min(3).max(1000),
