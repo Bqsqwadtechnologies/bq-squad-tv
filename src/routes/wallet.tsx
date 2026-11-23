@@ -319,7 +319,7 @@ function WalletPage() {
     }
   }
 
-  const currentCurrency = wallet?.currency || "USD";
+  const currentCurrency = wallet?.currency || "NGN";
 
   // Check whether signed in (token, email, or cached wallet)
   const isSignedIn = Boolean(email || wallet || !busy);
