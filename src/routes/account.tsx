@@ -54,7 +54,7 @@ function AccountPage() {
   const [accountEmail, setAccountEmail] = useState("");
   const [publicId, setPublicId] = useState<string | null>(null);
   const [countryCode, setCountryCode] = useState("NG");
-  const [walletCurrency, setWalletCurrency] = useState("USD");
+  const [walletCurrency, setWalletCurrency] = useState("NGN");
   const [walletBalanceMinor, setWalletBalanceMinor] = useState<number | null>(null);
   type ViewerAnalyticsData = {
     summary: {
