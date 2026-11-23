@@ -170,17 +170,7 @@ export function ContentDetailsPage() {
     setContent(contentResult.content);
     setNextEpisodeAvailable(contentResult.content.category === "series");
     setComments(commentsResult);
-    // Load reactions
-    fetch("/api/public/v1/reactions?targetType=video&targetId=" + encodeURIComponent(assetId), { headers })
-      .then((r) => r.json())
-      .then((data) => {
-        if (typeof data.likeCount === "number") setLikeCount(data.likeCount);
-        if (typeof data.dislikeCount === "number") setDislikeCount(data.dislikeCount);
-        if (data.userReaction) setUserReaction(data.userReaction);
-      })
-      .catch(() => {});
-
-    // Load reactions
+    // Load reaction counts once for this content item.
     fetch("/api/public/v1/reactions?targetType=video&targetId=" + encodeURIComponent(assetId), { headers })
       .then((r) => r.json())
       .then((data) => {
