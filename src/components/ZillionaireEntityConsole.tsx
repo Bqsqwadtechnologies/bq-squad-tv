@@ -91,6 +91,7 @@ export function ZillionaireEntityConsole<T extends Record<string, any>>({
   const [selectedItem, setSelectedItem] = useState<T | null>(null);
   const [actionNotes, setActionNotes] = useState("");
   const [busyAction, setBusyAction] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   const filteredItems = useMemo(() => {
     let result = [...items];
@@ -117,9 +118,12 @@ export function ZillionaireEntityConsole<T extends Record<string, any>>({
     if (!selectedItem) return;
     setBusyAction(true);
     try {
+      setActionError("");
       await act.onClick(selectedItem, actionNotes);
       setSelectedItem(null);
       setActionNotes("");
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : "The requested action could not be completed.");
     } finally {
       setBusyAction(false);
     }
@@ -290,6 +294,12 @@ export function ZillionaireEntityConsole<T extends Record<string, any>>({
                   </div>
                 ))}
               </div>
+
+              {actionError && (
+                <div role="alert" className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200">
+                  {actionError}
+                </div>
+              )}
 
               {/* Action Notes Input if actions exist */}
               {actions.length > 0 && (
