@@ -28,6 +28,7 @@ import {
   AlertTriangle,
   ThumbsUp,
   ThumbsDown,
+  BadgeCheck,
   Users,
   Flag,
   Moon,
@@ -831,6 +832,24 @@ export function ContentDetailsPage() {
                   {content.category} · {content.contentRating}
                 </p>
                 <h1 className="mt-3 text-3xl font-black sm:text-4xl">{content.title}</h1>
+                {content.producer && (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="text-blue-100/60">By</span>
+                    <Link to="/p/$slug" params={{ slug: content.producer.slug }} className="font-semibold text-cyan-200 hover:underline">
+                      {content.producer.name}
+                    </Link>
+                    {content.producer.verified && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-cyan-400/10 px-2 py-1 font-semibold text-cyan-200" title="Producer identity approved">
+                        <BadgeCheck className="h-3.5 w-3.5" /> Verified producer
+                      </span>
+                    )}
+                    {content.producer.blueVerified && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-1 font-semibold text-blue-300" title="Monthly public verification active">
+                        <BadgeCheck className="h-3.5 w-3.5" /> Blue tick
+                      </span>
+                    )}
+                  </div>
+                )}
                 <p className="mt-3 text-sm leading-7 text-blue-100/65">{content.description}</p>
                 <p className="mt-4 text-sm text-blue-100/60">Channel: {content.channelId}</p>
                 <p className="mt-2 text-sm text-blue-100/60">
