@@ -22,44 +22,6 @@ interface HomepageRail {
   targetAudience: "all" | "kids_safe" | "subscribers";
 }
 
-const mockRails: HomepageRail[] = [
-  {
-    id: "rail_01",
-    title: "Trending in Nigeria Now",
-    railType: "algorithmic_trending",
-    displayOrder: 1,
-    itemCount: 12,
-    active: true,
-    targetAudience: "all",
-  },
-  {
-    id: "rail_02",
-    title: "Nollywood Blockbusters",
-    railType: "curated_collection",
-    displayOrder: 2,
-    itemCount: 8,
-    active: true,
-    targetAudience: "all",
-  },
-  {
-    id: "rail_03",
-    title: "Live 24/7 Broadcast Channels",
-    railType: "live_tv_spotlight",
-    displayOrder: 3,
-    itemCount: 6,
-    active: true,
-    targetAudience: "all",
-  },
-  {
-    id: "rail_04",
-    title: "Family & Kids Safe Zone",
-    railType: "category_feed",
-    displayOrder: 4,
-    itemCount: 15,
-    active: true,
-    targetAudience: "kids_safe",
-  },
-];
 
 function TrendingRailsRoute() {
   return (
@@ -70,7 +32,7 @@ function TrendingRailsRoute() {
 }
 
 function TrendingRailsContent({ account }: { account: ConsoleAccount }) {
-  const [rails, setRails] = useState<HomepageRail[]>(mockRails);
+  const [rails, setRails] = useState<HomepageRail[]>([]);
 
   const columns: EntityColumn<HomepageRail>[] = [
     { key: "order", header: "Order", render: (r) => <span className="font-mono font-bold text-cyan-400">#{r.displayOrder}</span> },
@@ -95,7 +57,7 @@ function TrendingRailsContent({ account }: { account: ConsoleAccount }) {
     <ZillionaireEntityConsole
       account={account}
       title="Homepage Rails & Trending Editor"
-      subtitle="Curate discovery carousel rails, order featured showcases, and customize audience-specific feeds."
+      subtitle="Curate discovery carousel rails, order featured showcases, and customize audience-specific feeds. No live records are available from a connected service yet; sample data is intentionally not shown."
       icon={LayoutGrid}
       items={rails}
       columns={columns}
