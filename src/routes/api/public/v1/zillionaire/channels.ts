@@ -97,8 +97,9 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
           const allChannels = await fs.query("channels", { limit: 500 });
           const channels = allChannels.filter(
             (channel) =>
-              channel["ownerUid"] === "platform" ||
-              (channel["type"] === "platform" && channel["deliveryMode"] === "live_hls"),
+              channel["isSystemLibrary"] !== true &&
+              (channel["ownerUid"] === "platform" ||
+                (channel["type"] === "platform" && channel["deliveryMode"] === "live_hls")),
           );
           return Response.json({
             channels: channels.map((channel) => ({
