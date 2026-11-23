@@ -227,7 +227,9 @@ export function ZillionaireEntityConsole<T extends Record<string, any>>({
                 {filteredItems.length === 0 ? (
                   <tr>
                     <td colSpan={columns.length + 1} className="px-4 py-8 text-center text-slate-400">
-                      No records match the current filter.
+                      {items.length === 0
+                        ? "No live records are available here yet. Demo and sample records are not displayed."
+                        : "No records match the current filter."}
                     </td>
                   </tr>
                 ) : (
