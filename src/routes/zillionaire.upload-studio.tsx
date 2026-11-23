@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Film, Video, Tv, UploadCloud, Play, Search, CheckCircle2, Clock3 } from "lucide-react";
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
@@ -137,7 +137,7 @@ function UploadStudioContent({
     );
   }, [uploads, searchQuery]);
 
-  async function handleUpload(event: React.FormEvent<HTMLFormElement>) {
+  async function handleUpload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
     setError("");
