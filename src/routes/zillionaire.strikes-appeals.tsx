@@ -43,7 +43,7 @@ interface StrikeRecord {
 function StrikesAppealsRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="security">
-      {(account) => <StrikesAppealsContent account={account} />}
+      {({ account }) => <StrikesAppealsContent account={account} />}
     </ConsolePageGuard>
   );
 }
