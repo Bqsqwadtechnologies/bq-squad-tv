@@ -161,7 +161,7 @@ function ZillionaireViewersRoute() {
       title="Viewer 360"
       description="Find and manage viewers, accounts, wallets, receipts and security"
     >
-      {(token, account, onLock) => (
+      {({ token, account, onLock }) => (
         <ZillionaireViewersPage token={token} account={account} onLock={onLock} />
       )}
     </ConsolePageGuard>
