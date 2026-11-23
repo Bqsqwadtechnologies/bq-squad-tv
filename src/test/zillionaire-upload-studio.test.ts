@@ -89,136 +89,45 @@ describe("Zillionaire Upload Studio API", () => {
     expect(typeof body.stats.total).toBe("number");
   });
 
-  it("POST INITIATE_UPLOAD validates extensions and registers new asset", async () => {
+  it("rejects the legacy fake INITIATE_UPLOAD endpoint", async () => {
     const handler = (UploadRoute.options.server as unknown as { handlers: { POST: (ctx: unknown) => Promise<Response> } }).handlers.POST;
-
-    // Reject invalid extension
-    const badReq = new Request("http://localhost/api/public/v1/zillionaire/upload/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await handler({ request: new Request("http://localhost/api/public/v1/zillionaire/upload/", {
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        action: "INITIATE_UPLOAD",
-        channelId: "ch_main",
-        title: "Test File",
-        filename: "malware.exe",
-        sizeBytes: 1024,
-        mimeType: "application/octet-stream",
+        action: "INITIATE_UPLOAD", channelId: "ch_main", title: "Test movie",
+        filename: "test.mp4", sizeBytes: 1024, mimeType: "video/mp4",
+        licenseType: "owned", copyrightHolderName: "BQ Test Studio", productionYear: 2025,
       }),
-    });
-    const badRes = await handler({ request: badReq });
-    expect(badRes.status).toBe(400);
-
-    // Accept valid MP4 upload
-    const goodReq = new Request("http://localhost/api/public/v1/zillionaire/upload/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "INITIATE_UPLOAD",
-        channelId: "ch_main",
-        title: "Lagos Action Movie",
-        mediaType: "Movie",
-        genre: "Action",
-        language: "English",
-        ageRating: "PG-13",
-        licenseType: "owned",
-        copyrightHolderName: "BQ Test Studio",
-        productionYear: 2025,
-        contentWarnings: [],
-        filename: "lagos_action.mp4",
-        sizeBytes: 15_000_000,
-        mimeType: "video/mp4",
-        directPublish: true,
-      }),
-    });
-    const goodRes = await handler({ request: goodReq });
-    expect(goodRes.status).toBe(200);
-    const body = (await goodRes.json()) as { assetId: string; totalChunks: number; directPublish: boolean };
-    expect(body.assetId).toMatch(/^ast_/);
-    expect(body.totalChunks).toBe(3); // 15MB / 5MB chunks = 3
-    expect(body.directPublish).toBe(false);
+    }) });
+    expect(response.status).toBe(410);
+    expect(memFs.storedDocs["contentAssets/ast_test"]).toBeUndefined();
   });
 
-  it("POST UPLOAD_CHUNK tracks chunk progression and verifies last chunk", async () => {
-    const handler = (UploadRoute.options.server as unknown as { handlers: { POST: (ctx: unknown) => Promise<Response> } }).handlers.POST;
-
+  it("rejects simulated chunk progress instead of marking bytes as uploaded", async () => {
     memFs.storedDocs["contentAssets/ast_chunk_test"] = {
-      channelId: "ch_main",
-      status: "uploading",
-      chunksReceived: 0,
-      totalChunks: 2,
-      declaredSizeBytes: 10_000_000,
+      channelId: "ch_main", status: "uploading", chunksReceived: 0, totalChunks: 2, declaredSizeBytes: 10_000_000,
     };
-
-    // First chunk
-    const chunk1Req = new Request("http://localhost/api/public/v1/zillionaire/upload/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "UPLOAD_CHUNK",
-        assetId: "ast_chunk_test",
-        chunkIndex: 0,
-        totalChunks: 2,
-        chunkBytesLength: 5_000_000,
-      }),
-    });
-    const res1 = await handler({ request: chunk1Req });
-    expect(res1.status).toBe(200);
-    const body1 = (await res1.json()) as { progress: number; status: string };
-    expect(body1.progress).toBe(50);
-    expect(body1.status).toBe("uploading");
-
-    // Second (last) chunk
-    const chunk2Req = new Request("http://localhost/api/public/v1/zillionaire/upload/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "UPLOAD_CHUNK",
-        assetId: "ast_chunk_test",
-        chunkIndex: 1,
-        totalChunks: 2,
-        chunkBytesLength: 5_000_000,
-      }),
-    });
-    const res2 = await handler({ request: chunk2Req });
-    expect(res2.status).toBe(200);
-    const body2 = (await res2.json()) as { progress: number; status: string };
-    expect(body2.progress).toBe(100);
-    expect(body2.status).toBe("verifying");
+    const handler = (UploadRoute.options.server as unknown as { handlers: { POST: (ctx: unknown) => Promise<Response> } }).handlers.POST;
+    const response = await handler({ request: new Request("http://localhost/api/public/v1/zillionaire/upload/", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "UPLOAD_CHUNK", assetId: "ast_chunk_test", chunkIndex: 0, totalChunks: 2, chunkBytesLength: 5_000_000 }),
+    }) });
+    expect(response.status).toBe(410);
+    expect(memFs.storedDocs["contentAssets/ast_chunk_test"]).toMatchObject({ status: "uploading", chunksReceived: 0, uploadedBytes: undefined });
   });
 
-  it("POST COMPLETE_UPLOAD never publishes directly when processing is not configured", async () => {
-    const handler = (UploadRoute.options.server as unknown as { handlers: { POST: (ctx: unknown) => Promise<Response> } }).handlers.POST;
-
+  it("rejects simulated COMPLETE_UPLOAD and does not mark an unverified file ready", async () => {
     memFs.storedDocs["contentAssets/ast_direct_test"] = {
-      channelId: "ch_main",
-      status: "verifying",
-      sourceFilename: "lagos_night.mp4",
-      sourcePath: "producers/user1/ch_main/lagos_night.mp4",
-      directPublish: true,
+      channelId: "ch_main", status: "verifying", sourceFilename: "lagos_night.mp4",
+      sourcePath: "producers/user1/ch_main/lagos_night.mp4", directPublish: true,
     };
-
-    const compReq = new Request("http://localhost/api/public/v1/zillionaire/upload/", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "COMPLETE_UPLOAD",
-        assetId: "ast_direct_test",
-        directPublish: true,
-        durationSeconds: 3600,
-      }),
-    });
-    const res = await handler({ request: compReq });
-    expect(res.status).toBe(200);
-    const body = (await res.json()) as { status: string; contentStatus: string; approvalRequired: boolean; processingAvailable: boolean };
-    expect(body.status).toBe("needs_review");
-    expect(body.contentStatus).toBe("draft");
-    expect(body.approvalRequired).toBe(true);
-    expect(body.processingAvailable).toBe(false);
-
-    const doc = memFs.storedDocs["contentAssets/ast_direct_test"];
-    expect(doc["status"]).toBe("needs_review");
-    expect(doc["contentStatus"]).toBe("draft");
-    expect(doc["directPublish"]).toBe(false);
+    const handler = (UploadRoute.options.server as unknown as { handlers: { POST: (ctx: unknown) => Promise<Response> } }).handlers.POST;
+    const response = await handler({ request: new Request("http://localhost/api/public/v1/zillionaire/upload/", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "COMPLETE_UPLOAD", assetId: "ast_direct_test", durationSeconds: 3600 }),
+    }) });
+    expect(response.status).toBe(410);
+    expect(memFs.storedDocs["contentAssets/ast_direct_test"]).toMatchObject({ status: "verifying", directPublish: true });
   });
 
   it("POST ACTION_UPLOAD direct_publish is rejected and cannot publish", async () => {
