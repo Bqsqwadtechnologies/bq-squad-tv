@@ -203,19 +203,16 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/support/")({
             subject: String(t["subject"] || "General Inquiry"),
             customerName: String(t["customerName"] || "Viewer"),
             customerEmail: String(t["customerEmail"] || "viewer@example.com"),
-            customerPhone: typeof t["customerPhone"] === "string" ? t["customerPhone"] : undefined,
+            ...(typeof t["customerPhone"] === "string" ? { customerPhone: t["customerPhone"] } : {}),
             status: (t["status"] as TicketStatus) || "open",
             priority: (t["priority"] as TicketPriority) || "medium",
             category: (t["category"] as SupportTicket["category"]) || "general",
             messages: Array.isArray(t["messages"]) ? t["messages"] : [],
             internalNotes: Array.isArray(t["internalNotes"]) ? t["internalNotes"] : [],
-            linkedUserUid: typeof t["linkedUserUid"] === "string" ? t["linkedUserUid"] : undefined,
-            linkedPaymentId:
-              typeof t["linkedPaymentId"] === "string" ? t["linkedPaymentId"] : undefined,
-            linkedReceiptId:
-              typeof t["linkedReceiptId"] === "string" ? t["linkedReceiptId"] : undefined,
-            assignedOperatorUid:
-              typeof t["assignedOperatorUid"] === "string" ? t["assignedOperatorUid"] : undefined,
+            ...(typeof t["linkedUserUid"] === "string" ? { linkedUserUid: t["linkedUserUid"] } : {}),
+            ...(typeof t["linkedPaymentId"] === "string" ? { linkedPaymentId: t["linkedPaymentId"] } : {}),
+            ...(typeof t["linkedReceiptId"] === "string" ? { linkedReceiptId: t["linkedReceiptId"] } : {}),
+            ...(typeof t["assignedOperatorUid"] === "string" ? { assignedOperatorUid: t["assignedOperatorUid"] } : {}),
             createdAt: String(t["createdAt"] || now.toISOString()),
             updatedAt: String(t["updatedAt"] || now.toISOString()),
           }));
@@ -332,15 +329,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/support/")({
             email: String(r["email"] || ""),
             reason: String(r["reason"] || "Lost 2FA / Forgot password"),
             status: (r["status"] as RecoveryRequest["status"]) || "pending_verification",
-            verificationChecks:
-              typeof r["verificationChecks"] === "object" && r["verificationChecks"]
-                ? r["verificationChecks"]
-                : {
-                    emailConfirmed: false,
-                    recentBillingVerified: false,
-                    deviceFingerprintMatched: false,
-                  },
-            notes: typeof r["notes"] === "string" ? r["notes"] : undefined,
+            verificationChecks: {
+              emailConfirmed: (r["verificationChecks"] as Record<string, unknown> | null)?.["emailConfirmed"] === true,
+              recentBillingVerified: (r["verificationChecks"] as Record<string, unknown> | null)?.["recentBillingVerified"] === true,
+              deviceFingerprintMatched: (r["verificationChecks"] as Record<string, unknown> | null)?.["deviceFingerprintMatched"] === true,
+            },
+            ...(typeof r["notes"] === "string" ? { notes: r["notes"] } : {}),
             createdAt: String(r["createdAt"] || now.toISOString()),
             updatedAt: String(r["updatedAt"] || now.toISOString()),
           }));
@@ -515,7 +509,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/support/")({
               id: segmentId,
               name: body.name,
               description: body.description,
-              criteria: body.criteria,
+              criteria: {
+                ...(body.criteria.minSpendMinor !== undefined ? { minSpendMinor: body.criteria.minSpendMinor } : {}),
+                ...(body.criteria.platform !== undefined ? { platform: body.criteria.platform } : {}),
+                ...(body.criteria.country !== undefined ? { country: body.criteria.country } : {}),
+                ...(body.criteria.accountStatus !== undefined ? { accountStatus: body.criteria.accountStatus } : {}),
+              },
               audienceCount: Array.isArray(users) ? users.length : 0,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),

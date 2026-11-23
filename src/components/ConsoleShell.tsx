@@ -75,7 +75,8 @@ import {
 export type ConsoleType = "zillionaire" | "producer" | "provider";
 
 export interface ConsoleAccount {
-  email?: string;
+  email?: string | null | undefined;
+  publicId?: string | null;
   isOwner?: boolean;
   roles?: string[];
   modules?: string[];
@@ -191,10 +192,11 @@ export interface EarningsTickerConfig {
 export interface ConsoleShellProps {
   consoleType: ConsoleType;
   title: string;
-  tagline: string;
-  account?: ConsoleAccount;
+  tagline?: string;
+  subtitle?: string;
+  account?: ConsoleAccount | null;
   activePath?: string;
-  onLock?: () => void;
+  onLock?: (() => void) | undefined;
   onLogout?: () => void;
   unreadNotificationsCount?: number;
   groups?: ConsoleNavGroup[];
@@ -203,8 +205,8 @@ export interface ConsoleShellProps {
   searchPlaceholder?: string;
   onSearch?: (query: string) => void;
   viewAs?: ViewAsConfig;
-  channelSwitcher?: ChannelSwitcherConfig;
-  earningsTicker?: EarningsTickerConfig;
+  channelSwitcher?: ChannelSwitcherConfig | undefined;
+  earningsTicker?: EarningsTickerConfig | undefined;
   lastUpdated?: string;
   onRefresh?: () => void;
   isRefreshing?: boolean;
@@ -213,7 +215,8 @@ export interface ConsoleShellProps {
 export function ConsoleShell({
   consoleType,
   title,
-  tagline,
+  subtitle,
+  tagline = subtitle ?? "",
   account,
   activePath = "",
   onLock,
@@ -879,8 +882,8 @@ export function ConsoleShell({
         href: "/zillionaire/kyc",
         icon: Search,
         section: "Compliance",
-        description: CONSOLE_PAGE_HELP["/zillionaire/kyc"].description,
-        keywords: CONSOLE_PAGE_HELP["/zillionaire/kyc"].keywords,
+        description: CONSOLE_PAGE_HELP["/zillionaire/kyc"]?.description ?? "",
+        keywords: CONSOLE_PAGE_HELP["/zillionaire/kyc"]?.keywords ?? "",
         requiredModules: ["security", "finance", "producers", "compliance", "overview"],
       },
       {
@@ -889,8 +892,8 @@ export function ConsoleShell({
         href: "/zillionaire/test-lab",
         icon: Search,
         section: "Video operations",
-        description: CONSOLE_PAGE_HELP["/zillionaire/test-lab"].description,
-        keywords: CONSOLE_PAGE_HELP["/zillionaire/test-lab"].keywords,
+        description: CONSOLE_PAGE_HELP["/zillionaire/test-lab"]?.description ?? "",
+        keywords: CONSOLE_PAGE_HELP["/zillionaire/test-lab"]?.keywords ?? "",
         requiredModules: ["video"],
       },
       {
@@ -899,8 +902,8 @@ export function ConsoleShell({
         href: "/zillionaire/where-is-everything",
         icon: Search,
         section: "Help & navigation",
-        description: CONSOLE_PAGE_HELP["/zillionaire/where-is-everything"].description,
-        keywords: CONSOLE_PAGE_HELP["/zillionaire/where-is-everything"].keywords,
+        description: CONSOLE_PAGE_HELP["/zillionaire/where-is-everything"]?.description ?? "",
+        keywords: CONSOLE_PAGE_HELP["/zillionaire/where-is-everything"]?.keywords ?? "",
         requiredModules: ["system"],
       },
     ];
@@ -1566,7 +1569,6 @@ export function ConsoleShell({
           </div>
         </div>
       )}
-      )}
     </div>
   );
 }
@@ -1577,7 +1579,12 @@ export function ConsoleShell({
 
 export interface ConsoleWelcomeBannerProps {
   title: string;
-  description: string;
+  description?: string;
+  subtitle?: string;
+  badge?: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  actions?: ReactNode;
+  primaryAction?: { label: string; onClick: () => void };
   badgeText?: string;
   actionLabel?: string;
   onAction?: () => void;
@@ -1587,10 +1594,15 @@ export interface ConsoleWelcomeBannerProps {
 
 export function ConsoleWelcomeBanner({
   title,
-  description,
-  badgeText,
-  actionLabel,
-  onAction,
+  subtitle,
+  description = subtitle ?? "",
+  badge,
+  badgeText = badge,
+  icon: Icon,
+  actions,
+  primaryAction,
+  actionLabel = primaryAction?.label,
+  onAction = primaryAction?.onClick,
   secondaryActionLabel,
   onSecondaryAction,
 }: ConsoleWelcomeBannerProps) {
@@ -1603,10 +1615,11 @@ export function ConsoleWelcomeBanner({
               {badgeText}
             </span>
           )}
-          <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">{title}</h2>
+          <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">{Icon && <Icon className="h-5 w-5 inline-block mr-2" />}{title}</h2>
           <p className="text-xs text-blue-200/80 leading-relaxed">{description}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
+          {actions}
           {actionLabel && (
             <button
               onClick={onAction}
@@ -1632,18 +1645,21 @@ export function ConsoleWelcomeBanner({
   );
 }
 
-export type KpiVariant = "blue" | "purple" | "green" | "gold";
+export type KpiVariant = "blue" | "purple" | "green" | "gold" | "red";
 
 export interface ConsoleKpiCardProps {
   title: string;
   value: string | number;
-  subtitle?: string;
+  subtitle?: ReactNode;
   delta?: DeltaResult | null;
-  caption?: string;
+  caption?: string | undefined;
+  className?: string;
+  badge?: { text: string; variant: string };
   change?: string | { value: string; positive?: boolean };
   trend?: "up" | "down" | "neutral";
   gradient?: KpiVariant;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string }> | React.ReactElement;
+  color?: KpiVariant | "cyan" | "emerald" | "amber";
   variant?: KpiVariant;
   onClick?: () => void;
 }
@@ -1659,10 +1675,19 @@ export function ConsoleKpiCard({
   gradient,
   icon: Icon,
   variant,
+  color,
   onClick,
+  className = "",
+  badge,
 }: ConsoleKpiCardProps) {
-  const chosenVariant = variant || gradient || "blue";
+  const colorVariant = color === "cyan" ? "blue" : color === "emerald" ? "green" : color === "amber" ? "gold" : color;
+  const chosenVariant = variant || gradient || colorVariant || "blue";
   const styles = {
+    red: {
+      border: "border-destructive/30",
+      bg: "bg-destructive/5",
+      iconBg: "bg-destructive/10 text-destructive",
+    },
     blue: {
       border: "border-blue-500/20 hover:border-blue-500/40",
       bg: "bg-gradient-to-br from-[#0c1633]/90 to-[#070e22]/90",
@@ -1708,12 +1733,13 @@ export function ConsoleKpiCard({
         styles.border
       } ${styles.bg} ${
         onClick ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.99]" : ""
-      }`}
+      } ${className}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{title}</p>
           <p className="text-xl sm:text-2xl font-black text-white tracking-tight">{value}</p>
+          {badge && <span className="text-xs text-muted-foreground">{badge.text}</span>}
         </div>
         <div className={`p-2.5 rounded-xl ${styles.iconBg}`}>
           {React.isValidElement(Icon) ? Icon : (typeof Icon === "function" || typeof Icon === "object" ? React.createElement(Icon as any, { className: "h-5 w-5" }) : null)}
@@ -1761,7 +1787,10 @@ export function ConsoleKpiCard({
 export interface ConsoleCardProps {
   title?: string;
   subtitle?: string;
+  description?: string;
   headerAction?: ReactNode;
+  actions?: ReactNode;
+  action?: ReactNode;
   children: ReactNode;
   className?: string;
   loading?: boolean;
@@ -1769,8 +1798,11 @@ export interface ConsoleCardProps {
 
 export function ConsoleCard({
   title,
-  subtitle,
-  headerAction,
+  description,
+  subtitle = description,
+  actions,
+  action,
+  headerAction = actions ?? action,
   children,
   className = "",
   loading = false,
@@ -1892,8 +1924,8 @@ export function ConsoleActivityList({ items }: { items: ActivityItem[] }) {
   );
 }
 
-export interface ConsoleTableProps<T extends Record<string, unknown> = Record<string, unknown>> {
-  columns: Array<{ key: string; label: string; className?: string }>;
+export interface ConsoleTableProps<T extends object = Record<string, unknown>> {
+  columns: Array<{ key: string; label?: string; header?: ReactNode; className?: string; render?: (row: T) => ReactNode }>;
   data: T[];
   onRowClick?: (row: T) => void;
   loading?: boolean;
@@ -1903,7 +1935,7 @@ export interface ConsoleTableProps<T extends Record<string, unknown> = Record<st
   onEmptyAction?: () => void;
 }
 
-export function ConsoleTable<T extends Record<string, unknown> = Record<string, unknown>>({
+export function ConsoleTable<T extends object = Record<string, unknown>>({
   columns,
   data,
   onRowClick,
@@ -1946,14 +1978,14 @@ export function ConsoleTable<T extends Record<string, unknown> = Record<string, 
           <tr className="border-b border-white/5 text-[11px] uppercase tracking-wider text-slate-400">
             {columns.map((col) => (
               <th key={col.key} className={`pb-3 font-bold ${col.className || ""}`}>
-                {col.label}
+                {col.header ?? col.label}
               </th>
             ))}
           </tr>
         </thead>
         <tbody className="divide-y divide-white/5">
           {data.map((row, idx) => {
-            const rawId = row["id"];
+            const rawId: unknown = Reflect.get(row, "id");
             const rowKey = typeof rawId === "string" || typeof rawId === "number" ? rawId : idx;
             return (
               <tr
@@ -1961,13 +1993,16 @@ export function ConsoleTable<T extends Record<string, unknown> = Record<string, 
                 onClick={() => onRowClick && onRowClick(row)}
                 className={`group transition ${onRowClick ? "cursor-pointer hover:bg-white/5" : ""}`}
               >
-                {columns.map((col) => (
+                {columns.map((col) => {
+                  const cell: unknown = Reflect.get(row, col.key);
+                  return (
                   <td key={col.key} className={`py-3 text-slate-200 ${col.className || ""}`}>
-                    {row[col.key] !== undefined && row[col.key] !== null
-                      ? String(row[col.key])
+                    {col.render ? col.render(row) : React.isValidElement(cell) ? cell : cell !== undefined && cell !== null
+                      ? String(cell)
                       : null}
                   </td>
-                ))}
+                  );
+                })}
               </tr>
             );
           })}
@@ -1979,10 +2014,12 @@ export function ConsoleTable<T extends Record<string, unknown> = Record<string, 
 
 export function ConsoleStatusBadge({
   status,
-  label,
+  text,
+  label = text,
 }: {
-  status: "active" | "pending" | "resolved" | "suspended" | "failed" | "live" | "draft";
+  status: string;
   label?: string;
+  text?: string;
 }) {
   const configMap: Record<string, { bg: string }> = {
     active: { bg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },

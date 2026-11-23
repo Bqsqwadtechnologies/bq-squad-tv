@@ -4,6 +4,7 @@ import { Firestore, ApiError } from "@/lib/server/firebase-admin";
 import * as apiModule from "@/lib/server/api";
 import * as rolesModule from "@/lib/server/roles";
 import * as auditModule from "@/lib/server/audit";
+import * as uploadAccessModule from "@/lib/server/producer-upload-access";
 
 function createMemoryFirestore() {
   const storedDocs: Record<string, Record<string, unknown>> = {};
@@ -52,6 +53,7 @@ describe("Zillionaire Series and Episodes Pipeline API", () => {
     } as any);
     vi.spyOn(rolesModule, "requireZillionaireModule").mockResolvedValue(true as any);
     vi.spyOn(auditModule, "writeAuditLog").mockResolvedValue(undefined as any);
+    vi.spyOn(uploadAccessModule, "ensurePlatformLibraryChannel").mockResolvedValue("bq_sqwad_library");
   });
 
   afterEach(() => {

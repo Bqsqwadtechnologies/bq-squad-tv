@@ -1322,17 +1322,17 @@ function AuditIntegrityPanel({ token }: { token: string }) {
               </thead>
               <tbody>
                 {data?.entries.map((entry) => (
-                  <tr key={String(entry.id)} className="border-t border-white/5">
-                    <td className="p-3 text-xs text-slate-400">{String(entry.createdAt || "—")}</td>
+                  <tr key={String(entry["id"])} className="border-t border-white/5">
+                    <td className="p-3 text-xs text-slate-400">{String(entry["createdAt"] || "—")}</td>
                     <td className="p-3 font-mono text-xs text-slate-300">
-                      {String(entry.actorUid || "—")}
+                      {String(entry["actorUid"] || "—")}
                     </td>
-                    <td className="p-3 text-white">{String(entry.action || "—")}</td>
+                    <td className="p-3 text-white">{String(entry["action"] || "—")}</td>
                     <td className="p-3 text-slate-300">
-                      {String(entry.targetType || "—")}: {String(entry.targetId || "—")}
+                      {String(entry["targetType"] || "—")}: {String(entry["targetId"] || "—")}
                     </td>
                     <td className="max-w-xs p-3 text-xs text-slate-400">
-                      {String(entry.reason || "—")}
+                      {String(entry["reason"] || "—")}
                     </td>
                   </tr>
                 ))}
@@ -1817,8 +1817,8 @@ function AbuseFraudDefensePanel({ token, isOwner }: { token: string; isOwner: bo
                   </thead>
                   <tbody>
                     {reputationEntries.map((entry) => (
-                      <tr key={entry.id} className="border-t border-white/5 hover:bg-white/[0.02]">
-                        <td className="p-3 text-xs uppercase font-mono text-slate-400">{entry.targetType}</td>
+                      <tr key={entry["id"]} className="border-t border-white/5 hover:bg-white/[0.02]">
+                        <td className="p-3 text-xs uppercase font-mono text-slate-400">{entry["targetType"]}</td>
                         <td className="p-3 font-mono text-white text-xs">{entry.targetValue}</td>
                         <td className="p-3">
                           <span
@@ -1833,12 +1833,12 @@ function AbuseFraudDefensePanel({ token, isOwner }: { token: string; isOwner: bo
                             {entry.status}
                           </span>
                         </td>
-                        <td className="p-3 text-xs text-slate-300">{entry.reason}</td>
+                        <td className="p-3 text-xs text-slate-300">{entry["reason"]}</td>
                         <td className="p-3 text-xs text-slate-400">{entry.expiresAt ? new Date(entry.expiresAt).toLocaleString() : "Permanent"}</td>
                         <td className="p-3 text-right">
                           <button
                             type="button"
-                            onClick={() => handleRemoveReputation(entry.id)}
+                            onClick={() => handleRemoveReputation(entry["id"])}
                             className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-200 hover:bg-rose-500/20"
                           >
                             Remove

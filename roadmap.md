@@ -1,6 +1,6 @@
 # BQ SQWAD TV delivery roadmap
 
-- [ ] Repair reported preview compilation errors without changing platform access rules.
+- [ ] Finish remaining test-file type errors blocking publishing; ConsoleShell parse error repaired, preview pages verified, and 60 affected tests passed.
 
 - [ ] Read existing Firestore collections and fields — administrator sign-in and a protected inspector are ready; requires successful database access.
 - [ ] Implement and verify the shared Firebase-backed API — waiting for the inspected schema and confirmed database permissions.

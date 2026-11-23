@@ -183,7 +183,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
               published: ch["published"] === true,
             })),
             stats,
-            processingHostConfigured: Boolean(process.env.MODAL_TOKEN_ID && process.env.MODAL_TOKEN_SECRET),
+            processingHostConfigured: Boolean(process.env["MODAL_TOKEN_ID"] && process.env["MODAL_TOKEN_SECRET"]),
           });
         } catch (err) {
           return errorBody(err);
@@ -220,12 +220,13 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
 
             if (data.checksumSha256) {
               const existingByHash = await fs.query("contentAssets", {
-                where: [{ field: "checksumSha256", op: "==", value: data.checksumSha256 }],
+                filters: [{ field: "checksumSha256", op: "EQUAL", value: data.checksumSha256 }],
                 limit: 1,
               });
-              if (existingByHash.length > 0) {
+              const match = existingByHash[0];
+              if (match) {
                 duplicateDetected = true;
-                duplicateAssetId = existingByHash[0].__id;
+                duplicateAssetId = match.__id;
               }
             }
 
@@ -336,7 +337,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
               throw new ApiError(404, "ASSET_NOT_FOUND", "Upload asset does not exist.");
             }
 
-            const processingAvailable = Boolean(process.env.MODAL_TOKEN_ID && process.env.MODAL_TOKEN_SECRET);
+            const processingAvailable = Boolean(process.env["MODAL_TOKEN_ID"] && process.env["MODAL_TOKEN_SECRET"]);
             if (!processingAvailable) {
               await fs.patchDoc(`contentAssets/${data.assetId}`, {
                 status: "needs_review",

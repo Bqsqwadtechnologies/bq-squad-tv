@@ -123,7 +123,7 @@ function ZillionaireModerationRoute() {
   return (
     <ConsolePageGuard role="zillionaire" module="moderation">
       {({ token, account, onLock }) => (
-        <ZillionaireModerationContent token={token} account={account} onLock={onLock} />
+        <ZillionaireModerationContent token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -217,7 +217,7 @@ function ZillionaireModerationContent({
     setError("");
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/copyright-cases/", {
         method: "POST",
         headers,
@@ -246,7 +246,7 @@ function ZillionaireModerationContent({
   ) => {
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/moderation/", {
         method: "POST",
         headers,
@@ -266,7 +266,7 @@ function ZillionaireModerationContent({
   const handleShadowBan = async (authorUid: string, shadowBan: boolean) => {
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/moderation/", {
         method: "POST",
         headers,
@@ -297,7 +297,7 @@ function ZillionaireModerationContent({
     setBanBusy(true);
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/moderation/", {
         method: "POST",
         headers,
@@ -327,7 +327,7 @@ function ZillionaireModerationContent({
     setReportBusy(true);
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/moderation/", {
         method: "POST",
         headers,
@@ -368,7 +368,7 @@ function ZillionaireModerationContent({
   const saveKeywords = async (kwList: string[]) => {
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/moderation/", {
         method: "POST",
         headers,
@@ -387,7 +387,7 @@ function ZillionaireModerationContent({
     const nextOpen = !currentOpen;
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/moderation/", {
         method: "POST",
         headers,
@@ -411,7 +411,7 @@ function ZillionaireModerationContent({
   const handleDismissRatingAbuse = async (alertId: string) => {
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/moderation/", {
         method: "POST",
         headers,
@@ -1008,7 +1008,7 @@ function ZillionaireModerationContent({
               title="Under Review"
               value={copyrightStats.underReview.toString()}
               subtitle="Pending moderation decision"
-              variant="amber"
+              variant="gold"
               icon={AlertTriangle}
             />
             <ConsoleKpiCard
@@ -1022,7 +1022,7 @@ function ZillionaireModerationContent({
               title="Takedowns Enforced"
               value={copyrightStats.takedowns.toString()}
               subtitle="Strikes recorded"
-              variant="rose"
+              variant="purple"
               icon={Trash2}
             />
             <ConsoleKpiCard

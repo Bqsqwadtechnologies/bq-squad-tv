@@ -104,7 +104,7 @@ function ZillionaireSeriesRoute() {
       description="Manage episodic shows, seasons, skip-intro markers, bulk auto-numbering, and scheduled releases."
     >
       {({ token, account, onLock }) => (
-        <ZillionaireSeriesPage token={token} account={account} onLock={onLock} />
+        <ZillionaireSeriesPage token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -115,8 +115,8 @@ function ZillionaireSeriesPage({
   account,
   onLock,
 }: {
-  token: string | null;
-  account: { uid: string; email?: string; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
+  token: string;
+  account: { uid: string; email?: string | null; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
   onLock?: () => void;
 }) {
   const [seriesList, setSeriesList] = useState<Series[]>([]);
@@ -361,7 +361,9 @@ function ZillionaireSeriesPage({
 
     const targetIdx = direction === "UP" ? idx - 1 : idx + 1;
     const temp = eps[idx];
-    eps[idx] = eps[targetIdx];
+    const target = eps[targetIdx];
+    if (!temp || !target) return;
+    eps[idx] = target;
     eps[targetIdx] = temp;
 
     const episodeOrder = eps.map((e) => e.id);
@@ -412,9 +414,9 @@ function ZillionaireSeriesPage({
     <ConsoleShell
       title="Series & Episodes Studio"
       subtitle="Complete episodic pipeline: seasons, bulk auto-numbering, skip markers, and releases."
-      role="zillionaire"
-      activeId="series"
-      user={account ? { name: account.email?.split("@")[0] || "Owner", email: account.email } : undefined}
+      consoleType="zillionaire"
+      activePath="/zillionaire/series"
+      account={account}
       onLock={onLock}
     >
       <div className="space-y-6">
@@ -446,28 +448,28 @@ function ZillionaireSeriesPage({
             value={totalSeriesCount}
             variant="blue"
             icon={Layers}
-            changeLabel="Published catalogues"
+            caption="Published catalogues"
           />
           <ConsoleKpiCard
             title="Total Seasons"
             value={totalSeasonsCount}
             variant="purple"
             icon={Clapperboard}
-            changeLabel="Season structures"
+            caption="Season structures"
           />
           <ConsoleKpiCard
             title="Total Episodes"
             value={totalEpisodesCount}
             variant="green"
             icon={Film}
-            changeLabel="Active assets"
+            caption="Active assets"
           />
           <ConsoleKpiCard
             title="Coming Soon / Sched."
             value={comingSoonCount}
             variant="gold"
             icon={Clock}
-            changeLabel="Future releases"
+            caption="Future releases"
           />
         </div>
 
@@ -498,7 +500,7 @@ function ZillionaireSeriesPage({
                           key={s.id}
                           onClick={() => {
                             setSelectedSeriesId(s.id);
-                            if (s.seasons.length > 0) {
+                            if (s.seasons[0]) {
                               setSelectedSeasonId(s.seasons[0].id);
                             } else {
                               setSelectedSeasonId(null);

@@ -126,7 +126,7 @@ function ZillionaireFeaturesRoute() {
   return (
     <ConsolePageGuard role="zillionaire" module="system">
       {({ token, account, onLock }) => (
-        <ZillionaireFeaturesContent token={token} account={account} onLock={onLock} />
+        <ZillionaireFeaturesContent token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -189,7 +189,7 @@ function ZillionaireFeaturesContent({
     setSuccess("");
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/config/flags", {
         method: "POST",
         headers,

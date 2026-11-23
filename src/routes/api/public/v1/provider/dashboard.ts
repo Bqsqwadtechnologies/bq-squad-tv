@@ -31,8 +31,8 @@ export const Route = createFileRoute("/api/public/v1/provider/dashboard")({
           // Combine channels and deduplicate
           const channelMap = new Map<string, any>();
           for (const ch of [...providerChannels, ...platformChannels]) {
-            const id = ch.channelId || ch.__id || ch.id;
-            if (id) channelMap.set(id, ch);
+            const id = ch["channelId"] || ch.__id || ch["id"];
+            if (typeof id === "string" && id) channelMap.set(id, ch);
           }
           const allAssignedChannels = Array.from(channelMap.values());
 

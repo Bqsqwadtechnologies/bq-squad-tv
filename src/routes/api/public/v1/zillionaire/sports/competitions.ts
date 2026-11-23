@@ -80,8 +80,16 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/sports/competit
           const now = new Date().toISOString();
 
           const existing = await fs.getDoc(`sports_competitions/${body.id}`);
+          const { description, bannerUrl, logoUrl, sponsors, ...requiredFields } = body;
           const payload: SportsCompetition = {
-            ...body,
+            ...requiredFields,
+            ...(description !== undefined ? { description } : {}),
+            ...(bannerUrl !== undefined ? { bannerUrl } : {}),
+            ...(logoUrl !== undefined ? { logoUrl } : {}),
+            sponsors: sponsors.map(({ websiteUrl, ...sponsor }) => ({
+              ...sponsor,
+              ...(websiteUrl !== undefined ? { websiteUrl } : {}),
+            })),
             createdAt: existing && typeof existing["createdAt"] === "string" ? existing["createdAt"] : now,
             updatedAt: now,
           };

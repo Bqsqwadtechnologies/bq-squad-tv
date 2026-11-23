@@ -226,7 +226,7 @@ function SportsControlContent() {
   const selectedCompetition = competitions.find((c) => c.id === selectedCompId);
 
   return (
-    <ConsoleShell activeSection="sports">
+    <ConsoleShell consoleType="zillionaire" title="Sports Hub" activePath="/zillionaire/sports">
       <div className="space-y-6 max-w-6xl mx-auto pb-12">
         {/* Top Header */}
         <div className="flex items-center justify-between flex-wrap gap-4 border-b border-white/10 pb-4">

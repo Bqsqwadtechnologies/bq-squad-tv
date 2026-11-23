@@ -81,7 +81,7 @@ function ZillionaireCleanupSampleRoute() {
   return (
     <ConsolePageGuard role="zillionaire" module="system">
       {({ token, account, onLock }) => (
-        <CleanupSampleContentInner token={token} account={account} onLock={onLock} />
+        <CleanupSampleContentInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -92,9 +92,9 @@ function CleanupSampleContentInner({
   account,
   onLock,
 }: {
-  token: string | null;
-  account: { uid: string; email?: string; displayName?: string };
-  onLock: () => void;
+  token: string;
+  account: { uid: string; email?: string | null; displayName?: string };
+  onLock?: () => void;
 }) {
   const [isScanning, setIsScanning] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);

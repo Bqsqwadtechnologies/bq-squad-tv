@@ -68,8 +68,8 @@ export function ConsoleDataTable<T>({
     <div className="space-y-4">
       <ConsoleCard
         title={title}
-        subtitle={subtitle}
-        actions={
+        {...(subtitle !== undefined ? { subtitle } : {})}
+        headerAction={
           <div className="flex flex-wrap items-center gap-2">
             {onRefresh && (
               <button

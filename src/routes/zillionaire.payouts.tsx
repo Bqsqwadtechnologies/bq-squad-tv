@@ -62,6 +62,7 @@ interface PayoutItem {
   currency: string;
   status:
     | "REQUESTED"
+    | "PENDING_SECOND_APPROVAL"
     | "APPROVED"
     | "SETTLED"
     | "PARTIALLY_PAID"
@@ -97,18 +98,19 @@ function ZillionairePayoutsRoute() {
       description="Producer and provider payouts queue, approval workflow, bank settlement verification, and revenue share live calculator."
     >
       {({ token, account, onLock }) => (
-        <ZillionairePayoutsPage token={token} account={account} onLock={onLock} />
+        <ZillionairePayoutsPage token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
 }
 
 function ZillionairePayoutsPage({
+  token,
   account,
   onLock,
 }: {
-  token: string | null;
-  account: { uid: string; email?: string; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
+  token: string;
+  account: { uid: string; email?: string | null; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
   onLock?: () => void;
 }) {
   const [payouts, setPayouts] = useState<PayoutItem[]>([]);
@@ -164,7 +166,7 @@ function ZillionairePayoutsPage({
   const fetchPayouts = async () => {
     setLoading(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const params = new URLSearchParams();
       if (statusFilter !== "ALL") params.set("status", statusFilter);
       if (searchQuery) params.set("q", searchQuery);
@@ -190,7 +192,7 @@ function ZillionairePayoutsPage({
     setSubmitting(true);
     setFeedback(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch(`/api/public/v1/zillionaire/payouts/${reviewTarget.id}/review`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -217,7 +219,7 @@ function ZillionairePayoutsPage({
     setLoadingTransfer(true);
     setTransferDetails(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch(`/api/public/v1/zillionaire/payouts/${p.id}/transfer-details`, { headers });
       if (res.ok) {
         const data = await res.json();
@@ -239,7 +241,7 @@ function ZillionairePayoutsPage({
       setCopiedKey(key);
       setTimeout(() => setCopiedKey(null), 2000);
 
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       fetch(`/api/public/v1/zillionaire/payouts/${payoutId}/audit-copy`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -253,7 +255,7 @@ function ZillionairePayoutsPage({
   const handleBatchExport = async (group: "LOCAL" | "INTERNATIONAL" | "ALL") => {
     setExportingBatch(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const payload: { group: string; payoutIds?: string[] } = { group };
       if (selectedIds.size > 0) {
         payload.payoutIds = Array.from(selectedIds);
@@ -305,7 +307,7 @@ function ZillionairePayoutsPage({
 
   const fetchRules = async () => {
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/zillionaire/payouts/rules", { headers });
       if (res.ok) {
         const data = await res.json();
@@ -329,7 +331,7 @@ function ZillionairePayoutsPage({
     }
     setSavingRules(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/zillionaire/payouts/rules", {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -383,7 +385,7 @@ function ZillionairePayoutsPage({
     setSubmitting(true);
     setFeedback(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const payload: Record<string, unknown> = {
         action: settleAction,
         settlementReference: settlementRef.trim(),
@@ -392,9 +394,9 @@ function ZillionairePayoutsPage({
         receiptPath: settleReceiptPath.trim() || undefined,
       };
       if (settleAction === "PARTIAL") {
-        payload.paidAmountMinor = settleAmountMinor;
+        payload["paidAmountMinor"] = settleAmountMinor;
       } else if (settleAction === "SETTLE") {
-        payload.paidAmountMinor = settleTarget.amountMinor;
+        payload["paidAmountMinor"] = settleTarget.amountMinor;
       }
 
       const res = await fetch(`/api/public/v1/zillionaire/payouts/${settleTarget.id}/settle`, {
@@ -425,7 +427,7 @@ function ZillionairePayoutsPage({
     setSubmitting(true);
     setFeedback(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch(`/api/public/v1/zillionaire/payouts/${reversalTarget.id}/settle`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -457,7 +459,7 @@ function ZillionairePayoutsPage({
     setSubmitting(true);
     setFeedback(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch(`/api/public/v1/zillionaire/payouts/`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -494,7 +496,7 @@ function ZillionairePayoutsPage({
       status: p.status,
       settlementReference: p.settlementReference || "PENDING",
       paymentDate: p.settledAt || p.createdAt || new Date().toISOString(),
-      reversalReference: p.reversalReference,
+      reversalReference: p.reversalReference ?? null,
       isReversed: p.status === "REVERSED",
     });
     triggerPrintOrDownload(html, `receipt-${p.id}`);

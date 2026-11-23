@@ -31,7 +31,7 @@ function FirebaseSchemaPage() {
       description="Inspect the Firebase collection and field structure without exposing private record contents."
     >
       {({ token, account, onLock }) => (
-        <FirebaseSchemaContent token={token} account={account} onLock={onLock} />
+        <FirebaseSchemaContent token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );

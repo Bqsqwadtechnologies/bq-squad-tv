@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/public/v1/user/library/liked")({
               const bTime = typeof b["likedAt"] === "string" ? new Date(b["likedAt"]).getTime() : 0;
               return bTime - aTime;
             })
-            .map((item: Record<string, unknown> & { __id: string }) => ({
+            .map((item) => ({
               id: String(item["id"] || item.__id || ""),
               targetType: String(item["targetType"] || "video"),
               targetId: String(item["targetId"] || ""),

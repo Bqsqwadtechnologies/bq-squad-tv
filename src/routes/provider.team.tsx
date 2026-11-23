@@ -137,7 +137,7 @@ function ProviderTeamContent({
     setFormError("");
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/provider/team", {
         method: "POST",
         headers,
@@ -169,7 +169,7 @@ function ProviderTeamContent({
     setBusyMemberId(member.id);
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/provider/team", {
         method: "PUT",
         headers,
@@ -201,7 +201,7 @@ function ProviderTeamContent({
     setBusyMemberId(member.id);
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/provider/team", {
         method: "DELETE",
         headers,
@@ -236,7 +236,7 @@ function ProviderTeamContent({
       consoleType="provider"
       account={account}
       title="Partner Team Governance"
-      subtitle="Manage team members across Manager, Editor, and Viewer partner roles."
+      tagline="Manage team members across Manager, Editor, and Viewer partner roles."
     >
       <div className="space-y-6">
         {/* Back navigation */}
@@ -255,7 +255,6 @@ function ProviderTeamContent({
           description="Grant team members precise roles (Manager, Editor, Viewer). The first assigned company email is the account Owner."
           actionLabel="Add Team Member"
           onAction={() => setModalOpen(true)}
-          icon={Users}
         />
 
         {successMessage && (
@@ -279,28 +278,28 @@ function ProviderTeamContent({
             value={kpis.total}
             subtitle="Partner team operators"
             icon={Users}
-            tone="brand"
+              variant="blue"
           />
           <ConsoleKpiCard
             title="Active"
             value={kpis.active}
             subtitle="Operational access"
             icon={ShieldCheck}
-            tone="success"
+            variant="green"
           />
           <ConsoleKpiCard
             title="Managers"
             value={kpis.managers}
             subtitle="Full management role"
             icon={Briefcase}
-            tone="neutral"
+            variant="blue"
           />
           <ConsoleKpiCard
             title="Editors"
             value={kpis.editors}
             subtitle="Broadcast & EPG schedulers"
             icon={Calendar}
-            tone="neutral"
+            variant="blue"
           />
         </div>
 
@@ -316,9 +315,9 @@ function ProviderTeamContent({
               { key: "scopes", label: "Granted Scopes" },
               { key: "status", label: "Status" },
               { key: "expiry", label: "Expiry" },
-              { key: "actions", label: "Actions", align: "right" },
+              { key: "actions", label: "Actions", className: "text-right" },
             ]}
-            rows={members.map((m) => ({
+            data={members.map((m) => ({
               id: m.id,
               member: (
                 <div>
@@ -376,7 +375,7 @@ function ProviderTeamContent({
                 </div>
               ),
             }))}
-            emptyMessage={loading ? "Loading team members..." : "No provider team members added yet."}
+            emptyTitle={loading ? "Loading team members..." : "No provider team members added yet."}
           />
         </ConsoleCard>
 

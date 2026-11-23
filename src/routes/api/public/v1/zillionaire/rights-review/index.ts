@@ -60,8 +60,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/rights-review/"
               const matched = await fs.getDoc("contentAssets/" + a["duplicateOfAssetId"]);
               if (matched) {
                 matchedAsset = {
-                  assetId: String(matched["id"] || matched.__id || ""),
-                  title: matched["title"] || String(matched["id"] || matched.__id || ""),
+                  assetId: String(matched["id"] || matched["__id"] || ""),
+                  title: matched["title"] || String(matched["id"] || matched["__id"] || ""),
                   channelId: matched["channelId"] || null,
                   ownerUid: matched["ownerUid"] || null,
                   contentStatus: matched["contentStatus"] || matched["status"] || null,

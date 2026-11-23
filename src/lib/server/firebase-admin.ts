@@ -216,7 +216,7 @@ export type FirestoreWrite =
 
 export type QueryFilter = {
   field: string;
-  op: "EQUAL" | "LESS_THAN" | "GREATER_THAN" | "ARRAY_CONTAINS";
+  op: "EQUAL" | "LESS_THAN" | "GREATER_THAN" | "GREATER_THAN_OR_EQUAL" | "ARRAY_CONTAINS";
   value: unknown;
 };
 

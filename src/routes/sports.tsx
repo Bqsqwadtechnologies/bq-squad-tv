@@ -410,7 +410,7 @@ function SportsPage() {
                         Matches not set
                       </p>
                     ) : (
-                      bracket["quarter_final"].map((m) => (
+                      (bracket["quarter_final"] ?? []).map((m) => (
                         <div key={m.id} className="p-3 bg-white/[0.02] border border-white/10 rounded-xl space-y-1 text-xs">
                           <div className="flex justify-between text-white font-semibold">
                             <span>{m.homeTeam.name}</span>
@@ -433,7 +433,7 @@ function SportsPage() {
                         Matches not set
                       </p>
                     ) : (
-                      bracket["semi_final"].map((m) => (
+                      (bracket["semi_final"] ?? []).map((m) => (
                         <div key={m.id} className="p-3 bg-white/[0.02] border border-white/10 rounded-xl space-y-1 text-xs">
                           <div className="flex justify-between text-white font-semibold">
                             <span>{m.homeTeam.name}</span>
@@ -458,7 +458,7 @@ function SportsPage() {
                         Grand final fixture not set
                       </p>
                     ) : (
-                      bracket["final"].map((m) => (
+                      (bracket["final"] ?? []).map((m) => (
                         <div key={m.id} className="p-4 bg-gradient-to-br from-amber-950/20 to-slate-900 border border-amber-500/30 rounded-xl space-y-2 text-xs">
                           <div className="flex justify-between text-white font-bold text-sm">
                             <span>{m.homeTeam.name}</span>

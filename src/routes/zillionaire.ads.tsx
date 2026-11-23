@@ -498,16 +498,15 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
   return (
     <ConsoleShell
       account={account}
-      activeItem="ads"
-      role="delegate"
+      activePath="/zillionaire/ads"
+      consoleType="zillionaire"
       title="Advertising Manager"
-      subtitle="Direct Ad Units, Partner Networks, Own Creatives & Audience Protection"
+      tagline="Direct Ad Units, Partner Networks, Own Creatives & Audience Protection"
     >
       <div className="space-y-6 pb-12">
         <ConsoleWelcomeBanner
-          name={account.email.split("@")[0]}
-          role="Ad Operations & Monetization"
-          message="Control advertising across Android and Web. Enforce ad-free viewing for paid subscribers and zero-ad policies for kids profiles and adult channels."
+          title="Ad Operations & Monetization"
+          description="Control advertising across Android and Web. Enforce ad-free viewing for paid subscribers and zero-ad policies for kids profiles and adult channels."
         />
 
         {/* Top KPIs */}
@@ -517,7 +516,7 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
             value={units.length}
             change={`${units.filter((u) => u.enabled).length} active`}
             trend="neutral"
-            color="cyan"
+            variant="blue"
             icon={Layers}
           />
           <ConsoleKpiCard
@@ -525,7 +524,7 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
             value={reports?.summary.totalImpressions.toLocaleString() || "0"}
             change={`Web: ${reports?.summary.byPlatform.web.impressions || 0} | Android: ${reports?.summary.byPlatform.android.impressions || 0}`}
             trend="up"
-            color="emerald"
+            variant="green"
             icon={BarChart3}
           />
           <ConsoleKpiCard
@@ -533,7 +532,7 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
             value={reports?.summary.overallCtr || "0.00%"}
             change={`${reports?.summary.totalClicks.toLocaleString() || "0"} clicks`}
             trend="up"
-            color="purple"
+            variant="purple"
             icon={Megaphone}
           />
           <ConsoleKpiCard
@@ -541,7 +540,7 @@ function AdvertisingManagerDashboard({ account }: { account: ConsoleAccount }) {
             value={reports?.summary.totalRevenueFormatted || "₦0.00"}
             change={settings.paidViewersAdFree ? "Paid viewers: Ad-free" : "All viewers monetized"}
             trend="up"
-            color="amber"
+            variant="gold"
             icon={DollarSign}
           />
         </div>

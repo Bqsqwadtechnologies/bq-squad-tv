@@ -32,6 +32,7 @@ import {
 type Summary = {
   producerStatus: string;
   earningsBalanceMinor: number;
+  previousEarningsBalanceMinor?: number;
   earningsLifetimeMinor: number;
   currency: string;
   channelCount: number;
@@ -49,6 +50,8 @@ type AnalyticsData = {
   currency: string;
   sessionCount: number;
   liveViewers: number;
+  previousLiveViewers?: number;
+  previousWatchHours?: number;
   series: Array<{ label: string; views: number; watchMinutes: number; earningsMinor: number }>;
   topContent: Array<{
     id: string;
@@ -102,7 +105,7 @@ function ProducerPage() {
   return (
     <ConsolePageGuard role="producer">
       {({ token, account, onLock }) => (
-        <ProducerDashboardInner token={token} account={account} onLock={onLock} />
+        <ProducerDashboardInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -202,8 +205,9 @@ function ProducerDashboardInner({
       if (analyticsResponse.ok) {
         setAnalytics(analyticsResult);
       }
-      if (summaryResult.channels.length > 0 && !selectedChannelId) {
-        setSelectedChannelId(summaryResult.channels[0].id);
+      const firstChannel = summaryResult.channels[0];
+      if (firstChannel && !selectedChannelId) {
+        setSelectedChannelId(firstChannel.id);
       }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not load Producer Console.");
@@ -287,7 +291,7 @@ function ProducerDashboardInner({
     : undefined;
 
   const channelSwitcherConfig =
-    channelOptions.length > 0
+    channelOptions[0]
       ? {
           activeChannelId: selectedChannelId || channelOptions[0].id,
           channels: channelOptions,

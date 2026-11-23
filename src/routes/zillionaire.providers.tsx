@@ -119,7 +119,7 @@ function ZillionaireProvidersRoute() {
   return (
     <ConsolePageGuard role="zillionaire" module="providers">
       {({ token, account, onLock }) => (
-        <ZillionaireProvidersContent token={token} account={account} onLock={onLock} />
+        <ZillionaireProvidersContent token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -229,7 +229,7 @@ function ZillionaireProvidersContent({
     setEmailActionBusy(true);
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/providers/approved-emails", {
         method: "POST",
         headers,
@@ -266,7 +266,7 @@ function ZillionaireProvidersContent({
 
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/providers/", {
         method: "POST",
         headers,
@@ -297,7 +297,7 @@ function ZillionaireProvidersContent({
     setResolveBusy(true);
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/providers/", {
         method: "POST",
         headers,
@@ -326,7 +326,7 @@ function ZillionaireProvidersContent({
     setTestingId(channelId);
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/zillionaire/providers/test-playback", {
         method: "POST",
         headers,

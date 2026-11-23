@@ -105,7 +105,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/trending/promot
                 ? "REJECTED"
                 : "CANCELLED";
 
-          await fs.updateDoc("trendingPromotions/" + id, {
+          await fs.patchDoc("trendingPromotions/" + id, {
             status: newStatus,
             reviewNotes: body.notes,
             reviewedBy: user.uid,

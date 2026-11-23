@@ -97,18 +97,19 @@ function ZillionaireMoviesRoute() {
       description="Full catalogue veto power: shelves, featured hero rotation, regional windows, price overrides, and rights reviews."
     >
       {({ token, account, onLock }) => (
-        <ZillionaireMoviesPage token={token} account={account} onLock={onLock} />
+        <ZillionaireMoviesPage token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
 }
 
 function ZillionaireMoviesPage({
+  token,
   account,
   onLock,
 }: {
-  token: string | null;
-  account: { uid: string; email?: string; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
+  token: string;
+  account: { uid: string; email?: string | null; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
   onLock?: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<"CATALOGUE" | "SHELVES" | "HERO_ROTATION" | "CURATION_OVERRIDES">("CATALOGUE");
@@ -139,6 +140,24 @@ function ZillionaireMoviesPage({
   const [actionReason, setActionReason] = useState("");
   const [submittingAction, setSubmittingAction] = useState(false);
   const [actionFeedback, setActionFeedback] = useState<string | null>(null);
+
+  function openPrompt(options: {
+    title: string;
+    description: string;
+    defaultValue?: string;
+    placeholder?: string;
+    confirmLabel: string;
+    minChars: number;
+    onConfirm: (value: string) => void | Promise<void>;
+  }) {
+    const value = window.prompt(`${options.title}\n${options.description}`, options.defaultValue ?? "");
+    if (value === null) return;
+    if (value.trim().length < options.minChars) {
+      setActionFeedback(`Please enter at least ${options.minChars} characters.`);
+      return;
+    }
+    void options.onConfirm(value.trim());
+  }
 
   // Curation State: Shelves, Hero, Overrides
   const [curationLoading, setCurationLoading] = useState(false);
@@ -175,7 +194,7 @@ function ZillionaireMoviesPage({
   const fetchAssets = async () => {
     setLoading(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const params = new URLSearchParams();
       if (searchQuery) params.set("q", searchQuery);
       if (statusFilter !== "ALL") params.set("status", statusFilter);
@@ -196,7 +215,7 @@ function ZillionaireMoviesPage({
     setActionFeedback(null);
     const previewWindow = window.open("about:blank", "_blank");
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const response = await fetch("/api/public/v1/preview/grant", {
         method: "POST",
         headers: { ...headers, "content-type": "application/json" },
@@ -222,7 +241,7 @@ function ZillionaireMoviesPage({
   const fetchCurationData = async () => {
     setCurationLoading(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/zillionaire/movies/curation/", { headers });
       if (res.ok) {
         const data = await res.json();
@@ -300,7 +319,7 @@ function ZillionaireMoviesPage({
     setSubmittingAction(true);
     setActionFeedback(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch(`/api/public/v1/zillionaire/content-assets/${assetId}/actions`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -334,7 +353,7 @@ function ZillionaireMoviesPage({
         setSubmittingAction(true);
     setActionFeedback(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const response = await fetch("/api/public/v1/zillionaire/content-assets/" + encodeURIComponent(assetId) + "/" + stage, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -363,7 +382,7 @@ function ZillionaireMoviesPage({
         setSubmittingAction(true);
     setActionFeedback(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/zillionaire/content-assets/", {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -400,7 +419,7 @@ function ZillionaireMoviesPage({
       onConfirm: async (reason) => {
         setSubmittingAction(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/zillionaire/movies/curation/", {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -435,7 +454,7 @@ function ZillionaireMoviesPage({
       onConfirm: async (reason) => {
         setSubmittingAction(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/zillionaire/movies/curation/", {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -484,7 +503,7 @@ function ZillionaireMoviesPage({
 
     setSubmittingAction(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/zillionaire/movies/curation/", {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -830,7 +849,7 @@ function ZillionaireMoviesPage({
                             setEditTitle(a.title);
                             setEditDesc(a.description || "");
                             setEditCategory(a.category || "general");
-                            setEditAgeRating(a.ageRating || "PG");
+                            setEditAgeRating(a.ageRating === "G" || a.ageRating === "12" || a.ageRating === "15" || a.ageRating === "18" ? a.ageRating : "PG");
                           }}
                           title="Edit Details"
                           className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded"
@@ -884,7 +903,7 @@ function ZillionaireMoviesPage({
                 ]}
                 data={assets}
                 loading={loading}
-                emptyMessage="No movie or episodic titles found in catalogue."
+                emptyTitle="No movie or episodic titles found in catalogue."
               />
             </ConsoleCard>
           </div>
@@ -973,6 +992,7 @@ function ZillionaireMoviesPage({
                         <button
                           onClick={() => {
                             const updated = [...shelves];
+                            if (!updated[sIdx]) return;
                             updated[sIdx].enabled = !updated[sIdx].enabled;
                             setShelves(updated);
                           }}
@@ -990,7 +1010,9 @@ function ZillionaireMoviesPage({
                           onClick={() => {
                             if (sIdx === 0) return;
                             const updated = [...shelves];
+                            if (!updated[sIdx]) return;
                             const temp = updated[sIdx - 1];
+                            if (!temp) return;
                             updated[sIdx - 1] = updated[sIdx];
                             updated[sIdx] = temp;
                             setShelves(updated);
@@ -1005,7 +1027,9 @@ function ZillionaireMoviesPage({
                           onClick={() => {
                             if (sIdx === shelves.length - 1) return;
                             const updated = [...shelves];
+                            if (!updated[sIdx]) return;
                             const temp = updated[sIdx + 1];
+                            if (!temp) return;
                             updated[sIdx + 1] = updated[sIdx];
                             updated[sIdx] = temp;
                             setShelves(updated);
@@ -1041,6 +1065,7 @@ function ZillionaireMoviesPage({
                               if (!val) return;
                               if (!shelf.assetIds.includes(val)) {
                                 const updated = [...shelves];
+                            if (!updated[sIdx]) return;
                                 updated[sIdx].assetIds.push(val);
                                 setShelves(updated);
                               }
@@ -1087,6 +1112,7 @@ function ZillionaireMoviesPage({
                                   type="button"
                                   onClick={() => {
                                     const updated = [...shelves];
+                            if (!updated[sIdx]) return;
                                     const pinned = new Set(updated[sIdx].pinnedAssetIds);
                                     if (pinned.has(assetId)) pinned.delete(assetId);
                                     else pinned.add(assetId);
@@ -1102,6 +1128,7 @@ function ZillionaireMoviesPage({
                                   type="button"
                                   onClick={() => {
                                     const updated = [...shelves];
+                            if (!updated[sIdx]) return;
                                     updated[sIdx].assetIds = updated[sIdx].assetIds.filter((id) => id !== assetId);
                                     updated[sIdx].pinnedAssetIds = updated[sIdx].pinnedAssetIds.filter((id) => id !== assetId);
                                     setShelves(updated);
@@ -1223,7 +1250,9 @@ function ZillionaireMoviesPage({
                           onClick={() => {
                             if (hIdx === 0) return;
                             const updated = [...heroes];
+                            if (!updated[hIdx]) return;
                             const temp = updated[hIdx - 1];
+                            if (!temp) return;
                             updated[hIdx - 1] = updated[hIdx];
                             updated[hIdx] = temp;
                             setHeroes(updated);
@@ -1237,7 +1266,9 @@ function ZillionaireMoviesPage({
                           onClick={() => {
                             if (hIdx === heroes.length - 1) return;
                             const updated = [...heroes];
+                            if (!updated[hIdx]) return;
                             const temp = updated[hIdx + 1];
+                            if (!temp) return;
                             updated[hIdx + 1] = updated[hIdx];
                             updated[hIdx] = temp;
                             setHeroes(updated);
@@ -1383,7 +1414,7 @@ function ZillionaireMoviesPage({
                           <label className="block font-semibold text-slate-300 mb-1">Geographic Mode:</label>
                           <select
                             value={overrideRegionMode}
-                            onChange={(e) => setOverrideRegionMode(e.target.value)}
+                            onChange={(e) => setOverrideRegionMode(e.target.value === "BLACKLIST" || e.target.value === "WHITELIST" ? e.target.value : "GLOBAL")}
                             className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white"
                           >
                             <option value="GLOBAL">Global (Available Everywhere)</option>
@@ -1855,9 +1886,9 @@ function ZillionaireMoviesPage({
                   disabled={submittingAction || actionReason.trim().length < 3}
                   onClick={async () => {
                     const extra: Record<string, unknown> = {};
-                    if (pendingAction === "feature") extra.featured = true;
-                    if (pendingAction === "unfeature") extra.featured = false;
-                    if (pendingAction === "move_channel") extra.channelId = (window as Window & { __pendingChannelId?: string }).__pendingChannelId || "platform";
+                    if (pendingAction === "feature") extra["featured"] = true;
+                    if (pendingAction === "unfeature") extra["featured"] = false;
+                    if (pendingAction === "move_channel") extra["channelId"] = (window as Window & { __pendingChannelId?: string }).__pendingChannelId || "platform";
 
                     const realAction = pendingAction === "unfeature" ? "feature" : pendingAction;
                     await executeAction(targetAssetId, {

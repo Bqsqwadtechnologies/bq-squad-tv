@@ -81,18 +81,19 @@ function ZillionaireChannelsRoute() {
       description="Full catalogue channel management: verification badges, suspension, revenue share overrides, transfer, live permission."
     >
       {({ token, account, onLock }) => (
-        <ZillionaireChannelsPage token={token} account={account} onLock={onLock} />
+        <ZillionaireChannelsPage token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
 }
 
 function ZillionaireChannelsPage({
+  token,
   account,
   onLock,
 }: {
-  token: string | null;
-  account: { uid: string; email?: string; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
+  token: string;
+  account: { uid: string; email?: string | null; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
   onLock?: () => void;
 }) {
   const [channels, setChannels] = useState<ChannelItem[]>([]);
@@ -171,7 +172,7 @@ function ZillionaireChannelsPage({
         revenueShareBps: 7000,
         reason: "",
       });
-      await loadChannels();
+      await fetchChannels();
     } catch (err: any) {
       setWizardError(err.message || "Channel creation failed.");
     } finally {
@@ -205,7 +206,7 @@ function ZillionaireChannelsPage({
   const fetchChannels = async () => {
     setLoading(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const params = new URLSearchParams();
       if (searchQuery) params.set("q", searchQuery);
       if (filterType !== "ALL") params.set("filter", filterType);
@@ -230,7 +231,7 @@ function ZillionaireChannelsPage({
     setSubmittingAction(true);
     setActionFeedback(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch(`/api/public/v1/zillionaire/channels/${channelId}/actions`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -401,7 +402,7 @@ function ZillionaireChannelsPage({
                       <div className="font-bold text-white text-xs flex items-center gap-1">
                         <span>{c.title}</span>
                         {c.verified && (
-                          <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 fill-cyan-950 inline" title="Verified Channel" />
+                          <BadgeCheck className="w-3.5 h-3.5 text-cyan-400 fill-cyan-950 inline" aria-label="Verified Channel" />
                         )}
                         {c.featured && (
                           <span className="p-0.5 text-[10px] text-amber-300 bg-amber-950/60 border border-amber-800 rounded font-semibold flex items-center gap-0.5">
@@ -874,23 +875,23 @@ function ZillionaireChannelsPage({
                     let reqAction = pendingAction;
                     const extra: Record<string, unknown> = {};
 
-                    if (pendingAction === "verify") extra.verified = true;
+                    if (pendingAction === "verify") extra["verified"] = true;
                     if (pendingAction === "unverify") {
                       reqAction = "verify";
-                      extra.verified = false;
+                      extra["verified"] = false;
                     }
-                    if (pendingAction === "feature") extra.featured = true;
+                    if (pendingAction === "feature") extra["featured"] = true;
                     if (pendingAction === "unfeature") {
                       reqAction = "feature";
-                      extra.featured = false;
+                      extra["featured"] = false;
                     }
                     if (pendingAction === "enable_live") {
                       reqAction = "toggle_live";
-                      extra.allowed = true;
+                      extra["allowed"] = true;
                     }
                     if (pendingAction === "disable_live") {
                       reqAction = "toggle_live";
-                      extra.allowed = false;
+                      extra["allowed"] = false;
                     }
 
                     await executeAction(targetChannelId, {

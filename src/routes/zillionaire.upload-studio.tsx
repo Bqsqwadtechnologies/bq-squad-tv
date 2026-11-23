@@ -43,7 +43,7 @@ function UploadStudioRoute() {
       description="Upload movies, videos and series episodes directly into the private BQ SQWAD TV media library."
     >
       {({ token, account, onLock }) => (
-        <UploadStudioContent token={token} account={account} onLock={onLock} />
+        <UploadStudioContent token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );

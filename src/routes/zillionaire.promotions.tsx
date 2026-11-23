@@ -26,7 +26,7 @@ function ZillionairePromotionsRoute() {
   return (
     <ConsolePageGuard requiredRole="viewer" requiredModule="ads">
       {({ token, account, onLock }) => (
-        <PromotionsInner token={token} account={account} onLock={onLock} />
+        <PromotionsInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );

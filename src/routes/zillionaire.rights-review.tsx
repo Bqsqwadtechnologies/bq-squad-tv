@@ -119,7 +119,7 @@ function RightsReviewContent({
   account,
 }: {
   token: string;
-  account: { email?: string; isOwner: boolean; modules: string[] };
+  account: { email?: string | null; isOwner: boolean; modules: string[] };
 }) {
   const [items, setItems] = useState<RightsReviewItem[]>([]);
   const [reasonCodes, setReasonCodes] = useState<ReasonCodeOption[]>([]);
@@ -333,7 +333,7 @@ function RightsReviewContent({
       {/* Main Review Table */}
       <ConsoleCard>
         <div className="overflow-x-auto">
-          <ConsoleTable>
+          <table className="w-full">
             <thead>
               <tr className="border-b border-white/10 text-left text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 <th className="p-3">Video / Asset</th>
@@ -484,7 +484,7 @@ function RightsReviewContent({
                 ))
               )}
             </tbody>
-          </ConsoleTable>
+          </table>
         </div>
       </ConsoleCard>
 

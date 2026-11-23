@@ -66,18 +66,19 @@ function ZillionaireBlockedContentRoute() {
       description="Dedicated immutable enforcement log of all blocked and takedown assets with one-click owner restore."
     >
       {({ token, account, onLock }) => (
-        <ZillionaireBlockedContentPage token={token} account={account} onLock={onLock} />
+        <ZillionaireBlockedContentPage token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
 }
 
 function ZillionaireBlockedContentPage({
+  token,
   account,
   onLock,
 }: {
-  token: string | null;
-  account: { uid: string; email?: string; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
+  token: string;
+  account: { uid: string; email?: string | null; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
   onLock?: () => void;
 }) {
   const [items, setItems] = useState<BlockedItem[]>([]);
@@ -95,7 +96,7 @@ function ZillionaireBlockedContentPage({
   const fetchBlocked = async () => {
     setLoading(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const params = new URLSearchParams();
       if (searchQuery) params.set("q", searchQuery);
 
@@ -123,7 +124,7 @@ function ZillionaireBlockedContentPage({
     setUnblockingId(item.assetId);
     setActionFeedback(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch(`/api/public/v1/zillionaire/blocked-content/${item.assetId}/unblock`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },

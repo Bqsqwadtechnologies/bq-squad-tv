@@ -336,8 +336,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/$uid/")({
               try {
                 // Dispatch password reset via Firebase Identity Toolkit
                 const firebaseKey =
-                  process.env.FIREBASE_WEB_API_KEY ||
-                  process.env.VITE_FIREBASE_API_KEY ||
+                  process.env["FIREBASE_WEB_API_KEY"] ||
+                  process.env["VITE_FIREBASE_API_KEY"] ||
                   "AIzaSyD6QfAIfn_T0YWxxYKDbw8lZfj_s81N2ow";
                 const resetResp = await fetch(
                   `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${firebaseKey}`,

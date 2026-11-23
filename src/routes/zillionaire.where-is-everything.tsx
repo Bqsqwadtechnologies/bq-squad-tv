@@ -520,7 +520,7 @@ function WhereIsEverythingDashboard({ account }: { account: ConsoleAccount }) {
   }, [selectedCategory, searchQuery]);
 
   return (
-    <ConsoleShell activePath="/zillionaire/where-is-everything">
+    <ConsoleShell consoleType="zillionaire" title="Console Directory" account={account} activePath="/zillionaire/where-is-everything">
       <div className="space-y-6 p-6">
         <ConsoleWelcomeBanner
           title="Where is Everything in Zillionaire?"
@@ -583,9 +583,7 @@ function WhereIsEverythingDashboard({ account }: { account: ConsoleAccount }) {
                         <span className="font-mono text-[10px] text-muted-foreground">{sec.path}</span>
                       </div>
                     </div>
-                    <ConsoleStatusBadge variant="neutral">
-                      {sec.module}
-                    </ConsoleStatusBadge>
+                    <ConsoleStatusBadge status="draft" label={sec.module} />
                   </div>
 
                   <p className="text-xs text-foreground/80 leading-relaxed mb-4">

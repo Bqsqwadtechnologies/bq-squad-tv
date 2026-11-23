@@ -24,7 +24,7 @@ function ZillionaireDeliveryRoute() {
   return (
     <ConsolePageGuard requiredRole="viewer" requiredModule="delivery">
       {({ token, account, onLock }) => (
-        <DeliveryInner token={token} account={account} onLock={onLock} />
+        <DeliveryInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );

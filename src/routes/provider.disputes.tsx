@@ -23,7 +23,7 @@ function ProviderDisputesPage() {
   return (
     <ConsolePageGuard role="provider">
       {({ token, account, onLock }) => (
-        <ProviderDisputesInner token={token} account={account} onLock={onLock} />
+        <ProviderDisputesInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );

@@ -51,7 +51,7 @@ export function computeChannelChecklist(channel: Record<string, unknown>): Chann
         title: "Partner Privacy Policy Link",
         description: "Mandatory public HTTPS link to your company privacy policy.",
         status: "Needs attention",
-        detail: check.error,
+        ...(check.error !== undefined ? { detail: check.error } : {}),
         actionRequired: "Provide a valid public HTTPS link.",
       });
     } else if (channel["partnerPrivacyApproved"] === true) {
@@ -91,7 +91,7 @@ export function computeChannelChecklist(channel: Record<string, unknown>): Chann
         title: "Partner Terms of Service Link",
         description: "Mandatory public HTTPS link to your broadcast terms.",
         status: "Needs attention",
-        detail: check.error,
+        ...(check.error !== undefined ? { detail: check.error } : {}),
         actionRequired: "Provide a valid public HTTPS link.",
       });
     } else if (channel["partnerTermsApproved"] === true) {

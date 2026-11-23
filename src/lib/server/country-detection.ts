@@ -42,6 +42,7 @@ function isPublicIpLiteral(value: string): boolean {
     const octets = value.split(".").map(Number);
     if (octets.some((part) => part > 255)) return false;
     const [a, b] = octets;
+    if (a === undefined || b === undefined) return false;
     if (a === 10 || a === 127 || a === 0 || a >= 224) return false;
     if (a === 169 && b === 254) return false;
     if (a === 172 && b !== undefined && b >= 16 && b <= 31) return false;

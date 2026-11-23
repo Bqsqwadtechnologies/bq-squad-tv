@@ -97,7 +97,7 @@ function WatchPartyPage() {
           setToken(idToken);
           // decode uid roughly or through headers
           try {
-            const payload = JSON.parse(atob(idToken.split(".")[1]));
+            const payload = JSON.parse(atob(idToken.split(".")[1] ?? ""));
             setCurrentUid(payload.user_id || payload.sub || "");
           } catch {
             // ignore
@@ -356,7 +356,7 @@ function WatchPartyPage() {
                 if (isHost && party.playbackState !== "paused") handleHostPlayback("pause");
               }}
               onSeeked={() => {
-                if (isHost) handleHostPlayback(party.playbackState, videoRef.current?.currentTime);
+                if (isHost) handleHostPlayback(party.playbackState === "playing" ? "play" : "pause", videoRef.current?.currentTime);
               }}
             />
 

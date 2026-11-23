@@ -25,7 +25,7 @@ function ProviderStatementsPage() {
   return (
     <ConsolePageGuard role="provider">
       {({ token, account, onLock }) => (
-        <ProviderStatementsInner token={token} account={account} onLock={onLock} />
+        <ProviderStatementsInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );

@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useState, useEffect, useMemo, FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ConsolePageGuard } from "@/components/ConsolePageGuard";
@@ -73,7 +74,7 @@ function ZillionaireTeamRoute() {
   return (
     <ConsolePageGuard role="zillionaire" module="roles">
       {({ token, account, onLock }) => (
-        <ZillionaireTeamContent token={token} account={account} onLock={onLock} />
+        <ZillionaireTeamContent token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -181,7 +182,7 @@ function ZillionaireTeamContent({
     setInviteError("");
     try {
       const headers = await requestZillionaireStepUp("team_manage", inviteReason.trim());
-      headers.set("Authorization", (await getWebAuthHeaders(token)).get("Authorization") || "");
+      headers.set("Authorization", new Headers(await getWebAuthHeaders(token)).get("Authorization") || "");
       const res = await fetch("/api/public/v1/zillionaire/team", {
         method: "POST",
         headers,
@@ -226,7 +227,7 @@ function ZillionaireTeamContent({
     setCustomRoleError("");
     try {
       const headers = await requestZillionaireStepUp("team_manage", newRoleReason.trim());
-      headers.set("Authorization", (await getWebAuthHeaders(token)).get("Authorization") || "");
+      headers.set("Authorization", new Headers(await getWebAuthHeaders(token)).get("Authorization") || "");
       const res = await fetch("/api/public/v1/zillionaire/team", {
         method: "POST",
         headers,
@@ -277,7 +278,7 @@ function ZillionaireTeamContent({
           "team_manage",
           `Change access for ${member.email}`,
         );
-        headers.set("Authorization", (await getWebAuthHeaders(token)).get("Authorization") || "");
+        headers.set("Authorization", new Headers(await getWebAuthHeaders(token)).get("Authorization") || "");
         const res = await fetch(`/api/public/v1/zillionaire/team/${member.uid}`, {
           method: "PUT",
           headers,
@@ -294,7 +295,7 @@ function ZillionaireTeamContent({
           "team_manage",
           `Revoke access for ${member.email}`,
         );
-        headers.set("Authorization", (await getWebAuthHeaders(token)).get("Authorization") || "");
+        headers.set("Authorization", new Headers(await getWebAuthHeaders(token)).get("Authorization") || "");
         const res = await fetch(`/api/public/v1/zillionaire/team/${member.uid}`, {
           method: "DELETE",
           headers,
@@ -339,8 +340,7 @@ function ZillionaireTeamContent({
         <ConsoleWelcomeBanner
           title="Role Governance & Least Privilege"
           description="Grant staff granular access across dashboard jobs. Only the platform owner can create roles or modify team assignments. Delegated team members cannot change their own roles or others'."
-          actionLabel={account.isOwner ? "Delegate Access" : undefined}
-          onAction={account.isOwner ? () => setInviteModalOpen(true) : undefined}
+          {...(account.isOwner ? { actionLabel: "Delegate Access", onAction: () => setInviteModalOpen(true) } : {})}
           icon={ShieldCheck}
         />
 
@@ -377,28 +377,28 @@ function ZillionaireTeamContent({
             value={kpis.total}
             subtitle="Staff with platform jobs"
             icon={Users}
-            tone="brand"
+            variant="blue"
           />
           <ConsoleKpiCard
             title="Active Operators"
             value={kpis.active}
             subtitle="Operational accounts"
             icon={UserCheck}
-            tone="success"
+            variant="green"
           />
           <ConsoleKpiCard
             title="Suspended"
             value={kpis.suspended}
             subtitle="Access blocked"
             icon={UserX}
-            tone={kpis.suspended > 0 ? "danger" : "neutral"}
+            variant={kpis.suspended > 0 ? "red" : "blue"}
           />
           <ConsoleKpiCard
             title="Expiring Soon"
             value={kpis.expiringSoon}
             subtitle="Within next 7 days"
             icon={Clock}
-            tone={kpis.expiringSoon > 0 ? "warning" : "neutral"}
+            variant={kpis.expiringSoon > 0 ? "gold" : "blue"}
           />
         </div>
 
@@ -444,8 +444,7 @@ function ZillionaireTeamContent({
           <ConsoleCard
             title="Staff & Role Assignments"
             subtitle="Active operators and their delegated dashboard job scopes"
-            actionLabel={account.isOwner ? "Delegate Role" : undefined}
-            onAction={account.isOwner ? () => setInviteModalOpen(true) : undefined}
+            headerAction={account.isOwner ? <Button onClick={() => setInviteModalOpen(true)}>Delegate Role</Button> : null}
           >
             <ConsoleTable
               columns={[
@@ -454,9 +453,9 @@ function ZillionaireTeamContent({
                 { key: "permissions", label: "Job Permissions" },
                 { key: "status", label: "Account Status" },
                 { key: "expiry", label: "Expiry Date" },
-                { key: "actions", label: "Actions", align: "right" },
+                { key: "actions", label: "Actions", className: "text-right" },
               ]}
-              rows={members.map((member) => ({
+              data={members.map((member) => ({
                 id: member.uid,
                 email: (
                   <div>
@@ -522,7 +521,7 @@ function ZillionaireTeamContent({
                   <span className="text-xs text-zinc-600">Protected</span>
                 ),
               }))}
-              emptyMessage={loading ? "Loading team members..." : "No team members assigned yet."}
+              emptyTitle={loading ? "Loading team members..." : "No team members assigned yet."}
             />
           </ConsoleCard>
         )}
@@ -616,7 +615,7 @@ function ZillionaireTeamContent({
                 { key: "target", label: "Target" },
                 { key: "reason", label: "Justification Reason" },
               ]}
-              rows={activity.map((act) => ({
+              data={activity.map((act) => ({
                 id: act.id,
                 time: (
                   <span className="text-xs text-zinc-400 font-mono">
@@ -640,7 +639,7 @@ function ZillionaireTeamContent({
                 ),
                 reason: <span className="text-xs text-zinc-300">{act.reason || "—"}</span>,
               }))}
-              emptyMessage="No recent audited team actions."
+              emptyTitle="No recent audited team actions."
             />
           </ConsoleCard>
         )}

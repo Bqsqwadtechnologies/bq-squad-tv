@@ -52,9 +52,10 @@ export async function resolveProducerBySlugOrId(
       filters: [{ field: "slug", op: "EQUAL", value: clean.toLowerCase() }],
       limit: 1,
     });
-    if (bySlug.length > 0) {
-      producer = bySlug[0];
-      uid = producer.__id || (producer["uid"] as string) || clean;
+    const match = bySlug[0];
+    if (match) {
+      producer = match;
+      uid = match.__id || (typeof match["uid"] === "string" ? match["uid"] : clean);
     }
   }
 

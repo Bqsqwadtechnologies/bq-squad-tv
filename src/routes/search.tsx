@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, ArrowLeft, LoaderCircle, Mic, Tv2, Film, Clapperboard, Smile } from "lucide-react";
+import { Search, ArrowLeft, LoaderCircle, Mic, Tv2, Film, Clapperboard, Smile, Users, BadgeCheck } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
 

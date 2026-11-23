@@ -163,7 +163,7 @@ function CopyrightCasesContent({ account }: { account: ConsoleAccount }) {
     },
     {
       label: "Restore (Counter-Notice)",
-      variant: "secondary",
+      variant: "outline",
       icon: Scale,
       requiresNotes: false,
       onClick: (item) => openDecisionModal(item, "restore"),

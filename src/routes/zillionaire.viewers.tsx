@@ -162,20 +162,21 @@ function ZillionaireViewersRoute() {
       description="Find and manage viewers, accounts, wallets, receipts and security"
     >
       {({ token, account, onLock }) => (
-        <ZillionaireViewersPage token={token} account={account} onLock={onLock} />
+        <ZillionaireViewersPage token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
 }
 
 function ZillionaireViewersPage({
+  token,
   account,
   onLock,
 }: {
-  token: string | null;
+  token: string;
   account: {
     uid: string;
-    email?: string;
+    email?: string | null;
     roles?: string[];
     modules?: string[];
     isOwner?: boolean;
@@ -240,7 +241,7 @@ function ZillionaireViewersPage({
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const queryParam = searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : "";
       const res = await fetch(`/api/public/v1/zillionaire/users/${queryParam}`, { headers });
       if (res.ok) {
@@ -263,7 +264,7 @@ function ZillionaireViewersPage({
     setLoadingDetails(true);
     setUserDetails(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch(`/api/public/v1/zillionaire/users/${uid}/`, { headers });
       if (res.ok) {
         const data = await res.json();
@@ -289,19 +290,19 @@ function ZillionaireViewersPage({
 
     try {
       const sensitiveScope =
-        finalPayload.action === "wallet_adjust"
+        finalPayload["action"] === "wallet_adjust"
           ? "wallet_adjust"
-          : finalPayload.action === "reverse_payment"
+          : finalPayload["action"] === "reverse_payment"
             ? "payment_reversal"
-            : finalPayload.action === "delete_or_anonymize"
+            : finalPayload["action"] === "delete_or_anonymize"
               ? "permanent_delete"
               : null;
       const headers = sensitiveScope
         ? await requestZillionaireStepUp(
             sensitiveScope,
-            String(finalPayload.reason || "Sensitive owner action"),
+            String(finalPayload["reason"] || "Sensitive owner action"),
           )
-        : await getWebAuthHeaders();
+        : await getWebAuthHeaders(token);
       const res = await fetch(`/api/public/v1/zillionaire/users/${selectedUid}/`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },

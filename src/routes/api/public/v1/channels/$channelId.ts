@@ -40,7 +40,7 @@ export const Route = createFileRoute("/api/public/v1/channels/$channelId")({
             });
             if (matches.length > 0 && matches[0]) {
               channel = matches[0];
-              internalChannelId = String(channel.__id || channel["id"] || "");
+              internalChannelId = String(channel["__id"] || channel["id"] || "");
             }
           }
 

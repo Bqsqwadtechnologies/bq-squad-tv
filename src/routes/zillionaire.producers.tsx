@@ -95,7 +95,7 @@ function ZillionaireProducersRoute() {
   return (
     <ConsolePageGuard role="zillionaire" module="producers">
       {({ token, account, onLock }) => (
-        <ZillionaireProducersContent token={token} account={account} onLock={onLock} />
+        <ZillionaireProducersContent token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -185,7 +185,7 @@ function ZillionaireProducersContent({
     setReviewError("");
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch(
         `/api/public/v1/zillionaire/producers/${selectedProducer.id}/verification`,
         {
@@ -237,7 +237,7 @@ function ZillionaireProducersContent({
     setSuspendBusy(true);
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch(`/api/public/v1/zillionaire/producers/${suspendModal.producer.id}/actions`, {
         method: "POST",
         headers,
@@ -281,7 +281,7 @@ function ZillionaireProducersContent({
     setPayoutBusy(true);
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch(`/api/public/v1/zillionaire/producers/${payoutModal.id}/actions`, {
         method: "POST",
         headers,

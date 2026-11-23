@@ -10,6 +10,7 @@ type ConsoleGuardContext = { token: string; account: ConsoleAccount; onLock?: ()
 export type ConsoleAccount = {
   uid: string;
   email: string | null;
+  publicId?: string | null;
   emailVerified: boolean;
   roles: string[];
   isOwner: boolean;
@@ -1224,7 +1225,7 @@ export function ConsolePageGuard({
     | { status: "authorized"; token: string; account: ConsoleAccount }
   >({ status: "checking" });
 
-  const isZillionaireRoute = role === "admin" || role === "zillionaire";
+  const isZillionaireRoute = role === "zillionaire";
 
   useEffect(() => {
     let active = true;

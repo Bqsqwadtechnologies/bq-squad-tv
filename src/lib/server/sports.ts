@@ -110,8 +110,8 @@ export function computeStandings(
       teamId: team.id,
       teamName: team.name,
       shortCode: team.shortCode,
-      crestUrl: team.crestUrl,
-      group: team.group,
+      ...(team.crestUrl !== undefined ? { crestUrl: team.crestUrl } : {}),
+      ...(team.group !== undefined ? { group: team.group } : {}),
       played: 0,
       won: 0,
       drawn: 0,
@@ -186,9 +186,8 @@ export function computeKnockoutBracket(fixtures: SportsFixture[]): Record<string
   };
 
   for (const fix of fixtures) {
-    if (fix.stage && stages[fix.stage]) {
-      stages[fix.stage].push(fix);
-    }
+    const stage = fix.stage ? stages[fix.stage] : undefined;
+    if (stage) stage.push(fix);
   }
 
   return stages;

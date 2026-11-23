@@ -157,7 +157,7 @@ function StrikesAppealsContent({ account }: { account: ConsoleAccount }) {
     },
     {
       label: "Dismiss Strike",
-      variant: "secondary",
+      variant: "outline",
       icon: RotateCcw,
       requiresNotes: false,
       onClick: (item) => openActionModal(item, "dismiss_strike"),

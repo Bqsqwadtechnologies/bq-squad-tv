@@ -128,7 +128,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/test-lab")({
             after = {
               ...existing,
               steps: current.map((item) =>
-                item.id === body.step
+                item["id"] === body.step
                   ? { ...item, status: body.status, updatedAt: new Date().toISOString() }
                   : item,
               ),
@@ -189,7 +189,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/test-lab")({
             actorUid: user.uid,
             action: `test_lab.${body.action.toLowerCase()}`,
             targetType: "test_lab",
-            targetId: String(after.channelId || "current"),
+            targetId: String(after["channelId"] || "current"),
             reason: body.reason,
             after: { testOnly: true, ...after },
           });

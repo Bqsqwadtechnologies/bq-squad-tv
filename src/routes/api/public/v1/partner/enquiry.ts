@@ -25,9 +25,11 @@ export const Route = createFileRoute("/api/public/v1/partner/enquiry")({
       POST: async ({ request }) => {
         try {
           // Rate limit partner enquiries: 5 per hour per IP
-          await enforceRateLimit(request, "partner_enquiry", {
-            maxRequests: 5,
-            windowSeconds: 3600,
+          const fs = await Firestore.create();
+          const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-real-ip") || "unknown";
+          await enforceRateLimit(fs, `partner_enquiry:${ip}`, {
+            limit: 5,
+            windowMs: 3600 * 1000,
           });
 
           const body = await parseBody(request, schema);
@@ -40,7 +42,6 @@ export const Route = createFileRoute("/api/public/v1/partner/enquiry")({
             );
           }
 
-          const fs = await Firestore.create();
           const enquiryId = `enq_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
           const now = new Date().toISOString();
 
@@ -64,9 +65,11 @@ export const Route = createFileRoute("/api/public/v1/partner/enquiry")({
 
           await writeAuditLog(fs, {
             action: "partner.enquiry_submitted",
-            actorId: "anonymous",
+            actorUid: "anonymous",
             actorEmail: body.companyEmail,
+            targetType: "partner_enquiry",
             targetId: enquiryId,
+            reason: "Partner enquiry submitted for review.",
             metadata: {
               companyName: body.companyName,
               companyEmail: body.companyEmail,

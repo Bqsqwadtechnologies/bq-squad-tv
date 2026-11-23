@@ -40,7 +40,7 @@ function ProducerUploadStudioPage() {
   return (
     <ConsolePageGuard role="producer">
       {({ token, account, onLock }) => (
-        <ProducerUploadInner token={token} account={account} onLock={onLock} />
+        <ProducerUploadInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -88,7 +88,7 @@ const initialForm: UploadFormData = {
   genre: "General",
   language: "English",
   ageRating: "PG",
-  releaseDate: new Date().toISOString().split("T")[0],
+  releaseDate: new Date().toISOString().slice(0, 10),
   productionYear: new Date().getFullYear(),
   cast: [],
   crew: [],

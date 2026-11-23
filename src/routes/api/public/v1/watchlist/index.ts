@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { Firestore } from "@/lib/server/firebase-admin";
-import { errorBody, parseBody } from "@/lib/server/api";
+import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireVerifiedViewer } from "@/lib/server/access";
 
 const addSchema = z

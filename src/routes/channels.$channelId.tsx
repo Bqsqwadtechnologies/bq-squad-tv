@@ -74,6 +74,76 @@ function ChannelPage() {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [sessionElapsed, setSessionElapsed] = useState(0);
   const [reminders, setReminders] = useState<Record<string, boolean>>({});
+  const [likeCount, setLikeCount] = useState(0);
+  const [dislikeCount, setDislikeCount] = useState(0);
+  const [userReaction, setUserReaction] = useState<"like" | "dislike" | null>(null);
+  const [partyBusy, setPartyBusy] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  async function postViewerAction(path: string, body: Record<string, unknown>) {
+    const token = await restoreWebSession();
+    if (!token) throw new Error("Please sign in to continue.");
+    const response = await fetch(path, {
+      method: "POST",
+      headers: { ...(await getWebAuthHeaders(token)), "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message ?? data.error ?? "The action could not be completed.");
+    return data;
+  }
+
+  async function handleReaction(vote: "like" | "dislike") {
+    try {
+      const data = await postViewerAction("/api/public/v1/reactions", {
+        targetType: "channel",
+        targetId: channelId,
+        reaction: userReaction === vote ? "none" : vote,
+        title: details?.channel.title,
+        posterUrl: details?.channel.posterUrl,
+      });
+      if (typeof data.likeCount === "number") setLikeCount(data.likeCount);
+      if (typeof data.dislikeCount === "number") setDislikeCount(data.dislikeCount);
+      setUserReaction(data.userReaction === "like" || data.userReaction === "dislike" ? data.userReaction : null);
+    } catch (caught) {
+      setChatError(caught instanceof Error ? caught.message : "Could not save reaction.");
+    }
+  }
+
+  async function handleCreateWatchParty() {
+    if (!details) return;
+    setPartyBusy(true);
+    try {
+      const data = await postViewerAction("/api/public/v1/watch-parties/", {
+        targetType: "channel",
+        targetId: channelId,
+        title: details.channel.title,
+        posterUrl: details.channel.posterUrl,
+        maxParticipants: 10,
+      });
+      if (typeof data.party?.id === "string") {
+        window.location.assign(`/watch-party/${encodeURIComponent(data.party.id)}?code=${encodeURIComponent(data.party.roomCode ?? "")}`);
+      }
+    } catch (caught) {
+      setChatError(caught instanceof Error ? caught.message : "Could not create watch party.");
+    } finally {
+      setPartyBusy(false);
+    }
+  }
+
+  async function handleShare() {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: details?.channel.title ?? "BQ SQWAD TV", url: window.location.href });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        setCopiedLink(true);
+        window.setTimeout(() => setCopiedLink(false), 2000);
+      }
+    } catch {
+      // Share cancellation leaves playback unchanged.
+    }
+  }
 
   // Player state
   const [isPlaying, setIsPlaying] = useState(true);

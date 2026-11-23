@@ -191,7 +191,7 @@ function GeoRulesContent({ account, token }: { account: ConsoleAccount; token: s
       header: "Accepted Personal IDs",
       render: (r) => (
         <div className="max-w-xs truncate text-xs text-slate-300">
-          {r.acceptedPersonalIdTypes.map((t) => t.name).join(", ")}
+          {r.acceptedPersonalIdTypes.map((t) => t.label).join(", ")}
         </div>
       ),
     },
@@ -201,7 +201,7 @@ function GeoRulesContent({ account, token }: { account: ConsoleAccount; token: s
       render: (r) => (
         <div className="text-xs">
           <div className="text-cyan-300 font-mono">{r.defaultCurrency} • {r.bankCodeSystem.toUpperCase()}</div>
-          <div className="text-slate-400">{r.taxIdConfig.label}</div>
+          <div className="text-slate-400">{r.taxId.label}</div>
         </div>
       ),
     },
@@ -310,9 +310,9 @@ function GeoRulesContent({ account, token }: { account: ConsoleAccount; token: s
             { label: "Calling Dial Code", render: (r) => r.dialCode },
             { label: "Primary Currency", render: (r) => r.defaultCurrency },
             { label: "Banking & Settlement Standard", render: (r) => r.bankCodeSystem.toUpperCase() },
-            { label: "Tax Identifier Specification", render: (r) => `${r.taxIdConfig.label} (Required for payout: ${r.taxIdConfig.requiredForPayouts ? "Yes" : "No"})` },
-            { label: "Accepted Personal Identity Types", render: (r) => r.acceptedPersonalIdTypes.map((t) => `${t.name} (${t.description || "Official ID"})`).join(" • ") },
-            { label: "Corporate Registry Configuration", render: (r) => r.companyRegistryConfig ? `${r.companyRegistryConfig.registryName} (${r.companyRegistryConfig.numberLabel})` : "Standard Commercial Registry" },
+            { label: "Tax Identifier Specification", render: (r) => `${r.taxId.label} (Required for payout: ${!r.taxId.optional ? "Yes" : "No"})` },
+            { label: "Accepted Personal Identity Types", render: (r) => r.acceptedPersonalIdTypes.map((t) => `${t.label} (${t.formatDescription || "Official ID"})`).join(" • ") },
+            { label: "Corporate Registry Configuration", render: (r) => r.companyRegistry ? `${r.companyRegistry.name} (${r.companyRegistry.label})` : "Standard Commercial Registry" },
           ]}
         />
       )}

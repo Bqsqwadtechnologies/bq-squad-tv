@@ -279,8 +279,9 @@ export function FinanceBody({
 
   // CSV download helper
   const exportCsv = (filename: string, rows: Array<Record<string, any>>) => {
-    if (!rows.length) return;
-    const headers = Object.keys(rows[0]);
+    const firstRow = rows[0];
+    if (!firstRow) return;
+    const headers = Object.keys(firstRow);
     const csvContent =
       "data:text/csv;charset=utf-8," +
       [
@@ -313,9 +314,9 @@ export function FinanceBody({
       recipientName: "Platform Treasury & Distribution Consolidated",
       recipientRole: "partner",
       currency: "NGN",
-      grossRevenueMinor: data.stats.grossRevenueMinor,
-      deductionsMinor: data.stats.totalProducerMinor,
-      netPayoutMinor: data.stats.platformRevenueMinor,
+      grossRevenueMinor: data.metrics.grossRevenueMinor,
+      deductionsMinor: data.metrics.producerShareMinor,
+      netPayoutMinor: data.metrics.platformShareMinor,
       paymentReference: "CONSOLIDATED-LEDGER-STATEMENT",
       paidAt: new Date().toISOString(),
       statementHash: "sha256-" + crypto.randomUUID().replace(/-/g, ""),
@@ -371,7 +372,7 @@ export function FinanceBody({
       <ConsoleWelcomeBanner
         title="Finance Control Centre"
         description="Monitor platform gross revenue, creator shares, live wallet liabilities, and reconcile exceptions with period lock governance."
-        roleBadge="PLATFORM OWNER"
+        badgeText="PLATFORM OWNER"
       />
 
       {/* KPI Cards */}
@@ -538,7 +539,7 @@ export function FinanceBody({
           <ConsoleCard
             title="Daily Revenue Trend"
             subtitle={`Gross platform revenue and net distributions over the selected ${range} window`}
-            action={
+            headerAction={
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleExportStatement}
@@ -733,7 +734,7 @@ export function FinanceBody({
         <ConsoleCard
           title="All Wallets Ledger Explorer"
           subtitle="Real-time transaction history across all viewer accounts, producer earnings, and platform adjustments"
-          action={
+          headerAction={
             <button
               onClick={handleExportLedger}
               className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs text-white font-medium flex items-center gap-1.5 transition-all"
@@ -953,7 +954,7 @@ export function FinanceBody({
           <ConsoleCard
             title="Month-End Accounting Close"
             subtitle="Lock financial periods to freeze revenue, dispute reconciliation, and prevent post-close modifications"
-            action={
+            headerAction={
               <button
                 onClick={() => {
                   setModalType("lock_period");

@@ -95,7 +95,7 @@ function ProducerChannelsPage() {
   return (
     <ConsolePageGuard role="producer">
       {({ token, account, onLock }) => (
-        <ProducerChannelsInner token={token} account={account} onLock={onLock} />
+        <ProducerChannelsInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -105,6 +105,7 @@ function ProducerChannelsPage() {
 const DEFAULT_CHANNEL_ASSETS: ContentAsset[] = [
   {
     id: "asset_sample_1",
+    assetId: "asset_sample_1",
     title: "Lagos Nights - Episode 1: The Awakening",
     seriesTitle: "Lagos Nights",
     seasonNumber: 1,
@@ -118,6 +119,7 @@ const DEFAULT_CHANNEL_ASSETS: ContentAsset[] = [
   },
   {
     id: "asset_sample_2",
+    assetId: "asset_sample_2",
     title: "Lagos Nights - Episode 2: Midnight Run",
     seriesTitle: "Lagos Nights",
     seasonNumber: 1,
@@ -244,8 +246,9 @@ function ProducerChannelsInner({
         );
       }
       setChannels(result);
-      if (result.length > 0 && !selectedChannelId) {
-        setSelectedChannelId(result[0].id);
+      const firstChannel = result[0];
+      if (firstChannel && !selectedChannelId) {
+        setSelectedChannelId(firstChannel.id);
       }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not load channels.");
@@ -316,11 +319,12 @@ function ProducerChannelsInner({
           title: key,
           contentType: asset.contentType || (asset.episodeNumber ? "series" : "movie"),
           category: asset.category || "General",
-          posterUrl: asset.posterUrl,
+          ...(asset.posterUrl !== undefined ? { posterUrl: asset.posterUrl } : {}),
           episodes: [],
         });
       }
-      const entry = map.get(key)!;
+      const entry = map.get(key);
+      if (!entry) continue;
       entry.episodes.push(asset);
       if (asset.contentType === "series" || asset.episodeNumber) {
         entry.contentType = "series";
@@ -348,7 +352,6 @@ function ProducerChannelsInner({
     setAppealError("");
     setAppealSuccess("");
     try {
-      const token = await getAuthToken();
       if (!token) throw new Error("Authentication required.");
       const res = await fetch(
         `/api/public/v1/producer/content-assets/${encodeURIComponent(appealAsset.assetId || appealAsset.id)}/appeal`,
@@ -520,6 +523,7 @@ function ProducerChannelsInner({
     for (let i = 0; i < sorted.length - 1; i++) {
       const cur = sorted[i];
       const next = sorted[i + 1];
+      if (!cur || !next) continue;
       const curEnd = new Date(cur.endsAt).getTime();
       const nextStart = new Date(next.startsAt).getTime();
       if (curEnd > nextStart) {
@@ -589,7 +593,7 @@ function ProducerChannelsInner({
       activePath="/producer/channels"
       onLock={onLock}
       channelSwitcher={
-        channelSwitcherOptions.length > 0
+        channelSwitcherOptions[0]
           ? {
               activeChannelId: selectedChannelId || channelSwitcherOptions[0].id,
               channels: channelSwitcherOptions,

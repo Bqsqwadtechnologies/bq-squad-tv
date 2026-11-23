@@ -91,7 +91,7 @@ function ProviderPage() {
   return (
     <ConsolePageGuard role="provider">
       {({ token, account, onLock }) => (
-        <ProviderDashboardInner token={token} account={{ ...account, email: account.email ?? undefined }} onLock={onLock} />
+        <ProviderDashboardInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -234,7 +234,7 @@ function ProviderDashboardInner({
       consoleType="provider"
       title="Provider Console"
       tagline="Delivery Infrastructure & Ingest Telemetry"
-      account={{ ...account, email: account.email ?? undefined }}
+      account={account}
       activePath="/provider"
       onLock={onLock}
       onRefresh={() => void loadDashboard(token)}

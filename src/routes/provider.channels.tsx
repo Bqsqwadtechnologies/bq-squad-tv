@@ -67,7 +67,7 @@ type LatencyLocation = {
   city: string;
   region: string;
   pingMs: number;
-  status: "Optimal" | "Good" | "Fair";
+  status: "Optimal" | "Good" | "Fair" | "Degraded";
 };
 
 export const Route = createFileRoute("/provider/channels")({
@@ -84,7 +84,7 @@ function ProviderChannelsPage() {
   return (
     <ConsolePageGuard role="provider">
       {({ token, account, onLock }) => (
-        <ProviderChannelsInner token={token} account={account} onLock={onLock} />
+        <ProviderChannelsInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );

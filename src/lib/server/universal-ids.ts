@@ -230,7 +230,7 @@ export async function lookupByPublicId(
   return {
     uid: doc["uid"] as string,
     type: (doc["type"] as PublicIdType) || check.type || "viewer",
-    entityId: typeof doc["entityId"] === "string" ? (doc["entityId"] as string) : undefined,
+    ...(typeof doc["entityId"] === "string" ? { entityId: doc["entityId"] } : {}),
   };
 }
 

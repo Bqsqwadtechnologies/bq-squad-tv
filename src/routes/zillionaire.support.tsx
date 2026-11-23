@@ -204,7 +204,7 @@ function SupportBody({ token, account }: { token: string; account: ConsoleAccoun
       }
       const json: SupportApiResponse = await res.json();
       setData(json);
-      if (json.tickets.length > 0 && !selectedTicketId) {
+      if (json.tickets[0] && !selectedTicketId) {
         setSelectedTicketId(json.tickets[0].id);
       }
     } catch (e: any) {
@@ -375,7 +375,7 @@ function SupportBody({ token, account }: { token: string; account: ConsoleAccoun
       <ConsoleWelcomeBanner
         title="Support Desk & Customer Recovery"
         description="Unified inquiries queue, linked user records, canned responses, audience segmentation, and zero-password account recovery."
-        roleBadge="SUPPORT OPERATOR"
+        badgeText="SUPPORT OPERATOR"
       />
 
       {/* KPI Cards */}

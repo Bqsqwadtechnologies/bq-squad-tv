@@ -66,18 +66,19 @@ function ZillionaireReceiptsRoute() {
       description="Sequential money documents, receipts, proof of payout, and customer lifetime spend."
     >
       {({ token, account, onLock }) => (
-        <ZillionaireReceiptsPage token={token} account={account} onLock={onLock} />
+        <ZillionaireReceiptsPage token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
 }
 
 function ZillionaireReceiptsPage({
+  token,
   account,
   onLock,
 }: {
-  token: string | null;
-  account: { uid: string; email?: string; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
+  token: string;
+  account: { uid: string; email?: string | null; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
   onLock?: () => void;
 }) {
   const [receipts, setReceipts] = useState<ReceiptItem[]>([]);
@@ -108,7 +109,7 @@ function ZillionaireReceiptsPage({
   const fetchReceipts = async () => {
     setLoading(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const q = searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : "";
       const res = await fetch(`/api/public/v1/zillionaire/receipts/${q}`, { headers });
       if (res.ok) {
@@ -131,7 +132,7 @@ function ZillionaireReceiptsPage({
     setResendingId(receiptId);
     setActionNotice(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch(`/api/public/v1/zillionaire/receipts/${receiptId}/resend`, {
         method: "POST",
         headers,
@@ -155,7 +156,7 @@ function ZillionaireReceiptsPage({
     setIssuing(true);
     setActionNotice(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const amountMinor = Math.round(Number(issueAmountMajor) * 100);
       const res = await fetch("/api/public/v1/zillionaire/receipts/", {
         method: "POST",

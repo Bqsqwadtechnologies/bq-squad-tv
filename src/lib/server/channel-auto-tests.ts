@@ -89,7 +89,7 @@ export function runChannelPreflightTests(channel: Record<string, unknown>): Auto
         name: "Stream Configuration & Reachability",
         passed: false,
         severity: "blocker",
-        details: safeCheck.error,
+        ...(safeCheck.error !== undefined ? { details: safeCheck.error } : {}),
         fixInstruction: "Enter a valid public HTTPS stream URL.",
       });
     } else if (!streamUrl.endsWith(".m3u8") && !streamUrl.includes("m3u8")) {
@@ -241,7 +241,7 @@ export function runChannelPreflightTests(channel: Record<string, unknown>): Auto
         name: "Partner Privacy Policy Link",
         passed: false,
         severity: "blocker",
-        details: privCheck.error,
+        ...(privCheck.error !== undefined ? { details: privCheck.error } : {}),
         fixInstruction: "Enter a valid public HTTPS link to your privacy policy.",
       });
     } else {
@@ -274,7 +274,7 @@ export function runChannelPreflightTests(channel: Record<string, unknown>): Auto
         name: "Partner Terms of Service Link",
         passed: false,
         severity: "blocker",
-        details: termsCheck.error,
+        ...(termsCheck.error !== undefined ? { details: termsCheck.error } : {}),
         fixInstruction: "Enter a valid public HTTPS link to your terms.",
       });
     } else {

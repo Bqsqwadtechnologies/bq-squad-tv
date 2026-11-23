@@ -24,7 +24,7 @@ function ZillionaireCommentsRoute() {
   return (
     <ConsolePageGuard requiredRole="viewer" requiredModule="moderation">
       {({ token, account, onLock }) => (
-        <CommentsInner token={token} account={account} onLock={onLock} />
+        <CommentsInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );

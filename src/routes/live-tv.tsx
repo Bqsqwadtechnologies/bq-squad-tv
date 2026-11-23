@@ -285,7 +285,7 @@ function LiveTvPage() {
                 guides
               </p>
             </div>
-            {channels.length > 0 && (
+            {channels[0] && (
               <div className="flex items-center gap-3">
                 <Link
                   to="/channels/$channelId"

@@ -24,7 +24,7 @@ function ZillionaireReferralsRoute() {
   return (
     <ConsolePageGuard requiredRole="viewer" requiredModule="finance">
       {({ token, account, onLock }) => (
-        <ReferralsInner token={token} account={account} onLock={onLock} />
+        <ReferralsInner token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );

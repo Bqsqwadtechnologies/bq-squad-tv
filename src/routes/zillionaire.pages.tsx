@@ -112,7 +112,7 @@ function DocumentsHubRoute() {
   );
 }
 
-function DocumentsHubDashboard({ token }: { token: string; account: ConsoleAccount }) {
+function DocumentsHubDashboard({ token, account }: { token: string; account: ConsoleAccount }) {
   const [pages, setPages] = useState<LegalPageDoc[]>([]);
   const [selectedSlug, setSelectedSlug] = useState<string>("privacy-policy");
   const [selectedCategory, setSelectedCategory] = useState<DocumentCategory>("all");
@@ -389,7 +389,7 @@ function DocumentsHubDashboard({ token }: { token: string; account: ConsoleAccou
   }, [activePage, selectedHistoryVersion]);
 
   return (
-    <ConsoleShell activePath="/zillionaire/pages">
+    <ConsoleShell consoleType="zillionaire" title="Documents Hub" account={account} activePath="/zillionaire/pages">
       <div className="space-y-6 p-6">
         <ConsoleWelcomeBanner
           title="Documents Hub"
@@ -527,17 +527,7 @@ function DocumentsHubDashboard({ token }: { token: string; account: ConsoleAccou
                     >
                       <div className="flex items-center justify-between gap-2 mb-1">
                         <span className="font-semibold text-xs truncate">{p.title}</span>
-                        <ConsoleStatusBadge
-                          variant={
-                            p.status === "published"
-                              ? "success"
-                              : p.status === "scheduled"
-                              ? "warning"
-                              : "neutral"
-                          }
-                        >
-                          {p.status}
-                        </ConsoleStatusBadge>
+                        <ConsoleStatusBadge status={p.status} />
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 text-[10px] text-muted-foreground mt-1">
@@ -905,11 +895,7 @@ Content..."
                                 <span className="font-bold text-xs text-foreground">
                                   Version {ver.version}
                                 </span>
-                                <ConsoleStatusBadge
-                                  variant={ver.status === "published" ? "success" : "neutral"}
-                                >
-                                  {ver.status}
-                                </ConsoleStatusBadge>
+                                <ConsoleStatusBadge status={ver.status} />
                               </div>
                               <p className="mt-1 text-xs text-foreground/90">
                                 {ver.changeSummary || "Routine update"}

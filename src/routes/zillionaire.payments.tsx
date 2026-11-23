@@ -60,18 +60,19 @@ function ZillionairePaymentsRoute() {
       description="Viewer top-up transactions, gateway reconciliation against Paystack, and audited reversal workflow with double confirmation."
     >
       {({ token, account, onLock }) => (
-        <ZillionairePaymentsPage token={token} account={account} onLock={onLock} />
+        <ZillionairePaymentsPage token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
 }
 
 function ZillionairePaymentsPage({
+  token,
   account,
   onLock,
 }: {
-  token: string | null;
-  account: { uid: string; email?: string; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
+  token: string;
+  account: { uid: string; email?: string | null; roles?: string[]; modules?: string[]; isOwner?: boolean } | null;
   onLock?: () => void;
 }) {
   const [payments, setPayments] = useState<PaymentItem[]>([]);
@@ -92,7 +93,7 @@ function ZillionairePaymentsPage({
   const fetchPayments = async () => {
     setLoading(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const params = new URLSearchParams();
       if (statusFilter !== "ALL") params.set("status", statusFilter);
       if (searchQuery) params.set("q", searchQuery);
@@ -121,7 +122,7 @@ function ZillionairePaymentsPage({
     setSubmitting(true);
     setFeedback(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch(`/api/public/v1/zillionaire/payments/${reverseTarget.id}/reverse`, {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },

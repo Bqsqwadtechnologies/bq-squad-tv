@@ -531,10 +531,10 @@ function ApprovalsInboxBody({
                 {filteredItems.map((item) => {
                   const sla = formatSla(item.slaDeadline);
                   const isSelected = selectedIds.has(item.id);
-                  const dup = item.details?.duplicateResult as
+                  const dup = item.details?.["duplicateResult"] as
                     | Record<string, unknown>
                     | undefined;
-                  const isDup = dup?.duplicateDetected === true;
+                  const isDup = dup?.["duplicateDetected"] === true;
 
                   return (
                     <tr
@@ -657,17 +657,17 @@ function ApprovalsInboxBody({
             </div>
 
             {/* Media Preview Player */}
-            {activeItem.id !== "bulk" && activeItem.details?.previewPlayer && (
+            {activeItem.id !== "bulk" && Boolean(activeItem.details["previewPlayer"]) && (
               <div className="rounded-2xl border border-white/10 bg-black/50 p-3 space-y-2">
                 <p className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
                   <Play className="h-3.5 w-3.5 text-cyan-400" />
                   <span>Media Preview</span>
                 </p>
                 {(() => {
-                  const p = activeItem.details.previewPlayer as Record<string, unknown>;
-                  const previewUrl = p.previewUrl ? String(p.previewUrl) : null;
-                  const posterUrl = p.posterUrl ? String(p.posterUrl) : null;
-                  const mediaKind = String(p.mediaKind || "video");
+                  const p = activeItem.details["previewPlayer"] as Record<string, unknown>;
+                  const previewUrl = p["previewUrl"] ? String(p["previewUrl"]) : null;
+                  const posterUrl = p["posterUrl"] ? String(p["posterUrl"]) : null;
+                  const mediaKind = String(p["mediaKind"] || "video");
 
                   if (previewUrl && (mediaKind === "video" || mediaKind === "live_hls")) {
                     return (
@@ -707,30 +707,30 @@ function ApprovalsInboxBody({
             )}
 
             {/* Declaration & Rights Proof */}
-            {activeItem.id !== "bulk" && activeItem.details?.declaration && (
+            {activeItem.id !== "bulk" && Boolean(activeItem.details["declaration"]) && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-1.5">
                   <p className="font-bold text-slate-300">Rights Declaration:</p>
                   {(() => {
-                    const d = activeItem.details.declaration as Record<string, unknown>;
+                    const d = activeItem.details["declaration"] as Record<string, unknown>;
                     return (
                       <div className="space-y-1 text-[11px]">
                         <div>
                           <span className="text-slate-500">License: </span>
                           <span className="text-slate-200 font-semibold">
-                            {String(d.licenseType || "Commercial")}
+                            {String(d["licenseType"] || "Commercial")}
                           </span>
                         </div>
                         <div>
                           <span className="text-slate-500">Copyright Holder: </span>
                           <span className="text-slate-200">
-                            {String(d.copyrightHolderName || "Producer")}
+                            {String(d["copyrightHolderName"] || "Producer")}
                           </span>
                         </div>
                         <div>
                           <span className="text-slate-500">Production Year: </span>
                           <span className="text-slate-200">
-                            {String(d.productionYear || new Date().getFullYear())}
+                            {String(d["productionYear"] || new Date().getFullYear())}
                           </span>
                         </div>
                       </div>
@@ -741,9 +741,9 @@ function ApprovalsInboxBody({
                 <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-1.5">
                   <p className="font-bold text-slate-300">Proof of Rights:</p>
                   {(() => {
-                    const pr = (activeItem.details.proofOfRights as Record<string, unknown>) || {};
-                    const hasProof = pr.hasProof === true;
-                    const path = pr.evidencePath ? String(pr.evidencePath) : null;
+                    const pr = (activeItem.details["proofOfRights"] as Record<string, unknown>) || {};
+                    const hasProof = pr["hasProof"] === true;
+                    const path = pr["evidencePath"] ? String(pr["evidencePath"]) : null;
                     return (
                       <div className="space-y-1 text-[11px]">
                         <div>
@@ -762,12 +762,12 @@ function ApprovalsInboxBody({
                           </div>
                         )}
                         {(() => {
-                          const age = (activeItem.details.ageLimit as Record<string, unknown>) || {};
+                          const age = (activeItem.details["ageLimit"] as Record<string, unknown>) || {};
                           return (
                             <div>
                               <span className="text-slate-500">Age Rating: </span>
                               <span className="text-cyan-300 font-bold">
-                                {String(age.ageRating || "PG")}
+                                {String(age["ageRating"] || "PG")}
                               </span>
                             </div>
                           );
@@ -780,11 +780,11 @@ function ApprovalsInboxBody({
             )}
 
             {/* Duplicate & Fingerprint Detection Alert */}
-            {activeItem.id !== "bulk" && activeItem.details?.duplicateResult && (
+            {activeItem.id !== "bulk" && Boolean(activeItem.details["duplicateResult"]) && (
               <div>
                 {(() => {
-                  const dup = activeItem.details.duplicateResult as Record<string, unknown>;
-                  const isDup = dup.duplicateDetected === true;
+                  const dup = activeItem.details["duplicateResult"] as Record<string, unknown>;
+                  const isDup = dup["duplicateDetected"] === true;
                   return isDup ? (
                     <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-200 space-y-1">
                       <p className="font-bold flex items-center gap-1.5 text-amber-300">
@@ -794,11 +794,11 @@ function ApprovalsInboxBody({
                       <p className="text-[11px]">
                         Matched against:{" "}
                         <span className="font-bold text-white">
-                          {String(dup.duplicateOfTitle || "Existing catalog title")}
+                          {String(dup["duplicateOfTitle"] || "Existing catalog title")}
                         </span>
                       </p>
                       <p className="text-[10px] text-amber-300/80 font-mono">
-                        Flag: {String(dup.reviewQueueFlag || "Exact match")}
+                        Flag: {String(dup["reviewQueueFlag"] || "Exact match")}
                       </p>
                     </div>
                   ) : (
@@ -807,7 +807,7 @@ function ApprovalsInboxBody({
                       <div>
                         <p className="font-bold text-emerald-300">Unique Fingerprint Verified</p>
                         <p className="text-[10px] text-emerald-400/80">
-                          {String(dup.reviewQueueFlag || "No copyright or duplicate flags.")}
+                          {String(dup["reviewQueueFlag"] || "No copyright or duplicate flags.")}
                         </p>
                       </div>
                     </div>

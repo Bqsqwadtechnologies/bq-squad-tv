@@ -33,3 +33,5 @@ use the editor.
 
 - Keep the website and its shared API hosted on Lovable; the native Android app consumes that API, and Firebase Authentication + Firestore remain the shared identity/data layer. This preserves the requested hosting setup and avoids a second backend.
 - Keep Firestore schema inspection restricted to the configured Firebase administrator and return field types only, never document values, to limit exposure of production data.
+
+- Shared console presentation components normalize legacy display-prop aliases, while Firebase guard contexts supply request tokens; this preserves older consoles without changing authorization.

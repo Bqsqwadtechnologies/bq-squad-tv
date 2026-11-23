@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useState, useEffect, useMemo, FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ConsolePageGuard } from "@/components/ConsolePageGuard";
@@ -116,7 +117,7 @@ function ProducerTeamContent({
     setFormError("");
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/producer/team", {
         method: "POST",
         headers,
@@ -152,7 +153,7 @@ function ProducerTeamContent({
     setBusyMemberId(member.id);
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/producer/team", {
         method: "PUT",
         headers,
@@ -184,7 +185,7 @@ function ProducerTeamContent({
     setBusyMemberId(member.id);
     try {
       const headers = await getWebAuthHeaders(token);
-      headers.set("Content-Type", "application/json");
+      headers["Content-Type"] = "application/json";
       const res = await fetch("/api/public/v1/producer/team", {
         method: "DELETE",
         headers,
@@ -219,7 +220,7 @@ function ProducerTeamContent({
       consoleType="producer"
       account={account}
       title="Studio Team & Access Scopes"
-      subtitle="Delegate scoped access to collaborators for uploading, analytics, comments, and collaboration."
+      tagline="Delegate scoped access to collaborators for uploading, analytics, comments, and collaboration."
     >
       <div className="space-y-6">
         <ConsoleWelcomeBanner
@@ -227,7 +228,6 @@ function ProducerTeamContent({
           description="Grant team members precise scopes (upload, analytics, comments, collaboration). Each collaborator sees only your studio's content and metrics."
           actionLabel="Add Studio Member"
           onAction={() => setModalOpen(true)}
-          icon={Users}
         />
 
         {successMessage && (
@@ -251,28 +251,28 @@ function ProducerTeamContent({
             value={kpis.total}
             subtitle="Studio personnel"
             icon={Users}
-            tone="brand"
+            variant="blue"
           />
           <ConsoleKpiCard
             title="Active"
             value={kpis.active}
             subtitle="Operational access"
             icon={ShieldCheck}
-            tone="success"
+            variant="green"
           />
           <ConsoleKpiCard
             title="Upload Operators"
             value={kpis.uploaderCount}
             subtitle="Can upload media"
             icon={UploadCloud}
-            tone="neutral"
+            variant="blue"
           />
           <ConsoleKpiCard
             title="Collab Managers"
             value={kpis.collabCount}
             subtitle="Can manage splits"
             icon={Handshake}
-            tone="neutral"
+            variant="blue"
           />
         </div>
 
@@ -280,8 +280,9 @@ function ProducerTeamContent({
         <ConsoleCard
           title="Studio Team Members"
           subtitle="Scoped permissions for your studio assets"
-          actionLabel="Add Member"
-          onAction={() => setModalOpen(true)}
+          headerAction={
+            <Button type="button" onClick={() => setModalOpen(true)}>Add Member</Button>
+          }
         >
           <ConsoleTable
             columns={[
@@ -289,9 +290,9 @@ function ProducerTeamContent({
               { key: "scopes", label: "Granted Scopes" },
               { key: "status", label: "Status" },
               { key: "expiry", label: "Expiry" },
-              { key: "actions", label: "Actions", align: "right" },
+              { key: "actions", label: "Actions", className: "text-right" },
             ]}
-            rows={members.map((m) => ({
+            data={members.map((m) => ({
               id: m.id,
               member: (
                 <div>
@@ -344,7 +345,7 @@ function ProducerTeamContent({
                 </div>
               ),
             }))}
-            emptyMessage={loading ? "Loading team members..." : "No studio team members added yet."}
+            emptyTitle={loading ? "Loading team members..." : "No studio team members added yet."}
           />
         </ConsoleCard>
 

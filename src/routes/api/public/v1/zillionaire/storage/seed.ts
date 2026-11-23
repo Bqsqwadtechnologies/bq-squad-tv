@@ -70,7 +70,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/storage/seed")(
       POST: async ({ request }) => {
         try {
           const user = await requireUser(request);
-          if (process.env.NODE_ENV === "production" && !process.env.ALLOW_SAMPLE_SEED) {
+          if (process.env["NODE_ENV"] === "production" && !process.env["ALLOW_SAMPLE_SEED"]) {
             throw new ApiError(
               403,
               "SEED_LOCKED_IN_PRODUCTION",

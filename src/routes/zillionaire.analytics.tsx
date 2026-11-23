@@ -59,8 +59,9 @@ const compact = (n: number) =>
 const pctText = (n: number) => `${n >= 0 ? "+" : ""}${n}% vs previous period`;
 
 function csv(name: string, rows: Record<string, string | number>[]) {
-  if (!rows.length) return;
-  const keys = Object.keys(rows[0]);
+  const firstRow = rows[0];
+  if (!firstRow) return;
+  const keys = Object.keys(firstRow);
   const body = [keys.join(","), ...rows.map((r) => keys.map((k) => JSON.stringify(r[k] ?? "")).join(","))];
   const url = URL.createObjectURL(new Blob([body.join("\n")], { type: "text/csv" }));
   const a = document.createElement("a");

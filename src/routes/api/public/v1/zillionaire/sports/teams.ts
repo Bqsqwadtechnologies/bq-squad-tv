@@ -37,8 +37,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/sports/teams")(
               name: String(d["name"] || ""),
               shortCode: String(d["shortCode"] || ""),
               country: String(d["country"] || ""),
-              crestUrl: d["crestUrl"] ? String(d["crestUrl"]) : undefined,
-              group: d["group"] ? String(d["group"]) : undefined,
+              ...(d["crestUrl"] ? { crestUrl: String(d["crestUrl"]) } : {}),
+              ...(d["group"] ? { group: String(d["group"]) } : {}),
             }));
 
           return Response.json({ teams });

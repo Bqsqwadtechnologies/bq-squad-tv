@@ -119,7 +119,7 @@ interface PayoutAccountItem {
   updatedAt: string;
 }
 
-function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }) {
+function KycReviewBody({ token, isOwner }: { token: string; isOwner?: boolean }) {
   const [section, setSection] = useState<"kyc" | "payout_accounts" | "applicant_copy">("kyc");
   const [activeTab, setActiveTab] = useState<string>("pending");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -401,27 +401,27 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
           {/* KYC KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <ConsoleKpiCard
-              label="Pending Review"
+              title="Pending Review"
               value={counters.pending}
-              hint="Requires compliance action"
+              subtitle="Requires compliance action"
               icon={<Clock className="h-5 w-5 text-amber-400" />}
             />
             <ConsoleKpiCard
-              label="Needs Changes"
+              title="Needs Changes"
               value={counters.needsChanges}
-              hint="Waiting for applicant"
+              subtitle="Waiting for applicant"
               icon={<AlertTriangle className="h-5 w-5 text-yellow-400" />}
             />
             <ConsoleKpiCard
-              label="Approved Entities"
+              title="Approved Entities"
               value={counters.approved}
-              hint="Unlocked for publishing & payouts"
+              subtitle="Unlocked for publishing & payouts"
               icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
             />
             <ConsoleKpiCard
-              label="Rejected"
+              title="Rejected"
               value={counters.rejected}
-              hint="Failed verification"
+              subtitle="Failed verification"
               icon={<XCircle className="h-5 w-5 text-rose-400" />}
             />
           </div>
@@ -430,7 +430,7 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
           <ConsoleCard
             title="Applicant Queue"
             subtitle="Review, verify, and audit producer and provider identity credentials"
-            action={
+            headerAction={
               <button
                 onClick={fetchQueue}
                 disabled={loading}
@@ -609,27 +609,27 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
           {/* Payout Accounts KPI Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <ConsoleKpiCard
-              label="Pending Payout Accounts"
+              title="Pending Payout Accounts"
               value={payoutCounters.pending}
-              hint="Requires verification approval"
+              subtitle="Requires verification approval"
               icon={<Clock className="h-5 w-5 text-amber-400" />}
             />
             <ConsoleKpiCard
-              label="Approved Accounts"
+              title="Approved Accounts"
               value={payoutCounters.approved}
-              hint="Verified and locked for wire transfer"
+              subtitle="Verified and locked for wire transfer"
               icon={<CheckCircle2 className="h-5 w-5 text-emerald-400" />}
             />
             <ConsoleKpiCard
-              label="Rejected Accounts"
+              title="Rejected Accounts"
               value={payoutCounters.rejected}
-              hint="Requires corrected bank details"
+              subtitle="Requires corrected bank details"
               icon={<XCircle className="h-5 w-5 text-rose-400" />}
             />
             <ConsoleKpiCard
-              label="Total Payout Profiles"
+              title="Total Payout Profiles"
               value={payoutCounters.total}
-              hint="All registered bank profiles"
+              subtitle="All registered bank profiles"
               icon={<Building className="h-5 w-5 text-cyan-400" />}
             />
           </div>
@@ -638,7 +638,7 @@ function KycReviewBody({ token, isOwner }: { token?: string; isOwner?: boolean }
           <ConsoleCard
             title="Payout Accounts Queue"
             subtitle="Verify bank statement proof of account, validate bank/IBAN formats, and approve for wire transfers"
-            action={
+            headerAction={
               <button
                 onClick={fetchPayoutAccounts}
                 disabled={payoutLoading}

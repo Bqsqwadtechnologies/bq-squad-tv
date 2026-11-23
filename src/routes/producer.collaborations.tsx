@@ -67,7 +67,7 @@ function ProducerCollaborationsPage() {
           tagline="Manage co-production split agreements, collaborator requests, and agreed revenue allocations."
           activePath="/producer/collaborations"
           account={{
-            email: account.email || undefined,
+            email: account.email,
             isOwner: account.isOwner,
             modules: account.modules,
           }}
@@ -108,7 +108,7 @@ function CollaborationsBody({
       setLoading(true);
       setError(null);
       const res = await fetch("/api/public/v1/producer/collaborations", {
-        headers: getWebAuthHeaders(token),
+        headers: await getWebAuthHeaders(token),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -153,7 +153,7 @@ function CollaborationsBody({
       const res = await fetch("/api/public/v1/producer/collaborations", {
         method: "POST",
         headers: {
-          ...getWebAuthHeaders(token),
+          ...(await getWebAuthHeaders(token)),
           "Content-Type": "application/json",
         },
         body: JSON.stringify(payload),
@@ -181,7 +181,7 @@ function CollaborationsBody({
       const res = await fetch("/api/public/v1/producer/collaborations", {
         method: "POST",
         headers: {
-          ...getWebAuthHeaders(token),
+          ...(await getWebAuthHeaders(token)),
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -211,7 +211,7 @@ function CollaborationsBody({
       const res = await fetch("/api/public/v1/producer/collaborations", {
         method: "POST",
         headers: {
-          ...getWebAuthHeaders(token),
+          ...(await getWebAuthHeaders(token)),
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -443,6 +443,7 @@ function CollaborationsBody({
                       value={s.email}
                       onChange={(e) => {
                         const updated = [...splits];
+                        if (!updated[idx]) return;
                         updated[idx].email = e.target.value;
                         setSplits(updated);
                       }}
@@ -457,6 +458,7 @@ function CollaborationsBody({
                       value={s.sharePct}
                       onChange={(e) => {
                         const updated = [...splits];
+                        if (!updated[idx]) return;
                         updated[idx].sharePct = parseFloat(e.target.value) || 0;
                         setSplits(updated);
                       }}
@@ -468,6 +470,7 @@ function CollaborationsBody({
                       value={s.role}
                       onChange={(e) => {
                         const updated = [...splits];
+                        if (!updated[idx]) return;
                         updated[idx].role = e.target.value;
                         setSplits(updated);
                       }}

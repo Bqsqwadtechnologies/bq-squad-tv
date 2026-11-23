@@ -16,6 +16,8 @@ export const Route = createFileRoute("/zillionaire/pricing")({
 });
 
 type PricingConfig = {
+  countryRules?: Record<string, CountryPricingRule>;
+  exchangeRates?: Record<string, number>;
   version?: number;
   defaultRatePerMinuteMinor: number;
   minimumSessionBalanceMinor: number;

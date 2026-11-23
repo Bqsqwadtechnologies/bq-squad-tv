@@ -17,7 +17,7 @@ export interface PreviewGrantPayload {
 function getPreviewSecret(): string {
   const secret = process.env["SESSION_SECRET"] || process.env["WEB_SESSION_SECRET"];
   if (!secret) {
-    if (process.env.NODE_ENV === "production") {
+    if (process.env["NODE_ENV"] === "production") {
       throw new ApiError(500, "MISSING_PREVIEW_SECRET", "Preview signing secret is not configured.");
     }
     return "bqsqwad-preview-grant-secret-default";
@@ -48,6 +48,9 @@ export function verifyPreviewToken(
     throw new ApiError(401, "INVALID_PREVIEW_TOKEN", "Invalid preview token structure.");
   }
   const [payloadB64, sig] = parts;
+  if (payloadB64 === undefined || sig === undefined) {
+    throw new ApiError(401, "INVALID_PREVIEW_TOKEN", "Invalid preview token structure.");
+  }
   const secret = customSecret || getPreviewSecret();
   const expectedSig = crypto.createHmac("sha256", secret).update(payloadB64).digest("base64url");
 

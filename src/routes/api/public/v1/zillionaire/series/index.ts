@@ -208,7 +208,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/series/")({
 
             const seasons = (data.seasons || []) as SeasonRecord[];
             seriesList.push({
-              id: doc.id,
+              id: String(doc["id"] || doc.__id),
               title: data.title || "Untitled Series",
               description: data.description || "",
               channelId: data.channelId || "",

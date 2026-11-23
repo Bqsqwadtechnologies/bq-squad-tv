@@ -55,6 +55,8 @@ function createMemoryFirestore() {
       childMode: false,
       hasPaidSubscription: false,
       adultEligible: true,
+      isUnder18: false,
+      kidsSafeMode: false,
     },
   };
 
@@ -253,6 +255,8 @@ describe("Advertising Manager Backend & Policy Tests", () => {
     vi.spyOn(apiModule, "getUserProfile").mockResolvedValue({
       profileComplete: true,
       adultEligible: false,
+      isUnder18: true,
+      kidsSafeMode: true,
       roleTags: [],
       countryCode: "NG",
     });
@@ -273,6 +277,8 @@ describe("Advertising Manager Backend & Policy Tests", () => {
     vi.spyOn(apiModule, "getUserProfile").mockResolvedValue({
       profileComplete: true,
       adultEligible: true,
+      isUnder18: false,
+      kidsSafeMode: false,
       roleTags: [],
       countryCode: "NG",
     });
@@ -298,6 +304,8 @@ describe("Advertising Manager Backend & Policy Tests", () => {
     vi.spyOn(apiModule, "getUserProfile").mockResolvedValue({
       profileComplete: true,
       adultEligible: true,
+      isUnder18: false,
+      kidsSafeMode: false,
       roleTags: ["subscriber"],
       countryCode: "NG",
     });

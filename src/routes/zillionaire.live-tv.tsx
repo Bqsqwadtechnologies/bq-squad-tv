@@ -116,7 +116,7 @@ function ZillionaireLiveTvRoute() {
       description="Create live channels, manage programme listings, review submissions and monitor playback status."
     >
       {({ token, account, onLock }) => (
-        <LiveTvPage token={token} account={account} onLock={onLock} />
+        <LiveTvPage token={token} account={account} {...(onLock ? { onLock } : {})} />
       )}
     </ConsolePageGuard>
   );
@@ -129,7 +129,7 @@ function LiveTvPage({
 }: {
   token: string;
   account: any;
-  onLock: () => void;
+  onLock?: () => void;
 }) {
   const [channels, setChannels] = useState<LiveChannel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -143,7 +143,7 @@ function LiveTvPage({
   const [programmeDrafts, setProgrammeDrafts] = useState<Record<string, string>>({});
 
   const authHeaders = useCallback(async () => {
-    const headers = await getWebAuthHeaders();
+    const headers = await getWebAuthHeaders(token);
     return { ...headers, authorization: `Bearer ${token}` };
   }, [token]);
 
@@ -366,7 +366,7 @@ function LiveTvPage({
                       <p className="truncate"><span className="text-slate-500">Failover HLS:</span> <span className="text-slate-300">{channel.failoverStreamUrl || "Not configured"}</span></p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3 text-xs">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 ${channel.playbackHealth.status === "healthy" ? "bg-emerald-950 text-emerald-300" : channel.playbackHealth.status === "degraded" ? "bg-amber-950 text-amber-300" : "bg-red-950 text-red-300"}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 ${channel.playbackHealth?.status === "healthy" ? "bg-emerald-950 text-emerald-300" : channel.playbackHealth?.status === "degraded" ? "bg-amber-950 text-amber-300" : "bg-red-950 text-red-300"}`}>
                         {channel.playbackHealth?.status === "healthy" ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
                         Playback {channel.playbackHealth?.status || "unknown"}
                       </span>

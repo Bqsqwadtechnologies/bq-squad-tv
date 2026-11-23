@@ -122,6 +122,7 @@ export type PricingConfig = {
   defaultRatePerMinuteMinor: number;
   basePricePerMinuteUsdMinor?: number;
   minimumSessionBalanceByCurrency?: Record<string, number>;
+  currencyRates?: Record<string, number>;
   minimumSessionBalanceMinor?: number;
   dailySpendLimitByCurrency?: Record<string, number>;
   producerShareBpsByChannel?: Record<string, number>;
@@ -705,12 +706,12 @@ export function exportCountryPricingRulesCsv(
 export function parseCountryPricingRulesCsv(csvText: string): Partial<CountryPricingRule>[] {
   const lines = csvText.trim().split("\n");
   if (lines.length < 2) return [];
-  const headerLine = lines[0].trim();
+  const headerLine = lines[0]?.trim() ?? "";
   const headers = headerLine.split(",").map((h) => h.trim());
   const rules: Partial<CountryPricingRule>[] = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
+    const line = lines[i]?.trim() ?? "";
     if (!line) continue;
     const parts = line.split(",").map((p) => p.trim());
     const row: Record<string, string> = {};

@@ -814,12 +814,11 @@ function ZillionaireOverviewBody({
         <ConsoleActivityList
           items={(overview?.recentActivity || []).map((act) => ({
             id: act.id,
-            title: act.title || ("action" in act ? String((act as RecentActivityLog).action).replace(/_/g, " ").toUpperCase() : "Platform Event"),
-            subtitle: act.subtitle || ("reason" in act && (act as RecentActivityLog).reason ? (act as RecentActivityLog).reason : "Recorded in audit ledger"),
-            timestamp: act.timestamp ? (act.timestamp.includes("T") ? new Date(act.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : act.timestamp) : undefined,
+            title: act.action.replace(/_/g, " ").toUpperCase(),
+            subtitle: act.reason || "Recorded in audit ledger",
+            ...(act.timestamp ? { timestamp: act.timestamp.includes("T") ? new Date(act.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : act.timestamp } : {}),
             status: "success",
             icon: CheckCircle2,
-            onClick: act.onClick,
           }))}
         />
       </ConsoleCard>

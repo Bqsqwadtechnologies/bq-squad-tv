@@ -40,7 +40,7 @@ describe('Batch A1: KYC Persistence & Authenticated Viewer', () => {
     const profile = await saveKycProfile(mockFs, {
       uid: 'user_test_producer_01',
       role: 'producer',
-      kycType: 'individual',
+      kycType: 'producer_personal',
       kycCountry: 'US',
       rawIdNumber: rawId,
       rawTaxNumber: rawTax,
@@ -69,7 +69,7 @@ describe('Batch A1: KYC Persistence & Authenticated Viewer', () => {
     await saveKycProfile(mockFs, {
       uid: 'user_test_02',
       role: 'producer',
-      kycType: 'individual',
+      kycType: 'producer_personal',
       kycCountry: 'GB',
     });
 

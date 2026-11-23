@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useState, useEffect, FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ConsolePageGuard } from "@/components/ConsolePageGuard";
@@ -53,14 +54,16 @@ type SettingsTab =
 function ZillionaireSettingsRoute() {
   return (
     <ConsolePageGuard role="zillionaire" module="settings">
-      <ConsoleShell activeRoute="/zillionaire/settings">
-        <ZillionaireSettingsContent />
-      </ConsoleShell>
+      {({ token, account, onLock }) => (
+        <ConsoleShell consoleType="zillionaire" title="Platform Settings" account={account} onLock={onLock} activePath="/zillionaire/settings">
+          <ZillionaireSettingsContent token={token} />
+        </ConsoleShell>
+      )}
     </ConsolePageGuard>
   );
 }
 
-function ZillionaireSettingsContent() {
+function ZillionaireSettingsContent({ token }: { token: string }) {
   const [activeTab, setActiveTab] = useState<SettingsTab>("maintenance");
   const [settings, setSettings] = useState<PlatformSettings>(DEFAULT_PLATFORM_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -87,7 +90,7 @@ function ZillionaireSettingsContent() {
   async function loadSettings() {
     setLoading(true);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/zillionaire/config/settings", { headers });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -117,7 +120,7 @@ function ZillionaireSettingsContent() {
     setSaving(true);
     setFeedback(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/zillionaire/config/settings", {
         method: "PUT",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -145,7 +148,7 @@ function ZillionaireSettingsContent() {
     setTestingEmail(true);
     setTestEmailResult(null);
     try {
-      const headers = await getWebAuthHeaders();
+      const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/zillionaire/config/settings", {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
@@ -215,12 +218,8 @@ function ZillionaireSettingsContent() {
       <ConsoleWelcomeBanner
         title="Platform Settings & System Controls"
         description="Configure platform-wide operating parameters, maintenance gates, rate limits, geofencing, wallet constraints, Android force-updates, and transactional email routing."
-        role="zillionaire"
         badge={settings.maintenanceMode ? "MAINTENANCE ACTIVE" : "PLATFORM ONLINE"}
-        action={{
-          label: "View Feature Toggles",
-          href: "/zillionaire/features",
-        }}
+        actions={<Button asChild><a href="/zillionaire/features">View Feature Toggles</a></Button>}
       />
 
       {/* KPI Cards */}
@@ -228,7 +227,7 @@ function ZillionaireSettingsContent() {
         <ConsoleKpiCard
           title="Maintenance Mode"
           value={settings.maintenanceMode ? "ENABLED" : "STANDBY"}
-          subtext={
+          subtitle={
             settings.maintenanceMode
               ? settings.ownerBypass
                 ? "Active (Owner bypass allowed)"
@@ -236,7 +235,7 @@ function ZillionaireSettingsContent() {
               : "All streaming services online"
           }
           icon={ShieldAlert}
-          gradient={settings.maintenanceMode ? "rose" : "emerald"}
+          gradient={settings.maintenanceMode ? "red" : "green"}
         />
 
         <ConsoleKpiCard
@@ -246,7 +245,7 @@ function ZillionaireSettingsContent() {
               ? `${settings.blockedCountries.length} Blocked`
               : `${settings.allowedCountries.length} Allowed Only`
           }
-          subtext={`${settings.blockedIps.length} active IP/CIDR block rules`}
+          subtitle={`${settings.blockedIps.length} active IP/CIDR block rules`}
           icon={Globe}
           gradient="blue"
         />
@@ -254,21 +253,21 @@ function ZillionaireSettingsContent() {
         <ConsoleKpiCard
           title="Android Release Gate"
           value={`v${settings.minAndroidVersionCode} Min`}
-          subtext={
+          subtitle={
             settings.forceUpdateAndroid
               ? `Force update active (target v${settings.latestAndroidVersionCode})`
               : `Current release: v${settings.androidVersionName}`
           }
           icon={Smartphone}
-          gradient={settings.forceUpdateAndroid ? "amber" : "purple"}
+          gradient={settings.forceUpdateAndroid ? "gold" : "purple"}
         />
 
         <ConsoleKpiCard
           title="Session & Rate Limits"
           value={`${settings.maxConcurrentSessions} Sessions`}
-          subtext={`${settings.publicApiRpm} RPM public / ${settings.authAttemptsRpm} auth RPM`}
+          subtitle={`${settings.publicApiRpm} RPM public / ${settings.authAttemptsRpm} auth RPM`}
           icon={Clock}
-          gradient="cyan"
+          gradient="blue"
         />
       </div>
 

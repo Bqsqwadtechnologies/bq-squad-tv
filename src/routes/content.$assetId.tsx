@@ -419,7 +419,7 @@ export function ContentDetailsPage() {
               type: content.category.toLowerCase().includes("series") ? "series" : "movie",
               genre: content.category,
               posterUrl: content.posterUrl || "/brand/og-image.png",
-              addedAt: new Date().toISOString().split("T")[0],
+              addedAt: new Date().toISOString().slice(0, 10),
             });
           }
         } else {
@@ -447,9 +447,9 @@ export function ContentDetailsPage() {
           posterUrl: content?.posterUrl,
         }),
       });
-      if (typeof res.likeCount === "number") setLikeCount(res.likeCount as number);
-      if (typeof res.dislikeCount === "number") setDislikeCount(res.dislikeCount as number);
-      setUserReaction(res.userReaction as "like" | "dislike" | null);
+      if (typeof res["likeCount"] === "number") setLikeCount(res["likeCount"] as number);
+      if (typeof res["dislikeCount"] === "number") setDislikeCount(res["dislikeCount"] as number);
+      setUserReaction(res["userReaction"] as "like" | "dislike" | null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not save reaction.");
     }
@@ -472,108 +472,8 @@ export function ContentDetailsPage() {
           maxParticipants: partyMaxParticipants,
         }),
       });
-      if (res.party && (res.party as any).id) {
-        window.location.assign();
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create watch party.");
-    } finally {
-      setPartyBusy(false);
-      setPartyModalOpen(false);
-    }
-  }
-
-  async function submitCommentReport(e: FormEvent) {
-    e.preventDefault();
-    if (!targetCommentId) return;
-    setCommentReportBusy(true);
-    try {
-      await api("/api/public/v1/comment-reports", {
-        method: "POST",
-        body: JSON.stringify({
-          commentId: targetCommentId,
-          assetId,
-          reason: commentReportReason,
-          details: commentReportDetails,
-        }),
-      });
-      setMessage("Comment report submitted for moderator review.");
-      setCommentReportModalOpen(false);
-      setCommentReportDetails("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to report comment.");
-    } finally {
-      setCommentReportBusy(false);
-    }
-  }
-
-  function handleSleepTimerChange(mins: string) {
-    setSleepTimer(mins);
-    if (mins === "off") {
-      setSleepTimerEndsAt(null);
-    } else {
-      const durationMs = parseInt(mins, 10) * 60 * 1000;
-      setSleepTimerEndsAt(Date.now() + durationMs);
-    }
-  }
-
-  // Sleep timer interval
-  useEffect(() => {
-    if (!sleepTimerEndsAt) return;
-    const interval = setInterval(() => {
-      if (Date.now() >= sleepTimerEndsAt) {
-        if (videoRef.current) {
-          videoRef.current.pause();
-          setMessage("Sleep timer reached. Playback paused.");
-        }
-        setSleepTimer("off");
-        setSleepTimerEndsAt(null);
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [sleepTimerEndsAt]);
-
-
-  async function handleReaction(vote: "like" | "dislike") {
-    const nextVote = userReaction === vote ? "none" : vote;
-    try {
-      const res = await api("/api/public/v1/reactions", {
-        method: "POST",
-        body: JSON.stringify({
-          targetType: "video",
-          targetId: assetId,
-          reaction: nextVote,
-          title: content?.title,
-          posterUrl: content?.posterUrl,
-        }),
-      });
-      if (typeof res.likeCount === "number") setLikeCount(res.likeCount as number);
-      if (typeof res.dislikeCount === "number") setDislikeCount(res.dislikeCount as number);
-      setUserReaction(res.userReaction as "like" | "dislike" | null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save reaction.");
-    }
-  }
-
-  async function handleCreateWatchParty() {
-    if (!content) return;
-    setPartyBusy(true);
-    setError("");
-    try {
-      const res = await api("/api/public/v1/watch-parties/", {
-        method: "POST",
-        body: JSON.stringify({
-          targetType: "movie",
-          targetId: assetId,
-          title: content.title,
-          posterUrl: content.posterUrl,
-          streamUrl: playbackUrl || null,
-          contentRating: content.contentRating || "PG-13",
-          maxParticipants: partyMaxParticipants,
-        }),
-      });
-      if (res.party && (res.party as any).id) {
-        window.location.assign(`/watch-party/${(res.party as any).id}?code=${(res.party as any).roomCode}`);
+      if (res["party"] && (res["party"] as any).id) {
+        window.location.assign(`/watch-party/${(res["party"] as any).id}?code=${(res["party"] as any).roomCode}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create watch party.");
