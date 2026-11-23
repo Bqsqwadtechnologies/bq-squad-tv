@@ -71,7 +71,7 @@ const mockCollabs: Collaboration[] = [
 function CollaborationsOversightRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="finance">
-      {(account) => <CollaborationsContent account={account} />}
+      {({ account }) => <CollaborationsContent account={account} />}
     </ConsolePageGuard>
   );
 }
