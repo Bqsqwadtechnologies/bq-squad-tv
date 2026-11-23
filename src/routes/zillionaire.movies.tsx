@@ -194,6 +194,7 @@ function ZillionaireMoviesPage({
 
   async function handlePreviewAsset(asset: ContentAsset) {
     setActionFeedback(null);
+    const previewWindow = window.open("about:blank", "_blank");
     try {
       const headers = await getWebAuthHeaders();
       const response = await fetch("/api/public/v1/preview/grant", {
@@ -205,9 +206,15 @@ function ZillionaireMoviesPage({
       if (!response.ok || !result.previewPath) {
         throw new Error(result.error ?? "A private preview is not available yet.");
       }
-      window.open(result.previewPath, "_blank", "noopener,noreferrer");
+      if (previewWindow) {
+        previewWindow.opener = null;
+        previewWindow.location.replace(result.previewPath);
+      } else {
+        window.location.assign(result.previewPath);
+      }
       setActionFeedback("Private preview opened in a new tab.");
     } catch (caught) {
+      previewWindow?.close();
       setActionFeedback(caught instanceof Error ? caught.message : "Could not open the private preview.");
     }
   }
