@@ -53,7 +53,7 @@ const mockAnnouncements: Announcement[] = [
 function AnnouncementsRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="pages">
-      {(account) => <AnnouncementsContent account={account} />}
+      {({ account }) => <AnnouncementsContent account={account} />}
     </ConsolePageGuard>
   );
 }
