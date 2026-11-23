@@ -42,7 +42,7 @@ function GeoRulesContent({ account, token }: { account: ConsoleAccount; token: s
   const [activeTab, setActiveTab] = useState<"geo" | "kyc">("kyc");
   const [geoRules, setGeoRules] = useState<GeoRule[]>([]);
   const [kycRules, setKycRules] = useState<KycCountryRule[]>(() => getAllCountryRules());
-  const [customOverrides, setCustomOverrides] = useState<Record<string, any>>({});
+  const [customOverrides, setCustomOverrides] = useState<Record<string, unknown>>({});
   const [loadingKyc, setLoadingKyc] = useState(false);
   const [notice, setNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -100,8 +100,8 @@ function GeoRulesContent({ account, token }: { account: ConsoleAccount; token: s
         const data = await updatedRes.json();
         setKycRules(data.rules);
       }
-    } catch (err: any) {
-      setNotice({ type: "error", text: err.message || "Error updating country rule." });
+    } catch (err: unknown) {
+      setNotice({ type: "error", text: err instanceof Error ? err.message : "Error updating country rule." });
     }
   }
 
