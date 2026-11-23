@@ -143,6 +143,13 @@ function ZillionaireProducersContent({
   const [payoutCurrency, setPayoutCurrency] = useState("NGN");
   const [payoutReason, setPayoutReason] = useState("");
   const [payoutBusy, setPayoutBusy] = useState(false);
+  const [blueTickEnabled, setBlueTickEnabled] = useState(false);
+  const [blueTickPriceMajor, setBlueTickPriceMajor] = useState("0");
+  const [blueTickCurrency, setBlueTickCurrency] = useState("NGN");
+  const [blueTickReason, setBlueTickReason] = useState("");
+  const [blueTickSaving, setBlueTickSaving] = useState(false);
+  const [blueTickConfigError, setBlueTickConfigError] = useState("");
+  const [blueTickConfigNotice, setBlueTickConfigNotice] = useState("");
 
   const fetchProducers = async () => {
     setLoading(true);
@@ -167,6 +174,61 @@ function ZillionaireProducersContent({
   useEffect(() => {
     void fetchProducers();
   }, [token, statusFilter]);
+
+  useEffect(() => {
+    if (!account.isOwner) return;
+    void (async () => {
+      try {
+        const headers = await getWebAuthHeaders(token);
+        const response = await fetch("/api/public/v1/zillionaire/config/producer-blue-tick", { headers, cache: "no-store" });
+        const data = await response.json() as { config?: { enabled?: boolean; monthlyPriceMinor?: number; currency?: string }; error?: string };
+        if (!response.ok || !data.config) throw new Error(data.error || "Could not load public verification pricing.");
+        const currency = data.config.currency || "NGN";
+        setBlueTickEnabled(data.config.enabled === true);
+        setBlueTickCurrency(currency);
+        setBlueTickPriceMajor(String((Number(data.config.monthlyPriceMinor) || 0) / (currency === "XOF" ? 1 : 100)));
+      } catch (caught) {
+        setBlueTickConfigError(caught instanceof Error ? caught.message : "Could not load public verification pricing.");
+      }
+    })();
+  }, [token, account.isOwner]);
+
+  async function saveBlueTickConfig() {
+    const factor = blueTickCurrency === "XOF" ? 1 : 100;
+    const monthlyPriceMinor = Math.round(Number(blueTickPriceMajor) * factor);
+    if (!Number.isSafeInteger(monthlyPriceMinor) || monthlyPriceMinor < 1) {
+      setBlueTickConfigError("Enter a valid monthly price greater than zero.");
+      return;
+    }
+    if (!blueTickReason.trim()) {
+      setBlueTickConfigError("An audit reason is required to change public verification pricing.");
+      return;
+    }
+    setBlueTickSaving(true);
+    setBlueTickConfigError("");
+    setBlueTickConfigNotice("");
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const response = await fetch("/api/public/v1/zillionaire/config/producer-blue-tick", {
+        method: "PUT",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({
+          enabled: blueTickEnabled,
+          monthlyPriceMinor,
+          currency: blueTickCurrency,
+          reason: blueTickReason.trim(),
+        }),
+      });
+      const data = await response.json() as { saved?: boolean; error?: string; message?: string };
+      if (!response.ok || !data.saved) throw new Error(data.message || data.error || "Could not save public verification pricing.");
+      setBlueTickConfigNotice("Monthly public verification pricing saved.");
+      setBlueTickReason("");
+    } catch (caught) {
+      setBlueTickConfigError(caught instanceof Error ? caught.message : "Could not save public verification pricing.");
+    } finally {
+      setBlueTickSaving(false);
+    }
+  }
 
   const handleOpenReview = (p: ProducerItem) => {
     setSelectedProducer(p);
@@ -384,6 +446,37 @@ function ZillionaireProducersContent({
           icon={ShieldAlert}
         />
       </div>
+
+      {account.isOwner && (
+        <ConsoleCard
+          title="Monthly Public Blue-Tick Pricing"
+          description="Set the optional monthly public-verification price. Identity/KYC approval remains a separate mandatory producer review."
+        >
+          <div className="grid gap-4 md:grid-cols-[1fr_180px_auto] md:items-end">
+            <label className="grid gap-1.5 text-xs font-semibold">
+              Monthly price ({blueTickCurrency})
+              <input type="number" min="0.01" step={blueTickCurrency === "XOF" ? "1" : "0.01"} value={blueTickPriceMajor} onChange={(event) => setBlueTickPriceMajor(event.target.value)} className="rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground" />
+              <span className="font-normal text-muted-foreground">Charged every 30 days. NGN amounts are converted to kobo automatically.</span>
+            </label>
+            <label className="grid gap-1.5 text-xs font-semibold">
+              Currency
+              <select value={blueTickCurrency} onChange={(event) => setBlueTickCurrency(event.target.value)} className="rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground">
+                {["NGN", "USD", "GHS", "ZAR", "KES", "XOF"].map((currency) => <option key={currency} value={currency}>{currency}</option>)}
+              </select>
+            </label>
+            <button type="button" onClick={() => setBlueTickEnabled((value) => !value)} aria-pressed={blueTickEnabled} className={`rounded-xl border px-4 py-2.5 text-xs font-bold ${blueTickEnabled ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600" : "border-border bg-muted text-muted-foreground"}`}>
+              {blueTickEnabled ? "Enabled" : "Disabled"}
+            </button>
+          </div>
+          <label className="mt-4 grid gap-1.5 text-xs font-semibold">
+            Audit reason
+            <input value={blueTickReason} onChange={(event) => setBlueTickReason(event.target.value)} maxLength={1000} placeholder="Why are you changing public verification pricing?" className="rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground" />
+          </label>
+          {blueTickConfigError && <p role="alert" className="mt-3 text-xs text-rose-500">{blueTickConfigError}</p>}
+          {blueTickConfigNotice && <p role="status" className="mt-3 text-xs text-emerald-600">{blueTickConfigNotice}</p>}
+          <button type="button" onClick={() => void saveBlueTickConfig()} disabled={blueTickSaving || !blueTickReason.trim()} className="mt-4 rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground disabled:opacity-50">{blueTickSaving ? "Saving…" : "Save monthly pricing"}</button>
+        </ConsoleCard>
+      )}
 
       <ConsoleCard
         title="Producer Accounts"
