@@ -85,25 +85,65 @@ function LiveTvPage() {
     let active = true;
     void (async () => {
       try {
-        const res = await fetch("/api/public/v1/catalog/home", { cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
+        const [catalogResponse, epgResponse] = await Promise.all([
+          fetch("/api/public/v1/catalog/home", { cache: "no-store" }),
+          fetch("/api/public/v1/epg/", { cache: "no-store" }),
+        ]);
+        if (catalogResponse.ok) {
+          const data = await catalogResponse.json();
           if (active && Array.isArray(data.channels)) {
-            const liveChannels: LiveChannel[] = data.channels.filter((c: any) => c.isLive === true).map((c: any) => ({
-              id: c.id,
-              name: c.name || c.title || "Live Channel",
-              category: c.category || "General",
-              currentShow: c.currentShow || "Live Broadcast",
-              nextShow: c.nextShow || "Upcoming Broadcast",
-              viewersCount: typeof c.currentViewers === "number" ? c.currentViewers : (typeof c.viewersCount === "number" ? c.viewersCount : 0),
-              thumbnailUrl: c.thumbnailUrl || "/brand/og-image.png",
-              isLive: c.isLive === true,
-            }));
+            const liveChannels: LiveChannel[] = data.channels
+              .filter((channel: Record<string, unknown>) => channel["isLive"] === true)
+              .map((channel: Record<string, unknown>) => ({
+                id: String(channel["id"] || ""),
+                name: String(channel["name"] || channel["title"] || "Live Channel"),
+                category: String(channel["category"] || "General"),
+                currentShow: String(channel["currentShow"] || "Live Broadcast"),
+                nextShow: String(channel["nextShow"] || "Upcoming Broadcast"),
+                viewersCount: typeof channel["currentViewers"] === "number"
+                  ? channel["currentViewers"]
+                  : typeof channel["viewersCount"] === "number" ? channel["viewersCount"] : 0,
+                thumbnailUrl: String(channel["thumbnailUrl"] || "/brand/og-image.png"),
+                isLive: channel["isLive"] === true,
+              }));
             setChannels(liveChannels);
           }
         }
+        if (epgResponse.ok) {
+          const epg = await epgResponse.json() as {
+            channels?: Array<{
+              channelId: string;
+              channelName: string;
+              now?: Record<string, unknown> | null;
+              next?: Record<string, unknown> | null;
+              upcoming?: Array<Record<string, unknown>>;
+            }>;
+          };
+          if (active && Array.isArray(epg.channels)) {
+            const seen = new Set<string>();
+            const items: ScheduleItem[] = [];
+            for (const channel of epg.channels) {
+              for (const program of [channel.now, channel.next, ...(channel.upcoming || [])]) {
+                if (!program) continue;
+                const id = String(program["id"] || program["__id"] || "");
+                if (!id || seen.has(id)) continue;
+                seen.add(id);
+                items.push({
+                  id,
+                  channelId: channel.channelId,
+                  channelName: channel.channelName,
+                  title: String(program["title"] || program["name"] || "Scheduled programme"),
+                  time: String(program["startTime"] || ""),
+                  category: String(program["category"] || "General"),
+                  synopsis: String(program["synopsis"] || program["description"] || ""),
+                });
+              }
+            }
+            setSchedule(items);
+          }
+        }
       } catch {
-        // Fallback or offline
+        // Keep the live channel grid usable when one public catalogue feed is unavailable.
       } finally {
         if (active) setIsLoading(false);
       }
@@ -177,7 +217,7 @@ function LiveTvPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#030B2A] via-[#07143D] to-[#0A1A4A] text-white pb-24 md:pb-12">
+    <div className="viewer-theme-surface min-h-screen bg-gradient-to-b from-[#030B2A] via-[#07143D] to-[#0A1A4A] text-white pb-24 md:pb-12">
       {/* Toast alert */}
       {toastMessage && (
         <div
