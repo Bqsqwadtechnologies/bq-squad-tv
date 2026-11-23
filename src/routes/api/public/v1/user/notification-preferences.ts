@@ -9,6 +9,7 @@ const preferencesSchema = z.object({
   watchPartyInvites: z.boolean().default(true),
   billingReceipts: z.boolean().default(true),
   marketingUpdates: z.boolean().default(false),
+  followedProducerReleases: z.boolean().default(true),
 });
 
 export const Route = createFileRoute("/api/public/v1/user/notification-preferences")({
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/api/public/v1/user/notification-preferenc
             watchPartyInvites: doc?.["watchPartyInvites"] ?? true,
             billingReceipts: doc?.["billingReceipts"] ?? true,
             marketingUpdates: doc?.["marketingUpdates"] ?? false,
+            followedProducerReleases: doc?.["followedProducerReleases"] ?? true,
           };
 
           return Response.json(preferences);
