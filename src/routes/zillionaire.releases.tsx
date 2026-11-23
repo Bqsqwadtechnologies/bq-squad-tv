@@ -25,32 +25,6 @@ interface AppReleaseRule {
   updatedAt: string;
 }
 
-const mockReleaseRules: AppReleaseRule[] = [
-  {
-    id: "rel_android_mobile",
-    platform: "android",
-    currentLiveVersion: "6.2.0",
-    minSupportedVersion: "6.0.0",
-    minVersionCode: 600,
-    forceUpdate: false,
-    maintenanceMode: false,
-    maintenanceMessage: "BQ SQWAD TV Android client is operating normally.",
-    downloadUrl: "https://play.google.com/store/apps/details?id=com.bqsqwad.tv",
-    updatedAt: "2026-03-24",
-  },
-  {
-    id: "rel_web_client",
-    platform: "web_pwa",
-    currentLiveVersion: "6.2.0",
-    minSupportedVersion: "6.2.0",
-    minVersionCode: 620,
-    forceUpdate: false,
-    maintenanceMode: false,
-    maintenanceMessage: "Web application is operational.",
-    downloadUrl: "https://bqsqwad.tv",
-    updatedAt: "2026-03-24",
-  },
-];
 
 function ReleasesControlRoute() {
   return (
@@ -61,7 +35,7 @@ function ReleasesControlRoute() {
 }
 
 function ReleasesControlContent({ account }: { account: ConsoleAccount }) {
-  const [rules, setRules] = useState<AppReleaseRule[]>(mockReleaseRules);
+  const [rules, setRules] = useState<AppReleaseRule[]>([]);
 
   const columns: EntityColumn<AppReleaseRule>[] = [
     { key: "platform", header: "Client Platform", render: (r) => <span className="font-bold uppercase text-cyan-300">{r.platform}</span> },
@@ -101,7 +75,7 @@ function ReleasesControlContent({ account }: { account: ConsoleAccount }) {
     <ZillionaireEntityConsole
       account={account}
       title="App Release & Maintenance Control"
-      subtitle="Manage Android APK minimum versions, mandatory upgrade gates, and instant emergency platform locks."
+      subtitle="Manage Android APK minimum versions, mandatory upgrade gates, and instant emergency platform locks. No live records are available from a connected service yet; sample data is intentionally not shown."
       icon={Smartphone}
       items={rules}
       columns={columns}
