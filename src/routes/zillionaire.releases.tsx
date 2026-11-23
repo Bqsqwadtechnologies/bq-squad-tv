@@ -55,7 +55,7 @@ const mockReleaseRules: AppReleaseRule[] = [
 function ReleasesControlRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="settings">
-      {(account) => <ReleasesControlContent account={account} />}
+      {({ account }) => <ReleasesControlContent account={account} />}
     </ConsolePageGuard>
   );
 }
