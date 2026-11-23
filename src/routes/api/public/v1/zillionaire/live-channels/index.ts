@@ -249,7 +249,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               deliveryMode: "live_hls",
               channelType: "live_tv",
               type: "platform",
-              ownerUid: user.uid,
+              // Platform channels belong to BQ SQWAD TV, not the owner personal producer identity.
+              // Keep the acting owner separately for audit and attribution.
+              ownerUid: "platform",
+              createdBy: user.uid,
               status: "ACTIVE",
               published: true,
               isLive: false,
