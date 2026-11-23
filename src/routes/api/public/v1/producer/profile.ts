@@ -93,6 +93,8 @@ export const Route = createFileRoute("/api/public/v1/producer/profile")({
               externalLinks: Array.isArray(producer["externalLinks"]) ? producer["externalLinks"] : [],
               followerCount: Math.max(0, Number(producer["followerCount"]) || 0),
               verificationStatus: producer["verificationStatus"] || "PENDING",
+              publicVerificationStatus: producer["publicVerificationStatus"] || "INACTIVE",
+              publicVerificationUntil: producer["publicVerificationUntil"] || null,
               planStatus: producer["planStatus"] || "ACTIVE",
             },
           });
