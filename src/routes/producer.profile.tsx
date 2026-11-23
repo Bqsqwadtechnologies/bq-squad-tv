@@ -15,6 +15,9 @@ type ProducerProfile = {
   bannerUrl: string | null;
   avatarPath?: string | null;
   bannerPath?: string | null;
+  brandOverlayText?: string;
+  brandOverlayLogoPath?: string | null;
+  brandOverlayLogoUrl?: string | null;
   followerCount: number;
   verificationStatus: string;
   publicVerificationStatus?: string;
@@ -66,11 +69,14 @@ function ProducerProfileContent({ token, account, onLock }: {
   const [bio, setBio] = useState("");
   const [avatarPath, setAvatarPath] = useState<string | null>(null);
   const [bannerPath, setBannerPath] = useState<string | null>(null);
+  const [brandOverlayLogoPath, setBrandOverlayLogoPath] = useState<string | null>(null);
+  const [brandOverlayText, setBrandOverlayText] = useState("");
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [brandOverlayPreview, setBrandOverlayPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState<"avatar" | "banner" | null>(null);
+  const [uploading, setUploading] = useState<"avatar" | "banner" | "watermark" | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
@@ -92,8 +98,11 @@ function ProducerProfileContent({ token, account, onLock }: {
       setBio(data.profile.bio || "");
       setAvatarPath(data.profile.avatarPath || null);
       setBannerPath(data.profile.bannerPath || null);
+      setBrandOverlayLogoPath(data.profile.brandOverlayLogoPath || null);
+      setBrandOverlayText(data.profile.brandOverlayText || "");
       setAvatarPreview(data.profile.avatarUrl || null);
       setBannerPreview(data.profile.bannerUrl || null);
+      setBrandOverlayPreview(data.profile.brandOverlayLogoUrl || null);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Your profile could not be loaded.");
     } finally {
@@ -139,7 +148,7 @@ function ProducerProfileContent({ token, account, onLock }: {
     return () => { active = false; };
   }, [token, loadProfile]);
 
-  async function uploadImage(event: ChangeEvent<HTMLInputElement>, kind: "avatar" | "banner") {
+  async function uploadImage(event: ChangeEvent<HTMLInputElement>, kind: "avatar" | "banner" | "watermark") {
     const file = event.target.files?.[0];
     if (!file) return;
     if (file.size < 1 || file.size > 8 * 1024 * 1024) {
@@ -164,11 +173,14 @@ function ProducerProfileContent({ token, account, onLock }: {
       if (kind === "avatar") {
         setAvatarPath(data.path);
         setAvatarPreview(data.previewUrl);
-      } else {
+      } else if (kind === "banner") {
         setBannerPath(data.path);
         setBannerPreview(data.previewUrl);
+      } else {
+        setBrandOverlayLogoPath(data.path);
+        setBrandOverlayPreview(data.previewUrl);
       }
-      setNotice(kind === "avatar" ? "Profile photo uploaded. Save your profile to publish it." : "Cover photo uploaded. Save your profile to publish it.");
+      setNotice(kind === "avatar" ? "Profile photo uploaded. Save your profile to publish it." : kind === "banner" ? "Cover photo uploaded. Save your profile to publish it." : "Producer watermark logo uploaded. Save your profile to publish it.");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "The image could not be uploaded.");
     } finally {
@@ -214,6 +226,8 @@ function ProducerProfileContent({ token, account, onLock }: {
           bio: bio.trim(),
           avatarPath,
           bannerPath,
+          brandOverlayText: brandOverlayText.trim(),
+          brandOverlayLogoPath,
         }),
       });
       const data = await response.json() as { success?: boolean; error?: string; message?: string };
@@ -266,6 +280,22 @@ function ProducerProfileContent({ token, account, onLock }: {
                 </label>
               </div>
             </div>
+          </ConsoleCard>
+          <ConsoleCard title="Optional video watermark" description="Your producer logo or short name can appear transparently at the top-right of your BQ SQWAD TV player videos. This is a visible attribution overlay, not copy-protection or DRM.">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex h-16 w-28 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted p-2">
+                {brandOverlayPreview ? <img src={brandOverlayPreview} alt="Producer watermark logo preview" className="max-h-full max-w-full object-contain" /> : <span className="text-[10px] text-muted-foreground">Logo preview</span>}
+              </div>
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-xs font-bold text-card-foreground hover:bg-muted">
+                {uploading === "watermark" ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                Upload optional logo
+                <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" disabled={uploading !== null} onChange={(event) => void uploadImage(event, "watermark")} />
+              </label>
+            </div>
+            <label className="mt-4 grid gap-1.5 text-xs font-semibold">Optional brand name
+              <input value={brandOverlayText} onChange={(event) => setBrandOverlayText(event.target.value)} maxLength={32} placeholder="Your studio or producer name" className="rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground" />
+              <span className="font-normal text-muted-foreground">Leave both fields empty to disable your producer overlay.</span>
+            </label>
           </ConsoleCard>
           <ConsoleCard title="Public details" description="These details appear on your public producer page.">
             <div className="grid gap-4">
