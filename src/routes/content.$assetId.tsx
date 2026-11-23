@@ -908,6 +908,11 @@ export function ContentDetailsPage() {
 
         {content ? (
           <>
+            {isPrivatePreview && (
+              <div className="mt-6 rounded-xl border border-cyan-400/30 bg-cyan-400/10 p-4 text-sm text-cyan-100">
+                <strong>Private preview mode.</strong> This content is visible only through your authorised preview link. Playback is unbilled and does not publish the content.
+              </div>
+            )}
             <section className="mt-7 grid gap-7 rounded-3xl border border-white/10 bg-gradient-to-br from-[#0b286f] to-[#07143d] p-5 sm:grid-cols-[240px_1fr] sm:p-8">
               <div className="overflow-hidden rounded-2xl bg-[#020824]">
                 {content.posterUrl ? (
