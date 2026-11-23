@@ -911,7 +911,7 @@ export function ConsoleShell({
           item.requiredModules.some((module) => account?.modules?.includes(module))),
     );
     return [...menuItems, ...visibleExtras];
-  }, [filteredGroups, account?.isOwner, account?.modules]);
+  }, [filteredGroups, account?.isOwner, account?.modules, consoleType]);
 
   const matchingSearchItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
