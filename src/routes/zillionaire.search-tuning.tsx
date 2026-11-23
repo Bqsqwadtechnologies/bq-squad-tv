@@ -23,26 +23,6 @@ interface SearchTuningRule {
   searchesThisWeek: number;
 }
 
-const mockSearchRules: SearchTuningRule[] = [
-  {
-    id: "st_01",
-    queryTerm: "football",
-    synonyms: ["soccer", "super eagles", "afcon", "premier league"],
-    pinnedAssetId: "mov_super_eagles",
-    pinnedAssetTitle: "Super Eagles: African Kings",
-    boostMultiplier: 2.5,
-    active: true,
-    searchesThisWeek: 1420,
-  },
-  {
-    id: "st_02",
-    queryTerm: "comedy",
-    synonyms: ["funny", "nollywood comedy", "skit", "drama"],
-    boostMultiplier: 1.8,
-    active: true,
-    searchesThisWeek: 3100,
-  },
-];
 
 function SearchTuningRoute() {
   return (
@@ -53,7 +33,7 @@ function SearchTuningRoute() {
 }
 
 function SearchTuningContent({ account }: { account: ConsoleAccount }) {
-  const [rules, setRules] = useState<SearchTuningRule[]>(mockSearchRules);
+  const [rules, setRules] = useState<SearchTuningRule[]>([]);
 
   const columns: EntityColumn<SearchTuningRule>[] = [
     { key: "term", header: "Search Term", render: (s) => <span className="font-bold text-cyan-400">"{s.queryTerm}"</span> },
@@ -67,7 +47,7 @@ function SearchTuningContent({ account }: { account: ConsoleAccount }) {
     <ZillionaireEntityConsole
       account={account}
       title="Search Relevance & Synonym Tuning"
-      subtitle="Define query synonyms, pin top priority titles, and tune algorithmic discovery weights."
+      subtitle="Define query synonyms, pin top priority titles, and tune algorithmic discovery weights. No live records are available from a connected service yet; sample data is intentionally not shown."
       icon={Search}
       items={rules}
       columns={columns}
