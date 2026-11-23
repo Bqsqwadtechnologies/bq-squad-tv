@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
+import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Route } from "@/routes/live-tv";
@@ -33,14 +33,52 @@ describe("Live TV Screen (V5-05 Batch 3)", () => {
   beforeEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    const now = Date.now();
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/api/public/v1/catalog/home")) {
+        return new Response(JSON.stringify({
+          channels: [{
+            id: "prime-live",
+            name: "BQ SQWAD Prime Live",
+            category: "Sports",
+            isLive: true,
+            currentShow: "Super League Football",
+            nextShow: "Late Night African Beats",
+            currentViewers: 2480,
+            thumbnailUrl: "/brand/og-image.png",
+          }],
+        }), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      if (url.includes("/api/public/v1/epg/")) {
+        return new Response(JSON.stringify({
+          channels: [{
+            channelId: "prime-live",
+            channelName: "BQ SQWAD Prime Live",
+            now: { id: "program-now", title: "Prime Global Showcase — Live Concert", startTime: new Date(now - 60_000).toISOString() },
+            next: { id: "program-next", title: "Late Night African Beats", startTime: new Date(now + 60 * 60_000).toISOString() },
+            upcoming: [{ id: "program-upcoming", title: "Pan-African Evening News Bulletin", startTime: new Date(now + 2 * 60 * 60_000).toISOString() }],
+          }],
+        }), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      if (url.includes("/api/public/v1/wallet")) {
+        return new Response(JSON.stringify({ balanceMinor: 100_000 }), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      return new Response(JSON.stringify({}), { status: 404, headers: { "content-type": "application/json" } });
+    }));
   });
 
-  it("renders live channels grid with LIVE badges and viewer counts", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("renders live channels grid with LIVE badges and viewer counts", async () => {
     const LiveTv = Route as any;
     render(<LiveTv />);
 
     expect(screen.getByText("Live TV Channels & Programme Guide")).toBeInTheDocument();
-    expect(screen.getByText("BQ SQWAD Prime Live")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("BQ SQWAD Prime Live")).toBeInTheDocument());
     expect(screen.getByText("Super League Football")).toBeInTheDocument();
 
     const liveBadges = screen.getAllByText("LIVE");
@@ -48,10 +86,11 @@ describe("Live TV Screen (V5-05 Batch 3)", () => {
     expect(screen.getByText("2,480")).toBeInTheDocument();
   });
 
-  it("renders Now Showing and Up Next programme info", () => {
+  it("renders Now Showing and Up Next programme info", async () => {
     const LiveTv = Route as any;
     render(<LiveTv />);
 
+    await waitFor(() => expect(screen.getAllByText("Now Showing").length).toBeGreaterThan(0));
     const nowShowingLabels = screen.getAllByText("Now Showing");
     expect(nowShowingLabels.length).toBeGreaterThan(0);
 
@@ -62,7 +101,7 @@ describe("Live TV Screen (V5-05 Batch 3)", () => {
     expect(screen.getByText("Late Night African Beats")).toBeInTheDocument();
   });
 
-  it("toggles between channels grid and electronic programme guide views", () => {
+  it("toggles between channels grid and electronic programme guide views", async () => {
     const LiveTv = Route as any;
     render(<LiveTv />);
 
@@ -70,7 +109,7 @@ describe("Live TV Screen (V5-05 Batch 3)", () => {
     fireEvent.click(guideToggle);
 
     expect(screen.getByText("Full Electronic Programme Guide")).toBeInTheDocument();
-    expect(screen.getByText("Pan-African Evening News Bulletin")).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText("Pan-African Evening News Bulletin")).toBeInTheDocument());
 
     const gridToggle = screen.getByRole("button", { name: /Channels Grid/i });
     fireEvent.click(gridToggle);
