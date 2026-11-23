@@ -1,19 +1,15 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
-import { Database, LoaderCircle, LogOut, ShieldCheck } from "lucide-react";
-
+import { Database, LoaderCircle, ShieldCheck, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
+import { ConsoleShell, ConsoleWelcomeBanner, ConsoleCard } from "@/components/ConsoleShell";
+import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
 
 type SchemaReport = {
   projectId: string;
   collections: Array<{ name: string; fields: Record<string, string> }>;
 };
-
-const firebaseProjectId = "bq-sqwad-tv";
-const firebaseApiKey = "AIzaSyD6QfAIfn_T0YWxxYKDbw8lZfj_s81N2ow"; //gitleaks:allow Firebase web client API key; not a server credential
 
 export const Route = createFileRoute("/zillionaire/firebase-schema")({
   component: FirebaseSchemaPage,
@@ -22,55 +18,49 @@ export const Route = createFileRoute("/zillionaire/firebase-schema")({
       { title: "Data structure | BQ SQWAD TV" },
       { name: "description", content: "Private platform data structure." },
       { name: "robots", content: "noindex, nofollow, noarchive" },
-      { property: "og:title", content: "Data structure | BQ SQWAD TV" },
-      { property: "og:description", content: "Private platform data structure." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
     ],
   }),
 });
 
 function FirebaseSchemaPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  return (
+    <ConsolePageGuard
+      role="zillionaire"
+      module="system"
+      title="Data structure"
+      description="Inspect the Firebase collection and field structure without exposing private record contents."
+    >
+      {({ token, account, onLock }) => (
+        <FirebaseSchemaContent token={token} account={account} onLock={onLock} />
+      )}
+    </ConsolePageGuard>
+  );
+}
+
+function FirebaseSchemaContent({
+  token,
+  account,
+  onLock,
+}: {
+  token: string;
+  account: ConsoleAccount;
+  onLock?: () => void;
+}) {
   const [report, setReport] = useState<SchemaReport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function inspectSchema(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function inspectSchema() {
     setBusy(true);
     setError(null);
-    setReport(null);
-
     try {
-      const signInResponse = await fetch(
-        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${firebaseApiKey}`,
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ email, password, returnSecureToken: true }),
-        },
-      );
-      setPassword("");
-      const signInData = (await signInResponse.json()) as {
-        idToken?: string;
-        error?: { message?: string };
-      };
-      if (!signInResponse.ok || !signInData.idToken) {
-        throw new Error(
-          signInData.error?.message === "OPERATION_NOT_ALLOWED"
-            ? "Email and password sign-in is not enabled for this Platform."
-            : "Sign-in failed. Check your sign-in details and try again.",
-        );
-      }
-
       const response = await fetch("/api/public/firebase-schema-inspect", {
-        headers: await getWebAuthHeaders(signInData.idToken),
+        headers: await getWebAuthHeaders(token),
+        cache: "no-store",
       });
       const result = (await response.json()) as SchemaReport & { error?: string };
       if (!response.ok) {
-        throw new Error(result.error ?? "We could not load this information. Try again.");
+        throw new Error(result.error ?? "We could not load the data structure. Try again.");
       }
       setReport(result);
     } catch (caught) {
@@ -78,113 +68,61 @@ function FirebaseSchemaPage() {
         caught instanceof Error ? caught.message : "We could not load this information. Try again.",
       );
     } finally {
-      setPassword("");
       setBusy(false);
     }
   }
 
-  function clearReport() {
-    setReport(null);
-    setError(null);
-    setEmail("");
-    setPassword("");
-  }
-
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-5 py-5">
-          <span className="grid size-10 place-items-center rounded-md bg-primary text-primary-foreground">
-            <Database size={20} />
-          </span>
-          <div>
-            <p className="text-sm font-bold">BQ SQWAD TV</p>
-            <p className="text-xs text-muted-foreground">Data structure</p>
-          </div>
-        </div>
-      </header>
-
-      <section className="mx-auto max-w-5xl px-5 py-10 sm:py-14">
-        <div className="max-w-2xl">
-          <p className="flex items-center gap-2 text-sm font-semibold text-primary">
-            <ShieldCheck size={17} /> Owner access
-          </p>
-          <h1 className="mt-4 text-3xl font-bold">Data structure</h1>
-          <p className="mt-3 leading-7 text-muted-foreground">
-            Sign in with an owner account to view the platform's data structure. Private record
-            contents are not displayed.
-          </p>
-        </div>
-
-        {!report ? (
-          <form onSubmit={inspectSchema} className="mt-9 grid max-w-md gap-5">
-            <div className="grid gap-2">
-              <Label htmlFor="owner-email">Owner email</Label>
-              <Input
-                id="admin-email"
-                type="email"
-                autoComplete="username"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-              />
+    <ConsoleShell
+      consoleType="zillionaire"
+      title="Data structure"
+      tagline="Owner-only overview of Firebase collections and field types."
+      account={account}
+      activePath="/zillionaire/firebase-schema"
+      onLock={onLock}
+    >
+      <div className="space-y-6">
+        <ConsoleWelcomeBanner
+          title="Firebase data structure"
+          description="Inspect collection names and field types. Private user, payment and content record values are not displayed."
+          badgeText="Owner only"
+        />
+        <ConsoleCard title="Schema inspection">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="grid size-10 place-items-center rounded-lg bg-primary/10 text-primary">
+                <Database size={20} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-white">Firebase project structure</p>
+                <p className="mt-1 text-xs text-slate-400">Read-only · collection names and field types only</p>
+              </div>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="admin-password">Password</Label>
-              <Input
-                id="admin-password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-            </div>
-            {error ? (
-              <p role="alert" className="text-sm text-destructive">
-                {error}
-              </p>
-            ) : null}
-            <Button type="submit" disabled={busy} className="w-fit">
-              {busy ? <LoaderCircle className="animate-spin" /> : <ShieldCheck />}
-              {busy ? "Checking access…" : "View data structure"}
+            <Button type="button" onClick={() => void inspectSchema()} disabled={busy}>
+              {busy ? <LoaderCircle className="animate-spin" /> : <RefreshCw />}
+              {busy ? "Inspecting…" : report ? "Refresh structure" : "Inspect structure"}
             </Button>
-          </form>
-        ) : (
-          <div className="mt-10">
-            <div className="flex flex-wrap items-center justify-between gap-4 border-y border-border py-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Project</p>
-                <p className="font-semibold">{report.projectId}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Data groups</p>
-                <p className="font-semibold">{report.collections.length}</p>
-              </div>
-              <Button variant="outline" onClick={clearReport}>
-                <LogOut /> Sign out
-              </Button>
-            </div>
+          </div>
+          {error && <p role="alert" className="mt-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+        </ConsoleCard>
+        {report && (
+          <ConsoleCard title="Collections and fields" subtitle={report.projectId}>
+            <div className="mb-4 text-xs text-slate-400">{report.collections.length} collections discovered</div>
             {report.collections.length === 0 ? (
-              <p className="py-10 text-muted-foreground">No data groups were found.</p>
+              <p className="py-8 text-sm text-slate-400">No collections were found.</p>
             ) : (
-              <div className="mt-6 divide-y divide-border">
+              <div className="divide-y divide-slate-800">
                 {report.collections.map((collection) => (
                   <article key={collection.name} className="py-5">
-                    <h2 className="font-semibold">{collection.name}</h2>
+                    <h2 className="text-sm font-semibold text-white">{collection.name}</h2>
                     {Object.keys(collection.fields).length === 0 ? (
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        No information fields to display
-                      </p>
+                      <p className="mt-2 text-xs text-slate-400">No field information available.</p>
                     ) : (
                       <dl className="mt-3 grid gap-x-8 gap-y-2 sm:grid-cols-2">
                         {Object.entries(collection.fields).map(([field, type]) => (
-                          <div
-                            key={field}
-                            className="flex min-w-0 justify-between gap-3 border-b border-border/60 py-1.5 text-sm"
-                          >
-                            <dt className="truncate text-muted-foreground">{field}</dt>
-                            <dd className="shrink-0 font-mono text-xs">{type}</dd>
+                          <div key={field} className="flex min-w-0 justify-between gap-3 border-b border-slate-800 py-1.5 text-sm">
+                            <dt className="truncate text-slate-400">{field}</dt>
+                            <dd className="shrink-0 font-mono text-xs text-slate-200">{type}</dd>
                           </div>
                         ))}
                       </dl>
@@ -193,9 +131,9 @@ function FirebaseSchemaPage() {
                 ))}
               </div>
             )}
-          </div>
+          </ConsoleCard>
         )}
-      </section>
-    </main>
+      </div>
+    </ConsoleShell>
   );
 }
