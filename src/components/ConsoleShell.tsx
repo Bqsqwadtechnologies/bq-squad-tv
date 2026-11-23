@@ -2,6 +2,7 @@ import { DeltaResult } from "@/lib/delta";
 import { BackButton } from "./BackButton";
 import React, { useState, useEffect, useMemo, ReactNode } from "react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { getActiveWebIdToken, getWebAuthHeaders } from "@/lib/firebase-web-auth";
 import {
   LayoutDashboard,
   Compass,
@@ -240,6 +241,7 @@ export function ConsoleShell({
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [themeMode, setThemeMode] = useState<"system" | "light" | "dark">("system");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   useEffect(() => {
@@ -255,16 +257,70 @@ export function ConsoleShell({
   }, []);
 
   useEffect(() => {
-    const saved = localStorage.getItem("bq_console_theme");
-    if (saved === "light" || saved === "dark") {
-      setTheme(saved);
-    }
+    let cancelled = false;
+    const applyMode = (mode: "system" | "light" | "dark") => {
+      if (cancelled) return;
+      setThemeMode(mode);
+      const resolved = mode === "system"
+        ? (window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark")
+        : mode;
+      setTheme(resolved);
+      if (mode === "system") localStorage.removeItem("bq_console_theme");
+      else localStorage.setItem("bq_console_theme", mode);
+    };
+
+    void (async () => {
+      try {
+        const idToken = await getActiveWebIdToken();
+        if (idToken) {
+          const response = await fetch("/api/public/v1/profile/preferences", {
+            headers: await getWebAuthHeaders(idToken),
+            cache: "no-store",
+          });
+          if (response.ok) {
+            const data = (await response.json()) as { themeMode?: "system" | "light" | "dark" };
+            if (data.themeMode === "system" || data.themeMode === "light" || data.themeMode === "dark") {
+              applyMode(data.themeMode);
+              return;
+            }
+          }
+        }
+      } catch {
+        // Keep the locally cached preference if the profile preference endpoint is unavailable.
+      }
+      const saved = localStorage.getItem("bq_console_theme");
+      applyMode(saved === "light" || saved === "dark" ? saved : "system");
+    })();
+    return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    if (themeMode !== "system") return;
+    const media = window.matchMedia?.("(prefers-color-scheme: light)");
+    if (!media) return;
+    const sync = () => setTheme(media.matches ? "light" : "dark");
+    media.addEventListener?.("change", sync);
+    return () => media.removeEventListener?.("change", sync);
+  }, [themeMode]);
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
+    setThemeMode(next);
     localStorage.setItem("bq_console_theme", next);
+    void (async () => {
+      try {
+        const idToken = await getActiveWebIdToken();
+        if (!idToken) return;
+        await fetch("/api/public/v1/profile/preferences", {
+          method: "PUT",
+          headers: { ...(await getWebAuthHeaders(idToken)), "content-type": "application/json" },
+          body: JSON.stringify({ themeMode: next }),
+        });
+      } catch {
+        // Local preference remains available when the profile service is temporarily offline.
+      }
+    })();
   };
 
   const defaultZillionaireGroups: ConsoleNavGroup[] = useMemo(
