@@ -96,7 +96,7 @@ function ZillionaireMoviesRoute() {
       title="Movies & Catalogue Management"
       description="Full catalogue veto power: shelves, featured hero rotation, regional windows, price overrides, and rights reviews."
     >
-      {(token, account, onLock) => (
+      {({ token, account, onLock }) => (
         <ZillionaireMoviesPage token={token} account={account} onLock={onLock} />
       )}
     </ConsolePageGuard>
