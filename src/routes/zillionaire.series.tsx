@@ -103,7 +103,7 @@ function ZillionaireSeriesRoute() {
       title="Series & Episodic Studio"
       description="Manage episodic shows, seasons, skip-intro markers, bulk auto-numbering, and scheduled releases."
     >
-      {(token, account, onLock) => (
+      {({ token, account, onLock }) => (
         <ZillionaireSeriesPage token={token} account={account} onLock={onLock} />
       )}
     </ConsolePageGuard>
