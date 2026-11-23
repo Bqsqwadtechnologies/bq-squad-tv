@@ -1,4 +1,5 @@
 import { useState, useMemo, type ReactNode } from "react";
+import type { LucideIcon } from "lucide-react";
 import {
   Search,
   Filter,
@@ -35,7 +36,7 @@ export interface EntityColumn<T> {
 export interface EntityAction<T> {
   label: string;
   variant?: "primary" | "destructive" | "outline" | "success";
-  icon?: any;
+  icon?: LucideIcon;
   onClick: (item: T, notes?: string) => Promise<void> | void;
   requiresNotes?: boolean;
 }
@@ -44,7 +45,7 @@ export interface ZillionaireEntityConsoleProps<T> {
   account: ConsoleAccount;
   title: string;
   subtitle: string;
-  icon: any;
+  icon: LucideIcon;
   items: T[];
   columns: EntityColumn<T>[];
   idKey: keyof T;
@@ -53,7 +54,7 @@ export interface ZillionaireEntityConsoleProps<T> {
     title: string;
     value: string | number;
     subtitle?: string;
-    icon?: any;
+    icon?: LucideIcon;
     tone?: "primary" | "emerald" | "amber" | "rose" | "cyan";
   }>;
   tabs?: Array<{ id: string; label: string; filter: (item: T) => boolean }>;
@@ -68,7 +69,7 @@ export interface ZillionaireEntityConsoleProps<T> {
   loading?: boolean;
 }
 
-export function ZillionaireEntityConsole<T extends Record<string, any>>({
+export function ZillionaireEntityConsole<T extends object>({
   account,
   title,
   subtitle,
