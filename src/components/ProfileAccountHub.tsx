@@ -11,6 +11,7 @@ import {
   Radio,
   Settings,
   ShoppingBag,
+  ShieldCheck,
   UserRound,
   Wallet,
   X,
@@ -204,6 +205,19 @@ export function ProfileAccountHub() {
               </span>
               <ChevronRight size={14} className="text-slate-500" />
             </Link>
+            {account.emailVerified === true && account.isOwner === true ? (
+              <a
+                href="/zillionaire"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-between rounded-xl border border-amber-400/20 bg-amber-400/10 px-3 py-2.5 text-amber-100 transition hover:bg-amber-400/15"
+              >
+                <span className="flex items-center gap-2.5 font-semibold">
+                  <ShieldCheck size={16} className="text-amber-300" />
+                  <span>Zillionaire Dashboard</span>
+                </span>
+                <ChevronRight size={14} className="text-amber-200/60" />
+              </a>
+            ) : null}
 
             <Link
               to="/help"
@@ -219,14 +233,13 @@ export function ProfileAccountHub() {
 
             {/* Console shortcuts appear only when the verified account has the matching role. */}
             {account.emailVerified === true &&
-            (account.isOwner ||
-              (account.roles?.includes("producer") && account.producerPlanActive) ||
+            ((account.roles?.includes("producer") && account.producerPlanActive) ||
               account.roles?.includes("provider")) ? (
               <div className="pt-2 pb-1 border-t border-white/10 mt-2">
                 <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
                   Consoles
                 </span>
-                {account.emailVerified === true && (account.isOwner || (account.roles?.includes("producer") && account.producerPlanActive)) ? (
+                {account.emailVerified === true && ((account.roles?.includes("producer") && account.producerPlanActive)) ? (
                   <a
                     href="/producer"
                     onClick={() => setIsOpen(false)}
@@ -239,7 +252,7 @@ export function ProfileAccountHub() {
                     <ChevronRight size={13} className="text-slate-500" />
                   </a>
                 ) : null}
-                {account.emailVerified === true && (account.isOwner || account.roles?.includes("provider")) ? (
+                {account.emailVerified === true && (account.roles?.includes("provider")) ? (
                   <a
                     href="/provider"
                     onClick={() => setIsOpen(false)}
