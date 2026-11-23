@@ -94,10 +94,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels")({
           } catch {
             await requireZillionaireModule(fs, user, "channels");
           }
-          const channels = await fs.query("channels", {
-            filters: [{ field: "ownerUid", op: "EQUAL", value: "platform" }],
-            limit: 200,
-          });
+          const allChannels = await fs.query("channels", { limit: 500 });
+          const channels = allChannels.filter(
+            (channel) =>
+              channel["ownerUid"] === "platform" ||
+              (channel["type"] === "platform" && channel["deliveryMode"] === "live_hls"),
+          );
           return Response.json({
             channels: channels.map((channel) => ({
               id: channel.__id,
