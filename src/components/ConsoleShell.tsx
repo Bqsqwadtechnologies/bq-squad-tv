@@ -1587,13 +1587,13 @@ export function ConsoleShell({
             if (event.target === event.currentTarget) setSearchModalOpen(false);
           }}
         >
-          <div className={`w-full max-w-2xl rounded-2xl border p-4 shadow-2xl ${theme === "dark" ? "border-slate-800 bg-[#091126] text-slate-100" : "border-slate-200 bg-white text-slate-900"}`}>
-            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+          <div className={`w-full max-w-2xl rounded-2xl border p-4 shadow-2xl ${theme === "dark" ? "border-border bg-card text-card-foreground" : "border-border bg-card text-card-foreground"}`}>
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
-                <span className="block text-xs font-bold uppercase tracking-wider text-blue-400">Search the dashboard</span>
-                <span className="mt-1 block text-[11px] text-slate-500">Search by page name, feature or what a page does.</span>
+                <span className="block text-xs font-bold uppercase tracking-wider text-primary">Search the dashboard</span>
+                <span className="mt-1 block text-[11px] text-muted-foreground">Search by page name, feature or what a page does.</span>
               </div>
-              <button type="button" onClick={() => setSearchModalOpen(false)} className="rounded-lg p-2 text-slate-400 hover:bg-white/10 hover:text-white" aria-label="Close search">
+              <button type="button" onClick={() => setSearchModalOpen(false)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Close search">
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -1607,13 +1607,13 @@ export function ConsoleShell({
                   placeholder={searchPlaceholder}
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  className="w-full rounded-xl border border-slate-700/60 bg-black/40 py-3 pl-10 pr-4 text-sm text-white placeholder-slate-500 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  className="w-full rounded-xl border border-input bg-background py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                 />
               </div>
             </form>
             <div className="mt-4 flex items-center justify-between">
-              <p className="text-[11px] font-semibold text-slate-400">{searchQuery.trim() ? matchingSearchItems.length + " matching pages" : "Suggested pages"}</p>
-              <kbd className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-slate-500">ESC to close</kbd>
+              <p className="text-[11px] font-semibold text-muted-foreground">{searchQuery.trim() ? matchingSearchItems.length + " matching pages" : "Suggested pages"}</p>
+              <kbd className="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">ESC to close</kbd>
             </div>
             <div className="mt-2 max-h-[60vh] space-y-2 overflow-y-auto">
               {matchingSearchItems.length > 0 ? matchingSearchItems.map((item) => (
@@ -1621,23 +1621,23 @@ export function ConsoleShell({
                   key={item.id + item.href}
                   href={item.href}
                   onClick={() => setSearchModalOpen(false)}
-                  className="flex items-start gap-3 rounded-xl border border-white/5 bg-white/[0.03] p-3 transition hover:border-blue-400/40 hover:bg-blue-500/10"
+                  className="flex items-start gap-3 rounded-xl border border-border bg-muted/30 p-3 transition hover:border-primary/40 hover:bg-accent"
                 >
-                  <span className="mt-0.5 rounded-lg bg-blue-500/10 p-2 text-blue-300"><item.icon className="h-4 w-4" /></span>
+                  <span className="mt-0.5 rounded-lg bg-primary/10 p-2 text-primary"><item.icon className="h-4 w-4" /></span>
                   <span className="min-w-0 flex-1">
-                    <span className="flex flex-wrap items-center gap-2 text-xs font-bold text-white">
+                    <span className="flex flex-wrap items-center gap-2 text-xs font-bold text-card-foreground">
                       {item.label}
-                      <span className="font-normal text-slate-500">· {item.section}</span>
+                      <span className="font-normal text-muted-foreground">· {item.section}</span>
                     </span>
-                    <span className="mt-1 block text-[11px] leading-5 text-slate-400">{item.description}</span>
+                    <span className="mt-1 block text-[11px] leading-5 text-muted-foreground">{item.description}</span>
                   </span>
-                  <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-500" />
+                  <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground" />
                 </a>
               )) : (
-                <div className="rounded-xl border border-dashed border-slate-700 p-6 text-center">
-                  <Search className="mx-auto h-5 w-5 text-slate-500" />
-                  <p className="mt-2 text-xs font-semibold text-slate-300">No matching dashboard pages</p>
-                  <p className="mt-1 text-[11px] text-slate-500">Try another feature name or describe what you want to do.</p>
+                <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                  <Search className="mx-auto h-5 w-5 text-muted-foreground" />
+                  <p className="mt-2 text-xs font-semibold text-card-foreground">No matching dashboard pages</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">Try another feature name or describe what you want to do.</p>
                 </div>
               )}
             </div>
@@ -2037,7 +2037,7 @@ export function ConsoleTable<T extends object = Record<string, unknown>>({
         {emptyActionLabel && onEmptyAction && (
           <button
             onClick={onEmptyAction}
-            className="px-4 py-2 rounded-xl bg-blue-600 text-xs font-bold text-white hover:bg-blue-500 transition shadow"
+            className="px-4 py-2 rounded-xl bg-blue-600 text-xs font-bold text-card-foreground hover:bg-blue-500 transition shadow"
           >
             {emptyActionLabel}
           </button>
