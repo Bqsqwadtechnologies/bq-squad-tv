@@ -114,6 +114,9 @@ function AccountPage() {
       setAccountEmail(account.email ?? "");
       setEmail(account.email ?? "");
       setPublicId(account.publicId ?? null);
+       setCanOpenProducerConsole(account.emailVerified === true && account.isOwner !== true && account.roles?.includes("producer") === true && account.producerPlanActive === true);
+       setCanOpenProviderConsole(account.emailVerified === true && account.isOwner !== true && account.roles?.includes("provider") === true);
+       setCanOpenZillionaireDashboard(account.emailVerified === true && account.isOwner === true);
       void loadAccountCountry();
       try {
         const preferenceResponse = await fetch("/api/public/v1/profile/preferences", {
