@@ -215,7 +215,7 @@ export function ZillionaireEntityConsole<T extends object>({
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-white/10 bg-white/5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <tr className="border-b border-border bg-muted text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   {columns.map((col) => (
                     <th key={col.key} className="px-4 py-3">
                       {col.header}
@@ -224,7 +224,7 @@ export function ZillionaireEntityConsole<T extends object>({
                   <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-border">
                 {filteredItems.length === 0 ? (
                   <tr>
                     <td colSpan={columns.length + 1} className="px-4 py-8 text-center text-slate-400">
@@ -238,7 +238,7 @@ export function ZillionaireEntityConsole<T extends object>({
                     <tr
                       key={String(item[idKey])}
                       onClick={() => setSelectedItem(item)}
-                      className="cursor-pointer transition hover:bg-white/5"
+                      className="cursor-pointer transition hover:bg-muted/50"
                     >
                       {columns.map((col) => (
                         <td key={col.key} className="px-4 py-3">
@@ -289,9 +289,9 @@ export function ZillionaireEntityConsole<T extends object>({
         {/* Detail Modal */}
         {selectedItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-            <div className="max-w-2xl w-full rounded-3xl border border-white/10 bg-[#07143D] p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <div className="max-w-2xl w-full rounded-3xl border border-border bg-card text-card-foreground p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
+              <div className="flex items-center justify-between border-b border-border pb-4 mb-4">
+                <h3 className="text-base font-bold text-card-foreground flex items-center gap-2">
                   <ModuleIcon size={18} className="text-cyan-400" />
                   <span>Record Details: {String(selectedItem[idKey])}</span>
                 </h3>
@@ -309,11 +309,11 @@ export function ZillionaireEntityConsole<T extends object>({
               {/* Fields Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 {detailFields.map((field, idx) => (
-                  <div key={idx} className="rounded-xl border border-white/5 bg-white/5 p-3">
-                    <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+                  <div key={idx} className="rounded-xl border border-border bg-muted/50 p-3">
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
                       {field.label}
                     </span>
-                    <div className="text-xs text-white break-words">{field.render(selectedItem)}</div>
+                    <div className="text-xs text-card-foreground break-words">{field.render(selectedItem)}</div>
                   </div>
                 ))}
               </div>
@@ -335,13 +335,13 @@ export function ZillionaireEntityConsole<T extends object>({
                     value={actionNotes}
                     onChange={(e) => setActionNotes(e.target.value)}
                     placeholder="Provide mandatory notes or instructions for this action…"
-                    className="w-full rounded-xl border border-white/10 bg-slate-950/80 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                    className="w-full rounded-xl border border-input bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary"
                   />
                 </div>
               )}
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-white/10">
+              <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-border">
                 <button
                   type="button"
                   onClick={() => {
