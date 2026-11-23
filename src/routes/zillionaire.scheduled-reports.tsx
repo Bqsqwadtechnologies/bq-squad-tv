@@ -22,35 +22,6 @@ interface ScheduledReportConfig {
   active: boolean;
 }
 
-const mockConfigs: ScheduledReportConfig[] = [
-  {
-    id: "rep_cfg_01",
-    reportName: "Daily Financial & Revenue Settlement Summary",
-    frequency: "daily",
-    format: "both",
-    recipients: ["tv@bqsqwad.com"],
-    lastDispatchedAt: "2026-03-24T00:01:00Z",
-    active: true,
-  },
-  {
-    id: "rep_cfg_02",
-    reportName: "Weekly Copyright Violations & Piracy Takedowns",
-    frequency: "weekly",
-    format: "pdf",
-    recipients: ["tv@bqsqwad.com"],
-    lastDispatchedAt: "2026-03-23T08:00:00Z",
-    active: true,
-  },
-  {
-    id: "rep_cfg_03",
-    reportName: "Monthly Creator & Network Disbursement Audit",
-    frequency: "monthly",
-    format: "both",
-    recipients: ["tv@bqsqwad.com"],
-    lastDispatchedAt: "2026-03-01T00:05:00Z",
-    active: true,
-  },
-];
 
 function ScheduledReportsRoute() {
   return (
@@ -61,7 +32,7 @@ function ScheduledReportsRoute() {
 }
 
 function ScheduledReportsContent({ account }: { account: ConsoleAccount }) {
-  const [configs, setConfigs] = useState<ScheduledReportConfig[]>(mockConfigs);
+  const [configs, setConfigs] = useState<ScheduledReportConfig[]>([]);
 
   const columns: EntityColumn<ScheduledReportConfig>[] = [
     { key: "name", header: "Report Title", render: (r) => <span className="font-bold text-white">{r.reportName}</span> },
@@ -75,7 +46,7 @@ function ScheduledReportsContent({ account }: { account: ConsoleAccount }) {
     <ZillionaireEntityConsole
       account={account}
       title="Scheduled Automated Reports"
-      subtitle="Configure recurring automated dispatch of comprehensive PDF statements and CSV exports by email."
+      subtitle="Configure recurring automated dispatch of comprehensive PDF statements and CSV exports by email. No live report schedules are connected yet; sample configurations are not displayed."
       icon={Mail}
       items={configs}
       columns={columns}
