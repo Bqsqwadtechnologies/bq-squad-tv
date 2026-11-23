@@ -24,7 +24,6 @@ describe("readBoundedStorageObjectResponse", () => {
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
         controller.enqueue(bytes);
-        controller.close();
       },
       cancel() {
         cancelled = true;
