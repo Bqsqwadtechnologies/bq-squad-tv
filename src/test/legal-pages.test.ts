@@ -4,9 +4,9 @@ import { findUnfilledLegalPlaceholders } from "../lib/server/legal-acceptance";
 
 const REQUIRED_SLUGS = [
   "about",
-  "bq-sqwad-originals",
   "account-deletion",
   "age-restriction",
+  "bq-sqwad-originals",
   "community-guidelines",
   "contact",
   "cookie",
