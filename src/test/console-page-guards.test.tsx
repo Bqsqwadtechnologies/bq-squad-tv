@@ -422,6 +422,67 @@ describe("Batch X1: Console Page Guards", () => {
       expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
     });
 
+    it("treats a Zillionaire module route without an explicit role as owner-console access", async () => {
+      vi.mocked(restoreWebSession).mockResolvedValue({
+        uid: "owner-123",
+        email: "owner@example.com",
+      } as unknown as Awaited<ReturnType<typeof restoreWebSession>>);
+
+      setupMockFetch({
+        uid: "owner-123",
+        email: "owner@example.com",
+        emailVerified: true,
+        roles: ["viewer", "producer"],
+        isOwner: true,
+        modules: [],
+        producerPlanActive: true,
+        providerId: null,
+      });
+
+      render(
+        <ConsolePageGuard module="system">
+          <div data-testid="zillionaire-system-console">Zillionaire System Console</div>
+        </ConsolePageGuard>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("zillionaire-system-console")).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText("Create your producer account")).not.toBeInTheDocument();
+      expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+    });
+
+    it("supports legacy requiredRole and requiredModule props for Zillionaire routes", async () => {
+      vi.mocked(restoreWebSession).mockResolvedValue({
+        uid: "owner-123",
+        email: "owner@example.com",
+      } as unknown as Awaited<ReturnType<typeof restoreWebSession>>);
+
+      setupMockFetch({
+        uid: "owner-123",
+        email: "owner@example.com",
+        emailVerified: true,
+        roles: ["viewer", "producer"],
+        isOwner: true,
+        modules: [],
+        producerPlanActive: true,
+        providerId: null,
+      });
+
+      render(
+        <ConsolePageGuard requiredRole="zillionaire" requiredModule="system">
+          <div data-testid="legacy-zillionaire-console">Legacy Zillionaire Console</div>
+        </ConsolePageGuard>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("legacy-zillionaire-console")).toBeInTheDocument();
+      });
+
+      expect(screen.queryByText("Create your producer account")).not.toBeInTheDocument();
+    });
+
     it("allows delegate with specific module into module-guarded route", async () => {
       vi.mocked(restoreWebSession).mockResolvedValue({
         uid: "delegate-123",
