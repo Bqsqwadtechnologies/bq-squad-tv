@@ -39,7 +39,7 @@ export const Route = createFileRoute("/api/public/v1/producer/uploads/complete")
           // Storage object listing/metadata can become visible slightly after a
           // successful signed PUT. Retry verification before reporting a false
           // "upload incomplete" result to the producer.
-          for (let attempt = 0; attempt < 4; attempt++) {
+          for (let attempt = 0; attempt < 8; attempt++) {
             const { data: objects, error: listError } = await supabaseAdmin.storage
               .from(bucket)
               .list(folder, { limit: 100, search: filename });
@@ -56,19 +56,24 @@ export const Route = createFileRoute("/api/public/v1/producer/uploads/complete")
               if (!infoError && info && typeof info === "object") {
                 objectInfo = info as Record<string, unknown>;
                 const infoMetadata = objectInfo["metadata"];
+                const metadata = infoMetadata && typeof infoMetadata === "object"
+                  ? infoMetadata as Record<string, unknown>
+                  : {};
                 metadataSize =
-                  (infoMetadata && typeof infoMetadata === "object"
-                    ? (infoMetadata as Record<string, unknown>)["size"] ??
-                      (infoMetadata as Record<string, unknown>)["contentLength"]
-                    : undefined) ??
-                  objectInfo["size"] ??
-                  objectInfo["contentLength"] ??
-                  metadataSize;
+                  metadata["size"] ?? metadata["contentLength"] ??
+                  metadata["content-length"] ?? metadata["content_length"] ??
+                  metadata["fileSize"] ?? metadata["sizeBytes"] ??
+                  objectInfo["size"] ?? objectInfo["contentLength"] ??
+                  objectInfo["content-length"] ?? objectInfo["content_length"] ??
+                  objectInfo["fileSize"] ?? objectInfo["sizeBytes"] ?? metadataSize;
               }
             }
 
-            if (metadataSize !== undefined && metadataSize !== null) break;
-            if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)));
+            if (metadataSize !== undefined && metadataSize !== null && Number(metadataSize) > 0) break;
+            if (attempt < 7) {
+              // Storage listing and object metadata are eventually consistent after signed PUT.
+              await new Promise((resolve) => setTimeout(resolve, Math.min(350 + attempt * 250, 2_000)));
+            }
           }
 
           if (lastListError && !object && !objectInfo) {
