@@ -104,6 +104,7 @@ function CleanupSampleContentInner({
 
   // Form controls
   const [password, setPassword] = useState("");
+  const [authenticatorCode, setAuthenticatorCode] = useState("");
   const [typedConfirmation, setTypedConfirmation] = useState("");
   const [reason, setReason] = useState("");
   const [cleanupScope, setCleanupScope] = useState<"fake_live_streams" | "all_sample_content">("fake_live_streams");
@@ -162,14 +163,16 @@ function CleanupSampleContentInner({
         },
         body: JSON.stringify({
           password,
+          code: authenticatorCode,
           scope: "permanent_delete",
+          reason: reason.trim(),
         }),
       });
 
       const stepUpData = await stepUpRes.json();
       if (!stepUpRes.ok || !stepUpData.token) {
         throw new Error(
-          stepUpData.error?.message || "Invalid owner step-up password or re-authentication failed.",
+          stepUpData.message || stepUpData.error || "Owner verification failed. Check the password and authenticator code.",
         );
       }
 
@@ -209,6 +212,7 @@ function CleanupSampleContentInner({
         sampleItems: [],
       });
       setPassword("");
+      setAuthenticatorCode("");
       setTypedConfirmation("");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error executing permanent cleanup.");
@@ -221,6 +225,7 @@ function CleanupSampleContentInner({
     typedConfirmation === "DELETE_SAMPLE_CONTENT" &&
     reason.trim().length >= 5 &&
     password.length > 0 &&
+    /^\d{6}$/.test(authenticatorCode) &&
     scanResult !== null;
 
   return (
@@ -382,6 +387,23 @@ function CleanupSampleContentInner({
                           className="w-full rounded-xl border border-white/10 bg-[#030b2a] pl-9 pr-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-400"
                         />
                       </div>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold uppercase text-slate-400 block mb-1">
+                        Authenticator code
+                      </label>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={6}
+                        pattern="[0-9]{6}"
+                        value={authenticatorCode}
+                        onChange={(e) => setAuthenticatorCode(e.target.value.replace(/\\D/g, "").slice(0, 6))}
+                        placeholder="6-digit code from your authenticator app"
+                        className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-400 font-mono tracking-[0.3em]"
+                      />
                     </div>
 
                     <div>
