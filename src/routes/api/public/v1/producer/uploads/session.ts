@@ -100,6 +100,7 @@ export const Route = createFileRoute("/api/public/v1/producer/uploads/session")(
               bucket: "bq-sqwad-source-media",
               filename: sanitizedFilename,
               mediaKind: body.mediaKind,
+              contentType,
               expiresInSeconds: 7200,
             },
             { status: 201, headers: { "cache-control": "no-store" } },
