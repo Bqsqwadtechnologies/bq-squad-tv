@@ -7,6 +7,7 @@ import {
   paystackEventDocumentId,
   verifyPaystackSignature,
 } from "@/lib/server/paystack";
+import { activateProducerBlueTickPayment } from "@/lib/server/producer-blue-verification";
 
 export const Route = createFileRoute("/api/public/v1/payments/paystack/webhook")({
   server: {
@@ -55,9 +56,19 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/webhook")
             verified["status"] !== "success" ||
             verified["currency"] !== currency ||
             verified["amount"] !== payment["amountMinor"] ||
-            metadata?.["uid"] !== payment["uid"]
+            metadata?.["uid"] !== payment["uid"] ||
+            (payment["paymentType"] === "producer_blue_tick" && metadata?.["paymentType"] !== "producer_blue_tick")
           ) {
             return Response.json({ received: true });
+          }
+          if (payment["paymentType"] === "producer_blue_tick") {
+            await activateProducerBlueTickPayment(fs, {
+              reference,
+              uid: payment["uid"] as string,
+              amountMinor: payment["amountMinor"] as number,
+              currency,
+            });
+            return Response.json({ received: true, blueTickActivated: true });
           }
           await creditPaystackPayment(fs, {
             reference,
