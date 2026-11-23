@@ -286,7 +286,7 @@ function ProducerUploadInner({
       await new Promise<void>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open(session.method || "PUT", session.signedUrl, true);
-        xhr.setRequestHeader("Content-Type", file.type || session.contentType || "application/octet-stream");
+        xhr.setRequestHeader("Content-Type", session.contentType || file.type || "application/octet-stream");
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable) setUploadProgress(Math.round((event.loaded / event.total) * 95));
         };
