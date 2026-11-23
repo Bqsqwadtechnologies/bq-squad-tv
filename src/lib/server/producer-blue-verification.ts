@@ -8,8 +8,6 @@ export async function activateProducerBlueTickPayment(
   const producerPath = "producers/" + input.uid;
   const now = new Date();
   const nowIso = now.toISOString();
-  const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString();
-
   return fs.transact([paymentPath, producerPath], (docs) => {
     const payment = docs[0];
     const producer = docs[1];
@@ -35,6 +33,14 @@ export async function activateProducerBlueTickPayment(
     if (payment["status"] !== "pending" && payment["status"] !== "initializing") {
       throw new ApiError(409, "BLUE_TICK_PAYMENT_NOT_CREDITABLE", "This verification payment is not in a creditable state.");
     }
+    const currentExpiryMs = typeof producer["publicVerificationUntil"] === "string"
+      ? Date.parse(producer["publicVerificationUntil"] as string)
+      : NaN;
+    const renewalBaseMs = producer["publicVerificationStatus"] === "ACTIVE" &&
+      Number.isFinite(currentExpiryMs) && currentExpiryMs > now.getTime()
+        ? currentExpiryMs
+        : now.getTime();
+    const expiresAt = new Date(renewalBaseMs + 30 * 24 * 60 * 60 * 1000).toISOString();
     return {
       result: { activated: true, expiresAt },
       writes: [
