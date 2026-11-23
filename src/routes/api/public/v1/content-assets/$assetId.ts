@@ -208,8 +208,12 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
               rightsCurrent,
               isPrivatePreview,
               producer: producerSummary,
+              // The platform originality mark applies to BQ-hosted producer assets.
+              // Licensed external-provider playback is not modified or overlaid.
               bqOriginalMark: Boolean(producerUid) && (
-                (typeof asset["deliveryMode"] === "string" ? asset["deliveryMode"] : channel["deliveryMode"]) === "native"
+                ["bq_hosted", "native"].includes(
+                  String(asset["deliveryMode"] || channel["deliveryMode"] || "").toLowerCase(),
+                )
               ),
             },
             channel: {
