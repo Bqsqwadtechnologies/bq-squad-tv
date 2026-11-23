@@ -200,7 +200,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
             await requireZillionaireModule(fs, user, "content");
           }
           const data = await parseBody(request, actionSchema);
-          if (data.action !== "ACTION_UPLOAD") {
+          if ((data.action as string) !== "ACTION_UPLOAD") {
             throw new ApiError(410, "LEGACY_UPLOAD_DISABLED", "This legacy upload endpoint is disabled. Use the secure private storage upload flow.");
           }
           const now = new Date().toISOString();
