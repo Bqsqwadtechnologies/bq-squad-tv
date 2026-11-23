@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Database, LoaderCircle, ShieldCheck } from "lucide-react";
 import { getWebAuthHeaders, signInWithEmailPassword } from "@/lib/firebase-web-auth";
+import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 
 export const Route = createFileRoute("/zillionaire/storage")({
   component: AdminStoragePage,
@@ -68,9 +69,17 @@ const PURPOSE_LABELS: Record<string, string> = {
 };
 
 function AdminStoragePage() {
+  return (
+    <ConsolePageGuard role="zillionaire" module="system" title="Storage locations" description="Manage private media storage destinations, capacity, health and backups.">
+      {({ token }) => <AdminStorageContent initialToken={token} />}
+    </ConsolePageGuard>
+  );
+}
+
+function AdminStorageContent({ initialToken }: { initialToken: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(initialToken);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [destinationId, setDestinationId] = useState("");
   const [providerType, setProviderType] = useState<Destination["providerType"]>("lovable_storage");
@@ -149,6 +158,14 @@ function AdminStoragePage() {
         : String(groupItem.dailyEgressCapBytes / 1_000_000_000),
     );
   }
+
+  useEffect(() => {
+    void loadDestinations(initialToken).catch((caught) => {
+      setError(caught instanceof Error ? caught.message : "Could not load storage locations.");
+    });
+    // The owner guard supplies the authenticated token for this page.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialToken]);
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
