@@ -33,14 +33,15 @@ function getSigningSecret(): string {
 }
 
 export function isAccessPasswordConfigured(): boolean {
-  const pwd = (process.env["ZILLIONAIRE_ACCESS_PASSWORD"] || "").trim();
-  return pwd.length > 0;
+  // Do not normalise a password: whitespace can be part of the owner's secret.
+  return typeof process.env["ZILLIONAIRE_ACCESS_PASSWORD"] === "string" &&
+    process.env["ZILLIONAIRE_ACCESS_PASSWORD"]!.length > 0;
 }
 
 function getSecretHash(): Buffer | null {
-  const pwd = (process.env["ZILLIONAIRE_ACCESS_PASSWORD"] || "").trim();
-  if (!pwd) return null;
-  return crypto.createHash("sha256").update(pwd).digest();
+  const pwd = process.env["ZILLIONAIRE_ACCESS_PASSWORD"];
+  if (typeof pwd !== "string" || pwd.length === 0) return null;
+  return crypto.createHash("sha256").update(pwd, "utf8").digest();
 }
 
 export function checkLockout(identifier: string): {
@@ -123,7 +124,7 @@ export function verifyPasswordConstantTime(providedPassword: string): boolean {
   const secretHash = getSecretHash();
   if (!secretHash) return false;
 
-  const providedHash = crypto.createHash("sha256").update(providedPassword.trim()).digest();
+  const providedHash = crypto.createHash("sha256").update(providedPassword, "utf8").digest();
 
   return crypto.timingSafeEqual(secretHash, providedHash);
 }
