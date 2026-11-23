@@ -1,14 +1,7 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 
+// Legacy channel-first uploader has been retired. Keep old bookmarks working
+// by sending users to the channel-free platform Upload Studio.
 export const Route = createFileRoute("/zillionaire/video-studio")({
-  beforeLoad: () => {
-    throw redirect({ to: "/zillionaire/upload-studio" });
-  },
-  component: () => null,
-  head: () => ({
-    meta: [
-      { title: "Video Studio | BQ SQWAD TV" },
-      { name: "robots", content: "noindex, nofollow, noarchive" },
-    ],
-  }),
+  component: () => <Navigate to="/zillionaire/upload-studio" replace />,
 });
