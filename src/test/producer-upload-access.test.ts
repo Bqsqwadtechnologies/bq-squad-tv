@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { requireAuthorizedChannelUpload } from "@/lib/server/producer-upload-access";
+import { ensurePlatformLibraryChannel, requireAuthorizedChannelUpload } from "@/lib/server/producer-upload-access";
 import type { Firestore } from "@/lib/server/firebase-admin";
 
 function firestore(documents: Record<string, Record<string, unknown> | null>) {
@@ -168,5 +168,66 @@ describe("authorized channel uploads", () => {
         emailVerified: true,
       }),
     ).resolves.toBeUndefined();
+  });
+
+  it("creates one private platform media library for the verified Zillionaire owner", async () => {
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@bqsqwad.tv");
+    const docs: Record<string, Record<string, unknown>> = {
+      "users/owner-uid": { email: "owner@bqsqwad.tv" },
+    };
+    const setDoc = vi.fn(async (path: string, value: Record<string, unknown>) => {
+      docs[path] = value;
+    });
+    const fs = {
+      getDoc: vi.fn(async (path: string) => docs[path] ?? null),
+      setDoc,
+    } as unknown as Firestore;
+    try {
+      await expect(ensurePlatformLibraryChannel(fs, {
+        uid: "owner-uid", email: "owner@bqsqwad.tv", emailVerified: true,
+      })).resolves.toBe("bq_sqwad_library");
+      expect(setDoc).toHaveBeenCalledWith(
+        "channels/bq_sqwad_library",
+        expect.objectContaining({
+          ownerUid: "platform",
+          isSystemLibrary: true,
+          published: false,
+          visibility: "private",
+          deliveryMode: "bq_hosted",
+        }),
+        { mustNotExist: true },
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("does not create the private platform library for an ordinary viewer", async () => {
+    vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@bqsqwad.tv");
+    const setDoc = vi.fn();
+    const fs = {
+      getDoc: vi.fn(async (path: string) =>
+        path === "users/viewer-uid" ? { email: "viewer@example.com" } : null,
+      ),
+      setDoc,
+    } as unknown as Firestore;
+    try {
+      await expect(ensurePlatformLibraryChannel(fs, {
+        uid: "viewer-uid", email: "viewer@example.com", emailVerified: true,
+      })).rejects.toMatchObject({ status: 403, code: "ZILLIONAIRE_SCOPE_REQUIRED" });
+      expect(setDoc).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("allows a Zillionaire video-scope operator to upload to a platform channel", async () => {
+    const fs = firestore({
+      "channels/platform-channel": { ownerUid: "platform" },
+      "users/operator": { roleTags: [], zillionaireModules: ["video"] },
+    });
+    await expect(requireAuthorizedChannelUpload(fs, "platform-channel", {
+      uid: "operator", email: "operator@example.com", emailVerified: true,
+    })).resolves.toBeUndefined();
   });
 });
