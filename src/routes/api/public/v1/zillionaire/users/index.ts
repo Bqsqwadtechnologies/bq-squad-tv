@@ -15,7 +15,30 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
           await requireZillionaireModule(fs, user, "users");
 
           const url = new URL(request.url);
-          const search = url.searchParams.get("q")?.toLowerCase().trim();
+          const search = url.searchParams.get("q")?.trim().toLowerCase().replace(/^@/, "");
+
+          if (search && /^[a-z0-9][a-z0-9._-]{2,29}$/.test(search)) {
+            const usernameDoc = await fs.getDoc("usernames/" + search);
+            const usernameUid = typeof usernameDoc?.["uid"] === "string" ? usernameDoc["uid"] as string : null;
+            const matched = usernameUid ? await fs.getDoc("users/" + usernameUid) : null;
+            if (matched && usernameDoc?.["kind"] === "viewer") {
+              return Response.json({ users: [{
+                id: usernameUid,
+                username: search,
+                publicId: matched["publicId"] || null,
+                accountId: matched["accountId"] || null,
+                email: matched["email"] || "",
+                displayName: matched["displayName"] || "Viewer",
+                phone: matched["phone"] || null,
+                walletId: matched["walletId"] || null,
+                accountStatus: matched["accountStatus"] || (matched["suspended"] ? "SUSPENDED" : "ACTIVE"),
+                suspended: Boolean(matched["suspended"] || matched["accountStatus"] === "SUSPENDED" || matched["accountStatus"] === "BANNED"),
+                createdAt: matched["createdAt"] || null,
+                roleTags: Array.isArray(matched["roleTags"]) ? matched["roleTags"] : [],
+                riskScore: Number(matched["riskScore"] || 0),
+              }] });
+            }
+          }
 
           // Universal ID (Crockford check-char) lookup in O(1)
           if (search && (search.startsWith("bq-") || search.startsWith("ch-"))) {
@@ -27,9 +50,11 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
                   users: [{
                     id: lookup.uid,
                     publicId: search.toUpperCase(),
+                    username: matched["username"] || null,
                     accountId: matched["accountId"] || null,
                     email: matched["email"] || "",
                     displayName: matched["displayName"] || "Viewer",
+                  username: matched["username"] || null,
                     phone: matched["phone"] || null,
                     walletId: matched["walletId"] || null,
                     accountStatus: matched["accountStatus"] || (matched["suspended"] ? "SUSPENDED" : "ACTIVE"),
@@ -79,6 +104,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
                 (u["id"] as string)?.toLowerCase().includes(search) ||
                 (u["uid"] as string)?.toLowerCase().includes(search) ||
                 (u["displayName"] as string)?.toLowerCase().includes(search) ||
+                (u["username"] as string)?.toLowerCase().includes(search) ||
                 (u["phone"] as string)?.toLowerCase().includes(search) ||
                 (u["walletId"] as string)?.toLowerCase().includes(search) ||
                 (u["deviceId"] as string)?.toLowerCase().includes(search),
@@ -98,6 +124,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
                 publicId,
                 email: u["email"] || "",
                 displayName: u["displayName"] || "Viewer",
+                username: u["username"] || null,
                 phone: u["phone"] || null,
                 walletId: u["walletId"] || null,
                 accountStatus: u["accountStatus"] || (u["suspended"] ? "SUSPENDED" : "ACTIVE"),
