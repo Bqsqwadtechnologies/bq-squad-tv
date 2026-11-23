@@ -17,8 +17,19 @@ type ProducerProfile = {
   bannerPath?: string | null;
   followerCount: number;
   verificationStatus: string;
+  publicVerificationStatus?: string;
+  publicVerificationUntil?: string | null;
   planStatus: string;
   externalLinks: Array<{ title: string; url: string }>;
+};
+
+type BlueTickData = {
+  enabled: boolean;
+  monthlyPriceMinor: number;
+  currency: string;
+  verificationStatus: string;
+  blueVerified: boolean;
+  expiresAt: string | null;
 };
 
 export const Route = createFileRoute("/producer/profile")({
@@ -48,6 +59,8 @@ function ProducerProfileContent({ token, account, onLock }: {
   onLock?: () => void;
 }) {
   const [profile, setProfile] = useState<ProducerProfile | null>(null);
+  const [blueTick, setBlueTick] = useState<BlueTickData | null>(null);
+  const [blueTickBusy, setBlueTickBusy] = useState(false);
   const [displayName, setDisplayName] = useState("");
   const [slug, setSlug] = useState("");
   const [bio, setBio] = useState("");
@@ -65,12 +78,14 @@ function ProducerProfileContent({ token, account, onLock }: {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("/api/public/v1/producer/profile", {
-        headers: await getWebAuthHeaders(token),
-        cache: "no-store",
-      });
+      const headers = await getWebAuthHeaders(token);
+      const [response, blueTickResponse] = await Promise.all([
+        fetch("/api/public/v1/producer/profile", { headers, cache: "no-store" }),
+        fetch("/api/public/v1/producer/blue-verification", { headers, cache: "no-store" }),
+      ]);
       const data = await response.json() as { profile?: ProducerProfile; error?: string };
       if (!response.ok || !data.profile) throw new Error(data.error || "Your producer profile could not be loaded.");
+      if (blueTickResponse.ok) setBlueTick(await blueTickResponse.json() as BlueTickData);
       setProfile(data.profile);
       setDisplayName(data.profile.name || "");
       setSlug(data.profile.slug || "");
@@ -87,6 +102,42 @@ function ProducerProfileContent({ token, account, onLock }: {
   }, [token]);
 
   useEffect(() => { void loadProfile(); }, [loadProfile]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("blueTick") !== "verify") return;
+    const reference = params.get("reference") || params.get("trxref") || "";
+    if (!reference) {
+      setError("The payment return did not include a transaction reference.");
+      return;
+    }
+    let active = true;
+    void (async () => {
+      setBlueTickBusy(true);
+      try {
+        const response = await fetch("/api/public/v1/payments/paystack/verify", {
+          method: "POST",
+          headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+          body: JSON.stringify({ reference }),
+        });
+        const data = await response.json() as { error?: string; message?: string; blueVerified?: boolean };
+        if (!response.ok || data.blueVerified !== true) throw new Error(data.message || data.error || "The public verification payment could not be confirmed.");
+        if (active) setNotice("Payment confirmed. Your public blue tick is now active for one month.");
+        await loadProfile();
+      } catch (caught) {
+        if (active) setError(caught instanceof Error ? caught.message : "The payment could not be verified.");
+      } finally {
+        if (active) {
+          setBlueTickBusy(false);
+          params.delete("blueTick");
+          params.delete("reference");
+          params.delete("trxref");
+          window.history.replaceState({}, "", window.location.pathname + (params.toString() ? "?" + params.toString() : ""));
+        }
+      }
+    })();
+    return () => { active = false; };
+  }, [token, loadProfile]);
 
   async function uploadImage(event: ChangeEvent<HTMLInputElement>, kind: "avatar" | "banner") {
     const file = event.target.files?.[0];
@@ -123,6 +174,24 @@ function ProducerProfileContent({ token, account, onLock }: {
     } finally {
       setUploading(null);
       event.target.value = "";
+    }
+  }
+
+  async function purchaseBlueTick() {
+    setBlueTickBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/public/v1/producer/blue-verification", {
+        method: "POST",
+        headers: await getWebAuthHeaders(token),
+      });
+      const data = await response.json() as { authorizationUrl?: string; error?: string; message?: string };
+      if (!response.ok || !data.authorizationUrl) throw new Error(data.message || data.error || "Could not start public verification checkout.");
+      window.location.assign(data.authorizationUrl);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not start public verification checkout.");
+      setBlueTickBusy(false);
     }
   }
 
@@ -214,6 +283,29 @@ function ProducerProfileContent({ token, account, onLock }: {
                 <textarea value={bio} onChange={(event) => setBio(event.target.value)} maxLength={2000} rows={5} className="rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground" placeholder="Tell viewers about your studio, productions and the stories you create." />
               </label>
             </div>
+          </ConsoleCard>
+          <ConsoleCard title="Public blue tick" description="An optional monthly public-verification badge. This is separate from your identity approval and does not replace producer KYC.">
+            {blueTick?.blueVerified ? (
+              <div className="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4 text-sm">
+                <p className="font-bold text-blue-600">Your public blue tick is active.</p>
+                <p className="mt-1 text-xs text-muted-foreground">Valid until {blueTick.expiresAt ? new Date(blueTick.expiresAt).toLocaleDateString() : "the expiry date shown in your account"}.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-bold text-card-foreground">{blueTick?.enabled ? "Monthly public verification" : "Public verification is not yet available"}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {blueTick?.enabled
+                      ? "Price: " + new Intl.NumberFormat("en", { style: "currency", currency: blueTick.currency }).format(blueTick.monthlyPriceMinor / (blueTick.currency === "XOF" ? 1 : 100)) + " per 30 days."
+                      : "The platform owner has not enabled public verification pricing yet."}
+                  </p>
+                </div>
+                <button type="button" onClick={() => void purchaseBlueTick()} disabled={!blueTick?.enabled || profile.verificationStatus !== "APPROVED" || blueTickBusy} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
+                  {blueTickBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />}
+                  {profile.verificationStatus !== "APPROVED" ? "Identity approval required" : "Get blue tick"}
+                </button>
+              </div>
+            )}
           </ConsoleCard>
           <div className="flex flex-wrap items-center justify-between gap-3">
             {profile?.slug && <a href={`/p/${profile.slug}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"><ExternalLink className="h-4 w-4" /> View public profile</a>}
