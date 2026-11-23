@@ -23,38 +23,6 @@ interface FraudIncident {
   detectedAt: string;
 }
 
-const mockIncidents: FraudIncident[] = [
-  {
-    id: "frd_01",
-    targetUid: "usr_farm_88",
-    targetEmail: "viewer_seed88@tempmail.com",
-    patternType: "multi_account_farming",
-    riskScore: 92,
-    evidence: "18 accounts created within 10 minutes from single device fingerprint sharing identical IP.",
-    status: "account_frozen",
-    detectedAt: "2026-03-24T11:00:00Z",
-  },
-  {
-    id: "frd_02",
-    targetUid: "usr_charge_22",
-    targetEmail: "dispute_heavy@example.com",
-    patternType: "rapid_chargeback",
-    riskScore: 84,
-    evidence: "3 bank card chargebacks initiated within 48h after draining wallet watch credit.",
-    status: "flagged",
-    detectedAt: "2026-03-23T18:20:00Z",
-  },
-  {
-    id: "frd_03",
-    targetUid: "usr_vpn_44",
-    targetEmail: "vpn_streamer@nord.org",
-    patternType: "vpn_anonymizer",
-    riskScore: 68,
-    evidence: "Tor exit node used to bypass territory geo-blocking on restricted title.",
-    status: "investigating",
-    detectedAt: "2026-03-24T08:15:00Z",
-  },
-];
 
 function FraudWatchRoute() {
   return (
@@ -65,7 +33,7 @@ function FraudWatchRoute() {
 }
 
 function FraudWatchContent({ account }: { account: ConsoleAccount }) {
-  const [incidents, setIncidents] = useState<FraudIncident[]>(mockIncidents);
+  const [incidents, setIncidents] = useState<FraudIncident[]>([]);
 
   const columns: EntityColumn<FraudIncident>[] = [
     { key: "target", header: "Target Account", render: (f) => <span className="font-semibold text-white">{f.targetEmail}</span> },
@@ -107,7 +75,7 @@ function FraudWatchContent({ account }: { account: ConsoleAccount }) {
     <ZillionaireEntityConsole
       account={account}
       title="Fraud, Multi-Account & Abuse Watch"
-      subtitle="Detect automated watch inflation, multi-account bonus farming, VPN anonymizers, and chargeback anomalies."
+      subtitle="Detect automated watch inflation, multi-account bonus farming, VPN anonymizers, and chargeback anomalies. No live records are available from a connected service yet; sample data is intentionally not shown."
       icon={Fingerprint}
       items={incidents}
       columns={columns}
