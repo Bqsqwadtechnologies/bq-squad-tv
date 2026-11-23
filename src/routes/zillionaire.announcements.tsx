@@ -25,30 +25,6 @@ interface Announcement {
   endDate: string;
 }
 
-const mockAnnouncements: Announcement[] = [
-  {
-    id: "ann_001",
-    title: "Scheduled Maintenance Window",
-    message: "HLS transcoding cluster will undergo scheduled maintenance on Sunday 02:00 UTC.",
-    targetAudience: "producers",
-    bannerType: "warning",
-    active: true,
-    startDate: "2026-03-24",
-    endDate: "2026-03-30",
-  },
-  {
-    id: "ann_002",
-    title: "Weekend Nollywood Premieres",
-    message: "Enjoy 20% cashback in your wallet on all movies this weekend!",
-    targetAudience: "viewers",
-    bannerType: "promotion",
-    active: true,
-    ctaText: "Browse Movies",
-    ctaLink: "/movies",
-    startDate: "2026-03-27",
-    endDate: "2026-03-29",
-  },
-];
 
 function AnnouncementsRoute() {
   return (
@@ -59,7 +35,7 @@ function AnnouncementsRoute() {
 }
 
 function AnnouncementsContent({ account }: { account: ConsoleAccount }) {
-  const [items, setItems] = useState<Announcement[]>(mockAnnouncements);
+  const [items, setItems] = useState<Announcement[]>([]);
 
   const columns: EntityColumn<Announcement>[] = [
     { key: "title", header: "Announcement Title", render: (a) => <span className="font-bold text-white">{a.title}</span> },
@@ -83,7 +59,7 @@ function AnnouncementsContent({ account }: { account: ConsoleAccount }) {
     <ZillionaireEntityConsole
       account={account}
       title="Announcements & Sitewide Banners"
-      subtitle="Publish header banners and targeted notices for viewers, studios, and television broadcast partners."
+      subtitle="Publish header banners and targeted notices for viewers, studios, and television broadcast partners. No live records are available from a connected service yet; sample data is intentionally not shown."
       icon={Megaphone}
       items={items}
       columns={columns}
