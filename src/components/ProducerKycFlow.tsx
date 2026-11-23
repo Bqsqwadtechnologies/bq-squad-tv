@@ -105,8 +105,10 @@ export function ProducerKycFlow({
   // Status & Draft
   const [activeCameraMode, setActiveCameraMode] = useState<CaptureMode | null>(null);
   const [preopenedCameraStream, setPreopenedCameraStream] = useState<MediaStream | null>(null);
+  const cameraDialogOpenRef = React.useRef(false);
 
   function openCameraFromTap(cameraMode: CaptureMode) {
+    cameraDialogOpenRef.current = true;
     // Start getUserMedia synchronously from the actual tap. This makes Chrome
     // show its permission prompt before the camera dialog is rendered.
     const request = navigator.mediaDevices?.getUserMedia
@@ -121,6 +123,10 @@ export function ProducerKycFlow({
       : Promise.reject(new Error("CAMERA_API_UNAVAILABLE"));
     setActiveCameraMode(cameraMode);
     void request.then((mediaStream) => {
+      if (!cameraDialogOpenRef.current) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+        return;
+      }
       setPreopenedCameraStream(mediaStream);
     }).catch(() => {
       setPreopenedCameraStream(null);
@@ -1074,6 +1080,7 @@ export function ProducerKycFlow({
           mode={activeCameraMode}
           initialStream={preopenedCameraStream}
           onCapture={(result) => {
+            cameraDialogOpenRef.current = false;
             setPreopenedCameraStream(null);
             if (activeCameraMode === "id_card_front") {
               setIdFrontFile(dataUrlToFile(result.dataUrl, "id-front.jpg"));
@@ -1085,11 +1092,13 @@ export function ProducerKycFlow({
             setActiveCameraMode(null);
           }}
           onUploadFileInstead={() => {
+            cameraDialogOpenRef.current = false;
             preopenedCameraStream?.getTracks().forEach((track) => track.stop());
             setPreopenedCameraStream(null);
             setActiveCameraMode(null);
           }}
           onClose={() => {
+            cameraDialogOpenRef.current = false;
             preopenedCameraStream?.getTracks().forEach((track) => track.stop());
             setPreopenedCameraStream(null);
             setActiveCameraMode(null);
