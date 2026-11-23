@@ -120,9 +120,6 @@ function ZillionaireMoviesPage({
   // Selection for bulk actions
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  // In-console Preview Player Modal
-  const [previewAsset, setPreviewAsset] = useState<ContentAsset | null>(null);
-
   // Edit Details Modal
   const [editingAsset, setEditingAsset] = useState<ContentAsset | null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -194,6 +191,26 @@ function ZillionaireMoviesPage({
       setLoading(false);
     }
   };
+
+  async function handlePreviewAsset(asset: ContentAsset) {
+    setActionFeedback(null);
+    try {
+      const headers = await getWebAuthHeaders();
+      const response = await fetch("/api/public/v1/preview/grant", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ targetType: "asset", targetId: asset.id }),
+      });
+      const result = (await response.json()) as { previewPath?: string; error?: string };
+      if (!response.ok || !result.previewPath) {
+        throw new Error(result.error ?? "A private preview is not available yet.");
+      }
+      window.open(result.previewPath, "_blank", "noopener,noreferrer");
+      setActionFeedback("Private preview opened in a new tab.");
+    } catch (caught) {
+      setActionFeedback(caught instanceof Error ? caught.message : "Could not open the private preview.");
+    }
+  }
 
   const fetchCurationData = async () => {
     setCurationLoading(true);
@@ -793,7 +810,7 @@ function ZillionaireMoviesPage({
                     render: (a: ContentAsset) => (
                       <div className="flex items-center gap-1.5">
                         <button
-                          onClick={() => setPreviewAsset(a)}
+                          onClick={() => void handlePreviewAsset(a)}
                           title="Preview Video"
                           className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded"
                         >
@@ -1607,49 +1624,6 @@ function ZillionaireMoviesPage({
                   className="px-4 py-2 bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded font-bold"
                 >
                   Add to Carousel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Modal: Preview Player */}
-        {previewAsset && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <div className="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-2xl p-6 space-y-4 shadow-2xl text-xs">
-              <div className="flex items-center justify-between">
-                <h3 className="text-base font-bold text-white flex items-center gap-2">
-                  <Play className="w-5 h-5 text-cyan-400" />
-                  Preview: {previewAsset.title}
-                </h3>
-                <button onClick={() => setPreviewAsset(null)} className="text-slate-400 hover:text-white">
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center border border-slate-800">
-                {previewAsset.masterPlaylistUrl ? (
-                  <video
-                    src={previewAsset.masterPlaylistUrl}
-                    controls
-                    className="w-full h-full"
-                    autoPlay
-                  />
-                ) : (
-                  <div className="text-slate-500 text-center p-4">
-                    <Film className="w-10 h-10 mx-auto mb-2 text-slate-600" />
-                    <span>Playback URL not yet verified or processed.</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-between items-center text-slate-400 pt-2">
-                <span>Asset ID: <code>{previewAsset.id}</code></span>
-                <button
-                  onClick={() => setPreviewAsset(null)}
-                  className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded font-semibold"
-                >
-                  Close Preview
                 </button>
               </div>
             </div>
