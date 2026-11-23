@@ -119,7 +119,7 @@ function AdvertisingManagerRoute() {
       title="Advertising Manager"
       description="Manage direct ad units, own creatives, partner networks, and audience policy."
     >
-      {(account) => <AdvertisingManagerDashboard account={account} />}
+      {({ account }) => <AdvertisingManagerDashboard account={account} />}
     </ConsolePageGuard>
   );
 }
