@@ -224,7 +224,7 @@ describe("authorized channel uploads", () => {
   it("allows a Zillionaire video-scope operator to upload to a platform channel", async () => {
     const fs = firestore({
       "channels/platform-channel": { ownerUid: "platform" },
-      "users/operator": { roleTags: [], zillionaireModules: ["video"] },
+      "users/operator": { roleTags: [], adminModules: ["video"] },
     });
     await expect(requireAuthorizedChannelUpload(fs, "platform-channel", {
       uid: "operator", email: "operator@example.com", emailVerified: true,
