@@ -242,9 +242,10 @@ function UploadStudioContent({
         headers: { ...headers, "content-type": "application/json" },
         body: JSON.stringify({ assetId: intent.assetId }),
       });
-      const completed = (await completeResponse.json()) as { error?: string; status?: string };
+      const completed = (await completeResponse.json()) as { code?: string; message?: string; error?: string; status?: string };
       if (!completeResponse.ok) {
-        throw new Error(completed.error ?? "The uploaded video could not be verified.");
+        const detail = completed.message || completed.error || completed.code;
+        throw new Error(detail ? String(detail) : "The uploaded video could not be verified.");
       }
 
       if (mediaType === "Episode" && selectedSeries && selectedSeason) {
