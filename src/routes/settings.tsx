@@ -79,9 +79,22 @@ function SettingsPage() {
         const account = await getWebAccount();
         setIsZillionaireOwner(account?.emailVerified === true && account.isOwner === true);
         const headers = await getWebAuthHeaders(token);
-        const res = await fetch("/api/public/v1/profile", { headers, cache: "no-store" });
-        if (res.ok) {
-          const data = await res.json();
+        const [preferencesResponse, profileResponse] = await Promise.all([
+          fetch("/api/public/v1/profile/preferences", { headers, cache: "no-store" }),
+          fetch("/api/public/v1/profile", { headers, cache: "no-store" }),
+        ]);
+        if (preferencesResponse.ok) {
+          const preferences = (await preferencesResponse.json()) as { themeMode?: ThemeChoice };
+          if (preferences.themeMode === "system" || preferences.themeMode === "light" || preferences.themeMode === "dark") {
+            setThemePreference(preferences.themeMode);
+            try {
+              if (preferences.themeMode === "system") localStorage.removeItem("bq-sqwad-theme");
+              else localStorage.setItem("bq-sqwad-theme", preferences.themeMode);
+            } catch {}
+          }
+        }
+        if (profileResponse.ok) {
+          const data = await profileResponse.json();
           if (data.isUnder18 || data.kidsModeLocked) {
             setIsUnder18(true);
             setKidsModeActive(true);
@@ -122,11 +135,15 @@ function SettingsPage() {
         const token = await restoreWebSession();
         if (!token) return;
         const headers = await getWebAuthHeaders(token);
-        await fetch("/api/public/v1/profile", {
-          method: "PATCH",
+        const response = await fetch("/api/public/v1/profile/preferences", {
+          method: "PUT",
           headers: { ...headers, "content-type": "application/json" },
-          body: JSON.stringify({ preferredTheme: theme }),
+          body: JSON.stringify({ themeMode: theme }),
         });
+        if (!response.ok) {
+          // Keep the local choice visible, but let the user know it did not sync.
+          console.warn("Could not sync the selected theme preference.");
+        }
       } catch {}
     })();
   }
