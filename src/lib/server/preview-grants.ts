@@ -96,6 +96,13 @@ export async function createPrivatePreviewGrant(
     if (!asset) {
       throw new ApiError(404, "ASSET_NOT_FOUND", "Content title not found.");
     }
+    if (asset["status"] !== "ready") {
+      throw new ApiError(
+        409,
+        "PREVIEW_NOT_READY",
+        "This video is still processing. A private preview will be available when processing is complete.",
+      );
+    }
     const ownerUid = String(asset["ownerUid"] || asset["producerUid"] || "");
     if (ownerUid === user.uid) {
       isAuthorized = true;
