@@ -13,6 +13,7 @@ export const DEFAULT_FLAGS = {
   hlsEncryption: false,
   forYou: false,
   reminders: false,
+  followedProducerReleaseNotifications: true,
   modalSpendGuard: true,
   deliveryProxyFallback: true,
 } as const;
