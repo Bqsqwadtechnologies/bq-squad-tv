@@ -14,7 +14,7 @@ export const Route = createFileRoute("/api/public/v1/epg/")({
 
           const channels = await fs.query("channels");
           const activeChannels = channels.filter(
-            (c: Record<string, unknown>) => c["status"] === "published",
+            (c: Record<string, unknown>) => String(c["status"] || "").toLowerCase() === "published",
           );
 
           const scheduleItems = await fs.query("epgSchedule");
