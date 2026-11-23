@@ -11,6 +11,8 @@ const updateSchema = z.object({
   bio: z.string().trim().max(2000).optional(),
   avatarUrl: z.string().url().max(2048).optional().nullable(),
   bannerUrl: z.string().url().max(2048).optional().nullable(),
+  avatarPath: z.string().trim().max(512).optional().nullable(),
+  bannerPath: z.string().trim().max(512).optional().nullable(),
   slug: z
     .string()
     .trim()
@@ -68,6 +70,15 @@ export const Route = createFileRoute("/api/public/v1/producer/profile")({
             await fs.setDoc(`producerSlugs/${initialSlug}`, { uid: user.uid, createdAt: new Date().toISOString() });
           }
 
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const [avatarSigned, bannerSigned] = await Promise.all([
+            typeof producer["avatarPath"] === "string"
+              ? supabaseAdmin.storage.from("bq-sqwad-source-media").createSignedUrl(producer["avatarPath"] as string, 60 * 60)
+              : Promise.resolve({ data: null, error: null }),
+            typeof producer["bannerPath"] === "string"
+              ? supabaseAdmin.storage.from("bq-sqwad-source-media").createSignedUrl(producer["bannerPath"] as string, 60 * 60)
+              : Promise.resolve({ data: null, error: null }),
+          ]);
           return Response.json({
             profile: {
               uid: user.uid,
@@ -75,8 +86,10 @@ export const Route = createFileRoute("/api/public/v1/producer/profile")({
               slug: producer["slug"] || null,
               name: producer["displayName"] || producer["name"] || "Producer",
               bio: producer["bio"] || "",
-              avatarUrl: producer["avatarUrl"] || null,
-              bannerUrl: producer["bannerUrl"] || null,
+              avatarUrl: avatarSigned.data?.signedUrl || producer["avatarUrl"] || null,
+              bannerUrl: bannerSigned.data?.signedUrl || producer["bannerUrl"] || null,
+              avatarPath: producer["avatarPath"] || null,
+              bannerPath: producer["bannerPath"] || null,
               externalLinks: Array.isArray(producer["externalLinks"]) ? producer["externalLinks"] : [],
               followerCount: Math.max(0, Number(producer["followerCount"]) || 0),
               verificationStatus: producer["verificationStatus"] || "PENDING",
@@ -107,6 +120,8 @@ export const Route = createFileRoute("/api/public/v1/producer/profile")({
           if (body.bio !== undefined) updates["bio"] = body.bio;
           if (body.avatarUrl !== undefined) updates["avatarUrl"] = body.avatarUrl;
           if (body.bannerUrl !== undefined) updates["bannerUrl"] = body.bannerUrl;
+          if (body.avatarPath !== undefined) { updates["avatarPath"] = body.avatarPath; updates["avatarUrl"] = null; }
+          if (body.bannerPath !== undefined) { updates["bannerPath"] = body.bannerPath; updates["bannerUrl"] = null; }
           if (body.externalLinks !== undefined) updates["externalLinks"] = body.externalLinks;
 
           // If updating custom slug
