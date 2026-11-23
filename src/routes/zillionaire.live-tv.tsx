@@ -115,7 +115,7 @@ function ZillionaireLiveTvRoute() {
       title="Live TV"
       description="Create live channels, manage programme listings, review submissions and monitor playback status."
     >
-      {(token, account, onLock) => (
+      {({ token, account, onLock }) => (
         <LiveTvPage token={token} account={account} onLock={onLock} />
       )}
     </ConsolePageGuard>
