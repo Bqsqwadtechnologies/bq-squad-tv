@@ -148,8 +148,20 @@ function ProducerUploadInner({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadFileName, setUploadFileName] = useState<string | null>(null);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [selectedMediaFile, setSelectedMediaFile] = useState<File | null>(null);
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState("");
 
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!selectedMediaFile) {
+      setMediaPreviewUrl("");
+      return;
+    }
+    const objectUrl = URL.createObjectURL(selectedMediaFile);
+    setMediaPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [selectedMediaFile]);
 
   // Load existing submissions & active draft on mount
   useEffect(() => {
@@ -269,6 +281,7 @@ function ProducerUploadInner({
       return;
     }
     setSubmitError(null);
+    if (kind === "video") setSelectedMediaFile(file);
     setUploadingMedia(true);
     setUploadFileName(file.name);
     setUploadProgress(0);
@@ -393,6 +406,7 @@ function ProducerUploadInner({
 
       setSubmitSuccess(true);
       setForm(initialForm);
+      setSelectedMediaFile(null);
       loadSubmissions();
     } catch (err: any) {
       setSubmitError(err.message || "An unexpected error occurred.");
@@ -669,6 +683,22 @@ function ProducerUploadInner({
                     />
                   </label>
                 </div>
+
+                {mediaPreviewUrl && (
+                  <div className="space-y-2 rounded-xl border border-border bg-card p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-foreground">Video preview</span>
+                      <span className="text-[11px] text-muted-foreground">Private · visible only in your upload workflow</span>
+                    </div>
+                    <video
+                      src={mediaPreviewUrl}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="aspect-video w-full rounded-lg bg-black"
+                    />
+                  </div>
+                )}
 
                 {uploadingMedia && (
                   <div className="space-y-2 p-4 rounded-xl border border-border bg-muted/40">
