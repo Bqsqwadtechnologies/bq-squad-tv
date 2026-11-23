@@ -22,26 +22,6 @@ interface PrivacyRequest {
   legalRegulation: "GDPR" | "NDPR" | "CCPA";
 }
 
-const mockRequests: PrivacyRequest[] = [
-  {
-    id: "priv_001",
-    userEmail: "viewer_privacy@example.com",
-    userRole: "viewer",
-    requestType: "export_archive",
-    status: "pending",
-    requestedAt: "2026-03-24T10:00:00Z",
-    legalRegulation: "NDPR",
-  },
-  {
-    id: "priv_002",
-    userEmail: "deleted_producer@filmltd.ng",
-    userRole: "producer",
-    requestType: "account_deletion",
-    status: "processing",
-    requestedAt: "2026-03-22T14:30:00Z",
-    legalRegulation: "GDPR",
-  },
-];
 
 function PrivacyRequestsRoute() {
   return (
@@ -52,7 +32,7 @@ function PrivacyRequestsRoute() {
 }
 
 function PrivacyRequestsContent({ account }: { account: ConsoleAccount }) {
-  const [requests, setRequests] = useState<PrivacyRequest[]>(mockRequests);
+  const [requests, setRequests] = useState<PrivacyRequest[]>([]);
 
   const columns: EntityColumn<PrivacyRequest>[] = [
     { key: "email", header: "User Email", render: (r) => <span className="font-semibold text-white">{r.userEmail}</span> },
@@ -85,7 +65,7 @@ function PrivacyRequestsContent({ account }: { account: ConsoleAccount }) {
     <ZillionaireEntityConsole
       account={account}
       title="Privacy, Data Export & Deletion Centre"
-      subtitle="Fulfill GDPR, NDPR, and CCPA data portability archives and permanent account deletion requests."
+      subtitle="Fulfill GDPR, NDPR, and CCPA data portability archives and permanent account deletion requests. No live records are available from a connected service yet; sample data is intentionally not shown."
       icon={FileArchive}
       items={requests}
       columns={columns}
