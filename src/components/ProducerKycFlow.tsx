@@ -104,6 +104,28 @@ export function ProducerKycFlow({
 
   // Status & Draft
   const [activeCameraMode, setActiveCameraMode] = useState<CaptureMode | null>(null);
+  const [preopenedCameraStream, setPreopenedCameraStream] = useState<MediaStream | null>(null);
+
+  function openCameraFromTap(cameraMode: CaptureMode) {
+    // Start getUserMedia synchronously from the actual tap. This makes Chrome
+    // show its permission prompt before the camera dialog is rendered.
+    const request = navigator.mediaDevices?.getUserMedia
+      ? navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: cameraMode === "face_liveness" ? "user" : "environment",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        })
+      : Promise.reject(new Error("CAMERA_API_UNAVAILABLE"));
+    setActiveCameraMode(cameraMode);
+    void request.then((mediaStream) => {
+      setPreopenedCameraStream(mediaStream);
+    }).catch(() => {
+      setPreopenedCameraStream(null);
+    });
+  }
   const [submitting, setSubmitting] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftSavedMessage, setDraftSavedMessage] = useState<string | null>(null);
@@ -874,7 +896,7 @@ export function ProducerKycFlow({
       <label className="block text-xs font-semibold text-white">1. ID Document Front</label>
       <button
         type="button"
-        onClick={() => setActiveCameraMode("id_card_front")}
+        onClick={() => openCameraFromTap("id_card_front")}
         className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
       >
         <Camera className="h-3.5 w-3.5" /> Capture with Camera
@@ -896,7 +918,7 @@ export function ProducerKycFlow({
       <label className="block text-xs font-semibold text-white">2. ID Document Back (if applicable)</label>
       <button
         type="button"
-        onClick={() => setActiveCameraMode("id_card_back")}
+        onClick={() => openCameraFromTap("id_card_back")}
         className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
       >
         <Camera className="h-3.5 w-3.5" /> Capture with Camera
@@ -918,7 +940,7 @@ export function ProducerKycFlow({
       <label className="block text-xs font-semibold text-white">3. Face Liveness & Selfie Verification</label>
       <button
         type="button"
-        onClick={() => setActiveCameraMode("face_liveness")}
+        onClick={() => openCameraFromTap("face_liveness")}
         className="flex items-center gap-1.5 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-300 hover:bg-cyan-500/20 transition"
       >
         <Camera className="h-3.5 w-3.5" /> Start Face Liveness
@@ -1050,7 +1072,9 @@ export function ProducerKycFlow({
       {activeCameraMode && (
         <KycCameraCapture
           mode={activeCameraMode}
+          initialStream={preopenedCameraStream}
           onCapture={(result) => {
+            setPreopenedCameraStream(null);
             if (activeCameraMode === "id_card_front") {
               setIdFrontFile(dataUrlToFile(result.dataUrl, "id-front.jpg"));
             } else if (activeCameraMode === "id_card_back") {
@@ -1060,8 +1084,16 @@ export function ProducerKycFlow({
             }
             setActiveCameraMode(null);
           }}
-          onUploadFileInstead={() => setActiveCameraMode(null)}
-          onClose={() => setActiveCameraMode(null)}
+          onUploadFileInstead={() => {
+            preopenedCameraStream?.getTracks().forEach((track) => track.stop());
+            setPreopenedCameraStream(null);
+            setActiveCameraMode(null);
+          }}
+          onClose={() => {
+            preopenedCameraStream?.getTracks().forEach((track) => track.stop());
+            setPreopenedCameraStream(null);
+            setActiveCameraMode(null);
+          }}
         />
       )}
       {showSupportModal && (
