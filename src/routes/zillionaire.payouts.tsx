@@ -96,7 +96,7 @@ function ZillionairePayoutsRoute() {
       title="Payouts & Money Control"
       description="Producer and provider payouts queue, approval workflow, bank settlement verification, and revenue share live calculator."
     >
-      {(token, account, onLock) => (
+      {({ token, account, onLock }) => (
         <ZillionairePayoutsPage token={token} account={account} onLock={onLock} />
       )}
     </ConsolePageGuard>
