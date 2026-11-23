@@ -3,9 +3,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { FileBarChart, LoaderCircle, RefreshCw, ShieldCheck } from "lucide-react";
 import {
   getWebAuthHeaders,
-  restoreWebSession,
   signInWithEmailPassword,
 } from "@/lib/firebase-web-auth";
+import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 
 type Report = {
   month: string;
@@ -85,9 +85,17 @@ export const Route = createFileRoute("/zillionaire/reports")({
 });
 
 function MonthlyReportsPage() {
+  return (
+    <ConsolePageGuard role="zillionaire" module="overview" title="Monthly reports" description="Review monthly platform transactions, payouts, advertising and producer verification activity.">
+      {({ token }) => <MonthlyReportsContent initialToken={token} />}
+    </ConsolePageGuard>
+  );
+}
+
+function MonthlyReportsContent({ initialToken }: { initialToken: string }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [token, setToken] = useState("");
+  const [token, setToken] = useState(initialToken);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [report, setReport] = useState<Report | null>(null);
   const [busy, setBusy] = useState(false);
@@ -118,25 +126,10 @@ function MonthlyReportsPage() {
   }
 
   useEffect(() => {
-    let active = true;
-    void (async () => {
-      try {
-        const restored = await restoreWebSession();
-        if (restored && active) {
-          setToken(restored);
-          await load(restored, month);
-        }
-      } catch (caught) {
-        if (active)
-          setError(
-            caught instanceof Error ? caught.message : "Could not restore the owner session.",
-          );
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, []);
+    void load(initialToken, month);
+    // The guard owns authentication and supplies the current Firebase token.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialToken]);
 
   async function login(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
