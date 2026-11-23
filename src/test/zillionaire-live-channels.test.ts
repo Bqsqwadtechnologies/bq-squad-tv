@@ -134,6 +134,9 @@ describe("Zillionaire Live Channels Management API", () => {
     expect(body.channelId).toBeDefined();
     expect(body.channel.streamUrl).toBe("https://stream.bqsqwad.tv/hls/arena/main.m3u8");
     expect(body.channel.failoverStreamUrl).toBe("https://failover.bqsqwad.tv/hls/arena/backup.m3u8");
+    expect(body.channel.type).toBe("platform");
+    expect(body.channel.ownerUid).toBe("platform");
+    expect(body.channel.createdBy).toBe("owner-live-1");
   });
 
   it("3. handles Go Live and End Live stream transitions with confirmation", async () => {
