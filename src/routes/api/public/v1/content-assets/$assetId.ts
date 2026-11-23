@@ -140,16 +140,40 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
               )
             : [];
 
-          // Resolve Producer info for public profile link (Rule N10)
+          // Resolve public producer identity and optional transparent video branding.
           const producerUid = typeof asset["ownerUid"] === "string" ? asset["ownerUid"] : typeof asset["producerUid"] === "string" ? asset["producerUid"] : null;
-          let producerSummary: { slug: string; name: string; verified: boolean } | null = null;
+          let producerSummary: {
+            slug: string;
+            name: string;
+            verified: boolean;
+            blueVerified: boolean;
+            brandOverlayText: string;
+            brandOverlayLogoUrl: string | null;
+          } | null = null;
           if (producerUid) {
             const prodDoc = await fs.getDoc("producers/" + producerUid);
             if (prodDoc) {
+              let brandOverlayLogoUrl: string | null = null;
+              if (typeof prodDoc["brandOverlayLogoPath"] === "string") {
+                try {
+                  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+                  const signedLogo = await supabaseAdmin.storage
+                    .from("bq-sqwad-source-media")
+                    .createSignedUrl(prodDoc["brandOverlayLogoPath"] as string, 60 * 60);
+                  brandOverlayLogoUrl = signedLogo.data?.signedUrl || null;
+                } catch {
+                  brandOverlayLogoUrl = null;
+                }
+              }
               producerSummary = {
                 slug: (prodDoc["slug"] as string) || (prodDoc["publicId"] as string) || producerUid,
                 name: (prodDoc["displayName"] as string) || (prodDoc["name"] as string) || "Producer",
                 verified: prodDoc["verificationStatus"] === "APPROVED",
+                blueVerified: prodDoc["publicVerificationStatus"] === "ACTIVE" &&
+                  typeof prodDoc["publicVerificationUntil"] === "string" &&
+                  Date.parse(prodDoc["publicVerificationUntil"] as string) > Date.now(),
+                brandOverlayText: typeof prodDoc["brandOverlayText"] === "string" ? prodDoc["brandOverlayText"] as string : "",
+                brandOverlayLogoUrl,
               };
             }
           }
@@ -183,6 +207,10 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
               ratePerMinuteMinor,
               rightsCurrent,
               isPrivatePreview,
+              producer: producerSummary,
+              bqOriginalMark: Boolean(producerUid) && (
+                (typeof asset["deliveryMode"] === "string" ? asset["deliveryMode"] : channel["deliveryMode"]) === "native"
+              ),
             },
             channel: {
               id: channelId,
