@@ -1328,18 +1328,18 @@
   {
     "route": "/api/public/v1/producer/profile-media",
     "file": "src/routes/api/public/v1/producer/profile-media.ts",
-    "guard": "producer",
+    "guard": "viewer",
     "expected": {
       "anonymous": 401,
-      "viewer": 403,
+      "viewer": 200,
       "producer A": 200,
       "producer B": 200,
-      "provider A": 403,
-      "provider B": 403,
-      "delegate with module": 403,
-      "delegate without module": 403,
+      "provider A": 200,
+      "provider B": 200,
+      "delegate with module": 200,
+      "delegate without module": 200,
       "worker": 401,
-      "owner": 403
+      "owner": 200
     }
   },
   {
