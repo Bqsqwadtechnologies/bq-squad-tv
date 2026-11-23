@@ -330,9 +330,9 @@ function ProducerProfileContent({ token, account, onLock }: {
                       : "The platform owner has not enabled public verification pricing yet."}
                   </p>
                 </div>
-                <button type="button" onClick={() => void purchaseBlueTick()} disabled={!blueTick?.enabled || profile.verificationStatus !== "APPROVED" || blueTickBusy} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
+                <button type="button" onClick={() => void purchaseBlueTick()} disabled={!blueTick?.enabled || profile?.verificationStatus !== "APPROVED" || blueTickBusy} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
                   {blueTickBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <BadgeCheck className="h-4 w-4" />}
-                  {profile.verificationStatus !== "APPROVED" ? "Identity approval required" : "Get blue tick"}
+                  {profile?.verificationStatus !== "APPROVED" ? "Identity approval required" : "Get blue tick"}
                 </button>
               </div>
             )}
