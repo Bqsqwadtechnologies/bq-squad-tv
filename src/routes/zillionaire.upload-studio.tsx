@@ -162,6 +162,11 @@ function UploadStudioContent({
       setError("Choose a series, season and valid episode number before uploading.");
       return;
     }
+    const year = productionYear.trim() ? Number(productionYear) : undefined;
+    if (year !== undefined && (!Number.isInteger(year) || year < 1888 || year > new Date().getFullYear())) {
+      setError("Enter a valid production year or leave it blank.");
+      return;
+    }
 
     const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
     const mimeByExtension: Record<string, string> = {
@@ -196,7 +201,7 @@ function UploadStudioContent({
           ageRating,
           licenseType,
           copyrightHolderName: copyrightHolderName.trim(),
-          productionYear: Number(productionYear),
+          ...(year !== undefined ? { productionYear: year } : {}),
           ownershipDeclaration: ownershipConfirmed,
           copyrightDeclaration: copyrightConfirmed,
           ...(mediaType === "Episode" ? {
@@ -438,7 +443,7 @@ function UploadStudioContent({
             <div className="rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/30 p-5">
               <label className="block text-xs font-bold text-slate-200">
                 Video file (MP4, MOV, MKV or WebM · up to 5 GB)
-                <input type="file" accept="video/mp4,video/quicktime,video/x-matroska,video/webm,.mp4,.mov,.mkv,.webm" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="mt-3 block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:font-bold file:text-slate-950" />
+                <input key={file ? file.name : "empty"} type="file" accept="video/mp4,video/quicktime,video/x-matroska,video/webm,.mp4,.mov,.mkv,.webm" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="mt-3 block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:font-bold file:text-slate-950" />
               </label>
               {file && <p className="mt-3 text-xs text-slate-400">{file.name} · {(file.size / (1024 * 1024)).toFixed(1)} MB</p>}
               {previewUrl && <div className="mt-4 overflow-hidden rounded-xl border border-slate-700 bg-black"><video src={previewUrl} controls playsInline className="aspect-video w-full" /></div>}
