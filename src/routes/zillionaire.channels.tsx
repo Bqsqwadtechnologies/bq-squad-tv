@@ -80,7 +80,7 @@ function ZillionaireChannelsRoute() {
       title="Channels Master Control"
       description="Full catalogue channel management: verification badges, suspension, revenue share overrides, transfer, live permission."
     >
-      {(token, account, onLock) => (
+      {({ token, account, onLock }) => (
         <ZillionaireChannelsPage token={token} account={account} onLock={onLock} />
       )}
     </ConsolePageGuard>
