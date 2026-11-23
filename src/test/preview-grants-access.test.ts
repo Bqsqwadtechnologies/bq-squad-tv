@@ -9,7 +9,7 @@ describe("private preview grants", () => {
     vi.stubEnv("ZILLIONAIRE_EMAIL", "owner@bqsqwad.tv");
     const getDoc = vi.fn(async (path: string) => {
       if (path === "contentAssets/asset-1") {
-        return { ownerUid: "producer-1", hlsMasterUrl: "/private/asset-1/master.m3u8" };
+        return { ownerUid: "producer-1", status: "ready", hlsMasterUrl: "/private/asset-1/master.m3u8" };
       }
       if (path === "users/owner-1") return { email: "owner@bqsqwad.tv" };
       return null;
@@ -31,7 +31,7 @@ describe("private preview grants", () => {
   it("allows the account that uploaded an asset to preview it privately", async () => {
     const getDoc = vi.fn(async (path: string) =>
       path === "contentAssets/asset-2"
-        ? { ownerUid: "producer-2", masterPlaylistUrl: "/private/asset-2/master.m3u8" }
+        ? { ownerUid: "producer-2", status: "ready", masterPlaylistUrl: "/private/asset-2/master.m3u8" }
         : null,
     );
     const grant = await createPrivatePreviewGrant(
