@@ -4,6 +4,7 @@ import { findUnfilledLegalPlaceholders } from "../lib/server/legal-acceptance";
 
 const REQUIRED_SLUGS = [
   "about",
+  "bq-sqwad-originals",
   "account-deletion",
   "age-restriction",
   "community-guidelines",
@@ -40,7 +41,7 @@ describe("default legal page drafts", () => {
   it("contains all required unique audiences and slugs", () => {
     const presentSlugs = pages.map((p) => p.slug).sort();
     expect(presentSlugs).toEqual(REQUIRED_SLUGS);
-    expect(new Set(presentSlugs).size).toBe(19);
+    expect(new Set(presentSlugs).size).toBe(20);
   });
 
   it("keeps seed pages as reviewable Markdown drafts without script tags", () => {
