@@ -246,17 +246,37 @@ export function ZillionaireEntityConsole<T extends object>({
                         </td>
                       ))}
                       <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedItem(item);
-                          }}
-                          className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-semibold"
-                        >
-                          <span>Manage</span>
-                          <ChevronRight size={13} />
-                        </button>
+                        <div className="inline-flex items-center justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedItem(item);
+                              setActionNotes("");
+                              setActionError("");
+                            }}
+                            className="inline-flex items-center gap-1 text-cyan-400 hover:text-cyan-300 font-semibold"
+                          >
+                            <span>Manage</span>
+                            <ChevronRight size={13} />
+                          </button>
+                          {actions.some((act) => act.variant === "destructive") && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedItem(item);
+                                setActionNotes("");
+                                setActionError("");
+                              }}
+                              className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2 py-1 text-rose-300 hover:bg-rose-500/20 font-semibold"
+                              aria-label={`Open delete action for ${String(item[idKey])}`}
+                            >
+                              <Trash2 size={12} />
+                              <span>Delete</span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
