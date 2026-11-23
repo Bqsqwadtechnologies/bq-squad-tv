@@ -52,7 +52,9 @@ export const Route = createFileRoute("/api/public/v1/producer/analytics")({
 
           for (const session of sessions) {
             // Producer audience analytics are for on-demand assets, not channel streams.
-            const assetId = typeof session["assetId"] === "string" ? session["assetId"] : "";
+            const assetId = typeof session["contentAssetId"] === "string"
+              ? session["contentAssetId"]
+              : typeof session["assetId"] === "string" ? session["assetId"] : "";
             if (!assetId) continue;
 
             const lastHeartbeat =
