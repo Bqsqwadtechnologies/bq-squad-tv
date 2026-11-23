@@ -9,6 +9,9 @@ export type ContentRightsRequest = {
   viewerCountry: string;
   platform: PlaybackPlatform;
   paidPlayback?: boolean;
+  privatePreview?: boolean;
+  ownershipDeclaration?: boolean;
+  copyrightDeclaration?: boolean;
   now?: Date;
 };
 
@@ -17,6 +20,16 @@ export type ContentRightsRequest = {
  * delivery. Missing rights data is a deny, never an implicit allow.
  */
 export function assertContentPlaybackRights(input: ContentRightsRequest): void {
+  if (input.privatePreview === true) {
+    if (input.ownershipDeclaration !== true || input.copyrightDeclaration !== true) {
+      throw new ApiError(
+        403,
+        "PREVIEW_RIGHTS_DECLARATION_REQUIRED",
+        "A private preview requires the uploader to confirm ownership or distribution permission and copyright responsibility.",
+      );
+    }
+    return;
+  }
   if (input.contentStatus !== "published") {
     throw new ApiError(403, "CONTENT_NOT_PUBLISHED", "This content is not approved for playback.");
   }
