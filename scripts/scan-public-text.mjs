@@ -59,22 +59,14 @@ async function walk(directory) {
   return files;
 }
 
-function isOwnerZillionaireException(file, term) {
-  if (term.toLowerCase() !== "zillionaire") return false;
+function isPrivateConsoleSource(file) {
   const relative = path.relative(root, file).split(path.sep).join("/");
   return (
-    /^src\/routes\/zillionaire(?:\.|\/)/.test(relative) ||
-    relative === "src/routes/zillionaire.index.tsx" ||
+    /^src\/routes\/(?:zillionaire|producer|provider)(?:\.|\/)/.test(relative) ||
     relative === "src/components/ConsolePageGuard.tsx" ||
     relative === "src/components/ConsoleShell.tsx" ||
-    relative === "src/components/ProfileAccountHub.tsx" ||
-    relative === "src/routes/settings.tsx" ||
-    relative === "src/routes/account.tsx" ||
     relative.startsWith("src/components/Console") ||
-    relative === "src/routes/producer.index.tsx" ||
-    relative.startsWith("src/routes/producer.") ||
-    relative === "src/routes/provider.index.tsx" ||
-    relative.startsWith("src/routes/provider.")
+    relative === "src/components/ZillionaireEntityConsole.tsx"
   );
 }
 
@@ -193,7 +185,8 @@ for (const top of [
     const relative = path.relative(root, file).split(path.sep).join("/");
     const content = visibleCandidates(publicSource(await readFile(file, "utf8")), relative);
     for (const term of forbiddenTerms) {
-      if (isOwnerZillionaireException(file, term)) continue;
+      // Console routes are authenticated operator surfaces, not public-facing copy.
+      if (isPrivateConsoleSource(file)) continue;
       const index = content.toLowerCase().indexOf(term.toLowerCase());
       if (index < 0) continue;
       const line = content.slice(0, index).split("\n").length;
