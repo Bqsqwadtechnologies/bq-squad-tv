@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   UploadCloud,
   Film,
+  Play,
   Tv,
   FileCheck,
   AlertCircle,
