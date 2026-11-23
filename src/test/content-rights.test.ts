@@ -65,6 +65,32 @@ describe("content playback rights", () => {
     ).toThrow();
   });
 
+  it("allows an authorised private preview of declared content before publication and rights review", () => {
+    expect(() => assertContentPlaybackRights({
+      contentStatus: "draft",
+      license: null,
+      viewerCountry: "",
+      platform: "web",
+      paidPlayback: false,
+      privatePreview: true,
+      ownershipDeclaration: true,
+      copyrightDeclaration: true,
+    })).not.toThrow();
+  });
+
+  it("does not allow a private preview without both rights declarations", () => {
+    expect(() => assertContentPlaybackRights({
+      contentStatus: "draft",
+      license: null,
+      viewerCountry: "",
+      platform: "web",
+      paidPlayback: false,
+      privatePreview: true,
+      ownershipDeclaration: true,
+      copyrightDeclaration: false,
+    })).toThrow();
+  });
+
   it("does not require pay-per-minute rights for explicitly free playback", () => {
     expect(() =>
       assertContentPlaybackRights({
