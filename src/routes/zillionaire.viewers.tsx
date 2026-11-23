@@ -55,6 +55,7 @@ interface ViewerAccount {
   id: string;
   email: string;
   displayName: string;
+  username?: string | null;
   phone?: string | null;
   walletId?: string | null;
   accountStatus: string;
@@ -402,7 +403,7 @@ function ZillionaireViewersPage({
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by email, user ID, display name, phone, wallet ID, or device ID..."
+                placeholder="Search by @username, email, user ID, display name, phone, wallet ID or device ID..."
                 className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
               {searchQuery && (
@@ -444,6 +445,7 @@ function ZillionaireViewersPage({
             <ConsoleTable
               columns={[
                 { key: "displayName", label: "Viewer Name" },
+                { key: "username", label: "Username" },
                 { key: "email", label: "Email / Identifier" },
                 { key: "accountStatus", label: "Status" },
                 { key: "riskScore", label: "Risk Score" },
@@ -464,6 +466,9 @@ function ZillionaireViewersPage({
                       </span>
                     ))}
                   </div>
+                ),
+                username: (
+                  <span className="font-mono text-xs text-cyan-300">{u.username ? "@" + u.username : "—"}</span>
                 ),
                 email: (
                   <div>
