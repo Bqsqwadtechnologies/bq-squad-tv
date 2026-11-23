@@ -71,6 +71,13 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
             limit: 10,
             windowMs: 5 * 60_000,
           });
+          if (!body.channelId && (!body.ownershipDeclaration || !body.copyrightDeclaration)) {
+            throw new ApiError(
+              400,
+              "RIGHTS_DECLARATION_REQUIRED",
+              "Confirm ownership or distribution permission and copyright responsibility before uploading to the platform library.",
+            );
+          }
           const channelId = body.channelId ?? await ensurePlatformLibraryChannel(fs, user);
           await requireAuthorizedChannelUpload(fs, channelId, user);
 
