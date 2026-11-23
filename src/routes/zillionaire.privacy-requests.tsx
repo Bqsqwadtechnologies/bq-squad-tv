@@ -46,7 +46,7 @@ const mockRequests: PrivacyRequest[] = [
 function PrivacyRequestsRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="security">
-      {(account) => <PrivacyRequestsContent account={account} />}
+      {({ account }) => <PrivacyRequestsContent account={account} />}
     </ConsolePageGuard>
   );
 }
