@@ -160,6 +160,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
               resolution: a["resolution"] || null,
               duplicateDetected: a["duplicateDetected"] === true,
               failureReason: a["failureReason"] || a["lastErrorCode"] || null,
+              masterPlaylistUrl: a["masterPlaylistUrl"] || a["hlsMasterUrl"] || a["streamUrl"] || null,
               createdAt: a["createdAt"] || null,
               updatedAt: a["updatedAt"] || null,
             };
@@ -176,7 +177,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
 
           return Response.json({
             uploads,
-            channels: channelsList.map((ch) => ({
+            channels: channelsList.filter((ch) => ch["isSystemLibrary"] !== true).map((ch) => ({
               id: ch.__id,
               title: (ch["title"] as string) || (ch["name"] as string) || ch.__id,
               published: ch["published"] === true,
