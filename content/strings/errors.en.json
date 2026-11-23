@@ -33,5 +33,8 @@
   "SESSION_LIMIT_EXCEEDED": "You have reached the maximum active viewing sessions for your account.",
   "PAYSTACK_CURRENCY_UNAVAILABLE": "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.",
   "PAYMENT_CURRENCY_UNSUPPORTED": "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.",
-  "TOPUP_CURRENCY_NOT_CONFIGURED": "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet."
+  "TOPUP_CURRENCY_NOT_CONFIGURED": "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.",
+  "INVALID_PASSWORD": "The entered owner password does not match the password currently loaded by the server. If the saved setting is correct, redeploy or restart the server so it loads the latest setting.",
+  "ZILLIONAIRE_PASSWORD_INVALID": "The entered owner password does not match the password currently loaded by the server. If the saved setting is correct, redeploy or restart the server so it loads the latest setting.",
+  "ZILLIONAIRE_PASSWORD_NOT_CONFIGURED": "Owner password protection is not configured on the running server. The deployment must load the saved owner password setting before protected actions can continue."
 }
