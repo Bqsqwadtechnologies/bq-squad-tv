@@ -53,7 +53,7 @@ function UploadStudioRoute() {
       moduleName="Upload Studio"
       action="manage content ingestion and direct publishing"
     >
-      {(account) => <UploadStudioContent account={account} />}
+      {({ account }) => <UploadStudioContent account={account} />}
     </ConsolePageGuard>
   );
 }
