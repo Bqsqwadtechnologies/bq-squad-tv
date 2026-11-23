@@ -32,16 +32,25 @@ function getSigningSecret(): string {
   );
 }
 
+function removeSecretLineEnding(value: string): string {
+  // Secret managers can append one terminal newline when a value is pasted.
+  // Remove only that line ending; preserve intentional spaces and all other bytes.
+  return value.endsWith("\r\n") ? value.slice(0, -2)
+    : value.endsWith("\n") || value.endsWith("\r") ? value.slice(0, -1)
+    : value;
+}
+
 export function isAccessPasswordConfigured(): boolean {
-  // Do not normalise a password: whitespace can be part of the owner's secret.
-  return typeof process.env["ZILLIONAIRE_ACCESS_PASSWORD"] === "string" &&
-    process.env["ZILLIONAIRE_ACCESS_PASSWORD"]!.length > 0;
+  const password = process.env["ZILLIONAIRE_ACCESS_PASSWORD"];
+  return typeof password === "string" && removeSecretLineEnding(password).length > 0;
 }
 
 function getSecretHash(): Buffer | null {
-  const pwd = process.env["ZILLIONAIRE_ACCESS_PASSWORD"];
-  if (typeof pwd !== "string" || pwd.length === 0) return null;
-  return crypto.createHash("sha256").update(pwd, "utf8").digest();
+  const password = process.env["ZILLIONAIRE_ACCESS_PASSWORD"];
+  if (typeof password !== "string") return null;
+  const normalizedPassword = removeSecretLineEnding(password);
+  if (normalizedPassword.length === 0) return null;
+  return crypto.createHash("sha256").update(normalizedPassword, "utf8").digest();
 }
 
 export function checkLockout(identifier: string): {
@@ -124,7 +133,8 @@ export function verifyPasswordConstantTime(providedPassword: string): boolean {
   const secretHash = getSecretHash();
   if (!secretHash) return false;
 
-  const providedHash = crypto.createHash("sha256").update(providedPassword, "utf8").digest();
+  const normalizedProvidedPassword = removeSecretLineEnding(providedPassword);
+  const providedHash = crypto.createHash("sha256").update(normalizedProvidedPassword, "utf8").digest();
 
   return crypto.timingSafeEqual(secretHash, providedHash);
 }
