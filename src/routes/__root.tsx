@@ -105,7 +105,7 @@ function RootShell({ children }: { children: ReactNode }) {
             __html: `try {
               const saved = localStorage.getItem("bq-sqwad-theme") || localStorage.getItem("bq_console_theme");
               const systemLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
-              const mode = saved === "light" || (!saved && systemLight) ? "light" : "dark";
+              const mode = saved === "light" || (saved !== "dark" && systemLight) ? "light" : "dark";
               document.documentElement.classList.toggle("dark", mode === "dark");
               document.documentElement.classList.toggle("light", mode === "light");
             } catch {}
