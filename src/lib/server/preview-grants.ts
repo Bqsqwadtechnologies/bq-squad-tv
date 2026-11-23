@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { ApiError, Firestore } from "./firebase-admin";
+import { resolvePlatformAccess } from "./roles";
 
 export type PreviewTargetType = "asset" | "channel";
 
@@ -81,7 +82,7 @@ export function verifyPreviewToken(
  */
 export async function createPrivatePreviewGrant(
   fs: Firestore,
-  user: { uid: string; email: string | null },
+  user: { uid: string; email: string | null; emailVerified?: boolean; customClaims?: Record<string, unknown> },
   targetType: PreviewTargetType,
   targetId: string,
 ): Promise<{ previewToken: string; expiresAt: string; streamUrl?: string; previewPath: string }> {
@@ -100,7 +101,7 @@ export async function createPrivatePreviewGrant(
       isAuthorized = true;
       role = "producer";
     }
-    streamUrl = String(asset["hlsMasterUrl"] || asset["streamUrl"] || "");
+    streamUrl = String(asset["hlsMasterUrl"] || asset["masterPlaylistUrl"] || asset["streamUrl"] || "");
     previewPath = `/content/${targetId}?preview=true`;
   } else {
     const channel = await fs.getDoc(`channels/${targetId}`);
@@ -118,16 +119,24 @@ export async function createPrivatePreviewGrant(
     previewPath = `/channels/${slug}?preview=true`;
   }
 
-  // Operator / Zillionaire check
+  // Resolve platform permissions from the same verified identity and module
+  // grants used by the Zillionaire dashboard. Do not depend on a duplicate,
+  // optional consoleAccounts document to recognise the real platform owner.
   if (!isAuthorized) {
-    const operator = await fs.getDoc(`consoleAccounts/${user.uid}`);
-    if (operator) {
-      const roles = Array.isArray(operator["roles"]) ? (operator["roles"] as string[]) : [];
-      const isOwner = Boolean(operator["isOwner"]);
-      if (isOwner || roles.includes("operator") || roles.includes("admin") || roles.includes("zillionaire") || roles.includes("super_admin")) {
-        isAuthorized = true;
-        role = "operator";
-      }
+    const access = await resolvePlatformAccess(
+      fs,
+      user.uid,
+      user.email,
+      user.customClaims,
+      user.emailVerified === true,
+    );
+    if (
+      access.isZillionaireOwner ||
+      access.zillionaireModules.includes("content") ||
+      access.zillionaireModules.includes("video")
+    ) {
+      isAuthorized = true;
+      role = access.isZillionaireOwner ? "owner" : "operator";
     }
   }
 
