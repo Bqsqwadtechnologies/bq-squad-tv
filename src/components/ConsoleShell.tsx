@@ -1033,7 +1033,7 @@ export function ConsoleShell({
   return (
     <div
       className={`min-h-screen font-sans ${
-        theme === "dark" ? "bg-[#050914] text-slate-100 dark" : "bg-slate-50 text-slate-900"
+        theme === "dark" ? "bg-background text-foreground dark" : "bg-background text-foreground light"
       }`}
     >
       {/* "View As" Banner for Owner support */}
@@ -1073,8 +1073,8 @@ export function ConsoleShell({
         <aside
           className={`hidden md:flex flex-col md:w-20 lg:w-64 shrink-0 border-r transition-all duration-300 z-30 ${
             theme === "dark"
-              ? "bg-[#060b1b] border-blue-950/40 text-slate-300"
-              : "bg-white border-slate-200 text-slate-700 shadow-sm"
+              ? "bg-sidebar border-sidebar-border text-sidebar-foreground"
+              : "bg-sidebar border-sidebar-border text-sidebar-foreground"
           }`}
         >
           {/* Brand & Console Badge */}
@@ -1200,8 +1200,8 @@ export function ConsoleShell({
           <header
             className={`sticky top-0 z-20 flex items-center justify-between gap-4 px-4 sm:px-6 py-3 border-b backdrop-blur-md transition-colors ${
               theme === "dark"
-                ? "bg-[#060b1b]/90 border-blue-950/40"
-                : "bg-white/90 border-slate-200"
+                ? "bg-background/90 border-border"
+                : "bg-background/90 border-border"
             }`}
           >
             {/* Mobile menu button & Title */}
@@ -1682,16 +1682,16 @@ export function ConsoleWelcomeBanner({
   onSecondaryAction,
 }: ConsoleWelcomeBannerProps) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-r from-blue-900/40 via-[#0a1532] to-[#0d1c44] p-6 shadow-xl">
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-card text-card-foreground p-6 shadow-xl">
       <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="space-y-1 max-w-2xl">
           {badgeText && (
-            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 border border-blue-400/30 mb-1">
+            <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border border-primary/30 mb-1">
               {badgeText}
             </span>
           )}
-          <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-tight">{Icon && <Icon className="h-5 w-5 inline-block mr-2" />}{title}</h2>
-          <p className="text-xs text-blue-200/80 leading-relaxed">{description}</p>
+          <h2 className="text-lg sm:text-xl font-extrabold text-card-foreground tracking-tight">{Icon && <Icon className="h-5 w-5 inline-block mr-2" />}{title}</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
           {actions}
@@ -1715,7 +1715,7 @@ export function ConsoleWelcomeBanner({
         </div>
       </div>
       {/* Decorative background glow */}
-      <div className="absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-blue-500/10 blur-2xl pointer-events-none" />
+      <div className="absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-primary/5 blur-2xl pointer-events-none" />
     </div>
   );
 }
@@ -1884,7 +1884,7 @@ export function ConsoleCard({
 }: ConsoleCardProps) {
   return (
     <div
-      className={`rounded-2xl border border-blue-950/40 bg-[#080f24]/90 p-5 shadow-lg backdrop-blur-sm ${className}`}
+      className={`rounded-2xl border border-border bg-card text-card-foreground p-5 shadow-lg backdrop-blur-sm ${className}`}
     >
       {(title || headerAction) && (
         <div className="flex items-center justify-between gap-4 pb-3 border-b border-white/5 mb-4">
@@ -1918,7 +1918,7 @@ export function ConsoleChartCard({
   children,
 }: ConsoleChartCardProps) {
   return (
-    <div className="rounded-2xl border border-blue-950/40 bg-[#080f24]/90 p-5 shadow-lg">
+    <div className="rounded-2xl border border-border bg-card text-card-foreground p-5 shadow-lg">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-white/5 mb-4">
         <div>
           <h3 className="text-sm font-bold text-white">{title}</h3>
