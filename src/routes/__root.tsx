@@ -11,6 +11,7 @@ import {
   type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+import { getActiveWebIdToken, getWebAuthHeaders } from "@/lib/firebase-web-auth";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -123,6 +124,37 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      try {
+        const idToken = await getActiveWebIdToken();
+        if (!idToken) return;
+        const response = await fetch("/api/public/v1/profile/preferences", {
+          headers: await getWebAuthHeaders(idToken),
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const data = (await response.json()) as { themeMode?: "system" | "light" | "dark" };
+        if (!active || !["system", "light", "dark"].includes(String(data.themeMode))) return;
+        const mode = data.themeMode === "system"
+          ? (window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark")
+          : data.themeMode;
+        document.documentElement.classList.toggle("dark", mode === "dark");
+        document.documentElement.classList.toggle("light", mode === "light");
+        if (data.themeMode === "system") {
+          localStorage.removeItem("bq-sqwad-theme");
+          localStorage.removeItem("bq_console_theme");
+        } else {
+          localStorage.setItem("bq-sqwad-theme", mode);
+          localStorage.setItem("bq_console_theme", mode);
+        }
+      } catch {
+        // Keep the cached theme if profile preferences cannot be loaded.
+      }
+    })();
+    return () => { active = false; };
+  }, []);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const showLegalFooter =
     !pathname.startsWith("/admin") &&
