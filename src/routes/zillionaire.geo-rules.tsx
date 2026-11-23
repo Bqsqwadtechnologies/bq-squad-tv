@@ -29,38 +29,6 @@ interface GeoRule {
   updatedAt: string;
 }
 
-const mockGeoRules: GeoRule[] = [
-  {
-    id: "geo_01",
-    targetId: "mov_lagos_nights",
-    targetTitle: "Lagos Nights: Underground",
-    targetType: "movie",
-    mode: "worldwide",
-    countries: [],
-    reason: "Worldwide digital distribution license secured.",
-    updatedAt: "2026-03-20",
-  },
-  {
-    id: "geo_02",
-    targetId: "chan_afrobeats_tv",
-    targetTitle: "Afrobeats 24/7 Live TV",
-    targetType: "channel",
-    mode: "allow_only",
-    countries: ["NG", "GH", "KE", "ZA", "GB", "US"],
-    reason: "Broadcast license territorially restricted to Pan-Africa, UK, and US.",
-    updatedAt: "2026-03-22",
-  },
-  {
-    id: "geo_03",
-    targetId: "mov_nollywood_drama",
-    targetTitle: "Heart of Abuja",
-    targetType: "movie",
-    mode: "block_only",
-    countries: ["FR"],
-    reason: "Theatrical holdback window in France.",
-    updatedAt: "2026-03-15",
-  },
-];
 
 function GeoRulesRoute() {
   return (
@@ -260,7 +228,7 @@ function GeoRulesContent({ account, token }: { account: ConsoleAccount; token: s
         <ZillionaireEntityConsole
           account={account}
           title="Territory & Geo-Distribution Rules"
-          subtitle="Control country-level allowlists and blocklists per video title, episode, and television stream."
+          subtitle="Control country-level allowlists and blocklists per video title, episode, and television stream. No live records are available from a connected service yet; sample data is intentionally not shown."
           icon={Globe2}
           items={geoRules}
           columns={geoColumns}
