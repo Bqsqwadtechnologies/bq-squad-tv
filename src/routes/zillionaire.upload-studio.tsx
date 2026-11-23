@@ -158,7 +158,7 @@ function UploadStudioContent({
       setError("Confirm that you own or are authorised to distribute this content.");
       return;
     }
-    if (mediaType === "Episode" && (!selectedSeries || !selectedSeason || !/^\\d+$/.test(episodeNumber))) {
+    if (mediaType === "Episode" && (!selectedSeries || !selectedSeason || !/^\d+$/.test(episodeNumber))) {
       setError("Choose a series, season and valid episode number before uploading.");
       return;
     }
