@@ -51,6 +51,10 @@ export const Route = createFileRoute("/api/public/v1/producer/analytics")({
           });
 
           for (const session of sessions) {
+            // Producer audience analytics are for on-demand assets, not channel streams.
+            const assetId = typeof session["assetId"] === "string" ? session["assetId"] : "";
+            if (!assetId) continue;
+
             const lastHeartbeat =
               typeof session["lastHeartbeatAt"] === "string"
                 ? Date.parse(session["lastHeartbeatAt"])
@@ -91,7 +95,6 @@ export const Route = createFileRoute("/api/public/v1/producer/analytics")({
               point.earningsMinor += rev;
             }
 
-            const assetId = typeof session["assetId"] === "string" ? session["assetId"] : "channel_stream";
             if (!contentStats[assetId]) {
               contentStats[assetId] = {
                 views: 0,
@@ -109,19 +112,29 @@ export const Route = createFileRoute("/api/public/v1/producer/analytics")({
           }
 
           // Fetch producer's assets to augment top content
-          const channelAssets = await fs.query("contentAssets", {
-            filters: [{ field: "producerUid", op: "EQUAL", value: user.uid }],
-          }).catch(() => []);
+          const [ownedAssets, producerAssets] = await Promise.all([
+            fs.query("contentAssets", {
+              filters: [{ field: "ownerUid", op: "EQUAL", value: user.uid }],
+            }).catch(() => []),
+            fs.query("contentAssets", {
+              filters: [{ field: "producerUid", op: "EQUAL", value: user.uid }],
+            }).catch(() => []),
+          ]);
+          const assetsById = new Map<string, Record<string, unknown>>();
+          for (const item of [...ownedAssets, ...producerAssets]) {
+            const id = String(item["assetId"] || item["id"] || item.__id || "");
+            if (id) assetsById.set(id, item);
+          }
 
-          const topContent = channelAssets.map((item: any, idx: number) => ({
-            id: item.id || `asset_${idx}`,
-            title: item.title || item.name || `Content Item #${idx + 1}`,
-            status: item.status || "ACTIVE",
-            views: contentStats[item.id]?.views || 0,
+          const topContent = Array.from(assetsById.entries()).map(([id, item]) => ({
+            id,
+            title: String(item["title"] || item["name"] || "Untitled content"),
+            status: String(item["status"] || "ACTIVE"),
+            views: contentStats[id]?.views || 0,
             watchHours:
-              Math.round(((contentStats[item.id]?.watchSeconds || 0) / 3600) * 10) / 10,
-            revenueMinor: contentStats[item.id]?.revenueMinor || 0,
-            thumbnailUrl: item.thumbnailUrl || "/brand/bq-sqwad-tv-logo.png",
+              Math.round(((contentStats[id]?.watchSeconds || 0) / 3600) * 10) / 10,
+            revenueMinor: contentStats[id]?.revenueMinor || 0,
+            thumbnailUrl: typeof item["thumbnailUrl"] === "string" ? item["thumbnailUrl"] : "/brand/bq-sqwad-tv-logo.png",
           }));
 
           return Response.json({
