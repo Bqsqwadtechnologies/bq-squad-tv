@@ -44,6 +44,7 @@ interface PlatformFlags {
   reminders: boolean;
   modalSpendGuard: boolean;
   deliveryProxyFallback?: boolean;
+  followedProducerReleaseNotifications: boolean;
 }
 
 const FLAG_METADATA: Record<
@@ -93,6 +94,11 @@ const FLAG_METADATA: Record<
   reminders: {
     label: "Broadcast Reminders & Notifications",
     description: "Allow viewers to set alerts for upcoming scheduled broadcasts",
+    category: "viewer",
+  },
+  followedProducerReleaseNotifications: {
+    label: "New Releases from Followed Producers",
+    description: "Notify viewers when a producer they follow publishes a movie, series or video",
     category: "viewer",
   },
   newStreamGrants: {
