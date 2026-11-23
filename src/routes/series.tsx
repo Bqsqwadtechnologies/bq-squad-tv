@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ArrowLeft, Film, LoaderCircle, Star } from "lucide-react";
 import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
+import { BrandWatermark } from "@/components/BrandWatermark";
 
 type FeaturedContent = {
   id: string;
@@ -173,6 +174,7 @@ function SeriesPage() {
                       <Film size={42} />
                     </div>
                   )}
+                  <BrandWatermark />
                 </div>
                 <div className="p-3">
                   <p className="line-clamp-2 text-sm font-extrabold text-slate-900">{item.title}</p>
