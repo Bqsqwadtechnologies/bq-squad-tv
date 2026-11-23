@@ -45,6 +45,12 @@ function SettingsPage() {
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const [saveToast, setSaveToast] = useState(false);
   const [isZillionaireOwner, setIsZillionaireOwner] = useState(false);
+  const [publicDisplayName, setPublicDisplayName] = useState("");
+  const [publicUsername, setPublicUsername] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileStatus, setProfileStatus] = useState("");
+  const [followedProducerReleases, setFollowedProducerReleases] = useState(true);
+  const [releasePreferenceSaving, setReleasePreferenceSaving] = useState(false);
 
   useEffect(() => {
     try {
@@ -79,9 +85,11 @@ function SettingsPage() {
         const account = await getWebAccount();
         setIsZillionaireOwner(account?.emailVerified === true && account.isOwner === true);
         const headers = await getWebAuthHeaders(token);
-        const [preferencesResponse, profileResponse] = await Promise.all([
+        const [preferencesResponse, profileResponse, publicProfileResponse, notificationResponse] = await Promise.all([
           fetch("/api/public/v1/profile/preferences", { headers, cache: "no-store" }),
           fetch("/api/public/v1/profile", { headers, cache: "no-store" }),
+          fetch("/api/public/v1/viewer/profile", { headers, cache: "no-store" }),
+          fetch("/api/public/v1/user/notification-preferences", { headers, cache: "no-store" }),
         ]);
         if (preferencesResponse.ok) {
           const preferences = (await preferencesResponse.json()) as { themeMode?: ThemeChoice };
@@ -99,6 +107,17 @@ function SettingsPage() {
             setIsUnder18(true);
             setKidsModeActive(true);
           }
+        }
+        if (publicProfileResponse.ok) {
+          const data = await publicProfileResponse.json() as {
+            profile?: { displayName?: string; username?: string };
+          };
+          setPublicDisplayName(data.profile?.displayName || "");
+          setPublicUsername(data.profile?.username || "");
+        }
+        if (notificationResponse.ok) {
+          const data = await notificationResponse.json() as { followedProducerReleases?: boolean };
+          setFollowedProducerReleases(data.followedProducerReleases !== false);
         }
       } catch {}
     })();
@@ -146,6 +165,57 @@ function SettingsPage() {
         }
       } catch {}
     })();
+  }
+
+  async function savePublicProfile() {
+    setProfileSaving(true);
+    setProfileStatus("");
+    try {
+      const token = await restoreWebSession();
+      if (!token) throw new Error("Sign in again to update your public profile.");
+      const response = await fetch("/api/public/v1/viewer/profile", {
+        method: "PUT",
+        headers: { ...(await getWebAuthHeaders(token)), "content-type": "application/json" },
+        body: JSON.stringify({ displayName: publicDisplayName, username: publicUsername }),
+      });
+      const data = await response.json() as { profile?: { displayName?: string; username?: string }; error?: string; message?: string };
+      if (!response.ok) throw new Error(data.message || data.error || "Your public profile could not be saved.");
+      setPublicDisplayName(data.profile?.displayName || publicDisplayName);
+      setPublicUsername(data.profile?.username || publicUsername.trim().toLowerCase());
+      setProfileStatus("Your public name and username have been saved.");
+      triggerSaveToast();
+    } catch (error) {
+      setProfileStatus(error instanceof Error ? error.message : "Your public profile could not be saved.");
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
+  async function toggleFollowedProducerReleases() {
+    if (releasePreferenceSaving) return;
+    const next = !followedProducerReleases;
+    setReleasePreferenceSaving(true);
+    setProfileStatus("");
+    try {
+      const token = await restoreWebSession();
+      if (!token) throw new Error("Sign in again to update notification preferences.");
+      const headers = await getWebAuthHeaders(token);
+      const currentResponse = await fetch("/api/public/v1/user/notification-preferences", { headers, cache: "no-store" });
+      const current = currentResponse.ok ? await currentResponse.json() as Record<string, unknown> : {};
+      const response = await fetch("/api/public/v1/user/notification-preferences", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ ...current, followedProducerReleases: next }),
+      });
+      const data = await response.json() as { error?: string; message?: string };
+      if (!response.ok) throw new Error(data.message || data.error || "Notification preference could not be saved.");
+      setFollowedProducerReleases(next);
+      triggerSaveToast();
+    } catch (error) {
+      setProfileStatus(error instanceof Error ? error.message : "Notification preference could not be saved.");
+    } finally {
+      setReleasePreferenceSaving(false);
+    }
   }
 
   function toggleNotifications() {
@@ -291,6 +361,27 @@ function SettingsPage() {
           </div>
         </section>
 
+        <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-primary">Public Profile</h2>
+          <p className="mt-2 text-xs text-muted-foreground">Your public name and unique username identify you in the BQ SQWAD TV community.</p>
+          <div className="mt-4 grid gap-3">
+            <label className="grid gap-1.5 text-xs font-semibold">
+              Public display name
+              <input value={publicDisplayName} onChange={(event) => setPublicDisplayName(event.target.value)} maxLength={50} placeholder="Name other viewers will see" className="rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground" />
+            </label>
+            <label className="grid gap-1.5 text-xs font-semibold">
+              Username
+              <div className="flex items-center rounded-xl border border-input bg-background px-3">
+                <span className="text-sm text-muted-foreground">@</span>
+                <input value={publicUsername} onChange={(event) => setPublicUsername(event.target.value.toLowerCase().replace(/[^a-z0-9._-]/g, ""))} maxLength={30} minLength={3} placeholder="your-username" className="min-w-0 flex-1 bg-transparent px-2 py-2.5 text-sm text-foreground outline-none" />
+              </div>
+              <span className="font-normal text-muted-foreground">3–30 characters. Letters, numbers, dots, underscores and hyphens.</span>
+            </label>
+            <button type="button" onClick={() => void savePublicProfile()} disabled={profileSaving || !publicDisplayName.trim() || publicUsername.trim().length < 3} className="justify-self-start rounded-xl bg-primary px-4 py-2 text-xs font-bold text-primary-foreground disabled:opacity-50">{profileSaving ? "Saving…" : "Save public profile"}</button>
+            {profileStatus && <p role="status" className="text-xs text-muted-foreground">{profileStatus}</p>}
+          </div>
+        </section>
+
         {/* Group 2: Preferences & Playback */}
         <section className="mt-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
           <h2 className="text-xs font-bold uppercase tracking-wider text-primary">
@@ -360,6 +451,18 @@ function SettingsPage() {
                     notificationsEnabled ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
+              </button>
+            </div>
+            <div className="flex items-center justify-between gap-4 py-3.5">
+              <div className="flex items-center gap-3">
+                <Bell size={20} className="text-primary" />
+                <div>
+                  <p className="text-sm font-semibold">New releases from producers you follow</p>
+                  <p className="text-xs text-muted-foreground">Get an alert when they publish a movie, series or video.</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => void toggleFollowedProducerReleases()} disabled={releasePreferenceSaving} aria-pressed={followedProducerReleases} className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${followedProducerReleases ? "bg-primary" : "bg-muted"}`}>
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${followedProducerReleases ? "translate-x-6" : "translate-x-1"}`} />
               </button>
             </div>
           </div>
