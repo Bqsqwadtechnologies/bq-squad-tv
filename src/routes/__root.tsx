@@ -136,13 +136,14 @@ function RootComponent() {
         });
         if (!response.ok) return;
         const data = (await response.json()) as { themeMode?: "system" | "light" | "dark" };
-        if (!active || !["system", "light", "dark"].includes(String(data.themeMode))) return;
-        const mode = data.themeMode === "system"
+        const themeMode = data.themeMode;
+        if (!active || (themeMode !== "system" && themeMode !== "light" && themeMode !== "dark")) return;
+        const mode: "light" | "dark" = themeMode === "system"
           ? (window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark")
-          : data.themeMode;
+          : themeMode;
         document.documentElement.classList.toggle("dark", mode === "dark");
         document.documentElement.classList.toggle("light", mode === "light");
-        if (data.themeMode === "system") {
+        if (themeMode === "system") {
           localStorage.removeItem("bq-sqwad-theme");
           localStorage.removeItem("bq_console_theme");
         } else {
