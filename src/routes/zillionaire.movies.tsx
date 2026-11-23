@@ -46,6 +46,7 @@ import {
   Trash,
 } from "lucide-react";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
+import { BrandWatermark } from "@/components/BrandWatermark";
 import type {
   ShelfDefinition,
   FeaturedHero,
@@ -785,7 +786,7 @@ function ZillionaireMoviesPage({
                     render: (a: ContentAsset) => (
                       <div className="flex items-center gap-3">
                         {a.posterUrl ? (
-                          <img src={a.posterUrl} alt="" className="w-10 h-14 object-cover rounded bg-slate-900 border border-slate-800" />
+                          <div className="relative h-14 w-10 shrink-0 overflow-hidden rounded bg-slate-900"><img src={a.posterUrl} alt="" className="h-full w-full object-cover border border-slate-800" /><BrandWatermark /></div>
                         ) : (
                           <div className="w-10 h-14 rounded bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600">
                             <Film className="w-5 h-5" />
