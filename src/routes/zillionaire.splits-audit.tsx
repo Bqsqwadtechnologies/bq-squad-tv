@@ -67,7 +67,7 @@ const mockEntries: SplitAuditEntry[] = [
 function SplitsAuditRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="finance">
-      {(account) => <SplitsAuditContent account={account} />}
+      {({ account }) => <SplitsAuditContent account={account} />}
     </ConsolePageGuard>
   );
 }
