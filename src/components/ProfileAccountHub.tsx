@@ -232,14 +232,14 @@ export function ProfileAccountHub() {
             </Link>
 
             {/* Console shortcuts appear only when the verified account has the matching role. */}
-            {account.emailVerified === true &&
+            {account.emailVerified === true && account.isOwner !== true &&
             ((account.roles?.includes("producer") && account.producerPlanActive) ||
               account.roles?.includes("provider")) ? (
               <div className="pt-2 pb-1 border-t border-white/10 mt-2">
                 <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
                   Consoles
                 </span>
-                {account.emailVerified === true && ((account.roles?.includes("producer") && account.producerPlanActive)) ? (
+                {account.emailVerified === true && account.isOwner !== true && account.roles?.includes("producer") && account.producerPlanActive ? (
                   <a
                     href="/producer"
                     onClick={() => setIsOpen(false)}
@@ -252,7 +252,7 @@ export function ProfileAccountHub() {
                     <ChevronRight size={13} className="text-slate-500" />
                   </a>
                 ) : null}
-                {account.emailVerified === true && (account.roles?.includes("provider")) ? (
+                {account.emailVerified === true && account.isOwner !== true && account.roles?.includes("provider") ? (
                   <a
                     href="/provider"
                     onClick={() => setIsOpen(false)}
