@@ -51,11 +51,13 @@ function KycQueuePage() {
     >
       {({ account, token, onLock }) => (
         <ConsoleShell
+          consoleType="zillionaire"
+          title="Identity & Payout Verification"
+          tagline="Review producer and provider identity checks, compliance and payout-account verification."
           account={{
             email: account.email,
-            displayName: account.displayName,
-            role: account.role,
             isOwner: account.isOwner,
+            roles: account.roles,
             modules: account.modules,
           }}
           onLock={onLock}
