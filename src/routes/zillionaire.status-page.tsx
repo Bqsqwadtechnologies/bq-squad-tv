@@ -55,7 +55,7 @@ const mockSubsystems: SubsystemHealth[] = [
 function StatusPageEditorRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="settings">
-      {(account) => <StatusPageContent account={account} />}
+      {({ account }) => <StatusPageContent account={account} />}
     </ConsolePageGuard>
   );
 }
