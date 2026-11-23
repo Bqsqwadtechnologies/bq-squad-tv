@@ -280,6 +280,7 @@ function ProducerChannelsInner({
   }, [token, selectedChannelId]);
 
   async function handlePreviewAsset(assetId: string) {
+    const previewWindow = window.open("about:blank", "_blank");
     try {
       const headers = await getWebAuthHeaders(token);
       const res = await fetch("/api/public/v1/preview/grant", {
@@ -290,7 +291,12 @@ function ProducerChannelsInner({
       if (res.ok) {
         const data = await res.json();
         if (data.previewPath) {
-          window.open(data.previewPath, "_blank");
+          if (previewWindow) {
+            previewWindow.opener = null;
+            previewWindow.location.replace(data.previewPath);
+          } else {
+            window.location.assign(data.previewPath);
+          }
         } else {
           setMessage("Private preview link active.");
         }
@@ -299,6 +305,7 @@ function ProducerChannelsInner({
         setError(err.message || "Failed to generate preview grant.");
       }
     } catch (e: any) {
+      previewWindow?.close();
       setError(e.message || "Preview error");
     }
   }
