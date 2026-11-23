@@ -165,6 +165,7 @@ const CONSOLE_PAGE_HELP: Record<string, { description: string; keywords: string 
   "/zillionaire/status-page": { description: "Edit the public service status page and incident notices.", keywords: "uptime outage incident service status" },
   "/zillionaire/releases": { description: "Manage application releases, version notes and platform release controls.", keywords: "android app version rollout update release" },
   "/producer": { description: "Producer dashboard overview and account activity.", keywords: "producer home" },
+  "/producer/profile": { description: "Edit your public producer name, username, profile photo, cover image and creator bio.", keywords: "producer public profile username avatar cover photo branding" },
   "/producer/channels": { description: "Manage producer channels, content uploads and schedules.", keywords: "producer channel movie upload" },
   "/provider": { description: "Provider portal overview and account activity.", keywords: "provider home" },
 };
@@ -799,6 +800,12 @@ export function ConsoleShell({
             icon: LayoutDashboard,
   Compass,
   BookOpen,
+          },
+          {
+            id: "producer-profile",
+            label: "Public Profile",
+            href: "/producer/profile",
+            icon: UserCircle,
           },
           {
             id: "producer-channels",
