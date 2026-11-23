@@ -483,6 +483,35 @@ describe("Batch X1: Console Page Guards", () => {
       expect(screen.queryByText("Create your producer account")).not.toBeInTheDocument();
     });
 
+    it("supports the owner role alias and multiple accepted dashboard modules", async () => {
+      vi.mocked(restoreWebSession).mockResolvedValue({
+        uid: "owner-123",
+        email: "owner@example.com",
+      } as unknown as Awaited<ReturnType<typeof restoreWebSession>>);
+
+      setupMockFetch({
+        uid: "owner-123",
+        email: "owner@example.com",
+        emailVerified: true,
+        roles: ["viewer", "producer"],
+        isOwner: true,
+        modules: [],
+        producerPlanActive: true,
+        providerId: null,
+      });
+
+      render(
+        <ConsolePageGuard role="owner" requiredModules={["security", "finance", "overview"]}>
+          <div data-testid="owner-kyc-console">Owner verification console</div>
+        </ConsolePageGuard>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId("owner-kyc-console")).toBeInTheDocument();
+      });
+      expect(screen.queryByText("Create your producer account")).not.toBeInTheDocument();
+    });
+
     it("allows delegate with specific module into module-guarded route", async () => {
       vi.mocked(restoreWebSession).mockResolvedValue({
         uid: "delegate-123",
