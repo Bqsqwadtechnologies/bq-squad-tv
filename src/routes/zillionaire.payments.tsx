@@ -59,7 +59,7 @@ function ZillionairePaymentsRoute() {
       title="Payments & Reconciliation"
       description="Viewer top-up transactions, gateway reconciliation against Paystack, and audited reversal workflow with double confirmation."
     >
-      {(token, account, onLock) => (
+      {({ token, account, onLock }) => (
         <ZillionairePaymentsPage token={token} account={account} onLock={onLock} />
       )}
     </ConsolePageGuard>
