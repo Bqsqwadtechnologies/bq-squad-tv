@@ -28,6 +28,21 @@ describe("private preview grants", () => {
     expect(getDoc).not.toHaveBeenCalledWith("consoleAccounts/owner-1");
   });
 
+  it("allows producers to preview approved published assets", async () => {
+    const getDoc = vi.fn(async (path: string) =>
+      path === "contentAssets/asset-published"
+        ? { ownerUid: "producer-3", status: "PUBLISHED", masterPlaylistUrl: "/private/asset-published/master.m3u8" }
+        : null,
+    );
+    const grant = await createPrivatePreviewGrant(
+      { getDoc } as unknown as Firestore,
+      { uid: "producer-3", email: "producer@example.com", emailVerified: true },
+      "asset",
+      "asset-published",
+    );
+    expect(grant.previewPath).toContain("/content/asset-published?preview=true&previewToken=");
+  });
+
   it("allows the account that uploaded an asset to preview it privately", async () => {
     const getDoc = vi.fn(async (path: string) =>
       path === "contentAssets/asset-2"
