@@ -1,46 +1,35 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  UploadCloud,
-  Film,
-  Tv,
-  Clapperboard,
-  Video,
-  Radio,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  Play,
-  Pause,
-  RotateCcw,
-  Trash2,
-  ExternalLink,
-  ShieldCheck,
-  FileVideo,
-  Layers,
-  Sparkles,
-  Zap,
-  Info,
-  Server,
-  ArrowRight,
-  Filter,
-} from "lucide-react";
+import { Film, Video, Tv, UploadCloud, Play, Search, CheckCircle2, Clock3, AlertCircle } from "lucide-react";
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
-import {
-  ConsoleShell,
-  ConsoleWelcomeBanner,
-  ConsoleKpiCard,
-  ConsoleCard,
-  ConsoleStatusBadge,
-} from "@/components/ConsoleShell";
-import { getWebAuthHeaders, restoreWebSession } from "@/lib/firebase-web-auth";
+import { ConsoleShell, ConsoleWelcomeBanner, ConsoleCard, ConsoleStatusBadge } from "@/components/ConsoleShell";
+import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
+
+type MediaType = "Movie" | "Episode" | "Video";
+type UploadRecord = {
+  id: string;
+  title: string;
+  description: string;
+  mediaType: string;
+  displayState: string;
+  rawStatus: string;
+  contentStatus: string;
+  sourceFilename: string | null;
+  masterPlaylistUrl?: string | null;
+  failureReason: string | null;
+  createdAt: string | null;
+};
+type Episode = { id: string; episodeNumber: number; title: string; videoAssetId?: string };
+type Season = { id: string; seasonNumber: number; title: string; episodes: Episode[] };
+type Series = { id: string; title: string; seasons: Season[] };
 
 export const Route = createFileRoute("/zillionaire/upload-studio")({
   component: UploadStudioRoute,
   head: () => ({
     meta: [
       { title: "Upload Studio | BQ SQWAD TV Zillionaire" },
-      { name: "description", content: "Ingest and direct-publish movies, series, episodes, and live recordings." },
+      { name: "description", content: "Upload movies, series episodes and videos to the private BQ SQWAD TV media library." },
+      { name: "robots", content: "noindex, nofollow, noarchive" },
     ],
   }),
 });
@@ -49,985 +38,454 @@ function UploadStudioRoute() {
   return (
     <ConsolePageGuard
       role="zillionaire"
-      module="video"
-      moduleName="Upload Studio"
-      action="manage content ingestion and direct publishing"
+      module="content"
+      title="Upload Studio"
+      description="Upload movies, videos and series episodes directly into the private BQ SQWAD TV media library."
     >
-      {({ account }) => <UploadStudioContent account={account} />}
+      {({ token, account, onLock }) => (
+        <UploadStudioContent token={token} account={account} onLock={onLock} />
+      )}
     </ConsolePageGuard>
   );
 }
 
-type UploadRecord = {
-  id: string;
-  channelId: string;
-  channelTitle: string;
-  title: string;
-  description: string;
-  mediaType: "Movie" | "Series" | "Episode" | "Trailer" | "Live recording";
-  genre: string;
-  language: string;
-  ageRating: string;
-  ownershipDeclaration?: boolean;
-  copyrightDeclaration?: boolean;
-  releaseDate: string | null;
-  cast: string;
-  posterUrl: string | null;
-  backdropUrl: string | null;
-  directPublish: boolean;
-  displayState: "Uploading" | "Verifying" | "Processing" | "Needs review" | "Ready" | "Published" | "Failed";
-  rawStatus: string;
-  contentStatus: string;
-  sourceFilename: string | null;
-  declaredSizeBytes: number | null;
-  actualSizeBytes: number | null;
-  durationSeconds: number | null;
-  codec: string | null;
-  resolution: string | null;
-  duplicateDetected: boolean;
-  failureReason: string | null;
-  createdAt: string | null;
-  updatedAt: string | null;
-};
-
-type ChannelOption = {
-  id: string;
-  title: string;
-  published: boolean;
-};
-
-type ActiveUploadQueueItem = {
-  assetId: string;
-  filename: string;
-  sizeBytes: number;
-  uploadedBytes: number;
-  progress: number;
-  status: "idle" | "uploading" | "paused" | "completed" | "failed";
-  speedMbPerSec: number;
-  secondsRemaining: number;
-  chunksTotal: number;
-  chunksCompleted: number;
-};
-
-function formatBytes(bytes: number | null): string {
-  if (!bytes || bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
-}
-
-function formatDuration(seconds: number | null): string {
-  if (!seconds || seconds <= 0) return "—";
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  if (h > 0) return `${h}h ${m}m ${s}s`;
-  return `${m}m ${s}s`;
-}
-
-function UploadStudioContent({ account }: { account: ConsoleAccount }) {
-  const [uploads, setUploads] = useState<UploadRecord[]>([]);
-  const [channels, setChannels] = useState<ChannelOption[]>([]);
-  const [stats, setStats] = useState({
-    total: 0,
-    published: 0,
-    ready: 0,
-    processing: 0,
-    needsReview: 0,
-    failed: 0,
-  });
-  const [processingHostConfigured, setProcessingHostConfigured] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  // Active Tab
-  const [activeTab, setActiveTab] = useState<"ingest" | "queue" | "worker">("queue");
-
-  // Ingest Form State
-  const [mediaType, setMediaType] = useState<"Movie" | "Series" | "Episode" | "Trailer" | "Live recording">("Movie");
-  const [channelId, setChannelId] = useState("");
+function UploadStudioContent({
+  token,
+  account,
+  onLock,
+}: {
+  token: string;
+  account: ConsoleAccount;
+  onLock?: () => void;
+}) {
+  const [mediaType, setMediaType] = useState<MediaType>("Movie");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [genre, setGenre] = useState("Drama");
+  const [genre, setGenre] = useState("General");
   const [language, setLanguage] = useState("English");
-  const [ageRating, setAgeRating] = useState<"G" | "TV-Y7" | "PG-13" | "16" | "18">("PG-13");
-  const [contentWarnings, setContentWarnings] = useState("");
+  const [ageRating, setAgeRating] = useState("PG-13");
   const [licenseType, setLicenseType] = useState<"owned" | "licensed" | "public_domain">("owned");
   const [copyrightHolderName, setCopyrightHolderName] = useState("");
   const [productionYear, setProductionYear] = useState(String(new Date().getFullYear()));
-  const [rightsEvidenceFile, setRightsEvidenceFile] = useState<File | null>(null);
-  const [releaseDate, setReleaseDate] = useState(new Date().toISOString().slice(0, 10));
-  const [cast, setCast] = useState("");
-  const [posterUrl, setPosterUrl] = useState("");
-  const [backdropUrl, setBackdropUrl] = useState("");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [subtitlesLanguage, setSubtitlesLanguage] = useState("English");
-  const [subtitlesUrl, setSubtitlesUrl] = useState("");
+  const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
+  const [copyrightConfirmed, setCopyrightConfirmed] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [seriesList, setSeriesList] = useState<Series[]>([]);
+  const [seriesId, setSeriesId] = useState("");
+  const [seasonId, setSeasonId] = useState("");
+  const [episodeNumber, setEpisodeNumber] = useState("1");
+  const [uploads, setUploads] = useState<UploadRecord[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [progressLabel, setProgressLabel] = useState("");
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
-  // Upload Queue State
-  const [activeQueue, setActiveQueue] = useState<ActiveUploadQueueItem[]>([]);
-  const [typeFilter, setTypeFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const selectedSeries = seriesList.find((item) => item.id === seriesId) ?? null;
+  const selectedSeason = selectedSeries?.seasons.find((item) => item.id === seasonId) ?? null;
+
+  useEffect(() => {
+    if (!file) {
+      setPreviewUrl("");
+      return;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [file]);
 
   const loadData = useCallback(async () => {
+    setLoading(true);
+    setError("");
     try {
-      setLoading(true);
-      setError(null);
-      const token = await restoreWebSession();
-      const headers = await getWebAuthHeaders(token || "");
-
-      const res = await fetch("/api/public/v1/zillionaire/upload/", {
-        headers,
-        cache: "no-store",
-      });
-
-      if (!res.ok) {
-        throw new Error(`Failed to load upload records: ${res.statusText}`);
+      const headers = await getWebAuthHeaders(token);
+      const [uploadResponse, seriesResponse] = await Promise.all([
+        fetch("/api/public/v1/zillionaire/upload/", { headers, cache: "no-store" }),
+        fetch("/api/public/v1/zillionaire/series/", { headers, cache: "no-store" }),
+      ]);
+      const uploadData = (await uploadResponse.json()) as { uploads?: UploadRecord[]; error?: string };
+      if (!uploadResponse.ok) throw new Error(uploadData.error ?? "Could not load uploaded media.");
+      setUploads(uploadData.uploads ?? []);
+      if (seriesResponse.ok) {
+        const seriesData = (await seriesResponse.json()) as { series?: Series[] };
+        const rows = seriesData.series ?? [];
+        setSeriesList(rows);
+        if (!seriesId && rows[0]) {
+          setSeriesId(rows[0].id);
+          if (rows[0].seasons?.[0]) setSeasonId(rows[0].seasons[0].id);
+        }
       }
-
-      const data = await res.json();
-      setUploads(data.uploads || []);
-      setChannels(data.channels || []);
-      if (data.channels && data.channels.length > 0 && !channelId) {
-        setChannelId(data.channels[0].id);
-      }
-      setStats(data.stats || { total: 0, published: 0, ready: 0, processing: 0, needsReview: 0, failed: 0 });
-      setProcessingHostConfigured(Boolean(data.processingHostConfigured));
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error loading data");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not load the media library.");
     } finally {
       setLoading(false);
     }
-  }, [channelId]);
+  }, [token, seriesId]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
 
-  const handleStartUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const filteredUploads = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return uploads;
+    return uploads.filter((item) =>
+      [item.title, item.description, item.mediaType, item.displayState, item.sourceFilename]
+        .some((value) => String(value ?? "").toLowerCase().includes(query)),
+    );
+  }, [uploads, searchQuery]);
+
+  async function handleUpload(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (busy) return;
+    setError("");
+    setNotice("");
+    if (!file) {
+      setError("Choose a video file before uploading.");
+      return;
+    }
     if (!title.trim()) {
-      setError("Asset title is required.");
+      setError("Enter a title for this content.");
       return;
     }
-    if (!channelId) {
-      setError("Please select a target channel.");
+    if (file.size <= 0 || file.size > 5_000_000_000) {
+      setError("The video must be larger than 0 bytes and no larger than 5 GB.");
       return;
     }
-    if (!copyrightHolderName.trim() || !/^\d{4}$/.test(productionYear)) {
-      setError("Enter the copyright holder and four-digit production year before submitting.");
+    if (!ownershipConfirmed || !copyrightConfirmed) {
+      setError("Confirm that you own or are authorised to distribute this content.");
       return;
     }
-    if (!rightsEvidenceFile) {
-      setError("Upload a PDF, PNG or JPEG licence, contract or clearance document.");
+    if (mediaType === "Episode" && (!selectedSeries || !selectedSeason || !/^\\d+$/.test(episodeNumber))) {
+      setError("Choose a series, season and valid episode number before uploading.");
       return;
     }
 
-    const filename = selectedFile ? selectedFile.name : `${title.toLowerCase().replace(/[^a-z0-9]/g, "_")}.mp4`;
-    const sizeBytes = selectedFile ? selectedFile.size : 250_000_000; // 250MB mock if no local file selected
-    const mimeType = selectedFile ? selectedFile.type || "video/mp4" : "video/mp4";
+    const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+    const mimeByExtension: Record<string, string> = {
+      mp4: "video/mp4",
+      mov: "video/quicktime",
+      mkv: "video/x-matroska",
+      webm: "video/webm",
+    };
+    const mimeType = file.type || mimeByExtension[extension] || "";
+    if (!mimeByExtension[extension] || !mimeType.startsWith("video/")) {
+      setError("Use an MP4, MOV, MKV or WebM video file.");
+      return;
+    }
 
+    setBusy(true);
     try {
-      setError(null);
-      const token = await restoreWebSession();
-      const headers = {
-        ...(await getWebAuthHeaders(token || "")),
-        "Content-Type": "application/json",
-      };
-
-      // 1. Initiate Upload
-      const initRes = await fetch("/api/public/v1/zillionaire/upload/", {
+      const headers = await getWebAuthHeaders(token);
+      setProgressLabel("Preparing a secure private upload…");
+      const intentResponse = await fetch("/api/public/v1/storage/intent", {
         method: "POST",
-        headers,
+        headers: { ...headers, "content-type": "application/json" },
         body: JSON.stringify({
-          action: "INITIATE_UPLOAD",
-          channelId,
-          title,
-          description,
+          title: title.trim(),
+          description: description.trim(),
+          filename: file.name,
+          sizeBytes: file.size,
+          mimeType,
+          transcodeProfile: "standard",
           mediaType,
           genre,
           language,
           ageRating,
-          contentWarnings: contentWarnings.split(",").map((item) => item.trim()).filter(Boolean),
           licenseType,
           copyrightHolderName: copyrightHolderName.trim(),
           productionYear: Number(productionYear),
-          releaseDate,
-          cast,
-          posterUrl: posterUrl.trim() || undefined,
-          backdropUrl: backdropUrl.trim() || undefined,
-          filename,
-          sizeBytes,
-          mimeType,
-          subtitles: subtitlesUrl ? [{ language: subtitlesLanguage, format: "vtt", label: `${subtitlesLanguage} Subtitles`, url: subtitlesUrl }] : [],
+          ownershipDeclaration: ownershipConfirmed,
+          copyrightDeclaration: copyrightConfirmed,
+          ...(mediaType === "Episode" ? {
+            seriesId,
+            seasonId,
+            episodeNumber: Number(episodeNumber),
+          } : {}),
         }),
       });
-
-      if (!initRes.ok) {
-        const errData = await initRes.json();
-        throw new Error(errData.error || "Failed to initiate upload");
-      }
-
-      const initData = await initRes.json();
-      const assetId = initData.assetId as string;
-      const totalChunks = initData.totalChunks as number;
-      const evidenceForm = new FormData();
-      evidenceForm.append("file", rightsEvidenceFile);
-      const evidenceRes = await fetch(`/api/public/v1/content-assets/${encodeURIComponent(assetId)}/rights-evidence`, {
-        method: "POST",
-        headers: await getWebAuthHeaders(token || ""),
-        body: evidenceForm,
-      });
-      if (!evidenceRes.ok) {
-        const evidenceError = await evidenceRes.json();
-        throw new Error(evidenceError.error || "The rights document could not be stored privately.");
-      }
-
-      // Add to active queue
-      const queueItem: ActiveUploadQueueItem = {
-        assetId,
-        filename,
-        sizeBytes,
-        uploadedBytes: 0,
-        progress: 0,
-        status: "uploading",
-        speedMbPerSec: 4.8,
-        secondsRemaining: Math.ceil(sizeBytes / (4.8 * 1024 * 1024)),
-        chunksTotal: totalChunks,
-        chunksCompleted: 0,
+      const intent = (await intentResponse.json()) as {
+        assetId?: string;
+        signedUrl?: string;
+        method?: string;
+        error?: string;
       };
-      setActiveQueue((prev) => [queueItem, ...prev]);
-      setActiveTab("queue");
-
-      // Progressively upload chunks
-      for (let chunkIdx = 0; chunkIdx < totalChunks; chunkIdx++) {
-        const chunkLength = Math.min(5 * 1024 * 1024, sizeBytes - chunkIdx * 5 * 1024 * 1024);
-        const chunkRes = await fetch("/api/public/v1/zillionaire/upload/", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            action: "UPLOAD_CHUNK",
-            assetId,
-            chunkIndex: chunkIdx,
-            totalChunks,
-            chunkBytesLength: chunkLength,
-          }),
-        });
-
-        if (!chunkRes.ok) throw new Error("Upload chunk failed");
-
-        const progressPercent = Math.min(100, Math.round(((chunkIdx + 1) / totalChunks) * 100));
-        const uploadedNow = (chunkIdx + 1) * chunkLength;
-
-        setActiveQueue((prev) =>
-          prev.map((item) =>
-            item.assetId === assetId
-              ? {
-                  ...item,
-                  progress: progressPercent,
-                  uploadedBytes: uploadedNow,
-                  chunksCompleted: chunkIdx + 1,
-                  secondsRemaining: Math.max(0, Math.ceil((sizeBytes - uploadedNow) / (4.8 * 1024 * 1024))),
-                }
-              : item,
-          ),
-        );
+      if (!intentResponse.ok || !intent.assetId || !intent.signedUrl) {
+        throw new Error(intent.error ?? "The secure upload could not be prepared.");
       }
 
-      // 3. Complete Upload
-      const completeRes = await fetch("/api/public/v1/zillionaire/upload/", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          action: "COMPLETE_UPLOAD",
-          assetId,
-          durationSeconds: 5400, // 1h 30m
-          codec: "h264/aac",
-          resolution: "1080p",
-        }),
+      setProgressLabel("Uploading your video to private storage…");
+      const storedResponse = await fetch(intent.signedUrl, {
+        method: intent.method ?? "PUT",
+        headers: { "content-type": mimeType, "x-upsert": "false" },
+        body: file,
       });
+      if (!storedResponse.ok) {
+        throw new Error("Private storage rejected the video upload (" + storedResponse.status + ").");
+      }
 
-      if (!completeRes.ok) throw new Error("Failed to complete upload");
+      setProgressLabel("Verifying the uploaded video and starting processing…");
+      const completeResponse = await fetch("/api/public/v1/storage/complete", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ assetId: intent.assetId }),
+      });
+      const completed = (await completeResponse.json()) as { error?: string; status?: string };
+      if (!completeResponse.ok) {
+        throw new Error(completed.error ?? "The uploaded video could not be verified.");
+      }
 
-      setActiveQueue((prev) =>
-        prev.map((item) =>
-          item.assetId === assetId
-            ? { ...item, status: "completed", progress: 100, secondsRemaining: 0 }
-            : item,
-        ),
-      );
+      if (mediaType === "Episode" && selectedSeries && selectedSeason) {
+        const existingEpisode = selectedSeason.episodes?.find(
+          (item) => item.episodeNumber === Number(episodeNumber),
+        );
+        const actionBody = existingEpisode
+          ? {
+              action: "UPDATE_EPISODE",
+              seriesId,
+              seasonId,
+              episodeId: existingEpisode.id,
+              changes: { title: title.trim(), videoAssetId: intent.assetId, status: "DRAFT" },
+              reason: "Attached a newly uploaded episode video",
+            }
+          : {
+              action: "CREATE_EPISODE",
+              seriesId,
+              seasonId,
+              episodeNumber: Number(episodeNumber),
+              title: title.trim(),
+              videoAssetId: intent.assetId,
+              durationMinutes: 0,
+              status: "DRAFT",
+              reason: "Created an episode from the Upload Studio",
+            };
+        const episodeResponse = await fetch("/api/public/v1/zillionaire/series/", {
+          method: "POST",
+          headers: { ...headers, "content-type": "application/json" },
+          body: JSON.stringify(actionBody),
+        });
+        if (!episodeResponse.ok) {
+          const episodeError = (await episodeResponse.json()) as { error?: string };
+          setNotice("Video uploaded successfully, but the episode link needs attention: " + (episodeError.error ?? "series update failed") + ".");
+        }
+      }
 
-      setSuccessMessage(`Upload received for "${title}". It will remain private until processing, rights checks and approval are complete.`);
-      // Reset form
+      setNotice((current) => current || "Upload received. The video will be previewable when processing is complete.");
+      setFile(null);
       setTitle("");
       setDescription("");
-      setSelectedFile(null);
-      void loadData();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Upload error");
+      setOwnershipConfirmed(false);
+      setCopyrightConfirmed(false);
+      setProgressLabel("Upload complete · processing pending");
+      await loadData();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "The video upload failed.");
+      setProgressLabel("");
+    } finally {
+      setBusy(false);
     }
-  };
+  }
 
-  const handleAction = async (assetId: string, operation: "retry" | "delete", reason: string) => {
+  async function previewUploadedAsset(assetId: string) {
+    setError("");
     try {
-      setError(null);
-      const token = await restoreWebSession();
-      const headers = {
-        ...(await getWebAuthHeaders(token || "")),
-        "Content-Type": "application/json",
-      };
-
-      const res = await fetch("/api/public/v1/zillionaire/upload/", {
+      const headers = await getWebAuthHeaders(token);
+      const response = await fetch("/api/public/v1/preview/grant", {
         method: "POST",
-        headers,
-        body: JSON.stringify({
-          action: "ACTION_UPLOAD",
-          assetId,
-          operation,
-          reason,
-        }),
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ targetType: "asset", targetId: assetId }),
       });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || `Failed to execute ${operation}`);
+      const data = (await response.json()) as { previewPath?: string; error?: string };
+      if (!response.ok || !data.previewPath) {
+        throw new Error(data.error ?? "A private preview is not available yet.");
       }
-
-      setSuccessMessage(`Action "${operation}" applied successfully to asset ${assetId}.`);
-      void loadData();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Action failed");
+      window.open(data.previewPath, "_blank", "noopener,noreferrer");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not open the private preview.");
     }
-  };
-
-  const filteredUploads = useMemo(() => {
-    return uploads.filter((u) => {
-      if (typeFilter !== "all" && u.mediaType !== typeFilter) return false;
-      if (statusFilter !== "all" && u.displayState !== statusFilter) return false;
-      return true;
-    });
-  }, [uploads, typeFilter, statusFilter]);
+  }
 
   return (
     <ConsoleShell
       consoleType="zillionaire"
       title="Upload Studio"
-      tagline="Resumable video ingestion & direct publishing engine"
+      tagline="A simple, secure place to upload movies, series episodes and videos."
       account={account}
       activePath="/zillionaire/upload-studio"
+      onLock={onLock}
       onRefresh={loadData}
       isRefreshing={loading}
+      searchPlaceholder="Search dashboard pages and features…"
     >
       <div className="space-y-6">
         <ConsoleWelcomeBanner
-          heading="Video & Media Upload Studio"
-          description="Direct-publish movies, series episodes, and live recordings with instant playback compatibility, chunked resumable ingestion, and automated fallback when GPU transcode workers are offline."
-          badge="Direct Ingestion"
+          heading="Upload movies, series and videos"
+          description="Choose what you are uploading, select the video file, preview it, and send it to the private media library. You do not need to select a broadcast channel."
+          badge="Media Library"
         />
 
-        {error && (
-          <div className="flex items-center gap-3 rounded-lg border border-rose-500/30 bg-rose-950/40 p-4 text-rose-200">
-            <AlertTriangle className="h-5 w-5 shrink-0 text-rose-400" />
-            <div className="flex-1 text-sm font-medium">{error}</div>
-            <button onClick={() => setError(null)} className="text-xs text-rose-400 hover:underline">
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {successMessage && (
-          <div className="flex items-center gap-3 rounded-lg border border-emerald-500/30 bg-emerald-950/40 p-4 text-emerald-200">
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
-            <div className="flex-1 text-sm font-medium">{successMessage}</div>
-            <button onClick={() => setSuccessMessage(null)} className="text-xs text-emerald-400 hover:underline">
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {/* KPI Strip */}
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
-          <ConsoleKpiCard
-            title="Total Assets"
-            value={stats.total}
-            subtitle="Ingested in catalogue"
-            icon={Layers}
-            variant="default"
-          />
-          <ConsoleKpiCard
-            title="Published & Ready"
-            value={stats.published + stats.ready}
-            subtitle="Available for viewing"
-            icon={Play}
-            variant="success"
-          />
-          <ConsoleKpiCard
-            title="Awaiting Approval"
-            value={uploads.filter((u) => u.displayState === "Needs review" || u.displayState === "Ready").length}
-            subtitle="Private until approved"
-            icon={Zap}
-            variant="info"
-          />
-          <ConsoleKpiCard
-            title="Processing"
-            value={stats.processing}
-            subtitle="Transcode workers"
-            icon={Server}
-            variant="warning"
-          />
-          <ConsoleKpiCard
-            title="Needs Review"
-            value={stats.needsReview}
-            subtitle="Pending owner sign-off"
-            icon={Clock}
-            variant="neutral"
-          />
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex border-b border-slate-800">
-          <button
-            onClick={() => setActiveTab("ingest")}
-            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium transition-colors ${
-              activeTab === "ingest"
-                ? "border-amber-400 text-amber-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <UploadCloud className="h-4 w-4" />
-            Ingest New Content
-          </button>
-          <button
-            onClick={() => setActiveTab("queue")}
-            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium transition-colors ${
-              activeTab === "queue"
-                ? "border-amber-400 text-amber-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <Layers className="h-4 w-4" />
-            Catalogue & Pipeline ({uploads.length})
-            {activeQueue.some((q) => q.status === "uploading") && (
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab("worker")}
-            className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-medium transition-colors ${
-              activeTab === "worker"
-                ? "border-amber-400 text-amber-400"
-                : "border-transparent text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            <Server className="h-4 w-4" />
-            Transcode Host Setup
-            {processingHostConfigured ? (
-              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] text-emerald-300">Active</span>
-            ) : (
-              <span className="rounded bg-amber-500/20 px-1.5 py-0.5 text-[10px] text-amber-300">Direct Mode</span>
-            )}
-          </button>
-        </div>
-
-        {/* TAB 1: Ingest New Content */}
-        {activeTab === "ingest" && (
-          <form onSubmit={handleStartUpload} className="space-y-6">
-            <ConsoleCard title="1. Content Metadata & Channel Assignment">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Media Classification
-                  </label>
-                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-                    {(["Movie", "Series", "Episode", "Trailer", "Live recording"] as const).map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => setMediaType(t)}
-                        className={`flex flex-col items-center justify-center rounded-lg border p-3 text-center transition-all ${
-                          mediaType === t
-                            ? "border-amber-400 bg-amber-400/10 text-amber-300"
-                            : "border-slate-800 bg-slate-900/60 text-slate-400 hover:border-slate-700"
-                        }`}
-                      >
-                        {t === "Movie" && <Film className="h-5 w-5 mb-1" />}
-                        {t === "Series" && <Tv className="h-5 w-5 mb-1" />}
-                        {t === "Episode" && <Clapperboard className="h-5 w-5 mb-1" />}
-                        {t === "Trailer" && <Video className="h-5 w-5 mb-1" />}
-                        {t === "Live recording" && <Radio className="h-5 w-5 mb-1" />}
-                        <span className="text-xs font-medium">{t}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Target Broadcast Channel
-                  </label>
-                  <select
-                    value={channelId}
-                    onChange={(e) => setChannelId(e.target.value)}
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2.5 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
-                    required
+        <ConsoleCard title="New media upload">
+          <form onSubmit={handleUpload} className="space-y-5">
+            <div className="grid gap-3 sm:grid-cols-3">
+              {([
+                { value: "Movie", label: "Movie", detail: "A standalone film", icon: Film },
+                { value: "Episode", label: "Series episode", detail: "Attach to a season", icon: Tv },
+                { value: "Video", label: "Video", detail: "Other video content", icon: Video },
+              ] as const).map((option) => {
+                const Icon = option.icon;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setMediaType(option.value)}
+                    className={`rounded-xl border p-4 text-left transition ${mediaType === option.value ? "border-cyan-400 bg-cyan-400/10" : "border-slate-700 bg-slate-900/50 hover:border-slate-500"}`}
                   >
-                    <option value="">Select Channel...</option>
-                    {channels.map((ch) => (
-                      <option key={ch.id} value={ch.id}>
-                        {ch.title} {ch.published ? "(Live)" : "(Draft)"}
-                      </option>
-                    ))}
+                    <Icon className="mb-2 h-5 w-5 text-cyan-300" />
+                    <span className="block text-sm font-bold text-white">{option.label}</span>
+                    <span className="mt-1 block text-xs text-slate-400">{option.detail}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {mediaType === "Episode" && (
+              <div className="grid gap-3 rounded-xl border border-slate-700 bg-slate-900/40 p-4 sm:grid-cols-3">
+                <label className="text-xs font-semibold text-slate-300">
+                  Series
+                  <select value={seriesId} onChange={(event) => {
+                    const nextId = event.target.value;
+                    setSeriesId(nextId);
+                    const nextSeries = seriesList.find((item) => item.id === nextId);
+                    setSeasonId(nextSeries?.seasons?.[0]?.id ?? "");
+                  }} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white">
+                    <option value="">Select series</option>
+                    {seriesList.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
                   </select>
-                  <p className="mt-1 text-xs text-slate-500">
-                    The asset will be linked to this channel&apos;s schedule and streaming catalog.
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Asset Title
-                  </label>
-                  <input
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Lagos Nights (Director's Cut)"
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Genre & Primary Language
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input
-                      type="text"
-                      value={genre}
-                      onChange={(e) => setGenre(e.target.value)}
-                      placeholder="e.g. Nollywood, Thriller"
-                      className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
-                    />
-                    <input
-                      type="text"
-                      value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
-                      placeholder="e.g. English, Yoruba"
-                      className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Age Rating & Release Date
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <select
-                      value={ageRating}
-                      onChange={(e) => setAgeRating(e.target.value as typeof ageRating)}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
-                    >
-                      <option value="G">All ages</option>
-                      <option value="TV-Y7">7+</option>
-                      <option value="PG-13">13+</option>
-                      <option value="16">16+</option>
-                      <option value="18">18+</option>
-                    </select>
-                    <input
-                      type="date"
-                      value={releaseDate}
-                      onChange={(e) => setReleaseDate(e.target.value)}
-                      className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="md:col-span-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <label className="text-xs font-semibold text-slate-300">Content warnings (comma separated)
-                    <input value={contentWarnings} onChange={(e) => setContentWarnings(e.target.value)} maxLength={500} placeholder="Violence, strong language" className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100" />
-                  </label>
-                  <label className="text-xs font-semibold text-slate-300">Licence type
-                    <select value={licenseType} onChange={(e) => setLicenseType(e.target.value as typeof licenseType)} className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100">
-                      <option value="owned">Owned</option><option value="licensed">Licensed</option><option value="public_domain">Public domain</option>
-                    </select>
-                  </label>
-                  <label className="text-xs font-semibold text-slate-300">Copyright holder
-                    <input value={copyrightHolderName} onChange={(e) => setCopyrightHolderName(e.target.value)} required maxLength={150} className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100" />
-                  </label>
-                  <label className="text-xs font-semibold text-slate-300">Production year
-                    <input type="number" value={productionYear} onChange={(e) => setProductionYear(e.target.value)} min="1888" max={new Date().getFullYear()} required className="mt-2 w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100" />
-                  </label>
-                  <label className="text-xs font-semibold text-slate-300 sm:col-span-2">Proof of rights (PDF, PNG or JPEG; 10 MB max)
-                    <input type="file" accept="application/pdf,image/png,image/jpeg" required onChange={(e) => setRightsEvidenceFile(e.target.files?.[0] || null)} className="mt-2 w-full text-xs text-slate-300 file:mr-2 file:rounded-md file:border-0 file:bg-amber-400 file:px-3 file:py-2 file:font-semibold file:text-slate-950" />
-                  </label>
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Proof of Rights (PDF, PNG or JPEG; 10 MB max)
-                  </label>
-                  <input type="file" accept="application/pdf,image/png,image/jpeg" required onChange={(e) => setRightsEvidenceFile(e.target.files?.[0] || null)} className="w-full text-xs text-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-amber-400 file:px-3 file:py-2 file:font-semibold file:text-slate-950" />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Cast & Creators (Comma separated)
-                  </label>
-                  <input
-                    type="text"
-                    value={cast}
-                    onChange={(e) => setCast(e.target.value)}
-                    placeholder="e.g. Genevieve Nnaji, Richard Mofe-Damijo"
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Synopsis / Description
-                  </label>
-                  <textarea
-                    rows={3}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter full synopsis, episode notes, or broadcast summary..."
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
+                </label>
+                <label className="text-xs font-semibold text-slate-300">
+                  Season
+                  <select value={seasonId} onChange={(event) => setSeasonId(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white">
+                    <option value="">Select season</option>
+                    {selectedSeries?.seasons?.map((item) => <option key={item.id} value={item.id}>{item.title || `Season ${item.seasonNumber}`}</option>)}
+                  </select>
+                </label>
+                <label className="text-xs font-semibold text-slate-300">
+                  Episode number
+                  <input type="number" min="1" value={episodeNumber} onChange={(event) => setEpisodeNumber(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white" />
+                </label>
+                {seriesList.length === 0 && <p className="text-xs text-amber-300 sm:col-span-3">Create a series and season first in <a className="underline" href="/zillionaire/series">Series & seasons</a>.</p>}
+                {seriesList.length > 0 && !selectedSeries?.seasons?.length && <p className="text-xs text-amber-300 sm:col-span-3">This series has no seasons yet. Add one in <a className="underline" href="/zillionaire/series">Series & seasons</a>.</p>}
               </div>
-            </ConsoleCard>
+            )}
 
-            <ConsoleCard title="2. Media Assets, Subtitles & Artwork">
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Master Video File (MP4, MOV, WebM, MKV, or HLS .m3u8)
-                  </label>
-                  <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-700 bg-slate-900/50 p-6 text-center hover:border-amber-400 transition-colors">
-                    <FileVideo className="h-10 w-10 text-amber-400 mb-2" />
-                    <p className="text-sm font-medium text-slate-200">
-                      {selectedFile ? selectedFile.name : "Choose or drag a video file here"}
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      {selectedFile
-                        ? `${formatBytes(selectedFile.size)} • ${selectedFile.type || "Video"}`
-                        : "Up to 5 GB. Chunked upload ensures resilience on unstable mobile networks."}
-                    </p>
-                    <input
-                      type="file"
-                      accept="video/*,.mkv,.m3u8"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setSelectedFile(e.target.files[0]);
-                          if (!title) {
-                            setTitle(e.target.files[0].name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " "));
-                          }
-                        }
-                      }}
-                      className="mt-4 text-xs text-slate-400 file:mr-3 file:rounded-md file:border-0 file:bg-amber-400 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-slate-950 hover:file:bg-amber-300"
-                    />
-                  </div>
-                </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="text-xs font-semibold text-slate-300">
+                Content title
+                <input required maxLength={200} value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter movie, episode or video title" className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white placeholder:text-slate-500" />
+              </label>
+              <label className="text-xs font-semibold text-slate-300">
+                Genre
+                <input maxLength={100} value={genre} onChange={(event) => setGenre(event.target.value)} placeholder="Drama, comedy, sports…" className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
+              </label>
+              <label className="text-xs font-semibold text-slate-300 sm:col-span-2">
+                Description
+                <textarea rows={3} maxLength={5000} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Briefly describe this content" className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
+              </label>
+              <label className="text-xs font-semibold text-slate-300">
+                Language
+                <input maxLength={50} value={language} onChange={(event) => setLanguage(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
+              </label>
+              <label className="text-xs font-semibold text-slate-300">
+                Age rating
+                <select value={ageRating} onChange={(event) => setAgeRating(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white">
+                  <option value="G">All ages</option><option value="TV-Y7">7+</option><option value="PG-13">13+</option><option value="16">16+</option><option value="18">18+</option>
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-slate-300">
+                Rights type
+                <select value={licenseType} onChange={(event) => setLicenseType(event.target.value as typeof licenseType)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white">
+                  <option value="owned">Owned by us</option><option value="licensed">Licensed</option><option value="public_domain">Public domain</option>
+                </select>
+              </label>
+              <label className="text-xs font-semibold text-slate-300">
+                Copyright holder
+                <input maxLength={150} value={copyrightHolderName} onChange={(event) => setCopyrightHolderName(event.target.value)} placeholder="Rights holder name" className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
+              </label>
+              <label className="text-xs font-semibold text-slate-300">
+                Production year
+                <input type="number" min="1888" max={new Date().getFullYear()} value={productionYear} onChange={(event) => setProductionYear(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
+              </label>
+            </div>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Poster Image (Vertical 2:3)
-                  </label>
-                  <input
-                    type="url"
-                    value={posterUrl}
-                    onChange={(e) => setPosterUrl(e.target.value)}
-                    placeholder="https://.../poster.jpg"
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
+            <label className="flex items-start gap-3 rounded-xl border border-slate-700 bg-slate-900/40 p-3 text-xs text-slate-300">
+              <input type="checkbox" checked={ownershipConfirmed} onChange={(event) => setOwnershipConfirmed(event.target.checked)} className="mt-0.5" />
+              <span>I confirm that BQ SQWAD TV or the submitting account owns this content or has permission to distribute it.</span>
+            </label>
+            <label className="flex items-start gap-3 rounded-xl border border-slate-700 bg-slate-900/40 p-3 text-xs text-slate-300">
+              <input type="checkbox" checked={copyrightConfirmed} onChange={(event) => setCopyrightConfirmed(event.target.checked)} className="mt-0.5" />
+              <span>I confirm that the upload does not knowingly infringe another party's copyright. Publication remains subject to rights review.</span>
+            </label>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Backdrop Artwork (Horizontal 16:9)
-                  </label>
-                  <input
-                    type="url"
-                    value={backdropUrl}
-                    onChange={(e) => setBackdropUrl(e.target.value)}
-                    placeholder="https://.../backdrop.jpg"
-                    className="w-full rounded-lg border border-slate-800 bg-slate-900 px-4 py-2 text-sm text-slate-100 focus:border-amber-400 focus:outline-none"
-                  />
-                </div>
+            <div className="rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/30 p-5">
+              <label className="block text-xs font-bold text-slate-200">
+                Video file (MP4, MOV, MKV or WebM · up to 5 GB)
+                <input type="file" accept="video/mp4,video/quicktime,video/x-matroska,video/webm,.mp4,.mov,.mkv,.webm" onChange={(event) => setFile(event.target.files?.[0] ?? null)} className="mt-3 block w-full text-xs text-slate-300 file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:font-bold file:text-slate-950" />
+              </label>
+              {file && <p className="mt-3 text-xs text-slate-400">{file.name} · {(file.size / (1024 * 1024)).toFixed(1)} MB</p>}
+              {previewUrl && <div className="mt-4 overflow-hidden rounded-xl border border-slate-700 bg-black"><video src={previewUrl} controls playsInline className="aspect-video w-full" /></div>}
+            </div>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
-                    Subtitles (WebVTT / SRT)
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <input
-                      type="text"
-                      value={subtitlesLanguage}
-                      onChange={(e) => setSubtitlesLanguage(e.target.value)}
-                      placeholder="Lang (e.g. English)"
-                      className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
-                    />
-                    <input
-                      type="url"
-                      value={subtitlesUrl}
-                      onChange={(e) => setSubtitlesUrl(e.target.value)}
-                      placeholder="Subtitle VTT URL"
-                      className="col-span-2 rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs text-slate-100 focus:border-amber-400 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-cyan-500/20 bg-cyan-950/20 p-4">
-                  <div className="flex items-start gap-3">
-                    <ShieldCheck className="h-5 w-5 text-cyan-300 shrink-0 mt-0.5" />
-                    <div>
-                      <div className="text-sm font-semibold text-cyan-100">Approval required before publication</div>
-                      <p className="mt-1 text-xs leading-5 text-slate-300">
-                        Every upload stays private while processing and rights evidence are checked. Only the authorised review and publishing workflow can make a video available to viewers.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </ConsoleCard>
-
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex items-center gap-2 rounded-lg bg-amber-400 px-6 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-300 transition-colors disabled:opacity-50"
-              >
-                <UploadCloud className="h-4 w-4" />
-                Submit for Processing & Review
+            {error && <p role="alert" className="rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-200">{error}</p>}
+            {notice && <p role="status" className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200">{notice}</p>}
+            {progressLabel && <p className="flex items-center gap-2 text-xs text-cyan-200"><Clock3 className="h-4 w-4" />{progressLabel}</p>}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <a href="/zillionaire/series" className="text-xs font-semibold text-cyan-300 underline">Manage series and seasons</a>
+              <button type="submit" disabled={busy || !file} className="inline-flex items-center gap-2 rounded-xl bg-cyan-300 px-5 py-3 text-sm font-extrabold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50">
+                <UploadCloud className="h-4 w-4" />{busy ? "Uploading…" : "Upload media"}
               </button>
             </div>
           </form>
-        )}
+        </ConsoleCard>
 
-        {/* TAB 2: Catalogue & Queue */}
-        {activeTab === "queue" && (
-          <div className="space-y-6">
-            {/* Active Transfers Queue */}
-            {activeQueue.length > 0 && (
-              <ConsoleCard title="Active Resumable Transfer Queue">
-                <div className="space-y-4">
-                  {activeQueue.map((item) => (
-                    <div key={item.assetId} className="rounded-lg border border-slate-800 bg-slate-900/60 p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <FileVideo className="h-5 w-5 text-amber-400" />
-                          <div>
-                            <span className="text-sm font-medium text-slate-200">{item.filename}</span>
-                            <span className="ml-2 text-xs text-slate-500">({formatBytes(item.sizeBytes)})</span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs">
-                          {item.status === "uploading" && (
-                            <span className="flex items-center gap-1.5 text-emerald-400">
-                              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-                              {item.speedMbPerSec} MB/s • {item.secondsRemaining}s left
-                            </span>
-                          )}
-                          {item.status === "completed" && (
-                            <span className="flex items-center gap-1 text-emerald-400">
-                              <CheckCircle2 className="h-4 w-4" /> Complete
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Progress bar */}
-                      <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-                        <div
-                          className="h-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-300"
-                          style={{ width: `${item.progress}%` }}
-                        />
-                      </div>
-                      <div className="mt-1 flex justify-between text-[11px] text-slate-500">
-                        <span>
-                          {item.chunksCompleted} of {item.chunksTotal} chunks transferred
-                        </span>
-                        <span>{item.progress}%</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ConsoleCard>
-            )}
-
-            {/* Filter Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-800 bg-slate-900/40 p-4">
-              <div className="flex items-center gap-3">
-                <Filter className="h-4 w-4 text-slate-400" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Filter Catalogue:</span>
-                <select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  className="rounded-md border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 focus:outline-none"
-                >
-                  <option value="all">All Media Types</option>
-                  <option value="Movie">Movies</option>
-                  <option value="Series">Series</option>
-                  <option value="Episode">Episodes</option>
-                  <option value="Trailer">Trailers</option>
-                  <option value="Live recording">Live Recordings</option>
-                </select>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="rounded-md border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 focus:outline-none"
-                >
-                  <option value="all">All States</option>
-                  <option value="Published">Published</option>
-                  <option value="Ready">Ready</option>
-                  <option value="Processing">Processing</option>
-                  <option value="Needs review">Needs Review</option>
-                  <option value="Failed">Failed</option>
-                </select>
-              </div>
-
-              <span className="text-xs text-slate-400">
-                Showing {filteredUploads.length} of {uploads.length} assets
-              </span>
-            </div>
-
-            {/* Ingested Assets Table */}
-            <div className="overflow-x-auto rounded-lg border border-slate-800 bg-slate-900/30">
-              <table className="w-full text-left text-sm text-slate-300">
-                <thead className="border-b border-slate-800 bg-slate-900/80 text-xs uppercase tracking-wider text-slate-400">
-                  <tr>
-                    <th className="px-4 py-3">Content Asset</th>
-                    <th className="px-4 py-3">Channel</th>
-                    <th className="px-4 py-3">Format / Codec</th>
-                    <th className="px-4 py-3">Size & Duration</th>
-                    <th className="px-4 py-3">State</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {filteredUploads.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-slate-500 text-xs">
-                        No content assets match the current filter.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredUploads.map((asset) => (
-                      <tr key={asset.id} className="hover:bg-slate-800/20 transition-colors">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 shrink-0 rounded bg-slate-800 flex items-center justify-center text-amber-400">
-                              {asset.mediaType === "Movie" ? (
-                                <Film className="h-4 w-4" />
-                              ) : asset.mediaType === "Series" ? (
-                                <Tv className="h-4 w-4" />
-                              ) : (
-                                <FileVideo className="h-4 w-4" />
-                              )}
-                            </div>
-                            <div>
-                              <div className="font-medium text-slate-100 flex items-center gap-2">
-                                {asset.title}
-                                {asset.duplicateDetected && (
-                                  <span className="rounded bg-rose-500/20 px-1 py-0.2 text-[9px] text-rose-300">
-                                    Duplicate
-                                  </span>
-                                )}
-                              </div>
-                              <div className="text-xs text-slate-500">
-                                {asset.mediaType} • {asset.genre} • {asset.ageRating} • Rights declaration: {asset.ownershipDeclaration && asset.copyrightDeclaration ? "submitted" : "missing"}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-slate-300">
-                          {asset.channelTitle}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-slate-400">
-                          <div>{asset.codec || "h264/aac"}</div>
-                          <div className="text-slate-500">{asset.resolution || "1080p"}</div>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-slate-400">
-                          <div>{formatBytes(asset.actualSizeBytes || asset.declaredSizeBytes)}</div>
-                          <div className="text-slate-500">{formatDuration(asset.durationSeconds)}</div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <ConsoleStatusBadge
-                            status={asset.displayState}
-                            variant={
-                              asset.displayState === "Published"
-                                ? "success"
-                                : asset.displayState === "Ready"
-                                  ? "info"
-                                  : asset.displayState === "Processing"
-                                    ? "warning"
-                                    : asset.displayState === "Failed"
-                                      ? "error"
-                                      : "neutral"
-                            }
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => {
-                                const reason = window.prompt("Reason for deleting asset:", "Obsolete or test upload");
-                                if (reason) void handleAction(asset.id, "delete", reason);
-                              }}
-                              title="Delete asset"
-                              className="rounded p-1 text-slate-500 hover:text-rose-400 transition-colors"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+        <ConsoleCard title="Uploaded media">
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2">
+            <Search className="h-4 w-4 text-slate-400" />
+            <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search your uploads…" className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500" />
           </div>
-        )}
-
-        {/* TAB 3: Transcode Host Setup & Instructions */}
-        {activeTab === "worker" && (
-          <ConsoleCard title="Processing Host & Mobile Deployment Guide">
-            <div className="space-y-4 text-sm text-slate-300">
-              <div className="flex items-start gap-3 rounded-lg border border-slate-800 bg-slate-900/60 p-4">
-                <Info className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="font-semibold text-slate-100">Verified processing and publication</h4>
-                  <p className="mt-1 text-xs text-slate-400">
-                    Producer uploads are stored privately, verified and queued for processing. Videos remain unavailable to viewers until rights evidence has been checked, an authorised review team approves the content, and the separate publishing step succeeds.
-                  </p>
+          {loading ? (
+            <p className="py-8 text-center text-sm text-slate-400">Loading media library…</p>
+          ) : filteredUploads.length === 0 ? (
+            <p className="py-8 text-center text-sm text-slate-400">No uploads found. Your uploaded movies, series episodes and videos will appear here.</p>
+          ) : (
+            <div className="divide-y divide-slate-800">
+              {filteredUploads.map((item) => (
+                <div key={item.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-white">{item.title}</p>
+                    <p className="mt-1 text-xs text-slate-400">{item.mediaType} · {item.sourceFilename || "Video file"} · {item.createdAt ? new Date(item.createdAt).toLocaleString() : "Date unavailable"}</p>
+                    {item.failureReason && <p className="mt-1 text-xs text-rose-300">{item.failureReason}</p>}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <ConsoleStatusBadge status={item.displayState.toLowerCase().replace(/ /g, "_")} label={item.displayState} />
+                    {item.rawStatus === "ready" ? (
+                      <button type="button" onClick={() => void previewUploadedAsset(item.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-bold text-cyan-200 hover:bg-cyan-400/10">
+                        <Play className="h-3.5 w-3.5" /> Preview
+                      </button>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] text-slate-500"><Clock3 className="h-3.5 w-3.5" />Preview after processing</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-6">
-                Step-by-Step Deployment Instructions (Mobile or Desktop)
-              </h4>
-
-              <ol className="list-decimal list-inside space-y-3 text-xs text-slate-300">
-                <li className="pl-1">
-                  <strong className="text-slate-100">Processing Host Setup:</strong> Review the step-by-step instructions in section 13 of the operator documentation.
-                </li>
-                <li className="pl-1">
-                  <strong className="text-slate-100">Credentials Provisioning:</strong> Generate worker authentication keys and configure them in your environment settings.
-                </li>
-                <li className="pl-1">
-                  <strong className="text-slate-100">Worker Deployment:</strong> Deploy the background worker service to enable multi-bitrate ladder transcode jobs.
-                </li>
-                <li className="pl-1">
-                  <strong className="text-slate-100">Verification:</strong> Every source must be verified and processed before an review team can approve it. Direct publication is disabled.
-                </li>
-              </ol>
+              ))}
             </div>
-          </ConsoleCard>
-        )}
+          )}
+          <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            Uploads are private until processing, rights review and publication checks are complete.
+          </div>
+        </ConsoleCard>
       </div>
     </ConsoleShell>
   );
