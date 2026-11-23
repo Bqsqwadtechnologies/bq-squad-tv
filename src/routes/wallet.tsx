@@ -153,8 +153,8 @@ function WalletPage() {
         topupsRes.json(),
       ]);
 
-      if (!walletRes.ok) throw new Error(walletData.error ?? "Could not load your wallet.");
-      if (!ledgerRes.ok) throw new Error(ledgerData.error ?? "Could not load wallet history.");
+      if (!walletRes.ok) throw new Error("Your wallet is temporarily unavailable. Please try again shortly.");
+      if (!ledgerRes.ok) throw new Error("Wallet history is temporarily unavailable. Please try again shortly.");
 
       const loadedWallet = walletData as Wallet;
       setWallet(loadedWallet);
@@ -313,7 +313,8 @@ function WalletPage() {
 
       window.location.assign(result.authorizationUrl);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Could not start checkout.");
+      const message = caught instanceof Error ? caught.message : "";
+      setError(message.includes("CURRENCY") || message.includes("PAYSTACK") || message.includes("TOPUP") || message.includes("Firestore") || message.includes("firestore") ? "Paystack cannot complete a website top-up in your wallet currency. Please use the BQ SQWAD TV app to top up." : "Website checkout is temporarily unavailable. Please try again shortly.");
       setBusyPackage("");
     }
   }
