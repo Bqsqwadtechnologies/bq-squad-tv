@@ -113,7 +113,8 @@ describe("Zillionaire Upload Studio API", () => {
       body: JSON.stringify({ action: "UPLOAD_CHUNK", assetId: "ast_chunk_test", chunkIndex: 0, totalChunks: 2, chunkBytesLength: 5_000_000 }),
     }) });
     expect(response.status).toBe(410);
-    expect(memFs.storedDocs["contentAssets/ast_chunk_test"]).toMatchObject({ status: "uploading", chunksReceived: 0, uploadedBytes: undefined });
+    expect(memFs.storedDocs["contentAssets/ast_chunk_test"]).toMatchObject({ status: "uploading", chunksReceived: 0 });
+    expect(memFs.storedDocs["contentAssets/ast_chunk_test"]).not.toHaveProperty("uploadedBytes");
   });
 
   it("rejects simulated COMPLETE_UPLOAD and does not mark an unverified file ready", async () => {
