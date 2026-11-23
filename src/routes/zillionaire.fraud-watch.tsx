@@ -59,7 +59,7 @@ const mockIncidents: FraudIncident[] = [
 function FraudWatchRoute() {
   return (
     <ConsolePageGuard requiredRole="zillionaire" requiredModule="security">
-      {(account) => <FraudWatchContent account={account} />}
+      {({ account }) => <FraudWatchContent account={account} />}
     </ConsolePageGuard>
   );
 }
