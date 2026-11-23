@@ -10,6 +10,8 @@ export interface PublicProducer {
   bannerUrl: string | null;
   links: Array<{ title: string; url: string }>;
   verified: boolean;
+  blueVerified: boolean;
+  blueVerifiedUntil: string | null;
   followerCount: number;
   totalTitles: number;
   joinedAt: string | null;
@@ -90,6 +92,14 @@ export function formatPublicProducer(
     )
     .slice(0, 5);
 
+  const blueVerifiedUntil = typeof producer["publicVerificationUntil"] === "string"
+    ? producer["publicVerificationUntil"] as string
+    : null;
+  const blueVerified =
+    producer["publicVerificationStatus"] === "ACTIVE" &&
+    Boolean(blueVerifiedUntil) &&
+    Date.parse(blueVerifiedUntil!) > Date.now();
+
   return {
     uid,
     publicId: typeof producer["publicId"] === "string" ? producer["publicId"] : null,
@@ -99,7 +109,9 @@ export function formatPublicProducer(
     avatarUrl: typeof producer["avatarUrl"] === "string" ? producer["avatarUrl"] : null,
     bannerUrl: typeof producer["bannerUrl"] === "string" ? producer["bannerUrl"] : null,
     links,
-    verified: isKycApproved, // Verified tick derived purely from approved KYC without disclosing KYC documents
+    verified: isKycApproved, // Identity approval is separate from the optional paid public blue tick
+    blueVerified,
+    blueVerifiedUntil,
     followerCount: Math.max(0, Number(producer["followerCount"]) || 0),
     totalTitles,
     joinedAt: typeof producer["createdAt"] === "string" ? producer["createdAt"] : null,
