@@ -176,7 +176,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               approvalStatus: (ch["approvalStatus"] as string) || (ch["isLive"] ? "live" : ch["submissionStatus"] === "APPROVED" ? "approved" : "submitted"),
               rightsEvidence: ch["rightsEvidence"] || null,
               scheduledStartAt: ch["scheduledStartAt"] || null,
-              submittedBy: ch["submittedBy"] || ch["ownerUid"] || "platform",
+              submittedBy: ch["submittedBy"] || ch["createdBy"] || ch["ownerUid"] || "platform",
               type: ch["type"] || (ch["ownerUid"] === "platform" ? "platform" : "provider"),
               viewerCount: viewersCountByChannel[id] || 0,
               playbackHealth: ch["playbackHealth"] || null,
@@ -253,6 +253,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/live-channels/"
               // Keep the acting owner separately for audit and attribution.
               ownerUid: "platform",
               createdBy: user.uid,
+              submittedBy: user.uid,
               status: "ACTIVE",
               published: true,
               isLive: false,
