@@ -4,6 +4,8 @@ import { restoreWebSession, signInWithGoogleCredential, getWebAuthHeaders, signI
 import { NotFoundView } from "@/components/NotFoundView";
 
 export type ConsoleRole = "zillionaire" | "producer" | "provider" | "admin";
+type ConsoleRoleAlias = ConsoleRole | "owner" | "viewer" | "delegate";
+type ConsoleGuardContext = { token: string; account: ConsoleAccount; onLock?: () => void };
 
 export type ConsoleAccount = {
   uid: string;
@@ -20,16 +22,18 @@ export type ConsoleAccount = {
 export interface ConsolePageGuardProps {
   // "role"/"module" are the current API. The requiredRole/requiredModule
   // aliases keep older Zillionaire routes working during the route migration.
-  role?: ConsoleRole;
+  role?: ConsoleRole | "owner";
   module?: string;
-  requiredRole?: ConsoleRole | "viewer" | "delegate";
+  requiredRole?: ConsoleRoleAlias;
   requiredModule?: string;
+  requiredModules?: string[];
   title?: string;
   description?: string;
   moduleName?: string;
+  action?: string;
   children:
     | ReactNode
-    | ((props: { token: string; account: ConsoleAccount; onLock?: () => void }) => ReactNode);
+    | ((props: ConsoleGuardContext) => ReactNode);
 }
 
 function OwnerVerificationView({ token, email }: { token: string; email: string }) {
@@ -1187,18 +1191,21 @@ export function ConsolePageGuard({
   module: configuredModule,
   requiredRole,
   requiredModule: legacyRequiredModule,
+  requiredModules: legacyRequiredModules,
   children,
 }: ConsolePageGuardProps) {
   // Every route using this guard without an explicit role is a Zillionaire
   // module route. Producer and provider consoles always declare their roles.
   // Legacy "viewer"/"delegate" role labels on Zillionaire routes describe
   // delegated access, not permission to fall through to the Producer Console.
+  const requestedRole = configuredRole ?? requiredRole;
   const role: ConsoleRole =
-    configuredRole ??
-    (requiredRole === "producer" || requiredRole === "provider"
-      ? requiredRole
-      : "zillionaire");
-  const requiredModule = configuredModule ?? legacyRequiredModule;
+    requestedRole === "producer" || requestedRole === "provider"
+      ? requestedRole
+      : requestedRole === "admin" || requestedRole === "zillionaire" || requestedRole === "owner" || requestedRole === "viewer" || requestedRole === "delegate" || !requestedRole
+        ? "zillionaire"
+        : "zillionaire";
+  const requiredModules = [...new Set([...(legacyRequiredModules ?? []), configuredModule ?? legacyRequiredModule].filter((value): value is string => Boolean(value)))];
   const [state, setState] = useState<
     | { status: "checking" }
     | { status: "signed_out" }
@@ -1282,10 +1289,10 @@ export function ConsolePageGuard({
           } else if (account.needsOwnerVerification) {
             if (active) setState({ status: "unverified_owner", token, email: account.email || "" });
             return;
-          } else if (requiredModule && Array.isArray(account.modules) && account.modules.length > 0) {
-            // Delegated operators may open only explicitly assigned modules.
-            // The Zillionaire dashboard overview itself belongs to the owner.
-            authorized = account.modules.includes(requiredModule);
+          } else if (requiredModules.length > 0) {
+            // Delegated operators may open a page only when at least one of its
+            // explicitly accepted module scopes is assigned.
+            authorized = Array.isArray(account.modules) && requiredModules.some((module) => account.modules.includes(module));
           }
         } else if (role === "producer") {
           if (account.emailVerified !== true) {
@@ -1323,7 +1330,7 @@ export function ConsolePageGuard({
     return () => {
       active = false;
     };
-  }, [role, requiredModule, isZillionaireRoute]);
+  }, [role, requiredModules.join("|"), isZillionaireRoute]);
 
   const handleLock = async () => {
     try {
@@ -1415,7 +1422,7 @@ export function ConsolePageGuard({
             <div className="w-full max-w-md rounded-3xl border border-amber-500/20 bg-[#0a1435] p-8 text-center shadow-2xl">
               <h1 className="text-xl font-black text-amber-300">You do not have access to this section</h1>
               <p className="mt-3 text-xs text-blue-100/70 leading-relaxed">
-                Your account does not hold the permissions required for this specific module ({requiredModule || "restricted"}). Please contact the platform owner to request access.
+                Your account does not hold the permissions required for this specific module ({requiredModules.join(", ") || "restricted"}). Please contact the platform owner to request access.
               </p>
               <div className="mt-6 flex flex-col gap-2">
                 <a
