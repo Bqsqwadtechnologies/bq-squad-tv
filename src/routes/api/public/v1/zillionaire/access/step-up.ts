@@ -7,6 +7,7 @@ import {
   checkLockout,
   createStepUpToken,
   getProgressiveDelayMs,
+  isAccessPasswordConfigured,
   recordFailure,
   clearFailure,
   verifyPasswordConstantTime,
@@ -36,6 +37,13 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/step-up"
           if (!access.isZillionaireOwner || user.emailVerified !== true)
             throw new ApiError(403, "OWNER_REQUIRED", "Verified owner access required.");
           const body = await parseBody(request, schema);
+          if (!isAccessPasswordConfigured()) {
+            throw new ApiError(
+              503,
+              "ZILLIONAIRE_PASSWORD_NOT_CONFIGURED",
+              "The server cannot read the configured ZILLIONAIRE_ACCESS_PASSWORD secret.",
+            );
+          }
           const lockout = checkLockout(user.uid);
           if (lockout.locked)
             throw new ApiError(429, "ZILLIONAIRE_LOCKED_OUT", "Too many failed attempts.");
@@ -46,8 +54,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/step-up"
             );
             throw new ApiError(
               result.locked ? 429 : 401,
-              result.locked ? "ZILLIONAIRE_LOCKED_OUT" : "STEP_UP_INVALID",
-              "Owner verification failed.",
+              result.locked ? "ZILLIONAIRE_LOCKED_OUT" : "ZILLIONAIRE_PASSWORD_INVALID",
+              result.locked
+                ? "Too many failed owner verification attempts."
+                : "The password did not match the configured ZILLIONAIRE_ACCESS_PASSWORD secret.",
             );
           }
           const mfa = await fs.getDoc(`zillionaireMfa/${user.uid}`);
@@ -65,8 +75,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/access/step-up"
             );
             throw new ApiError(
               result.locked ? 429 : 401,
-              result.locked ? "ZILLIONAIRE_LOCKED_OUT" : "STEP_UP_INVALID",
-              "Owner verification failed.",
+              result.locked ? "ZILLIONAIRE_LOCKED_OUT" : "ZILLIONAIRE_AUTHENTICATOR_INVALID",
+              result.locked
+                ? "Too many failed owner verification attempts."
+                : "The password was accepted, but the authenticator code could not be verified.",
             );
           }
           clearFailure(user.uid);
