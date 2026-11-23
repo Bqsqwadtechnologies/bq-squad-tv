@@ -174,6 +174,51 @@ export async function createStorageUploadTarget(
   return { signedUrl: data.signedUrl, token: data.token, expiresInSeconds: 7200, method: "PUT" };
 }
 
+export async function readBoundedStorageObjectResponse(
+  response: Response,
+): Promise<{ sizeBytes: number; headerBytes: Uint8Array; contentType: string | null }> {
+  if (response.status !== 200 && response.status !== 206) {
+    await response.body?.cancel().catch(() => undefined);
+    throw new ApiError(409, "UPLOAD_OBJECT_MISSING", "The uploaded file could not be found in private storage.");
+  }
+
+  const totalHeader = response.status === 206
+    ? response.headers.get("content-range")?.match(/\/(\d+)$/)?.[1]
+    : response.headers.get("content-length") ??
+      response.headers.get("content-range")?.match(/\/(\d+)$/)?.[1];
+  const sizeBytes = totalHeader ? Number(totalHeader) : NaN;
+  if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 1) {
+    await response.body?.cancel().catch(() => undefined);
+    throw new ApiError(502, "STORAGE_SIZE_UNAVAILABLE", "The uploaded file size could not be verified.");
+  }
+
+  let headerBytes: Uint8Array;
+  if (response.status === 206) {
+    headerBytes = new Uint8Array(await response.arrayBuffer());
+    if (headerBytes.byteLength > 512) {
+      throw new ApiError(502, "STORAGE_RANGE_UNSUPPORTED", "Private storage returned more data than the bounded inspection limit.");
+    }
+  } else {
+    // Some compatible gateways ignore Range and answer with 200. Read only
+    // the first stream chunk and cancel immediately; never download the movie.
+    const reader = response.body?.getReader();
+    if (!reader) {
+      throw new ApiError(502, "STORAGE_RANGE_UNSUPPORTED", "Private storage did not provide a readable bounded response.");
+    }
+    try {
+      const first = await reader.read();
+      if (first.done || !first.value?.byteLength) {
+        throw new ApiError(502, "STORAGE_HEADER_UNAVAILABLE", "Private storage returned an empty file response.");
+      }
+      headerBytes = first.value.slice(0, 512);
+    } finally {
+      await reader.cancel().catch(() => undefined);
+    }
+  }
+
+  return { sizeBytes, headerBytes, contentType: response.headers.get("content-type") };
+}
+
 export async function inspectStorageObject(
   config: StorageDestinationConfiguration,
   key: string,
@@ -217,30 +262,7 @@ export async function inspectStorageObject(
       "The uploaded file could not be inspected.",
     );
   }
-  if (response.status !== 206) {
-    await response.body?.cancel();
-    throw new ApiError(
-      409,
-      "UPLOAD_OBJECT_MISSING",
-      "The uploaded file could not be found or private storage did not support bounded inspection.",
-    );
-  }
-  const headerBytes = new Uint8Array(await response.arrayBuffer());
-  if (headerBytes.byteLength > 512)
-    throw new ApiError(
-      502,
-      "STORAGE_RANGE_UNSUPPORTED",
-      "Private storage returned more data than the bounded inspection limit.",
-    );
-  const total = response.headers.get("content-range")?.match(/\/(\d+)$/)?.[1];
-  const sizeBytes = total ? Number(total) : NaN;
-  if (!Number.isSafeInteger(sizeBytes) || sizeBytes < 1)
-    throw new ApiError(
-      502,
-      "STORAGE_SIZE_UNAVAILABLE",
-      "The uploaded file size could not be verified.",
-    );
-  return { sizeBytes, headerBytes, contentType: response.headers.get("content-type") };
+  return readBoundedStorageObjectResponse(response);
 }
 
 export async function loadSourceStorageConfiguration(
