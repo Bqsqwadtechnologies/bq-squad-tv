@@ -31,40 +31,52 @@ export const Route = createFileRoute("/api/public/v1/producer/uploads/complete")
           }
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const folder = storagePath.slice(0, storagePath.lastIndexOf("/"));
-          const { data: objects, error: listError } = await supabaseAdmin.storage.from(bucket).list(folder, {
-            limit: 100,
-            search: filename,
-          });
-          if (listError) {
-            throw new ApiError(503, "UPLOAD_VERIFY_UNAVAILABLE", "Private storage could not verify this upload. Please try again.");
-          }
-          const object = objects?.find((item) => item.name === filename);
-
-          // Storage list responses can omit size metadata for some provider responses.
-          // Ask the object-info endpoint before declaring a completed upload incomplete.
-          let metadataSize = object?.metadata?.size ?? object?.metadata?.contentLength;
+          let object: { name: string; metadata?: { size?: number | string; contentLength?: number | string } } | undefined;
+          let metadataSize: number | string | undefined;
           let objectInfo: Record<string, unknown> | null = null;
-          if (!object || metadataSize === undefined || metadataSize === null) {
-            const { data: info, error: infoError } = await supabaseAdmin.storage
+          let lastListError: unknown = null;
+
+          // Storage object listing/metadata can become visible slightly after a
+          // successful signed PUT. Retry verification before reporting a false
+          // "upload incomplete" result to the producer.
+          for (let attempt = 0; attempt < 4; attempt++) {
+            const { data: objects, error: listError } = await supabaseAdmin.storage
               .from(bucket)
-              .info(storagePath);
-            if (!infoError && info && typeof info === "object") {
-              objectInfo = info as Record<string, unknown>;
-              const infoMetadata = objectInfo["metadata"];
-              if (metadataSize === undefined || metadataSize === null) {
+              .list(folder, { limit: 100, search: filename });
+            lastListError = listError;
+            if (!listError) {
+              object = objects?.find((item) => item.name === filename);
+              metadataSize = object?.metadata?.size ?? object?.metadata?.contentLength;
+            }
+
+            if (!object || metadataSize === undefined || metadataSize === null) {
+              const { data: info, error: infoError } = await supabaseAdmin.storage
+                .from(bucket)
+                .info(storagePath);
+              if (!infoError && info && typeof info === "object") {
+                objectInfo = info as Record<string, unknown>;
+                const infoMetadata = objectInfo["metadata"];
                 metadataSize =
                   (infoMetadata && typeof infoMetadata === "object"
                     ? (infoMetadata as Record<string, unknown>)["size"] ??
                       (infoMetadata as Record<string, unknown>)["contentLength"]
                     : undefined) ??
                   objectInfo["size"] ??
-                  objectInfo["contentLength"];
+                  objectInfo["contentLength"] ??
+                  metadataSize;
               }
             }
+
+            if (metadataSize !== undefined && metadataSize !== null) break;
+            if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 300 * (attempt + 1)));
+          }
+
+          if (lastListError && !object && !objectInfo) {
+            throw new ApiError(503, "UPLOAD_VERIFY_UNAVAILABLE", "Private storage could not verify this upload. Please try again.");
           }
           const actualSize = Number(metadataSize ?? NaN);
           if (!object && !objectInfo) {
-            throw new ApiError(400, "UPLOAD_INCOMPLETE", "The uploaded file was not found in private storage. Please retry the upload.");
+            throw new ApiError(400, "UPLOAD_INCOMPLETE", "The uploaded file was not found in private storage after repeated checks. Please retry the upload.");
           }
           if (!Number.isFinite(actualSize) || actualSize < 1) {
             throw new ApiError(503, "UPLOAD_SIZE_UNAVAILABLE", "Private storage received the file but could not confirm its size yet. Please retry verification.");
