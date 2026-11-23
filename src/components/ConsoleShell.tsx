@@ -984,14 +984,23 @@ export function ConsoleShell({
 
   const matchingSearchItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return searchableItems.slice(0, 8);
+    if (!query) return searchableItems.slice(0, 10);
     const terms = query.split(/\s+/).filter(Boolean);
     return searchableItems
-      .filter((item) => {
-        const haystack = [item.label, item.description, item.keywords, item.section, item.href].join(" ").toLowerCase();
-        return terms.every((term) => haystack.includes(term));
+      .map((item) => {
+        const label = item.label.toLowerCase();
+        const description = item.description.toLowerCase();
+        const keywords = String(item.keywords || "").toLowerCase();
+        const haystack = [label, description, keywords, item.section, item.href].join(" ").toLowerCase();
+        if (!terms.every((term) => haystack.includes(term))) return null;
+        const score = label === query ? 0 : label.startsWith(query) ? 1 :
+          terms.every((term) => label.includes(term)) ? 2 :
+          terms.every((term) => description.includes(term)) ? 3 : 4;
+        return { ...item, searchScore: score };
       })
-      .slice(0, 14);
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .sort((a, b) => a.searchScore - b.searchScore || a.label.localeCompare(b.label))
+      .slice(0, 30);
   }, [searchQuery, searchableItems]);
 
   const consoleBadge =
