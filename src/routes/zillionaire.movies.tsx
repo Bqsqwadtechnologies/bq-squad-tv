@@ -818,8 +818,9 @@ function ZillionaireMoviesPage({
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => void handlePreviewAsset(a)}
-                          title="Preview Video"
-                          className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded"
+                          disabled={a.status !== "ready" || !a.masterPlaylistUrl}
+                          title={a.status === "ready" && a.masterPlaylistUrl ? "Preview Video" : "Preview available after video processing"}
+                          className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <Play className="w-3.5 h-3.5" />
                         </button>
