@@ -90,6 +90,8 @@ export interface ConsoleNavItem {
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
   module?: string;
+  description?: string;
+  keywords?: string;
   external?: boolean;
 }
 
@@ -98,6 +100,69 @@ export interface ConsoleNavGroup {
   title?: string;
   items: ConsoleNavItem[];
 }
+
+const CONSOLE_PAGE_HELP: Record<string, { description: string; keywords: string }> = {
+  "/zillionaire": { description: "Platform overview with live activity, revenue, viewers, watch time and attention items.", keywords: "home dashboard summary metrics status" },
+  "/zillionaire/approvals?type=video": { description: "Review newly uploaded movies, videos and episodes waiting for moderation or publication.", keywords: "upload media movie video pending review approve reject" },
+  "/zillionaire/approvals?type=change_request": { description: "Review producer requests to change existing content and metadata.", keywords: "change request producer edit update" },
+  "/zillionaire/approvals": { description: "Central inbox for content, producer, provider and operational approvals.", keywords: "approval review queue moderation pending" },
+  "/zillionaire/viewers": { description: "Find viewers and manage profiles, account status, wallets, receipts and security.", keywords: "users customers accounts viewer search wallet" },
+  "/zillionaire/producers": { description: "Review producer applications, verification, plans, channel ownership and status.", keywords: "creator publisher onboarding verification subscription" },
+  "/zillionaire/providers": { description: "Manage licensed content providers, agreements, provider channels and playback access.", keywords: "partner licensor provider contract content rights" },
+  "/zillionaire/team": { description: "Invite dashboard team members and assign or revoke module permissions.", keywords: "staff employees roles permissions access delegation" },
+  "/zillionaire/analytics": { description: "Explore viewer growth, watch hours, content activity and revenue trends.", keywords: "statistics charts metrics numbers performance" },
+  "/zillionaire/channels": { description: "Create and manage platform channels, ownership, status and permissions.", keywords: "broadcast channel create edit suspend" },
+  "/zillionaire/live-tv": { description: "Create live TV channels, manage schedules and programmes, and monitor playback.", keywords: "broadcast live schedule EPG stream" },
+  "/zillionaire/movies": { description: "Manage the movie catalogue, featured titles, shelves, artwork, pricing and publication.", keywords: "film movie catalogue library poster hero featured" },
+  "/zillionaire/series": { description: "Create series, add seasons and episodes, organise episode order and release status.", keywords: "TV show season episode episodic create series" },
+  "/zillionaire/upload-studio": { description: "Upload movies, videos and series episodes into the private media library, preview files and track processing.", keywords: "upload movie video file media series episode preview" },
+  "/zillionaire/rights-review": { description: "Check ownership declarations, licence evidence, territories and distribution rights.", keywords: "copyright licence legal clearance evidence rights" },
+  "/zillionaire/comments": { description: "Moderate viewer comments, ratings, reports and feedback on published content.", keywords: "reviews stars feedback comments ratings" },
+  "/zillionaire/content-calendar": { description: "See planned releases, scheduled publication dates and upcoming content.", keywords: "calendar schedule release publish dates" },
+  "/zillionaire/geo-rules": { description: "Set country availability, territorial restrictions and country-specific compliance rules.", keywords: "geography country region territory geo block allow" },
+  "/zillionaire/trending-rails": { description: "Control homepage content rails, trending sections and catalogue placement.", keywords: "homepage rows collections trending recommendations" },
+  "/zillionaire/search-tuning": { description: "Tune catalogue search relevance, ranking, synonyms and discovery behaviour.", keywords: "search relevance ranking synonyms discover" },
+  "/zillionaire/sports": { description: "Manage sports competitions, teams, fixtures and sports content feeds.", keywords: "football soccer basketball tennis matches fixtures" },
+  "/zillionaire/finance": { description: "Review platform financial controls, revenue allocation and money movement summaries.", keywords: "money financial revenue income" },
+  "/zillionaire/payments": { description: "Inspect viewer payments, top-ups, gateway transactions and reconciliation.", keywords: "transactions paystack deposits topup billing" },
+  "/zillionaire/wallets": { description: "Inspect wallet balances, credits and wallet-level activity.", keywords: "wallet balance credits viewer funds" },
+  "/zillionaire/payouts": { description: "Review producer and provider payout requests, approvals and settlement.", keywords: "withdrawal bank transfer settlement earnings" },
+  "/zillionaire/pricing": { description: "Configure viewing rates, wallet packages, currency prices, producer shares and promotions.", keywords: "price rates charges tariffs plans credits currency" },
+  "/zillionaire/receipts": { description: "Find receipts and financial documents for viewer payments and settlements.", keywords: "invoice receipt proof document financial" },
+  "/zillionaire/collaborations": { description: "Review collaboration relationships and revenue-sharing arrangements.", keywords: "collaborator partnership split" },
+  "/zillionaire/splits-audit": { description: "Audit revenue split calculations, changes and allocation history.", keywords: "revenue share audit allocation" },
+  "/zillionaire/ads": { description: "Manage advertising units, creatives, partner networks, placement and reporting.", keywords: "advert campaigns banners native ads" },
+  "/zillionaire/promotions": { description: "Create and manage platform promotions, offers and campaigns.", keywords: "discount offer campaign promo" },
+  "/zillionaire/referrals": { description: "Review referral activity, attribution and rewards.", keywords: "invite code referral reward affiliate" },
+  "/zillionaire/notifications": { description: "Manage push, in-app and email notifications and inspect delivery status.", keywords: "message alerts push email inbox" },
+  "/zillionaire/moderation": { description: "Review content and user moderation cases, enforcement actions and appeals.", keywords: "safety policy report takedown review" },
+  "/zillionaire/security": { description: "Monitor security events, sessions, incidents, abuse controls and account protection.", keywords: "security fraud login session attack" },
+  "/zillionaire/audit": { description: "View the immutable audit trail of dashboard and platform actions.", keywords: "activity history log who changed" },
+  "/zillionaire/errors": { description: "Inspect application errors, failed operations and diagnostic details.", keywords: "error bug issue failure diagnostics crash" },
+  "/zillionaire/blocked-content": { description: "Review blocked or removed content and restoration decisions.", keywords: "blocked ban takedown removed restore" },
+  "/zillionaire/copyright-cases": { description: "Handle copyright complaints, claims, evidence and case outcomes.", keywords: "copyright DMCA infringement takedown claim" },
+  "/zillionaire/strikes-appeals": { description: "Review enforcement strikes and appeals submitted by content owners.", keywords: "strike appeal warning dispute" },
+  "/zillionaire/moderation-workload": { description: "Track moderation queue volume, assignments and team workload.", keywords: "moderator staff queue tasks" },
+  "/zillionaire/fraud-watch": { description: "Investigate suspicious accounts, payment patterns and abuse signals.", keywords: "fraud risk suspicious abuse scam" },
+  "/zillionaire/privacy-requests": { description: "Process privacy, data access, correction and deletion requests.", keywords: "privacy personal data delete access" },
+  "/zillionaire/pages": { description: "Edit, preview, version, schedule and publish legal pages, policies and help documents.", keywords: "documents terms privacy legal policy help text" },
+  "/zillionaire/storage": { description: "Manage private storage destinations, health checks, capacity and backups.", keywords: "storage bucket media files backup disk space" },
+  "/zillionaire/cleanup-sample": { description: "Find and remove designated sample or test content with an audit reason.", keywords: "cleanup delete test demo sample" },
+  "/zillionaire/delivery": { description: "Monitor video delivery, HLS playback and content delivery health.", keywords: "streaming HLS delivery playback" },
+  "/zillionaire/features": { description: "Enable or disable platform feature flags and staged feature rollouts.", keywords: "feature toggle flags experiments rollout" },
+  "/zillionaire/support": { description: "Manage viewer and producer support tickets and service responses.", keywords: "helpdesk ticket customer service contact" },
+  "/zillionaire/reports": { description: "Generate monthly reports for transactions, payouts, advertising and producer reviews.", keywords: "report monthly export financial summary" },
+  "/zillionaire/settings": { description: "Configure platform-wide settings and operational defaults.", keywords: "configuration preferences platform options" },
+  "/zillionaire/firebase-schema": { description: "Inspect Firebase collection and field structure without exposing private records.", keywords: "database firestore schema collections fields" },
+  "/zillionaire/announcements": { description: "Prepare and publish platform-wide announcements for users.", keywords: "broadcast notice announcement news" },
+  "/zillionaire/support-macros": { description: "Create reusable support response templates and saved replies.", keywords: "templates canned replies helpdesk" },
+  "/zillionaire/scheduled-reports": { description: "Configure recurring reports and scheduled report delivery.", keywords: "automatic recurring schedule email report" },
+  "/zillionaire/status-page": { description: "Edit the public service status page and incident notices.", keywords: "uptime outage incident service status" },
+  "/zillionaire/releases": { description: "Manage application releases, version notes and platform release controls.", keywords: "android app version rollout update release" },
+  "/producer": { description: "Producer dashboard overview and account activity.", keywords: "producer home" },
+  "/producer/channels": { description: "Manage producer channels, content uploads and schedules.", keywords: "producer channel movie upload" },
+  "/provider": { description: "Provider portal overview and account activity.", keywords: "provider home" },
+};
 
 export interface ViewAsConfig {
   activeOrgOrUid: string;
@@ -154,7 +219,7 @@ export function ConsoleShell({
   groups: customGroups,
   children,
   actions,
-  searchPlaceholder = "Search across users, channels, videos, payments...",
+  searchPlaceholder = "Search dashboard pages, features and what they do…",
   onSearch,
   viewAs,
   channelSwitcher,
@@ -170,6 +235,18 @@ export function ConsoleShell({
   const [searchQuery, setSearchQuery] = useState("");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleSearchShortcut = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setSearchModalOpen(true);
+      }
+      if (event.key === "Escape") setSearchModalOpen(false);
+    };
+    window.addEventListener("keydown", handleSearchShortcut);
+    return () => window.removeEventListener("keydown", handleSearchShortcut);
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("bq_console_theme");
@@ -777,6 +854,37 @@ export function ConsoleShell({
     return filteredGroups.flatMap((g) => g.items);
   }, [filteredGroups]);
 
+  const searchableItems = useMemo(
+    () =>
+      filteredGroups.flatMap((group) =>
+        group.items.map((item) => {
+          const help = CONSOLE_PAGE_HELP[item.href] ?? {
+            description: "Open the " + item.label + " page and manage its available tools and settings.",
+            keywords: item.label,
+          };
+          return {
+            ...item,
+            section: group.title || "Dashboard",
+            description: item.description || help.description,
+            keywords: [item.keywords, help.keywords].filter(Boolean).join(" "),
+          };
+        }),
+      ),
+    [filteredGroups],
+  );
+
+  const matchingSearchItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return searchableItems.slice(0, 8);
+    const terms = query.split(/\\s+/).filter(Boolean);
+    return searchableItems
+      .filter((item) => {
+        const haystack = [item.label, item.description, item.keywords, item.section, item.href].join(" ").toLowerCase();
+        return terms.every((term) => haystack.includes(term));
+      })
+      .slice(0, 14);
+  }, [searchQuery, searchableItems]);
+
   const consoleBadge =
     consoleType === "zillionaire"
       ? { label: "Control Centre", color: "border-cyan-500/30 text-cyan-400 bg-cyan-950/40" }
@@ -792,7 +900,13 @@ export function ConsoleShell({
 
   const handleGlobalSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSearch && searchQuery.trim()) {
+    if (!searchQuery.trim()) return;
+    if (matchingSearchItems[0]) {
+      window.location.assign(matchingSearchItems[0].href);
+      setSearchModalOpen(false);
+      return;
+    }
+    if (onSearch) {
       onSearch(searchQuery.trim());
       setSearchModalOpen(false);
     }
