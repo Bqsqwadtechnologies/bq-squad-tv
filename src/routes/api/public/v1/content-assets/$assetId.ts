@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, getUserProfile, requireUser } from "@/lib/server/api";
 import { assertContentAgeEligibility } from "@/lib/server/content-rating";
+import { verifyPreviewToken } from "@/lib/server/preview-grants";
 import { resolveAssetMediaBinding } from "@/lib/server/storage/asset-binding";
 import {
   createStorageDownloadTarget,
@@ -20,20 +21,42 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
           }
           const fs = await Firestore.create();
           const asset = await fs.getDoc("contentAssets/" + assetId);
-          if (!asset || asset["status"] !== "ready" || asset["contentStatus"] !== "published") {
+          if (!asset || asset["status"] !== "ready") {
             throw new ApiError(
               404,
               "CONTENT_NOT_AVAILABLE",
-              "This published content is not available.",
+              "This content is not ready for playback.",
             );
           }
           const channelId = typeof asset["channelId"] === "string" ? asset["channelId"] : "";
           const channel = channelId ? await fs.getDoc("channels/" + channelId) : null;
-          if (!channel || channel["published"] !== true) {
+          const previewToken = new URL(request.url).searchParams.get("previewToken");
+          let isPrivatePreview = false;
+          if (previewToken) {
+            try {
+              const grant = verifyPreviewToken(previewToken);
+              isPrivatePreview =
+                grant.targetType === "asset" &&
+                grant.targetId === assetId &&
+                grant.granteeUid === user.uid &&
+                grant.isPreview === true;
+            } catch {
+              isPrivatePreview = false;
+            }
+            if (!isPrivatePreview) {
+              throw new ApiError(403, "PREVIEW_NOT_AUTHORIZED", "This private preview link is not valid for this account.");
+            }
+          }
+          if (
+            !channel ||
+            (channel["published"] !== true && !isPrivatePreview) ||
+            String(channel["status"] ?? "").toUpperCase() === "SUSPENDED" ||
+            (asset["contentStatus"] !== "published" && !isPrivatePreview)
+          ) {
             throw new ApiError(
               404,
               "CONTENT_NOT_AVAILABLE",
-              "This content's channel is not published.",
+              "This content is not published or available.",
             );
           }
           const profile = await getUserProfile(fs, user.uid);
@@ -159,6 +182,7 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
               currency,
               ratePerMinuteMinor,
               rightsCurrent,
+              isPrivatePreview,
             },
             channel: {
               id: channelId,
