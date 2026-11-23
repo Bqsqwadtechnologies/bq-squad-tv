@@ -22,35 +22,6 @@ interface SupportMacro {
   lastUsedAt: string;
 }
 
-const mockMacros: SupportMacro[] = [
-  {
-    id: "macro_pay_01",
-    shortcut: "#payout-delay",
-    title: "Standard Monthly Payout Timeline",
-    category: "billing",
-    template: "Hello {{name}},\n\nPayouts for the previous calendar month are processed between the 30th and the 1st. Depending on your bank clearing network, disbursements may take 1-3 business days to reflect in your account.\n\nBest regards,\nBQ SQWAD Finance Team",
-    usageCount: 42,
-    lastUsedAt: "2026-03-23T11:00:00Z",
-  },
-  {
-    id: "macro_dmca_01",
-    shortcut: "#dmca-counter",
-    title: "DMCA Counter-Notice Procedure",
-    category: "copyright",
-    template: "Hello {{name}},\n\nA counter-notice has been received for title {{asset_title}}. Under our copyright policy, the claimant has 14 calendar days to file legal action. If no filing is submitted, your video will be automatically restored.\n\nBQ SQWAD Legal Operations",
-    usageCount: 18,
-    lastUsedAt: "2026-03-21T15:20:00Z",
-  },
-  {
-    id: "macro_kyc_01",
-    shortcut: "#kyc-docs",
-    title: "Provider KYC Documents Required",
-    category: "kyc",
-    template: "Hello {{name}},\n\nTo complete Tier 2 broadcaster verification, please provide your Certificate of Incorporation and Tax Identification Number (TIN) via your Provider Console settings.\n\nBQ SQWAD Compliance",
-    usageCount: 29,
-    lastUsedAt: "2026-03-24T09:45:00Z",
-  },
-];
 
 function SupportMacrosRoute() {
   return (
@@ -61,7 +32,7 @@ function SupportMacrosRoute() {
 }
 
 function SupportMacrosContent({ account }: { account: ConsoleAccount }) {
-  const [macros, setMacros] = useState<SupportMacro[]>(mockMacros);
+  const [macros, setMacros] = useState<SupportMacro[]>([]);
 
   const columns: EntityColumn<SupportMacro>[] = [
     { key: "shortcut", header: "Shortcut", render: (m) => <span className="font-mono font-bold text-cyan-400">{m.shortcut}</span> },
@@ -86,7 +57,7 @@ function SupportMacrosContent({ account }: { account: ConsoleAccount }) {
     <ZillionaireEntityConsole
       account={account}
       title="Support Macros & Canned Responses"
-      subtitle="Standardized customer and partner response templates for rapid, legally consistent ticket handling."
+      subtitle="Standardized customer and partner response templates for rapid, legally consistent ticket handling. No live records are available from a connected service yet; sample data is intentionally not shown."
       icon={MessageSquareText}
       items={macros}
       columns={columns}
