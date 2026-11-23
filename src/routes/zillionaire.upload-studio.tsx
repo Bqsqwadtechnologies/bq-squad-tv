@@ -393,43 +393,49 @@ function UploadStudioContent({
             )}
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="text-xs font-semibold text-slate-300">
+              <label className="text-xs font-semibold text-slate-300 sm:col-span-2">
                 Content title
                 <input required maxLength={200} value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter movie, episode or video title" className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white placeholder:text-slate-500" />
               </label>
-              <label className="text-xs font-semibold text-slate-300">
-                Genre
-                <input maxLength={100} value={genre} onChange={(event) => setGenre(event.target.value)} placeholder="Drama, comedy, sports…" className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
-              </label>
               <label className="text-xs font-semibold text-slate-300 sm:col-span-2">
-                Description
-                <textarea rows={3} maxLength={5000} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Briefly describe this content" className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
-              </label>
-              <label className="text-xs font-semibold text-slate-300">
-                Language
-                <input maxLength={50} value={language} onChange={(event) => setLanguage(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
-              </label>
-              <label className="text-xs font-semibold text-slate-300">
-                Age rating
-                <select value={ageRating} onChange={(event) => setAgeRating(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white">
-                  <option value="G">All ages</option><option value="TV-Y7">7+</option><option value="PG-13">13+</option><option value="16">16+</option><option value="18">18+</option>
-                </select>
-              </label>
-              <label className="text-xs font-semibold text-slate-300">
-                Rights type
-                <select value={licenseType} onChange={(event) => setLicenseType(event.target.value as typeof licenseType)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white">
-                  <option value="owned">Owned by us</option><option value="licensed">Licensed</option><option value="public_domain">Public domain</option>
-                </select>
-              </label>
-              <label className="text-xs font-semibold text-slate-300">
-                Copyright holder
-                <input maxLength={150} value={copyrightHolderName} onChange={(event) => setCopyrightHolderName(event.target.value)} placeholder="Rights holder name" className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
-              </label>
-              <label className="text-xs font-semibold text-slate-300">
-                Production year
-                <input type="number" min="1888" max={new Date().getFullYear()} value={productionYear} onChange={(event) => setProductionYear(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
+                Description (optional)
+                <textarea rows={2} maxLength={5000} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Briefly describe this content" className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
               </label>
             </div>
+
+            <details className="rounded-xl border border-slate-700 bg-slate-900/30 p-4">
+              <summary className="cursor-pointer text-xs font-bold text-cyan-200">Optional details · genre, language, rating and rights information</summary>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <label className="text-xs font-semibold text-slate-300">
+                  Genre
+                  <input maxLength={100} value={genre} onChange={(event) => setGenre(event.target.value)} placeholder="Drama, comedy, sports…" className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
+                </label>
+                <label className="text-xs font-semibold text-slate-300">
+                  Language
+                  <input maxLength={50} value={language} onChange={(event) => setLanguage(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
+                </label>
+                <label className="text-xs font-semibold text-slate-300">
+                  Age rating
+                  <select value={ageRating} onChange={(event) => setAgeRating(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white">
+                    <option value="G">All ages</option><option value="TV-Y7">7+</option><option value="PG-13">13+</option><option value="16">16+</option><option value="18">18+</option>
+                  </select>
+                </label>
+                <label className="text-xs font-semibold text-slate-300">
+                  Rights type
+                  <select value={licenseType} onChange={(event) => setLicenseType(event.target.value as typeof licenseType)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white">
+                    <option value="owned">Owned by us</option><option value="licensed">Licensed</option><option value="public_domain">Public domain</option>
+                  </select>
+                </label>
+                <label className="text-xs font-semibold text-slate-300">
+                  Copyright holder
+                  <input maxLength={150} value={copyrightHolderName} onChange={(event) => setCopyrightHolderName(event.target.value)} placeholder="Rights holder name" className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
+                </label>
+                <label className="text-xs font-semibold text-slate-300">
+                  Production year
+                  <input type="number" min="1888" max={new Date().getFullYear()} value={productionYear} onChange={(event) => setProductionYear(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-3 text-sm text-white" />
+                </label>
+              </div>
+            </details>
 
             <label className="flex items-start gap-3 rounded-xl border border-slate-700 bg-slate-900/40 p-3 text-xs text-slate-300">
               <input type="checkbox" checked={ownershipConfirmed} onChange={(event) => setOwnershipConfirmed(event.target.checked)} className="mt-0.5" />
