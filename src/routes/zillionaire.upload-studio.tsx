@@ -175,8 +175,11 @@ function UploadStudioContent({
       mkv: "video/x-matroska",
       webm: "video/webm",
     };
-    const mimeType = file.type || mimeByExtension[extension] || "";
-    if (!mimeByExtension[extension] || !mimeType.startsWith("video/")) {
+    // Browser MIME values are inconsistent for MKV/MOV (some Android browsers
+    // report application/octet-stream). The allow-listed extension determines the
+    // canonical MIME sent to the signed storage upload.
+    const mimeType = mimeByExtension[extension] || "";
+    if (!mimeType) {
       setError("Use an MP4, MOV, MKV or WebM video file.");
       return;
     }
@@ -224,7 +227,9 @@ function UploadStudioContent({
       setProgressLabel("Uploading your video to private storage…");
       const storedResponse = await fetch(intent.signedUrl, {
         method: intent.method ?? "PUT",
-        headers: { "content-type": mimeType, "x-upsert": "false" },
+        // The signed upload URL already encodes the no-overwrite policy.
+        // Avoid provider-specific x-upsert headers that can fail B2 CORS preflight.
+        headers: { "content-type": mimeType },
         body: file,
       });
       if (!storedResponse.ok) {
