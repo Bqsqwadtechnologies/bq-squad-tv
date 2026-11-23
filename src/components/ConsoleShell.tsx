@@ -306,7 +306,12 @@ export function ConsoleShell({
     if (themeMode !== "system") return;
     const media = window.matchMedia?.("(prefers-color-scheme: light)");
     if (!media) return;
-    const sync = () => setTheme(media.matches ? "light" : "dark");
+    const sync = () => {
+      const nextTheme = media.matches ? "light" : "dark";
+      setTheme(nextTheme);
+      document.documentElement.classList.toggle("dark", nextTheme === "dark");
+      document.documentElement.classList.toggle("light", nextTheme === "light");
+    };
     media.addEventListener?.("change", sync);
     return () => media.removeEventListener?.("change", sync);
   }, [themeMode]);
@@ -1039,7 +1044,7 @@ export function ConsoleShell({
 
   return (
     <div
-      className={`min-h-screen font-sans ${
+      className={`console-theme-surface min-h-screen font-sans ${
         theme === "dark" ? "bg-background text-foreground dark" : "bg-background text-foreground light"
       }`}
     >
