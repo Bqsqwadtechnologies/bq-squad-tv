@@ -143,6 +143,13 @@ export async function createPrivatePreviewGrant(
   if (!isAuthorized) {
     throw new ApiError(403, "UNAUTHORIZED_PREVIEW", "You do not own this content and cannot preview it.");
   }
+  if (!streamUrl) {
+    throw new ApiError(
+      409,
+      "PREVIEW_NOT_READY",
+      "This video is still processing. A private preview will be available when its playback manifest is ready.",
+    );
+  }
 
   // Short-lived: 15 minutes TTL
   const now = Math.floor(Date.now() / 1000);
