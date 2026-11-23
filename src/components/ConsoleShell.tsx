@@ -148,6 +148,9 @@ const CONSOLE_PAGE_HELP: Record<string, { description: string; keywords: string 
   "/zillionaire/pages": { description: "Edit, preview, version, schedule and publish legal pages, policies and help documents.", keywords: "documents terms privacy legal policy help text" },
   "/zillionaire/storage": { description: "Manage private storage destinations, health checks, capacity and backups.", keywords: "storage bucket media files backup disk space" },
   "/zillionaire/cleanup-sample": { description: "Find and remove designated sample or test content with an audit reason.", keywords: "cleanup delete test demo sample" },
+  "/zillionaire/kyc": { description: "Review producer and provider identity documents, compliance status and payout account verification.", keywords: "KYC identity verification documents bank payout compliance" },
+  "/zillionaire/test-lab": { description: "Run controlled video-processing checks and inspect media pipeline diagnostics.", keywords: "test video transcoding diagnostics processing pipeline" },
+  "/zillionaire/where-is-everything": { description: "Interactive directory explaining dashboard sections, features, permissions and where to find each tool.", keywords: "help guide directory documentation find feature navigation" },
   "/zillionaire/delivery": { description: "Monitor video delivery, HLS playback and content delivery health.", keywords: "streaming HLS delivery playback" },
   "/zillionaire/features": { description: "Enable or disable platform feature flags and staged feature rollouts.", keywords: "feature toggle flags experiments rollout" },
   "/zillionaire/support": { description: "Manage viewer and producer support tickets and service responses.", keywords: "helpdesk ticket customer service contact" },
@@ -854,24 +857,60 @@ export function ConsoleShell({
     return filteredGroups.flatMap((g) => g.items);
   }, [filteredGroups]);
 
-  const searchableItems = useMemo(
-    () =>
-      filteredGroups.flatMap((group) =>
-        group.items.map((item) => {
-          const help = CONSOLE_PAGE_HELP[item.href] ?? {
-            description: "Open the " + item.label + " page and manage its available tools and settings.",
-            keywords: item.label,
-          };
-          return {
-            ...item,
-            section: group.title || "Dashboard",
-            description: item.description || help.description,
-            keywords: [item.keywords, help.keywords].filter(Boolean).join(" "),
-          };
-        }),
-      ),
-    [filteredGroups],
-  );
+  const searchableItems = useMemo(() => {
+    const menuItems = filteredGroups.flatMap((group) =>
+      group.items.map((item) => {
+        const help = CONSOLE_PAGE_HELP[item.href] ?? {
+          description: "Open the " + item.label + " page and manage its available tools and settings.",
+          keywords: item.label,
+        };
+        return {
+          ...item,
+          section: group.title || "Dashboard",
+          description: item.description || help.description,
+          keywords: [item.keywords, help.keywords].filter(Boolean).join(" "),
+        };
+      }),
+    );
+    const extraPages: Array<ConsoleNavItem & { section: string; requiredModules: string[] }> = [
+      {
+        id: "kyc-verification",
+        label: "Identity & payout verification",
+        href: "/zillionaire/kyc",
+        icon: Search,
+        section: "Compliance",
+        description: CONSOLE_PAGE_HELP["/zillionaire/kyc"].description,
+        keywords: CONSOLE_PAGE_HELP["/zillionaire/kyc"].keywords,
+        requiredModules: ["security", "finance", "producers", "compliance", "overview"],
+      },
+      {
+        id: "video-test-lab",
+        label: "Video processing test lab",
+        href: "/zillionaire/test-lab",
+        icon: Search,
+        section: "Video operations",
+        description: CONSOLE_PAGE_HELP["/zillionaire/test-lab"].description,
+        keywords: CONSOLE_PAGE_HELP["/zillionaire/test-lab"].keywords,
+        requiredModules: ["video"],
+      },
+      {
+        id: "feature-directory",
+        label: "Where is Everything",
+        href: "/zillionaire/where-is-everything",
+        icon: Search,
+        section: "Help & navigation",
+        description: CONSOLE_PAGE_HELP["/zillionaire/where-is-everything"].description,
+        keywords: CONSOLE_PAGE_HELP["/zillionaire/where-is-everything"].keywords,
+        requiredModules: ["system"],
+      },
+    ];
+    const visibleExtras = extraPages.filter(
+      (item) =>
+        account?.isOwner ||
+        item.requiredModules.some((module) => account?.modules?.includes(module)),
+    );
+    return [...menuItems, ...visibleExtras];
+  }, [filteredGroups, account?.isOwner, account?.modules]);
 
   const matchingSearchItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
