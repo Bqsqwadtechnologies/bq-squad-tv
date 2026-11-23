@@ -400,7 +400,7 @@ function CleanupSampleContentInner({
                         maxLength={6}
                         pattern="[0-9]{6}"
                         value={authenticatorCode}
-                        onChange={(e) => setAuthenticatorCode(e.target.value.replace(/\\D/g, "").slice(0, 6))}
+                        onChange={(e) => setAuthenticatorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                         placeholder="6-digit code from your authenticator app"
                         className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-400 font-mono tracking-[0.3em]"
                       />
