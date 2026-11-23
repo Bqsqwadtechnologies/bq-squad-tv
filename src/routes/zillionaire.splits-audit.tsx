@@ -25,44 +25,6 @@ interface SplitAuditEntry {
   timestamp: string;
 }
 
-const mockEntries: SplitAuditEntry[] = [
-  {
-    id: "split_tx_8801",
-    assetId: "mov_lagos_nights",
-    grossAmountMinor: 1000000,
-    platformShareMinor: 500000,
-    producerShareMinor: 400000,
-    collaboratorShareMinor: 100000,
-    reconciled: true,
-    currency: "NGN",
-    period: "2026-03",
-    timestamp: "2026-03-24T12:00:00Z",
-  },
-  {
-    id: "split_tx_8802",
-    assetId: "mov_super_eagles",
-    grossAmountMinor: 450000,
-    platformShareMinor: 225000,
-    producerShareMinor: 157500,
-    collaboratorShareMinor: 67500,
-    reconciled: true,
-    currency: "NGN",
-    period: "2026-03",
-    timestamp: "2026-03-24T12:05:00Z",
-  },
-  {
-    id: "split_tx_8803",
-    assetId: "mov_nollywood_drama",
-    grossAmountMinor: 800000,
-    platformShareMinor: 400000,
-    producerShareMinor: 340000,
-    collaboratorShareMinor: 60000,
-    reconciled: false,
-    currency: "NGN",
-    period: "2026-03",
-    timestamp: "2026-03-24T12:10:00Z",
-  },
-];
 
 function SplitsAuditRoute() {
   return (
@@ -73,7 +35,7 @@ function SplitsAuditRoute() {
 }
 
 function SplitsAuditContent({ account }: { account: ConsoleAccount }) {
-  const [entries] = useState<SplitAuditEntry[]>(mockEntries);
+  const [entries] = useState<SplitAuditEntry[]>([]);
 
   const columns: EntityColumn<SplitAuditEntry>[] = [
     { key: "id", header: "Audit ID", render: (e) => <span className="font-mono text-cyan-400">{e.id}</span> },
@@ -109,7 +71,7 @@ function SplitsAuditContent({ account }: { account: ConsoleAccount }) {
     <ZillionaireEntityConsole
       account={account}
       title="Revenue & Splits Audit"
-      subtitle="Complete ledger verification of platform, producer, and collaborator allocations to the exact kobo."
+      subtitle="Complete ledger verification of platform, producer, and collaborator allocations to the exact kobo. No live records are available from a connected service yet; sample data is intentionally not shown."
       icon={Calculator}
       items={entries}
       columns={columns}
