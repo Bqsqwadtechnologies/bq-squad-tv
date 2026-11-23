@@ -107,7 +107,7 @@ function CleanupSampleContentInner({
   const [authenticatorCode, setAuthenticatorCode] = useState("");
   const [typedConfirmation, setTypedConfirmation] = useState("");
   const [reason, setReason] = useState("");
-  const [cleanupScope, setCleanupScope] = useState<"fake_live_streams" | "all_sample_content">("fake_live_streams");
+  const [cleanupScope, setCleanupScope] = useState<"fake_live_streams" | "all_sample_content">("all_sample_content");
 
   const handleScanDryRun = async () => {
     setIsScanning(true);
@@ -310,8 +310,8 @@ function CleanupSampleContentInner({
                     disabled={isScanning || isExecuting}
                     className="w-full rounded-xl border border-white/10 bg-[#030b2a] px-3 py-2.5 text-sm text-white"
                   >
-                    <option value="fake_live_streams">Only fake / test live streams (recommended)</option>
-                    <option value="all_sample_content">All demo content and sample storage records</option>
+                    <option value="fake_live_streams">Only fake / test live streams</option>
+                    <option value="all_sample_content">All demo content and sample storage records (default)</option>
                   </select>
                   <p className="mt-2 text-xs text-slate-400">
                     Fake-stream cleanup targets placeholder domains and clearly seeded live-channel records. Real stream URLs are left untouched.
