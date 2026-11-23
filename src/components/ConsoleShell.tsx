@@ -1001,7 +1001,7 @@ export function ConsoleShell({
     return searchableItems
       .map((item) => {
         const label = item.label.toLowerCase();
-        const description = item.description.toLowerCase();
+        const description = String(item.description || "");
         const keywords = String(item.keywords || "").toLowerCase();
         const haystack = [label, description, keywords, item.section, item.href].join(" ").toLowerCase();
         if (!terms.every((term) => haystack.includes(term))) return null;
