@@ -42,6 +42,7 @@ export const Route = createFileRoute("/zillionaire/producers")({
 interface ProducerItem {
   id: string;
   displayName: string;
+  username: string;
   companyName: string;
   legalName: string;
   countryCode: string;
@@ -393,7 +394,7 @@ function ZillionaireProducersContent({
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
             <input
               type="text"
-              placeholder="Search by name, company, or UID..."
+              placeholder="Search by producer name, @username, company or UID..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && void fetchProducers()}
@@ -445,6 +446,7 @@ function ZillionaireProducersContent({
                         <span className="text-[11px] text-slate-400">
                           {p.companyName ? p.companyName : "Independent"} ({p.countryCode})
                         </span>
+                        {p.username && <span className="text-[10px] font-mono text-cyan-300">@{p.username}</span>}
                         <span className="text-[10px] text-slate-500 font-mono">{p.id}</span>
                       </div>
                     </td>
