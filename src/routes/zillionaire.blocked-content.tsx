@@ -65,7 +65,7 @@ function ZillionaireBlockedContentRoute() {
       title="Blocked Content Log"
       description="Dedicated immutable enforcement log of all blocked and takedown assets with one-click owner restore."
     >
-      {(token, account, onLock) => (
+      {({ token, account, onLock }) => (
         <ZillionaireBlockedContentPage token={token} account={account} onLock={onLock} />
       )}
     </ConsolePageGuard>
