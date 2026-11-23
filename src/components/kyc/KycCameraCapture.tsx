@@ -51,6 +51,7 @@ export function KycCameraCapture({
   onCapture,
   onUploadFileInstead,
   onClose,
+  initialStream = null,
   title,
   subtitle,
   handoffUrl,
