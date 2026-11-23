@@ -1,6 +1,6 @@
 import { ApiError } from "./firebase-admin";
 
-export const DEFAULT_CURRENCY = "USD";
+export const DEFAULT_CURRENCY = "NGN";
 
 /** ISO 3166-1 alpha-2 country to ISO 4217 settlement currency. */
 const COUNTRY_CURRENCY: Readonly<Record<string, string>> = {
