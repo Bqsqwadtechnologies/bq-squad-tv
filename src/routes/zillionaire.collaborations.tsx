@@ -26,47 +26,6 @@ interface Collaboration {
   createdAt: string;
 }
 
-const mockCollabs: Collaboration[] = [
-  {
-    id: "collab_901",
-    assetId: "mov_lagos_nights",
-    assetTitle: "Lagos Nights: Underground",
-    producerUid: "prod_filmmaker_01",
-    partnerUid: "prod_sound_designer_99",
-    partnerEmail: "sound@lagosaudio.com",
-    partnerSharePercent: 20,
-    producerSharePercent: 80,
-    status: "active",
-    accruedPartnerMinor: 284000,
-    createdAt: "2026-03-01T08:00:00Z",
-  },
-  {
-    id: "collab_902",
-    assetId: "mov_super_eagles",
-    assetTitle: "Super Eagles: African Kings",
-    producerUid: "prod_sports_doc",
-    partnerUid: "prod_camera_crew",
-    partnerEmail: "dop@cinematv.ng",
-    partnerSharePercent: 30,
-    producerSharePercent: 70,
-    status: "pending_approval",
-    accruedPartnerMinor: 0,
-    createdAt: "2026-03-20T12:00:00Z",
-  },
-  {
-    id: "collab_903",
-    assetId: "mov_nollywood_drama",
-    assetTitle: "Heart of Abuja",
-    producerUid: "prod_abuja_studios",
-    partnerUid: "prod_vfx_house",
-    partnerEmail: "contact@africavfx.com",
-    partnerSharePercent: 15,
-    producerSharePercent: 85,
-    status: "active",
-    accruedPartnerMinor: 145000,
-    createdAt: "2026-02-15T10:00:00Z",
-  },
-];
 
 function CollaborationsOversightRoute() {
   return (
@@ -77,7 +36,7 @@ function CollaborationsOversightRoute() {
 }
 
 function CollaborationsContent({ account }: { account: ConsoleAccount }) {
-  const [collabs, setCollabs] = useState<Collaboration[]>(mockCollabs);
+  const [collabs, setCollabs] = useState<Collaboration[]>([]);
 
   const columns: EntityColumn<Collaboration>[] = [
     { key: "id", header: "Agreement ID", render: (c) => <span className="font-mono text-cyan-400">{c.id}</span> },
@@ -137,7 +96,7 @@ function CollaborationsContent({ account }: { account: ConsoleAccount }) {
     <ZillionaireEntityConsole
       account={account}
       title="Collaborations Oversight"
-      subtitle="Audit all producer collaboration contracts, inspect revenue split percentages, and manage agreement statuses."
+      subtitle="Audit all producer collaboration contracts, inspect revenue split percentages, and manage agreement statuses. No live records are available from a connected service yet; sample data is intentionally not shown."
       icon={Users2}
       items={collabs}
       columns={columns}
