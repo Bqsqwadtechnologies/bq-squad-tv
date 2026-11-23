@@ -8,7 +8,7 @@ export async function activateProducerBlueTickPayment(
   const producerPath = "producers/" + input.uid;
   const now = new Date();
   const nowIso = now.toISOString();
-  return fs.transact([paymentPath, producerPath], (docs) => {
+  return fs.transact<{ activated: boolean; expiresAt: string }>([paymentPath, producerPath], (docs) => {
     const payment = docs[0];
     const producer = docs[1];
     if (!payment || !producer) {
@@ -27,7 +27,10 @@ export async function activateProducerBlueTickPayment(
     if (payment["status"] === "credited" && producer["publicVerificationStatus"] === "ACTIVE") {
       const currentExpiry = typeof producer["publicVerificationUntil"] === "string"
         ? producer["publicVerificationUntil"] as string
-        : expiresAt;
+        : null;
+      if (!currentExpiry || !Number.isFinite(Date.parse(currentExpiry))) {
+        throw new ApiError(409, "BLUE_TICK_STATE_INVALID", "The existing verification payment is credited but its expiry date is missing. Contact platform support before retrying.");
+      }
       return { result: { activated: false, expiresAt: currentExpiry }, writes: [] };
     }
     if (payment["status"] !== "pending" && payment["status"] !== "initializing") {
