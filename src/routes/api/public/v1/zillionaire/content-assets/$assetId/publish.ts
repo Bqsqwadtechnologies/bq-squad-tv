@@ -5,6 +5,8 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireZillionaireModule } from "@/lib/server/roles";
 import { writeAuditLog } from "@/lib/server/audit";
 import { assertCanPublishWithoutDuplicateConflict } from "@/lib/server/copyright/fingerprint";
+import { getPlatformFlags } from "@/lib/server/flags";
+import { createInAppNotification, sendPushNotificationToUser } from "@/lib/server/notifications";
 
 const schema = z.object({ reason: z.string().trim().min(3).max(1000) }).strict();
 
@@ -56,9 +58,10 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
           }
           await assertCanPublishWithoutDuplicateConflict(fs, asset);
           const now = new Date().toISOString();
+          const wasAlreadyPublished = asset["contentStatus"] === "published";
           await fs.patchDoc("contentAssets/" + assetId, {
             contentStatus: "published",
-            publishedAt: now,
+            publishedAt: wasAlreadyPublished ? asset["publishedAt"] || now : now,
             publishedBy: user.uid,
             publishReason: body.reason,
             updatedAt: now,
@@ -71,7 +74,63 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
             reason: body.reason,
             metadata: { territoryCount: territories.length },
           });
-          return Response.json({ assetId, status: "ready", contentStatus: "published" });
+
+          let releaseNotificationsCreated = 0;
+          const producerUid =
+            typeof asset["producerUid"] === "string"
+              ? asset["producerUid"]
+              : typeof asset["ownerUid"] === "string" ? asset["ownerUid"] : null;
+          if (!wasAlreadyPublished && producerUid) {
+            const flags = await getPlatformFlags(fs);
+            if (flags.followedProducerReleaseNotifications) {
+              const [followers, producer] = await Promise.all([
+                fs.query("producers/" + producerUid + "/followers", {
+                  filters: [{ field: "active", op: "EQUAL", value: true }],
+                  limit: 500,
+                }),
+                fs.getDoc("producers/" + producerUid),
+              ]);
+              const producerName = String(producer?.["displayName"] || producer?.["name"] || "A producer you follow");
+              const title = String(asset["title"] || "a new title");
+              const deepLink = "/content/" + encodeURIComponent(assetId);
+              await Promise.allSettled(followers.map(async (follower) => {
+                const followerUid = String(follower.__id || follower["uid"] || "");
+                if (!followerUid || followerUid === producerUid) return;
+                const [preference, viewer] = await Promise.all([
+                  fs.getDoc("users/" + followerUid + "/settings/notifications"),
+                  fs.getDoc("users/" + followerUid),
+                ]);
+                if (!viewer || preference?.["followedProducerReleases"] === false) return;
+                const markerPath = "contentAssets/" + assetId + "/releaseNotifications/" + followerUid;
+                try {
+                  await fs.setDoc(markerPath, { uid: followerUid, createdAt: now }, { mustNotExist: true });
+                } catch (error) {
+                  if (error instanceof ApiError && error.status === 409) return;
+                  throw error;
+                }
+                await createInAppNotification(fs, followerUid, {
+                  title: "New release from " + producerName,
+                  body: producerName + " just published " + title + ".",
+                  deepLink,
+                  type: "producer_release",
+                });
+                await sendPushNotificationToUser(fs, followerUid, {
+                  notificationId: "producer_release_" + assetId,
+                  title: "New release from " + producerName,
+                  body: producerName + " just published " + title + ".",
+                  deepLink,
+                }).catch(() => undefined);
+                releaseNotificationsCreated += 1;
+              }));
+            }
+          }
+
+          return Response.json({
+            assetId,
+            status: "ready",
+            contentStatus: "published",
+            releaseNotificationsCreated,
+          });
         } catch (error) {
           return errorBody(error);
         }
