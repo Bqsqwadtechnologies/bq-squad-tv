@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { ConsolePageGuard } from "@/components/ConsolePageGuard";
 import { ConsoleShell } from "@/components/ConsoleShell";
+import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
 
 export const Route = createFileRoute("/producer/upload")({
   component: ProducerUploadStudioPage,
@@ -112,6 +113,7 @@ const initialForm: UploadFormData = {
 
 interface SubmittedTitle {
   id: string;
+  assetId?: string;
   title: string;
   contentType: string;
   genre: string;
@@ -366,6 +368,30 @@ function ProducerUploadInner({
     updateForm("crew", next);
   }
 
+  async function previewSubmittedTitle(assetId: string) {
+    const previewWindow = window.open("about:blank", "_blank");
+    setSubmitError(null);
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const response = await fetch("/api/public/v1/preview/grant", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({ targetType: "asset", targetId: assetId }),
+      });
+      const data = await response.json() as { previewPath?: string; message?: string; error?: string };
+      if (!response.ok || !data.previewPath) {
+        throw new Error(data.message || data.error || "This title is not ready for private preview yet.");
+      }
+      if (previewWindow) {
+        previewWindow.opener = null;
+        previewWindow.location.replace(data.previewPath);
+      }
+    } catch (error) {
+      previewWindow?.close();
+      setSubmitError(error instanceof Error ? error.message : "The private preview could not be opened.");
+    }
+  }
+
   async function handleSubmit() {
     setSubmitting(true);
     setSubmitError(null);
@@ -553,10 +579,19 @@ function ProducerUploadInner({
 
                     <div className="shrink-0 flex items-center gap-3">
                       {item.status === "approved" && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Approved
-                        </span>
+                        <>
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Approved
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void previewSubmittedTitle(item.assetId || item.id)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-primary/30 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/10"
+                          >
+                            <Play className="h-3.5 w-3.5" /> Preview
+                          </button>
+                        </>
                       )}
                       {item.status === "pending" && (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-500 border border-amber-500/20">
