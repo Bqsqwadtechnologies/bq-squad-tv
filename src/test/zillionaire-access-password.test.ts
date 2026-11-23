@@ -8,6 +8,7 @@ import {
   clearFailure,
   checkLockout,
   isAccessPasswordConfigured,
+  verifyPasswordConstantTime,
 } from "@/lib/server/zillionaire-access";
 import * as accessModule from "@/lib/server/access";
 import { Firestore } from "@/lib/server/firebase-admin";
@@ -95,6 +96,13 @@ describe("V4-01 Batch 02: Zillionaire Owner Access Password & Unlock Gate", () =
     expect(unlockRes.status).toBe(423);
     const unlockJson = await unlockRes.json();
     expect(unlockJson.code).toBe("ZILLIONAIRE_PASSWORD_NOT_CONFIGURED");
+  });
+
+  it("accepts a pasted secret with one terminal line ending without trimming password spaces", () => {
+    process.env["ZILLIONAIRE_ACCESS_PASSWORD"] = "  Exact Password  \r\n";
+    expect(isAccessPasswordConfigured()).toBe(true);
+    expect(verifyPasswordConstantTime("  Exact Password  ")).toBe(true);
+    expect(verifyPasswordConstantTime("Exact Password")).toBe(false);
   });
 
   it("2. Non-owner with correct password: is denied with 403 and denial recorded", async () => {
