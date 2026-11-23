@@ -389,24 +389,46 @@ function ZillionaireSeriesPage({
 
   const handleDeleteEpisode = async (episodeId: string) => {
     if (!selectedSeries || !selectedSeason) return;
-    if (!confirm("Are you sure you want to remove this episode?")) return;
+    if (!window.confirm("Remove this episode from the series? Its uploaded media file will remain in the content library.")) return;
+    const reason = window.prompt("Why are you removing this episode? (at least 3 characters)", "Remove test or incorrect episode");
+    if (!reason || reason.trim().length < 3) return;
     try {
       const headers = await getWebAuthHeaders(token);
-      await fetch("/api/public/v1/zillionaire/series/", {
+      const response = await fetch("/api/public/v1/zillionaire/series/", {
         method: "POST",
         headers: { ...headers, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "DELETE_EPISODE",
-          seriesId: selectedSeries.id,
-          seasonId: selectedSeason.id,
-          episodeId,
-          reason: "Owner deletion",
-        }),
+        body: JSON.stringify({ action: "DELETE_EPISODE", seriesId: selectedSeries.id, seasonId: selectedSeason.id, episodeId, reason: reason.trim() }),
       });
+      const data = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(data.message || data.error || "The episode could not be removed.");
       showToast("Episode removed");
       await loadData();
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "The episode could not be removed.");
+    }
+  };
+
+  const handleDeleteSeries = async () => {
+    if (!selectedSeries) return;
+    if (!window.confirm("Delete this series and its season/episode listing? Uploaded media files remain in the content library and are not permanently erased.")) return;
+    const reason = window.prompt("Why are you deleting this series? (at least 3 characters)", "Remove test or incorrect series");
+    if (!reason || reason.trim().length < 3) return;
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const response = await fetch("/api/public/v1/zillionaire/series/", {
+        method: "POST",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "DELETE_SERIES", seriesId: selectedSeries.id, reason: reason.trim() }),
+      });
+      const data = await response.json() as { message?: string; error?: string };
+      if (!response.ok) throw new Error(data.message || data.error || "The series could not be deleted.");
+      const remaining = seriesList.filter((item) => item.id !== selectedSeries.id);
+      setSeriesList(remaining);
+      setSelectedSeriesId(remaining[0]?.id ?? null);
+      setSelectedSeasonId(remaining[0]?.seasons?.[0]?.id ?? null);
+      showToast("Series removed. Uploaded media files remain in the content library.");
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : "The series could not be deleted.");
     }
   };
 
@@ -571,6 +593,9 @@ function ZillionaireSeriesPage({
                         className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold rounded-lg text-slate-200 transition"
                       >
                         + Add Season
+                      </button>
+                      <button type="button" onClick={() => void handleDeleteSeries()} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-xs font-semibold rounded-lg text-rose-300 transition">
+                        <Trash2 className="h-3.5 w-3.5" /> Delete Series
                       </button>
                     </div>
                   </div>
