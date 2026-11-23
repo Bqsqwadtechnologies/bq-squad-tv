@@ -97,7 +97,7 @@ describe("Live TV Screen (V5-05 Batch 3)", () => {
     const upNextLabels = screen.getAllByText("Up Next");
     expect(upNextLabels.length).toBeGreaterThan(0);
 
-    expect(screen.getByText("Prime Global Showcase — Live Concert")).toBeInTheDocument();
+    expect(screen.getByText("Super League Football")).toBeInTheDocument();
     expect(screen.getByText("Late Night African Beats")).toBeInTheDocument();
   });
 
