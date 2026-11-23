@@ -50,8 +50,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/users/")({
                   users: [{
                     id: lookup.uid,
                     publicId: search.toUpperCase(),
-                    username: matched["username"] || null,
-                    accountId: matched["accountId"] || null,
+                     accountId: matched["accountId"] || null,
                     email: matched["email"] || "",
                     displayName: matched["displayName"] || "Viewer",
                   username: matched["username"] || null,
