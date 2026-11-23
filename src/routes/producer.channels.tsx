@@ -283,30 +283,24 @@ function ProducerChannelsInner({
     const previewWindow = window.open("about:blank", "_blank");
     try {
       const headers = await getWebAuthHeaders(token);
-      const res = await fetch("/api/public/v1/preview/grant", {
+      const response = await fetch("/api/public/v1/preview/grant", {
         method: "POST",
         headers: { ...headers, "content-type": "application/json" },
         body: JSON.stringify({ targetType: "asset", targetId: assetId }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.previewPath) {
-          if (previewWindow) {
-            previewWindow.opener = null;
-            previewWindow.location.replace(data.previewPath);
-          } else {
-            window.location.assign(data.previewPath);
-          }
-        } else {
-          setMessage("Private preview link active.");
-        }
-      } else {
-        const err = await res.json().catch(() => ({}));
-        setError(err.message || "Failed to generate preview grant.");
+      const result = (await response.json()) as { previewPath?: string; error?: string };
+      if (!response.ok || !result.previewPath) {
+        throw new Error(result.error || "The private preview is not ready yet.");
       }
-    } catch (e: any) {
+      if (previewWindow) {
+        previewWindow.opener = null;
+        previewWindow.location.replace(result.previewPath);
+      } else {
+        window.location.assign(result.previewPath);
+      }
+    } catch (caught) {
       previewWindow?.close();
-      setError(e.message || "Preview error");
+      setError(caught instanceof Error ? caught.message : "Preview error");
     }
   }
 
