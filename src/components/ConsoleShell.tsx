@@ -1817,7 +1817,7 @@ export function ConsoleKpiCard({
           {badge && <span className="text-xs text-muted-foreground">{badge.text}</span>}
         </div>
         <div className={`p-2.5 rounded-xl ${styles.iconBg}`}>
-          {React.isValidElement(Icon) ? Icon : (typeof Icon === "function" || typeof Icon === "object" ? React.createElement(Icon as any, { className: "h-5 w-5" }) : null)}
+          {React.isValidElement(Icon) ? Icon : (typeof Icon === "function" || typeof Icon === "object" ? React.createElement(Icon as React.ElementType<{ className?: string }>, { className: "h-5 w-5" }) : null)}
         </div>
       </div>
 
