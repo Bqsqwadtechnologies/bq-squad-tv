@@ -72,7 +72,7 @@ export const Route = createFileRoute("/api/public/v1/producer/blue-verification"
             createdAt: new Date().toISOString(),
           }, { mustNotExist: true });
 
-          const callbackUrl = process.env["PAYSTACK_CALLBACK_URL"] || new URL("/producer/profile?blueTick=verify", request.url).toString();
+          const callbackUrl = new URL("/producer/profile?blueTick=verify", request.url).toString();
           const response = await fetch("https://api.paystack.co/transaction/initialize", {
             method: "POST",
             headers: { authorization: "Bearer " + secret, "content-type": "application/json" },
