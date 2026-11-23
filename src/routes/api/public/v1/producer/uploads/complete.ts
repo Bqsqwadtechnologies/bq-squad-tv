@@ -31,7 +31,7 @@ export const Route = createFileRoute("/api/public/v1/producer/uploads/complete")
           }
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const folder = storagePath.slice(0, storagePath.lastIndexOf("/"));
-          let object: { name: string; metadata?: { size?: number | string; contentLength?: number | string } } | undefined;
+          let object: { name: string; metadata?: unknown } | undefined;
           let metadataSize: number | string | undefined;
           let objectInfo: Record<string, unknown> | null = null;
           let lastListError: unknown = null;
@@ -46,7 +46,12 @@ export const Route = createFileRoute("/api/public/v1/producer/uploads/complete")
             lastListError = listError;
             if (!listError) {
               object = objects?.find((item) => item.name === filename);
-              metadataSize = object?.metadata?.size ?? object?.metadata?.contentLength;
+              const listedMetadata = object?.metadata && typeof object.metadata === "object"
+                ? object.metadata as Record<string, unknown>
+                : {};
+              const listedSize = listedMetadata["size"] ?? listedMetadata["contentLength"] ??
+                listedMetadata["content-length"] ?? listedMetadata["content_length"];
+              if (typeof listedSize === "number" || typeof listedSize === "string") metadataSize = listedSize;
             }
 
             if (!object || metadataSize === undefined || metadataSize === null) {
@@ -59,13 +64,13 @@ export const Route = createFileRoute("/api/public/v1/producer/uploads/complete")
                 const metadata = infoMetadata && typeof infoMetadata === "object"
                   ? infoMetadata as Record<string, unknown>
                   : {};
-                metadataSize =
-                  metadata["size"] ?? metadata["contentLength"] ??
+                const infoSize = metadata["size"] ?? metadata["contentLength"] ??
                   metadata["content-length"] ?? metadata["content_length"] ??
                   metadata["fileSize"] ?? metadata["sizeBytes"] ??
                   objectInfo["size"] ?? objectInfo["contentLength"] ??
                   objectInfo["content-length"] ?? objectInfo["content_length"] ??
-                  objectInfo["fileSize"] ?? objectInfo["sizeBytes"] ?? metadataSize;
+                  objectInfo["fileSize"] ?? objectInfo["sizeBytes"];
+                if (typeof infoSize === "number" || typeof infoSize === "string") metadataSize = infoSize;
               }
             }
 
