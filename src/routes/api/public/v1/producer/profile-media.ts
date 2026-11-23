@@ -32,8 +32,8 @@ export const Route = createFileRoute("/api/public/v1/producer/profile-media")({
           const form = await request.formData();
           const kind = form.get("kind");
           const file = form.get("file");
-          if (kind !== "avatar" && kind !== "banner") {
-            throw new ApiError(400, "PROFILE_MEDIA_KIND_INVALID", "Choose a profile photo or cover photo.");
+          if (kind !== "avatar" && kind !== "banner" && kind !== "watermark") {
+            throw new ApiError(400, "PROFILE_MEDIA_KIND_INVALID", "Choose a profile photo, cover photo or producer logo.");
           }
           if (!file || typeof file === "string" || typeof (file as Blob).arrayBuffer !== "function") {
             throw new ApiError(400, "PROFILE_MEDIA_FILE_REQUIRED", "Choose an image file to upload.");
