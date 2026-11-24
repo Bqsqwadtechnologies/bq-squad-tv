@@ -65,7 +65,7 @@ function createMemoryFirestore() {
     patchDoc: vi.fn(async (path: string, fields: Record<string, unknown>) => {
       storedDocs[path] = { ...(storedDocs[path] || {}), ...fields };
     }),
-    transact: vi.fn(async (paths: string[], callback: (docs: Array<Record<string, unknown> | null>) => Promise<{ result: unknown; writes: FirestoreWrite[] }> | { result: unknown; writes: any[] }) => {
+    transact: vi.fn(async (paths: string[], callback: (docs: Array<Record<string, unknown> | null>) => Promise<{ result: unknown; writes: FirestoreWrite[] }> | { result: unknown; writes: FirestoreWrite[] }) => {
       const outcome = await callback(paths.map((path) => {
         if (storedDocs[path]) return storedDocs[path];
         const split = path.lastIndexOf("/");
