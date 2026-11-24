@@ -421,3 +421,15 @@
 .dark .legacy-light-surface [class~="border-blue-200"] {
   border-color: var(--border) !important;
 }
+
+
+/* Complete light-mode mapping for legacy translucent controls and secondary text. */
+.light [class~="bg-white/10"],
+.light [class~="bg-white/15"],
+.light [class~="bg-white/20"] {
+  background-color: var(--muted) !important;
+}
+.light [class~="text-slate-200"],
+.light [class~="text-slate-300"] {
+  color: var(--foreground) !important;
+}
