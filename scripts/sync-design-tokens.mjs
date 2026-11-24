@@ -32,7 +32,7 @@ val IndigoRaised = Color(0xFF142456)
 val Signal = Color(0xFF00D8F5)
 val LiveRed = Color(0xFFFF405A)
 val AccentBlue = Color(0xFF0052D4)
-val TextPrimary = Color(0xFFF1F4F8)
+val TextPrimary = Color(0xFFF8FAFC)
 val TextMuted = Color(0xFF94A3B8)
 val BorderDark = Color(0xFF1E293B)
 
