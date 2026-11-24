@@ -267,8 +267,8 @@ export function ConsoleShell({
         : mode;
       setTheme(resolved);
       if (mode === "system") {
-        localStorage.removeItem("bq-sqwad-theme");
-        localStorage.removeItem("bq_console_theme");
+        localStorage.setItem("bq-sqwad-theme", "system");
+        localStorage.setItem("bq_console_theme", "system");
       } else {
         localStorage.setItem("bq-sqwad-theme", mode);
         localStorage.setItem("bq_console_theme", mode);
