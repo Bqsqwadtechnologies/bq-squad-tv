@@ -174,9 +174,8 @@ export async function creditPaystackPayment(
           "This payment is not in a creditable state.",
         );
       }
-      const walletCurrency =
-        typeof wallet["currency"] === "string" ? (wallet["currency"] as string) : currency;
-      const actualWalletCurrency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : walletCurrency;
+      const actualWalletCurrency =
+        typeof wallet["currency"] === "string" ? (wallet["currency"] as string) : walletCurrency;
       if (actualWalletCurrency !== walletCurrency)
         throw new ApiError(409, "WALLET_CURRENCY_MISMATCH", "Your wallet currency changed after this payment was started.");
       const nextBalance = currentBalance + input.creditMinor;
