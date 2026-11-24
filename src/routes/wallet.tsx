@@ -34,6 +34,9 @@ type Topup = {
   displayAmountMinor?: number;
   creditMinor: number;
   currency: string;
+  walletCurrency?: string;
+  converted?: boolean;
+  exchangeRate?: number;
 };
 
 const DEFAULT_NGN_PACKAGES: Topup[] = [
@@ -95,6 +98,7 @@ function WalletPage() {
   const [busy, setBusy] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [detectedCountryCode, setDetectedCountryCode] = useState<string>("");
 
   // Pending payment state
   const [pendingReference, setPendingReference] = useState<string>(() => {
@@ -141,17 +145,20 @@ function WalletPage() {
 
   const loadWallet = useCallback(async () => {
     try {
-      const [walletRes, ledgerRes, topupsRes] = await Promise.all([
+      const [countryRes, walletRes, ledgerRes, topupsRes] = await Promise.all([
+        fetchWithAuth("/api/public/v1/profile/country"),
         fetchWithAuth("/api/public/v1/wallet"),
         fetchWithAuth("/api/public/v1/wallet/ledger?limit=25"),
         fetchWithAuth("/api/public/v1/wallet/topups"),
       ]);
 
-      const [walletData, ledgerData, topupData] = await Promise.all([
+      const [countryData, walletData, ledgerData, topupData] = await Promise.all([
+        countryRes.json(),
         walletRes.json(),
         ledgerRes.json(),
         topupsRes.json(),
       ]);
+      if (countryRes.ok && typeof countryData.countryCode === "string") setDetectedCountryCode(countryData.countryCode);
 
       if (!walletRes.ok) throw new Error("Your wallet is temporarily unavailable. Please try again shortly.");
       if (!ledgerRes.ok) throw new Error("Wallet history is temporarily unavailable. Please try again shortly.");
@@ -274,7 +281,7 @@ function WalletPage() {
     if (isCustom || pkgId === "custom") {
       const parsed = Number(customAmountNgn);
       if (isNaN(parsed) || parsed < 200) {
-        setError("Minimum custom top-up amount is ₦200 for NGN wallets.");
+        setError("Enter a valid custom amount in your wallet currency. For currencies without website checkout, use the BQ SQWAD TV app.");
         return;
       }
       customMinor = Math.round(parsed * 100);
@@ -437,6 +444,10 @@ function WalletPage() {
               ) : (
                 <div id="topups" className="mt-8 scroll-mt-6">
                   <h2 className="text-lg font-bold">Add wallet credits</h2>
+                  <div className="mt-3 rounded-xl border border-cyan-300/20 bg-cyan-300/5 p-3 text-sm text-blue-50">
+                    <p className="font-semibold">Detected country: {detectedCountryCode ? new Intl.DisplayNames(["en"], { type: "region" }).of(detectedCountryCode) + " (" + detectedCountryCode + ")" : "Checking your location…"}</p>
+                    <p className="mt-1 text-xs text-blue-100/70">Your wallet is shown in {currentCurrency}. If Paystack does not support that currency, checkout will be converted to USD where available. The payment provider will charge in the currency shown at checkout; your wallet will still receive the displayed local-currency credit.</p>
+                  </div>
                   <p className="mt-1 text-xs text-blue-100/60">
                     Top-up amounts are displayed in your wallet currency ({currentCurrency}).
                   </p>
@@ -463,7 +474,7 @@ function WalletPage() {
                                 : "rounded-xl border border-white/10 bg-[#030b2a]/60 p-3 text-center text-blue-100/80 hover:border-white/20 hover:bg-white/5"}
                             >
                               <span className="text-xs font-extrabold sm:text-sm">
-                                {formatChipAmount(offer.amountMinor, offer.currency)}
+                                {formatChipAmount(offer.displayAmountMinor ?? offer.amountMinor, offer.walletCurrency ?? wallet?.currency ?? offer.currency)}
                               </span>
                             </button>
                           );
@@ -471,7 +482,7 @@ function WalletPage() {
                       </div>
                     ) : (
                       <p className="rounded-xl border border-amber-300/20 bg-amber-300/5 p-3 text-sm text-amber-100">
-                        Paystack cannot process top-ups in {currentCurrency} for this account. Please use the BQ SQWAD TV app to top up your wallet.
+                        Website checkout is not available for {currentCurrency}. Please download the BQ SQWAD TV app and fund your wallet there.
                       </p>
                     )}
                   </div>
@@ -533,7 +544,7 @@ function WalletPage() {
                               {item.packageId}
                             </p>
                             <p className="mt-2 text-xl font-extrabold">
-                              {formatMoney(item.creditMinor, item.currency)} credit
+                              {formatMoney(item.creditMinor, item.walletCurrency ?? wallet?.currency ?? item.currency)} credit
                             </p>
                             <p className="mt-1 text-sm text-blue-100/60">
                               Pay{" "}
