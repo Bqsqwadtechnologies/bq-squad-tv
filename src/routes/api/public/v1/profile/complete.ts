@@ -35,7 +35,23 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           const adultEligible = !isUnder18;
           const fs = await Firestore.create();
           await assertLegalAcceptance(fs, user.uid, "public");
-          const existingProfile = await fs.getDoc("users/" + user.uid);
+          let existingProfile = await fs.getDoc("users/" + user.uid);
+          if (!existingProfile) {
+            const now = new Date().toISOString();
+            const detected = await detectCountryFromRequest(request);
+            existingProfile = {
+              email: user.email ?? "",
+              role: "viewer",
+              roles: ["viewer"],
+              countryCode: detected,
+              preferredCurrency: detected ? currencyForCountry(detected) : null,
+              countryDetectionSource: detected ? "ip" : "unknown",
+              profileComplete: false,
+              createdAt: now,
+              updatedAt: now,
+            };
+            await fs.setDoc("users/" + user.uid, existingProfile, { merge: true });
+          }
           const accountId = await ensureAccountId(fs, user.uid, existingProfile);
           const existingWallet = await fs.getDoc("wallets/" + user.uid);
           // Country is determined by server-side IP geolocation. Ignore countryCode
