@@ -21,7 +21,7 @@ The existing Modal app has one resource configuration block:
 - Standard processing: 2 CPU, 4 GiB, 3-hour timeout, up to two containers.
 - Maintenance and wake resources are included in the same configuration block. A lighter copy-mode resource profile is defined, but the current job dispatcher does not yet route jobs to it automatically.
 
-The queue poll fallback runs every five minutes and exits when there is no work. When a verified source upload creates a queue job, the API calls the secured Modal `wake` endpoint using `MODAL_WAKE_URL` and `MODAL_WAKE_SECRET`. If either setting is absent or the wake call fails, the scheduled fallback remains responsible for discovering queued work.
+The queue poll fallback runs every five minutes and exits when there is no work; it remains enabled to recover delayed retries and expired leases. A direct wake is sent only after the API confirms that Firestore contains an eligible queued transcode job. Cancelled jobs and failed/terminal jobs do not wake Modal. The standard FFmpeg function is spawned only after the worker claim route returns a real job, so an empty queue never starts a transcode container. If either wake setting is absent or the direct wake fails, the scheduled fallback remains responsible for discovering queued work.
 
 Configure `MODAL_WAKE_SECRET` in the API environment and the existing Modal secret. The endpoint accepts only the exact bearer secret. Do not expose it in browser or Android code.
 
