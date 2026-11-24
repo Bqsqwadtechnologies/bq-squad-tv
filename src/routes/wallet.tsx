@@ -321,7 +321,8 @@ function WalletPage() {
       window.location.assign(result.authorizationUrl);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "";
-      setError(message.includes("CURRENCY") || message.includes("PAYSTACK") || message.includes("TOPUP") || message.includes("Firestore") || message.includes("firestore") ? "Paystack cannot complete this website top-up. Please download the BQ SQWAD TV app from Google Play and fund your wallet in the app." : "Website checkout is temporarily unavailable. Please try again shortly.");
+      const normalizedMessage = message.toUpperCase();
+      setError(normalizedMessage.includes("CURRENCY") || normalizedMessage.includes("PAYSTACK") || normalizedMessage.includes("TOPUP") || normalizedMessage.includes("FIRESTORE") ? "Paystack cannot complete this website top-up. Please download the BQ SQWAD TV app from Google Play and fund your wallet in the app." : "Website checkout is temporarily unavailable. Please try again shortly.");
       setBusyPackage("");
     }
   }
