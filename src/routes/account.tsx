@@ -91,7 +91,7 @@ function AccountPage() {
   const [showSettingsView, setShowSettingsView] = useState(false);
   const [countryReady, setCountryReady] = useState(false);
   const [canChangeCountry, setCanChangeCountry] = useState(false);
-  const [themeMode, setThemeMode] = useState<"light" | "dark">("light");
+  const [themeMode, setThemeMode] = useState<"system" | "light" | "dark">("system");
   const [legalConsentAccepted, setLegalConsentAccepted] = useState(false);
   const [legalAcceptanceRequired, setLegalAcceptanceRequired] = useState(false);
   const [legalAcceptanceBusy, setLegalAcceptanceBusy] = useState(false);
@@ -100,11 +100,21 @@ function AccountPage() {
   >([]);
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem("bq-sqwad-theme");
-    const initialTheme = storedTheme === "dark" ? "dark" : "light";
+    const storedTheme = localStorage.getItem("bq-sqwad-theme") || localStorage.getItem("bq_console_theme");
+    const initialTheme = storedTheme === "light" || storedTheme === "dark" || storedTheme === "system"
+      ? storedTheme
+      : "system";
+    const applyTheme = (mode: "system" | "light" | "dark") => {
+      const resolved = mode === "system"
+        ? (window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark")
+        : mode;
+      document.documentElement.classList.toggle("dark", resolved === "dark");
+      document.documentElement.classList.toggle("light", resolved === "light");
+      localStorage.setItem("bq-sqwad-theme", mode);
+      localStorage.setItem("bq_console_theme", mode);
+    };
     setThemeMode(initialTheme);
-    document.documentElement.classList.toggle("dark", initialTheme === "dark");
-    document.documentElement.classList.toggle("light", initialTheme === "light");
+    applyTheme(initialTheme);
     let active = true;
     void (async () => {
       const token = await restoreWebSession();
@@ -125,11 +135,9 @@ function AccountPage() {
         });
         if (preferenceResponse.ok) {
           const preference = (await preferenceResponse.json()) as { themeMode?: string };
-          if (preference.themeMode === "light" || preference.themeMode === "dark") {
+          if (preference.themeMode === "system" || preference.themeMode === "light" || preference.themeMode === "dark") {
             setThemeMode(preference.themeMode);
-            localStorage.setItem("bq-sqwad-theme", preference.themeMode);
-            document.documentElement.classList.toggle("dark", preference.themeMode === "dark");
-            document.documentElement.classList.toggle("light", preference.themeMode === "light");
+            applyTheme(preference.themeMode);
           }
         }
       } catch {
@@ -159,11 +167,15 @@ function AccountPage() {
     };
   }, []);
 
-  async function saveThemePreference(next: "light" | "dark") {
+  async function saveThemePreference(next: "system" | "light" | "dark") {
     setThemeMode(next);
+    const resolved = next === "system"
+      ? (window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark")
+      : next;
     localStorage.setItem("bq-sqwad-theme", next);
-    document.documentElement.classList.toggle("dark", next === "dark");
-    document.documentElement.classList.toggle("light", next === "light");
+    localStorage.setItem("bq_console_theme", next);
+    document.documentElement.classList.toggle("dark", resolved === "dark");
+    document.documentElement.classList.toggle("light", resolved === "light");
     const token = await getActiveWebIdToken();
     if (!token) return;
     try {
@@ -576,10 +588,11 @@ function AccountPage() {
           Appearance
           <select
             value={themeMode}
-            onChange={(event) => void saveThemePreference(event.target.value as "light" | "dark")}
+            onChange={(event) => void saveThemePreference(event.target.value as "system" | "light" | "dark")}
             className="mt-2 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-3 py-3 text-slate-900 dark:text-white shadow-sm focus:border-cyan-500 dark:focus:border-cyan-300"
             aria-label="Choose appearance"
           >
+            <option value="system">System default</option>
             <option value="light">White theme</option>
             <option value="dark">Dark navy theme</option>
           </select>
