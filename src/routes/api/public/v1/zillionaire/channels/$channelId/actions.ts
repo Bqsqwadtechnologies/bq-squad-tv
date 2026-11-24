@@ -47,6 +47,16 @@ const channelActionSchema = z.discriminatedUnion("action", [
     reason: z.string().trim().min(3).max(1000),
   }),
   z.object({
+    action: z.literal("set_region_availability"),
+    regionAvailability: z.object({
+      mode: z.enum(["GLOBAL", "WHITELIST", "BLACKLIST"]),
+      countries: z.array(z.string().trim().length(2)).max(250),
+      availableFrom: z.string().nullable().optional(),
+      availableTo: z.string().nullable().optional(),
+    }),
+    reason: z.string().trim().min(3).max(1000),
+  }),
+  z.object({
     action: z.literal("rev_share"),
     shareBps: z.number().int().min(0).max(10000),
     reason: z.string().trim().min(3).max(1000),
@@ -246,6 +256,29 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels/$chann
               createdAt: now,
             });
             return Response.json({ success: true, liveStreamingAllowed: body.allowed });
+          }
+
+          if (body.action === "set_region_availability") {
+            const regionAvailability = {
+              mode: body.regionAvailability.mode,
+              countries: Array.from(new Set(body.regionAvailability.countries.map((code) => code.toUpperCase()))),
+              availableFrom: body.regionAvailability.availableFrom ?? null,
+              availableTo: body.regionAvailability.availableTo ?? null,
+            };
+            await fs.set(`channels/${channelId}`, {
+              ...channel,
+              regionAvailability,
+              updatedAt: now,
+            });
+            await fs.set(`auditLog/${auditId}`, {
+              actorUid: actor.uid,
+              action: "channel.region_availability_updated",
+              targetId: channelId,
+              regionAvailability,
+              reason: body.reason,
+              createdAt: now,
+            });
+            return Response.json({ success: true, regionAvailability });
           }
 
           if (body.action === "rev_share") {
