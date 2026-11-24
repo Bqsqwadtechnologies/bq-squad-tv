@@ -301,7 +301,11 @@ function AccountPage() {
   const continueWithEmailAccount = useCallback(async (accountEmailValue: string) => {
     setEmail(accountEmailValue);
     setAccountEmail(accountEmailValue);
-    await loadAccountCountry();
+    try {
+      await loadAccountCountry();
+    } catch {
+      // Country and currency display are helpful, but must never block a successful sign-in.
+    }
     const account = await getWebAccount();
     if (account?.publicId) setPublicId(account.publicId);
     setCanOpenProducerConsole(account?.emailVerified === true && account.isOwner !== true && account.roles?.includes("producer") === true && account.producerPlanActive === true);
