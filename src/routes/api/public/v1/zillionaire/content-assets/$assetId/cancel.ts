@@ -5,7 +5,6 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireZillionaireModule } from "@/lib/server/roles";
 import { releaseStorageReservation } from "@/lib/server/storage/reservations";
 import { writeAuditLog } from "@/lib/server/audit";
-import { wakeModalVideoWorker } from "@/lib/server/modal-wake";
 
 const schema = z.object({ reason: z.string().trim().min(3).max(1000) }).strict();
 
@@ -84,7 +83,6 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/content-assets/
             targetId: assetId,
             reason: body.reason,
           });
-          await wakeModalVideoWorker();
           return Response.json({ assetId, status: "cancelled" });
         } catch (error) {
           return errorBody(error);
