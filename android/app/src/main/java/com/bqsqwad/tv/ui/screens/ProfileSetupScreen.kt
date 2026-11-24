@@ -70,25 +70,35 @@ fun ProfileSetupScreen(
             Text(" and ")
             TextButton(onClick = { uriHandler.openUri("https://tv.bqsqwad.com/legal/privacy-policy") }) { Text("Privacy Policy") }
         }
-        Button(enabled = !busy && legalAccepted && (profileAlreadyComplete || dob.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) && (pin.isBlank() || pin.length in 4..6), onClick = {
-            scope.launch {
-                busy = true
-                message = null
-                runCatching {
-                    val date = LocalDate.parse(dob)
-                    require(!date.isAfter(LocalDate.now())) { "Date of birth cannot be in the future." }
-                    require(repository.acceptLegalPages()) { "Please accept the current Terms and Privacy Policy before continuing." }
-                    if (!profileAlreadyComplete) repository.completeProfile(date.toString(), pin.ifBlank { null })
-                }.onSuccess { response ->
-                    if (response.profileComplete) {
-                        onComplete(response.adultEligible)
-                    } else {
-                        message = "Your profile could not be verified. Please try again."
+        Button(
+            enabled = !busy && legalAccepted && (
+                profileAlreadyComplete ||
+                    (dob.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) && (pin.isBlank() || pin.length in 4..6))
+            ),
+            onClick = {
+                scope.launch {
+                    busy = true
+                    message = null
+                    runCatching {
+                        require(repository.acceptLegalPages()) {
+                            "Please accept the current Terms and Privacy Policy before continuing."
+                        }
+                        if (!profileAlreadyComplete) {
+                            val date = LocalDate.parse(dob)
+                            require(!date.isAfter(LocalDate.now())) { "Date of birth cannot be in the future." }
+                            val response = repository.completeProfile(date.toString(), pin.ifBlank { null })
+                            require(response.profileComplete) { "Your profile could not be verified. Please try again." }
+                        }
+                    }.onSuccess {
+                        onComplete(false)
+                    }.onFailure {
+                        message = it.message ?: ErrorMessages.PROFILE_FAILED
                     }
-                }.onFailure { message = it.message ?: ErrorMessages.PROFILE_FAILED }
-                busy = false
-            }
-        }, modifier = Modifier.fillMaxWidth()) { Text(if (busy) "Verifying…" else "Continue to BQ SQWAD TV") }
+                    busy = false
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text(if (busy) "Verifying…" else "Continue to BQ SQWAD TV") }
         message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         Text(
             "Adult content is never enabled by this screen. The server must confirm eligibility for every protected catalog and playback request.",
