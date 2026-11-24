@@ -145,20 +145,23 @@ function WalletPage() {
 
   const loadWallet = useCallback(async () => {
     try {
-      const [countryRes, walletRes, ledgerRes, topupsRes] = await Promise.all([
-        fetchWithAuth("/api/public/v1/profile/country"),
+      const countryRes = await fetchWithAuth("/api/public/v1/profile/country");
+      const countryData = await countryRes.json();
+      if (countryRes.ok && typeof countryData.countryCode === "string") setDetectedCountryCode(countryData.countryCode);
+
+      // Country detection may safely initialise an empty wallet's currency.
+      // Load the wallet and its offers only after that server-side resolution.
+      const [walletRes, ledgerRes, topupsRes] = await Promise.all([
         fetchWithAuth("/api/public/v1/wallet"),
         fetchWithAuth("/api/public/v1/wallet/ledger?limit=25"),
         fetchWithAuth("/api/public/v1/wallet/topups"),
       ]);
 
-      const [countryData, walletData, ledgerData, topupData] = await Promise.all([
-        countryRes.json(),
+      const [walletData, ledgerData, topupData] = await Promise.all([
         walletRes.json(),
         ledgerRes.json(),
         topupsRes.json(),
       ]);
-      if (countryRes.ok && typeof countryData.countryCode === "string") setDetectedCountryCode(countryData.countryCode);
 
       if (!walletRes.ok) throw new Error("Your wallet is temporarily unavailable. Please try again shortly.");
       if (!ledgerRes.ok) throw new Error("Wallet history is temporarily unavailable. Please try again shortly.");
