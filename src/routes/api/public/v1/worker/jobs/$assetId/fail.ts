@@ -5,7 +5,6 @@ import { errorBody, parseBody } from "@/lib/server/api";
 import { requireVideoWorker } from "@/lib/server/video-worker-auth";
 import { releaseStorageReservation } from "@/lib/server/storage/reservations";
 import { videoWorkerRetry, isVideoWorkerLeaseActive } from "@/lib/server/video-worker-policy";
-import { wakeModalVideoWorker } from "@/lib/server/modal-wake";
 
 const schema = z.object({
   claimToken: z.string().regex(/^[a-f0-9]{32}$/),
@@ -94,7 +93,6 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/fail")
               transcodeErrorCode: body.errorCode,
               updatedAt: now,
             });
-          await wakeModalVideoWorker();
           return Response.json({ assetId, status: terminal ? "failed" : "queued", attempts });
         } catch (error) {
           return errorBody(error);
