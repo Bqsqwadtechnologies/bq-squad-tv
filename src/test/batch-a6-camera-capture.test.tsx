@@ -40,7 +40,7 @@ describe("Batch A6: Camera Capture, Liveness & ID Framing", () => {
     fireEvent.click(screen.getByRole("button", { name: /Passport Page/i }));
 
     // Upload file instead
-    const uploadBtn = screen.getByRole("button", { name: /Upload file instead/i });
+    const uploadBtn = screen.getAllByRole("button", { name: /Upload file instead/i })[0]!;
     fireEvent.click(uploadBtn);
     expect(handleUploadInstead).toHaveBeenCalledTimes(1);
 
