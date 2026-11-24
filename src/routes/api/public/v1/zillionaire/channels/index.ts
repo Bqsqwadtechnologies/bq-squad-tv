@@ -75,6 +75,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/channels/")({
                 suspendedReason: c["suspendedReason"] || null,
                 createdAt: c["createdAt"] || null,
                 updatedAt: c["updatedAt"] || null,
+                regionAvailability: c["regionAvailability"] || { mode: "GLOBAL", countries: [] },
               };
             }),
           });
