@@ -1,4 +1,14 @@
-export async function wakeModalVideoWorker(): Promise<void> {
+import type { Firestore } from "./firebase-admin";
+import { videoWorkerRetryIsDue } from "./video-worker-policy";
+
+export async function wakeModalVideoWorker(fs: Firestore): Promise<void> {
+  // Never start the Modal endpoint unless a queued transcode is actually eligible.
+  const queuedJobs = await fs.query("videoTranscodeJobs", {
+    filters: [{ field: "status", op: "EQUAL", value: "queued" }],
+    orderByField: "createdAt",
+    limit: 10,
+  }).catch(() => []);
+  if (!queuedJobs.some((job) => videoWorkerRetryIsDue(job["nextAttemptAt"]))) return;
   const endpoint = (process.env["MODAL_WAKE_URL"] ?? "").trim();
   const secret = process.env["MODAL_WAKE_SECRET"] ?? "";
   if (!endpoint || secret.length < 32) return;
