@@ -112,24 +112,24 @@
 /* Complete semantic light palette. Apply the .light class to the document root. */
 .light {
   color-scheme: light;
-  --background: oklch(0.99 0.004 250);
+  --background: oklch(0.965 0.012 250);
   --foreground: oklch(0.20 0.035 265);
-  --card: oklch(1 0 0);
+  --card: oklch(0.985 0.008 250);
   --card-foreground: oklch(0.20 0.035 265);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.985 0.008 250);
   --popover-foreground: oklch(0.20 0.035 265);
   --primary: oklch(0.48 0.17 250);
   --primary-foreground: oklch(0.99 0.004 250);
-  --secondary: oklch(0.94 0.018 250);
+  --secondary: oklch(0.925 0.018 250);
   --secondary-foreground: oklch(0.22 0.04 265);
-  --muted: oklch(0.95 0.012 250);
+  --muted: oklch(0.93 0.014 250);
   --muted-foreground: oklch(0.43 0.035 260);
   --accent: oklch(0.92 0.045 215);
   --accent-foreground: oklch(0.20 0.035 265);
   --destructive: oklch(0.52 0.20 27);
   --destructive-foreground: oklch(0.99 0.004 250);
-  --border: oklch(0.86 0.018 255);
-  --input: oklch(0.86 0.018 255);
+  --border: oklch(0.89 0.015 255);
+  --input: oklch(0.89 0.015 255);
   --ring: oklch(0.48 0.17 250);
   --chart-1: oklch(0.48 0.17 250);
   --chart-2: oklch(0.55 0.13 205);
