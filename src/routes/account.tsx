@@ -121,6 +121,10 @@ function AccountPage() {
       if (!token || !active) return;
       const account = await getWebAccount();
       if (!active || !account) return;
+      if (account.emailVerified && account.profileComplete === false) {
+        window.location.replace("/profile/setup");
+        return;
+      }
       setAccountEmail(account.email ?? "");
       setEmail(account.email ?? "");
       setPublicId(account.publicId ?? null);
@@ -320,6 +324,10 @@ function AccountPage() {
     }
     const account = await getWebAccount();
     if (account?.publicId) setPublicId(account.publicId);
+    if (account?.emailVerified && account.profileComplete === false) {
+      window.location.replace("/profile/setup");
+      return;
+    }
     setCanOpenProducerConsole(account?.emailVerified === true && account.isOwner !== true && account.roles?.includes("producer") === true && account.producerPlanActive === true);
     setCanOpenProviderConsole(account?.emailVerified === true && account.isOwner !== true && account.roles?.includes("provider") === true);
     setCanOpenZillionaireDashboard(account?.emailVerified === true && account.isOwner === true);
