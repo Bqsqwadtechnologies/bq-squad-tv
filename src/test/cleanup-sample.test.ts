@@ -75,10 +75,11 @@ function createMemoryFirestore() {
       }));
       for (const write of outcome.writes) {
         if ("delete" in write) {
-          deletedDocs.push(write.delete);
-          delete storedDocs[write.delete];
+          const deletedPath = String(write.delete).replace("projects/test-project/databases/(default)/documents/", "");
+          deletedDocs.push(deletedPath);
+          delete storedDocs[deletedPath];
         } else if ("update" in write) {
-          const path = write.update.name;
+          const path = String(write.update.name).replace("projects/test-project/databases/(default)/documents/", "");
           storedDocs[path] = { ...(storedDocs[path] || {}), ...decodeFields(write.update.fields) };
         }
       }
