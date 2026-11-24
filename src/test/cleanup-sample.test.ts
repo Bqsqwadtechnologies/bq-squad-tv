@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { Route as CleanupRoute } from "@/routes/api/public/v1/zillionaire/cleanup-sample";
 import { Route as StorageSeedRoute } from "@/routes/api/public/v1/zillionaire/storage/seed";
-import { Firestore } from "@/lib/server/firebase-admin";
+import { Firestore, decodeFields } from "@/lib/server/firebase-admin";
 import * as apiModule from "@/lib/server/api";
 import * as rolesModule from "@/lib/server/roles";
 import { createStepUpToken } from "@/lib/server/zillionaire-access";
@@ -14,6 +14,16 @@ function createMemoryFirestore() {
     channels: [
       { __id: "demo", name: "Demo Channel", isDemo: true },
       { __id: "ch_real_1", name: "Real News Live", isDemo: false },
+      { __id: "test_channel_1", name: "Test Channel", isDemo: false },
+    ],
+    "channels/test_channel_1/schedule": [
+      { __id: "test_program_future", channelId: "test_channel_1", title: "Test Program", startsAt: "2027-01-01T10:00:00.000Z", endsAt: "2027-01-01T11:00:00.000Z", status: "SCHEDULED" },
+      { __id: "test_program_upcoming", channelId: "test_channel_1", title: "Test Programme", startsAt: "2027-01-02T10:00:00.000Z", endsAt: "2027-01-02T11:00:00.000Z", status: "UPCOMING" },
+    ],
+    epgSchedule: [
+      { __id: "epg_test_future", title: "Test Program", channelId: "test_channel_1", startTime: "2027-01-01T10:00:00.000Z", endTime: "2027-01-01T11:00:00.000Z" },
+      { __id: "epg_test_upcoming", title: "Test Programme", channelId: "test_channel_1", startTime: "2027-01-02T10:00:00.000Z", endTime: "2027-01-02T11:00:00.000Z" },
+      { __id: "epg_real", title: "Real Evening Show", channelId: "ch_real_1", startTime: "2027-01-02T11:00:00.000Z", endTime: "2027-01-02T12:00:00.000Z" },
     ],
     contentAssets: [
       { __id: "demo_asset_1", title: "Lagos Nights Sample", uploaderUid: "system_seed", sizeBytes: 10485760 },
@@ -40,6 +50,25 @@ function createMemoryFirestore() {
     getDoc: vi.fn(async (path: string) => storedDocs[path] || null),
     set: vi.fn(async (path: string, fields: Record<string, unknown>) => {
       storedDocs[path] = { ...fields };
+    }),
+    setDoc: vi.fn(async (path: string, fields: Record<string, unknown>) => {
+      storedDocs[path] = { ...fields };
+    }),
+    patchDoc: vi.fn(async (path: string, fields: Record<string, unknown>) => {
+      storedDocs[path] = { ...(storedDocs[path] || {}), ...fields };
+    }),
+    transact: vi.fn(async (paths: string[], callback: (docs: Array<Record<string, unknown> | null>) => Promise<{ result: unknown; writes: any[] }> | { result: unknown; writes: any[] }) => {
+      const outcome = await callback(paths.map((path) => storedDocs[path] || null));
+      for (const write of outcome.writes) {
+        if ("delete" in write) {
+          deletedDocs.push(write.delete);
+          delete storedDocs[write.delete];
+        } else if ("update" in write) {
+          const path = write.update.name;
+          storedDocs[path] = { ...(storedDocs[path] || {}), ...decodeFields(write.update.fields) };
+        }
+      }
+      return outcome.result;
     }),
     deleteDoc: vi.fn(async (path: string) => {
       deletedDocs.push(path);
@@ -104,8 +133,10 @@ describe("Batch Q2 — Sample Content Cleanup System", () => {
     const body = await response.json();
     expect(body.dryRun).toBe(true);
     expect(body.totalRecordsFound).toBeGreaterThanOrEqual(5);
-    expect(body.channelsFound).toBe(1);
+    expect(body.channelsFound).toBe(2);
     expect(body.contentAssetsFound).toBe(1);
+    expect(body.epgProgrammesFound).toBe(2);
+    expect(body.channelProgrammesFound).toBe(2);
     expect(body.seriesFound).toBe(1);
     expect(body.storageDestinationsFound).toBe(1);
     expect(memFs.deletedDocs.length).toBe(0);
@@ -200,7 +231,12 @@ describe("Batch Q2 — Sample Content Cleanup System", () => {
 
     // Verify docs deleted
     expect(memFs.deletedDocs).toContain("channels/demo");
+    expect(memFs.deletedDocs).toContain("channels/test_channel_1");
     expect(memFs.deletedDocs).toContain("contentAssets/demo_asset_1");
+    expect(memFs.deletedDocs).toContain("epgSchedule/epg_test_future");
+    expect(memFs.deletedDocs).toContain("epgSchedule/epg_test_upcoming");
+    expect(memFs.deletedDocs).toContain("channels/test_channel_1/schedule/test_program_future");
+    expect(memFs.deletedDocs).toContain("channels/test_channel_1/schedule/test_program_upcoming");
     expect(memFs.deletedDocs).toContain("series/demo_series_1");
     expect(memFs.deletedDocs).toContain("storageDestinations/demo_dest");
 
