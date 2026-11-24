@@ -41,7 +41,7 @@ export const Route = createFileRoute("/help")({
 
 function HelpPage() {
   return (
-    <main className="min-h-screen bg-[#f7f9fe] px-4 py-8 text-slate-900 sm:px-6">
+    <main className="legacy-light-surface min-h-screen bg-[#f7f9fe] px-4 py-8 text-slate-900 sm:px-6">
       <div className="mx-auto max-w-3xl">
         <a href="/" className="inline-flex items-center gap-2 text-sm font-bold text-blue-700">
           <ArrowLeft size={17} /> Home
