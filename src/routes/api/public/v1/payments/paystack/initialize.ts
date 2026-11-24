@@ -6,7 +6,7 @@ import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, getWallet, parseBody, requireUser } from "@/lib/server/api";
 import { getPricingConfig, getDefaultPricingConfig } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
-import { getPaystackCheckoutTopup } from "@/lib/server/paystack";
+import { getPaystackCheckoutTopup, withPaystackExchangeRates } from "@/lib/server/paystack";
 import { assertRiskStepUp, recordRiskSignal } from "@/lib/server/risk-engine";
 
 const schema = z.object({
@@ -76,7 +76,8 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
           }
           let offer: ReturnType<typeof getPaystackCheckoutTopup>;
           try {
-            offer = getPaystackCheckoutTopup(pricing, packageId, walletCurrency, customAmountMinor);
+            const checkoutPricing = await withPaystackExchangeRates(pricing, walletCurrency);
+            offer = getPaystackCheckoutTopup(checkoutPricing, packageId, walletCurrency, customAmountMinor);
           } catch (error) {
             if (error instanceof ApiError && (
               error.code === "PAYMENT_CURRENCY_UNSUPPORTED" ||
