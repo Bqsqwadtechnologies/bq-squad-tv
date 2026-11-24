@@ -74,7 +74,7 @@ function ProfileSetupPage() {
         }
       }
       if (needsProfile) {
-        if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(dateOfBirth)) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth)) {
           throw new Error("Enter your date of birth in YYYY-MM-DD format.");
         }
         const profileResponse = await fetch("/api/public/v1/profile/complete", {
