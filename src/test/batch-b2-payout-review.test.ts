@@ -143,8 +143,8 @@ describe("Batch B2 — Payout Account Verification and Review Flow", () => {
       const handler = (Route as any).options.server.handlers.POST;
 
       const formData = new FormData();
-      const fakeFile = new Blob(["not-an-executable"], { type: "application/x-msdownload" });
-      formData.append("file", fakeFile, "malicious.exe");
+      const fakeFile = new File(["not-an-executable"], "malicious.exe", { type: "application/x-msdownload" });
+      formData.append("file", fakeFile);
 
       const req = new Request("http://localhost/api/public/v1/producer/payout-proof-upload", {
         method: "POST",
@@ -165,8 +165,8 @@ describe("Batch B2 — Payout Account Verification and Review Flow", () => {
       const handler = (Route as any).options.server.handlers.POST;
 
       const formData = new FormData();
-      const statementFile = new Blob(["%PDF-1.4 official statement content"], { type: "application/pdf" });
-      formData.append("file", statementFile, "bank_statement_nov2026.pdf");
+      const statementFile = new File(["%PDF-1.4 official statement content"], "bank_statement_nov2026.pdf", { type: "application/pdf" });
+      formData.append("file", statementFile);
       formData.append("fileName", "bank_statement_nov2026.pdf");
 
       const req = new Request("http://localhost/api/public/v1/producer/payout-proof-upload", {
