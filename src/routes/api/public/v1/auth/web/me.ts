@@ -5,6 +5,8 @@ import { getConfiguredOwnerEmail } from "@/lib/server/roles";
 import { ensureAccountId } from "@/lib/server/account-id";
 import { ensurePublicId, type PublicIdType } from "@/lib/server/universal-ids";
 import { Firestore } from "@/lib/server/firebase-admin";
+import { detectCountryFromRequest } from "@/lib/server/country-detection";
+import { currencyForCountry } from "@/lib/server/currency";
 
 export const Route = createFileRoute("/api/public/v1/auth/web/me")({
   server: {
@@ -31,7 +33,34 @@ export const Route = createFileRoute("/api/public/v1/auth/web/me")({
             );
           }
           const fs = await Firestore.create();
-          const profile = await fs.getDoc("users/" + user.uid);
+          let profile = await fs.getDoc("users/" + user.uid);
+          const detectedCountry = await detectCountryFromRequest(request);
+          if (!profile) {
+            const now = new Date().toISOString();
+            profile = {
+              email: user.email ?? "",
+              role: "viewer",
+              roles: ["viewer"],
+              countryCode: detectedCountry,
+              preferredCurrency: detectedCountry ? currencyForCountry(detectedCountry) : null,
+              countryDetectionSource: detectedCountry ? "ip" : "unknown",
+              countryDetectedAt: detectedCountry ? now : null,
+              profileComplete: false,
+              createdAt: now,
+              updatedAt: now,
+            };
+            await fs.setDoc("users/" + user.uid, profile, { merge: true });
+          } else if (detectedCountry && profile["countryCode"] !== detectedCountry) {
+            const now = new Date().toISOString();
+            await fs.setDoc("users/" + user.uid, {
+              countryCode: detectedCountry,
+              preferredCurrency: currencyForCountry(detectedCountry),
+              countryDetectionSource: "ip",
+              countryDetectedAt: now,
+              updatedAt: now,
+            }, { merge: true });
+            profile = { ...profile, countryCode: detectedCountry, preferredCurrency: currencyForCountry(detectedCountry) };
+          }
           const accountId = await ensureAccountId(fs, user.uid, profile);
           let userType: PublicIdType = "viewer";
           if (access.isZillionaireOwner) {
@@ -51,13 +80,27 @@ export const Route = createFileRoute("/api/public/v1/auth/web/me")({
 
           // Provider invitations require explicit approval and a secure acceptance flow.
           // Merely signing in with a matching email must never grant provider access.
-          const wallet = await fs.getDoc("wallets/" + user.uid);
+          let wallet = await fs.getDoc("wallets/" + user.uid);
+          if (!wallet) {
+            const currency = detectedCountry
+              ? currencyForCountry(detectedCountry)
+              : (typeof profile?.["preferredCurrency"] === "string" ? profile["preferredCurrency"] as string : "USD");
+            await fs.setDoc("wallets/" + user.uid, {
+              balanceMinor: 0,
+              currency,
+              dailySpendLimitMinor: null,
+              spentTodayMinor: 0,
+              updatedAt: new Date().toISOString(),
+            }, { merge: true });
+            wallet = await fs.getDoc("wallets/" + user.uid);
+          }
           return Response.json(
             {
               uid: user.uid,
               accountId,
               publicId,
-              countryCode: profile?.["countryCode"] ?? null,
+              countryCode: profile?.["countryCode"] ?? detectedCountry ?? null,
+              profileComplete: profile?.["profileComplete"] === true,
               currency: wallet?.["currency"] ?? profile?.["preferredCurrency"] ?? null,
               email: user.email,
               emailVerified: access.emailVerified,
