@@ -89,6 +89,71 @@ export async function paystackEventDocumentId(eventId: string | number): Promise
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+
+/** Load a daily USD reference-rate table only when the wallet currency is not
+ * present in the configured/default table. Owner-configured rates take priority. */
+let liveUsdRates: Record<string, number> | null = null;
+let liveUsdRatesExpiresAt = 0;
+
+export async function withPaystackExchangeRates(
+  config: Record<string, unknown>,
+  walletCurrencyRaw: string,
+): Promise<Record<string, unknown>> {
+  const walletCurrency = requireCurrency(walletCurrencyRaw);
+  const configured = config["exchangeRates"];
+  const configuredRates = configured && typeof configured === "object" && !Array.isArray(configured)
+    ? configured as Record<string, number>
+    : {};
+  const knownRates = { ...DEFAULT_EXCHANGE_RATES, ...configuredRates };
+  if (typeof knownRates[walletCurrency] === "number" &&
+      Number.isFinite(knownRates[walletCurrency]) && knownRates[walletCurrency] > 0) {
+    return config;
+  }
+
+  const now = Date.now();
+  if (!liveUsdRates || liveUsdRatesExpiresAt <= now) {
+    try {
+      const response = await fetch("https://open.er-api.com/v6/latest/USD", {
+        headers: { accept: "application/json" },
+        signal: AbortSignal.timeout(4500),
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Exchange-rate service unavailable");
+      const payload = await response.json() as {
+        result?: string;
+        base_code?: string;
+        time_next_update_unix?: number;
+        rates?: Record<string, unknown>;
+      };
+      if (payload.result !== "success" || payload.base_code !== "USD" ||
+          !payload.rates || typeof payload.rates !== "object") {
+        throw new Error("Exchange-rate response invalid");
+      }
+      const rates: Record<string, number> = {};
+      for (const [code, raw] of Object.entries(payload.rates)) {
+        if (/^[A-Z]{3}$/.test(code) && typeof raw === "number" && Number.isFinite(raw) && raw > 0) {
+          rates[code] = raw;
+        }
+      }
+      if (!rates.USD || !rates[walletCurrency]) throw new Error("Currency rate unavailable");
+      liveUsdRates = rates;
+      const nextUpdate = typeof payload.time_next_update_unix === "number"
+        ? payload.time_next_update_unix * 1000
+        : now + 6 * 60 * 60 * 1000;
+      liveUsdRatesExpiresAt = Math.max(now + 60 * 60 * 1000, Math.min(nextUpdate, now + 26 * 60 * 60 * 1000));
+    } catch {
+      if (typeof configuredRates[walletCurrency] === "number" &&
+          Number.isFinite(configuredRates[walletCurrency]) && configuredRates[walletCurrency] > 0) {
+        return config;
+      }
+      throw new ApiError(400, "TOPUP_CURRENCY_NOT_CONFIGURED",
+        "A reliable exchange rate is not available for this wallet currency right now. Please try again later or fund your wallet in the BQ SQWAD TV app.");
+    }
+  }
+
+  return { ...config, exchangeRates: { ...liveUsdRates, ...configuredRates } };
+}
+
 export async function creditPaystackPayment(
   fs: Firestore,
   input: {
