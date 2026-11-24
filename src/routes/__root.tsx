@@ -144,8 +144,8 @@ function RootComponent() {
         document.documentElement.classList.toggle("dark", mode === "dark");
         document.documentElement.classList.toggle("light", mode === "light");
         if (themeMode === "system") {
-          localStorage.removeItem("bq-sqwad-theme");
-          localStorage.removeItem("bq_console_theme");
+          localStorage.setItem("bq-sqwad-theme", "system");
+          localStorage.setItem("bq_console_theme", "system");
         } else {
           localStorage.setItem("bq-sqwad-theme", mode);
           localStorage.setItem("bq_console_theme", mode);
@@ -155,6 +155,18 @@ function RootComponent() {
       }
     })();
     return () => { active = false; };
+  }, []);
+  useEffect(() => {
+    const media = window.matchMedia?.("(prefers-color-scheme: light)");
+    if (!media) return;
+    const syncSystemTheme = () => {
+      const saved = localStorage.getItem("bq-sqwad-theme") || localStorage.getItem("bq_console_theme");
+      if (saved !== "system") return;
+      document.documentElement.classList.toggle("light", media.matches);
+      document.documentElement.classList.toggle("dark", !media.matches);
+    };
+    media.addEventListener?.("change", syncSystemTheme);
+    return () => media.removeEventListener?.("change", syncSystemTheme);
   }, []);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const showLegalFooter =
