@@ -315,3 +315,67 @@
 .light .viewer-theme-surface [class~="border-white/10"] {
   border-color: var(--border) !important;
 }
+
+
+/* Theme bridge for older console/viewer pages that still contain fixed navy utility colours.
+   These selectors are deliberately limited to dark navy surface tokens so brand/status colours
+   and semantic action buttons keep their intended meaning in light mode. */
+:root.light [class*="bg-slate-950"],
+:root.light [class*="bg-slate-900"],
+:root.light [class*="bg-zinc-950"],
+:root.light [class*="bg-zinc-900"],
+:root.light [class*="bg-[#030"],
+:root.light [class*="bg-[#061"],
+:root.light [class*="bg-[#071"],
+:root.light [class*="bg-[#081"],
+:root.light [class*="bg-[#091"],
+:root.light [class*="bg-[#0A"],
+:root.light [class*="bg-[#0a"],
+:root.light [class*="bg-[#0B"],
+:root.light [class*="bg-[#0b"] {
+  background-color: var(--card) !important;
+  color: var(--card-foreground);
+  border-color: var(--border);
+}
+
+:root.light [class*="bg-slate-950"] [class*="text-white"],
+:root.light [class*="bg-slate-900"] [class*="text-white"],
+:root.light [class*="bg-zinc-950"] [class*="text-white"],
+:root.light [class*="bg-zinc-900"] [class*="text-white"],
+:root.light [class*="bg-[#030"] [class*="text-white"],
+:root.light [class*="bg-[#061"] [class*="text-white"],
+:root.light [class*="bg-[#071"] [class*="text-white"],
+:root.light [class*="bg-[#081"] [class*="text-white"],
+:root.light [class*="bg-[#091"] [class*="text-white"],
+:root.light [class*="bg-[#0A"] [class*="text-white"],
+:root.light [class*="bg-[#0a"] [class*="text-white"],
+:root.light [class*="bg-[#0B"] [class*="text-white"],
+:root.light [class*="bg-[#0b"] [class*="text-white"] {
+  color: var(--foreground) !important;
+}
+
+:root.light [class*="bg-slate-950"] [class*="text-slate-200"],
+:root.light [class*="bg-slate-950"] [class*="text-slate-300"],
+:root.light [class*="bg-slate-900"] [class*="text-slate-200"],
+:root.light [class*="bg-slate-900"] [class*="text-slate-300"],
+:root.light [class*="bg-zinc-950"] [class*="text-zinc-200"],
+:root.light [class*="bg-zinc-950"] [class*="text-zinc-300"] {
+  color: var(--foreground) !important;
+}
+
+:root.light [class*="bg-slate-950"] [class*="text-slate-400"],
+:root.light [class*="bg-slate-950"] [class*="text-slate-500"],
+:root.light [class*="bg-slate-900"] [class*="text-slate-400"],
+:root.light [class*="bg-slate-900"] [class*="text-slate-500"],
+:root.light [class*="bg-zinc-950"] [class*="text-zinc-400"],
+:root.light [class*="bg-zinc-950"] [class*="text-zinc-500"] {
+  color: var(--muted-foreground) !important;
+}
+
+:root.light [class*="border-white/"],
+:root.light [class*="border-slate-800"],
+:root.light [class*="border-slate-700"],
+:root.light [class*="border-zinc-800"],
+:root.light [class*="border-zinc-700"] {
+  border-color: var(--border) !important;
+}
