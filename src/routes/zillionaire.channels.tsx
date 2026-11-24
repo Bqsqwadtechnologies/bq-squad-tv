@@ -45,6 +45,16 @@ export const Route = createFileRoute("/zillionaire/channels")({
   }),
 });
 
+const REGION_COUNTRY_OPTIONS: Array<{ code: string; name: string }> = [
+  { code: "NG", name: "Nigeria" }, { code: "GH", name: "Ghana" }, { code: "KE", name: "Kenya" },
+  { code: "ZA", name: "South Africa" }, { code: "US", name: "United States" }, { code: "GB", name: "United Kingdom" },
+  { code: "CA", name: "Canada" }, { code: "AU", name: "Australia" }, { code: "DE", name: "Germany" },
+  { code: "FR", name: "France" }, { code: "IN", name: "India" }, { code: "JP", name: "Japan" },
+  { code: "SG", name: "Singapore" }, { code: "AE", name: "United Arab Emirates" }, { code: "EG", name: "Egypt" },
+  { code: "TZ", name: "Tanzania" }, { code: "UG", name: "Uganda" }, { code: "RW", name: "Rwanda" },
+  { code: "BR", name: "Brazil" }, { code: "MX", name: "Mexico" },
+];
+
 interface ChannelItem {
   id: string;
   title: string;
@@ -70,6 +80,7 @@ interface ChannelItem {
   deletedAt: string | null;
   suspendedReason: string | null;
   createdAt: string | null;
+  regionAvailability?: { mode: "GLOBAL" | "WHITELIST" | "BLACKLIST"; countries: string[]; availableFrom?: string | null; availableTo?: string | null };
 }
 
 function ZillionaireChannelsRoute() {
@@ -195,6 +206,10 @@ function ZillionaireChannelsPage({
   const [revShareTarget, setRevShareTarget] = useState<ChannelItem | null>(null);
   const [selectedShareBps, setSelectedShareBps] = useState<number>(7000);
   const [revShareReason, setRevShareReason] = useState("");
+  const [regionTarget, setRegionTarget] = useState<ChannelItem | null>(null);
+  const [regionMode, setRegionMode] = useState<"GLOBAL" | "WHITELIST" | "BLACKLIST">("GLOBAL");
+  const [regionCountries, setRegionCountries] = useState<string[]>([]);
+  const [regionReason, setRegionReason] = useState("");
 
   // Generic Reason Confirmation Modal
   const [pendingAction, setPendingAction] = useState<string | null>(null);
@@ -528,6 +543,19 @@ function ZillionaireChannelsPage({
                       <Star className={`w-3.5 h-3.5 ${c.featured ? "fill-amber-300" : ""}`} />
                     </button>
 
+                    <button
+                      onClick={() => {
+                        setRegionTarget(c);
+                        setRegionMode(c.regionAvailability?.mode ?? "GLOBAL");
+                        setRegionCountries(c.regionAvailability?.countries ?? []);
+                        setRegionReason("");
+                      }}
+                      className="p-1 bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 rounded"
+                      title="Set country availability"
+                    >
+                      <Globe className="w-3.5 h-3.5" />
+                    </button>
+
                     {/* Transfer Ownership */}
                     <button
                       onClick={() => {
@@ -613,6 +641,38 @@ function ZillionaireChannelsPage({
             />
           )}
         </ConsoleCard>
+
+        {regionTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-2xl space-y-4 rounded-xl border border-slate-700 bg-slate-900 p-6 text-xs shadow-2xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-white">Country availability · {regionTarget.title}</h3>
+                  <p className="mt-1 text-slate-400">Set where this channel and its programmes can be viewed.</p>
+                </div>
+                <button type="button" onClick={() => setRegionTarget(null)} className="text-slate-400 hover:text-white"><X className="h-5 w-5" /></button>
+              </div>
+              <select value={regionMode} onChange={(e) => setRegionMode(e.target.value as typeof regionMode)} className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white">
+                <option value="GLOBAL">Global — available everywhere</option>
+                <option value="WHITELIST">Whitelist — only ticked countries</option>
+                <option value="BLACKLIST">Blacklist — block ticked countries</option>
+              </select>
+              <div className="grid max-h-64 grid-cols-2 gap-2 overflow-y-auto rounded-lg border border-slate-700 bg-slate-950 p-3 sm:grid-cols-3">
+                {REGION_COUNTRY_OPTIONS.map((country) => (
+                  <label key={country.code} className="flex items-center gap-2 text-slate-200">
+                    <input type="checkbox" disabled={regionMode === "GLOBAL"} checked={regionCountries.includes(country.code)} onChange={(e) => setRegionCountries((current) => e.target.checked ? [...current, country.code] : current.filter((code) => code !== country.code))} className="rounded border-slate-600 bg-slate-900 text-cyan-500" />
+                    {country.name} <span className="text-slate-500">({country.code})</span>
+                  </label>
+                ))}
+              </div>
+              <textarea value={regionReason} onChange={(e) => setRegionReason(e.target.value)} rows={2} placeholder="Audit reason (at least 3 characters)" className="w-full rounded-lg border border-slate-700 bg-slate-950 p-3 text-white" />
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setRegionTarget(null)} className="rounded bg-slate-800 px-4 py-2 font-semibold text-slate-300">Cancel</button>
+                <button type="button" disabled={submittingAction || regionReason.trim().length < 3 || (regionMode === "WHITELIST" && regionCountries.length === 0)} onClick={() => void executeAction(regionTarget.id, { action: "set_region_availability", regionAvailability: { mode: regionMode, countries: regionCountries }, reason: regionReason.trim() }).then(() => setRegionTarget(null))} className="rounded bg-cyan-600 px-4 py-2 font-bold text-white disabled:opacity-50">Save country access</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Modal: Transfer Ownership */}
         {transferTarget && (
