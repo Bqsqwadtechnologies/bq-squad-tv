@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, getUserProfile, requireAdultForContent, requireUser } from "@/lib/server/api";
 import { toChannelSummary } from "../catalog/-shared";
+import { isAvailableInRegion } from "@/lib/server/region-availability";
 
 export const Route = createFileRoute("/api/public/v1/channels/$channelId")({
   server: {
@@ -44,7 +45,8 @@ export const Route = createFileRoute("/api/public/v1/channels/$channelId")({
             }
           }
 
-          if (!channel || channel["published"] !== true) {
+          const viewerCountry = request.headers.get("cf-ipcountry")?.trim().toUpperCase() ?? "";
+          if (!channel || channel["published"] !== true || !isAvailableInRegion(channel["regionAvailability"], viewerCountry)) {
             throw new ApiError(404, "CHANNEL_NOT_FOUND", "This channel does not exist.");
           }
 
@@ -61,15 +63,15 @@ export const Route = createFileRoute("/api/public/v1/channels/$channelId")({
             requireAdultForContent(profile, true);
           }
 
-          const schedule = await fs.query(`channels/${internalChannelId}/schedule`, {
+          const schedule = (await fs.query(`channels/${internalChannelId}/schedule`, {
             orderByField: "startsAt",
             limit: 50,
-          });
-          const replays = await fs.query(`channels/${internalChannelId}/replays`, {
+          })).filter((programme) => isAvailableInRegion(programme["regionAvailability"], viewerCountry));
+          const replays = (await fs.query(`channels/${internalChannelId}/replays`, {
             orderByField: "createdAt",
             descending: true,
             limit: 20,
-          });
+          })).filter((replay) => isAvailableInRegion(replay["regionAvailability"], viewerCountry));
 
           // Public channel representation strictly uses the slug, never internal CH- IDs.
           const publicSlug = (channel["slug"] as string) || internalChannelId;
