@@ -98,6 +98,7 @@ export async function creditPaystackPayment(
     creditMinor: number;
     email: string | null;
     currency?: string;
+    walletCurrency?: string;
   },
 ): Promise<{ credited: boolean; balanceMinor: number }> {
   if (
@@ -111,6 +112,7 @@ export async function creditPaystackPayment(
   if (!/^[A-Za-z0-9_-]{8,100}$/.test(input.reference))
     throw new ApiError(400, "PAYMENT_REFERENCE_INVALID", "The payment reference is invalid.");
   const currency = requireCurrency(input.currency ?? "NGN");
+  const walletCurrency = requireCurrency(input.walletCurrency ?? currency);
   if (!isSupportedPaystackCurrency(currency))
     throw new ApiError(
       400,
@@ -143,7 +145,8 @@ export async function creditPaystackPayment(
         payment["provider"] !== "paystack" ||
         payment["amountMinor"] !== input.amountMinor ||
         payment["creditMinor"] !== input.creditMinor ||
-        (payment["currency"] ?? "NGN") !== currency
+        (payment["currency"] ?? "NGN") !== currency ||
+        (payment["walletCurrency"] ?? payment["currency"] ?? "NGN") !== walletCurrency
       ) {
         throw new ApiError(
           409,
@@ -173,12 +176,9 @@ export async function creditPaystackPayment(
       }
       const walletCurrency =
         typeof wallet["currency"] === "string" ? (wallet["currency"] as string) : currency;
-      if (walletCurrency !== currency)
-        throw new ApiError(
-          409,
-          "WALLET_CURRENCY_MISMATCH",
-          "This payment currency does not match your wallet currency.",
-        );
+      const actualWalletCurrency = typeof wallet["currency"] === "string" ? wallet["currency"] as string : walletCurrency;
+      if (actualWalletCurrency !== walletCurrency)
+        throw new ApiError(409, "WALLET_CURRENCY_MISMATCH", "Your wallet currency changed after this payment was started.");
       const nextBalance = currentBalance + input.creditMinor;
       if (!Number.isSafeInteger(nextBalance))
         throw new ApiError(
@@ -193,7 +193,7 @@ export async function creditPaystackPayment(
           {
             update: {
               name: fs.docName(walletPath),
-              fields: encodeFields({ balanceMinor: nextBalance, currency, updatedAt: now }),
+              fields: encodeFields({ balanceMinor: nextBalance, currency: walletCurrency, updatedAt: now }),
             },
             updateMask: { fieldPaths: ["balanceMinor", "currency", "updatedAt"] },
           },
@@ -207,6 +207,7 @@ export async function creditPaystackPayment(
                 amountMinor: input.amountMinor,
                 creditMinor: input.creditMinor,
                 currency,
+                walletCurrency,
                 provider: "paystack",
                 status: "credited",
                 creditedAt: now,
@@ -220,6 +221,7 @@ export async function creditPaystackPayment(
                 "amountMinor",
                 "creditMinor",
                 "currency",
+                "walletCurrency",
                 "provider",
                 "status",
                 "creditedAt",
@@ -234,7 +236,8 @@ export async function creditPaystackPayment(
                 kind: "wallet_topup",
                 description: "Website wallet top-up",
                 amountMinor: input.creditMinor,
-                currency,
+                currency: walletCurrency,
+                providerCurrency: currency,
                 reference: input.reference,
                 provider: "paystack",
                 createdAt: now,
@@ -409,5 +412,92 @@ export function getPaystackTopup(
     amountMinor,
     displayAmountMinor: currency === "XOF" ? amountMinor / 100 : amountMinor,
     creditMinor,
+  };
+}
+
+
+/**
+ * Resolve a Paystack checkout in a supported provider currency while keeping
+ * the wallet credit denominated in the viewer's own currency.
+ */
+export function getPaystackCheckoutTopup(
+  config: Record<string, unknown>,
+  packageId: string,
+  walletCurrencyRaw: string,
+  customAmountMinor?: number,
+): {
+  amountMinor: number;
+  displayAmountMinor: number;
+  creditMinor: number;
+  currency: string;
+  walletCurrency: string;
+  converted: boolean;
+  exchangeRate: number;
+} {
+  const walletCurrency = requireCurrency(walletCurrencyRaw);
+  if (isSupportedPaystackCurrency(walletCurrency)) {
+    const offer = getPaystackTopup(config, packageId, walletCurrency, customAmountMinor);
+    return {
+      ...offer,
+      currency: walletCurrency,
+      walletCurrency,
+      converted: false,
+      exchangeRate: 1,
+    };
+  }
+
+  const configuredRates = config["exchangeRates"];
+  const rates: Record<string, number> = {
+    ...DEFAULT_EXCHANGE_RATES,
+    ...(configuredRates && typeof configuredRates === "object" && !Array.isArray(configuredRates)
+      ? configuredRates as Record<string, number>
+      : {}),
+  };
+  const localRate = rates[walletCurrency];
+  const ngnRate = rates["NGN"];
+  if (typeof localRate !== "number" || !Number.isFinite(localRate) || localRate <= 0 ||
+      typeof ngnRate !== "number" || !Number.isFinite(ngnRate) || ngnRate <= 0) {
+    throw new ApiError(400, "TOPUP_CURRENCY_NOT_CONFIGURED",
+      "Paystack cannot process this wallet currency on the website. Please download the BQ SQWAD TV app and top up there.");
+  }
+
+  let localCreditMinor: number;
+  if (packageId === "custom") {
+    if (typeof customAmountMinor !== "number" || !Number.isSafeInteger(customAmountMinor) || customAmountMinor <= 0) {
+      throw new ApiError(400, "TOPUP_AMOUNT_INVALID", "Enter a valid top-up amount.");
+    }
+    localCreditMinor = customAmountMinor;
+  } else {
+    const byCurrency = config["walletTopupsByCurrency"];
+    const currencyOffers = byCurrency && typeof byCurrency === "object" && !Array.isArray(byCurrency)
+      ? (byCurrency as Record<string, unknown>)[walletCurrency] : null;
+    const configured = currencyOffers && typeof currencyOffers === "object" && !Array.isArray(currencyOffers)
+      ? (currencyOffers as Record<string, unknown>)[packageId] : null;
+    if (configured && typeof configured === "object") {
+      const row = configured as Record<string, unknown>;
+      const amount = row["creditMinor"] ?? row["amountMinor"];
+      if (typeof amount !== "number" || !Number.isSafeInteger(amount) || amount < 1) {
+        throw new ApiError(503, "TOPUP_CONFIG_INVALID", "The wallet top-up configuration is invalid.");
+      }
+      localCreditMinor = amount;
+    } else {
+      const base = DEFAULT_NGN_TOPUPS[packageId];
+      if (!base) throw new ApiError(400, "TOPUP_UNAVAILABLE", "This top-up package is unavailable.");
+      const localMajor = (base.creditMinor / 100 / ngnRate) * localRate;
+      localCreditMinor = Math.max(1, Math.round(localMajor * (10 ** minorUnitDigits(walletCurrency))));
+    }
+  }
+
+  const localMajor = localCreditMinor / (10 ** minorUnitDigits(walletCurrency));
+  const usdMajor = localMajor / localRate;
+  const amountMinor = Math.max(1, Math.round(usdMajor * 100));
+  return {
+    amountMinor,
+    displayAmountMinor: localCreditMinor,
+    creditMinor: localCreditMinor,
+    currency: "USD",
+    walletCurrency,
+    converted: true,
+    exchangeRate: localRate,
   };
 }
