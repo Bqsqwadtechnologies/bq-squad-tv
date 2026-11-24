@@ -19,16 +19,40 @@ export const Route = createFileRoute("/api/public/v1/profile/country")({
         try {
           const user = await requireUser(request);
           const fs = await Firestore.create();
-          const [profile, wallet] = await Promise.all([
+          let [profile, wallet] = await Promise.all([
             fs.getDoc("users/" + user.uid),
             fs.getDoc("wallets/" + user.uid),
           ]);
+          const detectedCountry = await detectCountryFromRequest(request);
+          if (!profile) {
+            const now = new Date().toISOString();
+            profile = {
+              email: user.email ?? "",
+              role: "viewer",
+              roles: ["viewer"],
+              countryCode: detectedCountry,
+              preferredCurrency: detectedCountry ? currencyForCountry(detectedCountry) : null,
+              countryDetectionSource: detectedCountry ? "ip" : "unknown",
+              profileComplete: false,
+              createdAt: now,
+              updatedAt: now,
+            };
+            await fs.setDoc("users/" + user.uid, profile, { merge: true });
+          }
+          if (!wallet) {
+            const currency = detectedCountry
+              ? currencyForCountry(detectedCountry)
+              : (typeof profile["preferredCurrency"] === "string" ? profile["preferredCurrency"] as string : "USD");
+            await fs.setDoc("wallets/" + user.uid, {
+              balanceMinor: 0, currency, dailySpendLimitMinor: null, spentTodayMinor: 0, updatedAt: new Date().toISOString(),
+            }, { merge: true });
+            wallet = await fs.getDoc("wallets/" + user.uid);
+          }
           const access = await resolvePlatformAccess(
             fs, user.uid, user.email, user.customClaims, user.emailVerified === true,
           );
           // A previously saved/manual country is only a fallback. A fresh server-side
           // IP result must replace it, including an earlier owner test override.
-          const detectedCountry = await detectCountryFromRequest(request);
           let countryCode = normalizeCountryCode(profile?.["countryCode"]);
           if (detectedCountry) {
             countryCode = detectedCountry;
@@ -49,12 +73,12 @@ export const Route = createFileRoute("/api/public/v1/profile/country")({
             }
             if (normalizeCountryCode(profile?.["countryCode"]) !== detectedCountry ||
                 profile?.["countryDetectionSource"] !== "ip") {
-              await fs.patchDoc("users/" + user.uid, {
+              await fs.setDoc("users/" + user.uid, {
                 countryCode: detectedCountry,
                 preferredCurrency: detectedCurrency,
                 countryDetectionSource: "ip",
                 countryDetectedAt: new Date().toISOString(),
-              });
+              }, { merge: true });
             }
           } else if (!countryCode) {
             countryCode = detectedCountry;
