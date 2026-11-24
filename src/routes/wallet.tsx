@@ -547,12 +547,13 @@ function WalletPage() {
                               {formatMoney(item.creditMinor, item.walletCurrency ?? wallet?.currency ?? item.currency)} credit
                             </p>
                             <p className="mt-1 text-sm text-blue-100/60">
-                              Pay{" "}
-                              {formatMoney(
-                                item.displayAmountMinor ?? item.amountMinor,
-                                item.currency,
-                              )}
+                              Pay {formatMoney(item.amountMinor, item.currency)}
                             </p>
+                            {item.converted ? (
+                              <p className="mt-2 text-[11px] leading-5 text-cyan-100/70">
+                                Converted from {item.walletCurrency} to USD for Paystack. Estimated rate: 1 USD = {item.exchangeRate?.toLocaleString(undefined, { maximumFractionDigits: 4 })} {item.walletCurrency}.
+                              </p>
+                            ) : null}
                             <button
                               type="button"
                               disabled={busyPackage !== ""}
