@@ -362,6 +362,19 @@ export function KycCameraCapture({
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
                 Tap below to let this website request camera permission from your browser. Camera access is used only for this verification step.
               </p>
+              {mode !== "face_liveness" && (
+                <>
+                  <p className="text-xs font-medium text-cyan-200">Fit entire document within box when the camera opens.</p>
+                  <div className="flex justify-center gap-2">
+                    <button type="button" onClick={() => setIdMode("card")} aria-pressed={idMode === "card"} className={`rounded-lg px-3 py-2 text-xs font-medium ${idMode === "card" ? "bg-cyan-500 text-black" : "border border-white/20 text-white"}`}>
+                      <CreditCard className="mr-1 inline h-3.5 w-3.5" /> ID Card
+                    </button>
+                    <button type="button" onClick={() => setIdMode("passport")} aria-pressed={idMode === "passport"} className={`rounded-lg px-3 py-2 text-xs font-medium ${idMode === "passport" ? "bg-cyan-500 text-black" : "border border-white/20 text-white"}`}>
+                      <FileText className="mr-1 inline h-3.5 w-3.5" /> Passport Page
+                    </button>
+                  </div>
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => void startCamera()}
