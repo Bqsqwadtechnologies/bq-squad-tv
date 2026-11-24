@@ -239,7 +239,7 @@ export const Route = createFileRoute("/api/public/v1/storage/complete")({
             reason: "Source upload verified before transcoding",
             metadata: { channelId, mediaKind, sizeBytes: actualSize, sourceDestinationId },
           });
-          await wakeModalVideoWorker();
+          await wakeModalVideoWorker(fs);
           return Response.json({
             assetId,
             status: "uploaded_pending_transcode",
