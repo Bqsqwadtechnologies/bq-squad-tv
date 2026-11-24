@@ -385,7 +385,7 @@
    Scope it to those page roots so white controls/indicators elsewhere keep their intended styling. */
 .dark .legacy-light-surface[class~="bg-[#F8FAFC]"],
 .dark .legacy-light-surface[class~="bg-[#f8fafc]"],
-.dark .legacy-light-surface[class~="bg-[#f7f9fe"] {
+.dark .legacy-light-surface[class~="bg-[#f7f9fe]"] {
   background-color: var(--background) !important;
   color: var(--foreground) !important;
 }
