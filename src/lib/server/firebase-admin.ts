@@ -308,7 +308,16 @@ export class Firestore {
     options?: { merge?: boolean; mustNotExist?: boolean },
   ): Promise<void> {
     if (options?.merge) {
-      return this.patchDoc(path, fields);
+      const existing = await this.getDoc(path);
+      if (existing) return this.patchDoc(path, fields);
+      try {
+        return await this.setDoc(path, fields, { mustNotExist: true });
+      } catch (error) {
+        if (error instanceof ApiError && error.code === "CONFLICT") {
+          return this.patchDoc(path, fields);
+        }
+        throw error;
+      }
     }
     return this.setDoc(path, fields, options);
   }
@@ -343,7 +352,18 @@ export class Firestore {
     fields: Record<string, unknown>,
     options?: { merge?: boolean; mustNotExist?: boolean },
   ): Promise<void> {
-    if (options?.merge) return this.patchDoc(path, fields);
+    if (options?.merge) {
+      const existing = await this.getDoc(path);
+      if (existing) return this.patchDoc(path, fields);
+      try {
+        return await this.setDoc(path, fields, { mustNotExist: true });
+      } catch (error) {
+        if (error instanceof ApiError && error.code === "CONFLICT") {
+          return this.patchDoc(path, fields);
+        }
+        throw error;
+      }
+    }
     const write: FirestoreWrite = {
       update: { name: this.docName(path), fields: encodeFields(fields) },
       ...(options?.mustNotExist ? { currentDocument: { exists: false } } : {}),
