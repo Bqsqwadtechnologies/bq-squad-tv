@@ -152,10 +152,10 @@ fun LibraryScreen(onChannel: (String) -> Unit = {}) {
                                 } else {
                                     Box(
                                         Modifier.fillMaxWidth().aspectRatio(3f / 4f)
-                                            .background(Brush.linearGradient(listOf(Color(0xFF1459B8), Color(0xFF07143D)))),
+                                            .background(Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.surfaceVariant))),
                                         contentAlignment = Alignment.Center,
                                     ) {
-                                        Text("BQ SQWAD TV", color = Color.White, fontWeight = FontWeight.Black)
+                                        Text("BQ SQWAD TV", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Black)
                                     }
                                 }
                                 Column(Modifier.padding(10.dp)) {
@@ -343,10 +343,10 @@ private fun EmptyPanel(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
-            Modifier.size(88.dp).background(Color(0xFF0B2057), RoundedCornerShape(28.dp)),
+            Modifier.size(88.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(28.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Text(symbol, color = Color(0xFF9BEFFF), style = MaterialTheme.typography.headlineLarge)
+            Text(symbol, color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.headlineLarge)
         }
         Spacer(Modifier.height(16.dp))
         Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -391,10 +391,10 @@ fun DownloadsScreen(
         verticalArrangement = Arrangement.Center,
     ) {
         Box(
-            Modifier.size(96.dp).background(Color(0xFF0B2057), RoundedCornerShape(28.dp)),
+            Modifier.size(96.dp).background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(28.dp)),
             contentAlignment = Alignment.Center,
         ) {
-            Text("↓", color = Color(0xFF9BEFFF), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+            Text("↓", color = MaterialTheme.colorScheme.secondary, style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
         }
         Spacer(Modifier.height(20.dp))
         Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)) {
