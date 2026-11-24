@@ -49,13 +49,22 @@ export const Route = createFileRoute("/zillionaire/channels")({
 const REGION_COUNTRY_OPTIONS: Array<{ code: string; name: string }> = [
   { code: "NG", name: "Nigeria" }, { code: "GH", name: "Ghana" }, { code: "KE", name: "Kenya" },
   { code: "ZA", name: "South Africa" }, { code: "US", name: "United States" }, { code: "GB", name: "United Kingdom" },
-  { code: "CA", name: "Canada" }, { code: "AU", name: "Australia" }, { code: "DE", name: "Germany" },
-  { code: "FR", name: "France" }, { code: "IN", name: "India" }, { code: "JP", name: "Japan" },
-  { code: "SG", name: "Singapore" }, { code: "AE", name: "United Arab Emirates" }, { code: "EG", name: "Egypt" },
-  { code: "TZ", name: "Tanzania" }, { code: "UG", name: "Uganda" }, { code: "RW", name: "Rwanda" },
-  { code: "BR", name: "Brazil" }, { code: "MX", name: "Mexico" },
+  { code: "CA", name: "Canada" }, { code: "AU", name: "Australia" }, { code: "NZ", name: "New Zealand" },
+  { code: "DE", name: "Germany" }, { code: "FR", name: "France" }, { code: "ES", name: "Spain" },
+  { code: "IT", name: "Italy" }, { code: "NL", name: "Netherlands" }, { code: "BE", name: "Belgium" },
+  { code: "IE", name: "Ireland" }, { code: "PT", name: "Portugal" }, { code: "CH", name: "Switzerland" },
+  { code: "SE", name: "Sweden" }, { code: "NO", name: "Norway" }, { code: "DK", name: "Denmark" },
+  { code: "IN", name: "India" }, { code: "PK", name: "Pakistan" }, { code: "BD", name: "Bangladesh" },
+  { code: "JP", name: "Japan" }, { code: "KR", name: "South Korea" }, { code: "SG", name: "Singapore" },
+  { code: "MY", name: "Malaysia" }, { code: "ID", name: "Indonesia" }, { code: "PH", name: "Philippines" },
+  { code: "TH", name: "Thailand" }, { code: "AE", name: "United Arab Emirates" }, { code: "SA", name: "Saudi Arabia" },
+  { code: "EG", name: "Egypt" }, { code: "MA", name: "Morocco" }, { code: "TZ", name: "Tanzania" },
+  { code: "UG", name: "Uganda" }, { code: "RW", name: "Rwanda" }, { code: "ZM", name: "Zambia" },
+  { code: "ZW", name: "Zimbabwe" }, { code: "BR", name: "Brazil" }, { code: "MX", name: "Mexico" },
+  { code: "AR", name: "Argentina" }, { code: "CL", name: "Chile" }, { code: "CO", name: "Colombia" },
+  { code: "TR", name: "Türkiye" }, { code: "IL", name: "Israel" }, { code: "QA", name: "Qatar" },
 ];
-
+ 
 interface ChannelItem {
   id: string;
   title: string;
