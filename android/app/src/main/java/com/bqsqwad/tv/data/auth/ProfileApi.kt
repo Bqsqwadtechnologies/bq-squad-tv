@@ -7,6 +7,8 @@ import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+data class WebAccountStatus(val uid: String = "", val emailVerified: Boolean = false, val profileComplete: Boolean = false)
+
 data class LegalAcceptanceRequest(val audience: String = "public", val acceptedSlugs: List<String>)
 
 data class LegalAcceptanceResponse(val accepted: Boolean)
@@ -110,6 +112,9 @@ data class AndroidVersionStatus(
 )
 
 interface ProfileApi {
+    @GET("v1/auth/web/me")
+    suspend fun webAccount(@Header("Authorization") bearerToken: String): WebAccountStatus
+
     @GET("v1/profile/country")
     suspend fun profileCountry(
         @Header("Authorization") bearerToken: String,
