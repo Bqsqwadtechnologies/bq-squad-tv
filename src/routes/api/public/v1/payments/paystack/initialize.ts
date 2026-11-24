@@ -6,7 +6,7 @@ import { ApiError, Firestore, encodeFields } from "@/lib/server/firebase-admin";
 import { errorBody, getWallet, parseBody, requireUser } from "@/lib/server/api";
 import { getPricingConfig, getDefaultPricingConfig } from "@/lib/server/pricing";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
-import { getPaystackTopup } from "@/lib/server/paystack";
+import { getPaystackCheckoutTopup } from "@/lib/server/paystack";
 import { assertRiskStepUp, recordRiskSignal } from "@/lib/server/risk-engine";
 
 const schema = z.object({
@@ -67,16 +67,16 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
           await enforceRateLimit(fs, "paystack-init:" + user.uid, { limit: 5, windowMs: 60_000 });
           await assertRiskStepUp(fs, user.uid, user.authTime);
           const wallet = await getWallet(fs, user.uid);
-          const currency = wallet.currency;
+          const walletCurrency = wallet.currency;
           let pricing;
           try {
             pricing = await getPricingConfig(fs);
           } catch {
             pricing = getDefaultPricingConfig();
           }
-          let offer: ReturnType<typeof getPaystackTopup>;
+          let offer: ReturnType<typeof getPaystackCheckoutTopup>;
           try {
-            offer = getPaystackTopup(pricing, packageId, currency, customAmountMinor);
+            offer = getPaystackCheckoutTopup(pricing, packageId, walletCurrency, customAmountMinor);
           } catch (error) {
             if (error instanceof ApiError && (
               error.code === "PAYMENT_CURRENCY_UNSUPPORTED" ||
@@ -86,11 +86,12 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
               throw new ApiError(
                 400,
                 "PAYSTACK_CURRENCY_UNAVAILABLE",
-                "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.",
+                "Website checkout is not available for your currency. Please download the BQ SQWAD TV app and fund your wallet there.",
               );
             }
             throw error;
           }
+          const currency = offer.currency;
           const clientIp =
             request.headers.get("cf-connecting-ip") ||
             request.headers.get("x-real-ip") ||
@@ -127,6 +128,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
               amountMinor: offer.amountMinor,
               creditMinor: offer.creditMinor,
               currency,
+              walletCurrency,
               provider: "paystack",
               status: "initializing",
               createdAt: new Date().toISOString(),
@@ -148,6 +150,9 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
                 uid: user.uid,
                 packageId,
                 creditMinor: offer.creditMinor,
+                walletCurrency,
+                providerCurrency: currency,
+                convertedFromWalletCurrency: offer.converted,
                 platform: "website",
               },
             }),
@@ -170,7 +175,7 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
               throw new ApiError(
                 400,
                 "PAYSTACK_CURRENCY_UNAVAILABLE",
-                "Paystack cannot process this wallet currency for this account. Please use the BQ SQWAD TV app to top up your wallet.",
+                "Website checkout is unavailable for this currency. Please download the BQ SQWAD TV app and fund your wallet there.",
               );
             }
             throw new ApiError(
@@ -186,6 +191,10 @@ export const Route = createFileRoute("/api/public/v1/payments/paystack/initializ
               reference,
               amountMinor: offer.amountMinor,
               currency,
+              walletCurrency,
+              localAmountMinor: offer.displayAmountMinor,
+              converted: offer.converted,
+              exchangeRate: offer.exchangeRate,
             },
             { status: 201 },
           );
