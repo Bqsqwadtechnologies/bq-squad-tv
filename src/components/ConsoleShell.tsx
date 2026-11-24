@@ -241,8 +241,25 @@ export function ConsoleShell({
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  const [themeMode, setThemeMode] = useState<"system" | "light" | "dark">("system");
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    try {
+      const saved = localStorage.getItem("bq-sqwad-theme") || localStorage.getItem("bq_console_theme");
+      if (saved === "light" || saved === "dark") return saved;
+      return window.matchMedia?.("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    } catch {
+      return "dark";
+    }
+  });
+  const [themeMode, setThemeMode] = useState<"system" | "light" | "dark">(() => {
+    if (typeof window === "undefined") return "system";
+    try {
+      const saved = localStorage.getItem("bq-sqwad-theme") || localStorage.getItem("bq_console_theme");
+      return saved === "light" || saved === "dark" ? saved : "system";
+    } catch {
+      return "system";
+    }
+  });
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   useEffect(() => {
