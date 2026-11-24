@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { Route as CleanupRoute } from "@/routes/api/public/v1/zillionaire/cleanup-sample";
 import { Route as StorageSeedRoute } from "@/routes/api/public/v1/zillionaire/storage/seed";
-import { Firestore, decodeFields } from "@/lib/server/firebase-admin";
+import { Firestore, decodeFields, type FirestoreWrite } from "@/lib/server/firebase-admin";
 import * as apiModule from "@/lib/server/api";
 import * as rolesModule from "@/lib/server/roles";
 import { createStepUpToken } from "@/lib/server/zillionaire-access";
@@ -65,7 +65,7 @@ function createMemoryFirestore() {
     patchDoc: vi.fn(async (path: string, fields: Record<string, unknown>) => {
       storedDocs[path] = { ...(storedDocs[path] || {}), ...fields };
     }),
-    transact: vi.fn(async (paths: string[], callback: (docs: Array<Record<string, unknown> | null>) => Promise<{ result: unknown; writes: any[] }> | { result: unknown; writes: any[] }) => {
+    transact: vi.fn(async (paths: string[], callback: (docs: Array<Record<string, unknown> | null>) => Promise<{ result: unknown; writes: FirestoreWrite[] }> | { result: unknown; writes: any[] }) => {
       const outcome = await callback(paths.map((path) => {
         if (storedDocs[path]) return storedDocs[path];
         const split = path.lastIndexOf("/");
