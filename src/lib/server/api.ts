@@ -191,7 +191,7 @@ export type WalletState = {
 
 export async function getWallet(fs: Firestore, uid: string): Promise<WalletState> {
   const doc = await fs.getDoc(`wallets/${uid}`);
-  const profile = doc ? null : await fs.getDoc(`users/${uid}`);
+  const profile = typeof doc?.["currency"] === "string" ? null : await fs.getDoc(`users/${uid}`);
   const today = new Date().toISOString().slice(0, 10);
   const spentDate = typeof doc?.["spentDate"] === "string" ? (doc["spentDate"] as string) : null;
   return {
@@ -199,9 +199,7 @@ export async function getWallet(fs: Firestore, uid: string): Promise<WalletState
     currency:
       typeof doc?.["currency"] === "string"
         ? (doc["currency"] as string)
-        : doc
-          ? "NGN"
-          : currencyForCountry(profile?.["countryCode"]),
+        : currencyForCountry(profile?.["countryCode"]),
     dailySpendLimitMinor:
       typeof doc?.["dailySpendLimitMinor"] === "number"
         ? (doc["dailySpendLimitMinor"] as number)
