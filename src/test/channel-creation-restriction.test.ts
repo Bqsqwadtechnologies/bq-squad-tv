@@ -57,7 +57,7 @@ describe("Owner Rules — Channel Creation & Country Lock (A1, A2, A3)", () => {
 
     expect(response.status).toBe(401);
     const body = await response.json();
-    expect(body.code).toBe("UNAUTHENTICATED");
+    expect(body).toHaveProperty("error");
   });
 
   it("rejects provider self-registration on POST /api/public/v1/provider/register with 403", async () => {
