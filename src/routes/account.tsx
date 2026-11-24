@@ -579,17 +579,17 @@ function AccountPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-[#030b2a] px-4 py-12 text-slate-900 dark:text-white transition-colors duration-200">
+    <main className="flex min-h-screen items-center justify-center bg-background px-4 py-12 text-foreground transition-colors duration-200">
       <div className="w-full max-w-md">
         <a href="/" className="mb-8 flex justify-center" aria-label="BQ SQWAD TV home">
           <BrandLogo variant="horizontal" className="h-10 w-auto" />
         </a>
-        <label className="mb-4 block text-sm font-semibold text-slate-700 dark:text-blue-50">
+        <label className="mb-4 block text-sm font-semibold text-foreground">
           Appearance
           <select
             value={themeMode}
             onChange={(event) => void saveThemePreference(event.target.value as "system" | "light" | "dark")}
-            className="mt-2 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-3 py-3 text-slate-900 dark:text-white shadow-sm focus:border-cyan-500 dark:focus:border-cyan-300"
+            className="mt-2 w-full rounded-xl border border-input bg-background px-3 py-3 text-foreground shadow-sm focus:border-primary"
             aria-label="Choose appearance"
           >
             <option value="system">System default</option>
@@ -597,14 +597,14 @@ function AccountPage() {
             <option value="dark">Dark navy theme</option>
           </select>
         </label>
-        <section className="rounded-3xl border border-slate-200 dark:border-cyan-200/15 bg-white dark:bg-[#08163e] p-6 shadow-xl dark:shadow-2xl dark:shadow-blue-950/50 sm:p-8 transition-colors duration-200">
+        <section className="rounded-3xl border border-border bg-card text-card-foreground p-6 shadow-lg sm:p-8 transition-colors duration-200">
           {legalAcceptanceRequired ? (
             <>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-300">
                 Updated terms
               </p>
               <h1 className="mt-3 text-2xl font-black text-slate-900 dark:text-white">Please review these pages</h1>
-              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-blue-100/70">
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
                 We have updated one or more documents. Review each current version before continuing
                 to watch.
               </p>
@@ -927,7 +927,7 @@ function AccountPage() {
                 minutes.
               </p>
               <form onSubmit={handleVerify} className="mt-6 space-y-4">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-blue-50">
+                <label className="block text-sm font-semibold text-foreground">
                   Verification code
                   <input
                     value={code}
@@ -978,7 +978,7 @@ function AccountPage() {
                       onChange={(event) => setDateOfBirth(event.target.value)}
                       max={new Date().toISOString().slice(0, 10)}
                       required
-                      className="mt-2 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-cyan-500 dark:focus:border-cyan-300 shadow-sm"
+                      className="mt-2 w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground outline-none focus:border-primary shadow-sm"
                     />
                   </label>
                 ) : null}
@@ -990,7 +990,7 @@ function AccountPage() {
                     onChange={(event) => setEmail(event.target.value)}
                     autoComplete="email"
                     required
-                    className="mt-2 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-cyan-500 dark:focus:border-cyan-300 shadow-sm"
+                    className="mt-2 w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground outline-none focus:border-primary shadow-sm"
                   />
                 </label>
                 <label className="block text-sm font-semibold text-slate-700 dark:text-blue-50">
@@ -1002,7 +1002,7 @@ function AccountPage() {
                     autoComplete={createAccount ? "new-password" : "current-password"}
                     minLength={6}
                     required
-                    className="mt-2 w-full rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#030b2a] px-4 py-3 text-slate-900 dark:text-white outline-none focus:border-cyan-500 dark:focus:border-cyan-300 shadow-sm"
+                    className="mt-2 w-full rounded-xl border border-input bg-background px-4 py-3 text-foreground outline-none focus:border-primary shadow-sm"
                   />
                 </label>
                 <GoogleSignInButton
