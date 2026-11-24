@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, getWallet, requireUser } from "@/lib/server/api";
 import { getPricingConfig, getDefaultPricingConfig } from "@/lib/server/pricing";
-import { getPaystackTopup } from "@/lib/server/paystack";
+import { getPaystackCheckoutTopup } from "@/lib/server/paystack";
 
 export const Route = createFileRoute("/api/public/v1/wallet/topups")({
   server: {
@@ -36,8 +36,8 @@ export const Route = createFileRoute("/api/public/v1/wallet/topups")({
                   .filter((packageId) => /^[A-Za-z0-9_-]{1,80}$/.test(packageId))
                   .flatMap((packageId) => {
                     try {
-                      const offer = getPaystackTopup(pricing, packageId, wallet.currency);
-                      return [{ packageId, ...offer, currency: wallet.currency }];
+                      const offer = getPaystackCheckoutTopup(pricing, packageId, wallet.currency);
+                      return [{ packageId, ...offer }];
                     } catch {
                       return [];
                     }
@@ -58,8 +58,8 @@ export const Route = createFileRoute("/api/public/v1/wallet/topups")({
           ];
           const defaultPackages = DEFAULT_ORDER.flatMap((packageId) => {
             try {
-              const offer = getPaystackTopup(pricing, packageId, wallet.currency);
-              return [{ packageId, ...offer, currency: wallet.currency }];
+              const offer = getPaystackCheckoutTopup(pricing, packageId, wallet.currency);
+              return [{ packageId, ...offer }];
             } catch {
               return [];
             }
