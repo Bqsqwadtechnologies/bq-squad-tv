@@ -41,7 +41,11 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
           // Country is determined by server-side IP geolocation. Ignore countryCode
           // sent by clients; only the protected owner can use the country test endpoint.
           const currentCountry = normalizeCountryCode(existingProfile?.["countryCode"]);
-          const nextCountry = currentCountry ?? await detectCountryFromRequest(request);
+          // Fresh server-side detection takes precedence over any country saved
+          // during the former manual-selection flow. Keep the saved value only
+          // when the request cannot be geolocated.
+          const detectedCountry = await detectCountryFromRequest(request);
+          const nextCountry = detectedCountry ?? currentCountry;
           const existingCurrency =
             typeof existingWallet?.["currency"] === "string"
               ? (existingWallet["currency"] as string)
@@ -126,7 +130,7 @@ export const Route = createFileRoute("/api/public/v1/profile/complete")({
             dateOfBirth: body.dateOfBirth,
             ...(nextCountry ? {
               countryCode: nextCountry,
-              countryDetectionSource: existingProfile?.["countryDetectionSource"] === "owner_test_override" ? "owner_test_override" : "ip",
+              countryDetectionSource: detectedCountry ? "ip" : (existingProfile?.["countryDetectionSource"] ?? "unknown"),
             } : {}),
             profileComplete: true,
             adultAgeVerified,
