@@ -175,20 +175,24 @@ function WalletPage() {
 
       setLedger((ledgerData.items ?? []) as LedgerItem[]);
 
-      if (topupsRes.ok && Array.isArray(topupData)) {
-        const effective =
-          topupData.length > 0
-            ? (topupData as Topup[])
-            : loadedWallet.currency === "NGN"
+      const serverOffers = topupsRes.ok && Array.isArray(topupData)
+        ? (topupData as Topup[])
+        : [];
+      // Never hide the native NGN checkout options because the optional offers
+      // endpoint failed or returned an empty list. The initialize endpoint has
+      // the same safe NGN defaults and validates the final amount server-side.
+      const effective =
+        serverOffers.length > 0
+          ? serverOffers
+          : loadedWallet.currency === "NGN"
             ? DEFAULT_NGN_PACKAGES
             : [];
-        setTopups(effective);
-        if (effective.length > 0 && (!selectedPackageId || !effective.some((offer: Topup) => offer.packageId === selectedPackageId))) {
-          setSelectedPackageId(effective[0]?.packageId ?? "");
-        } else if (effective.length === 0) {
-          setSelectedPackageId("");
-          setIsCustom(false);
-        }
+      setTopups(effective);
+      if (effective.length > 0 && (!selectedPackageId || !effective.some((offer: Topup) => offer.packageId === selectedPackageId))) {
+        setSelectedPackageId(effective[0]?.packageId ?? "");
+      } else if (effective.length === 0) {
+        setSelectedPackageId("");
+        setIsCustom(false);
       }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not load your wallet.");
