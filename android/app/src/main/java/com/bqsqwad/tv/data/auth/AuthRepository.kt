@@ -148,6 +148,13 @@ class AuthRepository(
         auth.sendPasswordResetEmail(email.trim()).awaitResult()
     }
 
+    suspend fun isProfileComplete(): Boolean {
+        val user = auth.currentUser ?: return false
+        user.reload().awaitResult()
+        if (!user.isEmailVerified) return false
+        return profileApi.webAccount(currentBearerToken()).profileComplete
+    }
+
     suspend fun signInGoogle(idToken: String) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         auth.signInWithCredential(credential).awaitResult()
@@ -174,19 +181,10 @@ class AuthRepository(
     suspend fun completeProfile(
         dateOfBirth: String,
         parentalPin: String?,
-        selectedCountryCode: String,
     ): CompleteProfileResponse {
-        val countryCode = selectedCountryCode.trim().uppercase(Locale.ROOT)
-        require(countryCode.matches(Regex("[A-Z]{2}"))) {
-            "Choose a valid country before completing your profile."
-        }
         return profileApi.completeProfile(
             currentBearerToken(),
-            CompleteProfileRequest(
-                dateOfBirth = dateOfBirth,
-                parentalPin = parentalPin,
-                countryCode = countryCode,
-            ),
+            CompleteProfileRequest(dateOfBirth = dateOfBirth, parentalPin = parentalPin),
         )
     }
 
