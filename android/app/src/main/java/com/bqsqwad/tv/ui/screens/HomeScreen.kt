@@ -151,7 +151,7 @@ fun HomeScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 14.dp),
             shape = RoundedCornerShape(24.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF071B58)),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         ) {
             Box(
                 Modifier
@@ -159,7 +159,7 @@ fun HomeScreen(
                     .height(218.dp)
                     .background(
                         Brush.linearGradient(
-                            listOf(Color(0xFF087BDF), Color(0xFF092B83), Color(0xFF030B2A)),
+                            listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.surface),
                         ),
                     ),
             ) {
@@ -177,12 +177,12 @@ fun HomeScreen(
                     Modifier
                         .align(Alignment.BottomStart)
                         .fillMaxWidth()
-                        .background(Brush.verticalGradient(listOf(Color.Transparent, Color(0xF5030B2A))))
+                        .background(Brush.verticalGradient(listOf(Color.Transparent, MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))))
                         .padding(20.dp),
                 ) {
                     Text(
                         "PREMIUM ENTERTAINMENT",
-                        color = Color(0xFF9BEFFF),
+                        color = MaterialTheme.colorScheme.secondary,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                     )
@@ -190,12 +190,12 @@ fun HomeScreen(
                         "Your world of entertainment.",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Black,
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Spacer(Modifier.height(12.dp))
                     Button(
                         onClick = onLive,
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00C8F0), contentColor = Color(0xFF031039)),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
                     ) {
                         Text("▶  Watch live", fontWeight = FontWeight.Bold)
                     }
@@ -325,7 +325,7 @@ private fun CatalogRail(
                     } else {
                         Box(
                             Modifier.fillMaxWidth().height(112.dp).background(
-                                Brush.linearGradient(listOf(Color(0xFF1459B8), Color(0xFF07143D))),
+                                Brush.linearGradient(listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.surfaceVariant)),
                             ),
                             contentAlignment = Alignment.Center,
                         ) {
