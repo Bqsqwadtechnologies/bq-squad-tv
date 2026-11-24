@@ -207,8 +207,14 @@ fun BqSqwadTvApp(
             ) {
                 composable("signin") {
                     SignInScreen {
-                        nav.navigate("profile-setup") {
-                            popUpTo("signin") { inclusive = true }
+                        scope.launch {
+                            val complete = runCatching { auth.isProfileComplete() }.getOrDefault(false)
+                            val needsLegal = if (complete) runCatching { auth.needsLegalAcceptance() }.getOrDefault(true) else true
+                            val destination = if (complete && !needsLegal) "home" else "profile-setup"
+                            nav.navigate(destination) {
+                                popUpTo("signin") { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
                     }
                 }
