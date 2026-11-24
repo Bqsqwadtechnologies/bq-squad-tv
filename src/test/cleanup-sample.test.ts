@@ -47,7 +47,13 @@ function createMemoryFirestore() {
 
   const fs = {
     docName: (path: string) => `projects/test-project/databases/(default)/documents/${path}`,
-    getDoc: vi.fn(async (path: string) => storedDocs[path] || null),
+    getDoc: vi.fn(async (path: string) => {
+      if (storedDocs[path]) return storedDocs[path];
+      const split = path.lastIndexOf("/");
+      const collectionPath = path.slice(0, split);
+      const id = path.slice(split + 1);
+      return (initialCollections[collectionPath] || []).find((row) => row.__id === id) || null;
+    }),
     set: vi.fn(async (path: string, fields: Record<string, unknown>) => {
       storedDocs[path] = { ...fields };
     }),
@@ -58,7 +64,13 @@ function createMemoryFirestore() {
       storedDocs[path] = { ...(storedDocs[path] || {}), ...fields };
     }),
     transact: vi.fn(async (paths: string[], callback: (docs: Array<Record<string, unknown> | null>) => Promise<{ result: unknown; writes: any[] }> | { result: unknown; writes: any[] }) => {
-      const outcome = await callback(paths.map((path) => storedDocs[path] || null));
+      const outcome = await callback(paths.map((path) => {
+        if (storedDocs[path]) return storedDocs[path];
+        const split = path.lastIndexOf("/");
+        const collectionPath = path.slice(0, split);
+        const id = path.slice(split + 1);
+        return (initialCollections[collectionPath] || []).find((row) => row.__id === id) || null;
+      }));
       for (const write of outcome.writes) {
         if ("delete" in write) {
           deletedDocs.push(write.delete);
