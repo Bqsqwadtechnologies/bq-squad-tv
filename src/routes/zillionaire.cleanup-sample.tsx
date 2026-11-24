@@ -50,6 +50,8 @@ type ScanResult = {
   episodesFound: number;
   storageDestinationsFound: number;
   storageObjectsFound: number;
+  epgProgrammesFound?: number;
+  channelProgrammesFound?: number;
   estimatedBytesFreed: number;
   sampleItems: SampleItem[];
 };
@@ -65,6 +67,8 @@ type CleanupResult = {
   episodesDeleted: number;
   storageDestinationsDeleted: number;
   storageObjectsDeleted: number;
+  epgProgrammesDeleted?: number;
+  channelProgrammesDeleted?: number;
   estimatedBytesFreed: number;
   executedAt: string;
 };
@@ -274,7 +278,7 @@ function CleanupSampleContentInner({
               <h4 className="text-sm font-bold">Sample Content Purged Successfully</h4>
             </div>
             <p className="text-xs text-slate-300">
-              Purged {cleanupResult.totalRecordsDeleted} records and freed approximately{" "}
+              Purged {cleanupResult.totalRecordsDeleted} records, including {(cleanupResult.epgProgrammesDeleted ?? 0) + (cleanupResult.channelProgrammesDeleted ?? 0)} scheduled test programmes, and freed approximately{" "}
               {formatBytes(cleanupResult.estimatedBytesFreed)} of storage space. An immutable audit record has been
               committed.
             </p>
@@ -452,10 +456,10 @@ function CleanupSampleContentInner({
               title="Series & Episodes"
               value={
                 scanResult
-                  ? String(scanResult.seriesFound + scanResult.episodesFound)
+                  ? String(scanResult.seriesFound + scanResult.episodesFound + (scanResult.epgProgrammesFound ?? 0) + (scanResult.channelProgrammesFound ?? 0))
                   : "—"
               }
-              caption="Sample seasons & episodes"
+              caption="Sample seasons, episodes & test programmes"
               icon={Database}
             />
             <ConsoleKpiCard
