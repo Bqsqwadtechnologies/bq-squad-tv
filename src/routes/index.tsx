@@ -180,7 +180,11 @@ function HomePage() {
           }
         } catch {}
 
-        const res = await fetch("/api/public/v1/catalog/home", { cache: "no-store" });
+        const catalogToken = await restoreWebSession();
+        const res = await fetch("/api/public/v1/catalog/home", {
+          headers: catalogToken ? await getWebAuthHeaders(catalogToken) : {},
+          cache: "no-store",
+        });
         if (res.ok) {
           const data = await res.json();
           if (active && data) {
