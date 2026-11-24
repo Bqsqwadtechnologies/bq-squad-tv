@@ -174,10 +174,10 @@ export async function ensurePublicId(
 
       // Update the owner entity document
       if (type === "viewer" || type === "zillionaire") {
-        await fs.patchDoc("users/" + uid, {
+        await fs.setDoc("users/" + uid, {
           publicId: candidateId,
           updatedAt: now,
-        });
+        }, { merge: true });
       } else if (type === "producer") {
         const prod = await fs.getDoc("producers/" + uid);
         if (prod) {
@@ -186,10 +186,10 @@ export async function ensurePublicId(
             updatedAt: now,
           });
         }
-        await fs.patchDoc("users/" + uid, {
+        await fs.setDoc("users/" + uid, {
           publicId: candidateId,
           updatedAt: now,
-        });
+        }, { merge: true });
       } else if (type === "provider") {
         const prov = await fs.getDoc("providers/" + uid);
         if (prov) {
