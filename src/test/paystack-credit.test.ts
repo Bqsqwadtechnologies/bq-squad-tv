@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError, type Firestore } from "@/lib/server/firebase-admin";
-import { creditPaystackPayment, getPaystackTopup } from "@/lib/server/paystack";
+import { creditPaystackPayment, getPaystackTopup, getPaystackCheckoutTopup } from "@/lib/server/paystack";
 
 function fakeFirestore(
   documents: Record<string, Record<string, unknown> | null>,
@@ -150,6 +150,24 @@ describe("Paystack wallet credit validation", () => {
       displayAmountMinor: 499,
       creditMinor: 499,
     });
+  });
+
+
+  it("uses USD checkout for unsupported wallet currencies while retaining local credit", () => {
+    const offer = getPaystackCheckoutTopup({}, "ngn_500", "EUR");
+    expect(offer.currency).toBe("USD");
+    expect(offer.walletCurrency).toBe("EUR");
+    expect(offer.converted).toBe(true);
+    expect(offer.creditMinor).toBe(30);
+    expect(offer.displayAmountMinor).toBe(30);
+    expect(offer.amountMinor).toBe(33);
+  });
+
+  it("keeps native USD checkout for USD wallets", () => {
+    const offer = getPaystackCheckoutTopup({}, "ngn_500", "USD");
+    expect(offer.currency).toBe("USD");
+    expect(offer.walletCurrency).toBe("USD");
+    expect(offer.converted).toBe(false);
   });
 
   it("does not credit an already credited payment again", async () => {
