@@ -135,7 +135,7 @@ export async function withPaystackExchangeRates(
           rates[code] = raw;
         }
       }
-      if (!rates.USD || !rates[walletCurrency]) throw new Error("Currency rate unavailable");
+      if (!rates["USD"] || !rates[walletCurrency]) throw new Error("Currency rate unavailable");
       liveUsdRates = rates;
       const nextUpdate = typeof payload.time_next_update_unix === "number"
         ? payload.time_next_update_unix * 1000
