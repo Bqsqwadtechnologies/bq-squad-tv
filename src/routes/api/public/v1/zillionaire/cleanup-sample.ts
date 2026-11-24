@@ -103,6 +103,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
             const isSeededChannel =
               id.startsWith("demo") ||
               id.startsWith("sample-") ||
+              id.startsWith("test-") ||
+              id.startsWith("test_") ||
               ch["isDemo"] === true ||
               ch["isSample"] === true ||
               ch["seed"] === true ||
@@ -137,7 +139,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
           const epgProgrammes = await fs.query("epgSchedule", { limit: 1000 }).catch(() => []);
           for (const programme of epgProgrammes) {
             const title = programme["title"] ?? programme["programmeTitle"] ?? programme["name"];
-            if (isExplicitTestTitle(title, ["test program", "test programme"])) {
+            if (isExplicitTestTitle(title, ["test program", "test programme"]) || programme.__id.startsWith("test-") || programme.__id.startsWith("test_")) {
               epgProgrammesToDelete.push(programme.__id);
               sampleItems.push({ collection: "epgSchedule", id: programme.__id, title: String(title), reason: "Explicit test programme in the EPG (date/status independent)" });
             }
@@ -165,6 +167,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
             const isSample =
               id.startsWith("demo") ||
               id.startsWith("sample-") ||
+              id.startsWith("test-") ||
+              id.startsWith("test_") ||
               asset["isDemo"] === true ||
               asset["isSample"] === true ||
               asset["seed"] === true ||
