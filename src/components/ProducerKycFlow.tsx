@@ -5,7 +5,7 @@ import { compressImageClientSide } from "@/lib/kyc-compression";
 import { getKycString } from "@/lib/kyc-strings";
 import { KycCameraCapture, type CaptureMode } from "@/components/kyc/KycCameraCapture";
 import { Camera } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { KycCountryPicker } from "@/components/KycCountryPicker";
 import { KycPhoneVerification } from "@/components/KycPhoneVerification";
 import {
@@ -260,6 +260,51 @@ export function ProducerKycFlow({
     }
   }
 
+  const isCurrentStepComplete = useMemo(() => {
+    if (step === 1) return Boolean(countryCode);
+    if (step === 2) {
+      if (!legalName.trim() || !idNumber.trim()) return false;
+      if (entityType === "individual") {
+        if (!dateOfBirth || !isAge18OrOlder(dateOfBirth)) return false;
+        if (!residentialLine1.trim() || !residentialCity.trim()) return false;
+      } else {
+        if (!businessName.trim() || !companyRegNumber.trim() || !businessLine1.trim() || !businessCity.trim() || !directorName.trim()) {
+          return false;
+        }
+      }
+      return true;
+    }
+    if (step === 3) return Boolean(phoneVerified);
+    if (step === 4) {
+      if (entityType === "individual") {
+        if (!idFrontFile || !selfieFile) return false;
+      } else {
+        if (!businessCertFile || !idFrontFile) return false;
+      }
+      return Boolean(declarationAccepted);
+    }
+    return true;
+  }, [
+    step,
+    countryCode,
+    legalName,
+    entityType,
+    dateOfBirth,
+    residentialLine1,
+    residentialCity,
+    businessName,
+    companyRegNumber,
+    businessLine1,
+    businessCity,
+    directorName,
+    idNumber,
+    phoneVerified,
+    idFrontFile,
+    selfieFile,
+    businessCertFile,
+    declarationAccepted,
+  ]);
+
   function validateCurrentStep(): boolean {
     setError(null);
     if (step === 1) {
@@ -291,7 +336,7 @@ export function ProducerKycFlow({
         }
       }
 
-      if (entityType === "registered_business") {
+      if (entityType !== "individual") {
         if (!businessName.trim()) {
           setError("Please enter your registered company or studio name.");
           return false;
@@ -386,24 +431,25 @@ export function ProducerKycFlow({
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
 
-      // Collect files to upload
-      const filesToUpload: File[] = [];
-      if (idFrontFile) filesToUpload.push(idFrontFile);
-      if (idBackFile) filesToUpload.push(idBackFile);
-      if (selfieFile) filesToUpload.push(selfieFile);
-      if (businessCertFile) filesToUpload.push(businessCertFile);
+      // Collect files to upload with semantic roles
+      const filesWithRoles: Array<{ file: File; role: string }> = [];
+      if (idFrontFile) filesWithRoles.push({ file: idFrontFile, role: "id_front" });
+      if (idBackFile) filesWithRoles.push({ file: idBackFile, role: "id_back" });
+      if (selfieFile) filesWithRoles.push({ file: selfieFile, role: "selfie_liveness" });
+      if (businessCertFile) filesWithRoles.push({ file: businessCertFile, role: "business_registration" });
 
-      // Upload documents through upload intent
       const evidenceUploadIds: string[] = [];
+      const documentRoleMap: Record<string, string> = {};
+      let faceCaptureUploadId: string | undefined = undefined;
 
-      for (const file of filesToUpload) {
+      for (const item of filesWithRoles) {
         const intentRes = await fetch("/api/public/v1/producer/verification/upload-intent", {
           method: "POST",
           headers,
           body: JSON.stringify({
-            filename: file.name,
-            sizeBytes: file.size,
-            mimeType: file.type || "application/pdf",
+            filename: item.file.name,
+            sizeBytes: item.file.size,
+            mimeType: item.file.type || "application/pdf",
           }),
         });
 
@@ -412,17 +458,21 @@ export function ProducerKycFlow({
           if (intentData.signedUrl) {
             await fetch(intentData.signedUrl, {
               method: "PUT",
-              headers: { "Content-Type": file.type || "application/pdf" },
-              body: file,
+              headers: { "Content-Type": item.file.type || "application/pdf" },
+              body: item.file,
             }).catch(() => {});
           }
           if (intentData.uploadId) {
             evidenceUploadIds.push(intentData.uploadId);
+            documentRoleMap[intentData.uploadId] = item.role;
+            if (item.role === "selfie_liveness") {
+              faceCaptureUploadId = intentData.uploadId;
+            }
           }
         }
       }
 
-      if (filesToUpload.length > 0 && evidenceUploadIds.length === 0) {
+      if (filesWithRoles.length > 0 && evidenceUploadIds.length === 0) {
         throw new Error("Document upload failed. Please verify your connection and try again.");
       }
       if (evidenceUploadIds.length === 0) {
@@ -436,8 +486,10 @@ export function ProducerKycFlow({
           countryCode,
           entityType,
           legalName: legalName.trim(),
-          businessName: entityType === "registered_business" ? businessName.trim() : undefined,
+          businessName: entityType !== "individual" ? businessName.trim() : undefined,
           evidenceUploadIds,
+          documentRoleMap,
+          faceCaptureUploadId,
           declarationAccepted: true,
           phone: verifiedPhone || undefined,
           phoneVerified,
@@ -445,8 +497,8 @@ export function ProducerKycFlow({
           idNumber: idNumber.trim() || undefined,
           taxId: taxId.trim() || undefined,
           dateOfBirth: entityType === "individual" ? dateOfBirth || undefined : undefined,
-          companyRegNumber: entityType === "registered_business" ? companyRegNumber.trim() || undefined : undefined,
-          directorName: entityType === "registered_business" ? directorName.trim() || undefined : undefined,
+          companyRegNumber: entityType !== "individual" ? companyRegNumber.trim() || undefined : undefined,
+          directorName: entityType !== "individual" ? directorName.trim() || undefined : undefined,
           residentialAddress: entityType === "individual" ? {
             line1: residentialLine1.trim(),
             city: residentialCity.trim(),
@@ -454,7 +506,7 @@ export function ProducerKycFlow({
             postalCode: residentialPostalCode.trim() || undefined,
             country: countryCode,
           } : undefined,
-          businessAddress: entityType === "registered_business" ? {
+          businessAddress: entityType !== "individual" ? {
             line1: businessLine1.trim(),
             city: businessCity.trim(),
             state: businessState.trim() || undefined,
@@ -1043,10 +1095,11 @@ export function ProducerKycFlow({
           {step < 4 ? (
             <button
               type="button"
+              disabled={!isCurrentStepComplete}
               onClick={() => {
                 if (validateCurrentStep()) setStep(step + 1);
               }}
-              className="flex items-center gap-1.5 rounded-lg bg-cyan-600 px-5 py-2 text-xs font-semibold text-white hover:bg-cyan-500"
+              className="flex items-center gap-1.5 rounded-lg bg-cyan-600 px-5 py-2 text-xs font-semibold text-white hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Continue <ArrowRight className="h-4 w-4" />
             </button>

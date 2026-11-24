@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Film, Video, Tv, UploadCloud, Play, Search, CheckCircle2, Clock3, Trash2 } from "lucide-react";
+import { Film, Video, Tv, UploadCloud, Play, Search, CheckCircle2, Clock3, Trash2, Globe, Check, X, SlidersHorizontal, ShieldCheck } from "lucide-react";
+import { ALL_COUNTRIES } from "@/lib/kyc-country-rules";
 import { ConsolePageGuard, type ConsoleAccount } from "@/components/ConsolePageGuard";
 import { ConsoleShell, ConsoleWelcomeBanner, ConsoleCard, ConsoleStatusBadge } from "@/components/ConsoleShell";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
@@ -18,6 +19,11 @@ type UploadRecord = {
   masterPlaylistUrl?: string | null;
   failureReason: string | null;
   createdAt: string | null;
+  regionAvailability?: {
+    mode: "GLOBAL" | "WHITELIST" | "BLACKLIST";
+    countries: string[];
+  };
+  territoryCodes?: string[];
 };
 type Episode = { id: string; episodeNumber: number; title: string; videoAssetId?: string };
 type Season = { id: string; seasonNumber: number; title: string; episodes: Episode[] };
@@ -67,6 +73,8 @@ function UploadStudioContent({
   const [licenseType, setLicenseType] = useState<"owned" | "licensed" | "public_domain">("owned");
   const [copyrightHolderName, setCopyrightHolderName] = useState("");
   const [productionYear, setProductionYear] = useState(String(new Date().getFullYear()));
+  const [visibilityMode, setVisibilityMode] = useState<"GLOBAL" | "WHITELIST" | "BLACKLIST">("GLOBAL");
+  const [visibilityCountries, setVisibilityCountries] = useState<string[]>([]);
   const [ownershipConfirmed, setOwnershipConfirmed] = useState(false);
   const [copyrightConfirmed, setCopyrightConfirmed] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -204,6 +212,12 @@ function UploadStudioContent({
           ageRating,
           licenseType,
           copyrightHolderName: copyrightHolderName.trim(),
+          directPublish: true,
+          regionAvailability: {
+            mode: visibilityMode,
+            countries: visibilityCountries,
+          },
+          territoryCodes: visibilityMode === "WHITELIST" && visibilityCountries.length > 0 ? visibilityCountries : ["*"],
           ...(year !== undefined ? { productionYear: year } : {}),
           ownershipDeclaration: ownershipConfirmed,
           copyrightDeclaration: copyrightConfirmed,
@@ -219,9 +233,12 @@ function UploadStudioContent({
         signedUrl?: string;
         method?: string;
         error?: string;
+        issues?: string[];
+        message?: string;
       };
       if (!intentResponse.ok || !intent.assetId || !intent.signedUrl) {
-        throw new Error(intent.error ?? "The secure upload could not be prepared.");
+        const details = Array.isArray(intent.issues) ? intent.issues.join(" · ") : "";
+        throw new Error([intent.message || intent.error || "The secure upload could not be prepared.", details].filter(Boolean).join(" "));
       }
 
       setProgressLabel("Uploading your video to private storage…");
@@ -323,6 +340,47 @@ function UploadStudioContent({
       await loadData();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not delete this content.");
+    }
+  }
+
+  async function editAssetVisibility(asset: UploadRecord) {
+    const mode = window.prompt(
+      "Enter GLOBAL (worldwide), WHITELIST (only selected countries), or BLACKLIST (exclude selected countries):",
+      asset.regionAvailability?.mode || "GLOBAL",
+    )?.trim().toUpperCase();
+    if (!mode || !["GLOBAL", "WHITELIST", "BLACKLIST"].includes(mode)) return;
+    let countryCodes: string[] = [];
+    if (mode !== "GLOBAL") {
+      const current = asset.regionAvailability?.countries?.join(",") || "";
+      const raw = window.prompt("Enter ISO two-letter country codes separated by commas (example: US,NG,GB):", current);
+      if (raw === null) return;
+      countryCodes = raw.split(",").map((value) => value.trim().toUpperCase()).filter(Boolean);
+      if (countryCodes.some((country) => !/^[A-Z]{2}$/.test(country))) {
+        setError("Enter country codes as two letters separated by commas.");
+        return;
+      }
+      if (mode === "WHITELIST" && countryCodes.length === 0) {
+        setError("Select at least one country for limited availability.");
+        return;
+      }
+    }
+    try {
+      const headers = await getWebAuthHeaders(token);
+      const response = await fetch("/api/public/v1/zillionaire/upload/", {
+        method: "POST",
+        headers: { ...headers, "content-type": "application/json" },
+        body: JSON.stringify({
+          action: "UPDATE_REGION",
+          assetId: asset.id,
+          regionAvailability: { mode, countries: countryCodes },
+        }),
+      });
+      const data = (await response.json()) as { error?: string; message?: string };
+      if (!response.ok) throw new Error(data.message || data.error || "Could not update country visibility.");
+      setNotice(`Country visibility updated for "${asset.title}".`);
+      await loadData();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Could not update country visibility.");
     }
   }
 
@@ -436,6 +494,52 @@ function UploadStudioContent({
               </label>
             </div>
 
+            <div className="rounded-xl border border-cyan-400/20 bg-cyan-400/5 p-4">
+              <div className="mb-3 flex items-center gap-2">
+                <Globe className="h-4 w-4 text-cyan-300" />
+                <div>
+                  <p className="text-sm font-bold text-white">Country visibility</p>
+                  <p className="text-xs text-slate-400">Choose where viewers can or cannot watch this video. You can change this later.</p>
+                </div>
+              </div>
+              <label className="block text-xs font-semibold text-slate-300">
+                Availability rule
+                <select
+                  value={visibilityMode}
+                  onChange={(event) => setVisibilityMode(event.target.value as typeof visibilityMode)}
+                  className="mt-2 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white"
+                >
+                  <option value="GLOBAL">Available worldwide</option>
+                  <option value="WHITELIST">Available only in selected countries</option>
+                  <option value="BLACKLIST">Available worldwide except selected countries</option>
+                </select>
+              </label>
+              {visibilityMode !== "GLOBAL" && (
+                <div className="mt-3">
+                  <label className="mb-2 block text-xs font-semibold text-slate-300">Select countries</label>
+                  <select
+                    multiple
+                    value={visibilityCountries}
+                    onChange={(event) => setVisibilityCountries(Array.from(event.target.selectedOptions, (option) => option.value))}
+                    className="min-h-40 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+                    aria-label="Select countries for video visibility"
+                  >
+                    {ALL_COUNTRIES.map((country) => (
+                      <option key={country.code} value={country.code}>{country.name} ({country.code})</option>
+                    ))}
+                  </select>
+                  <p className="mt-2 text-[11px] text-slate-500">{visibilityCountries.length ? `${visibilityCountries.length} country${visibilityCountries.length === 1 ? "" : "ies"} selected` : "No countries selected"}. Use Ctrl or Cmd to select multiple countries.</p>
+                  {visibilityMode === "WHITELIST" && visibilityCountries.length === 0 && (
+                    <p className="mt-2 text-xs text-amber-300">Select at least one country for limited availability.</p>
+                  )}
+                </div>
+              )}
+              <p className="mt-3 flex items-start gap-2 text-[11px] text-slate-400">
+                <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300" />
+                Owner uploads are processed and rights-checked before direct publication. Producer videos remain in review until approved.
+              </p>
+            </div>
+
             <details className="rounded-xl border border-slate-700 bg-slate-900/30 p-4">
               <summary className="cursor-pointer text-xs font-bold text-cyan-200">Optional details · genre, language, rating and rights information</summary>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
@@ -516,10 +620,19 @@ function UploadStudioContent({
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-white">{item.title}</p>
                     <p className="mt-1 text-xs text-slate-400">{item.mediaType} · {item.sourceFilename || "Video file"} · {item.createdAt ? new Date(item.createdAt).toLocaleString() : "Date unavailable"}</p>
+                    {item.regionAvailability && <p className="mt-1 text-[11px] text-cyan-300">Visibility: {item.regionAvailability.mode === "GLOBAL" ? "Worldwide" : item.regionAvailability.mode === "WHITELIST" ? `Only ${item.regionAvailability.countries.length} selected countries` : `Worldwide except ${item.regionAvailability.countries.length} selected countries`}</p>}
                     {item.failureReason && <p className="mt-1 text-xs text-rose-300">{item.failureReason}</p>}
                   </div>
                   <div className="flex items-center gap-3">
                     <ConsoleStatusBadge status={item.rawStatus === "failed" ? "failed" : item.rawStatus === "ready" ? "active" : "pending"} label={item.displayState} />
+                    <button
+                      type="button"
+                      onClick={() => void editAssetVisibility(item)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-bold text-cyan-200 hover:bg-cyan-400/10"
+                      aria-label={`Edit country visibility for ${item.title}`}
+                    >
+                      <SlidersHorizontal className="h-3.5 w-3.5" /> Countries
+                    </button>
                     {item.rawStatus === "ready" && item.masterPlaylistUrl ? (
                       <button type="button" onClick={() => void previewUploadedAsset(item.id)} className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 px-3 py-2 text-xs font-bold text-cyan-200 hover:bg-cyan-400/10">
                         <Play className="h-3.5 w-3.5" /> Preview

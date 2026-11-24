@@ -197,13 +197,14 @@ describe("Batch B2 — Payout Account Verification and Review Flow", () => {
 
   describe("Producer Payout Profile Submission & Verification State", () => {
     it("submits payout account with proof and marks as pending review", async () => {
-      // Seed KYC record for user
+      // Seed KYC record for user with verified tax identification
       mockDb.set("kycProfiles/user_producer_b2", {
         uid: "user_producer_b2",
         legalName: "Jane Doe Film Productions",
         fullName: "Jane Doe Film Productions",
         kycCountry: "NG",
         status: "approved",
+        maskedTaxNumber: "***1234",
       });
 
       const { Route } = await import("@/routes/api/public/v1/producer/payout-profile");

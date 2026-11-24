@@ -52,6 +52,8 @@ const schema = z
         country: z.string().trim().max(100).optional(),
       })
       .optional(),
+    faceCaptureUploadId: z.string().regex(/^[A-Za-z0-9_-]{20,64}$/).optional(),
+    documentRoleMap: z.record(z.string()).optional(),
   })
   .superRefine((value, context) => {
     if (new Set(value.evidenceUploadIds).size !== value.evidenceUploadIds.length) {
@@ -59,6 +61,76 @@ const schema = z
         code: z.ZodIssueCode.custom,
         path: ["evidenceUploadIds"],
         message: "Evidence uploads must be unique.",
+      });
+    }
+
+    if (value.entityType === "individual") {
+      if (!value.dateOfBirth) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["dateOfBirth"],
+          message: "Date of birth is required for individual verification.",
+        });
+      }
+      if (!value.residentialAddress?.line1 || !value.residentialAddress?.city) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["residentialAddress"],
+          message: "Residential address (street address and city) is required.",
+        });
+      }
+    } else {
+      if (!value.businessName || value.businessName.trim().length === 0) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["businessName"],
+          message: "Registered business name is required.",
+        });
+      }
+      if (!value.companyRegNumber || value.companyRegNumber.trim().length === 0) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["companyRegNumber"],
+          message: "Company registration number is required.",
+        });
+      }
+      if (!value.directorName || value.directorName.trim().length === 0) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["directorName"],
+          message: "Managing director or authorized representative name is required.",
+        });
+      }
+      if (!value.businessAddress?.line1 || !value.businessAddress?.city) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["businessAddress"],
+          message: "Registered business address is required.",
+        });
+      }
+    }
+
+    if (!value.idNumber || value.idNumber.trim().length === 0) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["idNumber"],
+        message: "Government ID number is required.",
+      });
+    }
+
+    if (!value.phone || !value.phoneVerified) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["phoneVerified"],
+        message: "Phone number must be verified.",
+      });
+    }
+
+    if (value.evidenceUploadIds.length < 2) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["evidenceUploadIds"],
+        message: "At least two verification documents are required.",
       });
     }
   });
@@ -310,9 +382,28 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
             },
           });
           const docPaths: Record<string, string> = {};
-          paths.forEach((p, i) => {
-            docPaths["evidence_doc_" + (i + 1)] = p;
+          let faceCaptureVaultPath: string | undefined = undefined;
+
+          body.evidenceUploadIds.forEach((uploadId, index) => {
+            const p = paths[index]!;
+            const role = body.documentRoleMap?.[uploadId];
+            if (role) {
+              docPaths[role] = p;
+              if (role === "face_capture" || role === "selfie" || role === "selfie_liveness") {
+                faceCaptureVaultPath = p;
+              }
+            } else {
+              docPaths["evidence_doc_" + (index + 1)] = p;
+            }
           });
+
+          if (body.faceCaptureUploadId) {
+            const faceIdx = body.evidenceUploadIds.indexOf(body.faceCaptureUploadId);
+            if (faceIdx >= 0) {
+              faceCaptureVaultPath = paths[faceIdx];
+              docPaths["face_capture"] = paths[faceIdx]!;
+            }
+          }
 
           const kycType =
             body.entityType === "registered_business" || body.entityType === "company"
@@ -400,6 +491,7 @@ export const Route = createFileRoute("/api/public/v1/producer/verification")({
             ...(body.taxId !== undefined ? { rawTaxNumber: body.taxId } : {}),
             ...(body.dateOfBirth !== undefined ? { rawDateOfBirth: body.dateOfBirth } : {}),
             documentVaultPaths: docPaths,
+            ...(faceCaptureVaultPath ? { faceCaptureVaultPath } : {}),
             status: "pending",
             verifierResult,
             riskScore: riskResult.riskScore,

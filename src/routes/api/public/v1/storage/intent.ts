@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { ensurePlatformLibraryChannel, requireAuthorizedChannelUpload } from "@/lib/server/producer-upload-access";
+import { resolvePlatformAccess } from "@/lib/server/roles";
 import { enforceRateLimit } from "@/lib/server/rate-limit";
 import { isSafeStoragePath } from "@/lib/server/storage/security";
 import { writeAuditLog } from "@/lib/server/audit";
@@ -44,7 +45,18 @@ const bodySchema = z.object({
   copyrightDeclaration: z.boolean().default(false),
   licenseType: z.enum(["owned", "licensed", "public_domain"]).default("owned"),
   copyrightHolderName: z.string().trim().max(150).default(""),
-  productionYear: z.number().int().min(1888).max(new Date().getFullYear()).optional(),
+  productionYear: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? undefined : typeof val === "string" ? Number(val) : val),
+    z.number().int().min(1888).max(new Date().getFullYear() + 2).optional(),
+  ),
+  regionAvailability: z
+    .object({
+      mode: z.enum(["GLOBAL", "WHITELIST", "BLACKLIST"]),
+      countries: z.array(z.string().regex(/^[A-Z]{2}$/)).default([]),
+    })
+    .optional(),
+  territoryCodes: z.array(z.union([z.string().regex(/^[A-Z]{2}$/), z.literal("*")])).optional(),
+  directPublish: z.boolean().default(false),
 });
 
 function safeFilename(value: string): string {
@@ -134,11 +146,25 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
             const expiresAt = new Date(
               now.getTime() + target.expiresInSeconds * 1000,
             ).toISOString();
+
+            const isPlatform = channelId === "bq_sqwad_library" || channel?.["ownerUid"] === "platform" || channel?.["type"] === "platform";
+            const access = await resolvePlatformAccess(fs, user.uid, user.email, user.customClaims, user.emailVerified === true);
+            const isOwner = access.isZillionaireOwner;
+            const canDirectPublish = isOwner;
+            const directPublish = Boolean(body.directPublish && canDirectPublish);
+
+            const regionMode = body.regionAvailability?.mode || "GLOBAL";
+            const selectedCountries = body.regionAvailability?.countries || [];
+            const territoryCodes = body.territoryCodes || (regionMode === "WHITELIST" && selectedCountries.length ? selectedCountries : ["*"]);
+
             await fs.setDoc(
               "contentAssets/" + assetId,
               {
                 channelId,
                 ownerUid: user.uid,
+                isPlatformAsset: isPlatform,
+                directPublish,
+                regionAvailability: body.regionAvailability || { mode: "GLOBAL", countries: [] },
                 sourceDestinationId: reservation.destinationId,
                 sourceBucket: metadata.bucketName,
                 sourcePath: path,
@@ -164,7 +190,21 @@ export const Route = createFileRoute("/api/public/v1/storage/intent")({
                 ownershipDeclaration: body.ownershipDeclaration,
                 copyrightDeclaration: body.copyrightDeclaration,
                 licenseType: body.licenseType,
-                copyrightHolderName: body.copyrightHolderName || null,
+                copyrightHolderName: body.copyrightHolderName || (isPlatform ? "BQ SQWAD TV" : "Producer"),
+                license: {
+                  status: isPlatform ? "verified" : "pending",
+                  verificationStatus: isPlatform ? "verified" : "pending",
+                  commercialStreamingAllowed: true,
+                  payPerMinuteAllowed: true,
+                  licenseType: body.licenseType,
+                  copyrightHolderName: body.copyrightHolderName || (isPlatform ? "BQ SQWAD TV" : "Producer"),
+                  ownershipDeclaration: body.ownershipDeclaration,
+                  copyrightDeclaration: body.copyrightDeclaration,
+                  territoryCodes,
+                  platforms: ["android", "web", "android_tv"],
+                  validFrom: now.toISOString(),
+                  validUntil: new Date(now.getTime() + 10 * 365 * 24 * 3600 * 1000).toISOString(),
+                },
                 productionYear: body.productionYear ?? null,
                 contentStatus: "draft",
                 declaredSizeBytes: body.sizeBytes,

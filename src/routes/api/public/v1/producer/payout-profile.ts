@@ -21,6 +21,7 @@ const postSchema = z.object({
   routingCode: z.string().trim().max(20).optional().nullable(),
   purposeOfPayment: z.string().trim().min(2).max(100).default("streaming_royalties"),
   isManualBank: z.boolean().default(false),
+  taxId: z.string().trim().min(3).max(64).optional().nullable(),
   proofDocumentPath: z.string().trim().max(500).optional().nullable(),
   proofDocumentFileName: z.string().trim().max(255).optional().nullable(),
 });
@@ -100,6 +101,32 @@ export const Route = createFileRoute("/api/public/v1/producer/payout-profile")({
           // 1. Enforce hard country lock against KYC profile
           const kycDoc = await fs.getDoc(`kycProfiles/${user.uid}`);
           const kycCountry = String(kycDoc?.["kycCountry"] || "NG").toUpperCase();
+
+          // Enforce TIN requirement before payout setup
+          const existingTaxId =
+            (typeof kycDoc?.["maskedTaxNumber"] === "string" && kycDoc["maskedTaxNumber"].trim().length > 0) ||
+            (typeof kycDoc?.["taxId"] === "string" && kycDoc["taxId"].trim().length > 0);
+
+          const submittedTaxId = body.taxId?.trim();
+          if (!existingTaxId && !submittedTaxId) {
+            throw new ApiError(
+              400,
+              "TIN_REQUIRED",
+              "A Tax Identification Number (TIN) is required before payout account setup.",
+            );
+          }
+
+          if (submittedTaxId) {
+            const encryptedTax = encryptSensitiveField(submittedTaxId);
+            const maskedTax =
+              submittedTaxId.length > 4
+                ? "*".repeat(Math.min(6, submittedTaxId.length - 4)) + submittedTaxId.slice(-4)
+                : "****";
+            await fs.patchDoc(`kycProfiles/${user.uid}`, {
+              encryptedTaxNumber: encryptedTax,
+              maskedTaxNumber: maskedTax,
+            }).catch(() => {});
+          }
 
           const targetCountry = (body.bankCountry || kycCountry).toUpperCase();
           if (targetCountry !== kycCountry) {

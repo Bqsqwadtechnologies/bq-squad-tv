@@ -35,6 +35,13 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
           if (!isAvailableInRegion(assetRegion, viewerCountry)) {
             throw new ApiError(404, "CONTENT_NOT_AVAILABLE_IN_REGION", "This title is not available in your country.");
           }
+          const assetLicense = asset["license"] as Record<string, unknown> | undefined;
+          if (Array.isArray(assetLicense?.["territoryCodes"]) && assetLicense["territoryCodes"].length > 0 && viewerCountry) {
+            const allowedTerritories = (assetLicense["territoryCodes"] as string[]).map((t) => String(t).toUpperCase());
+            if (!allowedTerritories.includes(viewerCountry) && !allowedTerritories.includes("GLOBAL")) {
+              throw new ApiError(404, "CONTENT_NOT_AVAILABLE_IN_REGION", "This title is not available in your country.");
+            }
+          }
           const channelId = typeof asset["channelId"] === "string" ? asset["channelId"] : "";
           const channel = channelId ? await fs.getDoc("channels/" + channelId) : null;
           const previewToken = new URL(request.url).searchParams.get("previewToken");

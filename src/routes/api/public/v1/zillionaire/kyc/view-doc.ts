@@ -57,7 +57,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/kyc/view-doc")(
             throw new ApiError(403, "FORBIDDEN", "Viewer link is bound to another reviewer identifier.");
           }
 
-          if (!isSafeStoragePath(path) || !path.startsWith("kyc-vault/")) {
+          const isAllowedKycPath =
+            path.startsWith("kyc-vault/") ||
+            path.startsWith("producer-verification/") ||
+            path.startsWith("provider-verification/");
+
+          if (!isSafeStoragePath(path) || !isAllowedKycPath) {
             throw new ApiError(400, "INVALID_PATH", "Document path is outside the private vault.");
           }
 

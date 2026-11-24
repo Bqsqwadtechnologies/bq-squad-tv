@@ -15,20 +15,25 @@ export function errorBody(error: unknown): Response {
   const ref = generateErrorRef();
   if (error instanceof ApiError) {
     const message = getFriendlyErrorMessage(error.code, error.message);
+    const details = error.details && typeof error.details === "object" ? error.details : {};
     return Response.json(
-      { code: error.code, message, error: message, ref },
+      { code: error.code, message, error: message, ref, ...details },
       { status: error.status },
     );
   }
   if (error instanceof z.ZodError) {
     const message = getFriendlyErrorMessage("INVALID_REQUEST", "Invalid request.");
+    const issues = error.issues.map((issue) => {
+      const field = issue.path.join(".");
+      return field ? `${field}: ${issue.message}` : issue.message;
+    });
     return Response.json(
       {
         code: "INVALID_REQUEST",
         message,
         error: message,
         ref,
-        issues: error.issues.map((issue) => issue.message),
+        issues,
       },
       { status: 400 },
     );

@@ -400,8 +400,28 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
             else if (item.mediaType === "thumbnail") thumbnailMediaIds.push(mediaId);
             else spriteMediaIds.push(mediaId);
           }
+          const completedAsset = await fs.getDoc("contentAssets/" + assetId);
+          const completedLicense = completedAsset?.["license"] as Record<string, unknown> | undefined;
+          const publishDirectly = Boolean(
+            completedAsset?.["isPlatformAsset"] === true &&
+            completedAsset?.["directPublish"] === true &&
+            completedAsset?.["duplicateDetected"] !== true &&
+            completedAsset?.["rightsReviewStatus"] === "verified" &&
+            completedLicense?.["status"] === "verified" &&
+            completedLicense?.["verificationStatus"] === "verified" &&
+            completedLicense?.["commercialStreamingAllowed"] === true &&
+            Array.isArray(completedLicense?.["territoryCodes"]) &&
+            completedLicense["territoryCodes"].length > 0
+          );
+          const completedAt = new Date().toISOString();
           await fs.patchDoc("contentAssets/" + assetId, {
-            status: "processed_pending_review",
+            status: publishDirectly ? "ready" : "processed_pending_review",
+            ...(publishDirectly ? {
+              contentStatus: "published",
+              published: true,
+              publishedAt: completedAt,
+              publishedBy: typeof completedAsset?.["ownerUid"] === "string" ? completedAsset["ownerUid"] : "platform",
+            } : {}),
             transcodeJobStatus: "completed",
             streamDestinationId: binding.streamDestinationId,
             streamReplicaIds: binding.streamReplicaIds,
@@ -442,8 +462,8 @@ export const Route = createFileRoute("/api/public/v1/worker/jobs/$assetId/comple
             allSegmentsVerified: true,
             expectedObjectCount: body.files.length,
             uploadedObjectCount: listedObjects.length,
-            ownerReviewRequired: true,
-            ownerReviewRequiredAt: now,
+            ownerReviewRequired: !publishDirectly,
+            ...(!publishDirectly ? { ownerReviewRequiredAt: now } : {}),
             updatedAt: now,
           });
           const usage = body.computeUsage;

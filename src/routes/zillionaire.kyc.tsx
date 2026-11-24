@@ -1034,21 +1034,79 @@ function KycReviewBody({ token, isOwner }: { token: string; isOwner?: boolean })
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div>
-                        <span className="text-slate-400">Legal Entity Name:</span>
+                        <span className="text-slate-400">Legal Entity / Full Name:</span>
                         <p className="font-semibold text-white">{detailProfile.legalName || "—"}</p>
                       </div>
+                      <div>
+                        <span className="text-slate-400">Entity Type:</span>
+                        <p className="font-semibold text-cyan-300">
+                          {detailProfile.kycType === "producer_business" ? "Registered Business / Studio" : "Individual Content Producer"}
+                        </p>
+                      </div>
+                      {detailProfile.businessName && (
+                        <div>
+                          <span className="text-slate-400">Trade / Studio Name:</span>
+                          <p className="font-semibold text-white">{detailProfile.businessName}</p>
+                        </div>
+                      )}
                       <div>
                         <span className="text-slate-400">Country:</span>
                         <p className="font-semibold text-white">{detailProfile.kycCountry || "—"}</p>
                       </div>
+                      {detailProfile.companyRegNumber && (
+                        <div>
+                          <span className="text-slate-400">Company Registration Number:</span>
+                          <p className="font-mono text-white">{detailProfile.companyRegNumber}</p>
+                        </div>
+                      )}
+                      {detailProfile.directorName && (
+                        <div>
+                          <span className="text-slate-400">Managing Director / Representative:</span>
+                          <p className="font-semibold text-white">{detailProfile.directorName}</p>
+                        </div>
+                      )}
                       <div>
-                        <span className="text-slate-400">Registration Number:</span>
-                        <p className="font-mono text-white">{detailProfile.companyRegNumber || "—"}</p>
+                        <span className="text-slate-400">Official Phone:</span>
+                        <p className="font-mono text-emerald-300">
+                          {detailProfile.phone || "—"} {detailProfile.phoneVerified ? "✓ (Verified)" : "(Unverified)"}
+                        </p>
                       </div>
-                      <div>
-                        <span className="text-slate-400">Official Phone (SMS Verified):</span>
-                        <p className="font-mono text-emerald-300">{detailProfile.phone || "—"}</p>
-                      </div>
+                      {detailProfile.maskedDateOfBirth && (
+                        <div>
+                          <span className="text-slate-400">Date of Birth:</span>
+                          <p className="font-mono text-slate-200">{detailProfile.maskedDateOfBirth}</p>
+                        </div>
+                      )}
+                      {detailProfile.residentialAddress && (
+                        <div className="sm:col-span-2 rounded-lg border border-white/5 bg-black/20 p-2">
+                          <span className="text-slate-400 font-semibold block mb-0.5">Residential Address:</span>
+                          <p className="text-slate-200">
+                            {[
+                              detailProfile.residentialAddress.line1,
+                              detailProfile.residentialAddress.line2,
+                              detailProfile.residentialAddress.city,
+                              detailProfile.residentialAddress.state,
+                              detailProfile.residentialAddress.postalCode,
+                              detailProfile.residentialAddress.country,
+                            ].filter(Boolean).join(", ")}
+                          </p>
+                        </div>
+                      )}
+                      {detailProfile.businessAddress && (
+                        <div className="sm:col-span-2 rounded-lg border border-white/5 bg-black/20 p-2">
+                          <span className="text-slate-400 font-semibold block mb-0.5">Registered Business Address:</span>
+                          <p className="text-slate-200">
+                            {[
+                              detailProfile.businessAddress.line1,
+                              detailProfile.businessAddress.line2,
+                              detailProfile.businessAddress.city,
+                              detailProfile.businessAddress.state,
+                              detailProfile.businessAddress.postalCode,
+                              detailProfile.businessAddress.country,
+                            ].filter(Boolean).join(", ")}
+                          </p>
+                        </div>
+                      )}
 
                       {/* Audited Reveal Fields */}
                       <div className="rounded-xl border border-white/10 bg-black/40 p-2.5 space-y-1">

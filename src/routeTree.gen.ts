@@ -40,6 +40,7 @@ import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SportsRouteImport } from './routes/sports'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as ChannelsChannelIdRouteImport } from './routes/channels.$channelId'
 import { Route as ContentAssetIdRouteImport } from './routes/content.$assetId'
 import { Route as HelpDataProtectionRouteImport } from './routes/help.data-protection'
@@ -49,8 +50,10 @@ import { Route as ProducerIndexRouteImport } from './routes/producer.index'
 import { Route as ProducerChannelsRouteImport } from './routes/producer.channels'
 import { Route as ProducerCollaborationsRouteImport } from './routes/producer.collaborations'
 import { Route as ProducerDocsRouteImport } from './routes/producer.docs'
+import { Route as ProducerProfileRouteImport } from './routes/producer.profile'
 import { Route as ProducerTeamRouteImport } from './routes/producer.team'
 import { Route as ProducerUploadRouteImport } from './routes/producer.upload'
+import { Route as ProfileSetupRouteImport } from './routes/profile.setup'
 import { Route as ProviderIndexRouteImport } from './routes/provider.index'
 import { Route as ProviderChannelsRouteImport } from './routes/provider.channels'
 import { Route as ProviderContractsRouteImport } from './routes/provider.contracts'
@@ -162,6 +165,7 @@ import { Route as ApiPublicV1PagesSlugRouteImport } from './routes/api/public/v1
 import { Route as ApiPublicV1PartnerEnquiryRouteImport } from './routes/api/public/v1/partner/enquiry'
 import { Route as ApiPublicV1PreviewGrantRouteImport } from './routes/api/public/v1/preview/grant'
 import { Route as ApiPublicV1ProducerAnalyticsRouteImport } from './routes/api/public/v1/producer/analytics'
+import { Route as ApiPublicV1ProducerBlueVerificationRouteImport } from './routes/api/public/v1/producer/blue-verification'
 import { Route as ApiPublicV1ProducerChannelsRouteImport } from './routes/api/public/v1/producer/channels'
 import { Route as ApiPublicV1ProducerEarningsRouteImport } from './routes/api/public/v1/producer/earnings'
 import { Route as ApiPublicV1ProducerMobileSummaryRouteImport } from './routes/api/public/v1/producer/mobile-summary'
@@ -169,6 +173,7 @@ import { Route as ApiPublicV1ProducerPayoutProfileRouteImport } from './routes/a
 import { Route as ApiPublicV1ProducerPayoutProofUploadRouteImport } from './routes/api/public/v1/producer/payout-proof-upload'
 import { Route as ApiPublicV1ProducerPayoutsRouteImport } from './routes/api/public/v1/producer/payouts'
 import { Route as ApiPublicV1ProducerProfileRouteImport } from './routes/api/public/v1/producer/profile'
+import { Route as ApiPublicV1ProducerProfileMediaRouteImport } from './routes/api/public/v1/producer/profile-media'
 import { Route as ApiPublicV1ProducerTeamRouteImport } from './routes/api/public/v1/producer/team'
 import { Route as ApiPublicV1ProducerTier2VerificationRouteImport } from './routes/api/public/v1/producer/tier2-verification'
 import { Route as ApiPublicV1ProducerVerificationRouteImport } from './routes/api/public/v1/producer/verification'
@@ -195,6 +200,8 @@ import { Route as ApiPublicV1StorageCompleteRouteImport } from './routes/api/pub
 import { Route as ApiPublicV1StorageIntentRouteImport } from './routes/api/public/v1/storage/intent'
 import { Route as ApiPublicV1SupportTicketsRouteImport } from './routes/api/public/v1/support/tickets'
 import { Route as ApiPublicV1UserNotificationPreferencesRouteImport } from './routes/api/public/v1/user/notification-preferences'
+import { Route as ApiPublicV1ViewerProfileRouteImport } from './routes/api/public/v1/viewer/profile'
+import { Route as ApiPublicV1ViewersUsernameRouteImport } from './routes/api/public/v1/viewers/$username'
 import { Route as ApiPublicV1WalletHistoryRouteImport } from './routes/api/public/v1/wallet/history'
 import { Route as ApiPublicV1WalletLedgerRouteImport } from './routes/api/public/v1/wallet/ledger'
 import { Route as ApiPublicV1WalletPreferencesRouteImport } from './routes/api/public/v1/wallet/preferences'
@@ -292,6 +299,7 @@ import { Route as ApiPublicV1ZillionaireCommentsIndexRouteImport } from './route
 import { Route as ApiPublicV1ZillionaireConfigFlagsRouteImport } from './routes/api/public/v1/zillionaire/config/flags'
 import { Route as ApiPublicV1ZillionaireConfigModalSpendRouteImport } from './routes/api/public/v1/zillionaire/config/modal-spend'
 import { Route as ApiPublicV1ZillionaireConfigPricingRouteImport } from './routes/api/public/v1/zillionaire/config/pricing'
+import { Route as ApiPublicV1ZillionaireConfigProducerBlueTickRouteImport } from './routes/api/public/v1/zillionaire/config/producer-blue-tick'
 import { Route as ApiPublicV1ZillionaireConfigSettingsRouteImport } from './routes/api/public/v1/zillionaire/config/settings'
 import { Route as ApiPublicV1ZillionaireContentAssetsIndexRouteImport } from './routes/api/public/v1/zillionaire/content-assets/index'
 import { Route as ApiPublicV1ZillionaireCopyrightCasesIndexRouteImport } from './routes/api/public/v1/zillionaire/copyright-cases/index'
@@ -575,6 +583,11 @@ const WalletRoute = WalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChannelsChannelIdRoute = ChannelsChannelIdRouteImport.update({
   id: '/channels/$channelId',
   path: '/channels/$channelId',
@@ -620,6 +633,11 @@ const ProducerDocsRoute = ProducerDocsRouteImport.update({
   path: '/producer/docs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProducerProfileRoute = ProducerProfileRouteImport.update({
+  id: '/producer/profile',
+  path: '/producer/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProducerTeamRoute = ProducerTeamRouteImport.update({
   id: '/producer/team',
   path: '/producer/team',
@@ -628,6 +646,11 @@ const ProducerTeamRoute = ProducerTeamRouteImport.update({
 const ProducerUploadRoute = ProducerUploadRouteImport.update({
   id: '/producer/upload',
   path: '/producer/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileSetupRoute = ProfileSetupRouteImport.update({
+  id: '/profile/setup',
+  path: '/profile/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProviderIndexRoute = ProviderIndexRouteImport.update({
@@ -1225,6 +1248,12 @@ const ApiPublicV1ProducerAnalyticsRoute =
     path: '/api/public/v1/producer/analytics',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicV1ProducerBlueVerificationRoute =
+  ApiPublicV1ProducerBlueVerificationRouteImport.update({
+    id: '/api/public/v1/producer/blue-verification',
+    path: '/api/public/v1/producer/blue-verification',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicV1ProducerChannelsRoute =
   ApiPublicV1ProducerChannelsRouteImport.update({
     id: '/api/public/v1/producer/channels',
@@ -1265,6 +1294,12 @@ const ApiPublicV1ProducerProfileRoute =
   ApiPublicV1ProducerProfileRouteImport.update({
     id: '/api/public/v1/producer/profile',
     path: '/api/public/v1/producer/profile',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ProducerProfileMediaRoute =
+  ApiPublicV1ProducerProfileMediaRouteImport.update({
+    id: '/api/public/v1/producer/profile-media',
+    path: '/api/public/v1/producer/profile-media',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ProducerTeamRoute = ApiPublicV1ProducerTeamRouteImport.update({
@@ -1418,6 +1453,18 @@ const ApiPublicV1UserNotificationPreferencesRoute =
   ApiPublicV1UserNotificationPreferencesRouteImport.update({
     id: '/api/public/v1/user/notification-preferences',
     path: '/api/public/v1/user/notification-preferences',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ViewerProfileRoute =
+  ApiPublicV1ViewerProfileRouteImport.update({
+    id: '/api/public/v1/viewer/profile',
+    path: '/api/public/v1/viewer/profile',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ViewersUsernameRoute =
+  ApiPublicV1ViewersUsernameRouteImport.update({
+    id: '/api/public/v1/viewers/$username',
+    path: '/api/public/v1/viewers/$username',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1WalletHistoryRoute =
@@ -1997,6 +2044,12 @@ const ApiPublicV1ZillionaireConfigPricingRoute =
   ApiPublicV1ZillionaireConfigPricingRouteImport.update({
     id: '/api/public/v1/zillionaire/config/pricing',
     path: '/api/public/v1/zillionaire/config/pricing',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicV1ZillionaireConfigProducerBlueTickRoute =
+  ApiPublicV1ZillionaireConfigProducerBlueTickRouteImport.update({
+    id: '/api/public/v1/zillionaire/config/producer-blue-tick',
+    path: '/api/public/v1/zillionaire/config/producer-blue-tick',
     getParentRoute: () => rootRouteImport,
   } as any)
 const ApiPublicV1ZillionaireConfigSettingsRoute =
@@ -2794,6 +2847,7 @@ export interface FileRoutesByFullPath {
   '/sports': typeof SportsRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/channels/$channelId': typeof ChannelsChannelIdRoute
   '/content/$assetId': typeof ContentAssetIdRoute
   '/help/data-protection': typeof HelpDataProtectionRoute
@@ -2802,8 +2856,10 @@ export interface FileRoutesByFullPath {
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
+  '/producer/profile': typeof ProducerProfileRoute
   '/producer/team': typeof ProducerTeamRoute
   '/producer/upload': typeof ProducerUploadRoute
+  '/profile/setup': typeof ProfileSetupRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
@@ -2911,6 +2967,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
   '/api/public/v1/preview/grant': typeof ApiPublicV1PreviewGrantRoute
   '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
+  '/api/public/v1/producer/blue-verification': typeof ApiPublicV1ProducerBlueVerificationRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
@@ -2918,6 +2975,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/producer/payout-proof-upload': typeof ApiPublicV1ProducerPayoutProofUploadRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   '/api/public/v1/producer/profile': typeof ApiPublicV1ProducerProfileRoute
+  '/api/public/v1/producer/profile-media': typeof ApiPublicV1ProducerProfileMediaRoute
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/tier2-verification': typeof ApiPublicV1ProducerTier2VerificationRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -2942,6 +3000,8 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
   '/api/public/v1/user/notification-preferences': typeof ApiPublicV1UserNotificationPreferencesRoute
+  '/api/public/v1/viewer/profile': typeof ApiPublicV1ViewerProfileRoute
+  '/api/public/v1/viewers/$username': typeof ApiPublicV1ViewersUsernameRoute
   '/api/public/v1/wallet/history': typeof ApiPublicV1WalletHistoryRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/wallet/preferences': typeof ApiPublicV1WalletPreferencesRoute
@@ -3040,6 +3100,7 @@ export interface FileRoutesByFullPath {
   '/api/public/v1/zillionaire/config/flags': typeof ApiPublicV1ZillionaireConfigFlagsRoute
   '/api/public/v1/zillionaire/config/modal-spend': typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
+  '/api/public/v1/zillionaire/config/producer-blue-tick': typeof ApiPublicV1ZillionaireConfigProducerBlueTickRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/kyc/bulk-action': typeof ApiPublicV1ZillionaireKycBulkActionRoute
@@ -3206,6 +3267,7 @@ export interface FileRoutesByTo {
   '/sports': typeof SportsRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/channels/$channelId': typeof ChannelsChannelIdRoute
   '/content/$assetId': typeof ContentAssetIdRoute
   '/help/data-protection': typeof HelpDataProtectionRoute
@@ -3214,8 +3276,10 @@ export interface FileRoutesByTo {
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
+  '/producer/profile': typeof ProducerProfileRoute
   '/producer/team': typeof ProducerTeamRoute
   '/producer/upload': typeof ProducerUploadRoute
+  '/profile/setup': typeof ProfileSetupRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
@@ -3323,6 +3387,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
   '/api/public/v1/preview/grant': typeof ApiPublicV1PreviewGrantRoute
   '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
+  '/api/public/v1/producer/blue-verification': typeof ApiPublicV1ProducerBlueVerificationRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
@@ -3330,6 +3395,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/producer/payout-proof-upload': typeof ApiPublicV1ProducerPayoutProofUploadRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   '/api/public/v1/producer/profile': typeof ApiPublicV1ProducerProfileRoute
+  '/api/public/v1/producer/profile-media': typeof ApiPublicV1ProducerProfileMediaRoute
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/tier2-verification': typeof ApiPublicV1ProducerTier2VerificationRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -3354,6 +3420,8 @@ export interface FileRoutesByTo {
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
   '/api/public/v1/user/notification-preferences': typeof ApiPublicV1UserNotificationPreferencesRoute
+  '/api/public/v1/viewer/profile': typeof ApiPublicV1ViewerProfileRoute
+  '/api/public/v1/viewers/$username': typeof ApiPublicV1ViewersUsernameRoute
   '/api/public/v1/wallet/history': typeof ApiPublicV1WalletHistoryRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/wallet/preferences': typeof ApiPublicV1WalletPreferencesRoute
@@ -3451,6 +3519,7 @@ export interface FileRoutesByTo {
   '/api/public/v1/zillionaire/config/flags': typeof ApiPublicV1ZillionaireConfigFlagsRoute
   '/api/public/v1/zillionaire/config/modal-spend': typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
+  '/api/public/v1/zillionaire/config/producer-blue-tick': typeof ApiPublicV1ZillionaireConfigProducerBlueTickRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/kyc/bulk-action': typeof ApiPublicV1ZillionaireKycBulkActionRoute
@@ -3618,6 +3687,7 @@ export interface FileRoutesById {
   '/sports': typeof SportsRoute
   '/terms': typeof TermsRoute
   '/wallet': typeof WalletRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/channels/$channelId': typeof ChannelsChannelIdRoute
   '/content/$assetId': typeof ContentAssetIdRoute
   '/help/data-protection': typeof HelpDataProtectionRoute
@@ -3626,8 +3696,10 @@ export interface FileRoutesById {
   '/producer/channels': typeof ProducerChannelsRouteWithChildren
   '/producer/collaborations': typeof ProducerCollaborationsRoute
   '/producer/docs': typeof ProducerDocsRoute
+  '/producer/profile': typeof ProducerProfileRoute
   '/producer/team': typeof ProducerTeamRoute
   '/producer/upload': typeof ProducerUploadRoute
+  '/profile/setup': typeof ProfileSetupRoute
   '/provider/channels': typeof ProviderChannelsRoute
   '/provider/contracts': typeof ProviderContractsRoute
   '/provider/disputes': typeof ProviderDisputesRoute
@@ -3735,6 +3807,7 @@ export interface FileRoutesById {
   '/api/public/v1/partner/enquiry': typeof ApiPublicV1PartnerEnquiryRoute
   '/api/public/v1/preview/grant': typeof ApiPublicV1PreviewGrantRoute
   '/api/public/v1/producer/analytics': typeof ApiPublicV1ProducerAnalyticsRoute
+  '/api/public/v1/producer/blue-verification': typeof ApiPublicV1ProducerBlueVerificationRoute
   '/api/public/v1/producer/channels': typeof ApiPublicV1ProducerChannelsRouteWithChildren
   '/api/public/v1/producer/earnings': typeof ApiPublicV1ProducerEarningsRoute
   '/api/public/v1/producer/mobile-summary': typeof ApiPublicV1ProducerMobileSummaryRoute
@@ -3742,6 +3815,7 @@ export interface FileRoutesById {
   '/api/public/v1/producer/payout-proof-upload': typeof ApiPublicV1ProducerPayoutProofUploadRoute
   '/api/public/v1/producer/payouts': typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   '/api/public/v1/producer/profile': typeof ApiPublicV1ProducerProfileRoute
+  '/api/public/v1/producer/profile-media': typeof ApiPublicV1ProducerProfileMediaRoute
   '/api/public/v1/producer/team': typeof ApiPublicV1ProducerTeamRoute
   '/api/public/v1/producer/tier2-verification': typeof ApiPublicV1ProducerTier2VerificationRoute
   '/api/public/v1/producer/verification': typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -3766,6 +3840,8 @@ export interface FileRoutesById {
   '/api/public/v1/storage/intent': typeof ApiPublicV1StorageIntentRoute
   '/api/public/v1/support/tickets': typeof ApiPublicV1SupportTicketsRoute
   '/api/public/v1/user/notification-preferences': typeof ApiPublicV1UserNotificationPreferencesRoute
+  '/api/public/v1/viewer/profile': typeof ApiPublicV1ViewerProfileRoute
+  '/api/public/v1/viewers/$username': typeof ApiPublicV1ViewersUsernameRoute
   '/api/public/v1/wallet/history': typeof ApiPublicV1WalletHistoryRoute
   '/api/public/v1/wallet/ledger': typeof ApiPublicV1WalletLedgerRoute
   '/api/public/v1/wallet/preferences': typeof ApiPublicV1WalletPreferencesRoute
@@ -3864,6 +3940,7 @@ export interface FileRoutesById {
   '/api/public/v1/zillionaire/config/flags': typeof ApiPublicV1ZillionaireConfigFlagsRoute
   '/api/public/v1/zillionaire/config/modal-spend': typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   '/api/public/v1/zillionaire/config/pricing': typeof ApiPublicV1ZillionaireConfigPricingRoute
+  '/api/public/v1/zillionaire/config/producer-blue-tick': typeof ApiPublicV1ZillionaireConfigProducerBlueTickRoute
   '/api/public/v1/zillionaire/config/settings': typeof ApiPublicV1ZillionaireConfigSettingsRoute
   '/api/public/v1/zillionaire/email/test': typeof ApiPublicV1ZillionaireEmailTestRoute
   '/api/public/v1/zillionaire/kyc/bulk-action': typeof ApiPublicV1ZillionaireKycBulkActionRoute
@@ -4032,6 +4109,7 @@ export interface FileRouteTypes {
     | '/sports'
     | '/terms'
     | '/wallet'
+    | '/auth/callback'
     | '/channels/$channelId'
     | '/content/$assetId'
     | '/help/data-protection'
@@ -4040,8 +4118,10 @@ export interface FileRouteTypes {
     | '/producer/channels'
     | '/producer/collaborations'
     | '/producer/docs'
+    | '/producer/profile'
     | '/producer/team'
     | '/producer/upload'
+    | '/profile/setup'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
@@ -4149,6 +4229,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/partner/enquiry'
     | '/api/public/v1/preview/grant'
     | '/api/public/v1/producer/analytics'
+    | '/api/public/v1/producer/blue-verification'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
@@ -4156,6 +4237,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/payout-proof-upload'
     | '/api/public/v1/producer/payouts'
     | '/api/public/v1/producer/profile'
+    | '/api/public/v1/producer/profile-media'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/tier2-verification'
     | '/api/public/v1/producer/verification'
@@ -4180,6 +4262,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/storage/intent'
     | '/api/public/v1/support/tickets'
     | '/api/public/v1/user/notification-preferences'
+    | '/api/public/v1/viewer/profile'
+    | '/api/public/v1/viewers/$username'
     | '/api/public/v1/wallet/history'
     | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/wallet/preferences'
@@ -4278,6 +4362,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/flags'
     | '/api/public/v1/zillionaire/config/modal-spend'
     | '/api/public/v1/zillionaire/config/pricing'
+    | '/api/public/v1/zillionaire/config/producer-blue-tick'
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/kyc/bulk-action'
@@ -4444,6 +4529,7 @@ export interface FileRouteTypes {
     | '/sports'
     | '/terms'
     | '/wallet'
+    | '/auth/callback'
     | '/channels/$channelId'
     | '/content/$assetId'
     | '/help/data-protection'
@@ -4452,8 +4538,10 @@ export interface FileRouteTypes {
     | '/producer/channels'
     | '/producer/collaborations'
     | '/producer/docs'
+    | '/producer/profile'
     | '/producer/team'
     | '/producer/upload'
+    | '/profile/setup'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
@@ -4561,6 +4649,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/partner/enquiry'
     | '/api/public/v1/preview/grant'
     | '/api/public/v1/producer/analytics'
+    | '/api/public/v1/producer/blue-verification'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
@@ -4568,6 +4657,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/payout-proof-upload'
     | '/api/public/v1/producer/payouts'
     | '/api/public/v1/producer/profile'
+    | '/api/public/v1/producer/profile-media'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/tier2-verification'
     | '/api/public/v1/producer/verification'
@@ -4592,6 +4682,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/storage/intent'
     | '/api/public/v1/support/tickets'
     | '/api/public/v1/user/notification-preferences'
+    | '/api/public/v1/viewer/profile'
+    | '/api/public/v1/viewers/$username'
     | '/api/public/v1/wallet/history'
     | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/wallet/preferences'
@@ -4689,6 +4781,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/flags'
     | '/api/public/v1/zillionaire/config/modal-spend'
     | '/api/public/v1/zillionaire/config/pricing'
+    | '/api/public/v1/zillionaire/config/producer-blue-tick'
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/kyc/bulk-action'
@@ -4855,6 +4948,7 @@ export interface FileRouteTypes {
     | '/sports'
     | '/terms'
     | '/wallet'
+    | '/auth/callback'
     | '/channels/$channelId'
     | '/content/$assetId'
     | '/help/data-protection'
@@ -4863,8 +4957,10 @@ export interface FileRouteTypes {
     | '/producer/channels'
     | '/producer/collaborations'
     | '/producer/docs'
+    | '/producer/profile'
     | '/producer/team'
     | '/producer/upload'
+    | '/profile/setup'
     | '/provider/channels'
     | '/provider/contracts'
     | '/provider/disputes'
@@ -4972,6 +5068,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/partner/enquiry'
     | '/api/public/v1/preview/grant'
     | '/api/public/v1/producer/analytics'
+    | '/api/public/v1/producer/blue-verification'
     | '/api/public/v1/producer/channels'
     | '/api/public/v1/producer/earnings'
     | '/api/public/v1/producer/mobile-summary'
@@ -4979,6 +5076,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/producer/payout-proof-upload'
     | '/api/public/v1/producer/payouts'
     | '/api/public/v1/producer/profile'
+    | '/api/public/v1/producer/profile-media'
     | '/api/public/v1/producer/team'
     | '/api/public/v1/producer/tier2-verification'
     | '/api/public/v1/producer/verification'
@@ -5003,6 +5101,8 @@ export interface FileRouteTypes {
     | '/api/public/v1/storage/intent'
     | '/api/public/v1/support/tickets'
     | '/api/public/v1/user/notification-preferences'
+    | '/api/public/v1/viewer/profile'
+    | '/api/public/v1/viewers/$username'
     | '/api/public/v1/wallet/history'
     | '/api/public/v1/wallet/ledger'
     | '/api/public/v1/wallet/preferences'
@@ -5101,6 +5201,7 @@ export interface FileRouteTypes {
     | '/api/public/v1/zillionaire/config/flags'
     | '/api/public/v1/zillionaire/config/modal-spend'
     | '/api/public/v1/zillionaire/config/pricing'
+    | '/api/public/v1/zillionaire/config/producer-blue-tick'
     | '/api/public/v1/zillionaire/config/settings'
     | '/api/public/v1/zillionaire/email/test'
     | '/api/public/v1/zillionaire/kyc/bulk-action'
@@ -5268,6 +5369,7 @@ export interface RootRouteChildren {
   SportsRoute: typeof SportsRoute
   TermsRoute: typeof TermsRoute
   WalletRoute: typeof WalletRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   ChannelsChannelIdRoute: typeof ChannelsChannelIdRoute
   ContentAssetIdRoute: typeof ContentAssetIdRoute
   LegalSlugRoute: typeof LegalSlugRoute
@@ -5275,8 +5377,10 @@ export interface RootRouteChildren {
   ProducerChannelsRoute: typeof ProducerChannelsRouteWithChildren
   ProducerCollaborationsRoute: typeof ProducerCollaborationsRoute
   ProducerDocsRoute: typeof ProducerDocsRoute
+  ProducerProfileRoute: typeof ProducerProfileRoute
   ProducerTeamRoute: typeof ProducerTeamRoute
   ProducerUploadRoute: typeof ProducerUploadRoute
+  ProfileSetupRoute: typeof ProfileSetupRoute
   ProviderChannelsRoute: typeof ProviderChannelsRoute
   ProviderContractsRoute: typeof ProviderContractsRoute
   ProviderDisputesRoute: typeof ProviderDisputesRoute
@@ -5381,6 +5485,7 @@ export interface RootRouteChildren {
   ApiPublicV1PartnerEnquiryRoute: typeof ApiPublicV1PartnerEnquiryRoute
   ApiPublicV1PreviewGrantRoute: typeof ApiPublicV1PreviewGrantRoute
   ApiPublicV1ProducerAnalyticsRoute: typeof ApiPublicV1ProducerAnalyticsRoute
+  ApiPublicV1ProducerBlueVerificationRoute: typeof ApiPublicV1ProducerBlueVerificationRoute
   ApiPublicV1ProducerChannelsRoute: typeof ApiPublicV1ProducerChannelsRouteWithChildren
   ApiPublicV1ProducerEarningsRoute: typeof ApiPublicV1ProducerEarningsRoute
   ApiPublicV1ProducerMobileSummaryRoute: typeof ApiPublicV1ProducerMobileSummaryRoute
@@ -5388,6 +5493,7 @@ export interface RootRouteChildren {
   ApiPublicV1ProducerPayoutProofUploadRoute: typeof ApiPublicV1ProducerPayoutProofUploadRoute
   ApiPublicV1ProducerPayoutsRoute: typeof ApiPublicV1ProducerPayoutsRouteWithChildren
   ApiPublicV1ProducerProfileRoute: typeof ApiPublicV1ProducerProfileRoute
+  ApiPublicV1ProducerProfileMediaRoute: typeof ApiPublicV1ProducerProfileMediaRoute
   ApiPublicV1ProducerTeamRoute: typeof ApiPublicV1ProducerTeamRoute
   ApiPublicV1ProducerTier2VerificationRoute: typeof ApiPublicV1ProducerTier2VerificationRoute
   ApiPublicV1ProducerVerificationRoute: typeof ApiPublicV1ProducerVerificationRouteWithChildren
@@ -5412,6 +5518,8 @@ export interface RootRouteChildren {
   ApiPublicV1StorageIntentRoute: typeof ApiPublicV1StorageIntentRoute
   ApiPublicV1SupportTicketsRoute: typeof ApiPublicV1SupportTicketsRoute
   ApiPublicV1UserNotificationPreferencesRoute: typeof ApiPublicV1UserNotificationPreferencesRoute
+  ApiPublicV1ViewerProfileRoute: typeof ApiPublicV1ViewerProfileRoute
+  ApiPublicV1ViewersUsernameRoute: typeof ApiPublicV1ViewersUsernameRoute
   ApiPublicV1WatchPartiesPartyIdRoute: typeof ApiPublicV1WatchPartiesPartyIdRoute
   ApiPublicV1WatchlistTitleIdRoute: typeof ApiPublicV1WatchlistTitleIdRoute
   ApiPublicV1ZillionaireApprovalsRoute: typeof ApiPublicV1ZillionaireApprovalsRoute
@@ -5490,6 +5598,7 @@ export interface RootRouteChildren {
   ApiPublicV1ZillionaireConfigFlagsRoute: typeof ApiPublicV1ZillionaireConfigFlagsRoute
   ApiPublicV1ZillionaireConfigModalSpendRoute: typeof ApiPublicV1ZillionaireConfigModalSpendRoute
   ApiPublicV1ZillionaireConfigPricingRoute: typeof ApiPublicV1ZillionaireConfigPricingRoute
+  ApiPublicV1ZillionaireConfigProducerBlueTickRoute: typeof ApiPublicV1ZillionaireConfigProducerBlueTickRoute
   ApiPublicV1ZillionaireConfigSettingsRoute: typeof ApiPublicV1ZillionaireConfigSettingsRoute
   ApiPublicV1ZillionaireEmailTestRoute: typeof ApiPublicV1ZillionaireEmailTestRoute
   ApiPublicV1ZillionaireKycBulkActionRoute: typeof ApiPublicV1ZillionaireKycBulkActionRoute
@@ -5826,6 +5935,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WalletRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/channels/$channelId': {
       id: '/channels/$channelId'
       path: '/channels/$channelId'
@@ -5889,6 +6005,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProducerDocsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/producer/profile': {
+      id: '/producer/profile'
+      path: '/producer/profile'
+      fullPath: '/producer/profile'
+      preLoaderRoute: typeof ProducerProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/producer/team': {
       id: '/producer/team'
       path: '/producer/team'
@@ -5901,6 +6024,13 @@ declare module '@tanstack/react-router' {
       path: '/producer/upload'
       fullPath: '/producer/upload'
       preLoaderRoute: typeof ProducerUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile/setup': {
+      id: '/profile/setup'
+      path: '/profile/setup'
+      fullPath: '/profile/setup'
+      preLoaderRoute: typeof ProfileSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/provider/': {
@@ -6680,6 +6810,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicV1ProducerAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/v1/producer/blue-verification': {
+      id: '/api/public/v1/producer/blue-verification'
+      path: '/api/public/v1/producer/blue-verification'
+      fullPath: '/api/public/v1/producer/blue-verification'
+      preLoaderRoute: typeof ApiPublicV1ProducerBlueVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/v1/producer/channels': {
       id: '/api/public/v1/producer/channels'
       path: '/api/public/v1/producer/channels'
@@ -6727,6 +6864,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/producer/profile'
       fullPath: '/api/public/v1/producer/profile'
       preLoaderRoute: typeof ApiPublicV1ProducerProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/producer/profile-media': {
+      id: '/api/public/v1/producer/profile-media'
+      path: '/api/public/v1/producer/profile-media'
+      fullPath: '/api/public/v1/producer/profile-media'
+      preLoaderRoute: typeof ApiPublicV1ProducerProfileMediaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/producer/team': {
@@ -6909,6 +7053,20 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/user/notification-preferences'
       fullPath: '/api/public/v1/user/notification-preferences'
       preLoaderRoute: typeof ApiPublicV1UserNotificationPreferencesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/viewer/profile': {
+      id: '/api/public/v1/viewer/profile'
+      path: '/api/public/v1/viewer/profile'
+      fullPath: '/api/public/v1/viewer/profile'
+      preLoaderRoute: typeof ApiPublicV1ViewerProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/viewers/$username': {
+      id: '/api/public/v1/viewers/$username'
+      path: '/api/public/v1/viewers/$username'
+      fullPath: '/api/public/v1/viewers/$username'
+      preLoaderRoute: typeof ApiPublicV1ViewersUsernameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/wallet/history': {
@@ -7588,6 +7746,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/v1/zillionaire/config/pricing'
       fullPath: '/api/public/v1/zillionaire/config/pricing'
       preLoaderRoute: typeof ApiPublicV1ZillionaireConfigPricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/v1/zillionaire/config/producer-blue-tick': {
+      id: '/api/public/v1/zillionaire/config/producer-blue-tick'
+      path: '/api/public/v1/zillionaire/config/producer-blue-tick'
+      fullPath: '/api/public/v1/zillionaire/config/producer-blue-tick'
+      preLoaderRoute: typeof ApiPublicV1ZillionaireConfigProducerBlueTickRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/v1/zillionaire/config/settings': {
@@ -8845,6 +9010,7 @@ const rootRouteChildren: RootRouteChildren = {
   SportsRoute: SportsRoute,
   TermsRoute: TermsRoute,
   WalletRoute: WalletRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   ChannelsChannelIdRoute: ChannelsChannelIdRoute,
   ContentAssetIdRoute: ContentAssetIdRoute,
   LegalSlugRoute: LegalSlugRoute,
@@ -8852,8 +9018,10 @@ const rootRouteChildren: RootRouteChildren = {
   ProducerChannelsRoute: ProducerChannelsRouteWithChildren,
   ProducerCollaborationsRoute: ProducerCollaborationsRoute,
   ProducerDocsRoute: ProducerDocsRoute,
+  ProducerProfileRoute: ProducerProfileRoute,
   ProducerTeamRoute: ProducerTeamRoute,
   ProducerUploadRoute: ProducerUploadRoute,
+  ProfileSetupRoute: ProfileSetupRoute,
   ProviderChannelsRoute: ProviderChannelsRoute,
   ProviderContractsRoute: ProviderContractsRoute,
   ProviderDisputesRoute: ProviderDisputesRoute,
@@ -8962,6 +9130,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1PartnerEnquiryRoute: ApiPublicV1PartnerEnquiryRoute,
   ApiPublicV1PreviewGrantRoute: ApiPublicV1PreviewGrantRoute,
   ApiPublicV1ProducerAnalyticsRoute: ApiPublicV1ProducerAnalyticsRoute,
+  ApiPublicV1ProducerBlueVerificationRoute:
+    ApiPublicV1ProducerBlueVerificationRoute,
   ApiPublicV1ProducerChannelsRoute:
     ApiPublicV1ProducerChannelsRouteWithChildren,
   ApiPublicV1ProducerEarningsRoute: ApiPublicV1ProducerEarningsRoute,
@@ -8971,6 +9141,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ProducerPayoutProofUploadRoute,
   ApiPublicV1ProducerPayoutsRoute: ApiPublicV1ProducerPayoutsRouteWithChildren,
   ApiPublicV1ProducerProfileRoute: ApiPublicV1ProducerProfileRoute,
+  ApiPublicV1ProducerProfileMediaRoute: ApiPublicV1ProducerProfileMediaRoute,
   ApiPublicV1ProducerTeamRoute: ApiPublicV1ProducerTeamRoute,
   ApiPublicV1ProducerTier2VerificationRoute:
     ApiPublicV1ProducerTier2VerificationRoute,
@@ -9000,6 +9171,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicV1SupportTicketsRoute: ApiPublicV1SupportTicketsRoute,
   ApiPublicV1UserNotificationPreferencesRoute:
     ApiPublicV1UserNotificationPreferencesRoute,
+  ApiPublicV1ViewerProfileRoute: ApiPublicV1ViewerProfileRoute,
+  ApiPublicV1ViewersUsernameRoute: ApiPublicV1ViewersUsernameRoute,
   ApiPublicV1WatchPartiesPartyIdRoute: ApiPublicV1WatchPartiesPartyIdRoute,
   ApiPublicV1WatchlistTitleIdRoute: ApiPublicV1WatchlistTitleIdRoute,
   ApiPublicV1ZillionaireApprovalsRoute: ApiPublicV1ZillionaireApprovalsRoute,
@@ -9113,6 +9286,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicV1ZillionaireConfigModalSpendRoute,
   ApiPublicV1ZillionaireConfigPricingRoute:
     ApiPublicV1ZillionaireConfigPricingRoute,
+  ApiPublicV1ZillionaireConfigProducerBlueTickRoute:
+    ApiPublicV1ZillionaireConfigProducerBlueTickRoute,
   ApiPublicV1ZillionaireConfigSettingsRoute:
     ApiPublicV1ZillionaireConfigSettingsRoute,
   ApiPublicV1ZillionaireEmailTestRoute: ApiPublicV1ZillionaireEmailTestRoute,

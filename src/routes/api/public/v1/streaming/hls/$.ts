@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody } from "@/lib/server/api";
 import { assertContentPlaybackRights } from "@/lib/server/content-rights";
+import { isAvailableInRegion } from "@/lib/server/region-availability";
 import {
   isSafeStoragePath,
   redactSensitiveText,
@@ -293,6 +294,9 @@ export const Route = createFileRoute("/api/public/v1/streaming/hls/$")({
             );
           }
           requireAdultForContent(profile, channel["adultOnly"]);
+          if (!isAvailableInRegion(asset["regionAvailability"], session["viewerCountry"])) {
+            throw new ApiError(403, "CONTENT_NOT_AVAILABLE_IN_REGION", "This content is not available in your country.");
+          }
           assertContentPlaybackRights({
             contentStatus: asset["contentStatus"] ?? channel["contentStatus"] ?? "published",
             license: (asset["license"] ?? channel["license"] ?? null) as Record<

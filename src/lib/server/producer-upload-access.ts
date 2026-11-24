@@ -28,12 +28,14 @@ export async function requireAuthorizedChannelUpload(
       user.customClaims,
       user.emailVerified === true,
     );
-    if (
-      !access.isZillionaireOwner &&
-      !access.adminModules.includes("content") &&
-      !access.adminModules.includes("channels") &&
-      !access.adminModules.includes("video")
-    ) {
+    const hasPlatformModule =
+      access.zillionaireModules.includes("content") ||
+      access.zillionaireModules.includes("channels") ||
+      access.zillionaireModules.includes("video") ||
+      access.adminModules.includes("content") ||
+      access.adminModules.includes("channels") ||
+      access.adminModules.includes("video");
+    if (!access.isZillionaireOwner && !hasPlatformModule) {
       throw new ApiError(
         403,
         "ZILLIONAIRE_SCOPE_REQUIRED",

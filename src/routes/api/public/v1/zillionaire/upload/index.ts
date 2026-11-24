@@ -84,6 +84,14 @@ const actionSchema = z.discriminatedUnion("action", [
     operation: z.enum(["pause", "resume", "retry", "direct_publish", "approve", "mark_review", "delete"]),
     reason: z.string().trim().min(3).max(500),
   }),
+  z.object({
+    action: z.literal("UPDATE_REGION"),
+    assetId: z.string().regex(/^[A-Za-z0-9_-]{1,100}$/),
+    regionAvailability: z.object({
+      mode: z.enum(["GLOBAL", "WHITELIST", "BLACKLIST"]),
+      countries: z.array(z.string().regex(/^[A-Z]{2}$/)).default([]),
+    }),
+  }),
 ]);
 
 export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
@@ -161,6 +169,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
               duplicateDetected: a["duplicateDetected"] === true,
               failureReason: a["failureReason"] || a["lastErrorCode"] || null,
               masterPlaylistUrl: a["masterPlaylistUrl"] || a["hlsMasterUrl"] || a["streamUrl"] || null,
+              regionAvailability: a["regionAvailability"] || { mode: "GLOBAL", countries: [] },
+              territoryCodes: (a["license"] as any)?.territoryCodes || [],
               createdAt: a["createdAt"] || null,
               updatedAt: a["updatedAt"] || null,
             };
@@ -199,11 +209,36 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
           } catch {
             await requireZillionaireModule(fs, user, "content");
           }
+          const now = new Date().toISOString();
           const data = await parseBody(request, actionSchema);
+          if (data.action === "UPDATE_REGION") {
+            const asset = await fs.getDoc(`contentAssets/${data.assetId}`);
+            if (!asset) throw new ApiError(404, "ASSET_NOT_FOUND", "Asset not found.");
+            const currentLicense = (asset["license"] as Record<string, unknown>) || {};
+            const region = data.regionAvailability;
+            const territoryCodes = region.mode === "WHITELIST" && region.countries.length ? region.countries : ["*"];
+            await fs.patchDoc(`contentAssets/${data.assetId}`, {
+              regionAvailability: region,
+              license: {
+                ...currentLicense,
+                territoryCodes,
+              },
+              updatedAt: now,
+            });
+            await writeAuditLog(fs, {
+              actorUid: user.uid,
+              action: "content.region_updated",
+              targetType: "contentAsset",
+              targetId: data.assetId,
+              reason: "Owner updated country visibility settings",
+              metadata: { mode: region.mode, countryCount: region.countries.length },
+            });
+            return Response.json({ success: true, assetId: data.assetId, regionAvailability: region });
+          }
+
           if ((data.action as string) !== "ACTION_UPLOAD") {
             throw new ApiError(410, "LEGACY_UPLOAD_DISABLED", "This legacy upload endpoint is disabled. Use the secure private storage upload flow.");
           }
-          const now = new Date().toISOString();
 
           if (data.action === "INITIATE_UPLOAD") {
             const ext = "." + (data.filename.split(".").pop() || "").toLowerCase();
