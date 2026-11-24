@@ -15,6 +15,7 @@ function createMemoryFirestore() {
       { __id: "demo", name: "Demo Channel", isDemo: true },
       { __id: "ch_real_1", name: "Real News Live", isDemo: false },
       { __id: "test_channel_1", name: "Test Channel", isDemo: false },
+      { __id: "test_live_stream_1", name: "Test Live Stream", channelType: "live_tv", streamUrl: "https://example.invalid/test.m3u8", isDemo: false },
     ],
     "channels/test_channel_1/schedule": [
       { __id: "test_program_future", channelId: "test_channel_1", title: "Test Program", startsAt: "2027-01-01T10:00:00.000Z", endsAt: "2027-01-01T11:00:00.000Z", status: "SCHEDULED" },
@@ -28,6 +29,7 @@ function createMemoryFirestore() {
     contentAssets: [
       { __id: "demo_asset_1", title: "Lagos Nights Sample", uploaderUid: "system_seed", sizeBytes: 10485760 },
       { __id: "asset_real_1", title: "Documentary Master", uploaderUid: "user_authentic", sizeBytes: 20971520 },
+      { __id: "test_movie_1", title: "Test Movie", uploaderUid: "user_authentic", sizeBytes: 1024 },
     ],
     series: [
       { __id: "demo_series_1", title: "Abidjan Hustle Season 1", isDemo: true },
@@ -145,8 +147,8 @@ describe("Batch Q2 — Sample Content Cleanup System", () => {
     const body = await response.json();
     expect(body.dryRun).toBe(true);
     expect(body.totalRecordsFound).toBeGreaterThanOrEqual(5);
-    expect(body.channelsFound).toBe(2);
-    expect(body.contentAssetsFound).toBe(1);
+    expect(body.channelsFound).toBe(3);
+    expect(body.contentAssetsFound).toBe(2);
     expect(body.epgProgrammesFound).toBe(2);
     expect(body.channelProgrammesFound).toBe(2);
     expect(body.seriesFound).toBe(1);
@@ -244,7 +246,9 @@ describe("Batch Q2 — Sample Content Cleanup System", () => {
     // Verify docs deleted
     expect(memFs.deletedDocs).toContain("channels/demo");
     expect(memFs.deletedDocs).toContain("channels/test_channel_1");
+    expect(memFs.deletedDocs).toContain("channels/test_live_stream_1");
     expect(memFs.deletedDocs).toContain("contentAssets/demo_asset_1");
+    expect(memFs.deletedDocs).toContain("contentAssets/test_movie_1");
     expect(memFs.deletedDocs).toContain("epgSchedule/epg_test_future");
     expect(memFs.deletedDocs).toContain("epgSchedule/epg_test_upcoming");
     expect(memFs.deletedDocs).toContain("channels/test_channel_1/schedule/test_program_future");
