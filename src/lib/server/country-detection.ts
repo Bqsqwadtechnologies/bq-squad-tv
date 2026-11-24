@@ -7,6 +7,7 @@ import { normalizeCountryCode } from "./currency";
  */
 export async function detectCountryFromRequest(request: Request): Promise<string | null> {
   const trustedCountry =
+    normalizeCountryCode(request.headers.get("cf-ipcountry")) ??
     normalizeCountryCode(request.headers.get("x-vercel-ip-country")) ??
     normalizeCountryCode(request.headers.get("x-nf-country"));
   if (trustedCountry) return trustedCountry;
