@@ -16,7 +16,6 @@ export function isAvailableInRegion(
   if (!availability || typeof availability !== "object" || Array.isArray(availability)) return true;
   const rule = availability as RegionAvailability;
   const mode = rule.mode ?? "GLOBAL";
-  if (mode === "GLOBAL") return true;
 
   const countryCode = normalizeCountryCode(countryCodeRaw);
   const countries = Array.isArray(rule.countries)
@@ -31,6 +30,7 @@ export function isAvailableInRegion(
     const end = Date.parse(rule.availableTo);
     if (Number.isFinite(end) && now > end) return false;
   }
+  if (mode === "GLOBAL") return true;
   if (!countryCode) return mode !== "WHITELIST";
   return mode === "WHITELIST"
     ? countries.includes(countryCode)
