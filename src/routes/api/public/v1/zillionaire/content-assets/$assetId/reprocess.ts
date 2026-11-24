@@ -89,7 +89,7 @@ export const Route = createFileRoute(
             reason: body.reason,
             metadata: { sourceSha256: asset["sourceSha256"] },
           });
-          await wakeModalVideoWorker();
+          await wakeModalVideoWorker(fs);
           return Response.json({ assetId, status: "queued" });
         } catch (error) {
           return errorBody(error);
