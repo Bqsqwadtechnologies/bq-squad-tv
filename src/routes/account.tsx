@@ -398,7 +398,6 @@ function AccountPage() {
           throw new Error(
             "Your account was created, but its profile could not be completed. Sign in again to continue.",
           );
-        const region = new Intl.Locale(navigator.language).region;
         const acceptanceResponse = await fetch("/api/public/v1/legal/acceptance", {
           method: "POST",
           headers: { ...(await getWebAuthHeaders(idToken)), "content-type": "application/json" },
@@ -416,7 +415,6 @@ function AccountPage() {
           body: JSON.stringify({
             dateOfBirth,
             parentalPin: null,
-            ...(region && /^[A-Z]{2}$/.test(region) ? { countryCode: region } : {}),
           }),
         });
         const profileResult = (await profileResponse.json()) as { error?: string };
