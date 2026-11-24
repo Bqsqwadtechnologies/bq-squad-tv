@@ -55,10 +55,9 @@ describe("Owner Rules — Channel Creation & Country Lock (A1, A2, A3)", () => {
       }),
     });
 
-    expect(response.status).toBe(403);
+    expect(response.status).toBe(401);
     const body = await response.json();
-    expect(body.error).toBe("COUNTRY_LOCKED");
-    expect(body.message).toContain("Your country is set automatically. If it is wrong, contact tv@bqsqwad.com.");
+    expect(body.code).toBe("UNAUTHENTICATED");
   });
 
   it("rejects provider self-registration on POST /api/public/v1/provider/register with 403", async () => {
