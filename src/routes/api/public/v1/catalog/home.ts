@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, getUserProfile, requireUser } from "@/lib/server/api";
 import { toChannelSummary, visibleChannels } from "./-shared";
+import { isAvailableInRegion } from "@/lib/server/region-availability";
 import {
   calculateLiveTrendingScore,
   calculateVodTrendingScore,
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/api/public/v1/catalog/home")({
           const profile = await getUserProfile(fs, user.uid);
           const viewerCountry = request.headers.get("cf-ipcountry")?.trim().toUpperCase() ?? "";
 
-          const [rawChannels, featuredAssets, promotions, trendingConfig, homeRails, heroSlots] =
+          const [rawChannels, featuredAssets, promotions, trendingConfig, homeRails, heroSlots, movieOverrides] =
             await Promise.all([
               fs.query("channels", {
                 filters: [{ field: "published", op: "EQUAL", value: true }],
@@ -48,9 +49,24 @@ export const Route = createFileRoute("/api/public/v1/catalog/home")({
                 country: viewerCountry,
                 audience: profile.adultEligible ? "all" : "kids",
               }),
+              fs.query("movie_curation_overrides", { limit: 500 }).catch(() => []),
             ]);
 
-          const channels = visibleChannels(rawChannels, profile.adultEligible);
+          const channels = visibleChannels(rawChannels, profile.adultEligible).filter((channel) =>
+            isAvailableInRegion(channel["regionAvailability"], viewerCountry),
+          );
+          const overrideByAsset = new Map<string, Record<string, unknown>>();
+          for (const override of movieOverrides) {
+            const assetId = String(override["assetId"] || override["__id"] || "");
+            if (assetId) overrideByAsset.set(assetId, override);
+          }
+          const regionAllowedAssets = featuredAssets.filter((asset) => {
+            const override = overrideByAsset.get(asset.__id);
+            return isAvailableInRegion(
+              asset["regionAvailability"] ?? override?.["regionAvailability"],
+              viewerCountry,
+            );
+          });
           const summaries = channels.map(toChannelSummary);
           const visibleChannelIds = new Set(channels.map((channel) => channel.__id));
 
@@ -83,7 +99,7 @@ export const Route = createFileRoute("/api/public/v1/catalog/home")({
             });
           }
 
-          for (const asset of featuredAssets) {
+          for (const asset of regionAllowedAssets) {
             if (
               typeof asset["channelId"] === "string" &&
               visibleChannelIds.has(asset["channelId"] as string)
