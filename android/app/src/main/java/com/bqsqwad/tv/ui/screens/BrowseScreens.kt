@@ -234,6 +234,11 @@ fun SettingsScreen(
             modifier = Modifier.clickable(onClick = onProfile),
         )
         ListItem(
+            headlineContent = { Text("Provider Console") },
+            supportingContent = { Text("Manage approved provider channels and schedules") },
+            modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/provider") },
+        )
+        ListItem(
             headlineContent = { Text("Account deletion") },
             supportingContent = { Text("Permanently delete account and associated data") },
             modifier = Modifier.clickable { uriHandler.openUri("https://tv.bqsqwad.com/account-deletion") },
@@ -306,6 +311,7 @@ fun AccountScreen(
         ProfileAction("My purchases", "Wallet transactions", onWallet)
         ProfileAction("Watch history", "Recent viewing sessions", onHistory)
         ProfileAction("Notifications", "Account and programme updates", onNotifications)
+        ProfileAction("Provider Console", "Manage approved provider channels and schedules", { uriHandler.openUri("https://tv.bqsqwad.com/provider") })
         ProfileAction("Terms of service", "Platform terms and conditions", { uriHandler.openUri("https://tv.bqsqwad.com/legal/terms") })
         ProfileAction("Privacy notice", "Privacy policy and personal data notice", { uriHandler.openUri("https://tv.bqsqwad.com/legal/privacy-policy") })
         ProfileAction("Account deletion", "Permanently delete account and data", { uriHandler.openUri("https://tv.bqsqwad.com/account-deletion") })
