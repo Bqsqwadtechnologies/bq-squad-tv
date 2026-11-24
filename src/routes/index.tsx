@@ -229,7 +229,7 @@ function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-24 md:pb-16">
+    <div className="legacy-light-surface min-h-screen bg-[#F8FAFC] text-slate-900 pb-24 md:pb-16">
       {/* Top Header Bar */}
       <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-3 sm:px-8">
