@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ApiError, Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, getUserProfile, requireUser } from "@/lib/server/api";
 import { assertContentAgeEligibility } from "@/lib/server/content-rating";
+import { isAvailableInRegion } from "@/lib/server/region-availability";
 import { verifyPreviewToken } from "@/lib/server/preview-grants";
 import { resolveAssetMediaBinding } from "@/lib/server/storage/asset-binding";
 import {
@@ -28,6 +29,12 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
               "This content is not ready for playback.",
             );
           }
+          const viewerCountry = request.headers.get("cf-ipcountry")?.trim().toUpperCase() ?? "";
+          const movieOverride = await fs.getDoc("movie_curation_overrides/" + assetId);
+          const assetRegion = asset["regionAvailability"] ?? movieOverride?.["regionAvailability"];
+          if (!isAvailableInRegion(assetRegion, viewerCountry)) {
+            throw new ApiError(404, "CONTENT_NOT_AVAILABLE_IN_REGION", "This title is not available in your country.");
+          }
           const channelId = typeof asset["channelId"] === "string" ? asset["channelId"] : "";
           const channel = channelId ? await fs.getDoc("channels/" + channelId) : null;
           const previewToken = new URL(request.url).searchParams.get("previewToken");
@@ -49,6 +56,7 @@ export const Route = createFileRoute("/api/public/v1/content-assets/$assetId")({
           }
           if (
             !channel ||
+            !isAvailableInRegion(channel["regionAvailability"], viewerCountry) ||
             (channel["published"] !== true && !isPrivatePreview) ||
             String(channel["status"] ?? "").toUpperCase() === "SUSPENDED" ||
             (asset["contentStatus"] !== "published" && !isPrivatePreview)
