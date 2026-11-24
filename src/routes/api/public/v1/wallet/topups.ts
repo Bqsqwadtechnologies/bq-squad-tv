@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Firestore } from "@/lib/server/firebase-admin";
 import { errorBody, getWallet, requireUser } from "@/lib/server/api";
 import { getPricingConfig, getDefaultPricingConfig } from "@/lib/server/pricing";
-import { getPaystackCheckoutTopup } from "@/lib/server/paystack";
+import { getPaystackCheckoutTopup, withPaystackExchangeRates } from "@/lib/server/paystack";
 
 export const Route = createFileRoute("/api/public/v1/wallet/topups")({
   server: {
@@ -18,6 +18,7 @@ export const Route = createFileRoute("/api/public/v1/wallet/topups")({
           } catch {
             pricing = getDefaultPricingConfig();
           }
+          pricing = await withPaystackExchangeRates(pricing, wallet.currency) as typeof pricing;
           const byCurrency = pricing["walletTopupsByCurrency"];
           const currencyOffers =
             byCurrency && typeof byCurrency === "object" && !Array.isArray(byCurrency)
