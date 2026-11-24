@@ -63,6 +63,25 @@ export const Route = createFileRoute("/zillionaire/movies")({
   }),
 });
 
+const REGION_COUNTRY_OPTIONS: Array<{ code: string; name: string }> = [
+  { code: "NG", name: "Nigeria" }, { code: "GH", name: "Ghana" }, { code: "KE", name: "Kenya" },
+  { code: "ZA", name: "South Africa" }, { code: "US", name: "United States" }, { code: "GB", name: "United Kingdom" },
+  { code: "CA", name: "Canada" }, { code: "AU", name: "Australia" }, { code: "NZ", name: "New Zealand" },
+  { code: "DE", name: "Germany" }, { code: "FR", name: "France" }, { code: "ES", name: "Spain" },
+  { code: "IT", name: "Italy" }, { code: "NL", name: "Netherlands" }, { code: "BE", name: "Belgium" },
+  { code: "IE", name: "Ireland" }, { code: "PT", name: "Portugal" }, { code: "CH", name: "Switzerland" },
+  { code: "SE", name: "Sweden" }, { code: "NO", name: "Norway" }, { code: "DK", name: "Denmark" },
+  { code: "IN", name: "India" }, { code: "PK", name: "Pakistan" }, { code: "BD", name: "Bangladesh" },
+  { code: "JP", name: "Japan" }, { code: "KR", name: "South Korea" }, { code: "SG", name: "Singapore" },
+  { code: "MY", name: "Malaysia" }, { code: "ID", name: "Indonesia" }, { code: "PH", name: "Philippines" },
+  { code: "TH", name: "Thailand" }, { code: "AE", name: "United Arab Emirates" }, { code: "SA", name: "Saudi Arabia" },
+  { code: "EG", name: "Egypt" }, { code: "MA", name: "Morocco" }, { code: "TZ", name: "Tanzania" },
+  { code: "UG", name: "Uganda" }, { code: "RW", name: "Rwanda" }, { code: "ZM", name: "Zambia" },
+  { code: "ZW", name: "Zimbabwe" }, { code: "BR", name: "Brazil" }, { code: "MX", name: "Mexico" },
+  { code: "AR", name: "Argentina" }, { code: "CL", name: "Chile" }, { code: "CO", name: "Colombia" },
+  { code: "TR", name: "Türkiye" }, { code: "IL", name: "Israel" }, { code: "QA", name: "Qatar" },
+];
+ 
 interface ContentAsset {
   id: string;
   title: string;
@@ -1424,16 +1443,31 @@ function ZillionaireMoviesPage({
                           </select>
                         </div>
 
-                        <div>
-                          <label className="block font-semibold text-slate-300 mb-1">Country ISO Codes (e.g. NG, GH, US):</label>
-                          <input
-                            type="text"
-                            disabled={overrideRegionMode === "GLOBAL"}
-                            value={overrideCountries}
-                            onChange={(e) => setOverrideCountries(e.target.value)}
-                            placeholder="NG, GH, KE, US, GB"
-                            className="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white disabled:opacity-30"
-                          />
+                        <div className="md:col-span-2">
+                          <label className="block font-semibold text-slate-300 mb-2">Select countries:</label>
+                          <div className="max-h-52 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-lg border border-slate-700 bg-slate-950 p-3">
+                            {REGION_COUNTRY_OPTIONS.map((country) => {
+                              const selected = overrideCountries.split(",").map((code) => code.trim().toUpperCase()).includes(country.code);
+                              return (
+                                <label key={country.code} className="flex items-center gap-2 text-xs text-slate-200">
+                                  <input
+                                    type="checkbox"
+                                    disabled={overrideRegionMode === "GLOBAL"}
+                                    checked={selected}
+                                    onChange={(event) => {
+                                      const current = new Set(overrideCountries.split(",").map((code) => code.trim().toUpperCase()).filter(Boolean));
+                                      if (event.target.checked) current.add(country.code);
+                                      else current.delete(country.code);
+                                      setOverrideCountries(Array.from(current).join(", "));
+                                    }}
+                                    className="rounded border-slate-600 bg-slate-900 text-cyan-500 focus:ring-cyan-500"
+                                  />
+                                  <span>{country.name} <span className="text-slate-500">({country.code})</span></span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          <p className="mt-2 text-[11px] text-slate-500">For Whitelist, only ticked countries can access this title. For Blacklist, ticked countries are blocked. Global ignores this selection.</p>
                         </div>
 
                         <div>
