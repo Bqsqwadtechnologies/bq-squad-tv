@@ -142,16 +142,21 @@ describe("Batch B2 — Payout Account Verification and Review Flow", () => {
       const { Route } = await import("@/routes/api/public/v1/producer/payout-proof-upload");
       const handler = (Route as any).options.server.handlers.POST;
 
-      const formData = new FormData();
-      const fakeFile = new File(["not-an-executable"], "malicious.exe", { type: "application/x-msdownload" });
-      formData.append("file", fakeFile);
-
+      const boundary = "----BQProofUploadBoundary";
+      const body = [
+        `--${boundary}\r\n`,
+        'Content-Disposition: form-data; name="file"; filename="malicious.exe"\r\n',
+        "Content-Type: application/x-msdownload\r\n\r\n",
+        "not-an-executable\r\n",
+        `--${boundary}--\r\n`,
+      ].join("");
       const req = new Request("http://localhost/api/public/v1/producer/payout-proof-upload", {
         method: "POST",
         headers: {
           authorization: "Bearer user_test_b2",
+          "content-type": `multipart/form-data; boundary=${boundary}`,
         },
-        body: formData,
+        body,
       });
 
       const res = await handler({ request: req });
@@ -164,17 +169,21 @@ describe("Batch B2 — Payout Account Verification and Review Flow", () => {
       const { Route } = await import("@/routes/api/public/v1/producer/payout-proof-upload");
       const handler = (Route as any).options.server.handlers.POST;
 
-      const formData = new FormData();
-      const statementFile = new File(["%PDF-1.4 official statement content"], "bank_statement_nov2026.pdf", { type: "application/pdf" });
-      formData.append("file", statementFile);
-      formData.append("fileName", "bank_statement_nov2026.pdf");
-
+      const boundary = "----BQProofUploadBoundary";
+      const body = [
+        `--${boundary}\r\n`,
+        'Content-Disposition: form-data; name="file"; filename="bank_statement_nov2026.pdf"\r\n',
+        "Content-Type: application/pdf\r\n\r\n",
+        "%PDF-1.4 official statement content\r\n",
+        `--${boundary}--\r\n`,
+      ].join("");
       const req = new Request("http://localhost/api/public/v1/producer/payout-proof-upload", {
         method: "POST",
         headers: {
           authorization: "Bearer user_producer_b2",
+          "content-type": `multipart/form-data; boundary=${boundary}`,
         },
-        body: formData,
+        body,
       });
 
       const res = await handler({ request: req });
