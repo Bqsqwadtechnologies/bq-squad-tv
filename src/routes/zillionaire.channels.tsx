@@ -32,6 +32,7 @@ import {
   RotateCcw,
   Sliders,
   DollarSign,
+  Globe,
 } from "lucide-react";
 import { getWebAuthHeaders } from "@/lib/firebase-web-auth";
 
