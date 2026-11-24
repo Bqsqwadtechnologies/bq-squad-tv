@@ -392,7 +392,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/upload/")({
                 updatedAt: now,
               });
 
-              await wakeModalVideoWorker();
+              await wakeModalVideoWorker(fs);
 
               await writeAuditLog(fs, {
                 actorUid: user.uid,
