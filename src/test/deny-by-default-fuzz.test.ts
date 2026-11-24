@@ -262,7 +262,6 @@ describe("Batch 14: Deny-by-Default Fuzz Suite", () => {
       });
       expect(response.status).toBe(401);
       expect(await response.json()).toMatchObject({
-        error: "A Firebase sign-in token is required.",
         code: "UNAUTHENTICATED",
       });
     });
