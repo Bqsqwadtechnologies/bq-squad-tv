@@ -141,7 +141,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
             const title = programme["title"] ?? programme["programmeTitle"] ?? programme["name"];
             if (isExplicitTestTitle(title, ["test program", "test programme"]) || programme.__id.startsWith("test-") || programme.__id.startsWith("test_")) {
               epgProgrammesToDelete.push(programme.__id);
-              sampleItems.push({ collection: "epgSchedule", id: programme.__id, title: String(title), reason: "Explicit test programme in the EPG (date/status independent)" });
+              sampleItems.push({ collection: "epgSchedule", id: programme.__id, title: String(title ?? programme.__id), reason: "Explicit test programme in the EPG (date/status independent)" });
             }
           }
           // Remove test programmes in each channel schedule and keep the reservation index consistent.
@@ -150,9 +150,9 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
             const programmes = await fs.query("channels/" + channelId + "/schedule", { limit: 300 }).catch(() => []);
             for (const programme of programmes) {
               const title = programme["title"] ?? programme["name"];
-              if (isExplicitTestTitle(title, ["test program", "test programme"])) {
+              if (isExplicitTestTitle(title, ["test program", "test programme"]) || programme.__id.startsWith("test-") || programme.__id.startsWith("test_")) {
                 channelProgrammesToDelete.push({ channelId, programmeId: programme.__id });
-                sampleItems.push({ collection: "channels/" + channelId + "/schedule", id: programme.__id, title: String(title), reason: "Explicit test programme in the channel schedule (date/status independent)" });
+                sampleItems.push({ collection: "channels/" + channelId + "/schedule", id: programme.__id, title: String(title ?? programme.__id), reason: "Explicit test programme in the channel schedule (date/status independent)" });
               }
             }
           }
