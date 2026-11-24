@@ -6,6 +6,7 @@ import { errorBody, parseBody, requireUser } from "@/lib/server/api";
 import { requireZillionaireModule } from "@/lib/server/roles";
 import { requireStepUp } from "@/lib/server/zillionaire-access";
 import { rebuildStoragePoolIndex } from "@/lib/server/storage/pool-index";
+import { deleteChannelSchedule } from "@/lib/server/channel-schedule";
 
 const bodySchema = z.object({
   dryRun: z.boolean().default(true),
@@ -21,6 +22,14 @@ type SampleItem = {
   reason: string;
   sizeBytes?: number;
 };
+
+function normalizedTestTitle(value: unknown): string {
+  return typeof value === "string" ? value.trim().toLowerCase().replace(/\\s+/g, " ") : "";
+}
+
+function isExplicitTestTitle(value: unknown, allowed: string[]): boolean {
+  return allowed.includes(normalizedTestTitle(value));
+}
 
 function isKnownPlaceholderStream(value: unknown): boolean {
   if (typeof value !== "string" || !value.trim()) return false;
@@ -83,6 +92,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
           const episodesToDelete: string[] = [];
           const storageDestinationsToDelete: string[] = [];
           const storageObjectsToDelete: string[] = [];
+          const epgProgrammesToDelete: string[] = [];
+          const channelProgrammesToDelete: Array<{ channelId: string; programmeId: string }> = [];
           for (const ch of channels) {
             const id = ch.__id;
             const title = String(ch["name"] || ch["title"] || "");
@@ -96,7 +107,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
               ch["isSample"] === true ||
               ch["seed"] === true ||
               ch["isSeeded"] === true ||
-              /demo channel|bq sqwad sports hd/i.test(title);
+              /demo channel|bq sqwad sports hd/i.test(title) ||
+              isExplicitTestTitle(title, ["test channel", "test live stream"]);
             const isLiveRecord =
               ch["deliveryMode"] === "live_hls" ||
               ch["channelType"] === "live" ||
@@ -121,6 +133,27 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
           }
 
           if (body.scope === "all_sample_content") {
+          // Remove explicitly named test programmes regardless of whether they are already live, upcoming, or scheduled for a future date.
+          const epgProgrammes = await fs.query("epgSchedule", { limit: 1000 }).catch(() => []);
+          for (const programme of epgProgrammes) {
+            const title = programme["title"] ?? programme["programmeTitle"] ?? programme["name"];
+            if (isExplicitTestTitle(title, ["test program", "test programme"])) {
+              epgProgrammesToDelete.push(programme.__id);
+              sampleItems.push({ collection: "epgSchedule", id: programme.__id, title: String(title), reason: "Explicit test programme in the EPG (date/status independent)" });
+            }
+          }
+          // Remove test programmes in each channel schedule and keep the reservation index consistent.
+          for (const channel of channels) {
+            const channelId = channel.__id;
+            const programmes = await fs.query("channels/" + channelId + "/schedule", { limit: 300 }).catch(() => []);
+            for (const programme of programmes) {
+              const title = programme["title"] ?? programme["name"];
+              if (isExplicitTestTitle(title, ["test program", "test programme"])) {
+                channelProgrammesToDelete.push({ channelId, programmeId: programme.__id });
+                sampleItems.push({ collection: "channels/" + channelId + "/schedule", id: programme.__id, title: String(title), reason: "Explicit test programme in the channel schedule (date/status independent)" });
+              }
+            }
+          }
           // 2. Content Assets
           const contentAssets = await fs.query("contentAssets", { limit: 500 }).catch(() => []);
           for (const asset of contentAssets) {
@@ -137,6 +170,7 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
               asset["seed"] === true ||
               asset["isSeeded"] === true ||
               uploaderUid === "system_seed" ||
+              isExplicitTestTitle(title, ["test movie", "test live stream"]) ||
               (/lagos nights|abidjan hustle|golden savannah|super eagles: african kings/i.test(title) &&
                 (uploaderUid === "system" || !uploaderUid));
 
@@ -250,7 +284,9 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
             seriesToDelete.length +
             episodesToDelete.length +
             storageDestinationsToDelete.length +
-            storageObjectsToDelete.length;
+            storageObjectsToDelete.length +
+            epgProgrammesToDelete.length +
+            channelProgrammesToDelete.length;
 
           if (body.dryRun) {
             return Response.json({
@@ -262,6 +298,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
               episodesFound: episodesToDelete.length,
               storageDestinationsFound: storageDestinationsToDelete.length,
               storageObjectsFound: storageObjectsToDelete.length,
+              epgProgrammesFound: epgProgrammesToDelete.length,
+              channelProgrammesFound: channelProgrammesToDelete.length,
               estimatedBytesFreed,
               sampleItems,
             });
@@ -285,6 +323,12 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
           }
           for (const id of storageObjectsToDelete) {
             await fs.deleteDoc(`storageObjects/${id}`).catch(() => {});
+          }
+          for (const id of epgProgrammesToDelete) {
+            await fs.deleteDoc(`epgSchedule/${id}`);
+          }
+          for (const item of channelProgrammesToDelete) {
+            await deleteChannelSchedule(fs, item.channelId, item.programmeId);
           }
 
           if (storageDestinationsToDelete.length > 0) {
@@ -325,6 +369,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
               seriesDeleted: seriesToDelete.length,
               episodesDeleted: episodesToDelete.length,
               storageObjectsDeleted: storageObjectsToDelete.length,
+              epgProgrammesDeleted: epgProgrammesToDelete.length,
+              channelProgrammesDeleted: channelProgrammesToDelete.length,
               estimatedBytesFreed,
             },
             createdAt: now,
@@ -341,6 +387,8 @@ export const Route = createFileRoute("/api/public/v1/zillionaire/cleanup-sample"
             episodesDeleted: episodesToDelete.length,
             storageDestinationsDeleted: storageDestinationsToDelete.length,
             storageObjectsDeleted: storageObjectsToDelete.length,
+            epgProgrammesDeleted: epgProgrammesToDelete.length,
+            channelProgrammesDeleted: channelProgrammesToDelete.length,
             estimatedBytesFreed,
             executedAt: now,
           });
