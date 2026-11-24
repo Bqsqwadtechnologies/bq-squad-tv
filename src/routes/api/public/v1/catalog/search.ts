@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Firestore, type QueryFilter } from "@/lib/server/firebase-admin";
 import { errorBody, getUserProfile, requireUser } from "@/lib/server/api";
 import { toChannelSummary, visibleChannels } from "./-shared";
+import { isAvailableInRegion } from "@/lib/server/region-availability";
 
 export const Route = createFileRoute("/api/public/v1/catalog/search")({
   server: {
@@ -32,10 +33,11 @@ export const Route = createFileRoute("/api/public/v1/catalog/search")({
           if (category) filters.push({ field: "category", op: "EQUAL", value: category });
           if (language) filters.push({ field: "language", op: "EQUAL", value: language });
 
+          const viewerCountry = request.headers.get("cf-ipcountry")?.trim().toUpperCase() ?? "";
           let results = visibleChannels(
             await fs.query("channels", { filters, limit: 200 }),
             adultEligible,
-          );
+          ).filter((channel) => isAvailableInRegion(channel["regionAvailability"], viewerCountry));
           if (queryText) {
             results = results.filter((channel) =>
               (typeof channel["title"] === "string" ? (channel["title"] as string) : "")
