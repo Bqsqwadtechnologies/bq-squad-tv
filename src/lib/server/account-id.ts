@@ -44,19 +44,19 @@ export async function ensureAccountId(
         uid,
         createdAt: new Date().toISOString(),
       });
-      await fs.patchDoc("users/" + uid, {
+      await fs.setDoc("users/" + uid, {
         accountId,
         updatedAt: new Date().toISOString(),
-      });
+      }, { merge: true });
       return accountId;
     } catch (error) {
       if (error instanceof ApiError && error.code === "CONFLICT") {
         const winner = await fs.getDoc("accountIdIndex/" + accountId);
         if (winner?.["uid"] === uid) {
-          await fs.patchDoc("users/" + uid, {
+          await fs.setDoc("users/" + uid, {
             accountId,
             updatedAt: new Date().toISOString(),
-          });
+          }, { merge: true });
           return accountId;
         }
         continue;
