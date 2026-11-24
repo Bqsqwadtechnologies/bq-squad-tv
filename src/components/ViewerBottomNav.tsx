@@ -60,7 +60,7 @@ export function ViewerBottomNav({ activeTab }: ViewerBottomNavProps) {
   return (
     <nav
       aria-label="Viewer Bottom Navigation"
-      className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-slate-200 bg-white/95 px-2 py-2 backdrop-blur-xl md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-border bg-background/95 px-2 py-2 backdrop-blur-xl md:hidden"
     >
       {navItems.map((item) => {
         const Icon = item.icon;
@@ -72,7 +72,7 @@ export function ViewerBottomNav({ activeTab }: ViewerBottomNavProps) {
             className={`flex flex-1 flex-col items-center justify-center gap-1 py-1 text-center transition ${
               isActive
                 ? "text-[#00D8F5] drop-shadow-[0_0_8px_rgba(0,216,245,0.6)] font-bold"
-                : "text-slate-500 hover:text-slate-900 font-medium"
+                : "text-muted-foreground hover:text-foreground font-medium"
             }`}
           >
             <Icon size={20} className={isActive ? "stroke-[2.5]" : "stroke-[2]"} />
