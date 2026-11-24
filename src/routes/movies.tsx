@@ -83,7 +83,7 @@ function MoviesPage() {
   );
 
   return (
-    <main className="min-h-screen bg-[#f7f9fe] px-4 py-8 text-slate-900 sm:px-6">
+    <main className="legacy-light-surface min-h-screen bg-[#f7f9fe] px-4 py-8 text-slate-900 sm:px-6">
       <div className="mx-auto max-w-6xl">
         <header className="flex items-center justify-between gap-4">
           <a
