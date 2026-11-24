@@ -24,7 +24,11 @@ fun ProfileSetupScreen(
     val uriHandler = LocalUriHandler.current
     var legalAccepted by remember { mutableStateOf(false) }
     var dob by remember { mutableStateOf("") }
+    var profileAlreadyComplete by remember { mutableStateOf(false) }
     var pin by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) {
+        profileAlreadyComplete = runCatching { repository.isProfileComplete() }.getOrDefault(false)
+    }
     var message by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
 
@@ -33,14 +37,16 @@ fun ProfileSetupScreen(
         Text("Your country and wallet currency are detected automatically. Enter your date of birth to finish setting up your account.")
         Spacer(Modifier.height(16.dp))
         Spacer(Modifier.height(12.dp))
-        OutlinedTextField(
-            dob,
-            { dob = it },
-            label = { Text("Date of birth (YYYY-MM-DD)") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Spacer(Modifier.height(8.dp))
+        if (!profileAlreadyComplete) {
+            OutlinedTextField(
+                dob,
+                { dob = it },
+                label = { Text("Date of birth (YYYY-MM-DD)") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(8.dp))
+        }
         OutlinedTextField(
             pin,
             {
@@ -64,7 +70,7 @@ fun ProfileSetupScreen(
             Text(" and ")
             TextButton(onClick = { uriHandler.openUri("https://tv.bqsqwad.com/legal/privacy-policy") }) { Text("Privacy Policy") }
         }
-        Button(enabled = !busy && legalAccepted && dob.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) && (pin.isBlank() || pin.length in 4..6), onClick = {
+        Button(enabled = !busy && legalAccepted && (profileAlreadyComplete || dob.matches(Regex("\\d{4}-\\d{2}-\\d{2}")) && (pin.isBlank() || pin.length in 4..6), onClick = {
             scope.launch {
                 busy = true
                 message = null
@@ -72,7 +78,7 @@ fun ProfileSetupScreen(
                     val date = LocalDate.parse(dob)
                     require(!date.isAfter(LocalDate.now())) { "Date of birth cannot be in the future." }
                     require(repository.acceptLegalPages()) { "Please accept the current Terms and Privacy Policy before continuing." }
-                    repository.completeProfile(date.toString(), pin.ifBlank { null })
+                    if (!profileAlreadyComplete) repository.completeProfile(date.toString(), pin.ifBlank { null })
                 }.onSuccess { response ->
                     if (response.profileComplete) {
                         onComplete(response.adultEligible)
