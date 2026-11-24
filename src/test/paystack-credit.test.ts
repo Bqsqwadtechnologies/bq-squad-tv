@@ -170,6 +170,33 @@ describe("Paystack wallet credit validation", () => {
     expect(offer.converted).toBe(false);
   });
 
+
+  it("credits an EUR wallet from a verified USD Paystack payment without changing wallet currency", async () => {
+    const capture = { writes: [] as unknown[] };
+    const convertedInput = { ...input, amountMinor: 33, creditMinor: 30, currency: "USD", walletCurrency: "EUR" };
+    const fs = fakeFirestore(
+      {
+        ["payments/paystack_" + input.reference]: {
+          uid: input.uid,
+          reference: input.reference,
+          provider: "paystack",
+          amountMinor: 33,
+          creditMinor: 30,
+          currency: "USD",
+          walletCurrency: "EUR",
+          status: "pending",
+        },
+        ["wallets/" + input.uid]: { balanceMinor: 100, currency: "EUR" },
+      },
+      capture,
+    );
+    const result = await creditPaystackPayment(fs, convertedInput);
+    expect(result).toEqual({ credited: true, balanceMinor: 130 });
+    const writes = capture.writes as Array<{ update?: { name: string; fields: Record<string, unknown> } }>;
+    expect(writes[0]?.update?.fields).toMatchObject({ balanceMinor: 130, currency: "EUR" });
+    expect(writes[2]?.update?.fields).toMatchObject({ amountMinor: 30, currency: "EUR", providerCurrency: "USD" });
+  });
+
   it("does not credit an already credited payment again", async () => {
     const capture = { writes: [] as unknown[] };
     const fs = fakeFirestore(
