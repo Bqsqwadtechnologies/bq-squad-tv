@@ -26,10 +26,11 @@ export const Route = createFileRoute("/api/public/v1/profile/country")({
           const access = await resolvePlatformAccess(
             fs, user.uid, user.email, user.customClaims, user.emailVerified === true,
           );
-          const ownerOverride = profile?.["countryDetectionSource"] === "owner_test_override";
-          const detectedCountry = ownerOverride ? null : await detectCountryFromRequest(request);
+          // A previously saved/manual country is only a fallback. A fresh server-side
+          // IP result must replace it, including an earlier owner test override.
+          const detectedCountry = await detectCountryFromRequest(request);
           let countryCode = normalizeCountryCode(profile?.["countryCode"]);
-          if (detectedCountry && !ownerOverride) {
+          if (detectedCountry) {
             countryCode = detectedCountry;
             const detectedCurrency = currencyForCountry(detectedCountry);
             const storedCurrency = typeof wallet?.["currency"] === "string"
