@@ -24,7 +24,7 @@ type SampleItem = {
 };
 
 function normalizedTestTitle(value: unknown): string {
-  return typeof value === "string" ? value.trim().toLowerCase().replace(/\\s+/g, " ") : "";
+  return typeof value === "string" ? value.trim().toLowerCase().replace(/\s+/g, " ") : "";
 }
 
 function isExplicitTestTitle(value: unknown, allowed: string[]): boolean {
