@@ -382,49 +382,42 @@
 
 
 /* Reverse bridge for viewer pages originally authored with a fixed white palette.
-   Keep the dark preference dark on Home, Movies, Series, Library, Help and Downloads. */
-:root.dark [class~="bg-[#F8FAFC]"],
-:root.dark [class~="bg-[#f8fafc]"],
-:root.dark [class~="bg-[#f7f9fe]"] {
+   Scope it to those page roots so white controls/indicators elsewhere keep their intended styling. */
+.dark .legacy-light-surface[class~="bg-[#F8FAFC]"],
+.dark .legacy-light-surface[class~="bg-[#f8fafc]"],
+.dark .legacy-light-surface[class~="bg-[#f7f9fe"] {
   background-color: var(--background) !important;
   color: var(--foreground) !important;
 }
 
-:root.dark [class~="bg-white"],
-:root.dark [class~="bg-white/95"],
-:root.dark [class~="bg-white/90"],
-:root.dark [class~="bg-white/80"] {
+.dark .legacy-light-surface [class~="bg-white"],
+.dark .legacy-light-surface [class~="bg-white/95"],
+.dark .legacy-light-surface [class~="bg-white/90"],
+.dark .legacy-light-surface [class~="bg-white/80"] {
   background-color: var(--card) !important;
   color: var(--card-foreground) !important;
 }
 
-:root.dark [class~="bg-slate-50"],
-:root.dark [class~="bg-slate-100"] {
+.dark .legacy-light-surface [class~="bg-slate-50"],
+.dark .legacy-light-surface [class~="bg-slate-100"] {
   background-color: var(--secondary) !important;
   color: var(--secondary-foreground) !important;
 }
 
-:root.dark [class~="bg-[#F8FAFC"] [class~="text-slate-900"],
-:root.dark [class~="bg-[#f8fafc"] [class~="text-slate-900"],
-:root.dark [class~="bg-[#f7f9fe"] [class~="text-slate-900"],
-:root.dark [class~="bg-white"] [class~="text-slate-900"],
-:root.dark [class~="bg-white/95"] [class~="text-slate-900"],
-:root.dark [class~="bg-slate-50"] [class~="text-slate-900"],
-:root.dark [class~="bg-slate-100"] [class~="text-slate-900"] {
+.dark .legacy-light-surface [class~="text-slate-900"] {
   color: var(--foreground) !important;
 }
 
-:root.dark [class~="bg-white"] [class~="text-slate-800"],
-:root.dark [class~="bg-white"] [class~="text-slate-700"],
-:root.dark [class~="bg-white"] [class~="text-slate-600"],
-:root.dark [class~="bg-slate-50"] [class~="text-slate-700"],
-:root.dark [class~="bg-slate-50"] [class~="text-slate-600"] {
+.dark .legacy-light-surface [class~="text-slate-800"],
+.dark .legacy-light-surface [class~="text-slate-700"],
+.dark .legacy-light-surface [class~="text-slate-600"],
+.dark .legacy-light-surface [class~="text-slate-500"] {
   color: var(--muted-foreground) !important;
 }
 
-:root.dark [class~="border-slate-200"],
-:root.dark [class~="border-slate-200/80"],
-:root.dark [class~="border-blue-100"],
-:root.dark [class~="border-blue-200"] {
+.dark .legacy-light-surface [class~="border-slate-200"],
+.dark .legacy-light-surface [class~="border-slate-200/80"],
+.dark .legacy-light-surface [class~="border-blue-100"],
+.dark .legacy-light-surface [class~="border-blue-200"] {
   border-color: var(--border) !important;
 }
