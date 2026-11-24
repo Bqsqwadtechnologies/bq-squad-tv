@@ -559,7 +559,7 @@ function WalletPage() {
                             </p>
                             {item.converted ? (
                               <p className="mt-2 text-[11px] leading-5 text-cyan-100/70">
-                                Converted from {item.walletCurrency} to USD for Paystack. Estimated rate: 1 USD = {item.exchangeRate?.toLocaleString(undefined, { maximumFractionDigits: 4 })} {item.walletCurrency}. Rates by <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer" className="underline">Exchange Rate API</a>.
+                                Converted from {item.walletCurrency} to USD for Paystack. Estimated rate: 1 USD = {item.exchangeRate?.toLocaleString(undefined, { maximumFractionDigits: 4 })} {item.walletCurrency}. Rates by <a href="https://www.exchangerate-api.com" target="_blank" rel="noreferrer" className="underline">exchange-rate source</a>.
                               </p>
                             ) : null}
                             <button
